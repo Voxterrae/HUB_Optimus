@@ -16,7 +16,7 @@ It is a tool for better judgment.
 ## New here? Start here 👇
 
 If this is your first time exploring HUB_Optimus, begin with:
-- [`docs/00_start_here.md`](docs/00_start_here.md)
+- [`[`docs/00_start_here.md`](00_start_here.md)`]([`docs/00_start_here.md`](00_start_here.md))
 
 It provides a guided, human-readable entrypoint before diving into the Kernel or the scenario simulator.
 
@@ -25,7 +25,7 @@ It provides a guided, human-readable entrypoint before diving into the Kernel or
 ## Want to see how it works in practice?
 
 Try a guided scenario walkthrough:
-- [`docs/03_try_a_scenario.md`](docs/03_try_a_scenario.md)
+- [`[`docs/03_try_a_scenario.md`](03_try_a_scenario.md)`]([`docs/03_try_a_scenario.md`](03_try_a_scenario.md))
 
 This shows how HUB_Optimus evaluates real situations by comparing incentives, verification, and long-term stability.
 

@@ -43,15 +43,15 @@ HUB_Optimus exists to break that cycle.
 
 ### If you have 15–30 minutes
 Read the Kernel (English reference):
-1) `v1_core/languages/en/01_base_declaracion.md`
-2) `v1_core/languages/en/02_arquitectura_base.md`
-3) `v1_core/languages/en/03_flujo_operativo.md`
+1) `[`v1_core/languages/en/01_base_declaracion.md`](../v1_core/languages/en/01_base_declaracion.md)`
+2) `[`v1_core/languages/en/02_arquitectura_base.md`](../v1_core/languages/en/02_arquitectura_base.md)`
+3) `[`v1_core/languages/en/03_flujo_operativo.md`](../v1_core/languages/en/03_flujo_operativo.md)`
 
 Then try the simulator:
 - `v1_core/workflow/04_escenario_template.md`
-- `v1_core/workflow/scenario_001_partial_ceasefire.md`
-- `v1_core/workflow/scenario_002_verified_ceasefire.md`
-- `v1_core/workflow/05_meta_learning.md`
+- `[`[`v1_core/workflow/scenario_001_partial_ceasefire.md`](../v1_core/workflow/scenario_001_partial_ceasefire.md)`](../[`v1_core/workflow/scenario_001_partial_ceasefire.md`](../v1_core/workflow/scenario_001_partial_ceasefire.md))`
+- `[`[`v1_core/workflow/scenario_002_verified_ceasefire.md`](../v1_core/workflow/scenario_002_verified_ceasefire.md)`](../[`v1_core/workflow/scenario_002_verified_ceasefire.md`](../v1_core/workflow/scenario_002_verified_ceasefire.md))`
+- `[`v1_core/workflow/05_meta_learning.md`](../v1_core/workflow/05_meta_learning.md)`
 
 ---
 
@@ -70,7 +70,7 @@ Ask:
 
 ## If you want to contribute
 Start here:
-- `CONTRIBUTING.md`
+- `[`CONTRIBUTING.md`](../CONTRIBUTING.md)`
 
 Contributions are welcome, but Kernel influence is integrity-gated.
 
