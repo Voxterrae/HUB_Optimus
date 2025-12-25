@@ -29,7 +29,16 @@ Try a guided scenario walkthrough:
 
 This shows how HUB_Optimus evaluates real situations by comparing incentives, verification, and long-term stability.
 
+---
 
+## How to navigate this repo (by role)
+
+Not sure what to read first? Use the repository map:
+- [`docs/02_how_to_read_this_repo.md`](docs/02_how_to_read_this_repo.md)
+
+It explains the recommended reading path depending on whether you are a newcomer, practitioner, contributor, or reviewer.
+
+---
 
 ## Why this project exists
 
