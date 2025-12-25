@@ -13,6 +13,16 @@ It is a tool for better judgment.
 
 ---
 
+## New here? Start here 👇
+
+If this is your first time exploring HUB_Optimus, begin with:
+- [`docs/00_start_here.md`](docs/00_start_here.md)
+
+It provides a guided, human-readable entrypoint before diving into the Kernel or the scenario simulator.
+
+---
+
+
 ## Why this project exists
 
 Modern diplomatic and institutional systems often fail not because of lack of intelligence, but because of:
