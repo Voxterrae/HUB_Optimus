@@ -61,7 +61,7 @@ Every scenario must include:
 
 ### C) Meta-learning updates (medium risk)
 Updates to:
-- `[`v1_core/workflow/05_meta_learning.md`](../v1_core/workflow/05_meta_learning.md)`
+- `v1_core/workflow/05_meta_learning.md`
 
 Must reference:
 - which scenario(s) justify the new rule,
@@ -69,9 +69,9 @@ Must reference:
 
 ### D) Kernel changes (high risk)
 Files like:
-- `[`v1_core/languages/en/01_base_declaracion.md`](../v1_core/languages/en/01_base_declaracion.md)`
-- `[`v1_core/languages/en/02_arquitectura_base.md`](../v1_core/languages/en/02_arquitectura_base.md)`
-- `[`v1_core/languages/en/03_flujo_operativo.md`](../v1_core/languages/en/03_flujo_operativo.md)`
+- `v1_core/languages/en/01_base_declaracion.md`
+- `v1_core/languages/en/02_arquitectura_base.md`
+- `v1_core/languages/en/03_flujo_operativo.md`
 
 Kernel changes require:
 - explicit justification,
