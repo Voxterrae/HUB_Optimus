@@ -22,6 +22,14 @@ It provides a guided, human-readable entrypoint before diving into the Kernel or
 
 ---
 
+## Want to see how it works in practice?
+
+Try a guided scenario walkthrough:
+- [`docs/03_try_a_scenario.md`](docs/03_try_a_scenario.md)
+
+This shows how HUB_Optimus evaluates real situations by comparing incentives, verification, and long-term stability.
+
+
 
 ## Why this project exists
 
