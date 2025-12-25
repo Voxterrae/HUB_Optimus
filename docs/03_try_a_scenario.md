@@ -25,8 +25,7 @@ Just note the structure:
 ## Step 2 — Scenario 001: Partial Ceasefire (false success)
 
 Open:
-- v1_core/workflow/scenario_001_partial_ceasefire.md
-
+- [`v1_core/workflow/scenario_001_partial_ceasefire.md`](../v1_core/workflow/scenario_001_partial_ceasefire.md)
 Focus on:
 - What is declared vs what is verified
 - Which incentives are rewarded

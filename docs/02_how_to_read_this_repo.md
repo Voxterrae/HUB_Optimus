@@ -23,9 +23,10 @@ without reading the Kernel.
 ## If you want to see how it works (practical use)
 
 Read:
-- docs/03_try_a_scenario.md
-- v1_core/workflow/scenario_001_partial_ceasefire.md
-- v1_core/workflow/scenario_002_verified_ceasefire.md
+- [`docs/03_try_a_scenario.md`](03_try_a_scenario.md)
+- [`v1_core/workflow/scenario_001_partial_ceasefire.md`](../v1_core/workflow/scenario_001_partial_ceasefire.md)
+- [`v1_core/workflow/scenario_002_verified_ceasefire.md`](../v1_core/workflow/scenario_002_verified_ceasefire.md)
+
 
 Focus on:
 - incentives
