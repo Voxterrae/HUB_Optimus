@@ -1,0 +1,25 @@
+name: Link Check
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Markdown links
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: >-
+            --no-progress
+            --verbose
+            README.md
+            CONTRIBUTING.md
+            docs/**/*.md
+            v1_core/**/*.md
+            legacy/**/*.md
+          fail: true
