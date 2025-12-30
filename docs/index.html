@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HUB_Optimus</title>
+  <meta http-equiv="refresh" content="1; url=00_start_here.html" />
+  <script>
+    (function () {
+      var lang = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+      var base = window.location.pathname;
+      // base => "/HUB_Optimus/" o "/HUB_Optimus/docs/"
+      if (!base.endsWith("/")) base = base.replace(/[^/]*$/, "");
+
+      var target = lang.startsWith("es")
+        ? base + "es/00_start_here.html"
+        : base + "00_start_here.html";
+
+      window.location.replace(target);
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting…</p>
+  <p>
+    Manual links:
+    <a href="00_start_here.html">English</a> ·
+    <a href="es/00_start_here.html">Español</a>
+  </p>
+</body>
+</html>
