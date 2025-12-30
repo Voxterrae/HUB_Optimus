@@ -1,3 +1,8 @@
+**Languages / Idiomas**
+- English (source): docs/00_start_here.md
+- Español: docs/es/00_start_here.md
+
+
 # HUB_Optimus
 
 **HUB_Optimus** is an open, integrity-first framework for improving diplomatic outcomes through structured evaluation, preventive mediation, and systemic learning.
