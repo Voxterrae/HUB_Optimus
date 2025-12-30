@@ -1,118 +1,59 @@
-﻿# How to read this repository â€” HUB_Optimus
+> 🇬🇧 English source: ../02_how_to_read_this_repo.md
 
-This repository is structured by **intent**, not by discipline.
+# Cómo leer este repositorio
 
-You do not need to read everything.
-Start based on **who you are** and **what you want to do**.
+Este repositorio está organizado para que puedas entender **qué es**, **dónde está cada cosa**, y **cómo usarlo** sin perderte en detalles. La idea es que cualquier persona pueda entrar, elegir idioma y seguir un camino claro.
 
----
+## Lecturas recomendadas (según tu objetivo)
 
-## If you are new (first contact)
+### Quiero entender rápido “en qué estáis trabajando”
+Sigue este orden:
+1) `docs/es/00_start_here.md`
+2) `docs/es/03_try_a_scenario.md`
+3) `../../v1_core/workflow/es/README.md`
 
-Start here:
-- docs/00_start_here.md
+### Quiero practicar escenarios (modo simulación)
+Ve directamente a:
+- Workflow (ES): `../../v1_core/workflow/es/README.md`
+- Escenario 001 (ES): `../../v1_core/workflow/es/scenario_001_partial_ceasefire.md`
+- Escenario 002 (ES): `../../v1_core/workflow/es/scenario_002_verified_ceasefire.md`
+- Plantilla (ES): `../../v1_core/workflow/es/04_scenario_template.md`
 
-Then:
-- docs/03_try_a_scenario.md
+### Quiero entender el marco conceptual y el método
+Empieza por:
+- `../../v1_core/languages/es/01_base_declaracion.md`
+- `../../v1_core/languages/es/02_arquitectura_base.md`
+- `../../v1_core/languages/es/03_flujo_operativo.md`
+y luego vuelve al workflow.
 
-This gives you a full picture of what HUB_Optimus does
-without reading the Kernel.
+## Mapa del repo (qué hay en cada carpeta)
+- `docs/`  
+  Entrada, guía de lectura y una prueba guiada. Si vienes “de fuera”, empieza aquí.
+- `v1_core/`  
+  Núcleo del sistema: workflow, escenarios, plantillas, criterios y aprendizaje iterativo.
+- `legacy/`  
+  Material anterior o experimental. Útil como referencia, no siempre está “al día”.
 
----
+## Convención de idiomas (EN ↔ ES)
+- La versión **EN** se considera la referencia original.
+- La versión **ES** se mantiene en paralelo para lectura y uso.
+- En la cabecera de cada documento hay un enlace a la “fuente” en el otro idioma.
 
-## If you want to see how it works (practical use)
+## Cómo navegar sin perder contexto
+1) Usa los “Start here” y “Try a scenario” para ver el sistema funcionando.
+2) Cuando un documento cite algo del núcleo (`v1_core`), sigue el enlace y vuelve.
+3) Si un apartado está en EN, usa el enlace a la fuente EN para no bloquearte.
 
-Read:
-- [`docs/03_try_a_scenario.md`](03_try_a_scenario.md)
-- [`../../v1_core/workflow/scenario_001_partial_ceasefire.md`](../../v1_core/workflow/scenario_001_partial_ceasefire.md)
-- [`../../v1_core/workflow/scenario_002_verified_ceasefire.md`](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
+## Dónde está lo importante (atajos)
+- Entrada (ES): `docs/es/00_start_here.md`
+- Probar un escenario (ES): `docs/es/03_try_a_scenario.md`
+- Workflow del núcleo (ES): `../../v1_core/workflow/es/README.md`
+- Plantilla de escenario (ES): `../../v1_core/workflow/es/04_scenario_template.md`
+- Meta-learning (ES): `../../v1_core/workflow/es/05_meta_learning.md`
 
+## Si quieres contribuir (sin romper enlaces)
+- Prefiere enlaces relativos (para que funcionen en GitHub y local).
+- Mantén los pares EN↔ES con la misma estructura de carpetas.
+- Si cambias rutas, corre el link-check (Lychee) antes de hacer push.
 
-Focus on:
-- incentives
-- verification vs declaration
-- long-term stability
-
-You can stop there and still understand the system.
-
----
-
-## If you want the theoretical foundation (Kernel)
-
-Read in order:
-1. ../../v1_core/languages/en/01_base_declaracion.md
-2. ../../v1_core/languages/en/02_arquitectura_base.md
-3. ../../v1_core/languages/en/03_flujo_operativo.md
-
-These documents define the **immutable principles** of HUB_Optimus.
-They change rarely and intentionally.
-
----
-
-## If you want to contribute
-
-Start with:
-- CONTRIBUTING.md
-
-Important:
-- Kernel influence is integrity-gated
-- Most contributions should be:
-  - new scenarios
-  - improvements to evaluation clarity
-  - detection of recurring patterns
-
-Do not start by changing principles.
-
----
-
-## If you are reviewing or auditing the system
-
-Focus on:
-- ../../v1_core/workflow/
-- scenario classifications
-- learning logic in 05_meta_learning.md
-
-Ask:
-- are incentives visible?
-- is verification explicit?
-- are future risks reduced or postponed?
-
----
-
-## About languages
-
-The reference language is English:
-- ../../v1_core/languages/en/
-
-Other languages mirror the same structure.
-Translations must preserve meaning, not style.
-
----
-
-## About legacy material
-
-The folder:
-- legacy/v0_exploratory/
-
-Contains exploratory documents and early drafts.
-They are preserved for transparency and learning,
-but do not define the current system.
-
----
-
-## One guiding rule
-
-HUB_Optimus does not reward:
-- authority
-- rhetoric
-- speed
-
-It rewards:
-- clarity
-- verification
-- structural stability over time
-
-
-
-
-
+Siguiente: `docs/es/03_try_a_scenario.md`

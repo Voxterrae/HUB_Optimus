@@ -1,6 +1,7 @@
-**Languages / Idiomas**
-- English (source): docs/00_start_here.md
-- Español: docs/es/00_start_here.md
+## Languages / Idiomas
+- 🇬🇧 English (source): [docs/00_start_here.md](docs/00_start_here.md)
+- 🇪🇸 Español: [docs/es/00_start_here.md](docs/es/00_start_here.md)
+
 
 
 # HUB_Optimus

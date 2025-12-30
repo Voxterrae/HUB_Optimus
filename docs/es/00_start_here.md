@@ -1,93 +1,40 @@
-﻿# Start Here â€” HUB_Optimus in 10 minutes
+> 🇬🇧 English source: ../00_start_here.md
 
-## What is HUB_Optimus?
-HUB_Optimus is an open, integrity-first framework that helps evaluate diplomatic and institutional decisions using:
-- systemic incentive analysis,
-- a stability-first evaluation lens,
-- a non-coercive prevention posture,
-- and structured scenario simulation.
+# Empezar aquí
 
-It does not replace diplomats.  
-It improves how decisions are evaluated before escalation becomes irreversible.
+Bienvenido a **HUB_Optimus** (Voxterrae). Este repositorio organiza un flujo de trabajo para **simulaciones diplomáticas**: escenarios, plantillas, metodología y un sistema para iterar y aprender de cada ronda.
 
----
+## ¿Qué es esto, en una frase?
+Un “hub” para diseñar y ejecutar escenarios diplomáticos (alto el fuego, verificación, mediación, garantías, implementación) y documentar decisiones, concesiones y resultados de forma reutilizable.
 
-## What problem does it solve?
-Modern systems often repeat known failures because:
-- incentives reward short-term optics,
-- early correction mechanisms are weak,
-- narratives override evaluation,
-- historical patterns are ignored until it is too late.
+## ¿Para quién es?
+- Personas que quieren **entrenar negociación** y comunicación diplomática.
+- Equipos que desean **probar escenarios** con estructura (roles, objetivos, rondas, criterios).
+- Colaboradores que quieran aportar escenarios, documentación o mejoras de método.
 
-HUB_Optimus exists to break that cycle.
+## Estructura del repo (mapa rápido)
+- `docs/` → Guías para orientarte y empezar (entrada principal).
+- `v1_core/` → Núcleo: workflow, plantillas y escenarios (donde ocurre “la simulación”).
+- `legacy/` → Material histórico/experimental.
 
----
+## Empieza en 3 pasos
+1) **Cómo leer el repo:** `docs/es/02_how_to_read_this_repo.md`  
+2) **Probar un escenario:** `docs/es/03_try_a_scenario.md`  
+3) **Workflow del núcleo:** `../../v1_core/workflow/es/README.md`  
+   (Si falta algo en ES, puedes usar la fuente EN: `../../v1_core/workflow/README.md`)
 
-## What HUB_Optimus is NOT
-- Not a predictive oracle.
-- Not a decision authority.
-- Not propaganda.
-- Not a tribunal to assign personal blame.
-- Not a coercive enforcement tool.
+## Enlaces útiles (núcleo)
+- Plantilla de escenario (ES): `../../v1_core/workflow/es/04_scenario_template.md`
+- Meta-learning (ES): `../../v1_core/workflow/es/05_meta_learning.md`
+- Escenario 001 (ES): `../../v1_core/workflow/es/scenario_001_partial_ceasefire.md`
+- Escenario 002 (ES): `../../v1_core/workflow/es/scenario_002_verified_ceasefire.md`
 
----
-
-## How to explore this repository (recommended path)
-
-### If you only have 5 minutes
-1) Read the main README:
-- `README.md`
-
-2) Read the simulator overview:
-- `../../v1_core/workflow/README.md`
-
-### If you have 15â€“30 minutes
-Read the Kernel (English reference):
-1) `../../v1_core/languages/en/01_base_declaracion.md`
-2) `../../v1_core/languages/en/02_arquitectura_base.md`
-3) `../../v1_core/languages/en/03_flujo_operativo.md`
-
-Then try the simulator:
-- `../../v1_core/workflow/04_escenario_template.md`
-- `../../v1_core/workflow/scenario_001_partial_ceasefire.md`
-- `../../v1_core/workflow/scenario_002_verified_ceasefire.md`
-- `../../v1_core/workflow/05_meta_learning.md`
+## Base conceptual (si quieres entender el marco)
+- Declaración base (ES): `../../v1_core/languages/es/01_base_declaracion.md`
+- Arquitectura base (ES): `../../v1_core/languages/es/02_arquitectura_base.md`
+- Flujo operativo (ES): `../../v1_core/languages/es/03_flujo_operativo.md`
 
 ---
 
-## Try it (fast test)
-Compare these two scenarios:
-- SCN-001 (unverified ceasefire) â†’ destabilizing masked â€œsuccessâ€
-- SCN-002 (verified + incentives aligned) â†’ stabilizing outcome
-
-Ask:
-- What incentives are rewarded?
-- What is verified vs declared?
-- Does the solution reduce future risk?
-- Does it increase medium/long-term stability?
-
----
-
-## If you want to contribute
-Start here:
-- `CONTRIBUTING.md`
-
-Contributions are welcome, but Kernel influence is integrity-gated.
-
----
-
-## Status
-This is an early but functional foundation:
-- Kernel baseline is defined
-- Scenario simulator is working
-- Governance for contributions is in place
-
-Next phases include:
-- multilingual synchronization,
-- quantitative evaluation model,
-- expanded scenario library.
-
-
-
-
-
+**Para compartir con alguien en español:** envíale este enlace:  
+`docs/es/00_start_here.md`
