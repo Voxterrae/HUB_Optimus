@@ -1,135 +1,122 @@
-# 04 — Scenario Evaluation Template (Canonical)
+> 🇬🇧 English source: ../04_scenario_template.md
 
-## 0) Scenario identification
-- **Scenario ID:** (unique)
-- **Domain:** geopolitical / economic / institutional / hybrid
-- **Date / version:**
-- **Evaluator(s):**
-- **Confidentiality level:** internal / restricted / public
+# Plantilla de escenario (ES)
+
+Esta plantilla sirve para crear escenarios comparables y fáciles de iterar. Mantén las secciones y sé explícito: lo que no se define se vuelve ambigüedad durante la negociación.
 
 ---
 
-## 1) Trigger
-Describe the triggering decision, event, or condition.
-
-Rules:
-- factual
-- neutral
-- no narrative framing
-- no moral judgment
-
----
-
-## 2) Structural context
-Describe the environment in which the trigger occurs.
-
-Include:
-- key actors (without personalization)
-- incentive structures (rewards / punishments)
-- dependencies and lock-ins
-- power asymmetries
-- time constraints
+## 0) Metadatos
+- **ID del escenario:** `scenario_XXX_nombre_corto`
+- **Versión:** `0.1`
+- **Idioma:** `es`
+- **Última actualización:** `YYYY-MM-DD`
+- **Autor/a:** `nombre`
+- **Estado:** borrador / estable / en revisión
 
 ---
 
-## 3) Incentive analysis (Layer 2)
-Identify:
-- which behaviors are rewarded
-- which behaviors are punished
-- whether escalation or restraint is incentivized
-- whether short-term optics conflict with long-term stability
-
-Output:
-- incentive map
-- early risk indicators
+## 1) Resumen ejecutivo (5–10 líneas)
+- ¿Qué está pasando?
+- ¿Cuál es el objetivo mínimo de la ronda?
+- ¿Qué hace que este escenario sea “difícil” o interesante?
 
 ---
 
-## 4) Human calibration (Layer 1)
-Assess:
-- perception risks
-- emotional escalation vectors
-- misinterpretation likelihood
-- urgency vs noise
+## 2) Actores y roles
+Define roles claros (evita “todos” / “la comunidad internacional” sin desglose):
 
-Output:
-- calibrated priority (low / medium / high)
-- framing guidance
+- **Parte A:** objetivos, límites, presión interna.
+- **Parte B:** objetivos, límites, presión interna.
+- **Tercero (opcional):** mediador/observador/verificador.
+- **Otros actores (opcional):** actores de campo, aliados, opinión pública, etc.
 
 ---
 
-## 5) Systemic evaluation (Layer 3)
-Evaluate against fixed questions:
-
-1. Does this reduce future risk?
-2. Does it improve medium/long-term stability?
-3. Does it reduce immediate human suffering?
-4. Does it correct or worsen incentive structures?
-5. Does it create lock-in or dependency?
-
-Outputs:
-- risk classification
-- stability impact (positive / neutral / negative)
-- correctability window (open / closing / closed)
+## 3) Contexto y línea de tiempo
+- **Contexto previo (3–8 bullets):**
+- **Eventos recientes relevantes (3–6 bullets):**
+- **Horizonte temporal:** horas / días / semanas (elige uno)
 
 ---
 
-## 6) Historical pattern check (Layer 5)
-Compare with:
-- structurally similar past cases
-- known escalation cycles
-- previously failed “false successes”
-
-Outputs:
-- pattern match (yes/no)
-- similarity notes
-- recurrence warning level
+## 4) Intereses, posiciones y restricciones
+Para cada parte:
+- **Intereses (por qué realmente quiere algo)**
+- **Posiciones (lo que pide explícitamente)**
+- **Restricciones internas (política, economía, seguridad, opinión pública)**
+- **Líneas rojas (no negociables)**
+- **Zona de flexibilidad (concesiones posibles)**
 
 ---
 
-## 7) Kernel coherence check (Layer 0)
-Validate:
-- consistency with immutable principles
-- absence of ethical or structural drift
-- compliance with the D+A priority model
-
-Decision:
-- approved
-- conditionally approved (with constraints)
-- rejected (false success / instability risk)
-
-Rationale required.
+## 5) Objetivo mínimo y criterios de éxito
+Define el “éxito mínimo” de forma verificable:
+- **Éxito mínimo:** (1–3 frases)
+- **Éxito ampliado (opcional):**
+- **Fracaso claro:** ¿qué resultado sería “no útil”?
 
 ---
 
-## 8) Preventive mediation options (Layer 4)
-If applicable, list:
-- reframing options
-- corrective alternatives
-- incentive adjustments
-- timing recommendations
-
-Constraints:
-- non-coercive
-- discreet
-- escalation-averse
+## 6) Propuesta inicial (borrador)
+Incluye una propuesta inicial para arrancar:
+- **Acción principal:** (qué se hace)
+- **Calendario:** (cuándo)
+- **Alcance geográfico:** (dónde)
+- **Excepciones:** (qué NO cubre)
+- **Mecanismo de verificación:** (quién, cómo, con qué acceso)
+- **Medidas ante incumplimiento:** (qué pasa si se viola)
 
 ---
 
-## 9) Final classification
-- **Outcome type:** stabilizing / neutral / destabilizing
-- **Primary risk vector:** (if any)
-- **Recommended posture:** monitor / engage / intervene / record only
+## 7) Verificación y cumplimiento
+Esta sección es crítica. Sé concreto:
+- **Quién verifica:** (nombre/rol)
+- **Qué se verifica:** (eventos/acciones observables)
+- **Cómo se verifica:** (observación, informes, sensores, acceso, etc.)
+- **Frecuencia:** (cada X horas/días)
+- **Acceso y seguridad:** (zonas, permisos, escoltas)
+- **Gestión de disputas:** (qué pasa si hay versiones contradictorias)
 
 ---
 
-## 10) Memory integration
-Define:
-- what this scenario teaches
-- which future signals it should reinforce
-- how it updates pattern recognition
+## 8) Riesgos y puntos de fricción
+Lista 5–10 riesgos realistas:
+- malentendidos previsibles
+- incentivos para “hacer trampa”
+- ambigüedad deliberada
+- spoilers (actores que sabotean)
+- incidentes en el terreno
 
 ---
 
-## 11) Notes
-Free space for additional observations.
+## 9) Rondas recomendadas (guía)
+- **Ronda 1:** propuesta ↔ respuesta (aceptación parcial + condiciones)
+- **Ronda 2:** ajustes (verificación, secuencia, garantías)
+- **Ronda 3:** cierre (texto de acuerdo + puntos abiertos)
+
+Entrega final:
+- un borrador de acuerdo breve (8–15 líneas)
+- lista de “puntos abiertos”
+- próximos pasos (quién hace qué y cuándo)
+
+---
+
+## 10) Evaluación (post-mortem)
+Puntúa (0–3 o 0–5) y anota evidencia:
+- **Claridad**
+- **Verificabilidad**
+- **Viabilidad**
+- **Coste político**
+- **Riesgo de escalada**
+
+---
+
+## 11) Meta-learning (qué aprender y ajustar)
+- ¿Qué funcionó?
+- ¿Qué falló?
+- ¿Qué faltaba definir?
+- ¿Qué cambiarías en el escenario para la próxima ronda?
+- ¿Qué nuevas preguntas surgieron?
+
+Siguiente: `./05_meta_learning.md`

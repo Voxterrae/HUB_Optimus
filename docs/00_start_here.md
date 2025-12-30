@@ -1,4 +1,4 @@
-# Start Here — HUB_Optimus in 10 minutes
+﻿# Start Here â€” HUB_Optimus in 10 minutes
 
 ## What is HUB_Optimus?
 HUB_Optimus is an open, integrity-first framework that helps evaluate diplomatic and institutional decisions using:
@@ -39,26 +39,26 @@ HUB_Optimus exists to break that cycle.
 - `README.md`
 
 2) Read the simulator overview:
-- `v1_core/workflow/README.md`
+- `../v1_core/workflow/README.md`
 
-### If you have 15–30 minutes
+### If you have 15â€“30 minutes
 Read the Kernel (English reference):
-1) `v1_core/languages/en/01_base_declaracion.md`
-2) `v1_core/languages/en/02_arquitectura_base.md`
-3) `v1_core/languages/en/03_flujo_operativo.md`
+1) `../v1_core/languages/en/01_base_declaracion.md`
+2) `../v1_core/languages/en/02_arquitectura_base.md`
+3) `../v1_core/languages/en/03_flujo_operativo.md`
 
 Then try the simulator:
-- `v1_core/workflow/04_escenario_template.md`
-- `v1_core/workflow/scenario_001_partial_ceasefire.md`
-- `v1_core/workflow/scenario_002_verified_ceasefire.md`
-- `v1_core/workflow/05_meta_learning.md`
+- `../v1_core/workflow/04_escenario_template.md`
+- `../v1_core/workflow/scenario_001_partial_ceasefire.md`
+- `../v1_core/workflow/scenario_002_verified_ceasefire.md`
+- `../v1_core/workflow/05_meta_learning.md`
 
 ---
 
 ## Try it (fast test)
 Compare these two scenarios:
-- SCN-001 (unverified ceasefire) → destabilizing masked “success”
-- SCN-002 (verified + incentives aligned) → stabilizing outcome
+- SCN-001 (unverified ceasefire) â†’ destabilizing masked â€œsuccessâ€
+- SCN-002 (verified + incentives aligned) â†’ stabilizing outcome
 
 Ask:
 - What incentives are rewarded?
@@ -86,3 +86,10 @@ Next phases include:
 - multilingual synchronization,
 - quantitative evaluation model,
 - expanded scenario library.
+
+
+
+
+
+
+
