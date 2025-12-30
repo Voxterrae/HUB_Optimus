@@ -1,115 +1,117 @@
-# Scenario 002 — Verified Ceasefire with Incentive Alignment
+> 🇬🇧 English source: ../scenario_002_verified_ceasefire.md
 
-## 0) Scenario identification
-- **Scenario ID:** SCN-002
-- **Domain:** geopolitical
-- **Date / version:** v1.0
-- **Evaluator(s):** HUB_Optimus (guided)
-- **Confidentiality level:** internal
+# Escenario 002 — Alto el fuego verificado con alineación de incentivos
 
----
-
-## 1) Trigger
-Announcement of a ceasefire agreement accompanied by an independent verification mechanism and explicit incentive alignment for compliance.
+## 0) Identificación del escenario
+- **ID del escenario:** SCN-002
+- **Dominio:** geopolítico
+- **Fecha / versión:** v1.0
+- **Evaluador(es):** HUB_Optimus (guiado)
+- **Nivel de confidencialidad:** interno
 
 ---
 
-## 2) Structural context
-- Parties acknowledge historical failures of unverifiable agreements.
-- External actors provide neutral verification support.
-- Incentives reward compliance over declaration.
-- Time pressure exists, but technical sequencing is accepted.
-- Public communication is intentionally restrained.
+## 1) Desencadenante
+Anuncio de un acuerdo de alto el fuego acompañado por un mecanismo independiente de verificación y una alineación explícita de incentivos para el cumplimiento.
 
 ---
 
-## 3) Incentive analysis (Layer 2)
-- **Rewarded behaviors:**
-  - verified compliance,
-  - transparency,
-  - gradual implementation.
-- **Punished behaviors:**
-  - unverifiable claims,
-  - unilateral declarations,
-  - covert violations.
-- **Escalation risk:**
-  - reduced due to monitoring and consequence symmetry.
-
-**Output:**
-- Incentive map aligned with stability.
-- Early risk indicators mitigated.
+## 2) Contexto estructural
+- Las partes reconocen fallos históricos de acuerdos no verificables.
+- Actores externos aportan apoyo de verificación neutral.
+- Los incentivos recompensan el cumplimiento por encima de la declaración.
+- Existe presión temporal, pero se acepta la secuenciación técnica.
+- La comunicación pública se mantiene intencionalmente contenida.
 
 ---
 
-## 4) Human calibration (Layer 1)
-- Lower emotional volatility due to restrained messaging.
-- Expectation management reduces perception gaps.
-- Diplomats retain room for corrective action.
+## 3) Análisis de incentivos (Capa 2)
+- **Conductas recompensadas:**
+  - cumplimiento verificado,
+  - transparencia,
+  - implementación gradual.
+- **Conductas castigadas:**
+  - afirmaciones no verificables,
+  - declaraciones unilaterales,
+  - violaciones encubiertas.
+- **Riesgo de escalada:**
+  - reducido debido a la monitorización y a la simetría de consecuencias.
 
-**Output:**
-- Priority: medium
-- Framing guidance: technical, procedural.
-
----
-
-## 5) Systemic evaluation (Layer 3)
-1. **Future risk reduction:** high
-2. **Medium/long-term stability:** positive
-3. **Immediate suffering reduction:** moderate but durable
-4. **Incentive correction:** positive
-5. **Lock-in effects:** low (adaptive clauses included)
-
-**Outputs:**
-- Risk classification: low
-- Stability impact: positive
-- Correctability window: open and protected
+**Salida:**
+- El mapa de incentivos está alineado con la estabilidad.
+- Indicadores tempranos de riesgo mitigados.
 
 ---
 
-## 6) Historical pattern check (Layer 5)
-- Pattern match: partial
-- Distinction: verification + incentives break prior failure cycle.
-- Historical divergence point identified.
+## 4) Calibración humana (Capa 1)
+- Menor volatilidad emocional gracias a un mensaje contenido.
+- La gestión de expectativas reduce brechas de percepción.
+- Los diplomáticos conservan margen para acción correctiva.
 
-**Outputs:**
-- Recurrence warning level: low
-- Positive deviation flagged.
-
----
-
-## 7) Kernel coherence check (Layer 0)
-- Fully aligned with supreme criterion (ML stability).
-- Satisfies D+A priority model.
-- No ethical or structural drift detected.
-
-**Decision:**
-- Approved as stabilizing solution.
-
-**Rationale:**
-Durable mechanisms convert short-term restraint into long-term stability.
+**Salida:**
+- Prioridad: media
+- Guía de encuadre: técnica, procedimental.
 
 ---
 
-## 8) Preventive mediation options (Layer 4)
-- Maintain verification independence.
-- Adjust incentives dynamically based on compliance data.
-- Prepare contingency pathways for partial failure.
+## 5) Evaluación sistémica (Capa 3)
+1. **Reducción de riesgo futuro:** alta
+2. **Estabilidad a medio/largo plazo:** positiva
+3. **Reducción del sufrimiento inmediato:** moderada pero duradera
+4. **Corrección de incentivos:** positiva
+5. **Efectos de bloqueo (lock-in):** bajos (se incluyen cláusulas adaptativas)
+
+**Salidas:**
+- Clasificación de riesgo: baja
+- Impacto sobre la estabilidad: positivo
+- Ventana de corrección: abierta y protegida
 
 ---
 
-## 9) Final classification
-- **Outcome type:** stabilizing
-- **Primary risk vector:** residual trust erosion (manageable)
-- **Recommended posture:** monitor and support
+## 6) Comprobación de patrón histórico (Capa 5)
+- Coincidencia de patrón: parcial
+- Distinción: verificación + incentivos rompen el ciclo previo de fallos.
+- Punto de divergencia histórica identificado.
+
+**Salidas:**
+- Nivel de advertencia por recurrencia: bajo
+- Desviación positiva registrada.
 
 ---
 
-## 10) Memory integration
-- Register as “Positive Structural Deviation”.
-- Update pattern library with success conditions.
-- Use as reference for future mediation templates.
+## 7) Comprobación de coherencia del núcleo (Capa 0)
+- Totalmente alineado con el criterio supremo (estabilidad ML).
+- Satisface el modelo de prioridad D+A.
+- No se detecta deriva ética ni estructural.
+
+**Decisión:**
+- Aprobado como solución estabilizadora.
+
+**Justificación:**
+Los mecanismos duraderos convierten la contención de corto plazo en estabilidad de largo plazo.
 
 ---
 
-## 11) Notes
-This scenario demonstrates that humanitarian relief and systemic stability can align when incentives and verification are correctly designed.
+## 8) Opciones de mediación preventiva (Capa 4)
+- Mantener la independencia de la verificación.
+- Ajustar los incentivos de forma dinámica según datos de cumplimiento.
+- Preparar vías de contingencia ante fallos parciales.
+
+---
+
+## 9) Clasificación final
+- **Tipo de resultado:** estabilizador
+- **Vector de riesgo primario:** erosión residual de confianza (manejable)
+- **Postura recomendada:** monitorizar y apoyar
+
+---
+
+## 10) Integración en memoria
+- Registrar como “Desviación estructural positiva”.
+- Actualizar la biblioteca de patrones con condiciones de éxito.
+- Usar como referencia para futuras plantillas de mediación.
+
+---
+
+## 11) Notas
+Este escenario demuestra que el alivio humanitario y la estabilidad sistémica pueden alinearse cuando los incentivos y la verificación están correctamente diseñados.

@@ -1,116 +1,118 @@
-# Scenario 001 — Partial Ceasefire Without Verification
+> 🇬🇧 English source: ../scenario_001_partial_ceasefire.md
 
-## 0) Scenario identification
-- **Scenario ID:** SCN-001
-- **Domain:** geopolitical
-- **Date / version:** v1.0
-- **Evaluator(s):** HUB_Optimus (guided)
-- **Confidentiality level:** internal
+# Escenario 001 — Alto el fuego parcial sin verificación
 
----
-
-## 1) Trigger
-Announcement of a partial ceasefire agreement between conflicting parties,
-without an independent verification mechanism or enforcement structure.
+## 0) Identificación del escenario
+- **ID del escenario:** SCN-001
+- **Dominio:** geopolítico
+- **Fecha / versión:** v1.0
+- **Evaluador(es):** HUB_Optimus (guiado)
+- **Nivel de confidencialidad:** interno
 
 ---
 
-## 2) Structural context
-- Actors operate under high international pressure to demonstrate de-escalation.
-- Incentives favor rapid symbolic success over durable mechanisms.
-- Power asymmetry exists between signatories.
-- Time pressure driven by political calendars and media cycles.
-- Historical recurrence of similar agreements in comparable conflicts.
+## 1) Desencadenante
+Anuncio de un acuerdo de alto el fuego parcial entre partes en conflicto,
+sin un mecanismo independiente de verificación ni una estructura de cumplimiento/ejecución.
 
 ---
 
-## 3) Incentive analysis (Layer 2)
-- **Rewarded behaviors:**
-  - public announcement of de-escalation,
-  - short-term reputational gains,
-  - postponement of hard negotiations.
-- **Punished behaviors:**
-  - insistence on verification mechanisms,
-  - delay for technical implementation.
-- **Escalation risk:**
-  - covert violations with plausible deniability.
-- **Signal:** false success highly probable.
-
-**Output:**
-- Incentive map indicates optics > stability.
-- Early risk indicators detected.
+## 2) Contexto estructural
+- Los actores operan bajo alta presión internacional para demostrar desescalada.
+- Los incentivos favorecen el éxito simbólico rápido frente a mecanismos duraderos.
+- Existe asimetría de poder entre los firmantes.
+- Presión temporal impulsada por calendarios políticos y ciclos mediáticos.
+- Reaparición histórica de acuerdos similares en conflictos comparables.
 
 ---
 
-## 4) Human calibration (Layer 1)
-- High risk of perception bias (“peace achieved” framing).
-- Emotional relief likely to reduce vigilance.
-- Urgency to declare success outweighs structural caution.
+## 3) Análisis de incentivos (Capa 2)
+- **Conductas recompensadas:**
+  - anuncio público de desescalada,
+  - ganancias reputacionales de corto plazo,
+  - aplazamiento de negociaciones difíciles.
+- **Conductas castigadas:**
+  - insistencia en mecanismos de verificación,
+  - demora para implementación técnica.
+- **Riesgo de escalada:**
+  - violaciones encubiertas con negación plausible.
+- **Señal:** alta probabilidad de “éxito falso”.
 
-**Output:**
-- Priority: high
-- Framing guidance: neutral, non-celebratory.
-
----
-
-## 5) Systemic evaluation (Layer 3)
-1. **Future risk reduction:** low
-2. **Medium/long-term stability:** negative
-3. **Immediate suffering reduction:** partial / temporary
-4. **Incentive correction:** negative (rewards symbolic compliance)
-5. **Lock-in effects:** moderate (normalizes unverifiable agreements)
-
-**Outputs:**
-- Risk classification: high
-- Stability impact: negative
-- Correctability window: open but closing
+**Salida:**
+- El mapa de incentivos indica: apariencia (optics) > estabilidad.
+- Indicadores tempranos de riesgo detectados.
 
 ---
 
-## 6) Historical pattern check (Layer 5)
-- Pattern match: yes
-- Comparable cases show escalation within short intervals.
-- Recurrent failure mode: unverified ceasefires enabling rearmament.
+## 4) Calibración humana (Capa 1)
+- Alto riesgo de sesgo de percepción (marco de “paz lograda”).
+- Es probable que el alivio emocional reduzca la vigilancia.
+- La urgencia por declarar éxito supera la cautela estructural.
 
-**Outputs:**
-- Recurrence warning level: high
-
----
-
-## 7) Kernel coherence check (Layer 0)
-- Violates supreme criterion (ML stability).
-- Represents a **False Positive Humanitarian Outcome**.
-- Fails D+A priority model.
-
-**Decision:**
-- Rejected as stabilizing solution.
-
-**Rationale:**
-Short-term relief does not justify long-term instability amplification.
+**Salida:**
+- Prioridad: alta
+- Guía de encuadre: neutral, no celebratoria.
 
 ---
 
-## 8) Preventive mediation options (Layer 4)
-- Reframe ceasefire as provisional technical pause.
-- Introduce minimal verification pilot.
-- Align incentives to reward compliance verification.
-- Delay public framing until mechanisms exist.
+## 5) Evaluación sistémica (Capa 3)
+1. **Reducción de riesgo futuro:** baja
+2. **Estabilidad a medio/largo plazo:** negativa
+3. **Reducción del sufrimiento inmediato:** parcial / temporal
+4. **Corrección de incentivos:** negativa (recompensa el cumplimiento simbólico)
+5. **Efectos de bloqueo (lock-in):** moderados (normaliza acuerdos no verificables)
+
+**Salidas:**
+- Clasificación de riesgo: alta
+- Impacto sobre la estabilidad: negativo
+- Ventana de corrección: abierta pero cerrándose
 
 ---
 
-## 9) Final classification
-- **Outcome type:** destabilizing (masked)
-- **Primary risk vector:** incentive misalignment
-- **Recommended posture:** engage discreetly, intervene structurally
+## 6) Comprobación de patrón histórico (Capa 5)
+- Coincidencia de patrón: sí
+- Casos comparables muestran escalada en intervalos cortos.
+- Modo de fallo recurrente: altos el fuego no verificados que permiten rearme.
+
+**Salidas:**
+- Nivel de advertencia por recurrencia: alto
 
 ---
 
-## 10) Memory integration
-- Strengthen pattern: “Unverified Ceasefire Trap”
-- Flag future triggers with similar optics-driven incentives.
-- Update early-warning thresholds.
+## 7) Comprobación de coherencia del núcleo (Capa 0)
+- Viola el criterio supremo (estabilidad ML).
+- Representa un **Falso Positivo Humanitario**.
+- Falla el modelo de prioridad D+A.
+
+**Decisión:**
+- Rechazado como solución estabilizadora.
+
+**Justificación:**
+El alivio a corto plazo no justifica la amplificación de inestabilidad a largo plazo.
 
 ---
 
-## 11) Notes
-This scenario illustrates why prevention must target incentives, not narratives.
+## 8) Opciones de mediación preventiva (Capa 4)
+- Reencuadrar el alto el fuego como una pausa técnica provisional.
+- Introducir un piloto mínimo de verificación.
+- Alinear incentivos para recompensar la verificación del cumplimiento.
+- Retrasar el encuadre público hasta que existan mecanismos.
+
+---
+
+## 9) Clasificación final
+- **Tipo de resultado:** desestabilizador (enmascarado)
+- **Vector de riesgo primario:** desalineación de incentivos
+- **Postura recomendada:** implicarse de forma discreta, intervenir estructuralmente
+
+---
+
+## 10) Integración en memoria
+- Reforzar el patrón: “Trampa del alto el fuego sin verificación”
+- Señalar futuros desencadenantes con incentivos similares orientados a la apariencia.
+- Actualizar umbrales de alerta temprana.
+
+---
+
+## 11) Notas
+Este escenario ilustra por qué la prevención debe actuar sobre los incentivos, no sobre las narrativas.
