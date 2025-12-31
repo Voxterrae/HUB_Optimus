@@ -2,7 +2,7 @@
 
 # HUB_Optimus — Start Here (ES)
 
-Showing quick diplomatic “wins” is easy. Building **verifiable, incentive-aligned stability** is hard.  
+Ganar “victorias” diplomáticas rápidas es fácil. Construir **estabilidad verificable** con **incentivos alineados** es lo difícil.  
 HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que se vuelvan irreversibles.
 
 ---
@@ -15,9 +15,9 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 ---
 
 ## Estructura del repo (mapa rápido)
-- [`docs/`](../) → Guías para orientarte y empezar (entrada principal).
-- [`v1_core/`](../../v1_core/) → Núcleo: workflow, plantillas y escenarios (donde ocurre “la simulación”).
-- [`legacy/`](../../legacy/) → Material histórico/experimental.
+- [docs/](../) → Guías para orientarte y empezar (entrada principal).
+- [v1_core/](../../v1_core/) → Núcleo: workflow, plantillas y escenarios (donde ocurre “la simulación”).
+- [legacy/](../../legacy/) → Material histórico/experimental.
 
 ---
 
@@ -43,14 +43,14 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 - Escenario 001 (ES): [scenario_001_partial_ceasefire.md](../../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
 - Escenario 002 (ES): [scenario_002_verified_ceasefire.md](../../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
 
+---
+
 ## Base conceptual (si quieres entender el marco)
 - Declaración base (ES): [01_base_declaracion.md](../../v1_core/languages/es/01_base_declaracion.md)
 - Arquitectura base (ES): [02_arquitectura_base.md](../../v1_core/languages/es/02_arquitectura_base.md)
 - Flujo operativo (ES): [03_flujo_operativo.md](../../v1_core/languages/es/03_flujo_operativo.md)
 
-
 ---
-
 
 ## Principios (versión ejecutiva)
 - **Estabilidad > óptica**  
