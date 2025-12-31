@@ -1,117 +1,108 @@
-## Languages / Idiomas
-- 🇬🇧 English (source): [docs/00_start_here.md](docs/00_start_here.md)
-- 🇪🇸 Español: [docs/es/00_start_here.md](docs/es/00_start_here.md)
-
-
-
 # HUB_Optimus
+**Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.**
 
-**HUB_Optimus** is an open, integrity-first framework for improving diplomatic outcomes through structured evaluation, preventive mediation, and systemic learning.
+**Languages / Idiomas:** 🇬🇧 [English](docs/00_start_here.md) · 🇪🇸 [Español](docs/es/00_start_here.md)
 
-It is designed to help humans and institutions:
-- avoid repeating known historical errors,
-- detect false successes before they escalate,
+---
+
+## What it is
+**HUB_Optimus** is an open framework designed to improve diplomatic outcomes through:
+- structured evaluation (incentives, verification, sequencing),
+- preventive, non-coercive mediation options,
+- iterative meta-learning from both failures and successes.
+
+It helps humans and institutions:
+- avoid repeating known historical failure patterns,
+- detect “false successes” before they escalate,
 - align incentives with medium/long-term stability,
 - operate rationally under time pressure and political noise.
 
-HUB_Optimus is not an authority.
-It is a tool for better judgment.
+## What it is not
+- Not an authority.
+- Not a prediction engine.
+- Not a replacement for diplomacy.
+
+It is a tool for **better judgment**.
 
 ---
 
-## New here? Start here 👇
+## Start in 60 seconds
+**New here?**
+- 🇬🇧 Start (EN): [docs/00_start_here.md](docs/00_start_here.md)
+- 🇪🇸 Empezar (ES): [docs/es/00_start_here.md](docs/es/00_start_here.md)
 
-If this is your first time exploring HUB_Optimus, begin with:
-- [`docs/00_start_here.md`](docs/00_start_here.md)
+**See it in practice (guided walkthrough):**
+- 🇬🇧 Try a scenario: [docs/03_try_a_scenario.md](docs/03_try_a_scenario.md)
+- 🇪🇸 Probar un escenario: [docs/es/03_try_a_scenario.md](docs/es/03_try_a_scenario.md)
 
-It provides a guided, human-readable entrypoint before diving into the Kernel or the scenario simulator.
-
----
-
-## Want to see how it works in practice?
-
-Try a guided scenario walkthrough:
-- [`docs/03_try_a_scenario.md`](docs/03_try_a_scenario.md)
-
-This shows how HUB_Optimus evaluates real situations by comparing incentives, verification, and long-term stability.
-
----
-
-## How to navigate this repo (by role)
-
-Not sure what to read first? Use the repository map:
-- [`docs/02_how_to_read_this_repo.md`](docs/02_how_to_read_this_repo.md)
-
-It explains the recommended reading path depending on whether you are a newcomer, practitioner, contributor, or reviewer.
+**Go deeper (workflow / simulator):**
+- 🇬🇧 Workflow: [v1_core/workflow/README.md](v1_core/workflow/README.md)
+- 🇪🇸 Workflow (ES): [v1_core/workflow/es/README.md](v1_core/workflow/es/README.md)
 
 ---
 
 ## Why this project exists
-
 Modern diplomatic and institutional systems often fail not because of lack of intelligence, but because of:
 - misaligned incentives,
 - short-term optics overriding long-term stability,
 - absence of early correction mechanisms,
-- repeated historical patterns being ignored.
+- ignored historical recurrence.
 
-HUB_Optimus exists to **break that cycle**.
-
-It provides a structured way to evaluate decisions and scenarios **before** they become irreversible.
+HUB_Optimus exists to **break that cycle** by evaluating scenarios **before** decisions become irreversible.
 
 ---
 
 ## Core principles (high-level)
-
 - **Stability over optics**  
   Medium/long-term systemic stability is the supreme criterion.
-
-- **No scapegoating**  
-  Errors are treated as systemic, not personal.
 
 - **Integrity first**  
   Influence over the core is earned through ethical coherence, not position or credentials.
 
 - **Evaluation over narrative**  
-  Outcomes are measured structurally, not rhetorically.
+  Outcomes are assessed structurally (incentives, verification, sequencing), not rhetorically.
 
 - **Prevention over reaction**  
   Early, discreet mediation is preferred to public escalation.
 
+- **No scapegoating**  
+  Errors are treated as systemic, not personal.
+
 ---
 
-## Repository structure
+## Repository map
+- `docs/` → onboarding and reading paths (recommended entry point)
+- `v1_core/` → active kernel: architecture, operational flow, workflow, templates, scenarios, meta-learning
+- `legacy/` → historical/exploratory materials (v0), preserved for transparency
 
-This repository is organized into two main parts:
-
-### `legacy/`
-Historical and exploratory materials (v0).  
-Preserved for context and transparency.
-
-### `v1_core/`
-The active Kernel of HUB_Optimus.
-
-It contains:
-- the immutable base declaration,
-- the system architecture,
-- the operational flow,
-- the scenario simulator,
-- meta-learning rules.
-
-English is the reference language for structure and validation.
+> English is the reference language for structural validation. Spanish documentation is maintained in parallel for accessibility.
 
 ---
 
 ## The simulator
-
-HUB_Optimus includes a scenario simulator that:
+The scenario simulator:
 - evaluates decisions and events,
 - classifies risk and stability,
 - detects false positives,
 - proposes non-coercive corrective options,
-- learns from both failures and successes.
+- learns from failures and successes.
 
-The simulator **does not predict outcomes**.
-It evaluates structural soundness.
+It **does not predict outcomes**. It evaluates **structural soundness**.
 
-See the simulator documentation:
-- [`v1_core/workflow/README.md`](v1_core/workflow/README.md)
+Start here:
+- [v1_core/workflow/README.md](v1_core/workflow/README.md)
+
+---
+
+## Contributing
+See: [CONTRIBUTING.md](CONTRIBUTING.md)  
+Link-checking is enforced via GitHub Actions (Lychee).
+
+---
+
+## Contact / Collaboration
+If you want to collaborate (scenarios, methodology, review), open an issue or pull request including:
+- intended use-case (training / policy review / research),
+- target domain,
+- constraints (time, verification, actors),
+- desired outcome type (stabilizing / risk-reducing / de-escalatory).
