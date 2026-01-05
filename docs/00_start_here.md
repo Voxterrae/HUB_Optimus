@@ -32,6 +32,8 @@ HUB_Optimus exists to break that cycle.
 - Trust Layer (evidence & verification): `governance/TRUST_LAYER.md`
 - Evaluation Standard: `governance/EVALUATION_STANDARD.md`
 - Scenario Schema: `governance/SCENARIO_SCHEMA.md`
+- Legitimacy Model: `governance/LEGITIMACY_MODEL.md`
+
 
 
 ---

@@ -16,7 +16,7 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 - Capa de Confianza (verificación): `governance/TRUST_LAYER.md`
 - Estándar de Evaluación: `governance/EVALUATION_STANDARD.md`
 - Esquema de Escenarios: `governance/SCENARIO_SCHEMA.md`
-
+- Modelo de Legitimidad: `governance/LEGITIMACY_MODEL.md`
 
 
 ---
