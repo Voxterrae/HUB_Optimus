@@ -30,6 +30,7 @@ HUB_Optimus exists to break that cycle.
 - Custodianship: `governance/CUSTODIANSHIP.md`
 - Name & Identity Use: `governance/TRADEMARKS.md`
 - Trust Layer (evidence & verification): `governance/TRUST_LAYER.md`
+- Evaluation Standard: `governance/EVALUATION_STANDARD.md`
 
 
 ---
