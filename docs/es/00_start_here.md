@@ -13,6 +13,7 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 - Proceso de Consenso: `governance/CONSENSUS_PROCESS.md`
 - Custodia del Sistema: `governance/CUSTODIANSHIP.md`
 - Nombre e Identidad: `governance/TRADEMARKS.md`
+- Capa de Confianza (verificación): `governance/TRUST_LAYER.md`
 
 
 

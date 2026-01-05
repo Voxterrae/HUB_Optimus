@@ -29,6 +29,7 @@ HUB_Optimus exists to break that cycle.
 - Consensus Process: `governance/CONSENSUS_PROCESS.md`
 - Custodianship: `governance/CUSTODIANSHIP.md`
 - Name & Identity Use: `governance/TRADEMARKS.md`
+- Trust Layer (evidence & verification): `governance/TRUST_LAYER.md`
 
 
 ---
