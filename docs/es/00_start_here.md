@@ -7,6 +7,17 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 
 ---
 
+## Gobernanza
+- Carta Fundacional: `governance/CHARTER.md`
+- Kernel (principios inmutables): `governance/KERNEL.md`
+- Proceso de Consenso: `governance/CONSENSUS_PROCESS.md`
+- Custodia del Sistema: `governance/CUSTODIANSHIP.md`
+- Nombre e Identidad: `governance/TRADEMARKS.md`
+
+
+
+---
+
 > ✅ **Inicio rápido**
 >
 > - ▶ **Empezar (ES):** [Guía de inicio](00_start_here.md)

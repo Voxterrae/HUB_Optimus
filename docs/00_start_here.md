@@ -23,6 +23,16 @@ HUB_Optimus exists to break that cycle.
 
 ---
 
+## Governance
+- Charter: `governance/CHARTER.md`
+- Kernel: `governance/KERNEL.md`
+- Consensus Process: `governance/CONSENSUS_PROCESS.md`
+- Custodianship: `governance/CUSTODIANSHIP.md`
+- Name & Identity Use: `governance/TRADEMARKS.md`
+
+
+---
+
 ## What HUB_Optimus is NOT
 - Not a predictive oracle.
 - Not a decision authority.
