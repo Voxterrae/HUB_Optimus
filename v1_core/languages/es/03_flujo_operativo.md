@@ -1,4 +1,4 @@
-> 🇬🇧 English source: [../en/03_flujo_operativo.md](../en/03_flujo_operativo.md)
+> 🇬🇧 English source: [../03_flujo_operativo.md](../03_flujo_operativo.md)
 
 # Flujo operativo (ES)
 

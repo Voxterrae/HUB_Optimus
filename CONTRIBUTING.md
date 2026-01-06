@@ -69,9 +69,9 @@ Must reference:
 
 ### D) Kernel changes (high risk)
 Files like:
-- [v1_core/languages/en/01_base_declaracion.md](v1_core/languages/en/01_base_declaracion.md)
-- [v1_core/languages/en/02_arquitectura_base.md](v1_core/languages/en/02_arquitectura_base.md)
-- [v1_core/languages/en/03_flujo_operativo.md](v1_core/languages/en/03_flujo_operativo.md)
+- [v1_core/languages/01_base_declaracion.md](v1_core/languages/01_base_declaracion.md)
+- [v1_core/languages/02_arquitectura_base.md](v1_core/languages/02_arquitectura_base.md)
+- [v1_core/languages/03_flujo_operativo.md](v1_core/languages/03_flujo_operativo.md)
 
 Kernel changes require:
 - explicit justification,

@@ -1,4 +1,4 @@
-> 🇬🇧 English source: [../en/02_arquitectura_base.md](../en/02_arquitectura_base.md)
+> 🇬🇧 English source: [../02_arquitectura_base.md](../02_arquitectura_base.md)
 
 # Arquitectura base (ES)
 
@@ -75,7 +75,7 @@ Un escenario bien formado incluye:
 ## 5) Artefactos del repositorio y dónde viven
 - Entrada y guías: `docs/` y `docs/es/`
 - Workflow (plantillas + escenarios): `v1_core/workflow/` y `v1_core/workflow/es/`
-- Base conceptual: `v1_core/languages/en/` y `v1_core/languages/es/`
+- Base conceptual: `v1_core/languages/` y `v1_core/languages/es/`
 
 ---
 

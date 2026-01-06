@@ -40,9 +40,9 @@ You can stop there and still understand the system.
 ## If you want the theoretical foundation (Kernel)
 
 Read in order:
-1. [../v1_core/languages/en/01_base_declaracion.md](../v1_core/languages/en/01_base_declaracion.md)
-2. [../v1_core/languages/en/02_arquitectura_base.md](../v1_core/languages/en/02_arquitectura_base.md)
-3. [../v1_core/languages/en/03_flujo_operativo.md](../v1_core/languages/en/03_flujo_operativo.md)
+1. [../v1_core/languages/01_base_declaracion.md](../v1_core/languages/01_base_declaracion.md)
+2. [../v1_core/languages/02_arquitectura_base.md](../v1_core/languages/02_arquitectura_base.md)
+3. [../v1_core/languages/03_flujo_operativo.md](../v1_core/languages/03_flujo_operativo.md)
 
 These documents define the **immutable principles** of HUB_Optimus.
 They change rarely and intentionally.
@@ -82,7 +82,7 @@ Ask:
 ## About languages
 
 The reference language is English:
-- ../v1_core/languages/en/
+- ../v1_core/languages/
 
 Other languages mirror the same structure.
 Translations must preserve meaning, not style.

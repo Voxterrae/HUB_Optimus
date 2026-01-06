@@ -1,4 +1,4 @@
-> 🇬🇧 English source: [../en/01_base_declaracion.md](../en/01_base_declaracion.md)
+> 🇬🇧 English source: [../01_base_declaracion.md](../01_base_declaracion.md)
 
 # Declaración base (ES)
 
