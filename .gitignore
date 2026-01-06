@@ -1,3 +1,24 @@
 # Local link-check reports
 lychee_*.txt
 md_files.txt
+# Secrets
+.env
+.env.*
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# SSH (por si acaso alguien la copia)
+.ssh/
+id_ed25519
+id_ed25519.pub
+known_hosts
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
