@@ -1,10 +1,10 @@
-# HUB_Optimus — Trust Layer
+﻿# HUB_Optimus — Trust Layer
 
 ## Purpose
-The Trust Layer defines how claims, commitments, and agreements are evaluated for reliability within HUB_Optimus.
+The Trust Layer defines how HUB_Optimus evaluates **claims**, **commitments**, and **agreements** for operational reliability.
 
-It does not assess intent, morality, or legitimacy.
-It assesses **verifiability**, **traceability**, and **structural trustworthiness**.
+It does **not** evaluate intent, morality, or political legitimacy.
+It evaluates **verifiability**, **traceability**, and **structural trustworthiness**.
 
 ## Core Principle
 A commitment that cannot be verified should not be treated as reliable, regardless of who makes it.
@@ -12,9 +12,10 @@ A commitment that cannot be verified should not be treated as reliable, regardle
 Trust is not assumed.
 Trust is **earned through structure**.
 
-## Evidence Classes
+---
 
-### Class A — Verifiable Commitments
+## Evidence Classes (A/B/C)
+### Class A — Verifiable Commitments (High trust)
 Characteristics:
 - Observable actions or states
 - Independent verification possible
@@ -22,29 +23,21 @@ Characteristics:
 - Time-bounded checkpoints
 
 Examples:
-- Ratified agreements with inspection mechanisms
+- Agreements with inspection/monitoring mechanisms
 - Publicly auditable actions
 - Reversible steps with monitoring
 
-Status: **High trust**
-
----
-
-### Class B — Partially Verifiable Commitments
+### Class B — Partially Verifiable Commitments (Conditional trust)
 Characteristics:
 - Some observable components
 - Limited verification scope
-- Ambiguous enforcement
+- Ambiguous enforcement or coverage
 
 Examples:
-- Political commitments with reporting but no enforcement
-- Conditional actions without penalties
+- Commitments with reporting but no independent verification
+- Conditional actions without defined penalties or rollback
 
-Status: **Conditional trust**
-
----
-
-### Class C — Non-Verifiable Assertions
+### Class C — Non-Verifiable Assertions (Low trust)
 Characteristics:
 - No external verification
 - Dependent on intent or goodwill
@@ -54,35 +47,61 @@ Examples:
 - Verbal assurances
 - Statements of future intent without mechanisms
 
-Status: **Low trust**
+---
+
+## Trust Profile (how HUB_Optimus scores reliability)
+For any commitment, HUB_Optimus creates a **Trust Profile** using the following dimensions:
+
+1) **Verifiability**
+- Can an independent actor verify the claim?
+
+2) **Traceability**
+- Is there an audit trail (who/what/when/where)?
+
+3) **Independence**
+- Is verification independent from the claimant?
+
+4) **Coverage**
+- Does verification cover the full commitment or only fragments?
+
+5) **Recency**
+- How current is the evidence relative to the commitment window?
+
+6) **Reversibility**
+- Can the action be rolled back if verification fails?
+
+A commitment can be Class A but still weak if coverage/independence is poor.
 
 ---
 
-## Structural Trust Score
-Evaluations may assign a qualitative trust level based on:
-- evidence class,
-- incentive alignment,
-- reversibility,
-- historical precedent.
+## Minimum Verification Protocol (MVP)
+A commitment is treated as “reliable enough to plan around” only if it includes:
+- A **clear observable outcome**
+- A **checkpoint schedule**
+- A **named verification method**
+- A **dispute pathway** (what happens if verification is contested)
 
-This score does not predict outcomes.
-It highlights **structural risk**.
+---
 
-## Anti-Manipulation Rule
-Narrative strength, moral framing, urgency, or authority do not increase trust classification.
+## Disputes and Degradation (non-coercive enforcement)
+HUB_Optimus does not enforce outcomes.
+It enforces **epistemic discipline**:
 
-Only structure does.
+- If verification fails → trust degrades.
+- If verification is blocked → trust degrades.
+- If evidence is partial → trust is conditional.
+- If evidence is independently confirmed → trust strengthens.
 
-## Dispute Handling
-Disagreement over classification must be resolved by:
-- pointing to missing verification,
-- proposing concrete mechanisms,
-- or downgrading trust assumptions.
+This creates incentive pressure without coercion.
 
-## Relationship to Consensus
-The Trust Layer informs evaluations.
-It does not override the Kernel or the consensus process.
+---
 
-## Non-Enforcement Clause
-HUB_Optimus does not enforce trust.
-It makes trust **explicit and inspectable**.
+## Anti-Gaming Rule
+“Paper compliance” (performative reporting without independent verification) is treated as Class B or C,
+even if presented as Class A.
+
+---
+
+## Integration points
+- Scenario inputs should reference evidence using: `governance/SCENARIO_SCHEMA.md`
+- Evaluations should explicitly cite evidence class + trust profile dimensions using: `governance/EVALUATION_STANDARD.md`

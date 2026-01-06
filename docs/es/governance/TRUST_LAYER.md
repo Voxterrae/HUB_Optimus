@@ -1,9 +1,9 @@
-# HUB_Optimus — Capa de Confianza (Trust Layer)
+﻿# HUB_Optimus — Capa de Confianza (Trust Layer)
 
 ## Propósito
-La Capa de Confianza define cómo se evalúan las afirmaciones, compromisos y acuerdos en HUB_Optimus.
+La Capa de Confianza define cómo HUB_Optimus evalúa **afirmaciones**, **compromisos** y **acuerdos** en términos de fiabilidad operativa.
 
-No evalúa intención, moralidad ni legitimidad.
+No evalúa intención, moralidad ni legitimidad política.
 Evalúa **verificabilidad**, **trazabilidad** y **confiabilidad estructural**.
 
 ## Principio Central
@@ -12,9 +12,10 @@ Un compromiso que no puede verificarse no debe considerarse fiable, independient
 La confianza no se presupone.
 La confianza se **construye mediante estructura**.
 
-## Clases de Evidencia
+---
 
-### Clase A — Compromisos Verificables
+## Clases de Evidencia (A/B/C)
+### Clase A — Compromisos Verificables (Alta confianza)
 Características:
 - Acciones o estados observables
 - Verificación independiente posible
@@ -22,29 +23,21 @@ Características:
 - Hitos temporales definidos
 
 Ejemplos:
-- Acuerdos ratificados con mecanismos de inspección
+- Acuerdos con mecanismos de inspección/supervisión
 - Acciones auditables públicamente
-- Pasos reversibles con supervisión
+- Pasos reversibles con monitorización
 
-Estado: **Alta confianza**
-
----
-
-### Clase B — Compromisos Parcialmente Verificables
+### Clase B — Compromisos Parcialmente Verificables (Confianza condicionada)
 Características:
 - Algunos componentes observables
 - Alcance de verificación limitado
-- Aplicación ambigua
+- Aplicación o cobertura ambigua
 
 Ejemplos:
-- Compromisos políticos con informes pero sin sanción
-- Acciones condicionales sin consecuencias claras
+- Compromisos con informes pero sin verificación independiente
+- Acciones condicionales sin consecuencias o reversión definidas
 
-Estado: **Confianza condicionada**
-
----
-
-### Clase C — Afirmaciones No Verificables
+### Clase C — Afirmaciones No Verificables (Baja confianza)
 Características:
 - Sin verificación externa
 - Dependientes de intención o buena fe
@@ -54,35 +47,61 @@ Ejemplos:
 - Garantías verbales
 - Declaraciones de intención futura sin mecanismos
 
-Estado: **Baja confianza**
+---
+
+## Perfil de Confianza (cómo se estima la fiabilidad)
+Para cada compromiso, HUB_Optimus genera un **Perfil de Confianza** con estas dimensiones:
+
+1) **Verificabilidad**
+- ¿Puede un actor independiente verificar la afirmación?
+
+2) **Trazabilidad**
+- ¿Existe un rastro auditable (quién/qué/cuándo/dónde)?
+
+3) **Independencia**
+- ¿La verificación es independiente del emisor?
+
+4) **Cobertura**
+- ¿La verificación cubre todo el compromiso o solo fragmentos?
+
+5) **Recencia**
+- ¿Qué tan actual es la evidencia frente a la ventana del compromiso?
+
+6) **Reversibilidad**
+- ¿Puede revertirse la acción si la verificación falla?
+
+Un compromiso puede ser Clase A y aun así ser débil si la cobertura/independencia es pobre.
 
 ---
 
-## Nivel de Confianza Estructural
-Las evaluaciones pueden asignar un nivel cualitativo según:
-- clase de evidencia,
-- alineación de incentivos,
-- reversibilidad,
-- precedentes históricos.
+## Protocolo mínimo de verificación (MVP)
+Un compromiso se considera “lo bastante fiable como para planificar” solo si incluye:
+- Un **resultado observable claro**
+- Un **calendario de hitos**
+- Un **método de verificación definido**
+- Una **vía de disputa** (qué ocurre si la verificación se cuestiona)
 
-Este nivel no predice resultados.
-Señala **riesgo estructural**.
+---
 
-## Regla Anti-Manipulación
-La fuerza narrativa, el marco moral, la urgencia o la autoridad no aumentan la confianza.
+## Disputas y degradación (sin coerción)
+HUB_Optimus no ejecuta ni impone resultados.
+Impone **disciplina epistémica**:
 
-Solo la estructura lo hace.
+- Si la verificación falla → la confianza cae.
+- Si se bloquea la verificación → la confianza cae.
+- Si la evidencia es parcial → la confianza queda condicionada.
+- Si la evidencia es independiente y consistente → la confianza sube.
 
-## Gestión de Disputas
-Los desacuerdos sobre la clasificación se resuelven:
-- señalando verificación ausente,
-- proponiendo mecanismos concretos,
-- o reduciendo supuestos de confianza.
+Esto crea presión por incentivos sin coerción.
 
-## Relación con el Consenso
-La Capa de Confianza informa las evaluaciones.
-No sustituye al Kernel ni al proceso de consenso.
+---
 
-## Cláusula de No Ejecución
-HUB_Optimus no impone confianza.
-Hace la confianza **explícita e inspeccionable**.
+## Regla anti-gaming
+El “cumplimiento de papel” (reporting performativo sin verificación independiente) se trata como Clase B o C,
+aunque se presente como Clase A.
+
+---
+
+## Puntos de integración
+- Los escenarios deben referenciar evidencia usando: `governance/SCENARIO_SCHEMA.md`
+- Las evaluaciones deben citar clase de evidencia + dimensiones del perfil usando: `governance/EVALUATION_STANDARD.md`
