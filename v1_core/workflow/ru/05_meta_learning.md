@@ -1,0 +1,6 @@
+﻿> 🇬🇧 English source: [../05_meta_learning.md](../05_meta_learning.md)
+
+# TRANSLATION PENDING (ru)
+
+Use the English source above until this file is translated.
+
