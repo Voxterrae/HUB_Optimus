@@ -11,7 +11,7 @@ Estimated time: 10â€“15 minutes.
 ## Step 1 â€” Open the scenario template
 
 Open:
-- ../v1_core/workflow/04_scenario_template.md
+- [../v1_core/workflow/04_scenario_template.md](../v1_core/workflow/04_scenario_template.md)
 
 Just note the structure:
 - Context
@@ -36,7 +36,7 @@ Focus on:
 ## Step 3 â€” Scenario 002: Verified Ceasefire (structural success)
 
 Open:
-- ../v1_core/workflow/scenario_002_verified_ceasefire.md
+- [../v1_core/workflow/scenario_002_verified_ceasefire.md](../v1_core/workflow/scenario_002_verified_ceasefire.md)
 
 Focus on:
 - What changed compared to Scenario 001
@@ -63,7 +63,7 @@ It asks:
 ## Step 5 â€” Learning layer
 
 Read:
-- ../v1_core/workflow/05_meta_learning.md
+- [../v1_core/workflow/05_meta_learning.md](../v1_core/workflow/05_meta_learning.md)
 
 This explains how patterns are extracted and remembered.
 
@@ -81,12 +81,12 @@ This is the core of HUB_Optimus.
 ## Next steps
 
 Foundations:
-- ../v1_core/languages/en/01_base_declaracion.md
-- ../v1_core/languages/en/02_arquitectura_base.md
-- ../v1_core/languages/en/03_flujo_operativo.md
+- [../v1_core/languages/en/01_base_declaracion.md](../v1_core/languages/en/01_base_declaracion.md)
+- [../v1_core/languages/en/02_arquitectura_base.md](../v1_core/languages/en/02_arquitectura_base.md)
+- [../v1_core/languages/en/03_flujo_operativo.md](../v1_core/languages/en/03_flujo_operativo.md)
 
 To contribute:
-- Read CONTRIBUTING.md
+- Read [CONTRIBUTING.md](../CONTRIBUTING.md)
 - Propose a new scenario using the template
 
 

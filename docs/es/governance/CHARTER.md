@@ -26,13 +26,13 @@ Proporcionar un marco verificable y alineado con incentivos que:
 
 ## Documentos Núcleo de Gobernanza
 Esta Carta se implementa mediante:
-- Kernel: `KERNEL.md`
-- Proceso de Consenso: `CONSENSUS_PROCESS.md`
-- Custodia: `CUSTODIANSHIP.md`
-- Capa de Confianza: `TRUST_LAYER.md`
-- Estándar de Evaluación: `EVALUATION_STANDARD.md`
-- Esquema de Escenarios: `SCENARIO_SCHEMA.md`
-- Nombre e Identidad: `TRADEMARKS.md`
+- Kernel: [KERNEL.md](KERNEL.md)
+- Proceso de Consenso: [CONSENSUS_PROCESS.md](CONSENSUS_PROCESS.md)
+- Custodia: [CUSTODIANSHIP.md](CUSTODIANSHIP.md)
+- Capa de Confianza: [TRUST_LAYER.md](TRUST_LAYER.md)
+- Estándar de Evaluación: [EVALUATION_STANDARD.md](EVALUATION_STANDARD.md)
+- Esquema de Escenarios: [SCENARIO_SCHEMA.md](SCENARIO_SCHEMA.md)
+- Nombre e Identidad: [TRADEMARKS.md](TRADEMARKS.md)
 
 ## Neutralidad y No Ejecución
 HUB_Optimus no impone resultados.

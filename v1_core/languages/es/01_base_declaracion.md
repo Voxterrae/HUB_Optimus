@@ -1,4 +1,4 @@
-> 🇬🇧 English source: ../en/01_base_declaracion.md
+> 🇬🇧 English source: [../en/01_base_declaracion.md](../en/01_base_declaracion.md)
 
 # Declaración base (ES)
 
@@ -80,6 +80,6 @@ Regla práctica:
 ---
 
 ## 9) Enlaces internos
-- Arquitectura base (ES): `./02_arquitectura_base.md`
-- Flujo operativo (ES): `./03_flujo_operativo.md`
-- Workflow (ES): `../../workflow/es/README.md`
+- Arquitectura base (ES): [./02_arquitectura_base.md](./02_arquitectura_base.md)
+- Flujo operativo (ES): [./03_flujo_operativo.md](./03_flujo_operativo.md)
+- Workflow (ES): [../../workflow/es/README.md](../../workflow/es/README.md)

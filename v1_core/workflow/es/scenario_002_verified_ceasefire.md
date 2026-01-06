@@ -1,4 +1,4 @@
-> 🇬🇧 English source: ../scenario_002_verified_ceasefire.md
+> 🇬🇧 English source: [../scenario_002_verified_ceasefire.md](../scenario_002_verified_ceasefire.md)
 
 # Escenario 002 — Alto el fuego verificado con alineación de incentivos
 

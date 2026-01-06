@@ -1,4 +1,4 @@
-> 🇬🇧 English source: ../05_meta_learning.md
+> 🇪🇸 Versión en español: [./es/05_meta_learning.md](./es/05_meta_learning.md)
 
 # Meta-learning (ES)
 
@@ -73,5 +73,5 @@ Añade al final del escenario o en notas:
 - [ ] ¿Está escrito el “parche mínimo viable”?
 
 Siguiente:
-- Workflow (ES): `./README.md`
-- Plantilla (ES): `./04_scenario_template.md`
+- Workflow (ES): [./README.md](./README.md)
+- Plantilla (ES): [./04_scenario_template.md](./04_scenario_template.md)

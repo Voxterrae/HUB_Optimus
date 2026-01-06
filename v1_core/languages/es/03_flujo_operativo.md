@@ -1,4 +1,4 @@
-> 🇬🇧 English source: ../en/03_flujo_operativo.md
+> 🇬🇧 English source: [../en/03_flujo_operativo.md](../en/03_flujo_operativo.md)
 
 # Flujo operativo (ES)
 
@@ -17,7 +17,7 @@ Este documento describe el flujo recomendado para usar HUB_Optimus: desde elegir
 
 ### 2.1 Elegir un escenario
 - Si vas a practicar: usa un escenario existente en `v1_core/workflow/es/`.
-- Si vas a crear uno nuevo: usa la plantilla `v1_core/workflow/es/04_scenario_template.md`.
+- Si vas a crear uno nuevo: usa la plantilla [v1_core/workflow/es/04_scenario_template.md](../../workflow/es/04_scenario_template.md).
 
 ### 2.2 Definir roles y límites
 - Parte A / Parte B / mediación (opcional).
@@ -81,7 +81,7 @@ Después de cada simulación:
 - Repite el escenario o crea una variante.
 
 Documento guía:
-- `v1_core/workflow/es/05_meta_learning.md`
+- [v1_core/workflow/es/05_meta_learning.md](../../workflow/es/05_meta_learning.md)
 
 ---
 
@@ -95,8 +95,8 @@ Documento guía:
 ---
 
 ## 8) Enlaces internos
-- Declaración base (ES): `./01_base_declaracion.md`
-- Arquitectura base (ES): `./02_arquitectura_base.md`
-- Workflow (ES): `../../workflow/es/README.md`
-- Plantilla de escenario (ES): `../../workflow/es/04_scenario_template.md`
-- Meta-learning (ES): `../../workflow/es/05_meta_learning.md`
+- Declaración base (ES): [./01_base_declaracion.md](./01_base_declaracion.md)
+- Arquitectura base (ES): [./02_arquitectura_base.md](./02_arquitectura_base.md)
+- Workflow (ES): [../../workflow/es/README.md](../../workflow/es/README.md)
+- Plantilla de escenario (ES): [../../workflow/es/04_scenario_template.md](../../workflow/es/04_scenario_template.md)
+- Meta-learning (ES): [../../workflow/es/05_meta_learning.md](../../workflow/es/05_meta_learning.md)

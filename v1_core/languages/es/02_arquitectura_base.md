@@ -1,4 +1,4 @@
-> 🇬🇧 English source: ../en/02_arquitectura_base.md
+> 🇬🇧 English source: [../en/02_arquitectura_base.md](../en/02_arquitectura_base.md)
 
 # Arquitectura base (ES)
 
@@ -90,6 +90,7 @@ Un documento se considera listo cuando:
 ---
 
 ## 7) Enlaces internos
-- Declaración base (ES): `./01_base_declaracion.md`
-- Flujo operativo (ES): `./03_flujo_operativo.md`
-- Workflow (ES): `../../workflow/es/README.md`
+- Capa 3: estándar de evaluación: [docs/es/governance/EVALUATION_STANDARD.md](../../../docs/es/governance/EVALUATION_STANDARD.md)
+- Declaración base (ES): [./01_base_declaracion.md](./01_base_declaracion.md)
+- Flujo operativo (ES): [./03_flujo_operativo.md](./03_flujo_operativo.md)
+- Workflow (ES): [../../workflow/es/README.md](../../workflow/es/README.md)

@@ -10,10 +10,10 @@ Start based on **who you are** and **what you want to do**.
 ## If you are new (first contact)
 
 Start here:
-- docs/00_start_here.md
+- [docs/00_start_here.md](00_start_here.md)
 
 Then:
-- docs/03_try_a_scenario.md
+- [docs/03_try_a_scenario.md](03_try_a_scenario.md)
 
 This gives you a full picture of what HUB_Optimus does
 without reading the Kernel.
@@ -40,9 +40,9 @@ You can stop there and still understand the system.
 ## If you want the theoretical foundation (Kernel)
 
 Read in order:
-1. ../v1_core/languages/en/01_base_declaracion.md
-2. ../v1_core/languages/en/02_arquitectura_base.md
-3. ../v1_core/languages/en/03_flujo_operativo.md
+1. [../v1_core/languages/en/01_base_declaracion.md](../v1_core/languages/en/01_base_declaracion.md)
+2. [../v1_core/languages/en/02_arquitectura_base.md](../v1_core/languages/en/02_arquitectura_base.md)
+3. [../v1_core/languages/en/03_flujo_operativo.md](../v1_core/languages/en/03_flujo_operativo.md)
 
 These documents define the **immutable principles** of HUB_Optimus.
 They change rarely and intentionally.
@@ -52,7 +52,7 @@ They change rarely and intentionally.
 ## If you want to contribute
 
 Start with:
-- CONTRIBUTING.md
+- [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 Important:
 - Kernel influence is integrity-gated
@@ -70,7 +70,7 @@ Do not start by changing principles.
 Focus on:
 - ../v1_core/workflow/
 - scenario classifications
-- learning logic in 05_meta_learning.md
+- learning logic in [05_meta_learning.md](../v1_core/workflow/05_meta_learning.md)
 
 Ask:
 - are incentives visible?

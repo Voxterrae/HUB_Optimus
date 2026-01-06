@@ -1,4 +1,4 @@
-> 🇬🇧 English source: ../scenario_001_partial_ceasefire.md
+> 🇬🇧 English source: [../scenario_001_partial_ceasefire.md](../scenario_001_partial_ceasefire.md)
 
 # Escenario 001 — Alto el fuego parcial sin verificación
 

@@ -127,10 +127,10 @@ The architecture is intentionally:
 - Coercive enforcement mechanisms inside HUB_Optimus
 
 ## 5) Repository mapping (where each layer lives)
-- Layer 0: `v1_core/languages/*/01_base_declaracion.md` + governance rules
+- Layer 0: [v1_core/languages/*/01_base_declaracion.md](./01_base_declaracion.md) + governance rules
 - Layer 1: `v1_core/workflow/` (human posture, interaction patterns)
 - Layer 2: implementation notes + detection specs (future)
-- Layer 3: evaluation model `v1_core/languages/*/05_modelo_de_evaluacion.md`
+- Layer 3: evaluation standard: [docs/governance/EVALUATION_STANDARD.md](../../../docs/governance/EVALUATION_STANDARD.md)
 - Layer 4: mediation playbooks (future, scenarios)
 - Layer 5: `memory/` (future folder for patterns and scenario archives)
 

@@ -26,13 +26,13 @@ To provide a verifiable, incentive-aligned framework that:
 
 ## Core Governance Documents
 This Charter is implemented through:
-- Kernel: `KERNEL.md`
-- Consensus Process: `CONSENSUS_PROCESS.md`
-- Custodianship: `CUSTODIANSHIP.md`
-- Trust Layer: `TRUST_LAYER.md`
-- Evaluation Standard: `EVALUATION_STANDARD.md`
-- Scenario Schema: `SCENARIO_SCHEMA.md`
-- Name & Identity Use: `TRADEMARKS.md`
+- Kernel: [KERNEL.md](KERNEL.md)
+- Consensus Process: [CONSENSUS_PROCESS.md](CONSENSUS_PROCESS.md)
+- Custodianship: [CUSTODIANSHIP.md](CUSTODIANSHIP.md)
+- Trust Layer: [TRUST_LAYER.md](TRUST_LAYER.md)
+- Evaluation Standard: [EVALUATION_STANDARD.md](EVALUATION_STANDARD.md)
+- Scenario Schema: [SCENARIO_SCHEMA.md](SCENARIO_SCHEMA.md)
+- Name & Identity Use: [TRADEMARKS.md](TRADEMARKS.md)
 
 ## Neutrality and Non-Enforcement
 HUB_Optimus does not enforce outcomes.

@@ -1,4 +1,4 @@
-> 🇬🇧 English source: ../04_scenario_template.md
+> 🇪🇸 Versión en español: [./es/04_scenario_template.md](./es/04_scenario_template.md)
 
 # Plantilla de escenario (ES)
 
@@ -119,4 +119,4 @@ Puntúa (0–3 o 0–5) y anota evidencia:
 - ¿Qué cambiarías en el escenario para la próxima ronda?
 - ¿Qué nuevas preguntas surgieron?
 
-Siguiente: `./05_meta_learning.md`
+Siguiente: [./05_meta_learning.md](./05_meta_learning.md)
