@@ -20,7 +20,7 @@ Use is open. Contribution is structured. The Kernel is protected.
 - changes that weaken Kernel integrity protections,
 - narrative manipulation or propaganda,
 - personal scapegoating as analysis,
-- short-term “wins” presented as success while increasing long-term instability,
+- short-term â€œwinsâ€ presented as success while increasing long-term instability,
 - attempts to introduce coercive enforcement into HUB_Optimus.
 
 ---
@@ -29,7 +29,7 @@ Use is open. Contribution is structured. The Kernel is protected.
 
 ### `legacy/`
 Historical v0 materials preserved for transparency.
-- **Do not rewrite or “modernize”** legacy documents.
+- **Do not rewrite or â€œmodernizeâ€** legacy documents.
 - Corrections should be added as v1 notes, not retroactively edited.
 
 ### `v1_core/`
@@ -128,7 +128,7 @@ No one is granted Kernel influence by title alone.
 
 If sensitive data is accidentally committed:
 - report immediately,
-- do not “fix by deleting” only; history rewriting may be required.
+- do not â€œfix by deletingâ€ only; history rewriting may be required.
 
 ---
 
@@ -143,3 +143,18 @@ If sensitive data is accidentally committed:
 ## 9) License
 Contributions are accepted under the repository license.
 If no license is defined yet, contributions are assumed to be offered for inclusion under a future open-source license chosen by the maintainers.
+
+---
+
+## 10) DCO sign-off (required)
+All contributions must include a Signed-off-by line in each commit.
+Example:
+Signed-off-by: Your Name <you@example.com>
+
+By signing off, you confirm you have the right to submit the work under the repository license.
+
+---
+
+## 11) Contribution access (core-team only option)
+Maintainers may require prior approval before accepting public contributions.
+When restricted mode is active, unsolicited PRs may be closed; request approval first.
