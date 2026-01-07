@@ -24,15 +24,15 @@ HUB_Optimus exists to break that cycle.
 ---
 
 ## Governance
-- Charter: [governance/CHARTER.md](governance/CHARTER.md)
-- Kernel: [governance/KERNEL.md](governance/KERNEL.md)
-- Consensus Process: [governance/CONSENSUS_PROCESS.md](governance/CONSENSUS_PROCESS.md)
-- Custodianship: [governance/CUSTODIANSHIP.md](governance/CUSTODIANSHIP.md)
-- Name & Identity Use: [governance/TRADEMARKS.md](governance/TRADEMARKS.md)
-- Trust Layer (evidence & verification): [governance/TRUST_LAYER.md](governance/TRUST_LAYER.md)
-- Evaluation Standard: [governance/EVALUATION_STANDARD.md](governance/EVALUATION_STANDARD.md)
-- Scenario Schema: [governance/SCENARIO_SCHEMA.md](governance/SCENARIO_SCHEMA.md)
-- Legitimacy Model: [governance/LEGITIMACY_MODEL.md](governance/LEGITIMACY_MODEL.md)
+- Charter: [governance/CHARTER.md](../governance/CHARTER.md)
+- Kernel: [governance/KERNEL.md](../governance/KERNEL.md)
+- Consensus Process: [governance/CONSENSUS_PROCESS.md](../governance/CONSENSUS_PROCESS.md)
+- Custodianship: [governance/CUSTODIANSHIP.md](../governance/CUSTODIANSHIP.md)
+- Name & Identity Use: [governance/TRADEMARKS.md](../governance/TRADEMARKS.md)
+- Trust Layer (evidence & verification): [governance/TRUST_LAYER.md](../governance/TRUST_LAYER.md)
+- Evaluation Standard: [governance/EVALUATION_STANDARD.md](../governance/EVALUATION_STANDARD.md)
+- Scenario Schema: [governance/SCENARIO_SCHEMA.md](../governance/SCENARIO_SCHEMA.md)
+- Legitimacy Model: [governance/LEGITIMACY_MODEL.md](../governance/LEGITIMACY_MODEL.md)
 
 
 
@@ -51,7 +51,7 @@ HUB_Optimus exists to break that cycle.
 
 ### If you only have 5 minutes
 1) Read the main README:
-- [README.md](../README.md)
+- [README.md](./README.md)
 
 2) Read the simulator overview:
 - [../v1_core/workflow/README.md](../../v1_core/workflow/README.md)
@@ -102,6 +102,7 @@ Next phases include:
 - multilingual synchronization,
 - quantitative evaluation model,
 - expanded scenario library.
+
 
 
 
