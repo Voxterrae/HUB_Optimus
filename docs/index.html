@@ -10,7 +10,6 @@
       // Supported languages (official order): EN → DE → ES → CA → FR → RU
       var supported = ["en", "de", "es", "ca", "fr", "ru"];
 
-      // Prefer navigator.languages when available
       var langs = (navigator.languages && navigator.languages.length)
         ? navigator.languages
         : [navigator.language || navigator.userLanguage || "en"];
@@ -30,13 +29,11 @@
       }
       if (!chosen) chosen = "en";
 
-      // For GitHub Project Pages, pathname looks like: /HUB_Optimus/ or /HUB_Optimus/docs/
-      // We want the directory that contains this index.html
-      var base = window.location.pathname;
-      if (!base.endsWith("/")) base = base.replace(/[^/]*$/, "");
+      // Directory that contains this index.html
+      var basePath = window.location.pathname;
+      if (!basePath.endsWith("/")) basePath = basePath.replace(/[^/]*$/, "");
 
-      // Redirect directly to language folder landing
-      var target = base + chosen + "/00_start_here.html";
+      var target = basePath + chosen + "/00_start_here.html";
       window.location.replace(target);
     })();
   </script>
@@ -58,6 +55,6 @@
     <li><a href="ru/00_start_here.html">Русский</a></li>
   </ul>
 
-  <!-- Legacy compatibility: docs/00_start_here.html exists and redirects to docs/en/00_start_here.html -->
+  <!-- Legacy compatibility: docs/00_start_here.html redirects to docs/en/00_start_here.html -->
 </body>
 </html>
