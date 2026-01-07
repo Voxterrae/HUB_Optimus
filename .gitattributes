@@ -1,14 +1,7 @@
-# Normalize line endings (cross-platform)
-* text=auto
+﻿* text=auto eol=lf
 
-# Keep LF in repo for common text formats
-*.md   text eol=lf
-*.txt  text eol=lf
-*.yml  text eol=lf
-*.yaml text eol=lf
-*.json text eol=lf
-*.js   text eol=lf
-*.ts   text eol=lf
-*.html text eol=lf
-*.css  text eol=lf
-*.sh   text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary
