@@ -1,6 +1,5 @@
-# 01 - Base Declaration (Legacy Path)
+﻿# Moved
 
-This canonical English document moved to:
-- [v1_core/languages/en/01_base_declaracion.md](./en/01_base_declaracion.md)
+This document has moved to the English canonical location:
 
-Note: This stub preserves legacy links.
+- `v1_core/languages/en/01_base_declaracion.md`
