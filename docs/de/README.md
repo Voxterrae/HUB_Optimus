@@ -1,15 +1,15 @@
 # HUB_Optimus Docs (DE)
 
 ## Local docs
-- [00 Start here](00_start_here.md)
-- [02 How to read this repo](02_how_to_read_this_repo.md)
-- [03 Try a scenario](03_try_a_scenario.md)
+- [00 Start here](./00_start_here.md)
+- [02 How to read this repo](./02_how_to_read_this_repo.md)
+- [03 Try a scenario](./03_try_a_scenario.md)
 
-## Governance (canonical)
+## Governance (canonical, EN)
 - [Charter](../governance/CHARTER.md)
 
 ## v1 core (DE)
-- [v1_core/languages/de](../../v1_core/languages/de/)
+- [v1_core/languages/de/README.md](../../v1_core/languages/de/README.md) <!-- TODO: missing -->
 
 ## Language selector
 - [EN](../en/README.md)
