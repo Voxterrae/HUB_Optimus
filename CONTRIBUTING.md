@@ -2,8 +2,9 @@
 
 Thank you for your interest in contributing to HUB_Optimus.
 
-HUB_Optimus is open-source by design, but **Kernel influence is integrity-gated**.
-Use is open. Contribution is structured. The Kernel is protected.
+HUB_Optimus is publicly readable, but **no rights are granted** unless and until a license is published.
+Contributions may be accepted, but **Kernel influence is integrity-gated** and acceptance is maintainers-only.
+The Kernel is protected.
 
 ---
 
@@ -20,7 +21,7 @@ Use is open. Contribution is structured. The Kernel is protected.
 - changes that weaken Kernel integrity protections,
 - narrative manipulation or propaganda,
 - personal scapegoating as analysis,
-- short-term â€œwinsâ€ presented as success while increasing long-term instability,
+- short-term "wins" presented as success while increasing long-term instability,
 - attempts to introduce coercive enforcement into HUB_Optimus.
 
 ---
@@ -29,7 +30,7 @@ Use is open. Contribution is structured. The Kernel is protected.
 
 ### `legacy/`
 Historical v0 materials preserved for transparency.
-- **Do not rewrite or â€œmodernizeâ€** legacy documents.
+- **Do not rewrite or "modernize"** legacy documents.
 - Corrections should be added as v1 notes, not retroactively edited.
 
 ### `v1_core/`
@@ -69,15 +70,15 @@ Must reference:
 
 ### D) Kernel changes (high risk)
 Files like:
-- [v1_core/languages/01_base_declaracion.md](v1_core/languages/01_base_declaracion.md)
-- [v1_core/languages/02_arquitectura_base.md](v1_core/languages/02_arquitectura_base.md)
-- [v1_core/languages/03_flujo_operativo.md](v1_core/languages/03_flujo_operativo.md)
+- [v1_core/languages/en/01_base_declaracion.md](v1_core/languages/en/01_base_declaracion.md)
+- [v1_core/languages/en/02_arquitectura_base.md](v1_core/languages/en/02_arquitectura_base.md)
+- [v1_core/languages/en/03_flujo_operativo.md](v1_core/languages/en/03_flujo_operativo.md)
 
 Kernel changes require:
 - explicit justification,
 - impact analysis,
 - integrity-first review,
-- synchronized language updates.
+- synchronized language updates (when applicable).
 
 ---
 
@@ -128,7 +129,7 @@ No one is granted Kernel influence by title alone.
 
 If sensitive data is accidentally committed:
 - report immediately,
-- do not â€œfix by deletingâ€ only; history rewriting may be required.
+- do not "fix by deleting" only; history rewriting may be required.
 
 ---
 
@@ -140,21 +141,33 @@ If sensitive data is accidentally committed:
 
 ---
 
-## 9) License
-Contributions are accepted under the repository license.
-If no license is defined yet, contributions are assumed to be offered for inclusion under a future open-source license chosen by the maintainers.
+## 9) License and inbound contribution grant
+
+This repository currently operates in **restricted mode** under a "no license granted" policy.
+Until an explicit open-source or commercial license is published, **no rights to use, copy, modify, or distribute** are granted to the public.
+
+### Contributions (inbound grant)
+If maintainers explicitly accept your contribution, you grant the maintainers and project stewards a **perpetual, worldwide, irrevocable, royalty-free license** to use, modify, reproduce, and relicense your contribution as part of HUB_Optimus.
+
+Unsolicited PRs may be closed when restricted mode is active. If in doubt, open an Issue first.
 
 ---
 
 ## 10) DCO sign-off (required)
-All contributions must include a Signed-off-by line in each commit.
-Example:
-Signed-off-by: Your Name <you@example.com>
 
-By signing off, you confirm you have the right to submit the work under the repository license.
+For any approved contribution, all commits must include a Signed-off-by line in each commit.
+
+Use:
+- `git commit -s -m "message"`
+
+Example:
+- `Signed-off-by: Your Name <you@example.com>`
+
+By signing off, you confirm you have the right to submit the work and to grant the inbound license described above.
 
 ---
 
 ## 11) Contribution access (core-team only option)
+
 Maintainers may require prior approval before accepting public contributions.
 When restricted mode is active, unsolicited PRs may be closed; request approval first.
