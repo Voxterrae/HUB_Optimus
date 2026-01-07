@@ -1,20 +1,21 @@
-# HUB_Optimus Docs (RU)
+﻿# HUB_Optimus — Documentation (RU)
 
-## Local docs
-- [00 Start here](./00_start_here.md)
-- [02 How to read this repo](./02_how_to_read_this_repo.md)
-- [03 Try a scenario](./03_try_a_scenario.md)
+## Start
+- [00 — Start here](./00_start_here.md)
+- [02 — How to read this repo](./02_how_to_read_this_repo.md)
+- [03 — Try a scenario](./03_try_a_scenario.md)
 
 ## Governance (canonical, EN)
-- [Charter](../governance/CHARTER.md)
+- [Governance (EN canonical)](../governance/CHARTER.md)
 
-## v1 core (RU)
-- [v1_core/languages/ru/README.md](../../v1_core/languages/ru/README.md) <!-- TODO: missing -->
+## v1 Core
+- [v1_core (overview)](../../v1_core/README.md)
+- [v1_core (RU)](../../v1_core/languages/ru/README.md)
 
-## Language selector
+## Languages
 - [EN](../en/README.md)
 - [DE](../de/README.md)
 - [ES](../es/README.md)
 - [CA](../ca/README.md)
 - [FR](../fr/README.md)
-- [RU](../ru/README.md)
+- RU (you are here)
