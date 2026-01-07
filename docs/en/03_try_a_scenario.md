@@ -81,9 +81,9 @@ This is the core of HUB_Optimus.
 ## Next steps
 
 Foundations:
-- [../v1_core/languages/01_base_declaracion.md](../v1_core/languages/01_base_declaracion.md)
-- [../v1_core/languages/02_arquitectura_base.md](../v1_core/languages/02_arquitectura_base.md)
-- [../v1_core/languages/03_flujo_operativo.md](../v1_core/languages/03_flujo_operativo.md)
+- [../v1_core/languages/en/01_base_declaracion.md](../v1_core/languages/en/01_base_declaracion.md)
+- [../v1_core/languages/en/02_arquitectura_base.md](../v1_core/languages/en/02_arquitectura_base.md)
+- [../v1_core/languages/en/03_flujo_operativo.md](../v1_core/languages/en/03_flujo_operativo.md)
 
 To contribute:
 - Read [CONTRIBUTING.md](../CONTRIBUTING.md)
