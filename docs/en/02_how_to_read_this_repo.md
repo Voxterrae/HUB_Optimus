@@ -1,4 +1,4 @@
-# How to read this repository — HUB_Optimus
+﻿# How to read this repository â€” HUB_Optimus
 
 This repository is structured by **intent**, not by discipline.
 
@@ -10,10 +10,10 @@ Start based on **who you are** and **what you want to do**.
 ## If you are new (first contact)
 
 Start here:
-- [docs/00_start_here.md](00_start_here.md)
+- [00 — Start here](./00_start_here.md)
 
 Then:
-- [docs/03_try_a_scenario.md](03_try_a_scenario.md)
+- [03 — Try a scenario](./03_try_a_scenario.md)
 
 This gives you a full picture of what HUB_Optimus does
 without reading the Kernel.
@@ -23,7 +23,7 @@ without reading the Kernel.
 ## If you want to see how it works (practical use)
 
 Read:
-- [`docs/03_try_a_scenario.md`](03_try_a_scenario.md)
+- [`03_try_a_scenario.md`](./03_try_a_scenario.md)
 - [`../v1_core/workflow/scenario_001_partial_ceasefire.md`](../v1_core/workflow/scenario_001_partial_ceasefire.md)
 - [`../v1_core/workflow/scenario_002_verified_ceasefire.md`](../v1_core/workflow/scenario_002_verified_ceasefire.md)
 
@@ -111,6 +111,7 @@ It rewards:
 - clarity
 - verification
 - structural stability over time
+
 
 
 
