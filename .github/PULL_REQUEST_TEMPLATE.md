@@ -1,27 +1,50 @@
+# PR: HUB_Optimus (Restricted Mode)
+
+> **Restricted mode / No license granted**
+> Unsolicited PRs may be closed. If you do not have maintainer approval, open an Issue first.
+
 ## Summary
-What does this PR change?
+- What does this change do (1–3 sentences)?
+- Why is it needed?
 
-## Type of change
-- [ ] Documentation / formatting
-- [ ] New scenario
-- [ ] Meta-learning update
-- [ ] Kernel change (high scrutiny)
+## Type of change (check one)
+- [ ] Docs / navigation
+- [ ] Scenario (v1_core/workflow)
+- [ ] Meta-learning update (v1_core/workflow/05_meta_learning.md)
+- [ ] Kernel-adjacent (requires higher scrutiny)
+- [ ] Kernel change (high risk)
 
-## Rationale
-Why is this change necessary?
+## Scope
+**Files / folders touched:**
+- 
 
-## Kernel coherence
-- [ ] Preserves Layer 0 principles
-- [ ] No narrative override of evaluation
-- [ ] No coercive mechanisms introduced
-- [ ] No personal scapegoating
+**Related issues / discussions:**
+- 
 
-## If scenario-related
-- [ ] Uses canonical template
-- [ ] Includes incentive analysis
-- [ ] Includes historical contrast
-- [ ] Includes final classification
-- [ ] Includes memory integration
+## Risk & integrity assessment
+- **Risk level:**
+  - [ ] Low (typos/formatting)
+  - [ ] Medium (scenario/meta-learning)
+  - [ ] High (kernel / governance / policy)
+- **Integrity checks (required):**
+  - [ ] No meaning drift introduced (especially for translated docs)
+  - [ ] No weakening of Kernel protections
+  - [ ] No coercive enforcement added
+  - [ ] Traceable rationale included (what problem is prevented / improved)
+  - [ ] Links validated (no broken paths)
 
-## Risk
-What could go wrong? How is it mitigated?
+## Kernel changes (only if applicable)
+- [ ] Justification is explicit
+- [ ] Impact analysis included
+- [ ] Cross-links updated
+- [ ] Language synchronization plan included (EN is canonical)
+
+## Security / sensitive info
+- [ ] No personal data, keys, credentials, private agreements, or secrets included
+
+## DCO sign-off (required for approved contributions)
+- [ ] All commits are signed off (`git commit -s`)
+- [ ] Signed-off-by line present in each commit
+
+## Maintainer approval
+- [ ] I have maintainer approval to submit this PR under restricted mode

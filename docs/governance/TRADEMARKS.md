@@ -1,30 +1,40 @@
-# HUB_Optimus — Name, Marks, and Identity Use
+# HUB_Optimus Trademark and Brand Policy
 
 ## Purpose
 HUB_Optimus must remain resistant to capture, commercialization pressure, and misleading claims of authority.
-This document defines how the name and identity may be used without creating a private “owner” or an institutional choke point.
+This policy defines how the name and identity may be used without creating a private owner or endorsement.
 
-## Terms
-- **Name/Mark**: “HUB_Optimus”, “HUB Optimus”, “HUB-Optimus”, and closely confusing variants.
-- **Official**: material that follows the Kernel and the documented consensus process.
-- **Derivative**: a fork or external implementation that reuses parts of HUB_Optimus.
+## Definitions
+- Name/Mark: "HUB_Optimus", "HUB Optimus", "HUB-Optimus", and confusingly similar variants.
+- Official: material that follows the Kernel and the documented consensus process.
+- Derivative: a fork or external implementation that reuses parts of HUB_Optimus.
 
-## Allowed Uses (without permission)
+## Permitted uses (without permission)
 You may use the Name/Mark to:
 - refer to this repository and its documents,
-- cite HUB_Optimus in academic/public-interest discussion,
-- build tools that *implement* HUB_Optimus methods,
-- create translations that preserve meaning.
+- cite HUB_Optimus in academic or public-interest discussion,
+- build tools that implement HUB_Optimus methods,
+- create translations that preserve meaning,
+- use "Powered by HUB_Optimus" when you follow the rules below.
 
-## Prohibited Uses (without permission)
-You may NOT:
-- claim “official” or “certified by HUB_Optimus” status,
+## Powered by rules
+If you use "Powered by HUB_Optimus":
+- include a link to this repository,
+- include a clear disclaimer: "No endorsement implied.",
+- do not present your project as official or certified.
+
+## Prohibited uses (without permission)
+You may not:
+- claim "official", "certified", or similar status,
 - imply HUB_Optimus is an authority, tribunal, or enforcement body,
-- use the Name/Mark to sell services that suggest endorsement,
-- present a derivative/fork as the canonical system,
-- register the Name/Mark (or confusing variants) in a way that prevents open public use.
+- use the Name/Mark in a way that suggests endorsement or sponsorship,
+- present a derivative or fork as the canonical system,
+- register the Name/Mark (or confusing variants) in a way that blocks public use.
 
-## Canonical Identity
+## No endorsement
+Use of the Name/Mark does not imply endorsement by HUB_Optimus maintainers or custodians.
+
+## Canonical identity and attribution
 The canonical system is defined by:
 - the Kernel principles,
 - the consensus process record,
@@ -35,17 +45,16 @@ Any derivative must clearly state:
 - which version it is based on,
 - and what changed.
 
-## Anti-Capture Clause
-No individual (including the originator) may use the Name/Mark to unilaterally alter the system’s identity, roadmap, or consensus rules.
-Public legitimacy requires traceable consensus.
+## Enforcement (good faith)
+If misuse occurs, maintainers or custodians may request:
+- correction of claims,
+- clearer attribution,
+- removal of misleading endorsement language.
 
-## Good-Faith Enforcement
-If misuse occurs, maintainers/custodians may:
-- request correction of claims,
-- request clearer attribution,
-- request removal of misleading endorsement language.
+No one grants certification; this policy protects clarity and prevents deception.
 
-Custodians do not grant “certification”. They only protect clarity and prevent deception.
+## Recommended attribution
+"Built on the HUB_Optimus framework (open repository). No endorsement implied."
 
-## Short Attribution (recommended)
-“Built on the HUB_Optimus framework (open repository). No endorsement implied.”
+## Contact
+Trademark questions: [CONTACT EMAIL OR URL]

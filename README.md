@@ -1,108 +1,21 @@
 # HUB_Optimus
-**Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.**
+Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.
+Mission: improve decision quality by testing incentives, verification, and long-term stability before escalation.
 
-**Languages / Idiomas:** 🇬🇧 [English](docs/00_start_here.md) · 🇪🇸 [Español](docs/es/00_start_here.md)
-
----
-
-## What it is
-**HUB_Optimus** is an open framework designed to improve diplomatic outcomes through:
-- structured evaluation (incentives, verification, sequencing),
-- preventive, non-coercive mediation options,
-- iterative meta-learning from both failures and successes.
-
-It helps humans and institutions:
-- avoid repeating known historical failure patterns,
-- detect “false successes” before they escalate,
-- align incentives with medium/long-term stability,
-- operate rationally under time pressure and political noise.
-
-## What it is not
-- Not an authority.
-- Not a prediction engine.
-- Not a replacement for diplomacy.
-
-It is a tool for **better judgment**.
+Language selector (default EN): [EN](docs/en/README.md) | [DE](docs/de/README.md) | [ES](docs/es/README.md) | [CA](docs/ca/README.md) | [FR](docs/fr/README.md) | [RU](docs/ru/README.md)
 
 ---
 
-## Start in 60 seconds
-**New here?**
-- 🇬🇧 Start (EN): [docs/00_start_here.md](docs/00_start_here.md)
-- 🇪🇸 Empezar (ES): [docs/es/00_start_here.md](docs/es/00_start_here.md)
-
-**See it in practice (guided walkthrough):**
-- 🇬🇧 Try a scenario: [docs/03_try_a_scenario.md](docs/03_try_a_scenario.md)
-- 🇪🇸 Probar un escenario: [docs/es/03_try_a_scenario.md](docs/es/03_try_a_scenario.md)
-
-**Go deeper (workflow / simulator):**
-- 🇬🇧 Workflow: [v1_core/workflow/README.md](v1_core/workflow/README.md)
-- 🇪🇸 Workflow (ES): [v1_core/workflow/es/README.md](v1_core/workflow/es/README.md)
+## Quickstart
+- Docs landing: [docs/index.html](docs/index.html) (auto language) and [docs/en/README.md](docs/en/README.md) (English)
+- Governance (EN canonical): [docs/governance/](docs/governance/)
+- v1 Core (EN): [v1_core/languages/en/README.md](v1_core/languages/en/README.md)
+- Workflow and scenarios: [v1_core/workflow/README.md](v1_core/workflow/README.md)
+- Archive / historical: [legacy/v0_exploratory/](legacy/v0_exploratory/)
 
 ---
 
-## Why this project exists
-Modern diplomatic and institutional systems often fail not because of lack of intelligence, but because of:
-- misaligned incentives,
-- short-term optics overriding long-term stability,
-- absence of early correction mechanisms,
-- ignored historical recurrence.
-
-HUB_Optimus exists to **break that cycle** by evaluating scenarios **before** decisions become irreversible.
-
----
-
-## Core principles (high-level)
-- **Stability over optics**  
-  Medium/long-term systemic stability is the supreme criterion.
-
-- **Integrity first**  
-  Influence over the core is earned through ethical coherence, not position or credentials.
-
-- **Evaluation over narrative**  
-  Outcomes are assessed structurally (incentives, verification, sequencing), not rhetorically.
-
-- **Prevention over reaction**  
-  Early, discreet mediation is preferred to public escalation.
-
-- **No scapegoating**  
-  Errors are treated as systemic, not personal.
-
----
-
-## Repository map
-- `docs/` → onboarding and reading paths (recommended entry point)
-- `v1_core/` → active kernel: architecture, operational flow, workflow, templates, scenarios, meta-learning
-- `legacy/` → historical/exploratory materials (v0), preserved for transparency
-
-> English is the reference language for structural validation. Spanish documentation is maintained in parallel for accessibility.
-
----
-
-## The simulator
-The scenario simulator:
-- evaluates decisions and events,
-- classifies risk and stability,
-- detects false positives,
-- proposes non-coercive corrective options,
-- learns from failures and successes.
-
-It **does not predict outcomes**. It evaluates **structural soundness**.
-
-Start here:
-- [v1_core/workflow/README.md](v1_core/workflow/README.md)
-
----
-
-## Contributing
-See: [CONTRIBUTING.md](CONTRIBUTING.md)  
-Link-checking is enforced via GitHub Actions (Lychee).
-
----
-
-## Contact / Collaboration
-If you want to collaborate (scenarios, methodology, review), open an issue or pull request including:
-- intended use-case (training / policy review / research),
-- target domain,
-- constraints (time, verification, actors),
-- desired outcome type (stabilizing / risk-reducing / de-escalatory).
+## Repo map
+- `docs/` - multilingual documentation and entry points
+- `docs/governance/` - canonical governance (EN)
+- `v1_core/` - kernel, workflow, scenarios, and meta-learning

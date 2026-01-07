@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -7,37 +7,54 @@
 
   <script>
     (function () {
-      // Browser language: "es", "es-ES", "en", "de-DE", etc.
-      var lang = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+      // Supported languages (official order): EN → DE → ES → CA → FR → RU
+      var supported = ["en", "de", "es", "ca", "fr", "ru"];
 
-      // For GitHub Project Pages, pathname looks like: /HUB_Optimus/ or /HUB_Optimus/docs/
-      // We want the directory that contains this index.html
-      var base = window.location.pathname;
-      if (!base.endsWith("/")) base = base.replace(/[^/]*$/, "");
-      // If index.html is served from /HUB_Optimus/ we keep it; if from /HUB_Optimus/docs/ we keep it too.
+      var langs = (navigator.languages && navigator.languages.length)
+        ? navigator.languages
+        : [navigator.language || navigator.userLanguage || "en"];
 
-      // Target pages that GitHub Pages/Jekyll will render from your Markdown:
-      // docs/00_start_here.md  -> 00_start_here.html
-      // docs/es/00_start_here.md -> es/00_start_here.html
-      var target = lang.startsWith("es")
-        ? base + "es/00_start_here.html"
-        : base + "00_start_here.html";
+      function pick(lang) {
+        var l = (lang || "").toLowerCase();
+        if (supported.indexOf(l) !== -1) return l;
+        var base = l.split("-")[0];
+        if (supported.indexOf(base) !== -1) return base;
+        return null;
+      }
 
+      var chosen = null;
+      for (var i = 0; i < langs.length; i++) {
+        chosen = pick(langs[i]);
+        if (chosen) break;
+      }
+      if (!chosen) chosen = "en";
+
+      // Directory that contains this index.html
+      var basePath = window.location.pathname;
+      if (!basePath.endsWith("/")) basePath = basePath.replace(/[^/]*$/, "");
+
+      var target = basePath + chosen + "/00_start_here.html";
       window.location.replace(target);
     })();
   </script>
 
   <noscript>
-    <meta http-equiv="refresh" content="0; url=00_start_here.html" />
+    <meta http-equiv="refresh" content="0; url=en/00_start_here.html" />
   </noscript>
 </head>
 
 <body>
   <p>Redirecting…</p>
-  <p>
-    Manual links:
-    <a href="00_start_here.html">English</a> ·
-    <a href="es/00_start_here.html">Español</a>
-  </p>
+  <p>Manual links:</p>
+  <ul>
+    <li><a href="en/00_start_here.html">English</a></li>
+    <li><a href="de/00_start_here.html">Deutsch</a></li>
+    <li><a href="es/00_start_here.html">Español</a></li>
+    <li><a href="ca/00_start_here.html">Català</a></li>
+    <li><a href="fr/00_start_here.html">Français</a></li>
+    <li><a href="ru/00_start_here.html">Русский</a></li>
+  </ul>
+
+  <!-- Legacy compatibility: docs/00_start_here.html redirects to docs/en/00_start_here.html -->
 </body>
 </html>

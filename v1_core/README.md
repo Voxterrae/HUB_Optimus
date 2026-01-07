@@ -1,12 +1,12 @@
-> Spanish version: [./workflow/es/README.md](./workflow/es/README.md)
+﻿> Spanish version: [./workflow/es/README.md](./workflow/es/README.md)
 
 # Workflow (EN)
 
 This directory contains the **operational flow** for running diplomatic simulations with structure: roles, objectives, rounds, verification criteria, and a learning layer (meta-learning) to iterate.
 
 ## Quick start
-1) English entry: [../docs/00_start_here.md](../docs/00_start_here.md)
-2) Guided try: [../docs/03_try_a_scenario.md](../docs/03_try_a_scenario.md)
+1) English entry: [../docs/en/00_start_here.md](../docs/en/00_start_here.md)
+2) Guided try: [../docs/en/03_try_a_scenario.md](../docs/en/03_try_a_scenario.md)
 3) Choose a scenario:
    - Scenario 001: [./workflow/scenario_001_partial_ceasefire.md](./workflow/scenario_001_partial_ceasefire.md)
    - Scenario 002: [./workflow/scenario_002_verified_ceasefire.md](./workflow/scenario_002_verified_ceasefire.md)
