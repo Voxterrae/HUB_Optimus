@@ -12,3 +12,8 @@ md_files.txt
 docs/context/I18N_AUDIT_*.csv
 docs/context/I18N_AUDIT_*.md
 
+
+# legacy audit filenames
+docs/context/I18N_AUDIT.csv
+docs/context/I18N_AUDIT.md
+
