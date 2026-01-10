@@ -52,22 +52,22 @@ HUB_Optimus exists to break that cycle.
 
 ### If you only have 5 minutes
 1) Read the main README:
-- [README.md](../README.md)
+- [README.md](../../README.md)
 
 2) Read the simulator overview:
-- [../v1_core/workflow/README.md](../v1_core/workflow/README.md)
+- [v1_core/workflow/README.md](../v1_core/workflow/README.md)
 
-### If you have 15â€“30 minutes
+### If you have 15-30 minutes
 Read the Kernel (English reference):
-1) [../v1_core/languages/en/01_base_declaracion.md](../v1_core/languages/en/01_base_declaracion.md)
-2) [../v1_core/languages/en/02_arquitectura_base.md](../v1_core/languages/en/02_arquitectura_base.md)
-3) [../v1_core/languages/en/03_flujo_operativo.md](../v1_core/languages/en/03_flujo_operativo.md)
+1) [v1_core/languages/en/01_base_declaracion.md](../v1_core/languages/en/01_base_declaracion.md)
+2) [v1_core/languages/en/02_arquitectura_base.md](../v1_core/languages/en/02_arquitectura_base.md)
+3) [v1_core/languages/en/03_flujo_operativo.md](../v1_core/languages/en/03_flujo_operativo.md)
 
 Then try the simulator:
-- [../v1_core/workflow/04_scenario_template.md](../v1_core/workflow/04_scenario_template.md)
-- [../v1_core/workflow/scenario_001_partial_ceasefire.md](../v1_core/workflow/scenario_001_partial_ceasefire.md)
-- [../v1_core/workflow/scenario_002_verified_ceasefire.md](../v1_core/workflow/scenario_002_verified_ceasefire.md)
-- [../v1_core/workflow/05_meta_learning.md](../v1_core/workflow/05_meta_learning.md)
+- [v1_core/workflow/04_scenario_template.md](../v1_core/workflow/04_scenario_template.md)
+- [v1_core/workflow/scenario_001_partial_ceasefire.md](../v1_core/workflow/scenario_001_partial_ceasefire.md)
+- [v1_core/workflow/scenario_002_verified_ceasefire.md](../v1_core/workflow/scenario_002_verified_ceasefire.md)
+- [v1_core/workflow/05_meta_learning.md](../v1_core/workflow/05_meta_learning.md)
 
 ---
 
@@ -86,7 +86,7 @@ Ask:
 
 ## If you want to contribute
 Start here:
-- [CONTRIBUTING.md](../CONTRIBUTING.md)
+- [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
 Contributions are welcome, but Kernel influence is integrity-gated.
 
@@ -102,6 +102,9 @@ Next phases include:
 - multilingual synchronization,
 - quantitative evaluation model,
 - expanded scenario library.
+
+
+
 
 
 
