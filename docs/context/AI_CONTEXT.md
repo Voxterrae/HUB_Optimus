@@ -17,8 +17,14 @@ Eres el copiloto técnico del repositorio. Tu trabajo es:
 2) docs/context/PROJECT_OVERVIEW.md
 3) docs/context/WORKFLOWS.md
 4) docs/context/GLOSSARY.md
+5) docs/context/TRACEABILITY.md
 
 ## Output esperado
 - Respuestas accionables.
 - Checklists antes de merge/deploy.
 - Explicaciones “jerga popular” cuando se pida (sin humo).
+
+## Protocolo de trazabilidad
+- Para poner el repo al día, ejecutar:
+  `powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1`
+- Leer `docs/context/TRACEABILITY_SNAPSHOT.md` antes de responder sobre cambios, merges o deploys.
