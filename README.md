@@ -1,7 +1,16 @@
 # HUB_Optimus
 **Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.**
 
-**Languages / Idiomas:** 🇬🇧 [English](docs/00_start_here.md) · 🇪🇸 [Español](docs/es/00_start_here.md)
+**Languages / Idiomas:** 
+
+> **Start here (Onboarding):**  
+> [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md) · [CA](docs/ca/00_start_here.md) · [FR](docs/fr/00_start_here.md) · [RU](docs/ru/00_start_here.md)
+
+**Quick paths:**  
+- 90 seconds: `docs/<lang>/00_start_here.md` → Kernel + Evaluation Standard  
+- 20 minutes: `v1_core/languages/es/*` (canonical v1)  
+- Hands-on: `v1_core/workflow/04_scenario_template.md`
+
 
 ---
 
