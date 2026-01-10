@@ -13,3 +13,4 @@
 *.ts text eol=lf
 *.html text eol=lf
 *.css text eol=lf
+*.ps1 text eol=lf
