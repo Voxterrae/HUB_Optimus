@@ -24,6 +24,28 @@ HUB_Optimus exists to break that cycle.
 
 ---
 
+<!-- HUB:TRACKS -->
+## Choose your path
+
+**90 seconds (executive):**
+- What this is / isn’t: [Kernel](governance/KERNEL.md)
+- How evaluation works: [Evaluation Standard](governance/EVALUATION_STANDARD.md)
+- How scenarios are defined: [Scenario Schema](governance/SCENARIO_SCHEMA.md)
+
+**20 minutes (practitioner):**
+- Core spec (ES, canonical v1):  
+  [01_base_declaracion](../../v1_core/languages/es/01_base_declaracion.md) → 
+  [02_arquitectura_base](../../v1_core/languages/es/02_arquitectura_base.md) → 
+  [03_flujo_operativo](../../v1_core/languages/es/03_flujo_operativo.md)
+- English reference:  
+  [01_base_declaracion (EN)](../../v1_core/languages/en/01_base_declaracion.md)
+
+**Try it (hands-on):**
+- Template: [Scenario Template](../../v1_core/workflow/04_scenario_template.md)
+- Examples: [Scenario 001](../../v1_core/workflow/scenario_001_partial_ceasefire.md), [Scenario 002](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
+- Learning loop: [Meta Learning](../../v1_core/workflow/05_meta_learning.md)
+<!-- /HUB:TRACKS -->
+
 ## Governance
 - Charter: [governance/CHARTER.md](governance/CHARTER.md)
 - Kernel: [governance/KERNEL.md](governance/KERNEL.md)
@@ -102,6 +124,7 @@ Next phases include:
 - multilingual synchronization,
 - quantitative evaluation model,
 - expanded scenario library.
+
 
 
 
