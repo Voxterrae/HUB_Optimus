@@ -2,3 +2,8 @@
 lychee_*.txt
 md_files.txt
 /docs/context/TRACEABILITY_SNAPSHOT.md
+
+# accidental terminal paste files
+*ssh-keygen*
+*sh-keygen*
+
