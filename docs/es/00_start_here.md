@@ -1,8 +1,8 @@
-﻿> ðŸ‡¬ðŸ‡§ English source: [docs/00_start_here.md](../00_start_here.md)
+> 🇬🇧 English source: [docs/00_start_here.md](../00_start_here.md)
 
-# HUB_Optimus â€” Start Here (ES)
+# HUB_Optimus — Start Here (ES)
 
-Ganar â€œvictoriasâ€ diplomÃ¡ticas rÃ¡pidas es fÃ¡cil. Construir **estabilidad verificable** con **incentivos alineados** es lo difÃ­cil.  
+Ganar “victorias” diplomáticas rápidas es fácil. Construir **estabilidad verificable** con **incentivos alineados** es lo difícil.  
 HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que se vuelvan irreversibles.
 
 ---
@@ -13,45 +13,45 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 - Proceso de Consenso: [governance/CONSENSUS_PROCESS.md](governance/CONSENSUS_PROCESS.md)
 - Custodia del Sistema: [governance/CUSTODIANSHIP.md](governance/CUSTODIANSHIP.md)
 - Nombre e Identidad: [governance/TRADEMARKS.md](governance/TRADEMARKS.md)
-- Capa de Confianza (verificaciÃ³n): [governance/TRUST_LAYER.md](governance/TRUST_LAYER.md)
-- EstÃ¡ndar de EvaluaciÃ³n: [governance/EVALUATION_STANDARD.md](governance/EVALUATION_STANDARD.md)
+- Capa de Confianza (verificación): [governance/TRUST_LAYER.md](governance/TRUST_LAYER.md)
+- Estándar de Evaluación: [governance/EVALUATION_STANDARD.md](governance/EVALUATION_STANDARD.md)
 - Esquema de Escenarios: [governance/SCENARIO_SCHEMA.md](governance/SCENARIO_SCHEMA.md)
 - Modelo de Legitimidad: [governance/LEGITIMACY_MODEL.md](governance/LEGITIMACY_MODEL.md)
 
 
 ---
 
-> âœ… **Inicio rÃ¡pido**
+> ✅ **Inicio rápido**
 >
-> - â–¶ **Empezar (ES):** [GuÃ­a de inicio](00_start_here.md)
-> - â–¶ **Start (EN source):** [English entry](../00_start_here.md)
+> - ▶ **Empezar (ES):** [Guía de inicio](00_start_here.md)
+> - ▶ **Start (EN source):** [English entry](../00_start_here.md)
 
 ---
 
-## Estructura del repo (mapa rÃ¡pido)
-- [docs/](../) â†’ GuÃ­as para orientarte y empezar (entrada principal).
-- [v1_core/](../../v1_core/) â†’ NÃºcleo: workflow, plantillas y escenarios (donde ocurre â€œla simulaciÃ³nâ€).
-- [legacy/](../../legacy/) â†’ Material histÃ³rico/experimental.
+## Estructura del repo (mapa rápido)
+- [docs/](../) → Guías para orientarte y empezar (entrada principal).
+- [v1_core/](../../v1_core/) → Núcleo: workflow, plantillas y escenarios (donde ocurre “la simulación”).
+- [legacy/](../../legacy/) → Material histórico/experimental.
 
 ---
 
 ## Empieza en 3 pasos
-1) CÃ³mo leer el repo: [02_how_to_read_this_repo.md](02_how_to_read_this_repo.md)  
+1) Cómo leer el repo: [02_how_to_read_this_repo.md](02_how_to_read_this_repo.md)  
 2) Probar un escenario: [03_try_a_scenario.md](03_try_a_scenario.md)  
-3) Workflow del nÃºcleo (ES): [v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)  
+3) Workflow del núcleo (ES): [v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)  
    (Si falta algo en ES, fuente EN: [v1_core/workflow/README.md](../../v1_core/workflow/README.md))
 
 ---
 
-## QuÃ© conseguirÃ¡s aquÃ­ (en 2â€“10 minutos)
+## Qué conseguirás aquí (en 2–10 minutos)
 - Una forma clara de separar **narrativa** de **estructura**.
-- SeÃ±ales de alerta para detectar **falsos positivos** (â€œparece pazâ€ pero incentiva violaciones).
-- Plantillas reutilizables para escenarios, acuerdos y evaluaciÃ³n.
+- Señales de alerta para detectar **falsos positivos** (“parece paz” pero incentiva violaciones).
+- Plantillas reutilizables para escenarios, acuerdos y evaluación.
 - Un mecanismo de mejora continua (meta-learning) para iterar con rigor.
 
 ---
 
-## Enlaces Ãºtiles (nÃºcleo)
+## Enlaces útiles (núcleo)
 - Plantilla de escenario (ES): [04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
 - Meta-learning (ES): [05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
 - Escenario 001 (ES): [scenario_001_partial_ceasefire.md](../../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
@@ -60,29 +60,29 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 ---
 
 ## Base conceptual (si quieres entender el marco)
-- DeclaraciÃ³n base (ES): [01_base_declaracion.md](../../v1_core/languages/es/01_base_declaracion.md)
+- Declaración base (ES): [01_base_declaracion.md](../../v1_core/languages/es/01_base_declaracion.md)
 - Arquitectura base (ES): [02_arquitectura_base.md](../../v1_core/languages/es/02_arquitectura_base.md)
 - Flujo operativo (ES): [03_flujo_operativo.md](../../v1_core/languages/es/03_flujo_operativo.md)
 
 ---
 
-## Principios (versiÃ³n ejecutiva)
-- **Estabilidad > Ã³ptica**  
+## Principios (versión ejecutiva)
+- **Estabilidad > óptica**  
   Lo que importa es la estabilidad a medio/largo plazo, no el anuncio.
 
-- **VerificaciÃ³n > promesas**  
+- **Verificación > promesas**  
   Si no se puede verificar, el riesgo se dispara.
 
-- **Incentivos > intenciÃ³n**  
+- **Incentivos > intención**  
   La estructura de recompensas/costes determina el comportamiento real.
 
-- **Secuencia > â€œtexto finalâ€**  
+- **Secuencia > “texto final”**  
   El orden de pasos define viabilidad.
 
 ---
 
-## Para compartir con alguien en espaÃ±ol
-EnvÃ­a este enlace:
+## Para compartir con alguien en español
+Envía este enlace:
 - [docs/es/00_start_here.md](00_start_here.md)
 
 
@@ -90,14 +90,14 @@ EnvÃ­a este enlace:
 ## Choose your path
 
 **90 seconds (executive):**
-- What this is / isn’t: [Kernel](governance/KERNEL.md)
+- What this is / isn�t: [Kernel](governance/KERNEL.md)
 - How evaluation works: [Evaluation Standard](governance/EVALUATION_STANDARD.md)
 - How scenarios are defined: [Scenario Schema](governance/SCENARIO_SCHEMA.md)
 
 **20 minutes (practitioner):**
 - Core spec (ES, canonical v1):  
-  [01_base_declaracion](../../v1_core/languages/es/01_base_declaracion.md) → 
-  [02_arquitectura_base](../../v1_core/languages/es/02_arquitectura_base.md) → 
+  [01_base_declaracion](../../v1_core/languages/es/01_base_declaracion.md) ? 
+  [02_arquitectura_base](../../v1_core/languages/es/02_arquitectura_base.md) ? 
   [03_flujo_operativo](../../v1_core/languages/es/03_flujo_operativo.md)
 - English reference:  
   [01_base_declaracion (EN)](../../v1_core/languages/en/01_base_declaracion.md)

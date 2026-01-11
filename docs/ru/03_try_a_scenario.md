@@ -1,5 +1,5 @@
-﻿<!-- TODO: TRANSLATE -->
-# Try a Scenario â€” HUB_Optimus in practice
+<!-- TODO: TRANSLATE -->
+# Try a Scenario — HUB_Optimus in practice
 
 This guide shows how to use HUB_Optimus by example, without reading the full Kernel.
 
@@ -9,7 +9,7 @@ Estimated time: 10-15 minutes.
 
 ---
 
-## Step 1 â€” Open the scenario template
+## Step 1 — Open the scenario template
 
 Open:
 - [v1_core/workflow/04_scenario_template.md](v1_core/workflow/04_scenario_template.md)
@@ -23,7 +23,7 @@ Just note the structure:
 
 ---
 
-## Step 2 â€” Scenario 001: Partial Ceasefire (false success)
+## Step 2 — Scenario 001: Partial Ceasefire (false success)
 
 Open:
 - [`v1_core/workflow/scenario_001_partial_ceasefire.md`](v1_core/workflow/scenario_001_partial_ceasefire.md)
@@ -34,7 +34,7 @@ Focus on:
 
 ---
 
-## Step 3 â€” Scenario 002: Verified Ceasefire (structural success)
+## Step 3 — Scenario 002: Verified Ceasefire (structural success)
 
 Open:
 - [v1_core/workflow/scenario_002_verified_ceasefire.md](v1_core/workflow/scenario_002_verified_ceasefire.md)
@@ -46,7 +46,7 @@ Focus on:
 
 ---
 
-## Step 4 â€” Compare
+## Step 4 — Compare
 
 Ask yourself:
 - Which scenario reduces future conflict risk?
@@ -54,14 +54,14 @@ Ask yourself:
 - Which looks good today but fails tomorrow?
 
 HUB_Optimus does not ask:
-â€œWho is right?â€
+“Who is right?”
 
 It asks:
-â€œWhich structure survives time?â€
+“Which structure survives time?”
 
 ---
 
-## Step 5 â€” Learning layer
+## Step 5 — Learning layer
 
 Read:
 - [v1_core/workflow/05_meta_learning.md](v1_core/workflow/05_meta_learning.md)
