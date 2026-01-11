@@ -7,3 +7,13 @@ md_files.txt
 *ssh-keygen*
 *sh-keygen*
 
+
+# generated audits
+docs/context/I18N_AUDIT_*.csv
+docs/context/I18N_AUDIT_*.md
+
+
+# legacy audit filenames
+docs/context/I18N_AUDIT.csv
+docs/context/I18N_AUDIT.md
+
