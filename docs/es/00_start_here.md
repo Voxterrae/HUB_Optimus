@@ -90,7 +90,7 @@ Envía este enlace:
 ## Choose your path
 
 **90 seconds (executive):**
-- What this is / isn�t: [Kernel](governance/KERNEL.md)
+- What this is / isn't: [Kernel](governance/KERNEL.md)
 - How evaluation works: [Evaluation Standard](governance/EVALUATION_STANDARD.md)
 - How scenarios are defined: [Scenario Schema](governance/SCENARIO_SCHEMA.md)
 
