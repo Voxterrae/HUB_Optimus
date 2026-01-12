@@ -1,127 +1,59 @@
-<!-- TODO: TRANSLATE -->
-# How to read this repository Ã¢â‚¬â€ HUB_Optimus
+> 🇬🇧 English source: [../02_how_to_read_this_repo.md](../02_how_to_read_this_repo.md)
 
-This repository is structured by **intent**, not by discipline.
+# Wie man dieses Repository liest
 
-You do not need to read everything.
-Start based on **who you are** and **what you want to do**.
+Dieses Repository ist so organisiert, dass du verstehst **was es ist**, **wo was liegt** und **wie du es nutzt**, ohne dich in Details zu verlieren. Die Idee: Jede Person kann reinkommen, eine Sprache wählen und einem klaren Pfad folgen.
 
----
+## Empfohlene Lesereihenfolge (je nach Ziel)
 
-## If you are new (first contact)
+### Ich will schnell verstehen, „woran ihr gerade arbeitet“
+Folge dieser Reihenfolge:
+1) [docs/de/00_start_here.md](00_start_here.md)
+2) [docs/de/03_try_a_scenario.md](03_try_a_scenario.md)
+3) [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
 
-Start here:
-- [docs/00_start_here.md](00_start_here.md)
+### Ich will Szenarien praktisch üben (Simulationsmodus)
+Geh direkt zu:
+- Workflow (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
+- Szenario 001 (ES): [../../v1_core/workflow/es/scenario_001_partial_ceasefire.md](../../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
+- Szenario 002 (ES): [../../v1_core/workflow/es/scenario_002_verified_ceasefire.md](../../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
+- Vorlage (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
 
-Then:
-- [docs/03_try_a_scenario.md](03_try_a_scenario.md)
+### Ich will das konzeptionelle Framework und die Methode verstehen
+Starte mit:
+- [../../v1_core/languages/es/01_base_declaracion.md](../../v1_core/languages/es/01_base_declaracion.md)
+- [../../v1_core/languages/es/02_arquitectura_base.md](../../v1_core/languages/es/02_arquitectura_base.md)
+- [../../v1_core/languages/es/03_flujo_operativo.md](../../v1_core/languages/es/03_flujo_operativo.md)
+und geh danach zurück in den Workflow.
 
-This gives you a full picture of what HUB_Optimus does
-without reading the Kernel.
+## Repo-Map (was in welchem Ordner liegt)
+- `docs/`  
+  Einstieg, Lese-Guide und ein geführter Testlauf. Wenn du „von außen“ kommst: starte hier.
+- `v1_core/`  
+  Kernel des Systems: Workflow, Szenarien, Vorlagen, Kriterien und iteratives Lernen.
+- `legacy/`  
+  Älteres oder experimentelles Material. Nützlich als Referenz, aber nicht immer „up to date“.
 
----
+## Sprachkonvention (EN ↔ ES)
+- Die **EN**-Version gilt als Referenz/Original.
+- Die **ES**-Version wird parallel gepflegt zum Lesen und Nutzen.
+- In der Kopfzeile jedes Dokuments gibt es einen Link zur „Quelle“ in der jeweils anderen Sprache.
 
-## If you want to see how it works (practical use)
+## Navigieren ohne Kontextverlust
+1) Nutze „Start here“ und „Try a scenario“, um das System in Aktion zu sehen.
+2) Wenn ein Dokument etwas aus dem Kernel (`v1_core`) zitiert, folge dem Link und komm wieder zurück.
+3) Wenn ein Abschnitt auf EN ist, nutze den Link zur EN-Quelle, damit du nicht blockierst.
 
-Read:
-- [`docs/03_try_a_scenario.md`](03_try_a_scenario.md)
-- [`../../v1_core/workflow/scenario_001_partial_ceasefire.md`](../.../../../v1_core/workflow/scenario_001_partial_ceasefire.md)
-- [`../../v1_core/workflow/scenario_002_verified_ceasefire.md`](../.../../../v1_core/workflow/scenario_002_verified_ceasefire.md)
+## Wo das Wichtige ist (Shortcuts)
+- Einstieg (DE): [docs/de/00_start_here.md](00_start_here.md)
+- Szenario ausprobieren (DE): [docs/de/03_try_a_scenario.md](03_try_a_scenario.md)
+- Kernel-Workflow (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
+- Szenario-Vorlage (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
+- Meta-Learning (ES): [../../v1_core/workflow/es/05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
 
+## Wenn du beitragen willst (ohne Links zu brechen)
+- Bevorzuge relative Links (damit sie in GitHub und lokal funktionieren).
+- Halte EN↔ES Paare mit derselben Ordnerstruktur.
+- Wenn du Pfade änderst, führe den Link-Check (Lychee) aus, bevor du pushst.
 
-Focus on:
-- incentives
-- verification vs declaration
-- long-term stability
-
-You can stop there and still understand the system.
-
----
-
-## If you want the theoretical foundation (Kernel)
-
-Read in order:
-1. [../../v1_core/languages/en/01_base_declaracion.md](../.../../../v1_core/languages/en/01_base_declaracion.md)
-2. [../../v1_core/languages/en/02_arquitectura_base.md](../.../../../v1_core/languages/en/02_arquitectura_base.md)
-3. [../../v1_core/languages/en/03_flujo_operativo.md](../.../../../v1_core/languages/en/03_flujo_operativo.md)
-
-These documents define the **immutable principles** of HUB_Optimus.
-They change rarely and intentionally.
-
----
-
-## If you want to contribute
-
-Start with:
-- [CONTRIBUTING.md](../../CONTRIBUTING.md)
-
-Important:
-- Kernel influence is integrity-gated
-- Most contributions should be:
-  - new scenarios
-  - improvements to evaluation clarity
-  - detection of recurring patterns
-
-Do not start by changing principles.
-
----
-
-## If you are reviewing or auditing the system
-
-Focus on:
-- ../../v1_core/workflow/
-- scenario classifications
-- learning logic in [05_meta_learning.md](../.../../../v1_core/workflow/05_meta_learning.md)
-
-Ask:
-- are incentives visible?
-- is verification explicit?
-- are future risks reduced or postponed?
-
----
-
-## About languages
-
-The reference language is English:
-- ../../v1_core/languages/en/
-
-Other languages mirror the same structure.
-Translations must preserve meaning, not style.
-
----
-
-## About legacy material
-
-The folder:
-- legacy/v0_exploratory/
-
-Contains exploratory documents and early drafts.
-They are preserved for transparency and learning,
-but do not define the current system.
-
----
-
-## One guiding rule
-
-HUB_Optimus does not reward:
-- authority
-- rhetoric
-- speed
-
-It rewards:
-- clarity
-- verification
-- structural stability over time
-
-
-
-
-
-
-
-
-
-
-
-
-
+Weiter: [docs/de/03_try_a_scenario.md](03_try_a_scenario.md)
