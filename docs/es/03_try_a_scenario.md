@@ -57,3 +57,4 @@ y luego vuelve al workflow.
 - Si cambias rutas, corre el link-check (Lychee) antes de hacer push.
 
 Siguiente: [docs/es/03_try_a_scenario.md](03_try_a_scenario.md)
+

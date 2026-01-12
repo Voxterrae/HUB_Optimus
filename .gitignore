@@ -7,3 +7,28 @@ md_files.txt
 *ssh-keygen*
 *sh-keygen*
 
+
+# generated audits
+docs/context/I18N_AUDIT_*.csv
+docs/context/I18N_AUDIT_*.md
+
+
+# legacy audit filenames
+docs/context/I18N_AUDIT.csv
+docs/context/I18N_AUDIT.md
+
+
+# Generated local snapshots (do not commit)
+docs/context/REPO_TREE.txt
+docs/context/SNAPSHOT.txt
+
+# Local traceability artifacts (generated)
+docs/context/REPO_TREE.txt
+docs/context/SNAPSHOT.txt
+
+# Local trace/snapshot artifacts
+docs/context/CONTEXT_BUNDLE.md
+docs/context/context.zip
+docs/context/*SNAPSHOT*.md
+docs/context/*REPO_TREE*.txt
+docs/context/*SNAPSHOT*.txt

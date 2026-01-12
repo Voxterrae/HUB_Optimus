@@ -3,11 +3,23 @@
 # Output: docs/context/TRACEABILITY_SNAPSHOT.md
 
 $ErrorActionPreference = "Stop"
-
-function Run-Git([string[]]$args) {
-  $out = & git @args 2>&1
-  return ($out | Out-String).TrimEnd()
+# PS7: don't treat native stderr as PowerShell errors
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -Scope Global -ErrorAction SilentlyContinue) {
+  $global:PSNativeCommandUseErrorActionPreference = $false
 }
+
+function Run-Git([string[]]$GitArgs) {
+  $old = $ErrorActionPreference
+  $ErrorActionPreference = "SilentlyContinue"
+  try {
+    $out = & git @GitArgs 2>&1
+    return ($out | Out-String).TrimEnd()
+  } finally {
+    $ErrorActionPreference = $old
+  }
+}
+
+
 
 function Try-GetRepoRoot {
   # First try via git
@@ -31,7 +43,7 @@ if (-not (Test-Path $repoRoot)) {
   throw "Repo root not found. Computed: $repoRoot"
 }
 
-Set-Location $repoRoot
+Set-Location -LiteralPath $repoRoot
 
 # Paths
 $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss zzz")

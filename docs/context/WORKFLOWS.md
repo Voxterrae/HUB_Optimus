@@ -3,6 +3,15 @@
 ## Qué es “automatización” aquí (en humano)
 Define qué proceso se dispara: tests, build, lint, generación de docs, releases, etc.
 
+---
+
+## Fix encoding / mojibake en docs (PowerShell)
+Cuando veas mojibake (p. ej. Ã, â, ð, Â) en Markdown dentro de `docs/`, ejecuta:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\fix_encoding_docs.ps1 -Path "docs"
+
+```
 ## Checklist PRE-MERGE
 - [ ] Pull de main actualizado
 - [ ] Snapshot de trazabilidad actualizado (`tools/trace_repo.ps1`)
@@ -33,3 +42,7 @@ Define qué proceso se dispara: tests, build, lint, generación de docs, release
 
 ## Regla de cambio
 - Cualquier cambio en `.github/workflows` se documenta en `docs/context/STATUS.md`.
+
+
+---
+

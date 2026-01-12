@@ -1,51 +1,10 @@
-# HUB_Optimus — Name, Marks, and Identity Use
+﻿---
+status: placeholder
+---
 
-## Purpose
-HUB_Optimus must remain resistant to capture, commercialization pressure, and misleading claims of authority.
-This document defines how the name and identity may be used without creating a private “owner” or an institutional choke point.
+# TRADEMARKS.md (missing)
 
-## Terms
-- **Name/Mark**: “HUB_Optimus”, “HUB Optimus”, “HUB-Optimus”, and closely confusing variants.
-- **Official**: material that follows the Kernel and the documented consensus process.
-- **Derivative**: a fork or external implementation that reuses parts of HUB_Optimus.
+This link exists to keep onboarding navigation stable, but the target file was not found at:
+- v1_core\governance\TRADEMARKS.md
 
-## Allowed Uses (without permission)
-You may use the Name/Mark to:
-- refer to this repository and its documents,
-- cite HUB_Optimus in academic/public-interest discussion,
-- build tools that *implement* HUB_Optimus methods,
-- create translations that preserve meaning.
-
-## Prohibited Uses (without permission)
-You may NOT:
-- claim “official” or “certified by HUB_Optimus” status,
-- imply HUB_Optimus is an authority, tribunal, or enforcement body,
-- use the Name/Mark to sell services that suggest endorsement,
-- present a derivative/fork as the canonical system,
-- register the Name/Mark (or confusing variants) in a way that prevents open public use.
-
-## Canonical Identity
-The canonical system is defined by:
-- the Kernel principles,
-- the consensus process record,
-- and the public repository history.
-
-Any derivative must clearly state:
-- it is a derivative,
-- which version it is based on,
-- and what changed.
-
-## Anti-Capture Clause
-No individual (including the originator) may use the Name/Mark to unilaterally alter the system’s identity, roadmap, or consensus rules.
-Public legitimacy requires traceable consensus.
-
-## Good-Faith Enforcement
-If misuse occurs, maintainers/custodians may:
-- request correction of claims,
-- request clearer attribution,
-- request removal of misleading endorsement language.
-
-Custodians do not grant “certification”. They only protect clarity and prevent deception.
-
-## Short Attribution (recommended)
-“Built on the HUB_Optimus framework (open repository). No endorsement implied.”
+TODO: locate the canonical doc and update this stub.

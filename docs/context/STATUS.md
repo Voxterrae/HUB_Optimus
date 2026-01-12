@@ -1,24 +1,18 @@
-# STATUS — fuente de verdad operativa
+### Canonical languages policy (v1)
 
-## Hoy (2026-01-08)
-- Hecho:
-  - [ ] (Ej: Se creó el pack de contexto en /docs/context)
-  - [ ] (Ej: Se hizo merge que activó automatizaciones y hubo reroll)
-- Problemas:
-  - (Ej: Workflows se dispararon y cambiaron README/Docs inesperadamente)
-  - (Ej: Hubo errores en pipeline / actions / outputs)
-- Decisiones:
-  - (Ej: Rollback vía revert, NO reset/force salvo emergencia)
+**v1_core/** (normative spec):
+- **Canonical (source of truth): es**
+- **Reference translation / parity target: en** (kept close, but es wins on conflicts)
 
-## Prioridades (Top 5)
-1) Documentar qué workflow se disparó y por qué.
-2) Checklist pre-merge/pre-deploy para evitar repetir el susto.
-3) Definir “qué es core” vs “docs/simulaciones” vs “legacy”.
-4) Congelar reglas de merge (branch protection / required checks).
-5) Preparar “runbook de rollback” (revert vs reset).
+**docs/** (onboarding & navigation):
+- Priority languages: **es, de, en**
+- Additional languages: ca, fr, ru (structure complete; translation progressive)
 
-## Riesgos / cosas frágiles
-- Cambios en `.github/workflows` pueden modificar el repo “sin que te enteres” (CI generando archivos).
-- Docs multilenguaje pueden desincronizarse si el pipeline regenera contenido.
+**Planned switch (later, not now):**
+- Once en reaches stable parity, we may declare **en as canonical** for a future version (v1.1 or v2).
 
-## Próximo merge/de
+## Next steps
+- [ ] Decidir si REPO_TREE.txt y SNAPSHOT.txt van a git (sí/no) y actuar en consecuencia
+- [ ] Validar/finalizar tools/fix_encoding_docs.ps1 (y documentar uso en WORKFLOWS.md)
+- [ ] Ejecutar link-check (Lychee) localmente o vía GitHub Actions y corregir rotos
+
