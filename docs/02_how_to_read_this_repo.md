@@ -1,4 +1,4 @@
-# How to read this repository — HUB_Optimus
+﻿# How to read this repository â€” HUB_Optimus
 
 This repository is structured by **intent**, not by discipline.
 
@@ -111,6 +111,7 @@ It rewards:
 - clarity
 - verification
 - structural stability over time
+
 
 
 

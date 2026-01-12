@@ -1,5 +1,5 @@
-<!-- TODO: TRANSLATE -->
-# Try a Scenario Ã¢â‚¬â€ HUB_Optimus in practice
+﻿<!-- TODO: TRANSLATE -->
+# Try a Scenario ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â HUB_Optimus in practice
 
 This guide shows how to use HUB_Optimus by example, without reading the full Kernel.
 
@@ -9,7 +9,7 @@ Estimated time: 10-15 minutes.
 
 ---
 
-## Step 1 Ã¢â‚¬â€ Open the scenario template
+## Step 1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Open the scenario template
 
 Open:
 - [../../v1_core/workflow/04_scenario_template.md](../.../../../v1_core/workflow/04_scenario_template.md)
@@ -23,7 +23,7 @@ Just note the structure:
 
 ---
 
-## Step 2 Ã¢â‚¬â€ Scenario 001: Partial Ceasefire (false success)
+## Step 2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Scenario 001: Partial Ceasefire (false success)
 
 Open:
 - [`../../v1_core/workflow/scenario_001_partial_ceasefire.md`](../.../../../v1_core/workflow/scenario_001_partial_ceasefire.md)
@@ -34,7 +34,7 @@ Focus on:
 
 ---
 
-## Step 3 Ã¢â‚¬â€ Scenario 002: Verified Ceasefire (structural success)
+## Step 3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Scenario 002: Verified Ceasefire (structural success)
 
 Open:
 - [../../v1_core/workflow/scenario_002_verified_ceasefire.md](../.../../../v1_core/workflow/scenario_002_verified_ceasefire.md)
@@ -46,7 +46,7 @@ Focus on:
 
 ---
 
-## Step 4 Ã¢â‚¬â€ Compare
+## Step 4 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Compare
 
 Ask yourself:
 - Which scenario reduces future conflict risk?
@@ -54,14 +54,14 @@ Ask yourself:
 - Which looks good today but fails tomorrow?
 
 HUB_Optimus does not ask:
-Ã¢â‚¬Å“Who is right?Ã¢â‚¬Â
+ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œWho is right?ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â
 
 It asks:
-Ã¢â‚¬Å“Which structure survives time?Ã¢â‚¬Â
+ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œWhich structure survives time?ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â
 
 ---
 
-## Step 5 Ã¢â‚¬â€ Learning layer
+## Step 5 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Learning layer
 
 Read:
 - [../../v1_core/workflow/05_meta_learning.md](../.../../../v1_core/workflow/05_meta_learning.md)
@@ -89,6 +89,7 @@ Foundations:
 To contribute:
 - Read [CONTRIBUTING.md](../../CONTRIBUTING.md)
 - Propose a new scenario using the template
+
 
 
 

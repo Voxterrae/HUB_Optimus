@@ -1,5 +1,5 @@
-<!-- TODO: TRANSLATE -->
-# Start Here Ã¢â‚¬â€ HUB_Optimus in 10 minutes
+﻿<!-- TODO: TRANSLATE -->
+# Start Here ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â HUB_Optimus in 10 minutes
 
 ## What is HUB_Optimus?
 HUB_Optimus is an open, integrity-first framework that helps evaluate diplomatic and institutional decisions using:
@@ -28,7 +28,7 @@ HUB_Optimus exists to break that cycle.
 ## Choose your path
 
 **90 seconds (executive):**
-- What this is / isnÃ¯Â¿Â½t: [Kernel](governance/KERNEL.md)
+- What this is / isnÃƒÂ¯Ã‚Â¿Ã‚Â½t: [Kernel](governance/KERNEL.md)
 - How evaluation works: [Evaluation Standard](governance/EVALUATION_STANDARD.md)
 - How scenarios are defined: [Scenario Schema](governance/SCENARIO_SCHEMA.md)
 
@@ -95,8 +95,8 @@ Then try the simulator:
 
 ## Try it (fast test)
 Compare these two scenarios:
-- SCN-001 (unverified ceasefire) Ã¢â€ â€™ destabilizing masked Ã¢â‚¬Å“successÃ¢â‚¬Â
-- SCN-002 (verified + incentives aligned) Ã¢â€ â€™ stabilizing outcome
+- SCN-001 (unverified ceasefire) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ destabilizing masked ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œsuccessÃƒÂ¢Ã¢â€šÂ¬Ã‚Â
+- SCN-002 (verified + incentives aligned) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ stabilizing outcome
 
 Ask:
 - What incentives are rewarded?
@@ -124,6 +124,7 @@ Next phases include:
 - multilingual synchronization,
 - quantitative evaluation model,
 - expanded scenario library.
+
 
 
 
