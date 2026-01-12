@@ -1,17 +1,17 @@
-﻿# Try a Scenario â€” HUB_Optimus in der Praxis
+# Try a Scenario — HUB_Optimus in der Praxis
 
-Dieser Leitfaden zeigt anhand eines Beispiels, wie du HUB_Optimus nutzt, ohne den gesamten Kernel lesen zu mÃ¼ssen.
+Dieser Leitfaden zeigt anhand eines Beispiels, wie du HUB_Optimus nutzt, ohne den gesamten Kernel lesen zu müssen.
 
-Du vergleichst zwei Szenarien, die an der OberflÃ¤che Ã¤hnlich wirken, aber zu sehr unterschiedlichen systemischen Ergebnissen fÃ¼hren.
+Du vergleichst zwei Szenarien, die an der Oberfläche ähnlich wirken, aber zu sehr unterschiedlichen systemischen Ergebnissen führen.
 
-GeschÃ¤tzte Dauer: 10â€“15 Minuten.
+Geschätzte Dauer: 10–15 Minuten.
 
 ---
 
-## Schritt 1 â€” Ã–ffne die Szenario-Vorlage
+## Schritt 1 — Öffne die Szenario-Vorlage
 
-Ã–ffne:
-- [../v1_core/04_scenario_template.md](../v1_core/04_scenario_template.md)
+Öffne:
+- [../v1_core/workflow/04_scenario_template.md](../v1_core/workflow/04_scenario_template.md)
 
 Achte nur auf die Struktur:
 - Kontext
@@ -22,10 +22,10 @@ Achte nur auf die Struktur:
 
 ---
 
-## Schritt 2 â€” Szenario 001: Teilweiser Waffenstillstand (falscher Erfolg)
+## Schritt 2 — Szenario 001: Teilweiser Waffenstillstand (falscher Erfolg)
 
-Ã–ffne:
-- [`../v1_core/scenario_001_partial_ceasefire.md`](../v1_core/scenario_001_partial_ceasefire.md)
+Öffne:
+- [../v1_core/workflow/scenario_001_partial_ceasefire.md](../v1_core/workflow/scenario_001_partial_ceasefire.md)
 
 Fokussiere dich auf:
 - Was behauptet wird vs. was verifiziert wird
@@ -34,60 +34,58 @@ Fokussiere dich auf:
 
 ---
 
-## Schritt 3 â€” Szenario 002: Verifizierter Waffenstillstand (struktureller Erfolg)
+## Schritt 3 — Szenario 002: Verifizierter Waffenstillstand (struktureller Erfolg)
 
-Ã–ffne:
-- [../v1_core/scenario_002_verified_ceasefire.md](../v1_core/scenario_002_verified_ceasefire.md)
+Öffne:
+- [../v1_core/workflow/scenario_002_verified_ceasefire.md](../v1_core/workflow/scenario_002_verified_ceasefire.md)
 
 Fokussiere dich auf:
-- Was sich im Vergleich zu Szenario 001 geÃ¤ndert hat
+- Was sich im Vergleich zu Szenario 001 geändert hat
 - Was gemessen wird statt angenommen
-- Wie zukÃ¼nftiges Risiko reduziert wird
+- Wie zukünftiges Risiko reduziert wird
 
 ---
 
-## Schritt 4 â€” Vergleiche
+## Schritt 4 — Vergleiche
 
 Frag dich:
-- Welches Szenario reduziert das Risiko zukÃ¼nftiger Konflikte?
-- Welches belohnt langfristige StabilitÃ¤t?
+- Welches Szenario reduziert das Risiko zukünftiger Konflikte?
+- Welches belohnt langfristige Stabilität?
 - Welches sieht heute gut aus, scheitert aber morgen?
 
 HUB_Optimus fragt nicht:
-â€žWer hat recht?â€œ
+„Wer hat recht?“
 
 Es fragt:
-â€žWelche Struktur Ã¼berlebt die Zeit?â€œ
+„Welche Struktur überlebt die Zeit?“
 
 ---
 
-## Schritt 5 â€” Learning Layer
+## Schritt 5 — Learning Layer
 
 Lies:
-- [../v1_core/05_meta_learning.md](../v1_core/05_meta_learning.md)
+- [../v1_core/workflow/05_meta_learning.md](../v1_core/workflow/05_meta_learning.md)
 
-Dort wird erklÃ¤rt, wie Muster extrahiert und â€žgemerktâ€œ werden.
+Dort wird erklärt, wie Muster extrahiert und „gemerkt“ werden.
 
 ---
 
 ## Was du gerade getan hast
 
-Du hast Anreize, Verifikation und langfristige StabilitÃ¤t bewertet â€”  
-ohne Vorhersage oder AutoritÃ¤t.
+Du hast Anreize, Verifikation und langfristige Stabilität bewertet —  
+ohne Vorhersage oder Autorität.
 
 Das ist der Kern von HUB_Optimus.
 
 ---
 
-## NÃ¤chste Schritte
+## Nächste Schritte
 
 Grundlagen:
-- [../v1_core/01_base_declaracion.md](../v1_core/01_base_declaracion.md)
-- [../v1_core/02_arquitectura_base.md](../v1_core/02_arquitectura_base.md)
-- [../v1_core/03_flujo_operativo.md](../v1_core/03_flujo_operativo.md)
+- [../v1_core/languages/es/01_base_declaracion.md](../v1_core/languages/es/01_base_declaracion.md)
+- [../v1_core/languages/es/02_arquitectura_base.md](../v1_core/languages/es/02_arquitectura_base.md)
+- [../v1_core/languages/es/03_flujo_operativo.md](../v1_core/languages/es/03_flujo_operativo.md)
 
 Mitmachen:
-- Lies [CONTRIBUTING.md](../../CONTRIBUTING.md)
+- Lies [CONTRIBUTING.md](../CONTRIBUTING.md)
 - Schlage ein neues Szenario mithilfe der Vorlage vor
-
-
