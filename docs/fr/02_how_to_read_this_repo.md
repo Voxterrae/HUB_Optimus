@@ -1,5 +1,5 @@
 <!-- TODO: TRANSLATE -->
-# How to read this repository — HUB_Optimus
+# How to read this repository â€” HUB_Optimus
 
 This repository is structured by **intent**, not by discipline.
 
@@ -25,8 +25,8 @@ without reading the Kernel.
 
 Read:
 - [`docs/03_try_a_scenario.md`](03_try_a_scenario.md)
-- [`v1_core/workflow/scenario_001_partial_ceasefire.md`](v1_core/workflow/scenario_001_partial_ceasefire.md)
-- [`v1_core/workflow/scenario_002_verified_ceasefire.md`](v1_core/workflow/scenario_002_verified_ceasefire.md)
+- [`v1_core/workflow/scenario_001_partial_ceasefire.md`](../../v1_core/workflow/scenario_001_partial_ceasefire.md)
+- [`v1_core/workflow/scenario_002_verified_ceasefire.md`](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
 
 
 Focus on:
@@ -41,9 +41,9 @@ You can stop there and still understand the system.
 ## If you want the theoretical foundation (Kernel)
 
 Read in order:
-1. [v1_core/languages/en/01_base_declaracion.md](v1_core/languages/en/01_base_declaracion.md)
-2. [v1_core/languages/en/02_arquitectura_base.md](v1_core/languages/en/02_arquitectura_base.md)
-3. [v1_core/languages/en/03_flujo_operativo.md](v1_core/languages/en/03_flujo_operativo.md)
+1. [v1_core/languages/en/01_base_declaracion.md](../../v1_core/languages/en/01_base_declaracion.md)
+2. [v1_core/languages/en/02_arquitectura_base.md](../../v1_core/languages/en/02_arquitectura_base.md)
+3. [v1_core/languages/en/03_flujo_operativo.md](../../v1_core/languages/en/03_flujo_operativo.md)
 
 These documents define the **immutable principles** of HUB_Optimus.
 They change rarely and intentionally.
@@ -71,7 +71,7 @@ Do not start by changing principles.
 Focus on:
 - v1_core/workflow/
 - scenario classifications
-- learning logic in [05_meta_learning.md](v1_core/workflow/05_meta_learning.md)
+- learning logic in [05_meta_learning.md](../../v1_core/workflow/05_meta_learning.md)
 
 Ask:
 - are incentives visible?
