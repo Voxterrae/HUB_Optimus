@@ -21,3 +21,8 @@ docs/context/I18N_AUDIT.md
 # Generated local snapshots (do not commit)
 docs/context/REPO_TREE.txt
 docs/context/SNAPSHOT.txt
+
+# Local traceability artifacts (generated)
+docs/context/REPO_TREE.txt
+docs/context/SNAPSHOT.txt
+
