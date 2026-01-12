@@ -1,4 +1,4 @@
-﻿# Start Here â€” HUB_Optimus in 10 minutes
+# Start Here — HUB_Optimus in 10 minutes
 
 ## What is HUB_Optimus?
 HUB_Optimus is an open, integrity-first framework that helps evaluate diplomatic and institutional decisions using:
@@ -56,7 +56,7 @@ HUB_Optimus exists to break that cycle.
 2) Read the simulator overview:
 - [../v1_core/workflow/README.md](../v1_core/workflow/README.md)
 
-### If you have 15â€“30 minutes
+### If you have 15–30 minutes
 Read the Kernel (English reference):
 1) [../v1_core/languages/en/01_base_declaracion.md](../v1_core/languages/en/01_base_declaracion.md)
 2) [../v1_core/languages/en/02_arquitectura_base.md](../v1_core/languages/en/02_arquitectura_base.md)
@@ -72,8 +72,8 @@ Then try the simulator:
 
 ## Try it (fast test)
 Compare these two scenarios:
-- SCN-001 (unverified ceasefire) â†’ destabilizing masked â€œsuccessâ€
-- SCN-002 (verified + incentives aligned) â†’ stabilizing outcome
+- SCN-001 (unverified ceasefire) → destabilizing masked “success”
+- SCN-002 (verified + incentives aligned) → stabilizing outcome
 
 Ask:
 - What incentives are rewarded?

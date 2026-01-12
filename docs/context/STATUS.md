@@ -15,3 +15,4 @@
 - [ ] Decidir si REPO_TREE.txt y SNAPSHOT.txt van a git (sí/no) y actuar en consecuencia
 - [ ] Validar/finalizar tools/fix_encoding_docs.ps1 (y documentar uso en WORKFLOWS.md)
 - [ ] Ejecutar link-check (Lychee) localmente o vía GitHub Actions y corregir rotos
+

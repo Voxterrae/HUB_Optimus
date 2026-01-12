@@ -1,5 +1,5 @@
-﻿<!-- TODO: TRANSLATE -->
-# How to read this repository ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â HUB_Optimus
+<!-- TODO: TRANSLATE -->
+# How to read this repository Ã¢â‚¬â€ HUB_Optimus
 
 This repository is structured by **intent**, not by discipline.
 

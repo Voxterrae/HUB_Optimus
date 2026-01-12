@@ -26,3 +26,9 @@ docs/context/SNAPSHOT.txt
 docs/context/REPO_TREE.txt
 docs/context/SNAPSHOT.txt
 
+# Local trace/snapshot artifacts
+docs/context/CONTEXT_BUNDLE.md
+docs/context/context.zip
+docs/context/*SNAPSHOT*.md
+docs/context/*REPO_TREE*.txt
+docs/context/*SNAPSHOT*.txt
