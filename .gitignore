@@ -17,3 +17,7 @@ docs/context/I18N_AUDIT_*.md
 docs/context/I18N_AUDIT.csv
 docs/context/I18N_AUDIT.md
 
+
+# Generated local snapshots (do not commit)
+docs/context/REPO_TREE.txt
+docs/context/SNAPSHOT.txt

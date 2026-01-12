@@ -10,3 +10,8 @@
 
 **Planned switch (later, not now):**
 - Once en reaches stable parity, we may declare **en as canonical** for a future version (v1.1 or v2).
+
+## Next steps
+- [ ] Decidir si REPO_TREE.txt y SNAPSHOT.txt van a git (sí/no) y actuar en consecuencia
+- [ ] Validar/finalizar tools/fix_encoding_docs.ps1 (y documentar uso en WORKFLOWS.md)
+- [ ] Ejecutar link-check (Lychee) localmente o vía GitHub Actions y corregir rotos
