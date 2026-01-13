@@ -32,3 +32,8 @@ docs/context/context.zip
 docs/context/*SNAPSHOT*.md
 docs/context/*REPO_TREE*.txt
 docs/context/*SNAPSHOT*.txt
+# Traceability artifacts (generated)
+REPO_TREE.txt
+SNAPSHOT.txt
+/docs/context/REPO_TREE.txt
+/docs/context/SNAPSHOT.txt
