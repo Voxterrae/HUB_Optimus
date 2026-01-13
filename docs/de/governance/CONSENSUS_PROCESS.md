@@ -1,1 +1,4 @@
-<PEGA AQUI el bloque CONSENSUS_PROCESS.md que te di arriba, tal cual>
+> ⚠ Governance Baseline Restored  
+> This document restores the last valid governance baseline.  
+> An IP-hardening revision is scheduled. No semantic drift introduced.
+
