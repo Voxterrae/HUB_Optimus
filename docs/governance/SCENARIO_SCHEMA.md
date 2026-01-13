@@ -1,10 +1,3 @@
-﻿---
-status: placeholder
----
-
-# SCENARIO_SCHEMA.md (missing)
-
-This link exists to keep onboarding navigation stable, but the target file was not found at:
-- v1_core\governance\SCENARIO_SCHEMA.md
-
-TODO: locate the canonical doc and update this stub.
+﻿> ⚠ Governance Baseline Restored  
+> This document restores the last valid governance baseline.  
+> An IP-hardening revision is scheduled. No semantic drift introduced.
