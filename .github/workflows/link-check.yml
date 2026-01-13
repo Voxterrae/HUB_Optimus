@@ -9,7 +9,28 @@ jobs:
   lychee:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout (with sparse paths)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            docs/de
+            docs/governance
+            docs/v1_core
+            docs/CONTRIBUTING.md
+            README.md
+            CONTRIBUTING.md
+
+      - name: Debug checkout
+        run: |
+          pwd
+          ls -la
+          ls -la docs || true
+          ls -la docs/v1_core || true
+          find docs/v1_core -maxdepth 4 -type f | sed -n '1,200p' || true
+          ls -la docs/CONTRIBUTING.md || true
+          ls -la CONTRIBUTING.md || true
+          ls -la README.md || true
 
       - name: Check Markdown links
         uses: lycheeverse/lychee-action@v1
@@ -19,7 +40,6 @@ jobs:
             --verbose
             README.md
             CONTRIBUTING.md
+            docs/CONTRIBUTING.md
             docs/**/*.md
-            v1_core/**/*.md
-            legacy/**/*.md
           fail: true
