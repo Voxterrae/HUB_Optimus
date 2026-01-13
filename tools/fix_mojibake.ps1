@@ -1,28 +1,63 @@
-﻿param(
-  [Parameter(Mandatory=$true)]
-  [string]$Path
+param(
+  [string]$Path = "docs"
 )
 
-$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-$cp1252    = [System.Text.Encoding]::GetEncoding(1252)
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
 
-$files = Get-ChildItem -Path $Path -Recurse -File -Filter *.md
+function WriteUtf8NoBom([string]$file, [string]$content) {
+  $enc = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($file, $content, $enc)
+}
 
-foreach($f in $files){
-  $p = $f.FullName
-  $txt = Get-Content -LiteralPath $p -Raw
+# Detect typical mojibake markers using char codes (ASCII-safe)
+$badChars = @(
+  [char]0x00C3,  # ?
+  [char]0x00C2,  # ?
+  [char]0x00E2,  # ?
+  [char]0xFFFD   # replacement char
+)
 
-  # Detect typical mojibake / replacement char
-  $hasBad = ($txt -match "[ÃÂâ€”â€“â€™â€œâ€ðŸ]" -or $txt -match [regex]::Escape([string][char]0xFFFD))
+function BadScore([string]$s) {
+  $n = 0
+  foreach ($c in $badChars) {
+    $n += ([regex]::Matches($s, [regex]::Escape([string]$c))).Count
+  }
+  return $n
+}
 
-  if(-not $hasBad){ continue }
+if (!(Test-Path $Path)) { throw "Path not found: $Path" }
 
-  # Fix: reinterpret current text as CP1252 bytes, decode as UTF-8
-  $bytes = $cp1252.GetBytes($txt)
-  $fixed = [System.Text.Encoding]::UTF8.GetString($bytes)
+$files = @()
+if (Test-Path $Path -PathType Leaf) {
+  $files = @((Resolve-Path $Path).Path)
+} else {
+  $files = Get-ChildItem -Recurse $Path -File -Include *.md,*.txt,*.html | Select-Object -ExpandProperty FullName
+}
 
-  if($fixed -ne $txt){
-    [System.IO.File]::WriteAllText($p, $fixed, $utf8NoBom)
-    Write-Host "FIXED: $p"
+$latin1 = [System.Text.Encoding]::GetEncoding("ISO-8859-1")
+$utf8   = [System.Text.Encoding]::UTF8
+
+$fixed = 0
+foreach ($f in $files) {
+  $bytes = [System.IO.File]::ReadAllBytes($f)
+  $txt = $utf8.GetString($bytes)
+
+  $before = BadScore $txt
+  if ($before -eq 0) { continue }
+
+  # Undo mojibake: interpret current text as latin1 bytes -> decode as utf8
+  $candidate = $utf8.GetString($latin1.GetBytes($txt))
+
+  # Normalize NBSP to space
+  $candidate = $candidate.Replace([char]0x00A0, " ")
+
+  $after = BadScore $candidate
+  if ($after -lt $before) {
+    WriteUtf8NoBom $f $candidate
+    $fixed++
+    Write-Host ("FIXED: {0} (bad {1} -> {2})" -f $f, $before, $after)
   }
 }
+
+Write-Host ("SUMMARY: FIXED={0}" -f $fixed)

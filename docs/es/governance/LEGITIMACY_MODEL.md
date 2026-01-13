@@ -1,70 +1,63 @@
-# HUB_Optimus — Modelo de Legitimidad
+# HUB_Optimus — Legitimacy Model
 
-## Pregunta Central
-¿Por qué una parte debería aceptar o referenciar HUB_Optimus si no tiene autoridad, ni poder coercitivo, ni propietario?
+## Core Question
+How can a system without authority, coercion, or enforcement be considered legitimate?
 
-## Principio
-La legitimidad surge de la **calidad del proceso**, no del poder.
+HUB_Optimus answers this by shifting legitimacy from power to structure.
 
-HUB_Optimus es legítimo porque:
-- hace explícitos los supuestos,
-- expone límites de verificación,
-- preserva registros neutrales,
-- y resiste la captura.
+## Source of Legitimacy
+HUB_Optimus derives legitimacy from:
+- transparency of assumptions,
+- verifiability of claims,
+- incentive-aligned reasoning,
+- traceable consensus,
+- and preservation of deliberative record.
 
-## Fuentes de Legitimidad
+Legitimacy is procedural, not positional.
 
-### 1. Transparencia Estructural
-Toda evaluación expone:
-- supuestos,
-- clases de evidencia,
-- incógnitas,
-- y modos de fallo.
+## What HUB_Optimus Does Not Rely On
+It does NOT rely on:
+- legal authority,
+- political mandate,
+- moral superiority,
+- institutional backing,
+- or enforcement capacity.
 
-Nada esencial queda oculto.
+## Structural Credibility
+A system gains credibility when:
+- its rules are explicit,
+- its evaluations are reproducible,
+- objections are recorded rather than silenced,
+- and manipulation is structurally constrained.
 
-### 2. Verificabilidad sobre Autoridad
-La confianza se asigna a estructuras, no a personas.
-Las afirmaciones pesan solo por sus mecanismos de verificación.
+## Voluntary Adoption
+Actors engage with HUB_Optimus voluntarily because:
+- it reduces ambiguity,
+- it exposes hidden risk,
+- it clarifies incentive misalignment,
+- and it creates a shared analytical baseline.
 
-### 3. Neutralidad de Resultado
-HUB_Optimus no recomienda acciones ni resultados.
-Esta neutralidad permite que partes adversarias usen el mismo análisis.
+## Comparison to Traditional Legitimacy
+Traditional systems claim legitimacy through authority.
+HUB_Optimus earns legitimacy through **predictable integrity**.
 
-### 4. Diseño Anti-Captura
-Ningún actor controla:
-- las reglas,
-- la identidad,
-- ni la hoja de ruta.
+## Failure Tolerance
+HUB_Optimus does not claim correctness.
+It claims:
+- errors are visible,
+- reasoning is inspectable,
+- and improvement is possible without erasing history.
 
-La legitimidad no puede privatizarse.
+## Anti-Capture Safeguard
+Legitimacy cannot be privatized.
+Any attempt to assert ownership, authority, or exclusive representation undermines legitimacy and is structurally rejected.
 
-### 5. Consenso Trazable
-Los cambios siguen un proceso de consenso documentado.
-Los desacuerdos permanecen visibles en lugar de borrarse.
+## Long-Term Trust
+Trust accumulates over time through:
+- consistent application of rules,
+- survival of scrutiny,
+- and demonstrated resistance to manipulation.
 
-### 6. Alineación Reputacional
-Los participantes ganan credibilidad al:
-- someterse a las mismas reglas de evaluación,
-- aceptar exposición explícita de riesgos,
-- y permitir escrutinio.
-
-## Qué NO es la Legitimidad
-- No es autoridad legal
-- No es superioridad moral
-- No es poder de ejecución
-- No es popularidad
-
-## Condiciones de Fallo
-La legitimidad se degrada si:
-- se viola el Kernel,
-- se alteran u ocultan registros,
-- se compromete la neutralidad,
-- o se produce captura.
-
-## Adopción Externa
-Las instituciones pueden referenciar HUB_Optimus sin delegar autoridad.
-El uso implica **alineación voluntaria**, no subordinación.
-
-## Resumen
-HUB_Optimus es legítimo porque aporta claridad donde el poder suele oscurecerla.
+## Summary
+HUB_Optimus is legitimate not because it commands,
+but because it **cannot easily lie, hide, or coerce**.

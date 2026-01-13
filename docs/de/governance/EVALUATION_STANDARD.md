@@ -1,45 +1,72 @@
-# HUB_Optimus — Evaluationsstandard
+# HUB_Optimus — Evaluation Standard
 
-## Zweck
-Dieses Dokument definiert das kanonische Format, um Entscheidungen/Ergebnisse systemisch zu bewerten.
-Es schützt vor „Optik-Siegen“ und erzwingt Struktur: Anreize, Verifizierbarkeit, Lock-in, Korrekturfester.
+## Purpose
+This document defines the minimum structure required for an evaluation to be considered compatible with HUB_Optimus.
 
-## Kernfragen (fix)
-1) Reduziert es zukünftiges Risiko?
-2) Erhöht es mittel-/langfristige Stabilität?
-3) Erzeugt es Lock-in / blockiert es künftige Korrekturen?
-4) Korrigiert es Anreize oder verstärkt es Fehlanreize?
-5) Ist es verifizierbar (Akteur, Methode, Zugriff, Frequenz)?
+It standardizes *how* analysis is expressed, not *what* conclusions are reached.
 
-## Ergebnis-Typen (operativ)
-- **Stabilisierend:** Risiko ↓, Stabilität ↑, verifizierbar, Anreize ausgerichtet.
-- **Destabilisierend (maskiert):** wirkt wie Erfolg, erhöht aber Risiko/Fehlanreize.
-- **Neutral / transient:** begrenzter Nutzen, stark kontextabhängig.
-- **Nicht bewertbar:** Definitionen/Metriken/Mechanismen fehlen.
+## Core Rule
+An evaluation is valid only if assumptions, risks, incentives, and verification limits are explicit.
 
-## Mindeststruktur für eine Evaluation
-- **Trigger / Entscheidung / Ereignis**
-- **Kontext (kurz)**
-- **Anreizkarte (wer wird wofür belohnt/bestraft?)**
-- **Verifizierbarkeit (Trust Layer)**
-- **Systemische Bewertung (Kernfragen)**
-- **Historischer Abgleich (Active Memory, wenn verfügbar)**
-- **Kernel-Kohärenzcheck**
-- **Korrekturoptionen (wenn Fenster offen)**
-- **Klassifikation + Begründung**
+Hidden assumptions invalidate trust.
 
-## Metriken (minimal)
-Wähle 3–5 und halte sie über Iterationen stabil:
-- Klarheit (0–5)
-- Verifizierbarkeit (0–5)
-- Viabilität (0–5)
-- Zeit bis Entwurf (Min)
-- Offene Punkte (Anzahl)
+## Required Sections
 
-## Zitierpflicht (Evidenz)
-Wenn möglich, referenziere:
-- Evidenzklasse (A/B/C),
-- Trust-Profil-Dimensionen,
-- Datenquelle oder Prüfpfad.
+### 1. Scenario Definition
+- Parties involved
+- Time horizon
+- Scope (what is included / excluded)
 
-Narrativ ohne Prüfpfad wird nicht hochgestuft.
+### 2. Stated Objectives
+- Declared goals of each party
+- Conflicting or incompatible objectives must be noted
+
+### 3. Constraints
+- Legal constraints
+- Political constraints
+- Material or operational constraints
+
+### 4. Incentive Structure
+- Short-term incentives
+- Long-term incentives
+- Misalignment risks
+
+### 5. Trust Layer Classification
+- Evidence class (A / B / C)
+- Verification mechanisms
+- Structural trust level
+
+### 6. Risk Vectors
+- Escalation risk
+- Lock-in risk
+- Reversibility risk
+- Precedent risk
+
+### 7. Failure Modes
+- How the scenario could fail
+- Early warning signals
+
+### 8. Stability Assessment
+- Conditions under which stability improves
+- Conditions under which instability increases
+
+### 9. Explicit Unknowns
+- Known unknowns
+- Areas requiring additional data
+
+## Prohibited Content
+Evaluations must NOT:
+- assign moral blame,
+- declare winners or losers,
+- predict behavior as certainty,
+- appeal to authority or urgency.
+
+## Outcome Neutrality
+HUB_Optimus evaluations do not recommend actions.
+They clarify consequences and structural risk.
+
+## Reviewability
+Any evaluation must be:
+- reproducible,
+- challengeable section by section,
+- improvable via consensus.

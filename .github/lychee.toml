@@ -1,0 +1,5 @@
+﻿verbose = "warn"
+no_progress = true
+max_retries = 2
+timeout = 20
+exclude = ["^mailto:","^tel:","^#"]

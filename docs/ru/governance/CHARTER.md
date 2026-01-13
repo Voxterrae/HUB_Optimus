@@ -1,53 +1,53 @@
-# HUB_Optimus — Carta Fundacional
+# HUB_Optimus — Charter
 
-## Naturaleza del Sistema
-HUB_Optimus es un sistema internacional, no soberano y no corporativo para la evaluación estructurada de escenarios, acuerdos y decisiones diplomáticas.
+## Nature of the System
+HUB_Optimus is an international, non-sovereign, non-corporate system for the structured evaluation of diplomatic scenarios, agreements, and decisions.
 
-Está diseñado para mejorar cómo se evalúan decisiones **antes de que la escalada sea irreversible**.
+It is designed to improve how decisions are evaluated **before escalation becomes irreversible**.
 
-## Misión
-Proporcionar un marco verificable y alineado con incentivos que:
-- haga explícitos los supuestos,
-- distinga compromisos verificables de afirmaciones no verificables,
-- revele riesgos de escalada y bloqueo (lock-in) de forma temprana,
-- y preserve un registro neutral del razonamiento.
+## Mission
+To provide a verifiable, incentive-aligned framework that:
+- makes assumptions explicit,
+- distinguishes verifiable commitments from non-verifiable claims,
+- surfaces escalation and lock-in risks early,
+- and preserves a neutral record of reasoning.
 
-## Qué ES HUB_Optimus
-- Un marco de evaluación estructurada.
-- Un “lenguaje común” para definir escenarios y analizar riesgos.
-- Un método para reducir manipulación y ambigüedad haciendo explícita la verificación.
+## What HUB_Optimus is
+- A structured evaluation framework.
+- A shared “language” for scenario definition and analysis.
+- A method to reduce uncertainty and manipulation by making verification explicit.
 
-## Qué NO ES HUB_Optimus
-- No es un oráculo predictivo.
-- No es una autoridad de decisión.
-- No es propaganda.
-- No es un tribunal que asigna culpa personal.
-- No es una herramienta de coerción o ejecución.
+## What HUB_Optimus is NOT
+- Not a predictive oracle.
+- Not a decision authority.
+- Not propaganda.
+- Not a tribunal assigning personal blame.
+- Not a coercive enforcement tool.
 
-## Documentos Núcleo de Gobernanza
-Esta Carta se implementa mediante:
+## Core Governance Documents
+This Charter is implemented through:
 - Kernel: [KERNEL.md](KERNEL.md)
-- Proceso de Consenso: [CONSENSUS_PROCESS.md](CONSENSUS_PROCESS.md)
-- Custodia: [CUSTODIANSHIP.md](CUSTODIANSHIP.md)
-- Capa de Confianza: [TRUST_LAYER.md](TRUST_LAYER.md)
-- Estándar de Evaluación: [EVALUATION_STANDARD.md](EVALUATION_STANDARD.md)
-- Esquema de Escenarios: [SCENARIO_SCHEMA.md](SCENARIO_SCHEMA.md)
-- Nombre e Identidad: [TRADEMARKS.md](TRADEMARKS.md)
+- Consensus Process: [CONSENSUS_PROCESS.md](CONSENSUS_PROCESS.md)
+- Custodianship: [CUSTODIANSHIP.md](CUSTODIANSHIP.md)
+- Trust Layer: [TRUST_LAYER.md](TRUST_LAYER.md)
+- Evaluation Standard: [EVALUATION_STANDARD.md](EVALUATION_STANDARD.md)
+- Scenario Schema: [SCENARIO_SCHEMA.md](SCENARIO_SCHEMA.md)
+- Name & Identity Use: [TRADEMARKS.md](TRADEMARKS.md)
 
-## Neutralidad y No Ejecución
-HUB_Optimus no impone resultados.
-Mejora la calidad de decisiones al exponer riesgos estructurales, desalineación de incentivos y límites de verificación.
+## Neutrality and Non-Enforcement
+HUB_Optimus does not enforce outcomes.
+It improves decision quality by exposing structural risks, incentive misalignments, and verification limits.
 
-## Principio Anti-Captura
-Ningún individuo, organización o estado puede reclamar autoridad unilateral sobre HUB_Optimus.
-La legitimidad proviene del proceso transparente, del razonamiento registrado y de reglas de consenso.
+## Anti-Capture Principle
+No individual, organization, or state may claim unilateral authority over HUB_Optimus.
+Legitimacy comes from transparent process, recorded reasoning, and consensus rules.
 
-## Versionado e Integridad
-Los cambios deben:
-- proponerse abiertamente,
-- revisarse mediante consenso,
-- registrarse con trazabilidad,
-- y ser compatibles con el Kernel.
+## Versioning and Integrity
+Changes must be:
+- proposed openly,
+- reviewed through the consensus process,
+- recorded with traceability,
+- and consistent with the Kernel.
 
-## Alcance y Adopción
-HUB_Optimus está orientado al uso diplomático internacional y podrá adaptarse a otros dominios (instituciones, empresas, disputas multipartitas) sin perder su naturaleza no coercitiva.
+## Scope and Adoption
+HUB_Optimus is intended for international diplomatic use, and may later be adapted to other domains (institutions, companies, multi-party disputes) without changing its non-coercive nature.

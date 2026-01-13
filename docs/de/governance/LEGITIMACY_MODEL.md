@@ -1,65 +1,63 @@
-@'
-# HUB_Optimus — Legitimitätsmodell (ohne Autorität)
+# HUB_Optimus — Legitimacy Model
 
-## Zweck
-HUB_Optimus beansprucht keine formale Autorität.
-Seine Legitimität entsteht ausschließlich durch nachvollziehbare Kohärenz, überprüfbare Methoden und wiederholbare Ergebnisse.
+## Core Question
+How can a system without authority, coercion, or enforcement be considered legitimate?
 
-Dieses Dokument definiert, wie “Legitimität” im Kontext eines nicht-souveränen, nicht-koerziven Systems zu verstehen ist.
+HUB_Optimus answers this by shifting legitimacy from power to structure.
 
-## Grundannahme
-Legitimität ist keine Zuschreibung durch Rang, Status oder Institution.
-Legitimität ist ein Effekt von:
-- Klarheit der Kriterien,
-- Verifizierbarkeit der Behauptungen,
-- Wiederholbarkeit der Bewertung,
-- und der nachweisbaren Verringerung zukünftiger Risiken.
+## Source of Legitimacy
+HUB_Optimus derives legitimacy from:
+- transparency of assumptions,
+- verifiability of claims,
+- incentive-aligned reasoning,
+- traceable consensus,
+- and preservation of deliberative record.
 
-## 1) Prozess-Legitimität (Process Legitimacy)
-Ein Output gilt als legitim, wenn:
-- die Bewertungsschritte nachvollziehbar sind,
-- die Eingaben und Annahmen explizit sind,
-- und die verwendeten Kriterien mit dem Kernel kompatibel sind.
+Legitimacy is procedural, not positional.
 
-## 2) Evidenz-Legitimität (Evidence Legitimacy)
-Ein Output steigt in Legitimität, wenn:
-- Belege und Quellen transparent referenziert sind,
-- Behauptungen klar von Verpflichtungen getrennt werden,
-- und die Vertrauensklassifikation konsistent angewendet wird.
+## What HUB_Optimus Does Not Rely On
+It does NOT rely on:
+- legal authority,
+- political mandate,
+- moral superiority,
+- institutional backing,
+- or enforcement capacity.
 
-## 3) Ergebnis-Legitimität (Outcome Legitimacy)
-HUB_Optimus bewertet “Erfolg” als messbare Reduktion zukünftiger Risiken
-und Zunahme mittel-/langfristiger Stabilität.
+## Structural Credibility
+A system gains credibility when:
+- its rules are explicit,
+- its evaluations are reproducible,
+- objections are recorded rather than silenced,
+- and manipulation is structurally constrained.
 
-Kurzfristige “Siege”, die langfristige Instabilität erhöhen, sind keine legitimen Erfolge.
+## Voluntary Adoption
+Actors engage with HUB_Optimus voluntarily because:
+- it reduces ambiguity,
+- it exposes hidden risk,
+- it clarifies incentive misalignment,
+- and it creates a shared analytical baseline.
 
-## 4) Anti-Autoritäts-Regel
-HUB_Optimus ist:
-- kein Tribunal,
-- keine Zertifizierungsstelle,
-- keine Durchsetzungsinstanz,
-- kein Ersatz für menschliches Urteil.
+## Comparison to Traditional Legitimacy
+Traditional systems claim legitimacy through authority.
+HUB_Optimus earns legitimacy through **predictable integrity**.
 
-Die Methode schafft Klarheit über Struktur und Konsequenzen; sie ersetzt keine Entscheidungsmacht.
+## Failure Tolerance
+HUB_Optimus does not claim correctness.
+It claims:
+- errors are visible,
+- reasoning is inspectable,
+- and improvement is possible without erasing history.
 
-## 5) Anti-Capture-Kriterium
-Legitimität setzt Widerstand gegen Capture voraus:
-- keine verdeckten Sonderrechte,
-- keine Re-Interpretation des Kernels über Übersetzungen,
-- keine private Aneignung der Identität.
+## Anti-Capture Safeguard
+Legitimacy cannot be privatized.
+Any attempt to assert ownership, authority, or exclusive representation undermines legitimacy and is structurally rejected.
 
-Jede Änderung, die die Kernel-Kompatibilität schwächt, reduziert Legitimität.
+## Long-Term Trust
+Trust accumulates over time through:
+- consistent application of rules,
+- survival of scrutiny,
+- and demonstrated resistance to manipulation.
 
-## 6) Minimaler Legitimitäts-Nachweis (praktisch)
-Ein Dokument/Output gilt als “HUB_Optimus-kompatibel”, wenn es:
-- den Kernel respektiert,
-- Verifizierbarkeit priorisiert,
-- Incentives explizit macht,
-- Annahmen markiert,
-- und die Bewertungsschritte dokumentiert.
-
-## Schluss
-HUB_Optimus wird nicht durch “Anerkennung” legitimiert, sondern durch:
-- wiederholbare, überprüfbare Evaluationen,
-- und die sichtbare Reduktion von Eskalationsrisiken im Zeitverlauf.
-'@ | Set-Content -Encoding utf8 docs\de\governance\LEGITIMACY_MODEL.md
+## Summary
+HUB_Optimus is legitimate not because it commands,
+but because it **cannot easily lie, hide, or coerce**.
