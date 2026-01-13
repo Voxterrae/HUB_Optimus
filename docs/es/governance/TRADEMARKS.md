@@ -1,51 +1,124 @@
-# HUB_Optimus — Nombre, Marca e Identidad
+# HUB_Optimus — Name, Marks, and Identity Use
+<<<<<<< HEAD
 
-## Propósito
-HUB_Optimus debe ser resistente a la captura, a la presión de comercialización y a afirmaciones engañosas de autoridad.
-Este documento define cómo puede usarse el nombre e identidad sin crear un “propietario” privado ni un punto único de control.
+## Purpose
+HUB_Optimus must remain resistant to capture, commercialization pressure, and misleading claims of authority.
+This document defines how the name and identity may be used without creating a private “owner” or an institutional choke point.
 
-## Términos
-- **Nombre/Marca**: “HUB_Optimus”, “HUB Optimus”, “HUB-Optimus” y variantes fácilmente confundibles.
-- **Oficial**: material que respeta el Kernel y el proceso de consenso documentado.
-- **Derivado**: un fork o implementación externa que reutiliza partes de HUB_Optimus.
+## Terms
+- **Name/Mark**: “HUB_Optimus”, “HUB Optimus”, “HUB-Optimus”, and closely confusing variants.
+- **Official**: material that follows the Kernel and the documented consensus process.
+- **Derivative**: a fork or external implementation that reuses parts of HUB_Optimus.
 
-## Usos permitidos (sin permiso)
-Puedes usar el Nombre/Marca para:
-- referirte a este repositorio y sus documentos,
-- citar HUB_Optimus en contextos académicos o de interés público,
-- construir herramientas que *implementen* el método HUB_Optimus,
-- crear traducciones que preserven el significado.
+## Allowed Uses (without permission)
+You may use the Name/Mark to:
+- refer to this repository and its documents,
+- cite HUB_Optimus in academic/public-interest discussion,
+- build tools that *implement* HUB_Optimus methods,
+- create translations that preserve meaning.
 
-## Usos prohibidos (sin permiso)
-NO puedes:
-- afirmar “oficial” o “certificado por HUB_Optimus”,
-- insinuar que HUB_Optimus es una autoridad, tribunal o entidad de ejecución,
-- usar el Nombre/Marca para vender servicios sugiriendo aval o endoso,
-- presentar un derivado/fork como el sistema canónico,
-- registrar el Nombre/Marca (o variantes confusas) de forma que impida su uso público abierto.
+## Prohibited Uses (without permission)
+You may NOT:
+- claim “official” or “certified by HUB_Optimus” status,
+- imply HUB_Optimus is an authority, tribunal, or enforcement body,
+- use the Name/Mark to sell services that suggest endorsement,
+- present a derivative/fork as the canonical system,
+- register the Name/Mark (or confusing variants) in a way that prevents open public use.
 
-## Identidad canónica
-El sistema canónico queda definido por:
-- los principios del Kernel,
-- el registro del proceso de consenso,
-- y el historial público del repositorio.
+## Canonical Identity
+The canonical system is defined by:
+- the Kernel principles,
+- the consensus process record,
+- and the public repository history.
 
-Todo derivado debe indicar claramente:
-- que es derivado,
-- en qué versión se basa,
-- y qué ha cambiado.
+Any derivative must clearly state:
+- it is a derivative,
+- which version it is based on,
+- and what changed.
 
-## Cláusula anti-captura
-Ningún individuo (incluido el originador) puede usar el Nombre/Marca para modificar unilateralmente la identidad del sistema, la hoja de ruta o las reglas de consenso.
-La legitimidad pública requiere consenso trazable.
+## Anti-Capture Clause
+No individual (including the originator) may use the Name/Mark to unilaterally alter the system’s identity, roadmap, or consensus rules.
+Public legitimacy requires traceable consensus.
 
-## Aplicación de buena fe
-Si ocurre un mal uso, los mantenedores/custodios pueden:
-- solicitar corrección de afirmaciones,
-- solicitar mejor atribución,
-- solicitar retirada de lenguaje engañoso de endoso.
+## Good-Faith Enforcement
+If misuse occurs, maintainers/custodians may:
+- request correction of claims,
+- request clearer attribution,
+- request removal of misleading endorsement language.
 
-Los custodios no otorgan “certificación”. Solo protegen la claridad y previenen el engaño.
+Custodians do not grant “certification”. They only protect clarity and prevent deception.
 
-## Atribución corta (recomendada)
-“Basado en el marco HUB_Optimus (repositorio abierto). Sin endoso implícito.”
+## Short Attribution (recommended)
+“Built on the HUB_Optimus framework (open repository). No endorsement implied.”
+
+---
+
+## Usage Policy (Trademark & Naming)
+
+### Allowed
+- Referencing HUB_Optimus as a framework, with clear citation.
+- Academic and public-interest discussion without implying endorsement.
+
+### Not allowed without written permission
+- Using HUB_Optimus name or logo to market products/services.
+- “Powered by HUB_Optimus”, “HUB_Optimus certified”, or similar endorsement language.
+- Naming a fork or derivative work “HUB_Optimus” or using confusingly similar branding.
+- Misleading “compatibility” claims that imply governance alignment.
+=======
+
+## Purpose
+HUB_Optimus must remain resistant to capture, commercialization pressure, and misleading claims of authority.
+This document defines how the name and identity may be used without creating a private “owner” or an institutional choke point.
+
+## Terms
+- **Name/Mark**: “HUB_Optimus”, “HUB Optimus”, “HUB-Optimus”, and closely confusing variants.
+- **Official**: material that follows the Kernel and the documented consensus process.
+- **Derivative**: a fork or external implementation that reuses parts of HUB_Optimus.
+>>>>>>> 8ad5dd5 (chore(governance): restore full governance content from last valid baseline)
+
+## Allowed Uses (without permission)
+You may use the Name/Mark to:
+- refer to this repository and its documents,
+- cite HUB_Optimus in academic/public-interest discussion,
+- build tools that *implement* HUB_Optimus methods,
+- create translations that preserve meaning.
+
+<<<<<<< HEAD
+### Enforcement
+Unauthorized use constitutes trademark infringement and may trigger legal action.
+
+=======
+## Prohibited Uses (without permission)
+You may NOT:
+- claim “official” or “certified by HUB_Optimus” status,
+- imply HUB_Optimus is an authority, tribunal, or enforcement body,
+- use the Name/Mark to sell services that suggest endorsement,
+- present a derivative/fork as the canonical system,
+- register the Name/Mark (or confusing variants) in a way that prevents open public use.
+
+## Canonical Identity
+The canonical system is defined by:
+- the Kernel principles,
+- the consensus process record,
+- and the public repository history.
+
+Any derivative must clearly state:
+- it is a derivative,
+- which version it is based on,
+- and what changed.
+
+## Anti-Capture Clause
+No individual (including the originator) may use the Name/Mark to unilaterally alter the system’s identity, roadmap, or consensus rules.
+Public legitimacy requires traceable consensus.
+
+## Good-Faith Enforcement
+If misuse occurs, maintainers/custodians may:
+- request correction of claims,
+- request clearer attribution,
+- request removal of misleading endorsement language.
+
+Custodians do not grant “certification”. They only protect clarity and prevent deception.
+
+## Short Attribution (recommended)
+“Built on the HUB_Optimus framework (open repository). No endorsement implied.”
+>>>>>>> 8ad5dd5 (chore(governance): restore full governance content from last valid baseline)

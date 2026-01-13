@@ -87,9 +87,9 @@ Das ist der Kern von HUB_Optimus.
 
 Grundlagen:
 
-- [../v1_core/languages/es/01_base_declaracion.md](../v1_core/languages/es/01_base_declaracion.md)
-- [../v1_core/languages/es/02_arquitectura_base.md](../v1_core/languages/es/02_arquitectura_base.md)
-- [../v1_core/languages/es/03_flujo_operativo.md](../v1_core/languages/es/03_flujo_operativo.md)
+- [../v1_core/01_base_declaracion.md](../v1_core/01_base_declaracion.md)
+- [../v1_core/02_arquitectura_base.md](../v1_core/02_arquitectura_base.md)
+- [../v1_core/03_flujo_operativo.md](../v1_core/03_flujo_operativo.md)
 =======
 - [../v1_core/01_base_declaracion.md](../v1_core/01_base_declaracion.md)
 - [../v1_core/02_arquitectura_base.md](../v1_core/02_arquitectura_base.md)
@@ -99,5 +99,6 @@ Grundlagen:
 Mitmachen:
 - Lies [CONTRIBUTING.md](../../CONTRIBUTING.md)
 - Schlage ein neues Szenario mithilfe der Vorlage vor
+
 
 

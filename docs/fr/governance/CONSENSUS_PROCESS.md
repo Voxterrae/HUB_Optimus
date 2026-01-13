@@ -1,64 +1,64 @@
-# HUB_Optimus — Proceso de Consenso
+# HUB_Optimus — Consensus Process
 
-## Propósito
-Este documento define cómo se proponen, revisan y adoptan cambios en los documentos de HUB_Optimus.
+## Purpose
+This document defines how changes to HUB_Optimus documents are proposed, reviewed, and adopted.
 
-El consenso se utiliza para evitar captura unilateral y preservar la legitimidad mediante acuerdos trazables.
+Consensus is used to prevent unilateral capture and to preserve system legitimacy through traceable agreement.
 
-## Definiciones
-- **Propuesta**: solicitud documentada de cambio (texto + justificación).
-- **Objeción**: argumento razonado de que la propuesta viola el Kernel, reduce neutralidad, debilita verificabilidad o introduce riesgo de captura.
-- **Objeción sostenida**: objeción no resuelta tras intentos de revisión de buena fe.
-- **Consenso**: adopción tras revisión cuando no quedan objeciones sostenidas.
+## Definitions
+- **Proposal**: a documented change request (text + rationale).
+- **Objection**: a reasoned statement that a proposal violates the Kernel, reduces neutrality, weakens verifiability, or introduces capture risk.
+- **Sustained objection**: an objection that remains unresolved after good-faith revision attempts.
+- **Consensus**: adoption after review when no sustained objections remain.
 
-## Visión General del Proceso
+## Process Overview
 
-### Paso 1 — Borrador
-La propuesta se presenta con:
-- descripción clara de cambios,
-- justificación e impacto esperado,
-- referencia a secciones afectadas,
-- declaración de compatibilidad con el Kernel.
+### Step 1 — Draft
+A proposal is submitted with:
+- a clear description of changes,
+- rationale and expected impact,
+- references to affected sections,
+- compatibility statement with the Kernel.
 
-### Paso 2 — Ventana de Revisión
-Se abre una ventana de revisión definida (con tiempo limitado).
-Los participantes pueden:
-- pedir aclaraciones,
-- sugerir mejoras,
-- plantear objeciones (deben ser razonadas).
+### Step 2 — Review Window
+A defined review window is opened (timeboxed).
+Participants may:
+- ask clarifying questions,
+- suggest improvements,
+- raise objections (must be reasoned).
 
-### Paso 3 — Gestión de Objeciones (Buena Fe)
-Si hay objeciones, la persona proponente debe:
-- responder directamente,
-- revisar la propuesta, o
-- documentar por qué la objeción no aplica.
+### Step 3 — Objection Handling (Good Faith)
+If objections are raised, the proposer must:
+- address the objection directly,
+- revise the proposal, or
+- document why the objection is out of scope.
 
-Las objeciones deben referenciar:
-- principios del Kernel, o
-- problemas de verificabilidad/confianza, o
-- riesgos de neutralidad/anti-captura.
+Objections must reference:
+- Kernel principles, or
+- verifiability/trust issues, or
+- anti-capture/neutrality risks.
 
-### Paso 4 — Resolución
-Una propuesta puede adoptarse si:
-- las objeciones se resolvieron mediante revisiones, o
-- las objeciones se retiraron, o
-- existe registro claro de respuesta sin conflicto con el Kernel.
+### Step 4 — Resolution
+A proposal may be adopted if:
+- objections were resolved through revision, or
+- objections were withdrawn, or
+- a clear record shows objections were answered without Kernel conflict.
 
-Si quedan objeciones sostenidas, la propuesta no se adopta.
+If sustained objections remain, the proposal is not adopted.
 
-### Paso 5 — Ratificación y Registro
-Las propuestas adoptadas deben:
-- integrarse con un commit trazable,
-- registrarse con un resumen breve,
-- enlazarse a notas/discusión si aplica.
+### Step 5 — Ratification and Record
+Adopted proposals must be:
+- merged with a traceable commit,
+- recorded with a short change summary,
+- linked to discussion/notes where applicable.
 
-## Regla Especial: Cambios en Reglas de Gobernanza
-Cualquier cambio a:
-- Kernel,
-- reglas de consenso,
-- reglas de custodia,
-requiere escrutinio reforzado y justificación explícita de compatibilidad.
+## Special Rule: Changes to Governance Rules
+Any change to:
+- the Kernel,
+- consensus rules,
+- custodianship rules,
+requires heightened scrutiny and explicit compatibility justification.
 
-## Cláusula de No Autoridad
-El consenso no crea autoridad sobre resultados.
-Solo gobierna la integridad de documentos y procesos del sistema.
+## Non-Authority Clause
+Consensus does not create authority over outcomes.
+It only governs the integrity of the system’s documents and processes.

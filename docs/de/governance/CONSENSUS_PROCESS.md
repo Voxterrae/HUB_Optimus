@@ -1,51 +1,64 @@
-# HUB_Optimus — Konsensprozess
+# HUB_Optimus — Consensus Process
 
-## Zweck
-Dieser Prozess definiert, wie Governance-Änderungen vorgeschlagen, diskutiert, entschieden und protokolliert werden.
-Ziel ist Nachvollziehbarkeit, Drift-Vermeidung und Schutz vor Capture.
+## Purpose
+This document defines how changes to HUB_Optimus documents are proposed, reviewed, and adopted.
 
-## Geltungsbereich
-Der Konsensprozess gilt für:
-- Governance-Dokumente,
-- Prozessregeln,
-- Kernel-nahe Änderungen.
+Consensus is used to prevent unilateral capture and to preserve system legitimacy through traceable agreement.
 
-Er gilt NICHT für:
-- reine Übersetzungs-/Formatkorrekturen ohne Bedeutungsänderung.
+## Definitions
+- **Proposal**: a documented change request (text + rationale).
+- **Objection**: a reasoned statement that a proposal violates the Kernel, reduces neutrality, weakens verifiability, or introduces capture risk.
+- **Sustained objection**: an objection that remains unresolved after good-faith revision attempts.
+- **Consensus**: adoption after review when no sustained objections remain.
 
-## Prinzipien
-- **Transparenz:** Vorschläge und Einwände sind sichtbar.
-- **Begründungspflicht:** Änderungen müssen mit Kernel-Prinzipien begründet werden.
-- **Nachvollziehbarkeit:** Entscheidungen müssen dokumentiert werden.
-- **Drift-Block:** Änderungen, die Bedeutung verwässern oder Capture ermöglichen, werden zurückgewiesen.
+## Process Overview
 
-## Ablauf (Standard)
-1) **Vorschlag**
-   - klare Beschreibung: was ändert sich?
-   - warum (Kernel-/Stabilitätsbezug)?
-   - erwartete Auswirkungen / Risiken
+### Step 1 — Draft
+A proposal is submitted with:
+- a clear description of changes,
+- rationale and expected impact,
+- references to affected sections,
+- compatibility statement with the Kernel.
 
-2) **Review-Phase**
-   - Einwände, Alternativen, Präzisierungen
-   - Fokus: Verifizierbarkeit, Anreize, Lock-in-Risiko, Klarheit
+### Step 2 — Review Window
+A defined review window is opened (timeboxed).
+Participants may:
+- ask clarifying questions,
+- suggest improvements,
+- raise objections (must be reasoned).
 
-3) **Entscheidung**
-   - dokumentierter Ausgang: angenommen / abgelehnt / zurück zur Überarbeitung
-   - Begründung kurz und prüfbar
+### Step 3 — Objection Handling (Good Faith)
+If objections are raised, the proposer must:
+- address the objection directly,
+- revise the proposal, or
+- document why the objection is out of scope.
 
-4) **Protokoll**
-   - Referenz auf PR/Commit
-   - zusammengefasste Einwände + Auflösung
+Objections must reference:
+- Kernel principles, or
+- verifiability/trust issues, or
+- anti-capture/neutrality risks.
 
-## Mindestanforderungen
-Eine Änderung ist ungültig, wenn:
-- sie nicht begründet ist,
-- sie Definitionsdrift einführt,
-- sie Verifizierbarkeit/Anreiz-Logik untergräbt,
-- sie Übersetzung als Hintertür nutzt.
+### Step 4 — Resolution
+A proposal may be adopted if:
+- objections were resolved through revision, or
+- objections were withdrawn, or
+- a clear record shows objections were answered without Kernel conflict.
 
-## Sprach-Synchronisierung
-Bei Governance-Änderungen:
-- canonical Version aktualisieren,
-- Übersetzungen synchronisieren (Meaning 1:1),
-- Drift ist nicht zulässig.
+If sustained objections remain, the proposal is not adopted.
+
+### Step 5 — Ratification and Record
+Adopted proposals must be:
+- merged with a traceable commit,
+- recorded with a short change summary,
+- linked to discussion/notes where applicable.
+
+## Special Rule: Changes to Governance Rules
+Any change to:
+- the Kernel,
+- consensus rules,
+- custodianship rules,
+requires heightened scrutiny and explicit compatibility justification.
+
+## Non-Authority Clause
+Consensus does not create authority over outcomes.
+It only governs the integrity of the system’s documents and processes.
