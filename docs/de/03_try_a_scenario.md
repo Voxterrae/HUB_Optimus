@@ -24,8 +24,12 @@ Achte nur auf die Struktur:
 
 ## Schritt 2 â€” Szenario 001: Teilweiser Waffenstillstand (falscher Erfolg)
 
+Öffne:
+- [../v1_core/workflow/scenario_001_partial_ceasefire.md](../v1_core/workflow/scenario_001_partial_ceasefire.md)
+=======
 Ã–ffne:
 - [`../v1_core/scenario_001_partial_ceasefire.md`](../v1_core/scenario_001_partial_ceasefire.md)
+>>>>>>> e892df9 (docs(de): fix broken v1_core and contributing links)
 
 Fokussiere dich auf:
 - Was behauptet wird vs. was verifiziert wird
@@ -82,9 +86,15 @@ Das ist der Kern von HUB_Optimus.
 ## NÃ¤chste Schritte
 
 Grundlagen:
+
+- [../v1_core/languages/es/01_base_declaracion.md](../v1_core/languages/es/01_base_declaracion.md)
+- [../v1_core/languages/es/02_arquitectura_base.md](../v1_core/languages/es/02_arquitectura_base.md)
+- [../v1_core/languages/es/03_flujo_operativo.md](../v1_core/languages/es/03_flujo_operativo.md)
+=======
 - [../v1_core/01_base_declaracion.md](../v1_core/01_base_declaracion.md)
 - [../v1_core/02_arquitectura_base.md](../v1_core/02_arquitectura_base.md)
 - [../v1_core/03_flujo_operativo.md](../v1_core/03_flujo_operativo.md)
+
 
 Mitmachen:
 - Lies [CONTRIBUTING.md](../../CONTRIBUTING.md)
