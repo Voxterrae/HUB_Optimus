@@ -1,4 +1,2 @@
-﻿# HUB_Optimus — Legacy Workflow Target
-
+﻿# Legacy link target
 This file exists to preserve backward-compatible links.
-Canonical content has been reorganized. Please navigate via docs start pages.
