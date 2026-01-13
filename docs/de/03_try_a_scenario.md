@@ -1,104 +1,93 @@
-<!-- TODO: TRANSLATE -->
-# Try a Scenario Ã¢â‚¬â€ HUB_Optimus in practice
+﻿# Try a Scenario â€” HUB_Optimus in der Praxis
 
-This guide shows how to use HUB_Optimus by example, without reading the full Kernel.
+Dieser Leitfaden zeigt anhand eines Beispiels, wie du HUB_Optimus nutzt, ohne den gesamten Kernel lesen zu mÃ¼ssen.
 
-You will compare two scenarios that look similar on the surface but lead to very different systemic outcomes.
+Du vergleichst zwei Szenarien, die an der OberflÃ¤che Ã¤hnlich wirken, aber zu sehr unterschiedlichen systemischen Ergebnissen fÃ¼hren.
 
-Estimated time: 10-15 minutes.
-
----
-
-## Step 1 Ã¢â‚¬â€ Open the scenario template
-
-Open:
-- [../../v1_core/workflow/04_scenario_template.md](../.../../../v1_core/workflow/04_scenario_template.md)
-
-Just note the structure:
-- Context
-- Incentives
-- Verification
-- Systemic impact
-- Classification
+GeschÃ¤tzte Dauer: 10â€“15 Minuten.
 
 ---
 
-## Step 2 Ã¢â‚¬â€ Scenario 001: Partial Ceasefire (false success)
+## Schritt 1 â€” Ã–ffne die Szenario-Vorlage
 
-Open:
-- [`../../v1_core/workflow/scenario_001_partial_ceasefire.md`](../.../../../v1_core/workflow/scenario_001_partial_ceasefire.md)
-Focus on:
-- What is declared vs what is verified
-- Which incentives are rewarded
-- What risks are postponed
+Ã–ffne:
+- [../v1_core/04_scenario_template.md](../v1_core/04_scenario_template.md)
 
----
-
-## Step 3 Ã¢â‚¬â€ Scenario 002: Verified Ceasefire (structural success)
-
-Open:
-- [../../v1_core/workflow/scenario_002_verified_ceasefire.md](../.../../../v1_core/workflow/scenario_002_verified_ceasefire.md)
-
-Focus on:
-- What changed compared to Scenario 001
-- What is measured instead of assumed
-- How future risk is reduced
+Achte nur auf die Struktur:
+- Kontext
+- Anreize
+- Verifikation
+- Systemische Wirkung
+- Klassifikation
 
 ---
 
-## Step 4 Ã¢â‚¬â€ Compare
+## Schritt 2 â€” Szenario 001: Teilweiser Waffenstillstand (falscher Erfolg)
 
-Ask yourself:
-- Which scenario reduces future conflict risk?
-- Which rewards long-term stability?
-- Which looks good today but fails tomorrow?
+Ã–ffne:
+- [`../v1_core/scenario_001_partial_ceasefire.md`](../v1_core/scenario_001_partial_ceasefire.md)
 
-HUB_Optimus does not ask:
-Ã¢â‚¬Å“Who is right?Ã¢â‚¬Â
-
-It asks:
-Ã¢â‚¬Å“Which structure survives time?Ã¢â‚¬Â
+Fokussiere dich auf:
+- Was behauptet wird vs. was verifiziert wird
+- Welche Anreize belohnt werden
+- Welche Risiken in die Zukunft verschoben werden
 
 ---
 
-## Step 5 Ã¢â‚¬â€ Learning layer
+## Schritt 3 â€” Szenario 002: Verifizierter Waffenstillstand (struktureller Erfolg)
 
-Read:
-- [../../v1_core/workflow/05_meta_learning.md](../.../../../v1_core/workflow/05_meta_learning.md)
+Ã–ffne:
+- [../v1_core/scenario_002_verified_ceasefire.md](../v1_core/scenario_002_verified_ceasefire.md)
 
-This explains how patterns are extracted and remembered.
-
----
-
-## What you just did
-
-You evaluated incentives, verification, and long-term stability  
-without prediction or authority.
-
-This is the core of HUB_Optimus.
+Fokussiere dich auf:
+- Was sich im Vergleich zu Szenario 001 geÃ¤ndert hat
+- Was gemessen wird statt angenommen
+- Wie zukÃ¼nftiges Risiko reduziert wird
 
 ---
 
-## Next steps
+## Schritt 4 â€” Vergleiche
 
-Foundations:
-- [../../v1_core/languages/en/01_base_declaracion.md](../.../../../v1_core/languages/en/01_base_declaracion.md)
-- [../../v1_core/languages/en/02_arquitectura_base.md](../.../../../v1_core/languages/en/02_arquitectura_base.md)
-- [../../v1_core/languages/en/03_flujo_operativo.md](../.../../../v1_core/languages/en/03_flujo_operativo.md)
+Frag dich:
+- Welches Szenario reduziert das Risiko zukÃ¼nftiger Konflikte?
+- Welches belohnt langfristige StabilitÃ¤t?
+- Welches sieht heute gut aus, scheitert aber morgen?
 
-To contribute:
-- Read [CONTRIBUTING.md](../../CONTRIBUTING.md)
-- Propose a new scenario using the template
+HUB_Optimus fragt nicht:
+â€žWer hat recht?â€œ
 
+Es fragt:
+â€žWelche Struktur Ã¼berlebt die Zeit?â€œ
 
+---
 
+## Schritt 5 â€” Learning Layer
 
+Lies:
+- [../v1_core/05_meta_learning.md](../v1_core/05_meta_learning.md)
 
+Dort wird erklÃ¤rt, wie Muster extrahiert und â€žgemerktâ€œ werden.
 
+---
 
+## Was du gerade getan hast
 
+Du hast Anreize, Verifikation und langfristige StabilitÃ¤t bewertet â€”  
+ohne Vorhersage oder AutoritÃ¤t.
 
+Das ist der Kern von HUB_Optimus.
 
+---
 
+## NÃ¤chste Schritte
+
+Grundlagen:
+- [../v1_core/01_base_declaracion.md](../v1_core/01_base_declaracion.md)
+- [../v1_core/02_arquitectura_base.md](../v1_core/02_arquitectura_base.md)
+- [../v1_core/03_flujo_operativo.md](../v1_core/03_flujo_operativo.md)
+
+Mitmachen:
+- Lies [CONTRIBUTING.md](../../CONTRIBUTING.md)
+- Schlage ein neues Szenario mithilfe der Vorlage vor
 
 

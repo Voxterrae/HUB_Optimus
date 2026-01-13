@@ -1,53 +1,35 @@
-# HUB_Optimus — Carta Fundacional
+# HUB_Optimus — Charta (Governance)
 
-## Naturaleza del Sistema
-HUB_Optimus es un sistema internacional, no soberano y no corporativo para la evaluación estructurada de escenarios, acuerdos y decisiones diplomáticas.
+## Zweck
+HUB_Optimus ist ein offenes Rahmenwerk zur Verbesserung diplomatischer Ergebnisse durch ethische, adaptive und verifizierbare Friedensarbeit.
 
-Está diseñado para mejorar cómo se evalúan decisiones **antes de que la escalada sea irreversible**.
+Es ist darauf ausgelegt:
+- die Wahrscheinlichkeit künftiger Konflikte zu reduzieren,
+- mittel-/langfristige Stabilität über kurzfristige „Wins“ zu priorisieren,
+- wiederkehrende systemische Fehlschläge zu verhindern, indem Anreize sichtbar und korrigierbar werden.
 
-## Misión
-Proporcionar un marco verificable y alineado con incentivos que:
-- haga explícitos los supuestos,
-- distinga compromisos verificables de afirmaciones no verificables,
-- revele riesgos de escalada y bloqueo (lock-in) de forma temprana,
-- y preserve un registro neutral del razonamiento.
+HUB_Optimus ist ein Arbeitswerkzeug: Legitimität wird durch überprüfbare Ergebnisse verdient, nicht durch Autorität.
 
-## Qué ES HUB_Optimus
-- Un marco de evaluación estructurada.
-- Un “lenguaje común” para definir escenarios y analizar riesgos.
-- Un método para reducir manipulación y ambigüedad haciendo explícita la verificación.
+## Was HUB_Optimus ist
+HUB_Optimus ist eine mehrschichtige Architektur, die:
+- Entscheidungen und Ergebnisse beobachtet,
+- sie gegen langfristige Stabilität und zukünftiges Risiko bewertet,
+- präventive Korrekturen ermöglicht, ohne Zwang auszuüben,
+- ein aktives Gedächtnis wiederkehrender historischer Muster pflegt.
 
-## Qué NO ES HUB_Optimus
-- No es un oráculo predictivo.
-- No es una autoridad de decisión.
-- No es propaganda.
-- No es un tribunal que asigna culpa personal.
-- No es una herramienta de coerción o ejecución.
+## Was HUB_Optimus nicht ist
+HUB_Optimus ist nicht:
+- eine Partei, Ideologie oder Propagandainstrument,
+- ein Tribunal zur persönlichen Schuldzuweisung,
+- eine Zwangsautorität,
+- ein Ersatz für menschliches Urteil.
 
-## Documentos Núcleo de Gobernanza
-Esta Carta se implementa mediante:
-- Kernel: [KERNEL.md](KERNEL.md)
-- Proceso de Consenso: [CONSENSUS_PROCESS.md](CONSENSUS_PROCESS.md)
-- Custodia: [CUSTODIANSHIP.md](CUSTODIANSHIP.md)
-- Capa de Confianza: [TRUST_LAYER.md](TRUST_LAYER.md)
-- Estándar de Evaluación: [EVALUATION_STANDARD.md](EVALUATION_STANDARD.md)
-- Esquema de Escenarios: [SCENARIO_SCHEMA.md](SCENARIO_SCHEMA.md)
-- Nombre e Identidad: [TRADEMARKS.md](TRADEMARKS.md)
+## Grundhaltung
+HUB_Optimus bevorzugt:
+- präventive, diskrete Vermittlung statt öffentliche Eskalation,
+- Handeln + Analyse parallel, wenn Zeit knapp ist,
+- transparente Kriterien statt verdecktes Bargaining.
 
-## Neutralidad y No Ejecución
-HUB_Optimus no impone resultados.
-Mejora la calidad de decisiones al exponer riesgos estructurales, desalineación de incentivos y límites de verificación.
-
-## Principio Anti-Captura
-Ningún individuo, organización o estado puede reclamar autoridad unilateral sobre HUB_Optimus.
-La legitimidad proviene del proceso transparente, del razonamiento registrado y de reglas de consenso.
-
-## Versionado e Integridad
-Los cambios deben:
-- proponerse abiertamente,
-- revisarse mediante consenso,
-- registrarse con trazabilidad,
-- y ser compatibles con el Kernel.
-
-## Alcance y Adopción
-HUB_Optimus está orientado al uso diplomático internacional y podrá adaptarse a otros dominios (instituciones, empresas, disputas multipartitas) sin perder su naturaleza no coercitiva.
+## Übersetzungsprinzip (ein Kern, mehrere Sprachen)
+Alle Sprachen müssen denselben Dokumentensatz, dieselbe Reihenfolge und dieselbe Bedeutung spiegeln.
+Übersetzungen müssen Intention und Definitionen bewahren; Sprache darf keine konzeptionelle Drift einführen.

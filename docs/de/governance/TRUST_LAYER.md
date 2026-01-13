@@ -1,107 +1,63 @@
-﻿# HUB_Optimus — Capa de Confianza (Trust Layer)
+# HUB_Optimus — Vertrauensebene (Trust Layer)
 
-## Propósito
-La Capa de Confianza define cómo HUB_Optimus evalúa **afirmaciones**, **compromisos** y **acuerdos** en términos de fiabilidad operativa.
+## Zweck
+Die Trust Layer definiert, wie HUB_Optimus Aussagen, Zusagen und „Beweise“ bewertet.
+Sie trennt verifizierbare Signale von Narrativdruck und verhindert, dass Dringlichkeit oder moralische Rahmung als Ersatz für Evidenz dienen.
 
-No evalúa intención, moralidad ni legitimidad política.
-Evalúa **verificabilidad**, **trazabilidad** y **confiabilidad estructural**.
+## Kernidee
+Nicht alles ist gleich „wahr“. HUB_Optimus klassifiziert Vertrauen anhand von:
+- Verifizierbarkeit,
+- Zugriff auf Beobachtung,
+- Anreizstrukturen,
+- Manipulationsresistenz.
 
-## Principio Central
-Un compromiso que no puede verificarse no debe considerarse fiable, independientemente de quién lo formule.
+## Evidenzklassen (Beispielrahmen)
+- **Klasse A (direkt verifizierbar):** unabhängige Beobachtung, nachprüfbare Daten, reproduzierbare Prüfung.
+- **Klasse B (teilweise verifizierbar):** verifizierbare Teilstücke, aber Lücken bei Zugriff/Abdeckung.
+- **Klasse C (nicht verifizierbar):** Absichtserklärungen, Behauptungen ohne Prüfpfad.
 
-La confianza no se presupone.
-La confianza se **construye mediante estructura**.
+> Hinweis: Diese Klassen sind ein operatives Raster. Entscheidend ist die Begründung samt Prüfpfad.
 
----
+## Vertrauensprofil-Dimensionen (operativ)
+Bewerte Aussagen entlang von:
+1) **Zugriff** (wer kann was beobachten?)
+2) **Integrität** (Anreiz zu täuschen vs. Anreiz zur Genauigkeit)
+3) **Abdeckung** (wie vollständig ist die Beobachtung?)
+4) **Zeit** (wie frisch/zeitkritisch ist die Evidenz?)
+5) **Störbarkeit** (wie leicht ist die Evidenz manipulierbar?)
 
-## Clases de Evidencia (A/B/C)
-### Clase A — Compromisos Verificables (Alta confianza)
-Características:
-- Acciones o estados observables
-- Verificación independiente posible
-- Condiciones claras de éxito o fallo
-- Hitos temporales definidos
+## Anti-Gaming-Regel
+Wenn ein Akteur versucht:
+- Prüfpfade zu blockieren,
+- Definitionslücken auszunutzen,
+- „Belege“ selektiv zu liefern,
+- Beobachtung zu verzögern,
+dann wird die Vertrauensklassifikation herabgestuft,
+auch wenn das Narrativ überzeugend wirkt.
 
-Ejemplos:
-- Acuerdos con mecanismos de inspección/supervisión
-- Acciones auditables públicamente
-- Pasos reversibles con monitorización
-
-### Clase B — Compromisos Parcialmente Verificables (Confianza condicionada)
-Características:
-- Algunos componentes observables
-- Alcance de verificación limitado
-- Aplicación o cobertura ambigua
-
-Ejemplos:
-- Compromisos con informes pero sin verificación independiente
-- Acciones condicionales sin consecuencias o reversión definidas
-
-### Clase C — Afirmaciones No Verificables (Baja confianza)
-Características:
-- Sin verificación externa
-- Dependientes de intención o buena fe
-- Sin hitos medibles
-
-Ejemplos:
-- Garantías verbales
-- Declaraciones de intención futura sin mecanismos
+## Integrationspunkte
+- Szenarioeingaben sollen Evidenz mit dem Schema referenzieren: `governance/SCENARIO_SCHEMA.md`
+- Bewertungen sollen Evidenzklasse + Trust-Profil explizit zitieren: `governance/EVALUATION_STANDARD.md`
 
 ---
 
-## Perfil de Confianza (cómo se estima la fiabilidad)
-Para cada compromiso, HUB_Optimus genera un **Perfil de Confianza** con estas dimensiones:
+## Kernelzugang & Anti-Capture-Regeln (Hardening)
 
-1) **Verificabilidad**
-- ¿Puede un actor independiente verificar la afirmación?
+### Vertrauensstufen (High-Level)
+- **Reader:** darf lesen und referenzieren.
+- **Contributor:** darf Änderungen an Nicht-Kernel-Materialien zur Prüfung vorschlagen.
+- **Custodian:** darf Governance-Änderungen unter strengem Prozess genehmigen.
 
-2) **Trazabilidad**
-- ¿Existe un rastro auditable (quién/qué/cuándo/dónde)?
+### Kernel-Zugangsregel
+Direkte Änderungen an Kernel-Dokumenten erfordern:
+1) explizite Begründung mit Bezug auf Kernel-Prinzipien,
+2) Consensus-Review gemäß CONSENSUS_PROCESS,
+3) Custodianship-Zustimmung gemäß CUSTODIANSHIP,
+4) Synchronisierung über Sprach-Spiegel hinweg.
 
-3) **Independencia**
-- ¿La verificación es independiente del emisor?
-
-4) **Cobertura**
-- ¿La verificación cubre todo el compromiso o solo fragmentos?
-
-5) **Recencia**
-- ¿Qué tan actual es la evidencia frente a la ventana del compromiso?
-
-6) **Reversibilidad**
-- ¿Puede revertirse la acción si la verificación falla?
-
-Un compromiso puede ser Clase A y aun así ser débil si la cobertura/independencia es pobre.
-
----
-
-## Protocolo mínimo de verificación (MVP)
-Un compromiso se considera “lo bastante fiable como para planificar” solo si incluye:
-- Un **resultado observable claro**
-- Un **calendario de hitos**
-- Un **método de verificación definido**
-- Una **vía de disputa** (qué ocurre si la verificación se cuestiona)
-
----
-
-## Disputas y degradación (sin coerción)
-HUB_Optimus no ejecuta ni impone resultados.
-Impone **disciplina epistémica**:
-
-- Si la verificación falla → la confianza cae.
-- Si se bloquea la verificación → la confianza cae.
-- Si la evidencia es parcial → la confianza queda condicionada.
-- Si la evidencia es independiente y consistente → la confianza sube.
-
-Esto crea presión por incentivos sin coerción.
-
----
-
-## Regla anti-gaming
-El “cumplimiento de papel” (reporting performativo sin verificación independiente) se trata como Clase B o C,
-aunque se presente como Clase A.
-
----
-
-## Puntos de integración
-- Los escenarios deben referenciar evidencia usando: `governance/SCENARIO_SCHEMA.md`
-- Las evaluaciones deben citar clase de evidencia + dimensiones del perfil usando: `governance/EVALUATION_STANDARD.md`
+### Anti-Capture-Regel
+Versuche,
+- Drift über Übersetzung einzuschleusen,
+- die Methode umzubranden, während Ansprüche übernommen werden,
+- Governance in Marketing umzuwandeln,
+werden als Capture-Versuche behandelt und zurückgewiesen.

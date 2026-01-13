@@ -1,43 +1,73 @@
-# HUB_Optimus — Custodia
+# HUB_Optimus — Custodianship
 
-## Definición del Rol
-Los Custodios son garantes del proceso, no decisores.
-Protegen integridad, documentación y trazabilidad.
+## Purpose
+Custodianship exists to protect the Kernel and the integrity of governance.
+It is not ownership, not authority over outcomes, and not a certification body.
 
-## Responsabilidades
-Los Custodios garantizan que:
-- las propuestas sigan procesos definidos,
-- la documentación esté completa,
-- los registros se preserven,
-- y se respeten los procedimientos de consenso.
+Custodians protect:
+- meaning coherence across languages,
+- resistance to capture and commercialization pressure,
+- traceability of governance changes,
+- and the public record of deliberation.
 
-## Limitaciones
-Los Custodios:
-- no pueden aprobar cambios unilateralmente,
-- no pueden invalidar objeciones,
-- no pueden modificar el Kernel,
-- no pueden atribuirse autoridad sobre resultados.
+## What Custodianship is
+Custodianship is a constrained governance role that:
+- safeguards the Kernel (Layer 0),
+- enforces the consensus process for governance changes,
+- blocks semantic drift and deceptive rebranding,
+- ensures translations remain meaning-identical to the canonical set.
 
-## Estatus del Creador
-El sistema no reconoce privilegios especiales para creadores u originadores.
-La autoría no confiere autoridad.
-Todos los participantes, incluidos los originadores, están sujetos a las mismas reglas y limitaciones.
+## What Custodianship is not
+Custodianship is not:
+- a tribunal or enforcement authority,
+- a political mandate,
+- a private ownership claim,
+- a gatekeeping tool for personal preference.
 
-## Sucesión
-La custodia es transferible.
-El sistema debe seguir operable con independencia de cualquier individuo.
+## Scope of powers (strictly limited)
+Custodians MAY:
+- reject governance changes that violate the Kernel,
+- require explicit rationale and traceability for governance edits,
+- require synchronization across language mirrors,
+- request removal/correction of misleading “official/endorsed” claims.
 
-## Mantenimiento de Emergencia (No Sustantivo)
-Los Custodios pueden aplicar correcciones no sustantivas sin consenso completo cuando sea necesario, como:
-- erratas,
-- enlaces rotos,
-- formato,
-siempre que no cambie el significado.
+Custodians MUST NOT:
+- impose political decisions,
+- grant “certification” status,
+- unilaterally change the Kernel,
+- rewrite history without traceable process.
 
-Los cambios sustantivos requieren el proceso completo de consenso.
+## Kernel change rule (high bar)
+Any Kernel change requires:
+1) an explicit written proposal,
+2) a rationale referencing Kernel principles,
+3) documented objections and responses,
+4) consensus review per `CONSENSUS_PROCESS.md`,
+5) custodianship approval,
+6) synchronization across all language mirrors.
 
-## Transparencia
-Los Custodios deben mantener cambios auditables:
-- mensajes de commit claros,
-- historial preservado,
-- justificación documentada cuando corresponda.
+Unreviewed Kernel edits are invalid by definition.
+
+## Conflict of interest and anti-capture
+Custodians must disclose conflicts of interest.
+Capture indicators include:
+- introducing exceptions via translation,
+- weakening MUST/NOT language,
+- rebranding the method as a private product,
+- shifting governance into marketing.
+
+If capture indicators appear, Custodians must block the change and document why.
+
+## Transparency and record
+All custodian actions must be traceable:
+- what was blocked/approved,
+- why (Kernel reference),
+- and what changes were required.
+
+## Removal / rotation (minimum rule)
+If a Custodian repeatedly violates the Kernel, hides conflicts, or acts deceptively,
+they lose custodianship status through the same consensus process.
+
+## Non-sovereign statement
+Custodianship does not create authority over participants or institutions.
+It only protects the integrity and clarity of the HUB_Optimus system definition.

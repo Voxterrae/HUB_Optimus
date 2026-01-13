@@ -1,70 +1,65 @@
-# HUB_Optimus — Modelo de Legitimidad
+@'
+# HUB_Optimus — Legitimitätsmodell (ohne Autorität)
 
-## Pregunta Central
-¿Por qué una parte debería aceptar o referenciar HUB_Optimus si no tiene autoridad, ni poder coercitivo, ni propietario?
+## Zweck
+HUB_Optimus beansprucht keine formale Autorität.
+Seine Legitimität entsteht ausschließlich durch nachvollziehbare Kohärenz, überprüfbare Methoden und wiederholbare Ergebnisse.
 
-## Principio
-La legitimidad surge de la **calidad del proceso**, no del poder.
+Dieses Dokument definiert, wie “Legitimität” im Kontext eines nicht-souveränen, nicht-koerziven Systems zu verstehen ist.
 
-HUB_Optimus es legítimo porque:
-- hace explícitos los supuestos,
-- expone límites de verificación,
-- preserva registros neutrales,
-- y resiste la captura.
+## Grundannahme
+Legitimität ist keine Zuschreibung durch Rang, Status oder Institution.
+Legitimität ist ein Effekt von:
+- Klarheit der Kriterien,
+- Verifizierbarkeit der Behauptungen,
+- Wiederholbarkeit der Bewertung,
+- und der nachweisbaren Verringerung zukünftiger Risiken.
 
-## Fuentes de Legitimidad
+## 1) Prozess-Legitimität (Process Legitimacy)
+Ein Output gilt als legitim, wenn:
+- die Bewertungsschritte nachvollziehbar sind,
+- die Eingaben und Annahmen explizit sind,
+- und die verwendeten Kriterien mit dem Kernel kompatibel sind.
 
-### 1. Transparencia Estructural
-Toda evaluación expone:
-- supuestos,
-- clases de evidencia,
-- incógnitas,
-- y modos de fallo.
+## 2) Evidenz-Legitimität (Evidence Legitimacy)
+Ein Output steigt in Legitimität, wenn:
+- Belege und Quellen transparent referenziert sind,
+- Behauptungen klar von Verpflichtungen getrennt werden,
+- und die Vertrauensklassifikation konsistent angewendet wird.
 
-Nada esencial queda oculto.
+## 3) Ergebnis-Legitimität (Outcome Legitimacy)
+HUB_Optimus bewertet “Erfolg” als messbare Reduktion zukünftiger Risiken
+und Zunahme mittel-/langfristiger Stabilität.
 
-### 2. Verificabilidad sobre Autoridad
-La confianza se asigna a estructuras, no a personas.
-Las afirmaciones pesan solo por sus mecanismos de verificación.
+Kurzfristige “Siege”, die langfristige Instabilität erhöhen, sind keine legitimen Erfolge.
 
-### 3. Neutralidad de Resultado
-HUB_Optimus no recomienda acciones ni resultados.
-Esta neutralidad permite que partes adversarias usen el mismo análisis.
+## 4) Anti-Autoritäts-Regel
+HUB_Optimus ist:
+- kein Tribunal,
+- keine Zertifizierungsstelle,
+- keine Durchsetzungsinstanz,
+- kein Ersatz für menschliches Urteil.
 
-### 4. Diseño Anti-Captura
-Ningún actor controla:
-- las reglas,
-- la identidad,
-- ni la hoja de ruta.
+Die Methode schafft Klarheit über Struktur und Konsequenzen; sie ersetzt keine Entscheidungsmacht.
 
-La legitimidad no puede privatizarse.
+## 5) Anti-Capture-Kriterium
+Legitimität setzt Widerstand gegen Capture voraus:
+- keine verdeckten Sonderrechte,
+- keine Re-Interpretation des Kernels über Übersetzungen,
+- keine private Aneignung der Identität.
 
-### 5. Consenso Trazable
-Los cambios siguen un proceso de consenso documentado.
-Los desacuerdos permanecen visibles en lugar de borrarse.
+Jede Änderung, die die Kernel-Kompatibilität schwächt, reduziert Legitimität.
 
-### 6. Alineación Reputacional
-Los participantes ganan credibilidad al:
-- someterse a las mismas reglas de evaluación,
-- aceptar exposición explícita de riesgos,
-- y permitir escrutinio.
+## 6) Minimaler Legitimitäts-Nachweis (praktisch)
+Ein Dokument/Output gilt als “HUB_Optimus-kompatibel”, wenn es:
+- den Kernel respektiert,
+- Verifizierbarkeit priorisiert,
+- Incentives explizit macht,
+- Annahmen markiert,
+- und die Bewertungsschritte dokumentiert.
 
-## Qué NO es la Legitimidad
-- No es autoridad legal
-- No es superioridad moral
-- No es poder de ejecución
-- No es popularidad
-
-## Condiciones de Fallo
-La legitimidad se degrada si:
-- se viola el Kernel,
-- se alteran u ocultan registros,
-- se compromete la neutralidad,
-- o se produce captura.
-
-## Adopción Externa
-Las instituciones pueden referenciar HUB_Optimus sin delegar autoridad.
-El uso implica **alineación voluntaria**, no subordinación.
-
-## Resumen
-HUB_Optimus es legítimo porque aporta claridad donde el poder suele oscurecerla.
+## Schluss
+HUB_Optimus wird nicht durch “Anerkennung” legitimiert, sondern durch:
+- wiederholbare, überprüfbare Evaluationen,
+- und die sichtbare Reduktion von Eskalationsrisiken im Zeitverlauf.
+'@ | Set-Content -Encoding utf8 docs\de\governance\LEGITIMACY_MODEL.md

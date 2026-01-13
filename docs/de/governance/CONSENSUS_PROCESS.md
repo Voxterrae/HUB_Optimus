@@ -1,64 +1,51 @@
-# HUB_Optimus — Proceso de Consenso
+# HUB_Optimus — Konsensprozess
 
-## Propósito
-Este documento define cómo se proponen, revisan y adoptan cambios en los documentos de HUB_Optimus.
+## Zweck
+Dieser Prozess definiert, wie Governance-Änderungen vorgeschlagen, diskutiert, entschieden und protokolliert werden.
+Ziel ist Nachvollziehbarkeit, Drift-Vermeidung und Schutz vor Capture.
 
-El consenso se utiliza para evitar captura unilateral y preservar la legitimidad mediante acuerdos trazables.
+## Geltungsbereich
+Der Konsensprozess gilt für:
+- Governance-Dokumente,
+- Prozessregeln,
+- Kernel-nahe Änderungen.
 
-## Definiciones
-- **Propuesta**: solicitud documentada de cambio (texto + justificación).
-- **Objeción**: argumento razonado de que la propuesta viola el Kernel, reduce neutralidad, debilita verificabilidad o introduce riesgo de captura.
-- **Objeción sostenida**: objeción no resuelta tras intentos de revisión de buena fe.
-- **Consenso**: adopción tras revisión cuando no quedan objeciones sostenidas.
+Er gilt NICHT für:
+- reine Übersetzungs-/Formatkorrekturen ohne Bedeutungsänderung.
 
-## Visión General del Proceso
+## Prinzipien
+- **Transparenz:** Vorschläge und Einwände sind sichtbar.
+- **Begründungspflicht:** Änderungen müssen mit Kernel-Prinzipien begründet werden.
+- **Nachvollziehbarkeit:** Entscheidungen müssen dokumentiert werden.
+- **Drift-Block:** Änderungen, die Bedeutung verwässern oder Capture ermöglichen, werden zurückgewiesen.
 
-### Paso 1 — Borrador
-La propuesta se presenta con:
-- descripción clara de cambios,
-- justificación e impacto esperado,
-- referencia a secciones afectadas,
-- declaración de compatibilidad con el Kernel.
+## Ablauf (Standard)
+1) **Vorschlag**
+   - klare Beschreibung: was ändert sich?
+   - warum (Kernel-/Stabilitätsbezug)?
+   - erwartete Auswirkungen / Risiken
 
-### Paso 2 — Ventana de Revisión
-Se abre una ventana de revisión definida (con tiempo limitado).
-Los participantes pueden:
-- pedir aclaraciones,
-- sugerir mejoras,
-- plantear objeciones (deben ser razonadas).
+2) **Review-Phase**
+   - Einwände, Alternativen, Präzisierungen
+   - Fokus: Verifizierbarkeit, Anreize, Lock-in-Risiko, Klarheit
 
-### Paso 3 — Gestión de Objeciones (Buena Fe)
-Si hay objeciones, la persona proponente debe:
-- responder directamente,
-- revisar la propuesta, o
-- documentar por qué la objeción no aplica.
+3) **Entscheidung**
+   - dokumentierter Ausgang: angenommen / abgelehnt / zurück zur Überarbeitung
+   - Begründung kurz und prüfbar
 
-Las objeciones deben referenciar:
-- principios del Kernel, o
-- problemas de verificabilidad/confianza, o
-- riesgos de neutralidad/anti-captura.
+4) **Protokoll**
+   - Referenz auf PR/Commit
+   - zusammengefasste Einwände + Auflösung
 
-### Paso 4 — Resolución
-Una propuesta puede adoptarse si:
-- las objeciones se resolvieron mediante revisiones, o
-- las objeciones se retiraron, o
-- existe registro claro de respuesta sin conflicto con el Kernel.
+## Mindestanforderungen
+Eine Änderung ist ungültig, wenn:
+- sie nicht begründet ist,
+- sie Definitionsdrift einführt,
+- sie Verifizierbarkeit/Anreiz-Logik untergräbt,
+- sie Übersetzung als Hintertür nutzt.
 
-Si quedan objeciones sostenidas, la propuesta no se adopta.
-
-### Paso 5 — Ratificación y Registro
-Las propuestas adoptadas deben:
-- integrarse con un commit trazable,
-- registrarse con un resumen breve,
-- enlazarse a notas/discusión si aplica.
-
-## Regla Especial: Cambios en Reglas de Gobernanza
-Cualquier cambio a:
-- Kernel,
-- reglas de consenso,
-- reglas de custodia,
-requiere escrutinio reforzado y justificación explícita de compatibilidad.
-
-## Cláusula de No Autoridad
-El consenso no crea autoridad sobre resultados.
-Solo gobierna la integridad de documentos y procesos del sistema.
+## Sprach-Synchronisierung
+Bei Governance-Änderungen:
+- canonical Version aktualisieren,
+- Übersetzungen synchronisieren (Meaning 1:1),
+- Drift ist nicht zulässig.
