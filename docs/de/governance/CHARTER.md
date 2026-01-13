@@ -1,56 +1,35 @@
->  English source: [../../governance/CHARTER.md](../../governance/CHARTER.md)
+# HUB_Optimus — Charta (Governance)
 
-# HUB_Optimus  Gründungsurkunde
+## Zweck
+HUB_Optimus ist ein offenes Rahmenwerk zur Verbesserung diplomatischer Ergebnisse durch ethische, adaptive und verifizierbare Friedensarbeit.
 
-## Natur des Systems
-HUB_Optimus ist ein internationales, nicht-souveränes und nicht-korporatives System zur strukturierten Bewertung von Szenarien, Vereinbarungen und diplomatischen Entscheidungen.
+Es ist darauf ausgelegt:
+- die Wahrscheinlichkeit künftiger Konflikte zu reduzieren,
+- mittel-/langfristige Stabilität über kurzfristige „Wins“ zu priorisieren,
+- wiederkehrende systemische Fehlschläge zu verhindern, indem Anreize sichtbar und korrigierbar werden.
 
-Es wurde entwickelt, um zu verbessern, wie Entscheidungen bewertet werden  **bevor Eskalation irreversibel wird**.
+HUB_Optimus ist ein Arbeitswerkzeug: Legitimität wird durch überprüfbare Ergebnisse verdient, nicht durch Autorität.
 
-## Mission
-Bereitstellung eines verifizierbaren und anreiz-ausgerichteten Rahmens, der:
-- Annahmen explizit macht,
-- verifizierbare Verpflichtungen von nicht verifizierbaren Behauptungen trennt,
-- Risiken von Eskalation und Lock-in frühzeitig sichtbar macht,
-- und ein neutrales Protokoll der Argumentation bewahrt.
+## Was HUB_Optimus ist
+HUB_Optimus ist eine mehrschichtige Architektur, die:
+- Entscheidungen und Ergebnisse beobachtet,
+- sie gegen langfristige Stabilität und zukünftiges Risiko bewertet,
+- präventive Korrekturen ermöglicht, ohne Zwang auszuüben,
+- ein aktives Gedächtnis wiederkehrender historischer Muster pflegt.
 
-## Was HUB_Optimus IST
-- Ein Rahmenwerk für strukturierte Bewertung.
-- Eine gemeinsame Sprache zur Definition von Szenarien und zur Risikoanalyse.
-- Eine Methode zur Reduktion von Manipulation und Mehrdeutigkeit durch explizite Verifikation.
+## Was HUB_Optimus nicht ist
+HUB_Optimus ist nicht:
+- eine Partei, Ideologie oder Propagandainstrument,
+- ein Tribunal zur persönlichen Schuldzuweisung,
+- eine Zwangsautorität,
+- ein Ersatz für menschliches Urteil.
 
-## Was HUB_Optimus NICHT IST
-- Kein prädiktives Orakel.
-- Keine Entscheidungsautorität.
-- Keine Propaganda.
-- Kein Tribunal, das persönliche Schuld zuweist.
-- Kein Werkzeug für Zwang oder Durchsetzung.
+## Grundhaltung
+HUB_Optimus bevorzugt:
+- präventive, diskrete Vermittlung statt öffentliche Eskalation,
+- Handeln + Analyse parallel, wenn Zeit knapp ist,
+- transparente Kriterien statt verdecktes Bargaining.
 
-## Kern-Dokumente der Governance
-Diese Gründungsurkunde wird umgesetzt durch:
-- Kernel: [KERNEL.md](KERNEL.md)
-- Konsensprozess: [CONSENSUS_PROCESS.md](CONSENSUS_PROCESS.md)
-- Kustodie (Custodianship): [CUSTODIANSHIP.md](CUSTODIANSHIP.md)
-- Trust Layer (Verifikation): [TRUST_LAYER.md](TRUST_LAYER.md)
-- Evaluationsstandard: [EVALUATION_STANDARD.md](EVALUATION_STANDARD.md)
-- Szenario-Schema: [SCENARIO_SCHEMA.md](SCENARIO_SCHEMA.md)
-- Name & Identität: [TRADEMARKS.md](TRADEMARKS.md)
-- Legitimitätsmodell: [LEGITIMACY_MODEL.md](LEGITIMACY_MODEL.md)
-
-## Neutralität und keine Durchsetzung
-HUB_Optimus setzt keine Ergebnisse durch.
-Es verbessert die Qualität von Entscheidungen, indem es strukturelle Risiken, Fehlanreize (Misalignment) und Grenzen der Verifizierbarkeit offenlegt.
-
-## Anti-Capture-Prinzip
-Keine Einzelperson, Organisation oder kein Staat kann einseitige Autorität über HUB_Optimus beanspruchen.
-Legitimität entsteht aus dem transparenten Prozess, der protokollierten Argumentation und den Konsensregeln.
-
-## Versionierung und Integrität
-Änderungen müssen:
-- offen vorgeschlagen werden,
-- per Konsens überprüft werden,
-- mit Nachvollziehbarkeit dokumentiert werden,
-- und mit dem Kernel kompatibel sein.
-
-## Geltungsbereich und Adoption
-HUB_Optimus ist für den internationalen diplomatischen Einsatz konzipiert und kann auf andere Domänen (Institutionen, Unternehmen, mehrparteiliche Streitfälle) angepasst werden, ohne seinen nicht-koerzitiven Charakter zu verlieren.
+## Übersetzungsprinzip (ein Kern, mehrere Sprachen)
+Alle Sprachen müssen denselben Dokumentensatz, dieselbe Reihenfolge und dieselbe Bedeutung spiegeln.
+Übersetzungen müssen Intention und Definitionen bewahren; Sprache darf keine konzeptionelle Drift einführen.
