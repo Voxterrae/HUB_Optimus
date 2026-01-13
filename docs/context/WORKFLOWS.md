@@ -6,12 +6,16 @@ Define qué proceso se dispara: tests, build, lint, generación de docs, release
 ---
 
 ## Fix encoding / mojibake en docs (PowerShell)
-Cuando veas mojibake (p. ej. Ã, â, ð, Â) en Markdown dentro de `docs/`, ejecuta:
+Cuando veas mojibake (p. ej. Ã, â, ð, Â) en Markdown dentro de `docs/`, usa el fixer **en modo seguro**.
 
+### 1) Preview (DryRun)
+No toca archivos; lista qué cambiaría:
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\fix_encoding_docs.ps1 -Path "docs"
-
+powershell -ExecutionPolicy Bypass -File .\tools\fix_encoding_docs.ps1 -Path .\docs -DryRun
 ```
+
+----
+
 ## Checklist PRE-MERGE
 - [ ] Pull de main actualizado
 - [ ] Snapshot de trazabilidad actualizado (`tools/trace_repo.ps1`)
