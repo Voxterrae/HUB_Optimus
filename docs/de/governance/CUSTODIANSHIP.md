@@ -1,36 +1,73 @@
-# HUB_Optimus — Custodianship (Hütermodell)
+# HUB_Optimus — Custodianship
 
-## Zweck
-Custodianship schützt den Kernel und die Governance-Integrität.
-Es schafft keine Autorität zur Durchsetzung von Entscheidungen in der Welt,
-sondern schützt Bedeutung, Klarheit und Nachvollziehbarkeit im System.
+## Purpose
+Custodianship exists to protect the Kernel and the integrity of governance.
+It is not ownership, not authority over outcomes, and not a certification body.
 
-## Rolle der Custodians
-Custodians:
-- wahren Kernel-Prinzipien,
-- blockieren Drift/Capture,
-- sichern Übersetzungs-Kohärenz,
-- schützen Namens- und Identitätsklarheit.
+Custodians protect:
+- meaning coherence across languages,
+- resistance to capture and commercialization pressure,
+- traceability of governance changes,
+- and the public record of deliberation.
 
-Custodians:
-- entscheiden nicht über reale Politik,
-- vergeben keine „Zertifikate“,
-- erzeugen keine institutionelle Hierarchie.
+## What Custodianship is
+Custodianship is a constrained governance role that:
+- safeguards the Kernel (Layer 0),
+- enforces the consensus process for governance changes,
+- blocks semantic drift and deceptive rebranding,
+- ensures translations remain meaning-identical to the canonical set.
 
-## Pflichten
-- **Integrität zuerst:** keine verdeckten Interessen, keine opportunistische Umdeutung.
-- **Transparenz:** Entscheidungen begründen und verlinken.
-- **Minimalität:** Governance nur ändern, wenn nötig.
-- **Synchronisierung:** Sprachen konsistent halten.
+## What Custodianship is not
+Custodianship is not:
+- a tribunal or enforcement authority,
+- a political mandate,
+- a private ownership claim,
+- a gatekeeping tool for personal preference.
 
-## Konflikte & Interessenkonflikte
-Bei Interessenkonflikten:
-- Offenlegung,
-- Enthaltung bei Entscheidung,
-- Dokumentation der Maßnahme.
+## Scope of powers (strictly limited)
+Custodians MAY:
+- reject governance changes that violate the Kernel,
+- require explicit rationale and traceability for governance edits,
+- require synchronization across language mirrors,
+- request removal/correction of misleading “official/endorsed” claims.
 
-## Kernel-Änderungen
-Kernel-Änderungen erfordern:
-- explizite Kernel-Referenz,
-- Konsensprozess,
-- vollständige Sprach-Synchronisierung.
+Custodians MUST NOT:
+- impose political decisions,
+- grant “certification” status,
+- unilaterally change the Kernel,
+- rewrite history without traceable process.
+
+## Kernel change rule (high bar)
+Any Kernel change requires:
+1) an explicit written proposal,
+2) a rationale referencing Kernel principles,
+3) documented objections and responses,
+4) consensus review per `CONSENSUS_PROCESS.md`,
+5) custodianship approval,
+6) synchronization across all language mirrors.
+
+Unreviewed Kernel edits are invalid by definition.
+
+## Conflict of interest and anti-capture
+Custodians must disclose conflicts of interest.
+Capture indicators include:
+- introducing exceptions via translation,
+- weakening MUST/NOT language,
+- rebranding the method as a private product,
+- shifting governance into marketing.
+
+If capture indicators appear, Custodians must block the change and document why.
+
+## Transparency and record
+All custodian actions must be traceable:
+- what was blocked/approved,
+- why (Kernel reference),
+- and what changes were required.
+
+## Removal / rotation (minimum rule)
+If a Custodian repeatedly violates the Kernel, hides conflicts, or acts deceptively,
+they lose custodianship status through the same consensus process.
+
+## Non-sovereign statement
+Custodianship does not create authority over participants or institutions.
+It only protects the integrity and clarity of the HUB_Optimus system definition.
