@@ -1,7 +1,7 @@
-# 01 — Base Declaration (Immutable Core)
+# 01 - Base Declaration (Immutable Core)
 
 ## 1) Purpose
-HUB_Optimus is an open framework to improve diplomatic outcomes through ethical, adaptive, and verifiable peacebuilding.
+HUB_Optimus is a transparent, integrity-first framework to improve diplomatic outcomes through ethical, adaptive, and verifiable peacebuilding.
 
 It is designed to:
 - reduce the likelihood of future conflict,
@@ -28,10 +28,10 @@ HUB_Optimus is not:
 These principles are immutable and define the Kernel.
 
 ### 4.1 Success definition
-A solution “works” when it measurably reduces future risk, even if it is not perfect today.
+A solution works when it measurably reduces future risk, even if it is not perfect today.
 
 ### 4.2 Supreme criterion
-Medium/long-term stability is the supreme evaluation criterion. Any “success” that increases long-term instability is rejected as a false success.
+Medium/long-term stability is the supreme evaluation criterion. Any success that increases long-term instability is rejected as a false success.
 
 ### 4.3 Systemic error framing
 Errors are treated as systemic failures (incentives, structures, feedback loops), not as personal defects. The system focuses on causes and corrections, not scapegoating.

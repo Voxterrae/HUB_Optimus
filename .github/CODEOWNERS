@@ -1,0 +1,11 @@
+# Replace @REPLACE_ME with the GitHub username(s) or team(s) for custodians.
+#
+# Kernel and governance
+docs/governance/ @REPLACE_ME
+v1_core/languages/ @REPLACE_ME
+v1_core/workflow/ @REPLACE_ME
+
+# Legal and licensing
+LICENSE @REPLACE_ME
+IP_NOTICE.md @REPLACE_ME
+SECURITY.md @REPLACE_ME

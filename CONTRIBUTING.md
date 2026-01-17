@@ -2,8 +2,8 @@
 
 Thank you for your interest in contributing to HUB_Optimus.
 
-HUB_Optimus is open-source by design, but **Kernel influence is integrity-gated**.
-Use is open. Contribution is structured. The Kernel is protected.
+HUB_Optimus is restricted-use. Contributions are reviewed to protect the Kernel,
+preserve integrity, and prevent capture.
 
 ---
 
@@ -20,19 +20,20 @@ Use is open. Contribution is structured. The Kernel is protected.
 - changes that weaken Kernel integrity protections,
 - narrative manipulation or propaganda,
 - personal scapegoating as analysis,
-- short-term “wins” presented as success while increasing long-term instability,
-- attempts to introduce coercive enforcement into HUB_Optimus.
+- short-term wins presented as success while increasing long-term instability,
+- attempts to introduce coercive enforcement into HUB_Optimus,
+- contributions that enable commercial or personal performance optimization.
 
 ---
 
 ## 2) Repository structure (how to contribute safely)
 
-### `legacy/`
+### legacy/
 Historical v0 materials preserved for transparency.
-- **Do not rewrite or “modernize”** legacy documents.
+- Do not rewrite or "modernize" legacy documents.
 - Corrections should be added as v1 notes, not retroactively edited.
 
-### `v1_core/`
+### v1_core/
 The active Kernel and simulator.
 - Changes here require higher scrutiny and must preserve meaning and structure.
 
@@ -48,10 +49,10 @@ Examples:
 
 ### B) Scenario contributions (recommended)
 Add new scenarios under:
-- `v1_core/workflow/`
+- v1_core/workflow/
 
 Use the canonical template:
-- [v1_core/workflow/04_scenario_template.md](v1_core/workflow/04_scenario_template.md)
+- v1_core/workflow/04_scenario_template.md
 
 Every scenario must include:
 - trigger, structural context, incentive analysis,
@@ -61,17 +62,17 @@ Every scenario must include:
 
 ### C) Meta-learning updates (medium risk)
 Updates to:
-- [v1_core/workflow/05_meta_learning.md](v1_core/workflow/05_meta_learning.md)
+- v1_core/workflow/05_meta_learning.md
 
 Must reference:
 - which scenario(s) justify the new rule,
-- what failure/success pattern it prevents or reinforces.
+- what failure or success pattern it prevents or reinforces.
 
 ### D) Kernel changes (high risk)
 Files like:
-- [v1_core/languages/en/01_base_declaracion.md](v1_core/languages/en/01_base_declaracion.md)
-- [v1_core/languages/en/02_arquitectura_base.md](v1_core/languages/en/02_arquitectura_base.md)
-- [v1_core/languages/en/03_flujo_operativo.md](v1_core/languages/en/03_flujo_operativo.md)
+- v1_core/languages/en/01_base_declaracion.md
+- v1_core/languages/en/02_arquitectura_base.md
+- v1_core/languages/en/03_flujo_operativo.md
 
 Kernel changes require:
 - explicit justification,
@@ -82,17 +83,15 @@ Kernel changes require:
 ---
 
 ## 4) Language policy (single core, multiple languages)
-
 - Folder structure and filenames must remain consistent across languages.
-- English (`en`) is the reference language for structure and validation.
+- English (en) is the reference language for structure and validation.
 - Translations must preserve meaning; do not introduce conceptual drift.
 
 ---
 
 ## 5) How to propose changes (workflow)
-
 1. Create a new branch:
-   - `feat/<short-name>` or `chore/<short-name>`
+   - feat/<short-name> or chore/<short-name>
 2. Make a focused change:
    - one objective per PR
 3. Open a Pull Request with:
@@ -105,7 +104,6 @@ Kernel changes require:
 ---
 
 ## 6) Integrity-first review
-
 Contributions are reviewed for:
 - coherence with Layer 0 principles,
 - systemic framing (not personal blame),
@@ -118,9 +116,18 @@ No one is granted Kernel influence by title alone.
 
 ---
 
-## 7) Security and sensitive information
+## 7) License and rights
+Contributions are accepted under the repository LICENSE.
+By contributing, you grant the custodians a perpetual, worldwide right to use,
+modify, and redistribute your contribution within HUB_Optimus.
 
-**Do not upload:**
+If you cannot grant these rights, do not contribute.
+
+---
+
+## 8) Security and sensitive information
+
+Do not upload:
 - personal data,
 - banking or financial documents,
 - credentials, API keys, passwords,
@@ -128,18 +135,11 @@ No one is granted Kernel influence by title alone.
 
 If sensitive data is accidentally committed:
 - report immediately,
-- do not “fix by deleting” only; history rewriting may be required.
+- do not fix by deleting only; history rewriting may be required.
 
 ---
 
-## 8) Code of conduct (minimal)
-
+## 9) Code of conduct (minimal)
 - Be respectful and precise.
 - Disagree with ideas, not people.
 - Keep discussions focused on system improvement.
-
----
-
-## 9) License
-Contributions are accepted under the repository license.
-If no license is defined yet, contributions are assumed to be offered for inclusion under a future open-source license chosen by the maintainers.

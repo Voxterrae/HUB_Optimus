@@ -1,0 +1,41 @@
+site_name: HUB_Optimus
+site_url: https://voxterrae.github.io/HUB_Optimus/
+repo_url: https://github.com/Voxterrae/HUB_Optimus
+repo_name: Voxterrae/HUB_Optimus
+
+docs_dir: docs
+
+theme:
+  name: readthedocs
+
+nav:
+  - Home: index.md
+  - Start here: 00_start_here.md
+  - How to read this repo: 02_how_to_read_this_repo.md
+  - Try a scenario: 03_try_a_scenario.md
+  - Governance:
+      - Charter: governance/CHARTER.md
+      - Custodianship: governance/CUSTODIANSHIP.md
+      - Consensus process: governance/CONSENSUS_PROCESS.md
+      - Evaluation standard: governance/EVALUATION_STANDARD.md
+      - Kernel: governance/KERNEL.md
+      - Legitimacy model: governance/LEGITIMACY_MODEL.md
+      - Scenario schema: governance/SCENARIO_SCHEMA.md
+      - Trust layer: governance/TRUST_LAYER.md
+      - Translation policy: governance/TRANSLATION_POLICY.md
+      - Trademarks: governance/TRADEMARKS.md
+      - Change request: governance/CHANGE_REQUEST.md
+      - IP notice: governance/IP_NOTICE.md
+  - v1_core (mirror in docs/):
+      - Overview: v1_core/README.md
+      - Languages:
+          - EN - Base declaration: v1_core/languages/en/01_base_declaracion.md
+          - EN - Base architecture: v1_core/languages/en/02_arquitectura_base.md
+          - EN - Operational flow: v1_core/languages/en/03_flujo_operativo.md
+          - ES - Declaracion base: v1_core/languages/es/01_base_declaracion.md
+          - ES - Arquitectura base: v1_core/languages/es/02_arquitectura_base.md
+          - ES - Flujo operativo: v1_core/languages/es/03_flujo_operativo.md
+      - Workflow:
+          - Workflow README: v1_core/workflow/README.md
+          - Scenario template: v1_core/workflow/04_scenario_template.md
+          - Meta-learning: v1_core/workflow/05_meta_learning.md

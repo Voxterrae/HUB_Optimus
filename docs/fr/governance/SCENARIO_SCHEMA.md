@@ -1,72 +1,67 @@
-# HUB_Optimus — Scenario Schema
+# SCENARIO_SCHEMA (HUB_Optimus)
 
-## Purpose
-This document defines the required structure for describing a scenario before evaluation.
+This document defines the formal structure of a scenario in HUB_Optimus.
+Goal: ensure all simulations are comparable, auditable, and repeatable.
 
-A scenario is a **structured representation of reality**, not a narrative or argument.
+## Golden rule
+- Keep the same fields, same order, same meaning across all languages.
+- Anything not defined here is a GAP and must be marked explicitly.
 
-## Core Rule
-If information is missing, it must be explicitly marked as unknown.
-Silence is not allowed.
+## Required structure (recommended v1)
 
-## Required Fields
-
-### 1. Scenario Identifier
-- Unique ID or name
-- Date of creation
+### 0) Scenario identification
+- ID (e.g., SCN-003)
+- Domain
 - Version
+- Date
+- Evaluator(s)
+- Confidentiality level
 
-### 2. Context Summary
-- One-paragraph factual description
-- No interpretation or blame
+### 1) Trigger
+Which event/decision activates the analysis.
 
-### 3. Parties
-For each party:
-- Identifier
-- Role
-- Declared objectives
-- Known constraints
+### 2) Structural context
+Baseline conditions: asymmetries, pressures, history, dependencies, correction windows.
 
-### 4. Timeline
-- Relevant past events
-- Current state
-- Known upcoming milestones
+### 3) Incentive analysis (Layer 2)
+- Rewarded / punished behaviors
+- Escalation risks
+- Signals ("red flags")
 
-### 5. Assets and Capabilities
-- Material assets
-- Institutional leverage
-- Economic or strategic dependencies
+### 4) Human calibration (Layer 1)
+- Likely biases
+- Political sensitivity
+- Urgency vs noise
+- Framing guidance
 
-### 6. Commitments and Claims
-- Stated commitments
-- Public claims
-- Private signals (if disclosed)
+### 5) Systemic evaluation (Layer 3)
+Answer explicitly:
+1. Future risk reduction
+2. Medium/long-term stability
+3. Immediate relief (if applicable)
+4. Incentive correction
+5. Lock-in / correction blockage
 
-Each must later be classified under the Trust Layer.
+### 6) Historical pattern (Layer 5)
+- Match (yes/no/partial)
+- Recurrent failure mode (if any)
+- Warning level
 
-### 7. External Factors
-- Third-party actors
-- Environmental or systemic factors
-- Legal or geopolitical context
+### 7) Kernel coherence (Layer 0)
+- Aligned with supreme criterion?
+- Any drift/capture/coercion?
+- Decision: approved / rejected / approved with conditions
 
-### 8. Information Gaps
-- Unknown facts
-- Disputed data
-- Unverifiable claims
+### 8) Preventive mediation options (Layer 4)
+Non-coercive options to improve stability and verifiability.
 
-## Prohibited Content
-Scenario descriptions must NOT:
-- argue conclusions,
-- assign moral judgment,
-- predict outcomes,
-- frame urgency rhetorically.
+### 9) Final classification
+- Outcome type: stabilizing / destabilizing (masked) / neutral / not evaluable
+- Primary risk vector
+- Recommended posture
 
-## Relationship to Evaluation
-The Scenario Schema feeds the Evaluation Standard.
-Evaluations must reference a specific scenario version.
+### 10) Memory integration
+Which pattern is reinforced or which "positive exception" is recorded.
 
-## Version Discipline
-Changes to a scenario require:
-- a new version,
-- a change log,
-- and preserved prior versions.
+### 11) Notes / GAPs
+List of what is missing to evaluate better.

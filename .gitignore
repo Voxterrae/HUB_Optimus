@@ -47,3 +47,25 @@ docs/context/REPO_TREE.txt
 docs/context/SNAPSHOT.txt
 REPO_TREE.txt
 SNAPSHOT.txt
+
+# ---- Added by HUB_Optimus governance & hygiene pack ----
+
+# MkDocs build output
+site/
+
+# Lychee link-check artifacts
+lychee_*.txt
+lychee*.txt
+md_files.txt
+
+# Local env
+.venv/
+__pycache__/
+*.py[cod]
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Release artifacts (prefer GitHub Releases)
+HUB_Optimus_GitHub_Release.zip

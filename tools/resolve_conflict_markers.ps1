@@ -23,8 +23,8 @@ function Resolve-Text([string]$text, [string]$keepSide) {
   return $text
 }
 
-# List files that contain markers
-$files = git grep -l '<<<<<<<|=======|>>>>>>>' -- $Path
+# List files that contain markers (use multiple -e for basic regex)
+$files = git grep -l -e '<<<<<<<' -e '=======' -e '>>>>>>>' -- $Path
 if (-not $files) { Write-Host "No markers found under $Path"; exit 0 }
 
 $enc = New-Object System.Text.UTF8Encoding($false)

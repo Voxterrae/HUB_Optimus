@@ -1,0 +1,41 @@
+name: Kernel Guard
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enforce change request for Kernel or governance edits
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+
+          head="${{ github.sha }}"
+          echo "Base: $base"
+          echo "Head: $head"
+
+          files=$(git diff --name-only "$base" "$head")
+          echo "$files"
+
+          if echo "$files" | grep -E '^(docs/governance/|v1_core/languages/)' >/dev/null; then
+            if ! echo "$files" | grep -q '^docs/governance/CHANGE_REQUEST.md$'; then
+              echo "Kernel or governance changes detected."
+              echo "Include docs/governance/CHANGE_REQUEST.md with justification."
+              exit 1
+            fi
+          fi

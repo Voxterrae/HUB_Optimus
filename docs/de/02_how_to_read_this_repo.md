@@ -10,20 +10,20 @@ Dieses Repository ist so organisiert, dass du verstehst **was es ist**, **wo was
 Folge dieser Reihenfolge:
 1) [docs/de/00_start_here.md](00_start_here.md)
 2) [docs/de/03_try_a_scenario.md](03_try_a_scenario.md)
-3) [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
+3) [../v1_core/workflow/es/README.md](../v1_core/workflow/es/README.md)
 
 ### Ich will Szenarien praktisch üben (Simulationsmodus)
 Geh direkt zu:
-- Workflow (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
-- Szenario 001 (ES): [../../v1_core/workflow/es/scenario_001_partial_ceasefire.md](../../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
-- Szenario 002 (ES): [../../v1_core/workflow/es/scenario_002_verified_ceasefire.md](../../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
-- Vorlage (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
+- Workflow (ES): [../v1_core/workflow/es/README.md](../v1_core/workflow/es/README.md)
+- Szenario 001 (ES): [../v1_core/workflow/es/scenario_001_partial_ceasefire.md](../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
+- Szenario 002 (ES): [../v1_core/workflow/es/scenario_002_verified_ceasefire.md](../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
+- Vorlage (ES): [../v1_core/workflow/es/04_scenario_template.md](../v1_core/workflow/es/04_scenario_template.md)
 
 ### Ich will das konzeptionelle Framework und die Methode verstehen
 Starte mit:
-- [../../v1_core/languages/es/01_base_declaracion.md](../../v1_core/languages/es/01_base_declaracion.md)
-- [../../v1_core/languages/es/02_arquitectura_base.md](../../v1_core/languages/es/02_arquitectura_base.md)
-- [../../v1_core/languages/es/03_flujo_operativo.md](../../v1_core/languages/es/03_flujo_operativo.md)
+- [../v1_core/languages/es/01_base_declaracion.md](../v1_core/languages/es/01_base_declaracion.md)
+- [../v1_core/languages/es/02_arquitectura_base.md](../v1_core/languages/es/02_arquitectura_base.md)
+- [../v1_core/languages/es/03_flujo_operativo.md](../v1_core/languages/es/03_flujo_operativo.md)
 und geh danach zurück in den Workflow.
 
 ## Repo-Map (was in welchem Ordner liegt)
@@ -47,9 +47,9 @@ und geh danach zurück in den Workflow.
 ## Wo das Wichtige ist (Shortcuts)
 - Einstieg (DE): [docs/de/00_start_here.md](00_start_here.md)
 - Szenario ausprobieren (DE): [docs/de/03_try_a_scenario.md](03_try_a_scenario.md)
-- Kernel-Workflow (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
-- Szenario-Vorlage (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
-- Meta-Learning (ES): [../../v1_core/workflow/es/05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
+- Kernel-Workflow (ES): [../v1_core/workflow/es/README.md](../v1_core/workflow/es/README.md)
+- Szenario-Vorlage (ES): [../v1_core/workflow/es/04_scenario_template.md](../v1_core/workflow/es/04_scenario_template.md)
+- Meta-Learning (ES): [../v1_core/workflow/es/05_meta_learning.md](../v1_core/workflow/es/05_meta_learning.md)
 
 ## Wenn du beitragen willst (ohne Links zu brechen)
 - Bevorzuge relative Links (damit sie in GitHub und lokal funktionieren).

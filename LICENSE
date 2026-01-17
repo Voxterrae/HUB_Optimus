@@ -1,0 +1,26 @@
+HUB_Optimus - License Status (No License Granted)
+
+Copyright (c) 2026 Voxterrae
+
+This repository is published for transparency and collaboration discussion.
+
+NO LICENSE IS GRANTED.
+
+Unless an explicit license is provided in a specific file, folder, or written permission from
+the maintainers, you may not use, copy, modify, distribute, sublicense, or create derivative works
+from any portion of this repository.
+
+Governing notice:
+- See IP_NOTICE.md (repository root) and docs/governance/IP_NOTICE.md (if present) for the
+  project's intellectual property and contribution rules.
+
+Trademarks:
+- See docs/governance/TRADEMARKS.md (if present). All marks, names, and logos remain the
+  property of their respective owners.
+
+To request permission:
+- Open an issue describing your intended use-case, or contact the maintainers through the
+  channels listed in the repository documentation.
+
+This file is intentionally conservative. If and when the project adopts an open-source or
+open-content license, this file will be replaced with that license text.
