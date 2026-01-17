@@ -18,6 +18,7 @@ import os
 import sys
 import argparse
 import re
+import subprocess
 from pathlib import Path
 from typing import List, Dict, Set, Tuple
 
@@ -54,7 +55,6 @@ class MirrorChecker:
     def _find_repo_root(self) -> Path:
         """Find the repository root using git."""
         try:
-            import subprocess
             result = subprocess.run(
                 ['git', 'rev-parse', '--show-toplevel'],
                 capture_output=True,
