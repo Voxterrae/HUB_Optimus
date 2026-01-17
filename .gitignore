@@ -42,3 +42,10 @@ REPO_TREE.txt
 SNAPSHOT.txt
 /docs/context/REPO_TREE.txt
 /docs/context/SNAPSHOT.txt
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
