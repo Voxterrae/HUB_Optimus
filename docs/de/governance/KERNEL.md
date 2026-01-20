@@ -9,7 +9,6 @@ All processes and documents must remain compatible with these principles.
 ### 1) Non-Coercion
 HUB_Optimus does not coerce, enforce, punish, or compel.
 It evaluates structure; it does not execute power.
-<<<<<<< HEAD
 
 ### 2) Neutrality
 The system must remain outcome-neutral.
@@ -64,39 +63,3 @@ Translations are not allowed to introduce new concepts, exceptions, or alternati
 ### Custodianship
 Authority to amend the Kernel is restricted by the Custodianship and Consensus process.
 Unreviewed changes are invalid by definition.
-=======
-
-### 2) Neutrality
-The system must remain outcome-neutral.
-It does not assign moral blame or political legitimacy.
-It clarifies consequences and structural risk.
-
-### 3) Verifiability First
-Claims and commitments are evaluated by verifiability.
-Narrative strength, authority, urgency, or moral framing do not increase trust classification.
-
-### 4) Incentive Alignment
-Evaluations must surface incentive structures and misalignment risks.
-Stability requires incentive-compatible commitments.
-
-### 5) Explicit Assumptions
-Hidden assumptions invalidate trust.
-Unknowns must be marked explicitly.
-
-### 6) Reversibility Preference
-Where possible, the system favors reversible steps, checkpoints, and monitored commitments to reduce lock-in and escalation risk.
-
-### 7) Traceable Governance
-Rule changes require transparent proposals, recorded objections, and a documented resolution path.
-
-### 8) Anti-Capture
-No individual—including the originator—has special privileges.
-Authorship does not confer authority.
-
-### 9) Preservation of Record
-The integrity of deliberation history must be preserved.
-Edits must be traceable and reviewable.
-
-## Interpretation
-If any document conflicts with the Kernel, the Kernel prevails.
->>>>>>> 8ad5dd5 (chore(governance): restore full governance content from last valid baseline)
