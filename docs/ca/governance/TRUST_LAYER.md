@@ -115,7 +115,6 @@ even if presented as Class A.
 - Contributor: may propose changes to non-Kernel materials under review.
 - Custodian: may approve governance-level changes under strict process.
 
-### Kernel access and anti-capture rules (hardening)
 Direct modifications to Kernel documents require:
 1) explicit rationale referencing Kernel principles,
 2) consensus review per CONSENSUS_PROCESS,
