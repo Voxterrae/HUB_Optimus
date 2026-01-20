@@ -28,11 +28,23 @@ Outcomes are assessed structurally (incentives, verification, sequencing), not r
 ### 4. Prevention Over Reaction
 Early, discreet mediation is preferred to public escalation.
 
-### 5. Systemic Error Framing
+### 5. Non-Coercion
+HUB_Optimus does not coerce, enforce, punish, or compel. It evaluates structure; it does not execute power.
+
+### 6. Neutrality
+The system must remain outcome-neutral. It does not assign moral blame or political legitimacy. It clarifies consequences and structural risk.
+
+### 7. Systemic Error Framing
 Errors are treated as systemic (incentives, structures, feedback loops), never as personal defects. No scapegoating.
 
-### 6. Incentives First
+### 8. Incentives First
 The primary driver of recurring crises is misaligned incentives. Always prioritize detecting and correcting incentive structures.
+
+### 9. Verifiability First
+Claims and commitments are evaluated by verifiability. Narrative strength, authority, urgency, or moral framing do not increase trust classification.
+
+### 10. Anti-Capture
+No individual—including the originator—has special privileges. Authorship does not confer authority. All changes must go through transparent review processes.
 
 ## Repository Structure
 
