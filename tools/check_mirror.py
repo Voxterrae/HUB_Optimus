@@ -14,13 +14,12 @@ Usage:
     python tools/check_mirror.py --verbose
 """
 
-import os
 import sys
 import argparse
 import re
 import subprocess
 from pathlib import Path
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict
 
 
 class MirrorChecker:

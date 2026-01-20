@@ -64,12 +64,6 @@ Custodians do not grant “certification”. They only protect clarity and preve
 - Naming a fork or derivative work “HUB_Optimus” or using confusingly similar branding.
 - Misleading “compatibility” claims that imply governance alignment.
 
-## Allowed Uses (without permission)
-You may use the Name/Mark to:
-- refer to this repository and its documents,
-- cite HUB_Optimus in academic/public-interest discussion,
-- build tools that *implement* HUB_Optimus methods,
-- create translations that preserve meaning.
 
 ### Enforcement
 Unauthorized use constitutes trademark infringement and may trigger legal action.
