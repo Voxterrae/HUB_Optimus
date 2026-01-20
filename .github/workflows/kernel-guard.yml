@@ -18,6 +18,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          
+          ZERO_SHA="0000000000000000000000000000000000000000"
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             base="${{ github.event.pull_request.base.sha }}"
@@ -30,7 +32,7 @@ jobs:
           echo "Head: $head"
 
           # Guard against zero SHA (new branch pushes)
-          if [ "$base" = "0000000000000000000000000000000000000000" ]; then
+          if [ "$base" = "$ZERO_SHA" ]; then
             echo "Zero SHA detected (new branch), using HEAD^ as base"
             base="HEAD^"
           fi
