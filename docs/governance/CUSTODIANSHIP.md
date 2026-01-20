@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # HUB_Optimus — Custodianship
 
 ## Purpose
@@ -72,5 +71,3 @@ they lose custodianship status through the same consensus process.
 ## Non-sovereign statement
 Custodianship does not create authority over participants or institutions.
 It only protects the integrity and clarity of the HUB_Optimus system definition.
-=======
->>>>>>> 8ad5dd5 (chore(governance): restore full governance content from last valid baseline)
