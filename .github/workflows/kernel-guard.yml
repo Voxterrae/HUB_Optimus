@@ -29,12 +29,19 @@ jobs:
           echo "Base: $base"
           echo "Head: $head"
 
+          # Guard against zero SHA (new branch pushes)
+          if [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            echo "Zero SHA detected (new branch), using HEAD^ as base"
+            base="HEAD^"
+          fi
+
           files=$(git diff --name-only "$base" "$head")
           echo "$files"
 
           if echo "$files" | grep -E '^(docs/governance/|v1_core/languages/)' >/dev/null; then
             if ! echo "$files" | grep -q '^docs/governance/CHANGE_REQUEST.md$'; then
-             
-            
+              echo "Error: Kernel or governance changes detected without CHANGE_REQUEST.md"
+              echo "Please include docs/governance/CHANGE_REQUEST.md in your changes"
+              exit 1
             fi
           fi

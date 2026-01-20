@@ -1,122 +1,122 @@
-> 🇪🇸 Versión en español: [./es/04_scenario_template.md](./es/04_scenario_template.md)
+> 🇪🇸 Spanish version: [./es/04_scenario_template.md](./es/04_scenario_template.md)
 
-# Plantilla de escenario (ES)
+# Scenario Template (EN)
 
-Esta plantilla sirve para crear escenarios comparables y fáciles de iterar. Mantén las secciones y sé explícito: lo que no se define se vuelve ambigüedad durante la negociación.
-
----
-
-## 0) Metadatos
-- **ID del escenario:** `scenario_XXX_nombre_corto`
-- **Versión:** `0.1`
-- **Idioma:** `es`
-- **Última actualización:** `YYYY-MM-DD`
-- **Autor/a:** `nombre`
-- **Estado:** borrador / estable / en revisión
+This template is used to create scenarios that are comparable and easy to iterate on. Keep all sections and be explicit: anything you do not define becomes ambiguity during the negotiation.
 
 ---
 
-## 1) Resumen ejecutivo (5–10 líneas)
-- ¿Qué está pasando?
-- ¿Cuál es el objetivo mínimo de la ronda?
-- ¿Qué hace que este escenario sea “difícil” o interesante?
+## 0) Metadata
+- **Scenario ID:** `scenario_XXX_short_name`
+- **Version:** `0.1`
+- **Language:** `en`
+- **Last updated:** `YYYY-MM-DD`
+- **Author:** `name`
+- **Status:** draft / stable / under review
 
 ---
 
-## 2) Actores y roles
-Define roles claros (evita “todos” / “la comunidad internacional” sin desglose):
-
-- **Parte A:** objetivos, límites, presión interna.
-- **Parte B:** objetivos, límites, presión interna.
-- **Tercero (opcional):** mediador/observador/verificador.
-- **Otros actores (opcional):** actores de campo, aliados, opinión pública, etc.
+## 1) Executive summary (5–10 lines)
+- What is happening?
+- What is the minimum objective for this round?
+- What makes this scenario "hard" or interesting?
 
 ---
 
-## 3) Contexto y línea de tiempo
-- **Contexto previo (3–8 bullets):**
-- **Eventos recientes relevantes (3–6 bullets):**
-- **Horizonte temporal:** horas / días / semanas (elige uno)
+## 2) Actors and roles
+Define clear roles (avoid "everyone" / "the international community" without further breakdown):
+
+- **Party A:** goals, limits, internal pressure.
+- **Party B:** goals, limits, internal pressure.
+- **Third party (optional):** mediator/observer/verifier.
+- **Other actors (optional):** field actors, allies, public opinion, etc.
 
 ---
 
-## 4) Intereses, posiciones y restricciones
-Para cada parte:
-- **Intereses (por qué realmente quiere algo)**
-- **Posiciones (lo que pide explícitamente)**
-- **Restricciones internas (política, economía, seguridad, opinión pública)**
-- **Líneas rojas (no negociables)**
-- **Zona de flexibilidad (concesiones posibles)**
+## 3) Context and timeline
+- **Prior context (3–8 bullets):**
+- **Relevant recent events (3–6 bullets):**
+- **Time horizon:** hours / days / weeks (choose one)
 
 ---
 
-## 5) Objetivo mínimo y criterios de éxito
-Define el “éxito mínimo” de forma verificable:
-- **Éxito mínimo:** (1–3 frases)
-- **Éxito ampliado (opcional):**
-- **Fracaso claro:** ¿qué resultado sería “no útil”?
+## 4) Interests, positions, and constraints
+For each party:
+- **Interests (why they really want something)**
+- **Positions (what they explicitly ask for)**
+- **Internal constraints (politics, economy, security, public opinion)**
+- **Red lines (non-negotiables)**
+- **Flexibility zone (possible concessions)**
 
 ---
 
-## 6) Propuesta inicial (borrador)
-Incluye una propuesta inicial para arrancar:
-- **Acción principal:** (qué se hace)
-- **Calendario:** (cuándo)
-- **Alcance geográfico:** (dónde)
-- **Excepciones:** (qué NO cubre)
-- **Mecanismo de verificación:** (quién, cómo, con qué acceso)
-- **Medidas ante incumplimiento:** (qué pasa si se viola)
+## 5) Minimum objective and success criteria
+Define "minimum success" in a verifiable way:
+- **Minimum success:** (1–3 sentences)
+- **Expanded success (optional):**
+- **Clear failure:** what outcome would be "not useful"?
 
 ---
 
-## 7) Verificación y cumplimiento
-Esta sección es crítica. Sé concreto:
-- **Quién verifica:** (nombre/rol)
-- **Qué se verifica:** (eventos/acciones observables)
-- **Cómo se verifica:** (observación, informes, sensores, acceso, etc.)
-- **Frecuencia:** (cada X horas/días)
-- **Acceso y seguridad:** (zonas, permisos, escoltas)
-- **Gestión de disputas:** (qué pasa si hay versiones contradictorias)
+## 6) Initial proposal (draft)
+Include an initial proposal to get started:
+- **Main action:** (what is done)
+- **Timeline:** (when)
+- **Geographic scope:** (where)
+- **Exceptions:** (what is NOT covered)
+- **Verification mechanism:** (who, how, with what access)
+- **Non-compliance measures:** (what happens if violated)
 
 ---
 
-## 8) Riesgos y puntos de fricción
-Lista 5–10 riesgos realistas:
-- malentendidos previsibles
-- incentivos para “hacer trampa”
-- ambigüedad deliberada
-- spoilers (actores que sabotean)
-- incidentes en el terreno
+## 7) Verification and compliance
+This section is critical. Be specific:
+- **Who verifies:** (name/role)
+- **What is verified:** (observable events/actions)
+- **How it is verified:** (observation, reports, sensors, access, etc.)
+- **Frequency:** (every X hours/days)
+- **Access and security:** (zones, permits, escorts)
+- **Dispute management:** (what happens if there are conflicting versions)
 
 ---
 
-## 9) Rondas recomendadas (guía)
-- **Ronda 1:** propuesta ↔ respuesta (aceptación parcial + condiciones)
-- **Ronda 2:** ajustes (verificación, secuencia, garantías)
-- **Ronda 3:** cierre (texto de acuerdo + puntos abiertos)
-
-Entrega final:
-- un borrador de acuerdo breve (8–15 líneas)
-- lista de “puntos abiertos”
-- próximos pasos (quién hace qué y cuándo)
+## 8) Risks and friction points
+List 5–10 realistic risks:
+- foreseeable misunderstandings
+- incentives to "cheat"
+- deliberate ambiguity
+- spoilers (sabotaging actors)
+- incidents in the field
 
 ---
 
-## 10) Evaluación (post-mortem)
-Puntúa (0–3 o 0–5) y anota evidencia:
-- **Claridad**
-- **Verificabilidad**
-- **Viabilidad**
-- **Coste político**
-- **Riesgo de escalada**
+## 9) Recommended rounds (guide)
+- **Round 1:** proposal ↔ response (partial acceptance + conditions)
+- **Round 2:** adjustments (verification, sequencing, guarantees)
+- **Round 3:** closure (agreement text + open points)
+
+Final delivery:
+- a brief agreement draft (8–15 lines)
+- list of "open points"
+- next steps (who does what and when)
 
 ---
 
-## 11) Meta-learning (qué aprender y ajustar)
-- ¿Qué funcionó?
-- ¿Qué falló?
-- ¿Qué faltaba definir?
-- ¿Qué cambiarías en el escenario para la próxima ronda?
-- ¿Qué nuevas preguntas surgieron?
+## 10) Evaluation (post-mortem)
+Score (0–3 or 0–5) and note evidence:
+- **Clarity**
+- **Verifiability**
+- **Viability**
+- **Political cost**
+- **Escalation risk**
 
-Siguiente: [./05_meta_learning.md](./05_meta_learning.md)
+---
+
+## 11) Meta-learning (what to learn and adjust)
+- What worked?
+- What failed?
+- What needed to be defined?
+- What would you change in the scenario for the next round?
+- What new questions emerged?
+
+Next: [./05_meta_learning.md](./05_meta_learning.md)
