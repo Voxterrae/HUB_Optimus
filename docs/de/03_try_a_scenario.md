@@ -10,8 +10,8 @@ GeschÃ¤tzte Dauer: 10â€“15 Minuten.
 
 ## Schritt 1 â€” Ã–ffne die Szenario-Vorlage
 
-Ã–ffne:
-- [../v1_core/04_scenario_template.md](../v1_core/04_scenario_template.md)
+Öffne:
+- [../v1_core/workflow/04_scenario_template.md](../v1_core/workflow/04_scenario_template.md)
 
 Achte nur auf die Struktur:
 - Kontext
@@ -26,10 +26,6 @@ Achte nur auf die Struktur:
 
 Öffne:
 - [../v1_core/workflow/scenario_001_partial_ceasefire.md](../v1_core/workflow/scenario_001_partial_ceasefire.md)
-=======
-Ã–ffne:
-- [`../v1_core/scenario_001_partial_ceasefire.md`](../v1_core/scenario_001_partial_ceasefire.md)
-
 
 Fokussiere dich auf:
 - Was behauptet wird vs. was verifiziert wird
@@ -40,8 +36,8 @@ Fokussiere dich auf:
 
 ## Schritt 3 â€” Szenario 002: Verifizierter Waffenstillstand (struktureller Erfolg)
 
-Ã–ffne:
-- [../v1_core/scenario_002_verified_ceasefire.md](../v1_core/scenario_002_verified_ceasefire.md)
+Öffne:
+- [../v1_core/workflow/scenario_002_verified_ceasefire.md](../v1_core/workflow/scenario_002_verified_ceasefire.md)
 
 Fokussiere dich auf:
 - Was sich im Vergleich zu Szenario 001 geÃ¤ndert hat
@@ -68,7 +64,7 @@ Es fragt:
 ## Schritt 5 â€” Learning Layer
 
 Lies:
-- [../v1_core/05_meta_learning.md](../v1_core/05_meta_learning.md)
+- [../v1_core/workflow/05_meta_learning.md](../v1_core/workflow/05_meta_learning.md)
 
 Dort wird erklÃ¤rt, wie Muster extrahiert und â€žgemerktâ€œ werden.
 
@@ -87,14 +83,9 @@ Das ist der Kern von HUB_Optimus.
 
 Grundlagen:
 
-- [../v1_core/languages/es/01_base_declaracion.md](../v1_core/languages/es/01_base_declaracion.md)
-- [../v1_core/languages/es/02_arquitectura_base.md](../v1_core/languages/es/02_arquitectura_base.md)
-- [../v1_core/languages/es/03_flujo_operativo.md](../v1_core/languages/es/03_flujo_operativo.md)
-=======
-- [../v1_core/01_base_declaracion.md](../v1_core/01_base_declaracion.md)
-- [../v1_core/02_arquitectura_base.md](../v1_core/02_arquitectura_base.md)
-- [../v1_core/03_flujo_operativo.md](../v1_core/03_flujo_operativo.md)
-
+- [../v1_core/languages/en/01_base_declaracion.md](../v1_core/languages/en/01_base_declaracion.md)
+- [../v1_core/languages/en/02_arquitectura_base.md](../v1_core/languages/en/02_arquitectura_base.md)
+- [../v1_core/languages/en/03_flujo_operativo.md](../v1_core/languages/en/03_flujo_operativo.md)
 
 Mitmachen:
 - Lies [CONTRIBUTING.md](../../CONTRIBUTING.md)
