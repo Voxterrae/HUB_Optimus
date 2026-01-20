@@ -38,4 +38,8 @@ nav:
       - Workflow:
           - Workflow README: v1_core/workflow/README.md
           - Scenario template: v1_core/workflow/04_scenario_template.md
+          - Scenarios:
+              - Scenario 001 – Partial ceasefire: v1_core/workflow/scenario_001_partial_ceasefire.md
+              - Scenario 002 – Verified ceasefire: v1_core/workflow/scenario_002_verified_ceasefire.md
+              - Scenario 003 – Conflicted mediation: v1_core/workflow/scenario_003_conflicted_mediation.md
           - Meta-learning: v1_core/workflow/05_meta_learning.md
