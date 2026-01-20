@@ -8,15 +8,15 @@ HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie
 ---
 
 ## Governance
-- Gründungsurkunde: [governance/CHARTER.md](governance/CHARTER.md)
-- Kernel (unveränderliche Prinzipien): [governance/KERNEL.md](governance/KERNEL.md)
-- Konsensprozess: [governance/CONSENSUS_PROCESS.md](governance/CONSENSUS_PROCESS.md)
-- System-Kustodianship: [governance/CUSTODIANSHIP.md](governance/CUSTODIANSHIP.md)
-- Name & Identität: [governance/TRADEMARKS.md](governance/TRADEMARKS.md)
-- Trust Layer (Verifikation): [governance/TRUST_LAYER.md](governance/TRUST_LAYER.md)
-- Evaluationsstandard: [governance/EVALUATION_STANDARD.md](governance/EVALUATION_STANDARD.md)
-- Szenario-Schema: [governance/SCENARIO_SCHEMA.md](governance/SCENARIO_SCHEMA.md)
-- Legitimitätsmodell: [governance/LEGITIMACY_MODEL.md](governance/LEGITIMACY_MODEL.md)
+- Gründungsurkunde: [governance/CHARTER.md](../governance/CHARTER.md)
+- Kernel (unveränderliche Prinzipien): [governance/KERNEL.md](../governance/KERNEL.md)
+- Konsensprozess: [governance/CONSENSUS_PROCESS.md](../governance/CONSENSUS_PROCESS.md)
+- System-Kustodianship: [governance/CUSTODIANSHIP.md](../governance/CUSTODIANSHIP.md)
+- Name & Identität: [governance/TRADEMARKS.md](../governance/TRADEMARKS.md)
+- Trust Layer (Verifikation): [governance/TRUST_LAYER.md](../governance/TRUST_LAYER.md)
+- Evaluationsstandard: [governance/EVALUATION_STANDARD.md](../governance/EVALUATION_STANDARD.md)
+- Szenario-Schema: [governance/SCENARIO_SCHEMA.md](../governance/SCENARIO_SCHEMA.md)
+- Legitimitätsmodell: [governance/LEGITIMACY_MODEL.md](../governance/LEGITIMACY_MODEL.md)
 
 ---
 
@@ -88,9 +88,9 @@ Sende diesen Link:
 ## Choose your path
 
 **90 seconds (executive):**
-- What this is / isn't: [Kernel](governance/KERNEL.md)
-- How evaluation works: [Evaluation Standard](governance/EVALUATION_STANDARD.md)
-- How scenarios are defined: [Scenario Schema](governance/SCENARIO_SCHEMA.md)
+- What this is / isn't: [Kernel](../governance/KERNEL.md)
+- How evaluation works: [Evaluation Standard](../governance/EVALUATION_STANDARD.md)
+- How scenarios are defined: [Scenario Schema](../governance/SCENARIO_SCHEMA.md)
 
 **20 minutes (practitioner):**
 - Core spec (ES, canonical v1):  

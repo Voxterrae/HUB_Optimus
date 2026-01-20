@@ -8,15 +8,15 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 ---
 
 ## Gobernanza
-- Carta Fundacional: [governance/CHARTER.md](governance/CHARTER.md)
-- Kernel (principios inmutables): [governance/KERNEL.md](governance/KERNEL.md)
-- Proceso de Consenso: [governance/CONSENSUS_PROCESS.md](governance/CONSENSUS_PROCESS.md)
-- Custodia del Sistema: [governance/CUSTODIANSHIP.md](governance/CUSTODIANSHIP.md)
-- Nombre e Identidad: [governance/TRADEMARKS.md](governance/TRADEMARKS.md)
-- Capa de Confianza (verificación): [governance/TRUST_LAYER.md](governance/TRUST_LAYER.md)
-- Estándar de Evaluación: [governance/EVALUATION_STANDARD.md](governance/EVALUATION_STANDARD.md)
-- Esquema de Escenarios: [governance/SCENARIO_SCHEMA.md](governance/SCENARIO_SCHEMA.md)
-- Modelo de Legitimidad: [governance/LEGITIMACY_MODEL.md](governance/LEGITIMACY_MODEL.md)
+- Carta Fundacional: [governance/CHARTER.md](../governance/CHARTER.md)
+- Kernel (principios inmutables): [governance/KERNEL.md](../governance/KERNEL.md)
+- Proceso de Consenso: [governance/CONSENSUS_PROCESS.md](../governance/CONSENSUS_PROCESS.md)
+- Custodia del Sistema: [governance/CUSTODIANSHIP.md](../governance/CUSTODIANSHIP.md)
+- Nombre e Identidad: [governance/TRADEMARKS.md](../governance/TRADEMARKS.md)
+- Capa de Confianza (verificación): [governance/TRUST_LAYER.md](../governance/TRUST_LAYER.md)
+- Estándar de Evaluación: [governance/EVALUATION_STANDARD.md](../governance/EVALUATION_STANDARD.md)
+- Esquema de Escenarios: [governance/SCENARIO_SCHEMA.md](../governance/SCENARIO_SCHEMA.md)
+- Modelo de Legitimidad: [governance/LEGITIMACY_MODEL.md](../governance/LEGITIMACY_MODEL.md)
 
 
 ---
@@ -90,9 +90,9 @@ Envía este enlace:
 ## Choose your path
 
 **90 seconds (executive):**
-- What this is / isn't: [Kernel](governance/KERNEL.md)
-- How evaluation works: [Evaluation Standard](governance/EVALUATION_STANDARD.md)
-- How scenarios are defined: [Scenario Schema](governance/SCENARIO_SCHEMA.md)
+- What this is / isn't: [Kernel](../governance/KERNEL.md)
+- How evaluation works: [Evaluation Standard](../governance/EVALUATION_STANDARD.md)
+- How scenarios are defined: [Scenario Schema](../governance/SCENARIO_SCHEMA.md)
 
 **20 minutes (practitioner):**
 - Core spec (ES, canonical v1):  
