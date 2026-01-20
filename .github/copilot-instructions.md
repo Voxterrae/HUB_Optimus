@@ -49,7 +49,7 @@ No individual—including the originator—has special privileges. Authorship do
 ## Repository Structure
 
 ### Critical Paths
-- `v1_core/` — Active Kernel and simulator (HIGH SCRUTINY required for changes)
+- `v1_core/` — Active Kernel and simulator (HIGH SCRUTINY required for changes - see "D) Kernel Changes" section below)
   - `v1_core/languages/en/` — English reference for structure and validation
   - `v1_core/languages/es/` — Spanish translations
   - `v1_core/workflow/` — Scenario simulator templates and examples
