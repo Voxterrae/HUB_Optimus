@@ -24,8 +24,6 @@ Achte nur auf die Struktur:
 
 ## Schritt 2 — Szenario 001: Teilweiser Waffenstillstand (falscher Erfolg)
 
-�ffne:
-- [../v1_core/workflow/scenario_001_partial_ceasefire.md](../v1_core/workflow/scenario_001_partial_ceasefire.md)
 Öffne:
 - [`../v1_core/scenario_001_partial_ceasefire.md`](../v1_core/scenario_001_partial_ceasefire.md)
 
@@ -88,10 +86,6 @@ Grundlagen:
 - [../v1_core/01_base_declaracion.md](../v1_core/01_base_declaracion.md)
 - [../v1_core/02_arquitectura_base.md](../v1_core/02_arquitectura_base.md)
 - [../v1_core/03_flujo_operativo.md](../v1_core/03_flujo_operativo.md)
-- [../v1_core/01_base_declaracion.md](../v1_core/01_base_declaracion.md)
-- [../v1_core/02_arquitectura_base.md](../v1_core/02_arquitectura_base.md)
-- [../v1_core/03_flujo_operativo.md](../v1_core/03_flujo_operativo.md)
-
 
 Mitmachen:
 - Lies [CONTRIBUTING.md](../../CONTRIBUTING.md)
