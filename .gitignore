@@ -57,6 +57,8 @@ site/
 lychee_*.txt
 lychee*.txt
 md_files.txt
+lychee
+lychee-*.tar.gz
 
 # Local env
 .venv/
