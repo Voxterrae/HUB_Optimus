@@ -34,7 +34,8 @@ jobs:
 
           if echo "$files" | grep -E '^(docs/governance/|v1_core/languages/)' >/dev/null; then
             if ! echo "$files" | grep -q '^docs/governance/CHANGE_REQUEST.md$'; then
-             
-            
+              echo "::error::Governance or Kernel edits detected without corresponding CHANGE_REQUEST.md update."
+              echo "::error::Please update docs/governance/CHANGE_REQUEST.md to document this change."
+              exit 1
             fi
           fi
