@@ -49,27 +49,3 @@ Custodians vergeben keine „Zertifizierung“. Sie schützen nur Klarheit und v
 
 ## Kurze Attribution (empfohlen)
 „Auf dem HUB_Optimus-Framework aufgebaut (öffentliches Repository). Keine Billigung impliziert.“
-
----
-
-## Usage Policy (Trademark & Naming)
-
-### Erlaubt
-- HUB_Optimus als Framework referenzieren, mit klarer Zitierung.
-- Akademische und gemeinwohlorientierte Diskussion ohne Billigungsimplikation.
-
-### Ohne schriftliche Genehmigung nicht erlaubt
-- Name oder Logo für Marketing von Produkten/Dienstleistungen zu nutzen.
-- „Powered by HUB_Optimus“, „HUB_Optimus certified“ oder ähnliche Endorsement-Formulierungen.
-- Einen Fork/ein Derivat „HUB_Optimus“ zu nennen oder verwechselbar ähnliche Markenführung zu verwenden.
-- Irreführende „Kompatibilitäts“-Behauptungen, die Governance-Ausrichtung suggerieren.
-
-### Kompatibilitätsaussage (falls erlaubt)
-Wenn ein Dritter autorisiert ist, Kompatibilität zu behaupten, muss er angeben:
-- Versionsreferenz,
-- Umfang der Kompatibilität,
-- explizite Aussage, dass er den Kernel nicht kontrolliert.
-
-### Durchsetzung
-Unautorisierte Nutzung stellt Markenverletzung dar und kann rechtliche Schritte auslösen.
-=======
