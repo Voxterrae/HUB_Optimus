@@ -92,4 +92,3 @@ Grundlagen:
 Mitmachen:
 - Lies [CONTRIBUTING.md](../../CONTRIBUTING.md)
 - Schlage ein neues Szenario mithilfe der Vorlage vor
-
