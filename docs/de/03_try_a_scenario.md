@@ -26,9 +26,6 @@ Achte nur auf die Struktur:
 
 Öffne:
 - [../v1_core/workflow/scenario_001_partial_ceasefire.md](../v1_core/workflow/scenario_001_partial_ceasefire.md)
-=======
-Ã–ffne:
-- [`../v1_core/scenario_001_partial_ceasefire.md`](../v1_core/scenario_001_partial_ceasefire.md)
 
 
 Fokussiere dich auf:
