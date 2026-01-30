@@ -30,4 +30,4 @@ It evaluates structural soundness.
 ## How to use the simulator (canonical process)
 
 ### Step 1 — Define a scenario
-Create a new scenario file using the canonical [scenario template](./04_scenario_template.md).
+Create a new scenario file using the canonical template:

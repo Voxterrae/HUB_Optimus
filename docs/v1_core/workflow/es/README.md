@@ -5,8 +5,8 @@
 Este directorio contiene el **flujo operativo** para ejecutar simulaciones diplomáticas con estructura: roles, objetivos, rondas, criterios de verificación y una capa de aprendizaje (“meta-learning”) para iterar.
 
 ## Cómo empezar (rápido)
-1) Entrada (EN, en inglés): [../../../00_start_here.md](../../../00_start_here.md)
-2) Prueba guiada (EN, en inglés): [../../../03_try_a_scenario.md](../../../03_try_a_scenario.md)
+1) Entrada en español: [../../../00_start_here.md](../../../00_start_here.md)
+2) Prueba guiada: [../../../03_try_a_scenario.md](../../../03_try_a_scenario.md)
 3) Elige un escenario:
    - Escenario 001: [./scenario_001_partial_ceasefire.md](./scenario_001_partial_ceasefire.md)
    - Escenario 002: [./scenario_002_verified_ceasefire.md](./scenario_002_verified_ceasefire.md)
