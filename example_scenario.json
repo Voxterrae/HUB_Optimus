@@ -1,0 +1,10 @@
+{
+  "title": "Alto el fuego parcial",
+  "description": "Dos facciones negocian un alto el fuego parcial.",
+  "roles": [
+    {"name": "FacciónA", "role": "faccion"},
+    {"name": "FacciónB", "role": "faccion"}
+  ],
+  "success_criteria": {"offer": 5},
+  "max_rounds": 5
+}
