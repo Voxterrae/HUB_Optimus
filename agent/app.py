@@ -6,6 +6,8 @@ from azure.ai.agentserver.agentframework import from_agent_framework
 from azure.identity.aio import DefaultAzureCredential
 from dotenv import load_dotenv
 
+from tracing import setup_tracing
+
 
 def _get_env(name: str) -> str:
     value = os.getenv(name)
@@ -16,6 +18,11 @@ def _get_env(name: str) -> str:
 
 async def main() -> None:
     load_dotenv(override=True)
+    
+    # Initialize tracing
+    tracer = setup_tracing("hub-optimus-agent")
+    if tracer:
+        print("OpenTelemetry tracing initialized")
 
     project_endpoint = _get_env("FOUNDRY_PROJECT_ENDPOINT")
     deployment_name = _get_env("FOUNDRY_MODEL_DEPLOYMENT_NAME")
