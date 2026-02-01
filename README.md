@@ -72,11 +72,13 @@ is maintained in parallel for accessibility.
 ---
 
 ## Agent Deployment
-The HUB_Optimus agent can be deployed to Azure AI Foundry. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on:
-- Setting up Azure AI Foundry
-- Configuring environment variables
-- Deploying with Azure Developer CLI (azd)
-- Local testing and debugging
+The HUB_Optimus agent can be deployed to Azure AI Foundry:
+- **Quick Start**: [QUICKSTART.md](QUICKSTART.md) - Deploy in 5 steps
+- **Full Guide**: [DEPLOYMENT.md](DEPLOYMENT.md) - Detailed instructions including:
+  - Setting up Azure AI Foundry
+  - Configuring environment variables
+  - Deploying with Azure Developer CLI (azd)
+  - Local testing and debugging
 
 ---
 
