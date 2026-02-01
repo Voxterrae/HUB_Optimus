@@ -6,7 +6,11 @@ from azure.ai.agentserver.agentframework import from_agent_framework
 from azure.identity.aio import DefaultAzureCredential
 from dotenv import load_dotenv
 
-from tracing import setup_tracing
+try:
+    from .tracing import setup_tracing
+except ImportError:
+    # Fallback for when running as a script
+    from tracing import setup_tracing
 
 
 def _get_env(name: str) -> str:
