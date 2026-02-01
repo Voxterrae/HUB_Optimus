@@ -63,10 +63,20 @@ Go deeper (workflow / simulator):
 - docs/  onboarding and reading paths (recommended entry point)
 - v1_core/  active kernel: architecture, operational flow, workflow, templates,
   scenarios, meta-learning
+- agent/  AI agent application for Azure AI Foundry
 - legacy/  historical or exploratory materials (v0), preserved for transparency
 
 English is the reference language for structural validation. Spanish documentation
 is maintained in parallel for accessibility.
+
+---
+
+## Agent Deployment
+The HUB_Optimus agent can be deployed to Azure AI Foundry. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on:
+- Setting up Azure AI Foundry
+- Configuring environment variables
+- Deploying with Azure Developer CLI (azd)
+- Local testing and debugging
 
 ---
 

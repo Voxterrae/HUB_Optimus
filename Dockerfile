@@ -22,5 +22,5 @@ EXPOSE 8087
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Run the agent with agentdev
+# Run the agent with agentdev (provided by agent-dev-cli package)
 CMD ["python", "-m", "agentdev", "run", "agent/app.py", "--port", "8087"]

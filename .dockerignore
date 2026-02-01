@@ -57,11 +57,8 @@ temp/
 .DS_Store
 Thumbs.db
 
-# Markdown files (not needed in container)
-*.md
-
-# Contributing and license files
+# Markdown documentation (not needed in container, except DEPLOYMENT.md for reference)
+README.md
 CONTRIBUTING.md
-LICENSE
-IP_NOTICE.md
 SECURITY.md
+IP_NOTICE.md
