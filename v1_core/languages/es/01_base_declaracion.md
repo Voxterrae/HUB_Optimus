@@ -1,85 +1,63 @@
-> 🇬🇧 English source: [../en/01_base_declaracion.md](../en/01_base_declaracion.md)
-
-# Declaración base (ES)
-
-Este documento define el propósito, los principios operativos y los criterios mínimos de coherencia del sistema **HUB_Optimus**: un marco para estructurar simulaciones diplomáticas y evaluar si un resultado reduce riesgos y mejora estabilidad de forma verificable.
-
----
+# 01 — Declaración Base (Núcleo Inmutable)
 
 ## 1) Propósito
-- Proveer un **método reproducible** para analizar y ejecutar escenarios de negociación.
-- Distinguir entre **alivio inmediato** y **estabilidad sistémica** (evitar “falsos positivos humanitarios”).
-- Mejorar iterativamente la calidad de escenarios, acuerdos y mecanismos (meta-learning).
+HUB_Optimus es un marco abierto para mejorar los resultados diplomáticos a través de la construcción de paz ética, adaptativa y verificable.
 
----
+Está diseñado para:
+- reducir la probabilidad de conflictos futuros,
+- priorizar la estabilidad a medio/largo plazo sobre las victorias a corto plazo,
+- prevenir fallos sistémicos repetidos haciendo visibles y corregibles los incentivos.
 
-## 2) Qué hace HUB_Optimus
-- Estructura un caso en capas: disparador → contexto → incentivos → calibración humana → evaluación sistémica → patrones históricos → coherencia del núcleo.
-- Prioriza **mecanismos verificables** sobre declaraciones.
-- Identifica cuándo un acuerdo es “estéticamente pacífico” pero estructuralmente frágil.
+HUB_Optimus es una herramienta de trabajo: la legitimidad se gana a través de resultados verificables, no de autoridad.
 
----
+## 2) Qué es HUB_Optimus
+HUB_Optimus es una arquitectura en capas que:
+- observa decisiones y resultados,
+- los evalúa frente a la estabilidad a largo plazo y el riesgo futuro,
+- habilita la mediación preventiva y opciones correctivas sin coerción,
+- mantiene una memoria activa de patrones históricos recurrentes.
 
-## 3) Principios operativos
-1) **Verificación > narrativa**  
-   Un texto bonito sin verificación tiende a fallar bajo presión.
-2) **Incentivos > intención**  
-   Si el sistema recompensa el incumplimiento, el incumplimiento aparece.
-3) **Secuencia > promesas**  
-   El orden de pasos y condiciones determina viabilidad real.
-4) **Claridad > ambigüedad útil**  
-   La ambigüedad puede “cerrar” acuerdos, pero suele reabrir conflicto.
-5) **Iteración > perfección**  
-   Cada ronda produce parches pequeños y comparables.
+## 3) Qué no es HUB_Optimus
+HUB_Optimus no es:
+- un partido político, ideología o instrumento de propaganda,
+- un tribunal para asignar culpas personales,
+- una autoridad coercitiva,
+- un reemplazo del juicio humano.
 
----
+## 4) Principios no negociables (Capa 0)
+Estos principios son inmutables y definen el Núcleo.
 
-## 4) Criterio supremo
-El criterio supremo es la **estabilidad a medio/largo plazo** (reducción de riesgo futuro) sin sacrificar principios básicos de verificación y coherencia.
+### 4.1 Definición de éxito
+Una solución "funciona" cuando reduce mediblemente el riesgo futuro, aunque no sea perfecta hoy.
 
-> Si una solución reduce sufrimiento hoy pero aumenta el riesgo de escalada mañana, se clasifica como inestable o “falso positivo humanitario”.
+### 4.2 Criterio supremo
+La estabilidad a medio/largo plazo es el criterio supremo de evaluación. Cualquier "éxito" que aumente la inestabilidad a largo plazo se rechaza como un falso éxito.
 
----
+### 4.3 Marco de error sistémico
+Los errores se tratan como fallos sistémicos (incentivos, estructuras, bucles de retroalimentación), no como defectos personales. El sistema se centra en causas y correcciones, no en la búsqueda de chivos expiatorios.
 
-## 5) Modelo de prioridad D + A (definición operativa)
-Para mantener coherencia, el sistema distingue entre:
-- **D (Durabilidad / Durabilidad estructural):** mecanismos, verificación, cumplimiento, secuencia.
-- **A (Alivio / Asistencia inmediata):** reducción de daño y sufrimiento en el corto plazo.
+### 4.4 Incentivos primero
+El motor principal de las crisis recurrentes son los incentivos desalineados. HUB_Optimus prioriza detectar y corregir los incentivos que recompensan la inestabilidad o castigan las opciones racionales y estabilizadoras.
 
-Regla práctica:
-- A sin D suele ser temporal y puede empeorar el conflicto.
-- D con A produce resultados sostenibles.
-- Cuando hay tensión, se busca **A verificable** y **D mínimo viable**.
+### 4.5 Evaluación sobre narrativa
+HUB_Optimus interviene principalmente mejorando cómo se evalúan los resultados (métricas, criterios, retroalimentación), no imponiendo decisiones o narrativas.
 
----
+### 4.6 Integridad como filtro de entrada
+El acceso para influir en el Núcleo se otorga primero por integridad ética y coherencia sostenida en el tiempo. La habilidad técnica es valiosa pero secundaria en el punto de confianza.
 
-## 6) Resultados típicos (tipología)
-- **Estabilizador:** reduce riesgo futuro y mejora estabilidad (con verificación e incentivos alineados).
-- **Desestabilizador (enmascarado):** parece éxito, pero incentiva violaciones o rearme.
-- **Neutral / transitorio:** mejora parcial, con alta dependencia de contexto y seguimiento.
-- **No evaluable:** faltan definiciones, métricas o mecanismos.
+## 5) Postura operativa
+HUB_Optimus prefiere:
+- mediación preventiva y discreta sobre escalada pública,
+- acción + análisis en paralelo cuando el tiempo es limitado,
+- criterios transparentes sobre negociación oculta.
 
----
+## 6) Política de traducción (núcleo único, múltiples idiomas)
+Todos los idiomas deben reflejar el mismo conjunto de archivos, orden y significado.
+Las traducciones deben preservar la intención y las definiciones; el idioma no debe introducir deriva conceptual.
 
-## 7) Señales de alerta temprana (red flags)
-- No hay verificación independiente.
-- “Compromisos” sin plazos ni alcance.
-- Incentivos que premian anuncios, no cumplimiento.
-- Ausencia de consecuencias o resolución de disputas.
-- Lenguaje celebratorio que bloquea corrección.
-
----
-
-## 8) Qué se considera “éxito” aquí
-Éxito no es “firmar algo”. Éxito es:
-- un acuerdo claro,
-- con verificación plausible,
-- con secuencia viable,
-- y con incentivos que favorecen cumplimiento.
-
----
-
-## 9) Enlaces internos
-- Arquitectura base (ES): [./02_arquitectura_base.md](./02_arquitectura_base.md)
-- Flujo operativo (ES): [./03_flujo_operativo.md](./03_flujo_operativo.md)
-- Workflow (ES): [../../workflow/es/README.md](../../workflow/es/README.md)
+## 7) Política de cambios
+Este documento es parte del Núcleo inmutable (Capa 0).
+Los cambios requieren:
+- justificación explícita que haga referencia a los principios del Núcleo,
+- revisión bajo el modelo de integridad primero,
+- sincronización entre todas las versiones de idioma.
