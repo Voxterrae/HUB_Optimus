@@ -18,16 +18,18 @@ To enable tracing, set the following in your `.env` file:
 TRACING_ENABLED=true
 ```
 
+**Note**: When tracing is enabled without specifying an exporter, it defaults to console output for immediate feedback during development.
+
 ### Console Tracing (Local Development)
 
-For local development, you can output traces to the console:
+For local development, you can explicitly enable console output:
 
 ```bash
 TRACING_ENABLED=true
 TRACING_CONSOLE=true
 ```
 
-This will print span information to the console as the agent runs, useful for immediate debugging.
+This will print span information to the console as the agent runs, useful for immediate debugging. Console output is also the default when tracing is enabled without configuring any other exporter.
 
 ### OTLP Exporter (Production/Integration)
 

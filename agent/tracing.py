@@ -1,4 +1,25 @@
-"""OpenTelemetry tracing configuration for HUB_Optimus agent."""
+"""OpenTelemetry tracing configuration for HUB_Optimus agent.
+
+This module provides configuration and setup for OpenTelemetry distributed tracing.
+It supports multiple exporters (OTLP, Console) and is fully configurable via
+environment variables.
+
+Functions:
+    setup_tracing: Initialize and configure OpenTelemetry tracing
+    get_tracer: Get the current global tracer instance (for use in other modules)
+
+Example:
+    from agent.tracing import setup_tracing, get_tracer
+    
+    # Initialize tracing in main application
+    tracer = setup_tracing("my-service")
+    
+    # Use tracer in other modules
+    tracer = get_tracer()
+    with tracer.start_as_current_span("operation"):
+        # ... operation code ...
+        pass
+"""
 
 import os
 from typing import Optional
@@ -40,6 +61,11 @@ def setup_tracing(service_name: str = "hub-optimus-agent") -> Optional[trace.Tra
     # Configure exporters based on environment
     otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
     console_tracing = os.getenv("TRACING_CONSOLE", "false").lower() == "true"
+    
+    # Ensure at least one exporter is configured when tracing is enabled
+    if not otlp_endpoint and not console_tracing:
+        # Default to console exporter when tracing is enabled but no exporter is specified
+        console_tracing = True
     
     if otlp_endpoint:
         # OTLP exporter for production/integration
