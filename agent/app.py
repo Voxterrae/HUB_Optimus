@@ -6,10 +6,10 @@ from azure.ai.agentserver.agentframework import from_agent_framework
 from azure.identity.aio import DefaultAzureCredential
 from dotenv import load_dotenv
 
-try:
+# Handle import for both package and script execution contexts
+if __package__:
     from .tracing import setup_tracing
-except ImportError:
-    # Fallback for when running as a script
+else:
     from tracing import setup_tracing
 
 
