@@ -2,6 +2,7 @@ import asyncio
 import os
 
 from agent_framework.azure import AzureAIClient
+from agent_framework.observability import configure_otel_providers
 from azure.ai.agentserver.agentframework import from_agent_framework
 from azure.identity.aio import DefaultAzureCredential
 from dotenv import load_dotenv
@@ -16,6 +17,11 @@ def _get_env(name: str) -> str:
 
 async def main() -> None:
     load_dotenv(override=True)
+
+    configure_otel_providers(
+        vs_code_extension_port=4317,
+        enable_sensitive_data=True,
+    )
 
     project_endpoint = _get_env("FOUNDRY_PROJECT_ENDPOINT")
     deployment_name = _get_env("FOUNDRY_MODEL_DEPLOYMENT_NAME")

@@ -6,3 +6,4 @@ azure-identity>=1.15.0
 python-dotenv>=1.0.1
 debugpy>=1.8.0
 agent-dev-cli
+opentelemetry-exporter-otlp-proto-grpc>=1.23.0
