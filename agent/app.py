@@ -11,7 +11,10 @@ from dotenv import load_dotenv
 def _get_env(name: str) -> str:
     value = os.getenv(name)
     if not value:
-        raise RuntimeError(f"Missing required environment variable: {name}")
+        raise RuntimeError(
+            f"Missing required environment variable: {name}. "
+            "Set it in your environment or in a .env file (see .env.example)."
+        )
     return value
 
 

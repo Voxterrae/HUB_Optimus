@@ -59,6 +59,17 @@ Go deeper (workflow / simulator):
 
 ---
 
+## Local agent (optional)
+To run the agent locally, set the required Foundry environment variables.
+
+1) Copy [.env.example](.env.example) to .env.
+2) Fill in:
+  - FOUNDRY_PROJECT_ENDPOINT
+  - FOUNDRY_MODEL_DEPLOYMENT_NAME
+3) Run the task “Run Agent HTTP Server”, then attach with “Debug Local Agent HTTP Server”.
+
+---
+
 ## Repository map
 - docs/  onboarding and reading paths (recommended entry point)
 - v1_core/  active kernel: architecture, operational flow, workflow, templates,
