@@ -1,7 +1,5 @@
 # HUB_Optimus — Trust Layer
 
-HUB_Optimus — Trust Layer
-
 ## Purpose
 The Trust Layer defines how HUB_Optimus evaluates **claims**, **commitments**, and **agreements** for operational reliability.
 
@@ -107,3 +105,25 @@ even if presented as Class A.
 ## Integration points
 - Scenario inputs should reference evidence using: `governance/SCENARIO_SCHEMA.md`
 - Evaluations should explicitly cite evidence class + trust profile dimensions using: `governance/EVALUATION_STANDARD.md`
+
+---
+
+## Kernel access and anti-capture rules (hardening)
+
+### Trust tiers (high-level)
+- Reader: may read and reference the system.
+- Contributor: may propose changes to non-Kernel materials under review.
+- Custodian: may approve governance-level changes under strict process.
+
+Direct modifications to Kernel documents require:
+1) explicit rationale referencing Kernel principles,
+2) consensus review per CONSENSUS_PROCESS,
+3) custodianship approval per CUSTODIANSHIP,
+4) synchronization across language mirrors.
+
+### Anti-capture rule
+Attempts to:
+- introduce drift via translation,
+- rebrand the method while preserving claims,
+- convert governance into marketing,
+are treated as capture attempts and rejected.

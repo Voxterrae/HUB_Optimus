@@ -1,0 +1,80 @@
+name: Import bundle (HUB_Optimus)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  import_bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Unpack bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/hub_bundle
+          unzip -q tools/import_bundle/HUB_Optimus-alllangs-fixed4.zip -d /tmp/hub_bundle
+          test -d /tmp/hub_bundle/HUB_Optimus-main
+          echo "Bundle unpacked."
+
+      - name: Apply governance + i18n assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC=/tmp/hub_bundle/HUB_Optimus-main
+
+          # Governance canonical + mirrored across languages
+          mkdir -p ./docs/governance
+          rsync -a "$SRC/docs/governance/" "./docs/governance/"
+
+          for lang in ca de es fr ru he zh; do
+            mkdir -p "./docs/${lang}/governance"
+            rsync -a --delete "$SRC/docs/${lang}/governance/" "./docs/${lang}/governance/"
+          done
+
+          # Keep onboarding docs for HE/ZH in sync (optional)
+          rsync -a "$SRC/docs/he/" "./docs/he/"
+          rsync -a "$SRC/docs/zh/" "./docs/zh/"
+
+          # Root README language links
+          cp -f "$SRC/README.md" "./README.md" || true
+
+          # Tools
+          mkdir -p tools
+          cp -f "$SRC/tools/check_local_links.py" "./tools/check_local_links.py" || true
+          chmod +x ./tools/check_local_links.py || true
+
+      - name: Sanity checks (offline)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -V
+          if [ -f tools/check_mirror.py ]; then
+            python3 tools/check_mirror.py --check-structure
+          fi
+          if [ -f tools/check_local_links.py ]; then
+            python3 tools/check_local_links.py || true
+          fi
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: "docs(governance): mirror across languages + link fixes"
+          title: "docs(governance): mirror across languages + link fixes"
+          body: |
+            Automated import from `tools/import_bundle/HUB_Optimus-alllangs-fixed4.zip`.
+
+            Includes:
+            - Governance docs mirrored across official languages (including HE/ZH)
+            - Fixes for local relative links in onboarding docs
+            - Adds `tools/check_local_links.py` for offline verification
+          branch: automation/import-alllangs-fixed4
+          delete-branch: true

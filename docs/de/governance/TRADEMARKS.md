@@ -1,75 +1,70 @@
-# HUB_Optimus — Name, Marken und Identitätsnutzung
+# HUB_Optimus — Name, Marks, and Identity Use
 
-## Zweck
-HUB_Optimus muss resistent gegen Capture, Kommerzialisierungsdruck und irreführende Autoritätsbehauptungen bleiben.
-Dieses Dokument definiert, wie Name und Identität genutzt werden dürfen, ohne private „Eigentümer“ oder institutionelle Engpässe zu erzeugen.
+## Purpose
+HUB_Optimus must remain resistant to capture, commercialization pressure, and misleading claims of authority.
+This document defines how the name and identity may be used without creating a private “owner” or an institutional choke point.
 
-## Begriffe
-- **Name/Marke:** „HUB_Optimus“, „HUB Optimus“, „HUB-Optimus“ und nah verwechselbare Varianten.
-- **Offiziell:** Material, das dem Kernel und dem dokumentierten Konsensprozess folgt.
-- **Derivat:** ein Fork oder eine externe Implementierung, die Teile von HUB_Optimus wiederverwendet.
+## Terms
+- **Name/Mark**: “HUB_Optimus”, “HUB Optimus”, “HUB-Optimus”, and closely confusing variants.
+- **Official**: material that follows the Kernel and the documented consensus process.
+- **Derivative**: a fork or external implementation that reuses parts of HUB_Optimus.
 
-## Erlaubte Nutzung (ohne Genehmigung)
-Du darfst Name/Marke nutzen, um:
-- dieses Repository und seine Dokumente zu referenzieren,
-- HUB_Optimus in akademischen / gemeinwohlorientierten Diskussionen zu zitieren,
-- Tools zu bauen, die HUB_Optimus-Methoden implementieren,
-- Übersetzungen zu erstellen, die die Bedeutung bewahren.
+## Allowed Uses (without permission)
+You may use the Name/Mark to:
+- refer to this repository and its documents,
+- cite HUB_Optimus in academic/public-interest discussion,
+- build tools that *implement* HUB_Optimus methods,
+- create translations that preserve meaning.
 
-## Verbotene Nutzung (ohne Genehmigung)
-Du darfst NICHT:
-- „offiziell“ oder „zertifiziert durch HUB_Optimus“ behaupten,
-- implizieren, HUB_Optimus sei Autorität, Tribunal oder Durchsetzungsorgan,
-- Name/Marke nutzen, um Leistungen zu verkaufen, die eine Billigung suggerieren,
-- ein Derivat/Fork als kanonisches System darstellen,
-- Name/Marke (oder verwechselbare Varianten) so registrieren, dass offene öffentliche Nutzung verhindert wird.
+## Prohibited Uses (without permission)
+You may NOT:
+- claim “official” or “certified by HUB_Optimus” status,
+- imply HUB_Optimus is an authority, tribunal, or enforcement body,
+- use the Name/Mark to sell services that suggest endorsement,
+- present a derivative/fork as the canonical system,
+- register the Name/Mark (or confusing variants) in a way that prevents open public use.
 
-## Kanonische Identität
-Das kanonische System ist definiert durch:
-- die Kernel-Prinzipien,
-- das Protokoll des Konsensprozesses,
-- und die öffentliche Repository-Historie.
+## Canonical Identity
+The canonical system is defined by:
+- the Kernel principles,
+- the consensus process record,
+- and the public repository history.
 
-Jedes Derivat muss klar angeben:
-- dass es ein Derivat ist,
-- auf welcher Version es basiert,
-- und was geändert wurde.
+Any derivative must clearly state:
+- it is a derivative,
+- which version it is based on,
+- and what changed.
 
-## Anti-Capture-Klausel
-Keine Einzelperson (einschließlich des Urhebers) darf Name/Marke nutzen, um Identität, Roadmap oder Konsensregeln unilateral zu verändern.
-Öffentliche Legitimität erfordert nachvollziehbaren Konsens.
+## Anti-Capture Clause
+No individual (including the originator) may use the Name/Mark to unilaterally alter the system’s identity, roadmap, or consensus rules.
+Public legitimacy requires traceable consensus.
 
 ## Good-Faith Enforcement
-Bei Missbrauch können Maintainer/Custodians:
-- Korrektur von Behauptungen verlangen,
-- klarere Attribution verlangen,
-- Entfernung irreführender Endorsement-Sprache verlangen.
+If misuse occurs, maintainers/custodians may:
+- request correction of claims,
+- request clearer attribution,
+- request removal of misleading endorsement language.
 
-Custodians vergeben keine „Zertifizierung“. Sie schützen nur Klarheit und verhindern Täuschung.
+Custodians do not grant “certification”. They only protect clarity and prevent deception.
 
-## Kurze Attribution (empfohlen)
-„Auf dem HUB_Optimus-Framework aufgebaut (öffentliches Repository). Keine Billigung impliziert.“
+## Short Attribution (recommended)
+“Built on the HUB_Optimus framework (open repository). No endorsement implied.”
 
 ---
 
 ## Usage Policy (Trademark & Naming)
 
-### Erlaubt
-- HUB_Optimus als Framework referenzieren, mit klarer Zitierung.
-- Akademische und gemeinwohlorientierte Diskussion ohne Billigungsimplikation.
+### Allowed
+- Referencing HUB_Optimus as a framework, with clear citation.
+- Academic and public-interest discussion without implying endorsement.
 
-### Ohne schriftliche Genehmigung nicht erlaubt
-- Name oder Logo für Marketing von Produkten/Dienstleistungen zu nutzen.
-- „Powered by HUB_Optimus“, „HUB_Optimus certified“ oder ähnliche Endorsement-Formulierungen.
-- Einen Fork/ein Derivat „HUB_Optimus“ zu nennen oder verwechselbar ähnliche Markenführung zu verwenden.
-- Irreführende „Kompatibilitäts“-Behauptungen, die Governance-Ausrichtung suggerieren.
+### Not allowed without written permission
+- Using HUB_Optimus name or logo to market products/services.
+- “Powered by HUB_Optimus”, “HUB_Optimus certified”, or similar endorsement language.
+- Naming a fork or derivative work “HUB_Optimus” or using confusingly similar branding.
+- Misleading “compatibility” claims that imply governance alignment.
 
-### Kompatibilitätsaussage (falls erlaubt)
-Wenn ein Dritter autorisiert ist, Kompatibilität zu behaupten, muss er angeben:
-- Versionsreferenz,
-- Umfang der Kompatibilität,
-- explizite Aussage, dass er den Kernel nicht kontrolliert.
 
-### Durchsetzung
-Unautorisierte Nutzung stellt Markenverletzung dar und kann rechtliche Schritte auslösen.
-=======
+### Enforcement
+Unauthorized use constitutes trademark infringement and may trigger legal action.
+
