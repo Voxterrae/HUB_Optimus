@@ -1,73 +1,79 @@
-# HUB_Optimus — Custodianship
+# Custodianship
 
-## Purpose
-Custodianship exists to protect the Kernel and the integrity of governance.
-It is not ownership, not authority over outcomes, and not a certification body.
+Custodianship defines who can protect the immutable Kernel and how the official repository evolves without capture.
 
-Custodians protect:
-- meaning coherence across languages,
-- resistance to capture and commercialization pressure,
-- traceability of governance changes,
-- and the public record of deliberation.
+HUB_Optimus does not enforce outcomes. Custodianship only governs what is accepted into the official canonical system.
 
-## What Custodianship is
-Custodianship is a constrained governance role that:
-- safeguards the Kernel (Layer 0),
-- enforces the consensus process for governance changes,
-- blocks semantic drift and deceptive rebranding,
-- ensures translations remain meaning-identical to the canonical set.
+---
 
-## What Custodianship is not
-Custodianship is not:
-- a tribunal or enforcement authority,
-- a political mandate,
-- a private ownership claim,
-- a gatekeeping tool for personal preference.
+## 1) Purpose
 
-## Scope of powers (strictly limited)
-Custodians MAY:
-- reject governance changes that violate the Kernel,
-- require explicit rationale and traceability for governance edits,
-- require synchronization across language mirrors,
-- request removal/correction of misleading “official/endorsed” claims.
+- Protect the Immutable Kernel.
+- Preserve integrity-first constraints.
+- Prevent governance capture and narrative drift.
+- Ensure traceability of changes and rationale.
 
-Custodians MUST NOT:
-- impose political decisions,
-- grant “certification” status,
-- unilaterally change the Kernel,
-- rewrite history without traceable process.
+---
 
-## Kernel change rule (high bar)
-Any Kernel change requires:
-1) an explicit written proposal,
-2) a rationale referencing Kernel principles,
-3) documented objections and responses,
-4) consensus review per `CONSENSUS_PROCESS.md`,
-5) custodianship approval,
-6) synchronization across all language mirrors.
+## 2) Scope
 
-Unreviewed Kernel edits are invalid by definition.
+Custodianship applies to:
+- Kernel and governance documents
+- Evaluation standards and schemas
+- Workflow templates that define official structure
 
-## Conflict of interest and anti-capture
-Custodians must disclose conflicts of interest.
-Capture indicators include:
-- introducing exceptions via translation,
-- weakening MUST/NOT language,
-- rebranding the method as a private product,
-- shifting governance into marketing.
+It does not govern external discussion, forks, or private experimentation (but those must not be presented as “official HUB_Optimus”).
 
-If capture indicators appear, Custodians must block the change and document why.
+---
 
-## Transparency and record
-All custodian actions must be traceable:
-- what was blocked/approved,
-- why (Kernel reference),
-- and what changes were required.
+## 3) Custodian responsibilities
 
-## Removal / rotation (minimum rule)
-If a Custodian repeatedly violates the Kernel, hides conflicts, or acts deceptively,
-they lose custodianship status through the same consensus process.
+Custodians must:
+- enforce Kernel coherence (no contradictions),
+- require verification / Trust Layer compliance in methodology,
+- reject coercive or propaganda-oriented modifications,
+- require structural justification and impact analysis for Kernel-adjacent changes,
+- ensure translation policy is respected for multilingual parity.
 
-## Non-sovereign statement
-Custodianship does not create authority over participants or institutions.
-It only protects the integrity and clarity of the HUB_Optimus system definition.
+---
+
+## 4) Who can be a custodian
+
+Custodians are appointed by:
+- initial authors (bootstrap), then
+- existing custodians via the consensus process.
+
+Selection criteria:
+- repeated coherent contributions,
+- demonstrated integrity-first reasoning,
+- ability to resist narrative manipulation,
+- consistency across time (not popularity).
+
+---
+
+## 5) Decision rules
+
+- Normal governance changes follow CONSENSUS_PROCESS.md
+- Kernel changes require elevated scrutiny and explicit custodian approval
+- If a proposal creates ambiguity, it must be clarified before acceptance
+
+---
+
+## 6) Revocation
+
+Custodianship can be revoked if a custodian:
+- violates Kernel constraints,
+- attempts capture (coercion, propaganda, rebranding),
+- repeatedly bypasses verification standards.
+
+Revocation is executed via consensus among remaining custodians.
+
+---
+
+## 7) Transparency and logs
+
+Every accepted governance change should be traceable to:
+- a PR / issue discussion,
+- the rationale,
+- the affected documents,
+- the risks and mitigations.
