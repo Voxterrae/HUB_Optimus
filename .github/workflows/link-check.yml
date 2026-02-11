@@ -42,7 +42,7 @@ jobs:
           \) | sed -n '1,200p'
 
       - name: Check Markdown links
-        uses: lycheeverse/lychee-action@v1
+        uses: lycheeverse/lychee-action@v2.0.2
         with:
           args: >-
             --no-progress
