@@ -27,11 +27,20 @@ jobs:
 
       - name: Create hygiene branch and commit
         run: |
-          git config user.name "hub-optimus-maintainer[bot]"
+         git config user.name "hub-optimus-maintainer[bot]"
           git config user.email "hub-optimus-maintainer[bot]@users.noreply.github.com"
-          
+
           BRANCH="chore/repo-hygiene-${GITHUB_RUN_NUMBER}"
-          git checkout -b $BRANCH
+
+          echo "Creating branch $BRANCH"
+          git checkout -b "$BRANCH"
+
           git add -A
-          git commit -m "chore: docs + governance hygiene" || echo "No changes to commit"
-          git push -u origin $BRANCH
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore: docs + governance hygiene"
+          git push origin "$BRANCH"
