@@ -9,18 +9,21 @@ name: Repo maintenance bot
         required: true
         default: "full"
         type: choice
-        options:
-          - hygiene
-          - i18n
-          - full
+        options: [hygiene, i18n, full]
       allow_kernel_changes:
         description: "Allow changes in docs/governance and v1_core/languages/en"
         required: true
         default: "false"
         type: choice
-        options:
-          - "false"
-          - "true"
+        options: ["false", "true"]
+  schedule:
+    - cron: "15 6 * * *"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "v1_core/**"
+      - ".github/workflows/**"
+      - "tools/**"
 
 permissions:
   contents: write
@@ -94,14 +97,19 @@ jobs:
           TITLE="chore: automated maintenance (${{ inputs.mode }})"
           BODY="Automated maintenance PR.\n\n"
           BODY+="Mode: ${{ inputs.mode }}\n"
-          BODY+="allow_kernel_changes: ${{ inputs.allow_kernel_changes }}\n\n"
-          BODY+="Includes:\n"
-          BODY+="- hygiene fixes\n"
-          BODY+="- i18n mirror enforcement\n"
-          BODY+="- link integrity scaffolding\n"
-          BODY+="- kernel guard enforcement\n"
+          BODY+="allow_kernel_changes: ${{ inputs.allow_kernel_changes }}\n"
           gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" || true
-          gh pr edit "$BRANCH" --add-label "maintenance" || true
-          if [ "${{ inputs.allow_kernel_changes }}" = "true" ]; then
-            gh pr edit "$BRANCH" --add-label "kernel-change" || true
-          fi
+          PR_NUMBER=$(gh pr view "$BRANCH" --json number --jq .number)
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$BRANCH" >> $GITHUB_ENV
+
+      - name: "PRO: labels + summary comment"
+        if: steps.commit.outputs.NO_CHANGES == 'false'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ env.PR_NUMBER }}
+          MODE: ${{ inputs.mode }}
+          ALLOW_KERNEL: ${{ inputs.allow_kernel_changes }}
+        run: |
+          git fetch origin main
+          python tools/pr_pro.py
