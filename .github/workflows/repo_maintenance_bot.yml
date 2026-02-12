@@ -1,0 +1,33 @@
+name: Repo maintenance bot
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Create hygiene branch and commit
+        run: |
+          git config user.name "hub-optimus-maintainer[bot]"
+          git config user.email "hub-optimus-maintainer[bot]@users.noreply.github.com"
+          git checkout -b chore/repo-hygiene
+          git add -A
+          git commit -m "chore: docs + governance hygiene" || echo "No changes to commit"
+          git push -u origin chore/repo-hygiene
