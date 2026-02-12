@@ -64,6 +64,11 @@ jobs:
           git fetch origin main
           git checkout main
           git reset --hard origin/main
+          SCRIPT_SHA=${GITHUB_SHA}
+          mkdir -p tools
+          git show "$SCRIPT_SHA:tools/maintenance_bot.py" > tools/maintenance_bot.py
+          git show "$SCRIPT_SHA:tools/kernel_guard.py" > tools/kernel_guard.py
+          git show "$SCRIPT_SHA:tools/pr_pro.py" > tools/pr_pro.py
           git checkout -b "chore/maintenance-${GITHUB_RUN_NUMBER}"
 
       - name: Run maintenance bot
