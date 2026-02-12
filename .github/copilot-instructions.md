@@ -12,6 +12,16 @@ HUB_Optimus is an integrity-first diplomatic simulation framework designed for e
 - Not a propaganda tool
 - Not a coercive enforcement mechanism
 
+## Tech Stack & Tooling
+- Python 3.7+ (standard library only; install `pyyaml` if you need YAML scenario loading).
+- CLI entry points: `run_scenario.py` (execute scenarios), `hub_optimus_simulator.py` (kernel), `i18n_sync.py` (docs translation check).
+
+## Quick Run & Validation
+- Optional venv: `python3 -m venv .venv && source .venv/bin/activate`
+- Run sample scenario: `python run_scenario.py --scenario example_scenario.json --seed 42`
+- Check docs translations: `python i18n_sync.py --docs_dir docs`
+- Link check runs in CI via Lychee (`.github/lychee.toml`); fix reported broken links.
+
 ## Immutable Principles (Layer 0 - Kernel)
 
 When contributing to this codebase, you MUST respect these non-negotiable principles:
