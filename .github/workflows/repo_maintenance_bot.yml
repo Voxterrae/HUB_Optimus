@@ -2,15 +2,35 @@
 name: Repo maintenance bot
 
 "on":
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Scope"
+        required: true
+        default: "full"
+        type: choice
+        options:
+          - hygiene
+          - i18n
+          - full
+      allow_kernel_changes:
+        description: "Allow changes in docs/governance and v1_core/languages/en"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   maintenance:
     runs-on: ubuntu-latest
+
     steps:
       - name: Create GitHub App token
         id: app-token
@@ -25,21 +45,63 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create working branch
+        id: vars
+        run: |
+          echo "BRANCH=chore/maintenance-${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+          git config user.name "hub-optimus-maintainer[bot]"
+          git config user.email "hub-optimus-maintainer[bot]@users.noreply.github.com"
+          git checkout -b "chore/maintenance-${GITHUB_RUN_NUMBER}"
 
       - name: Run maintenance bot
-        run: python3 tools/maintenance_bot.py
+        run: |
+          python tools/maintenance_bot.py "${{ inputs.mode }}"
 
-      - name: Create pull request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          commit-message: "chore: docs + governance hygiene"
-          title: "chore: docs + governance hygiene"
-          body: |
-            Automated hygiene updates.
-          branch: chore/repo-hygiene-${{ github.run_number }}
-          base: main
-          committer: >-
-            hub-optimus-maintainer[bot] <hub-optimus-maintainer[bot]@users.noreply.github.com>
-          author: >-
-            hub-optimus-maintainer[bot] <hub-optimus-maintainer[bot]@users.noreply.github.com>
+      - name: Kernel guard (block protected changes unless allowed)
+        run: |
+          python tools/kernel_guard.py "${{ inputs.allow_kernel_changes }}"
+
+      - name: Commit changes if any
+        id: commit
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "NO_CHANGES=true" >> $GITHUB_OUTPUT
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: automated maintenance (${{ inputs.mode }})"
+          echo "NO_CHANGES=false" >> $GITHUB_OUTPUT
+
+      - name: Push branch
+        if: steps.commit.outputs.NO_CHANGES == 'false'
+        run: |
+          git push -u origin "${{ steps.vars.outputs.BRANCH }}"
+
+      - name: Create PR automatically
+        if: steps.commit.outputs.NO_CHANGES == 'false'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          BRANCH="${{ steps.vars.outputs.BRANCH }}"
+          TITLE="chore: automated maintenance (${{ inputs.mode }})"
+          BODY="Automated maintenance PR.\n\n"
+          BODY+="Mode: ${{ inputs.mode }}\n"
+          BODY+="allow_kernel_changes: ${{ inputs.allow_kernel_changes }}\n\n"
+          BODY+="Includes:\n"
+          BODY+="- hygiene fixes\n"
+          BODY+="- i18n mirror enforcement\n"
+          BODY+="- link integrity scaffolding\n"
+          BODY+="- kernel guard enforcement\n"
+          gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" || true
+          gh pr edit "$BRANCH" --add-label "maintenance" || true
+          if [ "${{ inputs.allow_kernel_changes }}" = "true" ]; then
+            gh pr edit "$BRANCH" --add-label "kernel-change" || true
+          fi
