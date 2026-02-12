@@ -26,14 +26,20 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
 
-      - name: Create hygiene branch and commit
-        run: |
-          git config user.name "hub-optimus-maintainer[bot]"
-          git config user.email \
-            "hub-optimus-maintainer[bot]@users.noreply.github.com"
-          BRANCH="chore/repo-hygiene-${GITHUB_RUN_NUMBER}"
-          git checkout -b $BRANCH
-          git add -A
-          git commit -m "chore: docs + governance hygiene" || \
-            echo "No changes to commit"
-          git push -u origin $BRANCH
+      - name: Run maintenance bot
+        run: python3 tools/maintenance_bot.py
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          commit-message: "chore: docs + governance hygiene"
+          title: "chore: docs + governance hygiene"
+          body: |
+            Automated hygiene updates.
+          branch: chore/repo-hygiene-${{ github.run_number }}
+          base: main
+          committer: >-
+            hub-optimus-maintainer[bot] <hub-optimus-maintainer[bot]@users.noreply.github.com>
+          author: >-
+            hub-optimus-maintainer[bot] <hub-optimus-maintainer[bot]@users.noreply.github.com>
