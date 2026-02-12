@@ -30,8 +30,7 @@ jobs:
           git config user.name "hub-optimus-maintainer[bot]"
           git config user.email "hub-optimus-maintainer[bot]@users.noreply.github.com"
           
-          BRANCH="chore/repo-hygiene-${GITHUB_RUN_NUMBER}"git checkout -b chore/repo-hygiene
-          
+          BRANCH="chore/repo-hygiene-${GITHUB_RUN_NUMBER}"
           git checkout -b $BRANCH
           git add -A
           git commit -m "chore: docs + governance hygiene" || echo "No changes to commit"
