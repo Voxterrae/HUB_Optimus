@@ -1,6 +1,7 @@
+---
 name: Repo maintenance bot
 
-on:
+"on":
   workflow_dispatch: {}
 
 permissions:
@@ -17,6 +18,8 @@ jobs:
         with:
           app-id: ${{ secrets.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          owner: Voxterrae
+          repositories: HUB_Optimus
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,8 +29,11 @@ jobs:
       - name: Create hygiene branch and commit
         run: |
           git config user.name "hub-optimus-maintainer[bot]"
-          git config user.email "hub-optimus-maintainer[bot]@users.noreply.github.com"
-          git checkout -b chore/repo-hygiene
+          git config user.email \
+            "hub-optimus-maintainer[bot]@users.noreply.github.com"
+          BRANCH="chore/repo-hygiene-${GITHUB_RUN_NUMBER}"
+          git checkout -b $BRANCH
           git add -A
-          git commit -m "chore: docs + governance hygiene" || echo "No changes to commit"
-          git push -u origin chore/repo-hygiene
+          git commit -m "chore: docs + governance hygiene" || \
+            echo "No changes to commit"
+          git push -u origin $BRANCH
