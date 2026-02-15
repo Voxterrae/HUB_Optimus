@@ -1,0 +1,154 @@
+site_name: HUB_Optimus
+site_url: https://voxterrae.github.io/HUB_Optimus/
+repo_url: https://github.com/Voxterrae/HUB_Optimus
+repo_name: Voxterrae/HUB_Optimus
+
+docs_dir: docs
+
+theme:
+  name: readthedocs
+
+nav:
+  - Home: index.md
+  - Start here: 00_start_here.md
+  - How to read this repo: 02_how_to_read_this_repo.md
+  - Try a scenario: 03_try_a_scenario.md
+  - Translation status: TRANSLATION_STATUS.md
+  - Governance:
+      - Charter: governance/CHARTER.md
+      - Custodianship: governance/CUSTODIANSHIP.md
+      - Consensus process: governance/CONSENSUS_PROCESS.md
+      - Evaluation standard: governance/EVALUATION_STANDARD.md
+      - Kernel: governance/KERNEL.md
+      - Legitimacy model: governance/LEGITIMACY_MODEL.md
+      - Scenario schema: governance/SCENARIO_SCHEMA.md
+      - Trust layer: governance/TRUST_LAYER.md
+      - Translation policy: governance/TRANSLATION_POLICY.md
+      - Trademarks: governance/TRADEMARKS.md
+      - Change request: governance/CHANGE_REQUEST.md
+      - IP notice: governance/IP_NOTICE.md
+  - v1_core (mirror in docs/):
+      - Base declaration: v1_core/01_base_declaracion.md
+      - Base architecture: v1_core/02_arquitectura_base.md
+      - Operational flow: v1_core/03_flujo_operativo.md
+      - Workflow README: v1_core/workflow/README.md
+      - Scenario template: v1_core/workflow/04_scenario_template.md
+      - Scenario 001 - Partial ceasefire: v1_core/workflow/scenario_001_partial_ceasefire.md
+      - Scenario 002 - Verified ceasefire: v1_core/workflow/scenario_002_verified_ceasefire.md
+      - Meta-learning: v1_core/workflow/05_meta_learning.md
+
+  - Appendix (unlisted pages):
+      - ca/00_start_here.md
+      - ca/02_how_to_read_this_repo.md
+      - ca/03_try_a_scenario.md
+      - ca/governance/CHARTER.md
+      - ca/governance/CONSENSUS_PROCESS.md
+      - ca/governance/CUSTODIANSHIP.md
+      - ca/governance/EVALUATION_STANDARD.md
+      - ca/governance/IP_NOTICE.md
+      - ca/governance/KERNEL.md
+      - ca/governance/LEGITIMACY_MODEL.md
+      - ca/governance/SCENARIO_SCHEMA.md
+      - ca/governance/TRADEMARKS.md
+      - ca/governance/TRANSLATION_POLICY.md
+      - ca/governance/TRUST_LAYER.md
+      - context/AI_CONTEXT.md
+      - context/GLOSSARY.md
+      - context/I18N_AUDIT_docs.md
+      - context/I18N_AUDIT_v1_core_languages.md
+      - context/I18N_AUDIT_v1_core_workflow.md
+      - context/PROJECT_OVERVIEW.md
+      - context/STATUS.md
+      - context/TRACEABILITY.md
+      - context/TRACEABILITY_SNAPSHOT.md
+      - context/WORKFLOWS.md
+      - CONTRIBUTING.md
+      - de/00_start_here.md
+      - de/02_how_to_read_this_repo.md
+      - de/03_try_a_scenario.md
+      - de/governance/CHARTER.md
+      - de/governance/CONSENSUS_PROCESS.md
+      - de/governance/CUSTODIANSHIP.md
+      - de/governance/EVALUATION_STANDARD.md
+      - de/governance/IP_NOTICE.md
+      - de/governance/KERNEL.md
+      - de/governance/LEGITIMACY_MODEL.md
+      - de/governance/SCENARIO_SCHEMA.md
+      - de/governance/TRADEMARKS.md
+      - de/governance/TRANSLATION_POLICY.md
+      - de/governance/TRUST_LAYER.md
+      - es/00_start_here.md
+      - es/02_how_to_read_this_repo.md
+      - es/03_try_a_scenario.md
+      - es/governance/CHARTER.md
+      - es/governance/CONSENSUS_PROCESS.md
+      - es/governance/CUSTODIANSHIP.md
+      - es/governance/EVALUATION_STANDARD.md
+      - es/governance/IP_NOTICE.md
+      - es/governance/KERNEL.md
+      - es/governance/LEGITIMACY_MODEL.md
+      - es/governance/SCENARIO_SCHEMA.md
+      - es/governance/TRADEMARKS.md
+      - es/governance/TRANSLATION_POLICY.md
+      - es/governance/TRUST_LAYER.md
+      - fr/00_start_here.md
+      - fr/02_how_to_read_this_repo.md
+      - fr/03_try_a_scenario.md
+      - fr/governance/CHARTER.md
+      - fr/governance/CONSENSUS_PROCESS.md
+      - fr/governance/CUSTODIANSHIP.md
+      - fr/governance/EVALUATION_STANDARD.md
+      - fr/governance/IP_NOTICE.md
+      - fr/governance/KERNEL.md
+      - fr/governance/LEGITIMACY_MODEL.md
+      - fr/governance/SCENARIO_SCHEMA.md
+      - fr/governance/TRADEMARKS.md
+      - fr/governance/TRANSLATION_POLICY.md
+      - fr/governance/TRUST_LAYER.md
+      - he/00_start_here.md
+      - he/governance/CHARTER.md
+      - he/governance/CONSENSUS_PROCESS.md
+      - he/governance/CUSTODIANSHIP.md
+      - he/governance/EVALUATION_STANDARD.md
+      - he/governance/KERNEL.md
+      - he/governance/LEGITIMACY_MODEL.md
+      - he/governance/SCENARIO_SCHEMA.md
+      - he/governance/TRADEMARKS.md
+      - he/governance/TRUST_LAYER.md
+      - repository_readme.md
+      - ru/00_start_here.md
+      - ru/02_how_to_read_this_repo.md
+      - ru/03_try_a_scenario.md
+      - ru/governance/CHARTER.md
+      - ru/governance/CONSENSUS_PROCESS.md
+      - ru/governance/CUSTODIANSHIP.md
+      - ru/governance/EVALUATION_STANDARD.md
+      - ru/governance/IP_NOTICE.md
+      - ru/governance/KERNEL.md
+      - ru/governance/LEGITIMACY_MODEL.md
+      - ru/governance/SCENARIO_SCHEMA.md
+      - ru/governance/TRADEMARKS.md
+      - ru/governance/TRANSLATION_POLICY.md
+      - ru/governance/TRUST_LAYER.md
+      - u_core/languages/en/01_base_declaracion.md
+      - u_core/languages/en/02_arquitectura_base.md
+      - u_core/languages/en/03_flujo_operativo.md
+      - u_core/workflow/04_scenario_template.md
+      - u_core/workflow/05_meta_learning.md
+      - u_core/workflow/scenario_001_partial_ceasefire.md
+      - u_core/workflow/scenario_002_verified_ceasefire.md
+      - v1_core/04_scenario_template.md
+      - v1_core/05_meta_learning.md
+      - v1_core/languages/en/01_base_declaracion.md
+      - v1_core/languages/en/02_arquitectura_base.md
+      - v1_core/languages/en/03_flujo_operativo.md
+      - v1_core/languages/es/01_base_declaracion.md
+      - v1_core/languages/es/02_arquitectura_base.md
+      - v1_core/languages/es/03_flujo_operativo.md
+      - v1_core/scenario_001_partial_ceasefire.md
+      - v1_core/scenario_002_verified_ceasefire.md
+      - v1_core/workflow/es/04_scenario_template.md
+      - v1_core/workflow/es/05_meta_learning.md
+      - v1_core/workflow/es/README.md
+      - v1_core/workflow/es/scenario_001_partial_ceasefire.md
+      - v1_core/workflow/es/scenario_002_verified_ceasefire.md

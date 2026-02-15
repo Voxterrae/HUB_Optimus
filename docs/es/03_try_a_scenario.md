@@ -1,60 +1,61 @@
-> 🇬🇧 English source: [../02_how_to_read_this_repo.md](../02_how_to_read_this_repo.md)
+﻿> ðŸ‡¬ðŸ‡§ English source: [../02_how_to_read_this_repo.md](../02_how_to_read_this_repo.md)
 
-# Cómo leer este repositorio
+# CÃ³mo leer este repositorio
 
-Este repositorio está organizado para que puedas entender **qué es**, **dónde está cada cosa**, y **cómo usarlo** sin perderte en detalles. La idea es que cualquier persona pueda entrar, elegir idioma y seguir un camino claro.
+Este repositorio estÃ¡ organizado para que puedas entender **quÃ© es**, **dÃ³nde estÃ¡ cada cosa**, y **cÃ³mo usarlo** sin perderte en detalles. La idea es que cualquier persona pueda entrar, elegir idioma y seguir un camino claro.
 
-## Lecturas recomendadas (según tu objetivo)
+## Lecturas recomendadas (segÃºn tu objetivo)
 
-### Quiero entender rápido “en qué estáis trabajando”
+### Quiero entender rÃ¡pido â€œen quÃ© estÃ¡is trabajandoâ€
 Sigue este orden:
 1) [docs/es/00_start_here.md](00_start_here.md)
 2) [docs/es/03_try_a_scenario.md](03_try_a_scenario.md)
-3) [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
+3) [../v1_core/workflow/es/README.md](../v1_core/workflow/es/README.md)
 
-### Quiero practicar escenarios (modo simulación)
+### Quiero practicar escenarios (modo simulaciÃ³n)
 Ve directamente a:
-- Workflow (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
-- Escenario 001 (ES): [../../v1_core/workflow/es/scenario_001_partial_ceasefire.md](../../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
-- Escenario 002 (ES): [../../v1_core/workflow/es/scenario_002_verified_ceasefire.md](../../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
-- Plantilla (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
+- Workflow (ES): [../v1_core/workflow/es/README.md](../v1_core/workflow/es/README.md)
+- Escenario 001 (ES): [../v1_core/workflow/es/scenario_001_partial_ceasefire.md](../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
+- Escenario 002 (ES): [../v1_core/workflow/es/scenario_002_verified_ceasefire.md](../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
+- Plantilla (ES): [../v1_core/workflow/es/04_scenario_template.md](../v1_core/workflow/es/04_scenario_template.md)
 
-### Quiero entender el marco conceptual y el método
+### Quiero entender el marco conceptual y el mÃ©todo
 Empieza por:
-- [../../v1_core/languages/es/01_base_declaracion.md](../../v1_core/languages/es/01_base_declaracion.md)
-- [../../v1_core/languages/es/02_arquitectura_base.md](../../v1_core/languages/es/02_arquitectura_base.md)
-- [../../v1_core/languages/es/03_flujo_operativo.md](../../v1_core/languages/es/03_flujo_operativo.md)
+- [../v1_core/languages/es/01_base_declaracion.md](../v1_core/languages/es/01_base_declaracion.md)
+- [../v1_core/languages/es/02_arquitectura_base.md](../v1_core/languages/es/02_arquitectura_base.md)
+- [../v1_core/languages/es/03_flujo_operativo.md](../v1_core/languages/es/03_flujo_operativo.md)
 y luego vuelve al workflow.
 
-## Mapa del repo (qué hay en cada carpeta)
+## Mapa del repo (quÃ© hay en cada carpeta)
 - `docs/`  
-  Entrada, guía de lectura y una prueba guiada. Si vienes “de fuera”, empieza aquí.
+  Entrada, guÃ­a de lectura y una prueba guiada. Si vienes â€œde fueraâ€, empieza aquÃ­.
 - `v1_core/`  
-  Núcleo del sistema: workflow, escenarios, plantillas, criterios y aprendizaje iterativo.
+  NÃºcleo del sistema: workflow, escenarios, plantillas, criterios y aprendizaje iterativo.
 - `legacy/`  
-  Material anterior o experimental. Útil como referencia, no siempre está “al día”.
+  Material anterior o experimental. Ãštil como referencia, no siempre estÃ¡ â€œal dÃ­aâ€.
 
-## Convención de idiomas (EN ↔ ES)
-- La versión **EN** se considera la referencia original.
-- La versión **ES** se mantiene en paralelo para lectura y uso.
-- En la cabecera de cada documento hay un enlace a la “fuente” en el otro idioma.
+## ConvenciÃ³n de idiomas (EN â†” ES)
+- La versiÃ³n **EN** se considera la referencia original.
+- La versiÃ³n **ES** se mantiene en paralelo para lectura y uso.
+- En la cabecera de cada documento hay un enlace a la â€œfuenteâ€ en el otro idioma.
 
-## Cómo navegar sin perder contexto
-1) Usa los “Start here” y “Try a scenario” para ver el sistema funcionando.
-2) Cuando un documento cite algo del núcleo (`v1_core`), sigue el enlace y vuelve.
-3) Si un apartado está en EN, usa el enlace a la fuente EN para no bloquearte.
+## CÃ³mo navegar sin perder contexto
+1) Usa los â€œStart hereâ€ y â€œTry a scenarioâ€ para ver el sistema funcionando.
+2) Cuando un documento cite algo del nÃºcleo (`v1_core`), sigue el enlace y vuelve.
+3) Si un apartado estÃ¡ en EN, usa el enlace a la fuente EN para no bloquearte.
 
-## Dónde está lo importante (atajos)
+## DÃ³nde estÃ¡ lo importante (atajos)
 - Entrada (ES): [docs/es/00_start_here.md](00_start_here.md)
 - Probar un escenario (ES): [docs/es/03_try_a_scenario.md](03_try_a_scenario.md)
-- Workflow del núcleo (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
-- Plantilla de escenario (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
-- Meta-learning (ES): [../../v1_core/workflow/es/05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
+- Workflow del nÃºcleo (ES): [../v1_core/workflow/es/README.md](../v1_core/workflow/es/README.md)
+- Plantilla de escenario (ES): [../v1_core/workflow/es/04_scenario_template.md](../v1_core/workflow/es/04_scenario_template.md)
+- Meta-learning (ES): [../v1_core/workflow/es/05_meta_learning.md](../v1_core/workflow/es/05_meta_learning.md)
 
 ## Si quieres contribuir (sin romper enlaces)
 - Prefiere enlaces relativos (para que funcionen en GitHub y local).
-- Mantén los pares EN↔ES con la misma estructura de carpetas.
+- MantÃ©n los pares ENâ†”ES con la misma estructura de carpetas.
 - Si cambias rutas, corre el link-check (Lychee) antes de hacer push.
 
 Siguiente: [docs/es/03_try_a_scenario.md](03_try_a_scenario.md)
+
 

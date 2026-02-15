@@ -1,59 +1,60 @@
-> 🇬🇧 English source: [../02_how_to_read_this_repo.md](../02_how_to_read_this_repo.md)
+﻿> ðŸ‡¬ðŸ‡§ English source: [../02_how_to_read_this_repo.md](../02_how_to_read_this_repo.md)
 
 # Wie man dieses Repository liest
 
-Dieses Repository ist so organisiert, dass du verstehst **was es ist**, **wo was liegt** und **wie du es nutzt**, ohne dich in Details zu verlieren. Die Idee: Jede Person kann reinkommen, eine Sprache wählen und einem klaren Pfad folgen.
+Dieses Repository ist so organisiert, dass du verstehst **was es ist**, **wo was liegt** und **wie du es nutzt**, ohne dich in Details zu verlieren. Die Idee: Jede Person kann reinkommen, eine Sprache wÃ¤hlen und einem klaren Pfad folgen.
 
 ## Empfohlene Lesereihenfolge (je nach Ziel)
 
-### Ich will schnell verstehen, „woran ihr gerade arbeitet“
+### Ich will schnell verstehen, â€žworan ihr gerade arbeitetâ€œ
 Folge dieser Reihenfolge:
 1) [docs/de/00_start_here.md](00_start_here.md)
 2) [docs/de/03_try_a_scenario.md](03_try_a_scenario.md)
-3) [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
+3) [../v1_core/workflow/es/README.md](../v1_core/workflow/es/README.md)
 
-### Ich will Szenarien praktisch üben (Simulationsmodus)
+### Ich will Szenarien praktisch Ã¼ben (Simulationsmodus)
 Geh direkt zu:
-- Workflow (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
-- Szenario 001 (ES): [../../v1_core/workflow/es/scenario_001_partial_ceasefire.md](../../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
-- Szenario 002 (ES): [../../v1_core/workflow/es/scenario_002_verified_ceasefire.md](../../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
-- Vorlage (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
+- Workflow (ES): [../v1_core/workflow/es/README.md](../v1_core/workflow/es/README.md)
+- Szenario 001 (ES): [../v1_core/workflow/es/scenario_001_partial_ceasefire.md](../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
+- Szenario 002 (ES): [../v1_core/workflow/es/scenario_002_verified_ceasefire.md](../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
+- Vorlage (ES): [../v1_core/workflow/es/04_scenario_template.md](../v1_core/workflow/es/04_scenario_template.md)
 
 ### Ich will das konzeptionelle Framework und die Methode verstehen
 Starte mit:
-- [../../v1_core/languages/es/01_base_declaracion.md](../../v1_core/languages/es/01_base_declaracion.md)
-- [../../v1_core/languages/es/02_arquitectura_base.md](../../v1_core/languages/es/02_arquitectura_base.md)
-- [../../v1_core/languages/es/03_flujo_operativo.md](../../v1_core/languages/es/03_flujo_operativo.md)
-und geh danach zurück in den Workflow.
+- [../v1_core/languages/es/01_base_declaracion.md](../v1_core/languages/es/01_base_declaracion.md)
+- [../v1_core/languages/es/02_arquitectura_base.md](../v1_core/languages/es/02_arquitectura_base.md)
+- [../v1_core/languages/es/03_flujo_operativo.md](../v1_core/languages/es/03_flujo_operativo.md)
+und geh danach zurÃ¼ck in den Workflow.
 
 ## Repo-Map (was in welchem Ordner liegt)
 - `docs/`  
-  Einstieg, Lese-Guide und ein geführter Testlauf. Wenn du „von außen“ kommst: starte hier.
+  Einstieg, Lese-Guide und ein gefÃ¼hrter Testlauf. Wenn du â€žvon auÃŸenâ€œ kommst: starte hier.
 - `v1_core/`  
   Kernel des Systems: Workflow, Szenarien, Vorlagen, Kriterien und iteratives Lernen.
 - `legacy/`  
-  Älteres oder experimentelles Material. Nützlich als Referenz, aber nicht immer „up to date“.
+  Ã„lteres oder experimentelles Material. NÃ¼tzlich als Referenz, aber nicht immer â€žup to dateâ€œ.
 
-## Sprachkonvention (EN ↔ ES)
+## Sprachkonvention (EN â†” ES)
 - Die **EN**-Version gilt als Referenz/Original.
 - Die **ES**-Version wird parallel gepflegt zum Lesen und Nutzen.
-- In der Kopfzeile jedes Dokuments gibt es einen Link zur „Quelle“ in der jeweils anderen Sprache.
+- In der Kopfzeile jedes Dokuments gibt es einen Link zur â€žQuelleâ€œ in der jeweils anderen Sprache.
 
 ## Navigieren ohne Kontextverlust
-1) Nutze „Start here“ und „Try a scenario“, um das System in Aktion zu sehen.
-2) Wenn ein Dokument etwas aus dem Kernel (`v1_core`) zitiert, folge dem Link und komm wieder zurück.
+1) Nutze â€žStart hereâ€œ und â€žTry a scenarioâ€œ, um das System in Aktion zu sehen.
+2) Wenn ein Dokument etwas aus dem Kernel (`v1_core`) zitiert, folge dem Link und komm wieder zurÃ¼ck.
 3) Wenn ein Abschnitt auf EN ist, nutze den Link zur EN-Quelle, damit du nicht blockierst.
 
 ## Wo das Wichtige ist (Shortcuts)
 - Einstieg (DE): [docs/de/00_start_here.md](00_start_here.md)
 - Szenario ausprobieren (DE): [docs/de/03_try_a_scenario.md](03_try_a_scenario.md)
-- Kernel-Workflow (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
-- Szenario-Vorlage (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
-- Meta-Learning (ES): [../../v1_core/workflow/es/05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
+- Kernel-Workflow (ES): [../v1_core/workflow/es/README.md](../v1_core/workflow/es/README.md)
+- Szenario-Vorlage (ES): [../v1_core/workflow/es/04_scenario_template.md](../v1_core/workflow/es/04_scenario_template.md)
+- Meta-Learning (ES): [../v1_core/workflow/es/05_meta_learning.md](../v1_core/workflow/es/05_meta_learning.md)
 
 ## Wenn du beitragen willst (ohne Links zu brechen)
 - Bevorzuge relative Links (damit sie in GitHub und lokal funktionieren).
-- Halte EN↔ES Paare mit derselben Ordnerstruktur.
-- Wenn du Pfade änderst, führe den Link-Check (Lychee) aus, bevor du pushst.
+- Halte ENâ†”ES Paare mit derselben Ordnerstruktur.
+- Wenn du Pfade Ã¤nderst, fÃ¼hre den Link-Check (Lychee) aus, bevor du pushst.
 
 Weiter: [docs/de/03_try_a_scenario.md](03_try_a_scenario.md)
+
