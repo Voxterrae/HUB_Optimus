@@ -1,8 +1,22 @@
 # GLOSSARY
 
-- Core: ...
-- Workflow: ...
-- Scenario (.md): ...
-- Outcome: ...
-- Reroll: repetir pipeline/build por fallo o cambio.
-- CI/CD: ...
+- Canonical (v1 core): The language/version that defines normative meaning first (`v1_core/languages/es/`).
+- Parity reference: Secondary language that must mirror canonical meaning (`v1_core/languages/en/`).
+- Source of truth: Document that resolves conflicts; in this repo it is `docs/context/STATUS.md`.
+- Kernel: The immutable principle layer that constrains design and evaluation choices.
+- Kernel-adjacent: Files that materially affect kernel interpretation or governance safeguards.
+- Scenario: Structured case used to test incentives, verification, and systemic stability.
+- Scenario template: Reusable structure in `v1_core/workflow/04_scenario_template.md`.
+- Trust Layer: Claim classification model based on verifiability strength.
+- Verification: Independent, observable evidence confirming a claim or commitment.
+- Declarative claim: Statement without sufficient verification backing.
+- False success: Short-term positive optics that increase medium/long-term instability.
+- Meta-learning: Process of extracting reusable rules from evaluated scenarios.
+- Critical missing section: Required high-impact section absent from a scenario (for now: `verification`).
+- Fail-fast: Immediate stop with actionable error before executing downstream simulation/evaluation.
+- Integrity flag: Warning raised by the evaluator when structural risks are detected.
+- Governance set: Charter, kernel, translation policy, and related operating constraints.
+- Link-check: Automated markdown link validation (Lychee in CI and local runs).
+- Repo hygiene: Maintenance tasks that keep structure, mirrors, and automation healthy.
+- Smoke test: Minimal end-to-end test proving a core path works in CI.
+- No-go zone: Explicit boundary for changes that must not be introduced.

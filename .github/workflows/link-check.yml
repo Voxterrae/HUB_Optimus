@@ -15,33 +15,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Debug checkout
-        run: |
-          pwd
-          echo "== repo root =="
-          ls -la
-
-          echo "== docs =="
-          ls -la docs || true
-
-          echo "== targets =="
-          ls -la docs/CONTRIBUTING.md || true
-          ls -la docs/v1_core || true
-          ls -la docs/v1_core/languages/en || true
-          ls -la docs/v1_core/workflow || true
-
-          echo "== find exact link targets =="
-          find docs -type f \( \
-            -name "01_base_declaracion.md" -o \
-            -name "02_arquitectura_base.md" -o \
-            -name "03_flujo_operativo.md" -o \
-            -name "04_scenario_template.md" -o \
-            -name "05_meta_learning.md" -o \
-            -name "scenario_001_partial_ceasefire.md" -o \
-            -name "scenario_002_verified_ceasefire.md" -o \
-            -name "CONTRIBUTING.md" \
-          \) | sed -n '1,200p'
-
       - name: Check Markdown links
         uses: lycheeverse/lychee-action@v1
         with:
@@ -52,4 +25,5 @@ jobs:
             CONTRIBUTING.md
             docs/CONTRIBUTING.md
             docs/**/*.md
+            v1_core/**/*.md
           fail: true

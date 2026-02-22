@@ -69,9 +69,12 @@ Must reference:
 
 ### D) Kernel changes (high risk)
 Files like:
-- [v1_core/languages/en/01_base_declaracion.md](v1_core/languages/en/01_base_declaracion.md)
-- [v1_core/languages/en/02_arquitectura_base.md](v1_core/languages/en/02_arquitectura_base.md)
-- [v1_core/languages/en/03_flujo_operativo.md](v1_core/languages/en/03_flujo_operativo.md)
+- [v1_core/languages/es/01_base_declaracion.md](v1_core/languages/es/01_base_declaracion.md)
+- [v1_core/languages/es/02_arquitectura_base.md](v1_core/languages/es/02_arquitectura_base.md)
+- [v1_core/languages/es/03_flujo_operativo.md](v1_core/languages/es/03_flujo_operativo.md)
+- [v1_core/languages/en/01_base_declaracion.md](v1_core/languages/en/01_base_declaracion.md) (parity)
+- [v1_core/languages/en/02_arquitectura_base.md](v1_core/languages/en/02_arquitectura_base.md) (parity)
+- [v1_core/languages/en/03_flujo_operativo.md](v1_core/languages/en/03_flujo_operativo.md) (parity)
 
 Kernel changes require:
 - explicit justification,
@@ -84,7 +87,9 @@ Kernel changes require:
 ## 4) Language policy (single core, multiple languages)
 
 - Folder structure and filenames must remain consistent across languages.
-- English (`en`) is the reference language for structure and validation.
+- `docs/context/STATUS.md` is the source of truth when docs disagree.
+- Spanish (`es`) is canonical for `v1_core/languages/*`.
+- English (`en`) is maintained as parity reference for validation and accessibility.
 - Translations must preserve meaning; do not introduce conceptual drift.
 
 ---

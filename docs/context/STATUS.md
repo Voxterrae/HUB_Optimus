@@ -1,18 +1,32 @@
-### Canonical languages policy (v1)
+# STATUS
 
-**v1_core/** (normative spec):
-- **Canonical (source of truth): es**
-- **Reference translation / parity target: en** (kept close, but es wins on conflicts)
+## Canonical languages policy (v1)
 
-**docs/** (onboarding & navigation):
-- Priority languages: **es, de, en**
-- Additional languages: ca, fr, ru (structure complete; translation progressive)
+`v1_core/` (normative spec):
+- Canonical (source of truth): `es`
+- Parity reference: `en`
 
-**Planned switch (later, not now):**
-- Once en reaches stable parity, we may declare **en as canonical** for a future version (v1.1 or v2).
+`docs/` (onboarding and navigation):
+- Priority languages: `es`, `de`, `en`
+- Progressive languages: `ca`, `fr`, `ru`
+- Partial/planned: `he`, `zh`
 
-## Next steps
-- [ ] Decidir si REPO_TREE.txt y SNAPSHOT.txt van a git (sí/no) y actuar en consecuencia
-- [ ] Validar/finalizar tools/fix_encoding_docs.ps1 (y documentar uso en WORKFLOWS.md)
-- [ ] Ejecutar link-check (Lychee) localmente o vía GitHub Actions y corregir rotos
+Rule: when repository docs disagree, this file wins.
 
+## Batch update - 2026-02-22
+
+- [x] Align language source-of-truth repo-wide (`STATUS` policy applied in README/docs/copilot instructions)
+- [x] Close #49: update `.github/copilot-instructions.md` to match STATUS and repo rules
+- [x] Create `docs/context/PROJECT_OVERVIEW.md` (MVP + no-go zones)
+- [x] Create `docs/context/GLOSSARY.md` (15+ terms)
+- [x] Fix ES docs duplication: `docs/es/03_try_a_scenario.md` is now a real guided scenario page
+- [x] Update kernel guard with protected prefixes: added `tools/kernel_guard.py` and CI PR check
+- [x] Harden `.github/workflows/repo_maintenance_bot.yml` for missing secrets (clean skip path)
+- [x] Link-check green and local run documented in `docs/context/WORKFLOWS.md`
+- [x] Scenario validation schema + fail-fast added to `run_scenario.py`
+- [x] Minimal smoke test for `example_scenario.json` added (`tests/test_run_scenario_cli.py`)
+
+## Verification snapshot
+
+- Tests: `python -m pytest -q` -> 13 passed
+- Link-check: `lychee --config .github/lychee.toml README.md CONTRIBUTING.md docs/**/*.md v1_core/**/*.md` -> 0 errors

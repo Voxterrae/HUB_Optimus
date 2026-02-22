@@ -12,6 +12,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Kernel guard (pull requests)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags --prune --depth=1 origin "${{ github.base_ref }}"
+          python tools/kernel_guard.py --base-ref "origin/${{ github.base_ref }}" --head-ref HEAD
 
       - name: Setup Python
         uses: actions/setup-python@v5

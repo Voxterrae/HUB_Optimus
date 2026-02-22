@@ -12,8 +12,22 @@ jobs:
   maintenance:
     runs-on: ubuntu-latest
     steps:
+      - name: Check required secrets
+        id: secrets
+        env:
+          GH_APP_ID: ${{ secrets.GH_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "${GH_APP_ID}" ] || [ -z "${GH_APP_PRIVATE_KEY}" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping maintenance bot: GH_APP_ID or GH_APP_PRIVATE_KEY is not configured."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create GitHub App token
         id: app-token
+        if: steps.secrets.outputs.available == 'true'
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.GH_APP_ID }}
@@ -22,11 +36,23 @@ jobs:
           repositories: HUB_Optimus
 
       - name: Checkout
+        if: steps.secrets.outputs.available == 'true'
         uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
 
+      - name: Setup Python
+        if: steps.secrets.outputs.available == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run maintenance bot
+        if: steps.secrets.outputs.available == 'true'
+        run: python tools/maintenance_bot.py
+
       - name: Create hygiene branch and commit
+        if: steps.secrets.outputs.available == 'true'
         run: |
           git config user.name "hub-optimus-maintainer[bot]"
           git config user.email \
@@ -34,6 +60,13 @@ jobs:
           BRANCH="chore/repo-hygiene-${GITHUB_RUN_NUMBER}"
           git checkout -b $BRANCH
           git add -A
-          git commit -m "chore: docs + governance hygiene" || \
-            echo "No changes to commit"
+          if git diff --cached --quiet; then
+            echo "No changes to commit; skipping push."
+            exit 0
+          fi
+          git commit -m "chore: docs + governance hygiene"
           git push -u origin $BRANCH
+
+      - name: Skip summary
+        if: steps.secrets.outputs.available != 'true'
+        run: echo "Maintenance workflow skipped cleanly due to missing secrets."

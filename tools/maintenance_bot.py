@@ -53,7 +53,7 @@ def ensure_governance_mirrors():
                 if not target.exists():
                     write(target, f"""# {f.replace('.md','')}
 
-> English canonical source: ../../governance/{f}
+> Canonical source: ../../governance/{f}
 
 Temporary mirror file to satisfy structure and link integrity.
 Translation pending.
@@ -67,3 +67,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

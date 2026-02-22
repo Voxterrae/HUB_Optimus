@@ -1,4 +1,4 @@
-﻿# How to read this repository â€” HUB_Optimus
+# How to read this repository â€” HUB_Optimus
 
 This repository is structured by **intent**, not by discipline.
 
@@ -81,8 +81,11 @@ Ask:
 
 ## About languages
 
-The reference language is English:
-- v1_core/languages/en/
+Source-of-truth lives in `docs/context/STATUS.md`.
+
+For v1 core specs:
+- canonical: `v1_core/languages/es/`
+- parity reference: `v1_core/languages/en/`
 
 Other languages mirror the same structure.
 Translations must preserve meaning, not style.
