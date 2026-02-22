@@ -49,3 +49,9 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# MkDocs output
+site/
+
+# Local report artifacts
+out_pr*/
