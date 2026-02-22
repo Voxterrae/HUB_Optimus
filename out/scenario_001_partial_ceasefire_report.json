@@ -1,0 +1,62 @@
+{
+  "scenario": "scenario_001_partial_ceasefire.md",
+  "schema": {
+    "missing": [],
+    "critical_missing": [
+      "verification"
+    ]
+  },
+  "trust_layer": {
+    "counts": {
+      "A": 0,
+      "B": 0,
+      "C": 1
+    },
+    "distribution_pct": {
+      "A": 0.0,
+      "B": 0.0,
+      "C": 100.0
+    },
+    "claim_type_counts": {
+      "verification_mechanism": 0,
+      "third_party_audit": 0,
+      "metrics_reporting": 0,
+      "declarative_only": 1
+    },
+    "claim_type_distribution_pct": {
+      "verification_mechanism": 0.0,
+      "third_party_audit": 0.0,
+      "metrics_reporting": 0.0,
+      "declarative_only": 100.0
+    },
+    "claims": [
+      {
+        "claim": "Ceasefire announced without independent verification mechanism (evidence gap).",
+        "level": "C",
+        "claim_type": "declarative_only",
+        "evidence_required": [
+          "Signed agreement text (definitions, scope, parties, timelines).",
+          "Operational plan to add verification (mechanism design, access, authority, data).",
+          "Incentive-alignment measures (cost of violation, reward of compliance).",
+          "Escalation and remediation playbook for breaches."
+        ]
+      }
+    ]
+  },
+  "flags": [
+    "CRITICAL missing section: 'verification' (trustability degraded)"
+  ],
+  "claims": [
+    {
+      "claim": "Ceasefire announced without independent verification mechanism (evidence gap).",
+      "level": "C",
+      "claim_type": "declarative_only",
+      "evidence_required": [
+        "Signed agreement text (definitions, scope, parties, timelines).",
+        "Operational plan to add verification (mechanism design, access, authority, data).",
+        "Incentive-alignment measures (cost of violation, reward of compliance).",
+        "Escalation and remediation playbook for breaches."
+      ]
+    }
+  ]
+}
