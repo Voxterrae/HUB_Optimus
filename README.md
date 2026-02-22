@@ -105,6 +105,50 @@ Start here:
 
 ---
 
+## Scenario Engine CLI
+Use the scenario evaluator from the repository root:
+
+```bash
+python -m hub_optimus evaluate v1_core/workflow/scenario_001_partial_ceasefire.md
+```
+
+### Output format
+The `evaluate` command supports `--format {md,json,both}`:
+- `md`: prints only the Markdown report to stdout.
+- `json`: prints only the JSON payload to stdout.
+- `both`: prints Markdown first, then JSON, separated by `--- JSON ---`.
+
+Default behavior:
+- Without `--write`: defaults to `md`.
+- With `--write`: defaults to `both`.
+
+Examples:
+
+```bash
+# Print only Markdown
+python -m hub_optimus evaluate v1_core/workflow/scenario_001_partial_ceasefire.md --format md
+
+# Print only JSON and write only JSON report file
+python -m hub_optimus evaluate v1_core/workflow/scenario_001_partial_ceasefire.md --write --format json
+
+# Print Markdown + JSON and write both files
+python -m hub_optimus evaluate v1_core/workflow/scenario_001_partial_ceasefire.md --write --format both
+```
+
+When `--write` is enabled, reports are stored in `out/` by default:
+- `*_report.md` for Markdown output.
+- `*_report.json` for JSON output.
+
+### Fail on critical flags
+Use `--fail-on-critical` to make the command exit with code `2` when critical flags are present.
+This is intended for CI gating.
+
+```bash
+python -m hub_optimus evaluate v1_core/workflow/scenario_001_partial_ceasefire.md --fail-on-critical
+```
+
+---
+
 ## Contributing
 See: [CONTRIBUTING.md](CONTRIBUTING.md)  
 Link-checking is enforced via GitHub Actions (Lychee).
