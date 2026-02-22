@@ -16,6 +16,12 @@ Anuncio de un acuerdo de alto el fuego acompañado por un mecanismo independient
 
 ---
 
+## Verificación
+- Auditoría independiente de terceros con inspecciones in situ y reportes públicos.
+- Equipo conjunto de monitoreo con protocolo de verificación publicado y línea de incidentes.
+
+---
+
 ## 2) Contexto estructural
 - Las partes reconocen fallos históricos de acuerdos no verificables.
 - Actores externos aportan apoyo de verificación neutral.

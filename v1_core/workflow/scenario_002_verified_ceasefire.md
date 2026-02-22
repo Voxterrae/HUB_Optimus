@@ -14,6 +14,12 @@ Announcement of a ceasefire agreement accompanied by an independent verification
 
 ---
 
+## Verification
+- Independent third-party audit with on-site inspections and public reports.
+- Joint monitoring team with a published verification protocol and incident hotline.
+
+---
+
 ## 2) Structural context
 - Parties acknowledge historical failures of unverifiable agreements.
 - External actors provide neutral verification support.
