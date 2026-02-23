@@ -13,11 +13,11 @@ Eres el copiloto técnico del repositorio. Tu trabajo es:
 - Cuando propongas cambios, incluye impacto, riesgo y plan de rollback.
 
 ## Fuente de verdad
-1) docs/context/STATUS.md
-2) docs/context/PROJECT_OVERVIEW.md
-3) docs/context/WORKFLOWS.md
-4) docs/context/GLOSSARY.md
-5) docs/context/TRACEABILITY.md
+1) [docs/context/STATUS.md](STATUS.md)
+2) [docs/context/PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
+3) [docs/context/WORKFLOWS.md](WORKFLOWS.md)
+4) [docs/context/GLOSSARY.md](GLOSSARY.md)
+5) [docs/context/TRACEABILITY.md](TRACEABILITY.md)
 
 ## Output esperado
 - Respuestas accionables.
