@@ -1,8 +1,28 @@
 # GLOSSARY
 
-- Core: ...
-- Workflow: ...
-- Scenario (.md): ...
-- Outcome: ...
-- Reroll: repetir pipeline/build por fallo o cambio.
-- CI/CD: ...
+- `Agreement`: Declared commitment between actors in a scenario.
+- `Canonical`: The authoritative version when parallel language variants differ.
+- `CI`: Continuous Integration checks executed on `pull_request` and `push`.
+- `Classification`: Final scenario label derived from structural evidence.
+- `Consensus process`: Governance path for high-impact kernel decisions.
+- `Custodian`: Reviewer role responsible for protected governance/kernel areas.
+- `Drift`: Meaning divergence between docs, languages, or policy statements.
+- `Evaluation standard`: Rules used to score structure, verification, and incentives.
+- `Fail-fast`: Immediate stop on invalid input with a stable, actionable error.
+- `Governance`: Rules, ownership, and review protocol for repository decisions.
+- `Incentive structure`: What behavior the scenario rewards over time.
+- `Kernel`: Core normative framework and protected conceptual backbone.
+- `Legitimacy model`: Criteria used to assess whether outcomes remain acceptable over time.
+- `Link-check`: Automated validation of markdown links (Lychee in this repo).
+- `Meta-learning`: Extraction of reusable rules from scenario outcomes.
+- `MVP`: Minimum set of features required for a stable first public workflow.
+- `No-go zone`: Explicitly out-of-scope area to prevent scope creep.
+- `Parity reference`: Non-canonical language variant maintained close to canonical meaning.
+- `Protected path`: Repository path that requires stricter review/guard rules.
+- `RFC`: Structured proposal required for kernel/governance-impacting changes.
+- `Scenario`: Structured case description used for evaluation and comparison.
+- `Schema`: Contract defining required fields/types for scenario input.
+- `Source-of-truth`: Document that resolves contradictions (`docs/context/STATUS.md`).
+- `Trust layer`: Integrity lens that tests whether a claim is verifiable and stable.
+- `Verification`: Evidence step that confirms claims beyond declarations.
+- `Workflow`: Ordered procedure used to run, review, and iterate scenarios.
