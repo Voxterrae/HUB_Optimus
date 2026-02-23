@@ -6,7 +6,7 @@ Dieses Repository ist so organisiert, dass du verstehst **was es ist**, **wo was
 
 ## Empfohlene Lesereihenfolge (je nach Ziel)
 
-### Ich will schnell verstehen, „woran ihr gerade arbeitet“
+### Ich will schnell verstehen, "woran ihr gerade arbeitet"
 Folge dieser Reihenfolge:
 1) [docs/de/00_start_here.md](00_start_here.md)
 2) [docs/de/03_try_a_scenario.md](03_try_a_scenario.md)
@@ -28,11 +28,11 @@ und geh danach zurück in den Workflow.
 
 ## Repo-Map (was in welchem Ordner liegt)
 - `docs/`  
-  Einstieg, Lese-Guide und ein geführter Testlauf. Wenn du „von außen“ kommst: starte hier.
+  Einstieg, Lese-Guide und ein geführter Testlauf. Wenn du "von außen" kommst: starte hier.
 - `v1_core/`  
   Kernel des Systems: Workflow, Szenarien, Vorlagen, Kriterien und iteratives Lernen.
 - `legacy/`  
-  Älteres oder experimentelles Material. Nützlich als Referenz, aber nicht immer „up to date“.
+  Älteres oder experimentelles Material. Nützlich als Referenz, aber nicht immer "up to date".
 
 ## Language policy (STATUS)
 - Source-of-truth: `docs/context/STATUS.md`
@@ -40,7 +40,7 @@ und geh danach zurück in den Workflow.
 - parity reference: `../../v1_core/languages/en/`
 
 ## Navigieren ohne Kontextverlust
-1) Nutze „Start here“ und „Try a scenario“, um das System in Aktion zu sehen.
+1) Nutze "Start here" und "Try a scenario", um das System in Aktion zu sehen.
 2) Wenn ein Dokument etwas aus dem Kernel (`v1_core`) zitiert, folge dem Link und komm wieder zurück.
 3) Wenn ein Abschnitt auf EN ist, nutze den Link zur EN-Quelle, damit du nicht blockierst.
 

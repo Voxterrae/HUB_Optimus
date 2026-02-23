@@ -61,4 +61,4 @@ requires heightened scrutiny and explicit compatibility justification.
 
 ## Non-Authority Clause
 Consensus does not create authority over outcomes.
-It only governs the integrity of the system’s documents and processes.
+It only governs the integrity of the system's documents and processes.

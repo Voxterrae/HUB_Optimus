@@ -1,4 +1,4 @@
-﻿# KERNEL
+# KERNEL
 
 > English canonical source: ../../governance/KERNEL.md
 

@@ -53,10 +53,10 @@ Ask yourself:
 - Which looks good today but fails tomorrow?
 
 HUB_Optimus does not ask:
-“Who is right?”
+"Who is right?"
 
 It asks:
-“Which structure survives time?”
+"Which structure survives time?"
 
 ---
 

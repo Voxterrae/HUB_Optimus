@@ -1,4 +1,4 @@
-﻿# Workflow (mirror)
+# Workflow (mirror)
 
 This is a documentation mirror path for link integrity.
 

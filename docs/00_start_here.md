@@ -72,7 +72,7 @@ Then try the simulator:
 
 ## Try it (fast test)
 Compare these two scenarios:
-- SCN-001 (unverified ceasefire) → destabilizing masked “success”
+- SCN-001 (unverified ceasefire) → destabilizing masked "success"
 - SCN-002 (verified + incentives aligned) → stabilizing outcome
 
 Ask:

@@ -1,4 +1,4 @@
-﻿# docs/
+# docs/
 
 This folder contains onboarding guides and multilingual entry points.
 

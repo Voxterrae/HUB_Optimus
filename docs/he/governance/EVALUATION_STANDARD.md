@@ -1,4 +1,4 @@
-﻿# EVALUATION_STANDARD
+# EVALUATION_STANDARD
 
 > English canonical source: ../../governance/EVALUATION_STANDARD.md
 

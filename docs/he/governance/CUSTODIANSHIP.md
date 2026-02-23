@@ -1,4 +1,4 @@
-﻿# CUSTODIANSHIP
+# CUSTODIANSHIP
 
 > English canonical source: ../../governance/CUSTODIANSHIP.md
 

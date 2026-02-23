@@ -2,7 +2,7 @@
 
 # HUB_Optimus — Start Here (ES)
 
-Ganar “victorias” diplomáticas rápidas es fácil. Construir **estabilidad verificable** con **incentivos alineados** es lo difícil.  
+Ganar "victorias" diplomáticas rápidas es fácil. Construir **estabilidad verificable** con **incentivos alineados** es lo difícil.  
 HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que se vuelvan irreversibles.
 
 ---
@@ -30,7 +30,7 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 
 ## Estructura del repo (mapa rápido)
 - [docs/](../) → Guías para orientarte y empezar (entrada principal).
-- [v1_core/](../../v1_core/) → Núcleo: workflow, plantillas y escenarios (donde ocurre “la simulación”).
+- [v1_core/](../../v1_core/) → Núcleo: workflow, plantillas y escenarios (donde ocurre "la simulación").
 - [legacy/](../../legacy/) → Material histórico/experimental.
 
 ---
@@ -45,7 +45,7 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 
 ## Qué conseguirás aquí (en 2–10 minutos)
 - Una forma clara de separar **narrativa** de **estructura**.
-- Señales de alerta para detectar **falsos positivos** (“parece paz” pero incentiva violaciones).
+- Señales de alerta para detectar **falsos positivos** ("parece paz" pero incentiva violaciones).
 - Plantillas reutilizables para escenarios, acuerdos y evaluación.
 - Un mecanismo de mejora continua (meta-learning) para iterar con rigor.
 
@@ -76,7 +76,7 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 - **Incentivos > intención**  
   La estructura de recompensas/costes determina el comportamiento real.
 
-- **Secuencia > “texto final”**  
+- **Secuencia > "texto final"**  
   El orden de pasos define viabilidad.
 
 ---

@@ -1,4 +1,4 @@
-﻿# TRUST_LAYER
+# TRUST_LAYER
 
 > English canonical source: ../../governance/TRUST_LAYER.md
 

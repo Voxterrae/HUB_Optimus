@@ -75,7 +75,7 @@ A commitment can be Class A but still weak if coverage/independence is poor.
 ---
 
 ## Minimum Verification Protocol (MVP)
-A commitment is treated as “reliable enough to plan around” only if it includes:
+A commitment is treated as "reliable enough to plan around" only if it includes:
 - A **clear observable outcome**
 - A **checkpoint schedule**
 - A **named verification method**
@@ -97,7 +97,7 @@ This creates incentive pressure without coercion.
 ---
 
 ## Anti-Gaming Rule
-“Paper compliance” (performative reporting without independent verification) is treated as Class B or C,
+"Paper compliance" (performative reporting without independent verification) is treated as Class B or C,
 even if presented as Class A.
 
 ---

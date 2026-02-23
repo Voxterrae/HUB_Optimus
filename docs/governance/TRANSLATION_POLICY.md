@@ -29,7 +29,7 @@ Translations MUST NOT introduce:
 - exceptions,
 - additional permissions,
 - softened language,
-- alternative “interpretations”.
+- alternative "interpretations".
 
 If a translation diverges, it is considered invalid until corrected.
 

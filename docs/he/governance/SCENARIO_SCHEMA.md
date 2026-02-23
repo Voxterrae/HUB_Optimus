@@ -1,4 +1,4 @@
-﻿# SCENARIO_SCHEMA
+# SCENARIO_SCHEMA
 
 > English canonical source: ../../governance/SCENARIO_SCHEMA.md
 

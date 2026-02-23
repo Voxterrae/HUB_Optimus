@@ -6,7 +6,7 @@ Este repositorio está organizado para que puedas entender **qué es**, **dónde
 
 ## Lecturas recomendadas (según tu objetivo)
 
-### Quiero entender rápido “en qué estáis trabajando”
+### Quiero entender rápido "en qué estáis trabajando"
 Sigue este orden:
 1) [docs/es/00_start_here.md](00_start_here.md)
 2) [docs/es/03_try_a_scenario.md](03_try_a_scenario.md)
@@ -28,11 +28,11 @@ y luego vuelve al workflow.
 
 ## Mapa del repo (qué hay en cada carpeta)
 - `docs/`  
-  Entrada, guía de lectura y una prueba guiada. Si vienes “de fuera”, empieza aquí.
+  Entrada, guía de lectura y una prueba guiada. Si vienes "de fuera", empieza aquí.
 - `v1_core/`  
   Núcleo del sistema: workflow, escenarios, plantillas, criterios y aprendizaje iterativo.
 - `legacy/`  
-  Material anterior o experimental. Útil como referencia, no siempre está “al día”.
+  Material anterior o experimental. Útil como referencia, no siempre está "al día".
 
 ## Language policy (STATUS)
 - Source-of-truth: `docs/context/STATUS.md`
@@ -40,7 +40,7 @@ y luego vuelve al workflow.
 - parity reference: `../../v1_core/languages/en/`
 
 ## Cómo navegar sin perder contexto
-1) Usa los “Start here” y “Try a scenario” para ver el sistema funcionando.
+1) Usa los "Start here" y "Try a scenario" para ver el sistema funcionando.
 2) Cuando un documento cite algo del núcleo (`v1_core`), sigue el enlace y vuelve.
 3) Si un apartado está en EN, usa el enlace a la fuente EN para no bloquearte.
 
