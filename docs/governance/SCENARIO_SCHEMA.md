@@ -1,72 +1,31 @@
-# HUB_Optimus — Scenario Schema
+# HUB_Optimus Scenario Schema
 
 ## Purpose
-This document defines the required structure for describing a scenario before evaluation.
+Define the minimum structure required to execute `run_scenario.py` safely.
+A scenario is a structured input contract, not an argumentative narrative.
 
-A scenario is a **structured representation of reality**, not a narrative or argument.
+## Canonical machine-readable contract
+- JSON Schema file: [../../scenario.schema.json](../../scenario.schema.json)
+- Contract versioning source: Git history for `scenario.schema.json`
 
-## Core Rule
-If information is missing, it must be explicitly marked as unknown.
-Silence is not allowed.
+## Required fields
+- `title`: non-empty string
+- `description`: non-empty string
+- `roles`: non-empty array of `{ "name": string, "role": string }`
+- `success_criteria`: non-empty object
+- `max_rounds`: integer >= 1
 
-## Required Fields
+## Validation behavior
+- Unknown top-level fields are rejected (`additionalProperties: false`).
+- Empty role arrays are rejected.
+- Missing required fields are rejected.
 
-### 1. Scenario Identifier
-- Unique ID or name
-- Date of creation
-- Version
+## Typical invalid inputs (must fail)
+- Missing `success_criteria`.
+- `roles` is an empty array.
+- `max_rounds` is `0` or a non-integer value.
 
-### 2. Context Summary
-- One-paragraph factual description
-- No interpretation or blame
-
-### 3. Parties
-For each party:
-- Identifier
-- Role
-- Declared objectives
-- Known constraints
-
-### 4. Timeline
-- Relevant past events
-- Current state
-- Known upcoming milestones
-
-### 5. Assets and Capabilities
-- Material assets
-- Institutional leverage
-- Economic or strategic dependencies
-
-### 6. Commitments and Claims
-- Stated commitments
-- Public claims
-- Private signals (if disclosed)
-
-Each must later be classified under the Trust Layer.
-
-### 7. External Factors
-- Third-party actors
-- Environmental or systemic factors
-- Legal or geopolitical context
-
-### 8. Information Gaps
-- Unknown facts
-- Disputed data
-- Unverifiable claims
-
-## Prohibited Content
-Scenario descriptions must NOT:
-- argue conclusions,
-- assign moral judgment,
-- predict outcomes,
-- frame urgency rhetorically.
-
-## Relationship to Evaluation
-The Scenario Schema feeds the Evaluation Standard.
-Evaluations must reference a specific scenario version.
-
-## Version Discipline
-Changes to a scenario require:
-- a new version,
-- a change log,
-- and preserved prior versions.
+## Extension guidance
+- Keep backward compatibility when possible; add optional fields first.
+- If a new required field is needed, bump schema version and update examples/tests in the same PR.
+- Update this document and `scenario.schema.json` together; never update one without the other.
