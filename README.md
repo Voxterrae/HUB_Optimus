@@ -86,7 +86,7 @@ HUB_Optimus exists to **break that cycle** by evaluating scenarios **before** de
 - `v1_core/` → active kernel: architecture, operational flow, workflow, templates, scenarios, meta-learning
 - `legacy/` → historical/exploratory materials (v0), preserved for transparency
 
-> English is the reference language for structural validation. Spanish documentation is maintained in parallel for accessibility.
+> Source-of-truth policy is defined in `docs/context/STATUS.md`: `v1_core/languages/es/` is canonical and `v1_core/languages/en/` is parity reference.
 
 ---
 
