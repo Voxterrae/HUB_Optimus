@@ -34,10 +34,10 @@ und geh danach zurück in den Workflow.
 - `legacy/`  
   Älteres oder experimentelles Material. Nützlich als Referenz, aber nicht immer „up to date“.
 
-## Sprachkonvention (EN ↔ ES)
-- Die **EN**-Version gilt als Referenz/Original.
-- Die **ES**-Version wird parallel gepflegt zum Lesen und Nutzen.
-- In der Kopfzeile jedes Dokuments gibt es einen Link zur „Quelle“ in der jeweils anderen Sprache.
+## Language policy (STATUS)
+- Source-of-truth: `docs/context/STATUS.md`
+- canonical: `../../v1_core/languages/es/`
+- parity reference: `../../v1_core/languages/en/`
 
 ## Navigieren ohne Kontextverlust
 1) Nutze „Start here“ und „Try a scenario“, um das System in Aktion zu sehen.
