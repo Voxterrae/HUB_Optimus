@@ -5,6 +5,14 @@ HUB_Optimus is an integrity-first diplomatic simulation framework designed for e
 
 **Core Purpose:** Improve diplomatic outcomes through structured evaluation of incentives, verification mechanisms, and sequencing of decisions.
 
+## Source of Truth
+
+When repository docs conflict, `docs/context/STATUS.md` wins.
+
+- `v1_core/languages/es/` is canonical for v1 core specs.
+- `v1_core/languages/en/` is a parity reference that must remain synchronized.
+- For onboarding/navigation docs under `docs/`, maintenance priority is `es`, `de`, `en`.
+
 **What it is NOT:**
 - Not an authority or decision-maker
 - Not a prediction engine
@@ -50,8 +58,8 @@ No individual—including the originator—has special privileges. Authorship do
 
 ### Critical Paths
 - `v1_core/` — Active Kernel and simulator (HIGH SCRUTINY required for changes - see "D) Kernel Changes" section below)
-  - `v1_core/languages/en/` — English reference for structure and validation
-  - `v1_core/languages/es/` — Spanish translations
+  - `v1_core/languages/es/` — Canonical source of truth for v1 core specs
+  - `v1_core/languages/en/` — Parity reference (must stay synchronized with `es`)
   - `v1_core/workflow/` — Scenario simulator templates and examples
 - `docs/` — Onboarding and reading paths (multilingual)
 - `docs/governance/` — Governance documents (Charter, Kernel, Consensus Process, etc.)
@@ -59,7 +67,7 @@ No individual—including the originator—has special privileges. Authorship do
 
 ### File Naming Convention
 - Folder structure and filenames MUST remain consistent across all languages
-- English (`en`) is the reference language for structural validation
+- Follow the language policy from `docs/context/STATUS.md`
 - All translations must preserve meaning without conceptual drift
 
 ## Contribution Guidelines
@@ -100,15 +108,18 @@ No individual—including the originator—has special privileges. Authorship do
 
 ### D) Kernel Changes (High Risk)
 **Files:**
-- `v1_core/languages/en/01_base_declaracion.md`
-- `v1_core/languages/en/02_arquitectura_base.md`
-- `v1_core/languages/en/03_flujo_operativo.md`
+- `v1_core/languages/es/01_base_declaracion.md` (canonical)
+- `v1_core/languages/es/02_arquitectura_base.md` (canonical)
+- `v1_core/languages/es/03_flujo_operativo.md` (canonical)
+- `v1_core/languages/en/01_base_declaracion.md` (parity)
+- `v1_core/languages/en/02_arquitectura_base.md` (parity)
+- `v1_core/languages/en/03_flujo_operativo.md` (parity)
 
 **Requirements:**
 - Explicit justification aligned with Layer 0 principles
 - Impact analysis
 - Integrity-first review
-- Synchronized language updates across ALL translations
+- Synchronized language updates in `es` and `en`, then propagate to other languages per `docs/context/STATUS.md`
 
 **DO NOT:**
 - Weaken Kernel integrity protections
@@ -129,15 +140,17 @@ No individual—including the originator—has special privileges. Authorship do
 
 ### Translation Requirements
 1. **Structural Consistency:** All languages mirror the same file set, order, and structure
-2. **Reference Language:** English (`en`) is the reference for validation
-3. **Meaning Preservation:** Translations must preserve intent and definitions precisely
-4. **No Conceptual Drift:** Language must not introduce new interpretations or concepts
-5. **Synchronized Updates:** Kernel changes must be reflected in ALL language versions
+2. **Source of Truth:** `docs/context/STATUS.md` defines canonical/parity policy
+3. **Canonical v1 Core Language:** Spanish (`es`) under `v1_core/languages/es/`
+4. **Parity Reference:** English (`en`) under `v1_core/languages/en/`
+5. **Meaning Preservation:** Translations must preserve intent and definitions precisely
+6. **No Conceptual Drift:** Language must not introduce new interpretations or concepts
+7. **Synchronized Updates:** Kernel changes must be reflected in `es` and `en` at minimum
 
 ### Supported Languages
-- English (`en`) — Reference language
-- Spanish (`es`) — Parallel documentation
-- German (`de`) — Onboarding materials
+- Spanish (`es`) — Canonical v1 core language and priority onboarding
+- German (`de`) — Priority onboarding language
+- English (`en`) — Parity reference for v1 core + priority onboarding
 - Catalan (`ca`) — Onboarding materials
 - French (`fr`) — Onboarding materials
 - Russian (`ru`) — Onboarding materials
@@ -241,11 +254,11 @@ When adding or modifying scenarios:
 
 ### Multi-Language Validation
 When updating Kernel documents:
-1. Update English version first
-2. Synchronize all language versions
-3. Verify structural consistency across languages
-4. Check that translations preserve meaning
-5. Validate file naming and structure match exactly
+1. Update Spanish canonical version first (`v1_core/languages/es/`)
+2. Synchronize English parity version (`v1_core/languages/en/`)
+3. Propagate to additional languages per `docs/context/STATUS.md`
+4. Verify structural consistency across languages
+5. Check that translations preserve meaning
 
 ## Common Tasks
 
@@ -295,9 +308,10 @@ When updating Kernel documents:
 - Contributing Guide: `/CONTRIBUTING.md`
 - Start Here: `/docs/00_start_here.md`
 - Workflow Overview: `/v1_core/workflow/README.md`
-- Base Declaration (Kernel): `/v1_core/languages/en/01_base_declaracion.md`
-- Architecture: `/v1_core/languages/en/02_arquitectura_base.md`
-- Operational Flow: `/v1_core/languages/en/03_flujo_operativo.md`
+- Base Declaration (Kernel canonical): `/v1_core/languages/es/01_base_declaracion.md`
+- Architecture (Kernel canonical): `/v1_core/languages/es/02_arquitectura_base.md`
+- Operational Flow (Kernel canonical): `/v1_core/languages/es/03_flujo_operativo.md`
+- English parity references: `/v1_core/languages/en/`
 - Governance Documents: `/docs/governance/`
 
 ## Questions or Uncertainty?
