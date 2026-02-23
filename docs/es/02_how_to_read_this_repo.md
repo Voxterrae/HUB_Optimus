@@ -34,10 +34,10 @@ y luego vuelve al workflow.
 - `legacy/`  
   Material anterior o experimental. Útil como referencia, no siempre está “al día”.
 
-## Convención de idiomas (EN ↔ ES)
-- La versión **EN** se considera la referencia original.
-- La versión **ES** se mantiene en paralelo para lectura y uso.
-- En la cabecera de cada documento hay un enlace a la “fuente” en el otro idioma.
+## Language policy (STATUS)
+- Source-of-truth: `docs/context/STATUS.md`
+- canonical: `../../v1_core/languages/es/`
+- parity reference: `../../v1_core/languages/en/`
 
 ## Cómo navegar sin perder contexto
 1) Usa los “Start here” y “Try a scenario” para ver el sistema funcionando.
@@ -57,4 +57,3 @@ y luego vuelve al workflow.
 - Si cambias rutas, corre el link-check (Lychee) antes de hacer push.
 
 Siguiente: [docs/es/03_try_a_scenario.md](03_try_a_scenario.md)
-
