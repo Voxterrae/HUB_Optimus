@@ -1,60 +1,71 @@
-> 🇬🇧 English source: [../02_how_to_read_this_repo.md](../02_how_to_read_this_repo.md)
+> English source: [../03_try_a_scenario.md](../03_try_a_scenario.md)
 
-# Cómo leer este repositorio
+# Probar un escenario - HUB_Optimus en practica
 
-Este repositorio está organizado para que puedas entender **qué es**, **dónde está cada cosa**, y **cómo usarlo** sin perderte en detalles. La idea es que cualquier persona pueda entrar, elegir idioma y seguir un camino claro.
+Esta guia es un recorrido hands-on para evaluar un caso sin leer todo el repositorio.
+Objetivo: comparar dos escenarios parecidos en apariencia pero distintos en estabilidad real.
 
-## Lecturas recomendadas (según tu objetivo)
+Tiempo estimado: 10 a 15 minutos.
 
-### Quiero entender rápido “en qué estáis trabajando”
-Sigue este orden:
-1) [docs/es/00_start_here.md](00_start_here.md)
-2) [docs/es/03_try_a_scenario.md](03_try_a_scenario.md)
-3) [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
+## Paso 1. Abre la plantilla de escenario
 
-### Quiero practicar escenarios (modo simulación)
-Ve directamente a:
-- Workflow (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
-- Escenario 001 (ES): [../../v1_core/workflow/es/scenario_001_partial_ceasefire.md](../../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
-- Escenario 002 (ES): [../../v1_core/workflow/es/scenario_002_verified_ceasefire.md](../../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
-- Plantilla (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
+Lee la estructura base:
+- [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
 
-### Quiero entender el marco conceptual y el método
-Empieza por:
+Fijate en cinco bloques:
+- Contexto
+- Incentivos
+- Verificacion
+- Impacto sistemico
+- Clasificacion
+
+## Paso 2. Revisa escenario 001 (alto el fuego parcial)
+
+Abre:
+- [../../v1_core/workflow/es/scenario_001_partial_ceasefire.md](../../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
+
+Evalua:
+- Lo declarado vs lo verificable
+- Que incentivos se premian
+- Que riesgos quedan desplazados al futuro
+
+## Paso 3. Revisa escenario 002 (alto el fuego verificado)
+
+Abre:
+- [../../v1_core/workflow/es/scenario_002_verified_ceasefire.md](../../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
+
+Evalua:
+- Que cambio frente al escenario 001
+- Que ahora se mide en vez de asumirse
+- Como cambia el riesgo de ruptura futura
+
+## Paso 4. Compara ambos resultados
+
+Contesta estas preguntas:
+- Cual escenario baja mejor el riesgo sistemico?
+- Cual premia estabilidad de largo plazo?
+- Cual parece exitoso hoy pero deja fragilidad manana?
+
+HUB_Optimus prioriza estructura verificable sobre narrativa.
+
+## Paso 5. Cierra el ciclo con meta-learning
+
+Lee:
+- [../../v1_core/workflow/es/05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
+
+Este documento explica como convertir observaciones de casos en reglas reutilizables.
+
+## Referencias clave
+
+Base conceptual canonica (ES):
 - [../../v1_core/languages/es/01_base_declaracion.md](../../v1_core/languages/es/01_base_declaracion.md)
 - [../../v1_core/languages/es/02_arquitectura_base.md](../../v1_core/languages/es/02_arquitectura_base.md)
 - [../../v1_core/languages/es/03_flujo_operativo.md](../../v1_core/languages/es/03_flujo_operativo.md)
-y luego vuelve al workflow.
 
-## Mapa del repo (qué hay en cada carpeta)
-- `docs/`  
-  Entrada, guía de lectura y una prueba guiada. Si vienes “de fuera”, empieza aquí.
-- `v1_core/`  
-  Núcleo del sistema: workflow, escenarios, plantillas, criterios y aprendizaje iterativo.
-- `legacy/`  
-  Material anterior o experimental. Útil como referencia, no siempre está “al día”.
+Paridad de referencia (EN):
+- [../../v1_core/languages/en/01_base_declaracion.md](../../v1_core/languages/en/01_base_declaracion.md)
+- [../../v1_core/languages/en/02_arquitectura_base.md](../../v1_core/languages/en/02_arquitectura_base.md)
+- [../../v1_core/languages/en/03_flujo_operativo.md](../../v1_core/languages/en/03_flujo_operativo.md)
 
-## Convención de idiomas (EN ↔ ES)
-- La versión **EN** se considera la referencia original.
-- La versión **ES** se mantiene en paralelo para lectura y uso.
-- En la cabecera de cada documento hay un enlace a la “fuente” en el otro idioma.
-
-## Cómo navegar sin perder contexto
-1) Usa los “Start here” y “Try a scenario” para ver el sistema funcionando.
-2) Cuando un documento cite algo del núcleo (`v1_core`), sigue el enlace y vuelve.
-3) Si un apartado está en EN, usa el enlace a la fuente EN para no bloquearte.
-
-## Dónde está lo importante (atajos)
-- Entrada (ES): [docs/es/00_start_here.md](00_start_here.md)
-- Probar un escenario (ES): [docs/es/03_try_a_scenario.md](03_try_a_scenario.md)
-- Workflow del núcleo (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
-- Plantilla de escenario (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
-- Meta-learning (ES): [../../v1_core/workflow/es/05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
-
-## Si quieres contribuir (sin romper enlaces)
-- Prefiere enlaces relativos (para que funcionen en GitHub y local).
-- Mantén los pares EN↔ES con la misma estructura de carpetas.
-- Si cambias rutas, corre el link-check (Lychee) antes de hacer push.
-
-Siguiente: [docs/es/03_try_a_scenario.md](03_try_a_scenario.md)
-
+Contribucion:
+- [../../CONTRIBUTING.md](../../CONTRIBUTING.md)
