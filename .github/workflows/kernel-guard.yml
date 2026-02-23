@@ -1,0 +1,44 @@
+name: Kernel Guard
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect override label
+        id: labels
+        run: |
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'allow-kernel-change') }}" == "true" ]]; then
+            echo "allow=true" >> "$GITHUB_OUTPUT"
+            echo "Kernel guard override enabled by label: allow-kernel-change"
+          else
+            echo "allow=false" >> "$GITHUB_OUTPUT"
+            echo "Kernel guard override label not present."
+          fi
+
+      - name: Run kernel guard (diff-based)
+        run: |
+          git fetch --no-tags --prune --depth=1 origin "${{ github.base_ref }}"
+          if [[ "${{ steps.labels.outputs.allow }}" == "true" ]]; then
+            python tools/kernel_guard.py \
+              --base-ref "origin/${{ github.base_ref }}" \
+              --head-ref "${{ github.sha }}" \
+              --allow-kernel-changes
+          else
+            python tools/kernel_guard.py \
+              --base-ref "origin/${{ github.base_ref }}" \
+              --head-ref "${{ github.sha }}"
+          fi
