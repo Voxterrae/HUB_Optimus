@@ -29,11 +29,11 @@ Custodians MAY:
 - reject governance changes that violate the Kernel,
 - require explicit rationale and traceability for governance edits,
 - require synchronization across language mirrors,
-- request removal/correction of misleading “official/endorsed” claims.
+- request removal/correction of misleading "official/endorsed" claims.
 
 Custodians MUST NOT:
 - impose political decisions,
-- grant “certification” status,
+- grant "certification" status,
 - unilaterally change the Kernel,
 - rewrite history without traceable process.
 

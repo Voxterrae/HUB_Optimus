@@ -2,7 +2,7 @@
 
 # HUB_Optimus — Start Here (DE)
 
-Schnelle diplomatische „Siege“ zu erzielen ist leicht. **Verifizierbare Stabilität** mit **ausgerichteten Anreizen** aufzubauen, ist das Schwierige.  
+Schnelle diplomatische "Siege" zu erzielen ist leicht. **Verifizierbare Stabilität** mit **ausgerichteten Anreizen** aufzubauen, ist das Schwierige.  
 HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie irreversibel werden.
 
 ---
@@ -29,7 +29,7 @@ HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie
 
 ## Repo-Struktur (Quick Map)
 - [docs/](../) → Guides zum Orientieren und Starten (Haupteinstieg).
-- [v1_core/](../../v1_core/) → Kernel: Workflow, Templates und Szenarien (wo die „Simulation“ stattfindet).
+- [v1_core/](../../v1_core/) → Kernel: Workflow, Templates und Szenarien (wo die "Simulation" stattfindet).
 - [legacy/](../../legacy/) → Historisches/experimentelles Material.
 
 ---
@@ -44,7 +44,7 @@ HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie
 
 ## Was du hier in 2–10 Minuten bekommst
 - Eine klare Methode, **Narrativ** von **Struktur** zu trennen.
-- Warnsignale, um **False Positives** zu erkennen („wirkt wie Frieden“, belohnt aber Verstöße).
+- Warnsignale, um **False Positives** zu erkennen ("wirkt wie Frieden", belohnt aber Verstöße).
 - Wiederverwendbare Templates für Szenarien, Vereinbarungen und Evaluation.
 - Einen Continuous-Improvement-Mechanismus (Meta-Learning), um rigoros zu iterieren.
 
@@ -75,7 +75,7 @@ HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie
 - **Anreize > Intention**  
   Die Struktur aus Belohnungen/Kosten bestimmt das reale Verhalten.
 
-- **Sequenz > „Finaler Text“**  
+- **Sequenz > "Finaler Text"**  
   Die Reihenfolge der Schritte entscheidet über die Machbarkeit.
 
 ---

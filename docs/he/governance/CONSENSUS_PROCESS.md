@@ -1,4 +1,4 @@
-﻿# CONSENSUS_PROCESS
+# CONSENSUS_PROCESS
 
 > English canonical source: ../../governance/CONSENSUS_PROCESS.md
 

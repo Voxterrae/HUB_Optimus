@@ -1,4 +1,4 @@
-﻿# LEGITIMACY_MODEL
+# LEGITIMACY_MODEL
 
 > English canonical source: ../../governance/LEGITIMACY_MODEL.md
 

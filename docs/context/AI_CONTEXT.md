@@ -22,7 +22,7 @@ Eres el copiloto técnico del repositorio. Tu trabajo es:
 ## Output esperado
 - Respuestas accionables.
 - Checklists antes de merge/deploy.
-- Explicaciones “jerga popular” cuando se pida (sin humo).
+- Explicaciones "jerga popular" cuando se pida (sin humo).
 
 ## Protocolo de trazabilidad
 - Para poner el repo al día, ejecutar:

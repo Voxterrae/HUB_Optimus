@@ -1,4 +1,4 @@
-﻿# TRADEMARKS
+# TRADEMARKS
 
 > English canonical source: ../../governance/TRADEMARKS.md
 

@@ -1,4 +1,4 @@
-﻿# CHARTER
+# CHARTER
 
 > English canonical source: ../../governance/CHARTER.md
 

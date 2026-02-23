@@ -14,7 +14,7 @@ To provide a verifiable, incentive-aligned framework that:
 
 ## What HUB_Optimus is
 - A structured evaluation framework.
-- A shared “language” for scenario definition and analysis.
+- A shared "language" for scenario definition and analysis.
 - A method to reduce uncertainty and manipulation by making verification explicit.
 
 ## What HUB_Optimus is NOT
