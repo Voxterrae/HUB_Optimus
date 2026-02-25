@@ -1,18 +1,21 @@
 ### Canonical languages policy (v1)
 
-**v1_core/** (normative spec):
-- **Canonical (source of truth): es**
-- **Reference translation / parity target: en** (kept close, but es wins on conflicts)
+Language folders currently present in the repository:
+- `v1_core/languages/`: `es`, `en`
+- `docs/`: `ca`, `de`, `es`, `fr`, `he`, `ru`, `zh` (English lives in root `docs/` files, not `docs/en/`)
 
-**docs/** (onboarding & navigation):
-- Priority languages: **es, de, en**
-- Additional languages: ca, fr, ru (structure complete; translation progressive)
+Translation tiers:
+- Tier 0 (canonical): `es`
+  - Source of truth for normative content in `v1_core/`.
+- Tier 1 (required parity): `en`
+  - Must stay semantically aligned with `es`.
+  - On conflict, `es` wins.
+- Tier 2 (additional languages): `ca`, `de`, `fr`, `he`, `ru`, `zh`
+  - Structural paths and links are guaranteed.
+  - Content can be partial unless a language is explicitly promoted.
 
-**Source-of-truth rule:**
+Source-of-truth rule:
 - If repository docs conflict, this file wins.
-
-**Planned switch (later, not now):**
-- Once en reaches stable parity, we may declare **en as canonical** for a future version (v1.1 or v2).
 
 ## Next steps
 - [ ] Decidir si REPO_TREE.txt y SNAPSHOT.txt van a git (sí/no) y actuar en consecuencia
