@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import argparse
+from fnmatch import fnmatch
 import re
 import sys
 from pathlib import Path
 
 
-DEFAULT_TARGETS = ("docs", "README.md", "CONTRIBUTING.md")
+DEFAULT_TARGETS = (".",)
+EXCLUDED_DIR_NAMES = {".git", ".venv", "site", "node_modules"}
+EXCLUDED_DIR_PATTERNS = ("out_*",)
 
 PATTERNS = (
     ("replacement_char", re.compile(r"\uFFFD")),
@@ -19,11 +22,23 @@ PATTERNS = (
 
 
 def iter_markdown_files(target: Path) -> list[Path]:
+    def is_excluded(path: Path) -> bool:
+        return any(
+            part in EXCLUDED_DIR_NAMES
+            or any(fnmatch(part, pattern) for pattern in EXCLUDED_DIR_PATTERNS)
+            for part in path.parts
+        )
+
     if target.is_file():
-        return [target.resolve()] if target.suffix.lower() == ".md" else []
+        resolved = target.resolve()
+        return [resolved] if resolved.suffix.lower() == ".md" and not is_excluded(resolved) else []
     if not target.exists():
         return []
-    return sorted(p.resolve() for p in target.rglob("*.md") if p.is_file())
+    return sorted(
+        p.resolve()
+        for p in target.rglob("*.md")
+        if p.is_file() and not is_excluded(p.resolve())
+    )
 
 
 def scan_file(path: Path, root: Path) -> list[str]:
@@ -49,7 +64,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "targets",
         nargs="*",
-        help="Files or directories to scan (default: docs README.md CONTRIBUTING.md).",
+        help=(
+            "Files or directories to scan (default: repo root). "
+            "Excludes .git, .venv, site, node_modules, and out_* directories."
+        ),
     )
     return parser.parse_args()
 
