@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RUN_SCENARIO = REPO_ROOT / "run_scenario.py"
@@ -39,27 +40,52 @@ def test_example_scenario_happy_path() -> None:
     assert isinstance(payload["detail"], str)
 
 
-def test_invalid_schema_fails_fast_with_stable_exit_code(tmp_path: Path) -> None:
-    invalid = tmp_path / "invalid_scenario.json"
-    invalid.write_text(
-        json.dumps(
+@pytest.mark.parametrize(
+    ("payload", "expected_fragment"),
+    [
+        (
             {
-                "title": "bad scenario",
-                "description": "missing required constraints",
-                "roles": [],
-                "success_criteria": {},
-                "max_rounds": 0,
-            }
+                "title": "missing max_rounds",
+                "description": "invalid scenario",
+                "roles": [{"name": "A", "role": "Mediator"}],
+                "success_criteria": {"criterion": "ok"},
+            },
+            "max_rounds",
         ),
-        encoding="utf-8",
-    )
+        (
+            {
+                "title": "empty roles",
+                "description": "invalid scenario",
+                "roles": [],
+                "success_criteria": {"criterion": "ok"},
+                "max_rounds": 2,
+            },
+            ".roles",
+        ),
+        (
+            {
+                "title": "extra field",
+                "description": "invalid scenario",
+                "roles": [{"name": "A", "role": "Mediator"}],
+                "success_criteria": {"criterion": "ok"},
+                "max_rounds": 2,
+                "unexpected": True,
+            },
+            "Additional properties",
+        ),
+    ],
+)
+def test_invalid_schema_fails_fast_with_stable_exit_code(
+    tmp_path: Path, payload: dict[str, object], expected_fragment: str
+) -> None:
+    invalid = tmp_path / "invalid_scenario.json"
+    invalid.write_text(json.dumps(payload), encoding="utf-8")
 
     proc = _run_cli("--scenario", str(invalid))
     assert proc.returncode == 2
     assert "[schema-error]" in proc.stderr
-    assert "roles must be a non-empty list" in proc.stderr
-    assert "success_criteria must be a non-empty object" in proc.stderr
-    assert "max_rounds must be an integer >= 1" in proc.stderr
+    assert "scenario.schema.json" in proc.stderr
+    assert expected_fragment in proc.stderr
 
 
 def test_missing_file_returns_input_error_code() -> None:

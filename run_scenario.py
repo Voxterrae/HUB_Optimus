@@ -10,98 +10,80 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import ValidationError
+
 from hub_optimus_simulator import Scenario, Simulator
 
 
-REQUIRED_FIELDS = ("title", "description", "roles", "success_criteria", "max_rounds")
 INPUT_ERROR_EXIT_CODE = 2
+RUNTIME_ERROR_EXIT_CODE = 1
+SCHEMA_PATH = Path(__file__).with_name("scenario.schema.json")
 
 
-def _validate_role(role: object, index: int) -> list[str]:
-    if not isinstance(role, dict):
-        return [f"roles[{index}] must be an object"]
-
-    errors: list[str] = []
-    name = role.get("name")
-    role_type = role.get("role")
-
-    if not isinstance(name, str) or not name.strip():
-        errors.append(f"roles[{index}].name must be a non-empty string")
-    if not isinstance(role_type, str) or not role_type.strip():
-        errors.append(f"roles[{index}].role must be a non-empty string")
-
-    unknown_keys = sorted(set(role.keys()) - {"name", "role"})
-    if unknown_keys:
-        errors.append(f"roles[{index}] has unknown field(s): {', '.join(unknown_keys)}")
-
-    return errors
+class ScenarioValidationError(ValueError):
+    """Raised when a scenario input is invalid against the schema contract."""
 
 
-def validate_scenario_payload(payload: object) -> list[str]:
-    if not isinstance(payload, dict):
-        return ["Scenario root must be a JSON object"]
+def _format_error_path(error: ValidationError) -> str:
+    if not error.absolute_path:
+        return "$"
 
-    errors: list[str] = []
+    path = "$"
+    for part in error.absolute_path:
+        if isinstance(part, int):
+            path += f"[{part}]"
+        else:
+            path += f".{part}"
+    return path
 
-    missing = [field for field in REQUIRED_FIELDS if field not in payload]
-    if missing:
-        errors.append(f"Missing required field(s): {', '.join(missing)}")
 
-    unknown = sorted(set(payload.keys()) - set(REQUIRED_FIELDS))
-    if unknown:
-        errors.append(f"Unknown field(s): {', '.join(unknown)}")
+def _load_schema_validator(schema_path: Path = SCHEMA_PATH) -> Draft202012Validator:
+    try:
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise RuntimeError(f"Schema file not found: {schema_path}") from exc
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            f"Invalid schema JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
+        ) from exc
 
-    title = payload.get("title")
-    if not isinstance(title, str) or not title.strip():
-        errors.append("title must be a non-empty string")
+    Draft202012Validator.check_schema(schema)
+    return Draft202012Validator(schema)
 
-    description = payload.get("description")
-    if not isinstance(description, str) or not description.strip():
-        errors.append("description must be a non-empty string")
 
-    roles = payload.get("roles")
-    if not isinstance(roles, list) or not roles:
-        errors.append("roles must be a non-empty list")
-    elif isinstance(roles, list):
-        for idx, role in enumerate(roles):
-            errors.extend(_validate_role(role, idx))
-
-    success_criteria = payload.get("success_criteria")
-    if not isinstance(success_criteria, dict) or not success_criteria:
-        errors.append("success_criteria must be a non-empty object")
-
-    max_rounds = payload.get("max_rounds")
-    if type(max_rounds) is not int or max_rounds < 1:
-        errors.append("max_rounds must be an integer >= 1")
-
-    return errors
+def _validate_payload_with_schema(payload: Any) -> list[str]:
+    validator = _load_schema_validator()
+    errors = sorted(
+        validator.iter_errors(payload),
+        key=lambda err: (list(err.absolute_path), err.message),
+    )
+    return [f"{_format_error_path(error)}: {error.message}" for error in errors]
 
 
 def load_validated_scenario(scenario_path: Path) -> Scenario:
     try:
         payload: Any = json.loads(scenario_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ValueError(
+        raise ScenarioValidationError(
             f"Invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
         ) from exc
 
-    errors = validate_scenario_payload(payload)
+    errors = _validate_payload_with_schema(payload)
     if errors:
-        raise ValueError("\n".join(errors))
+        raise ScenarioValidationError(
+            "Scenario does not match scenario.schema.json:\n" + "\n".join(errors)
+        )
 
-    assert isinstance(payload, dict)
-    assert isinstance(payload["title"], str)
-    assert isinstance(payload["description"], str)
-    assert isinstance(payload["roles"], list)
-    assert isinstance(payload["success_criteria"], dict)
-    assert isinstance(payload["max_rounds"], int)
+    if not isinstance(payload, dict):
+        raise ScenarioValidationError("Scenario root must be a JSON object")
 
     return Scenario(
-        title=payload["title"],
-        description=payload["description"],
-        roles=payload["roles"],
-        success_criteria=payload["success_criteria"],
-        max_rounds=payload["max_rounds"],
+        title=str(payload["title"]),
+        description=str(payload["description"]),
+        roles=list(payload["roles"]),
+        success_criteria=dict(payload["success_criteria"]),
+        max_rounds=int(payload["max_rounds"]),
     )
 
 
@@ -132,12 +114,15 @@ def main() -> int:
 
     try:
         scenario = load_validated_scenario(scenario_path)
-    except ValueError as exc:
+        simulator = Simulator(scenario)
+        result = simulator.run(seed=args.seed)
+    except ScenarioValidationError as exc:
         print(f"[schema-error] {exc}", file=sys.stderr)
         return INPUT_ERROR_EXIT_CODE
+    except Exception as exc:  # pragma: no cover - defensive runtime boundary
+        print(f"[runtime-error] {exc}", file=sys.stderr)
+        return RUNTIME_ERROR_EXIT_CODE
 
-    simulator = Simulator(scenario)
-    result = simulator.run(seed=args.seed)
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
