@@ -1,58 +1,80 @@
-# WORKFLOWS — Merge / Deploy / Automatización
+# WORKFLOWS - CI and Automation
 
-## Qué es "automatización" aquí (en humano)
-Define qué proceso se dispara: tests, build, lint, generación de docs, releases, etc.
+This document reflects the workflows currently present in `.github/workflows`.
+Source of truth is the workflow YAML in the repository.
 
----
+## ci.yml
+- Trigger:
+  - `pull_request`
+  - `push` on `main`
+- What it checks:
+  - Installs dev dependencies from `requirements-dev.txt`
+  - Runs mojibake guard: `python tools/check_mojibake.py`
+  - Runs test suite: `python -m pytest -q`
+- How to run locally:
+  1. `python -m pip install --upgrade pip`
+  2. `python -m pip install -r requirements-dev.txt`
+  3. `python tools/check_mojibake.py`
+  4. `python -m pytest -q`
 
-## Fix encoding / mojibake en docs (PowerShell)
-Cuando veas texto corrupto o caracteres rotos en Markdown dentro de `docs/`, usa el fixer **en modo seguro**.
-Regla de codificación: todos los `.md` deben guardarse en **UTF-8**.
+## link-check.yml
+- Trigger:
+  - `push`
+  - `pull_request`
+  - `workflow_dispatch`
+- What it checks:
+  - Repository/debug listing for link targets
+  - Markdown links via `lycheeverse/lychee-action@v1` with:
+    - `README.md`
+    - `CONTRIBUTING.md`
+    - `docs/CONTRIBUTING.md`
+    - `docs/**/*.md`
+- How to run locally:
+  1. `lychee --no-progress --verbose README.md CONTRIBUTING.md docs/CONTRIBUTING.md docs/**/*.md`
 
-### 1) Preview (DryRun)
-No toca archivos; lista qué cambiaría:
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\fix_encoding_docs.ps1 -Path .\docs -DryRun
-```
+## repo_maintenance_bot.yml
+- Trigger:
+  - `workflow_dispatch` with inputs:
+    - `mode`: `hygiene`, `i18n`, `full`
+    - `allow_kernel_changes`: `false`, `true`
+  - `schedule`: `15 6 * * *`
+  - `pull_request` (paths):
+    - `docs/**`
+    - `v1_core/**`
+    - `.github/workflows/**`
+    - `tools/**`
+- What it checks/does:
+  - Skips cleanly when `GH_APP_ID` or `GH_APP_PRIVATE_KEY` are missing
+  - Creates GitHub App token
+  - Creates maintenance branch and runs:
+    - `python tools/maintenance_bot.py <mode>`
+    - `python tools/kernel_guard.py <allow_kernel_changes>`
+  - Commits/pushes changes and opens PR
+  - Runs `python tools/pr_pro.py`
+- How to run locally:
+  1. `python tools/maintenance_bot.py full`
+  2. `python tools/kernel_guard.py --help`
+  3. `python tools/kernel_guard.py`
+- Notes:
+  - Full automation path requires GitHub App secrets and `gh` auth.
 
-### 2) Guard local de mojibake
-Para validar antes de abrir PR:
-```powershell
-python tools/check_mojibake.py
-```
+## kernel-guard.yml
+- Trigger:
+  - `pull_request` events:
+    - `opened`
+    - `synchronize`
+    - `reopened`
+    - `labeled`
+    - `unlabeled`
+- What it checks:
+  - Reads override label `allow-kernel-change`
+  - Runs diff-based kernel guard against base/head refs:
+    - without override: `python tools/kernel_guard.py --base-ref origin/<base> --head-ref <sha>`
+    - with override label: adds `--allow-kernel-changes`
+- How to run locally:
+  1. `git fetch --no-tags --prune --depth=1 origin main`
+  2. `python tools/kernel_guard.py --base-ref origin/main --head-ref HEAD`
+  3. Optional override: `python tools/kernel_guard.py --base-ref origin/main --head-ref HEAD --allow-kernel-changes`
 
-----
-
-## Checklist PRE-MERGE
-- [ ] Pull de main actualizado
-- [ ] Snapshot de trazabilidad actualizado (`tools/trace_repo.ps1`)
-- [ ] Tests pasan localmente
-- [ ] Revisión de cambios en docs críticas (README/START_HERE)
-- [ ] Workflows CI no cambian sin revisión
-- [ ] Plan de rollback definido (revert vs reset)
-- [ ] Changelog/STATUS actualizado
-
-
-## Checklist PRE-DEPLOY (si existe deploy)
-- [ ] Tag/versión definida
-- [ ] Artefactos generados correctamente
-- [ ] Variables/secretos verificados
-- [ ] Monitoreo/logs listos
-- [ ] Rollback confirmado
-
-## Rollback cookbook
-- Revert seguro:
-- Reset + force (solo emergencia y con rulesets claros):
-
-## Inventario actual de workflows
-- .github/workflows/link-check.yml
-  - Trigger: push, pull_request, workflow_dispatch
-  - Accion: lycheeverse/lychee-action@v1
-  - Alcance: README.md, CONTRIBUTING.md, docs/**/*.md, v1_core/**/*.md, legacy/**/*.md
-  - Escribe en repo: no (solo lectura)
-
-## Regla de cambio
-- Cualquier cambio en `.github/workflows` se documenta en `docs/context/STATUS.md`.
-
-
----
+## Change rule
+Any change under `.github/workflows` must update this file in the same PR.
