@@ -87,7 +87,7 @@ The architecture is intentionally:
 - incentive adjustment proposals (remove reward for instability),
 - timing recommendations (use windows of opportunity).
 
-**Inputs:** Layer 3 activation (risk â†‘ + window open)  
+**Inputs:** Layer 3 activation (risk ↑ + window open)
 **Outputs:** discreet mediation briefs, options, corrective paths
 
 **Rule:** no public spectacle; preserve channels; minimize escalation.
@@ -116,7 +116,7 @@ The architecture is intentionally:
 4. **Layer 3** evaluates against Kernel criteria
 5. **Layer 5** contrasts with recurring historical patterns
 6. **Layer 0** validates coherence and blocks drift/capture
-7. If risk â†‘ and window open â†’ **Layer 4** activates preventive mediation
+7. If risk ↑ and window open → **Layer 4** activates preventive mediation
 8. Outputs are recorded and fed back into **Layer 5** (memory strengthening)
 
 ## 4) Hard constraints (what the architecture forbids)
@@ -139,5 +139,4 @@ This document is part of the Kernel baseline. Any change must:
 - preserve Layer 0 principles,
 - keep layer numbering stable,
 - be synchronized across languages.
-
 
