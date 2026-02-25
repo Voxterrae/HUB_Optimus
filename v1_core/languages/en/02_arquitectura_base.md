@@ -1,4 +1,4 @@
-﻿# 02 â€” Architecture Baseline (Layers 0â€“5)
+# 02 — Architecture Baseline (Layers 0–5)
 
 ## 1) Core design statement
 HUB_Optimus is a layered system designed to reduce future risk and increase medium/long-term stability by improving how outcomes are evaluated, and by enabling preventive correction before escalation.
@@ -9,9 +9,9 @@ The architecture is intentionally:
 - **anti-cycle** (active memory, early warning),
 - **human-compatible** (clear posture under time pressure).
 
-## 2) Layer model (0â€“5)
+## 2) Layer model (0–5)
 
-### Layer 0 â€” Immutable Ethicalâ€“Rational Kernel (INMUTABLE)
+### Layer 0 — Immutable Ethical–Rational Kernel (INMUTABLE)
 **Role:** constitutional core; prevents drift and capture.  
 **Contains (non-negotiable):**
 - Success = measurable reduction of future risk
@@ -27,7 +27,7 @@ The architecture is intentionally:
 
 ---
 
-### Layer 1 â€” Human Model (Interpretative)
+### Layer 1 — Human Model (Interpretative)
 **Role:** align system outputs with human limits and diplomatic posture.  
 **Captures:**
 - preference for preventive mediation,
@@ -42,12 +42,12 @@ The architecture is intentionally:
 
 ---
 
-### Layer 2 â€” Observation & Detection (Optimus)
+### Layer 2 — Observation & Detection (Optimus)
 **Role:** detect incentive shifts and early risk signals.  
 **Focus:** incentives, feedback loops, reward/punishment structures.
 
 **Typical signals:**
-- â€œfalse successesâ€ (short-term wins increasing long-term instability),
+- “false successes” (short-term wins increasing long-term instability),
 - decisions that reward escalation or punish rational restraint,
 - dependency creation (path dependence),
 - repeated historical patterns emerging.
@@ -59,7 +59,7 @@ The architecture is intentionally:
 
 ---
 
-### Layer 3 â€” Systemic Evaluation (Operational Core)
+### Layer 3 — Systemic Evaluation (Operational Core)
 **Role:** evaluate outcomes with Kernel criteria and long-term stability lens.
 
 **Fixed evaluation questions:**
@@ -71,14 +71,14 @@ The architecture is intentionally:
 **Outputs:**
 - evaluation report (systemic),
 - risk score / classification,
-- â€œintervention neededâ€ decision (yes/no),
+- “intervention needed” decision (yes/no),
 - recommended preventive posture (if applicable).
 
-**Rule:** Layer 3 is the main decision engine for â€œworks / does not workâ€ within HUB_Optimus.
+**Rule:** Layer 3 is the main decision engine for “works / does not work” within HUB_Optimus.
 
 ---
 
-### Layer 4 â€” Preventive Mediation (Discrete Intervention)
+### Layer 4 — Preventive Mediation (Discrete Intervention)
 **Role:** act before escalation becomes irreversible, without public confrontation.
 
 **Methods (non-exhaustive):**
@@ -87,20 +87,20 @@ The architecture is intentionally:
 - incentive adjustment proposals (remove reward for instability),
 - timing recommendations (use windows of opportunity).
 
-**Inputs:** Layer 3 activation (risk â†‘ + window open)  
+**Inputs:** Layer 3 activation (risk ↑ + window open)  
 **Outputs:** discreet mediation briefs, options, corrective paths
 
 **Rule:** no public spectacle; preserve channels; minimize escalation.
 
 ---
 
-### Layer 5 â€” Active Memory (Anti-cycle)
+### Layer 5 — Active Memory (Anti-cycle)
 **Role:** convert historical recurrence into operational prevention.
 
 **Provides:**
 - comparable past cycles,
 - recurrence patterns and thresholds,
-- â€œwe have seen this beforeâ€ warnings with structural similarity.
+- “we have seen this before” warnings with structural similarity.
 
 **Inputs:** evaluations, outcomes, scenario archives  
 **Outputs:** pattern matches, recurrence alerts, historical analog sets
@@ -116,12 +116,12 @@ The architecture is intentionally:
 4. **Layer 3** evaluates against Kernel criteria
 5. **Layer 5** contrasts with recurring historical patterns
 6. **Layer 0** validates coherence and blocks drift/capture
-7. If risk â†‘ and window open â†’ **Layer 4** activates preventive mediation
+7. If risk ↑ and window open → **Layer 4** activates preventive mediation
 8. Outputs are recorded and fed back into **Layer 5** (memory strengthening)
 
 ## 4) Hard constraints (what the architecture forbids)
 - Personal scapegoating as a primary framing
-- Short-term â€œwinsâ€ counted as success when ML stability decreases
+- Short-term “wins” counted as success when ML stability decreases
 - Kernel modification without integrity-first review
 - Language drift (translations changing meaning)
 - Coercive enforcement mechanisms inside HUB_Optimus
