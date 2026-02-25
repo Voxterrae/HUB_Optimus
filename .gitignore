@@ -49,3 +49,8 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Local build/test artifacts
+site/
+out_pr41/
+.pytest_cache/
