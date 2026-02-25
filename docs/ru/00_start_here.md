@@ -34,16 +34,16 @@ HUB_Optimus exists to break that cycle.
 
 **20 minutes (practitioner):**
 - Core spec (ES, canonical v1):  
-  [01_base_declaracion](../.../../../v1_core/languages/es/01_base_declaracion.md) ? 
-  [02_arquitectura_base](../.../../../v1_core/languages/es/02_arquitectura_base.md) ? 
-  [03_flujo_operativo](../.../../../v1_core/languages/es/03_flujo_operativo.md)
+  [01_base_declaracion](../../v1_core/languages/es/01_base_declaracion.md)
+  [02_arquitectura_base](../../v1_core/languages/es/02_arquitectura_base.md)
+  [03_flujo_operativo](../../v1_core/languages/es/03_flujo_operativo.md)
 - English reference:  
-  [01_base_declaracion (EN)](../.../../../v1_core/languages/en/01_base_declaracion.md)
+  [01_base_declaracion (EN)](../../v1_core/languages/en/01_base_declaracion.md)
 
 **Try it (hands-on):**
-- Template: [Scenario Template](../.../../../v1_core/workflow/04_scenario_template.md)
-- Examples: [Scenario 001](../.../../../v1_core/workflow/scenario_001_partial_ceasefire.md), [Scenario 002](../.../../../v1_core/workflow/scenario_002_verified_ceasefire.md)
-- Learning loop: [Meta Learning](../.../../../v1_core/workflow/05_meta_learning.md)
+- Template: [Scenario Template](../../v1_core/workflow/04_scenario_template.md)
+- Examples: [Scenario 001](../../v1_core/workflow/scenario_001_partial_ceasefire.md), [Scenario 002](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
+- Learning loop: [Meta Learning](../../v1_core/workflow/05_meta_learning.md)
 <!-- /HUB:TRACKS -->
 
 ## Governance
@@ -77,19 +77,19 @@ HUB_Optimus exists to break that cycle.
 - [README.md](../../README.md)
 
 2) Read the simulator overview:
-- [../../v1_core/workflow/README.md](../.../../../v1_core/workflow/README.md)
+- [../../v1_core/workflow/README.md](../../v1_core/workflow/README.md)
 
 ### If you have 15-30 minutes
 Read the Kernel (English reference):
-1) [../../v1_core/languages/en/01_base_declaracion.md](../.../../../v1_core/languages/en/01_base_declaracion.md)
-2) [../../v1_core/languages/en/02_arquitectura_base.md](../.../../../v1_core/languages/en/02_arquitectura_base.md)
-3) [../../v1_core/languages/en/03_flujo_operativo.md](../.../../../v1_core/languages/en/03_flujo_operativo.md)
+1) [../../v1_core/languages/en/01_base_declaracion.md](../../v1_core/languages/en/01_base_declaracion.md)
+2) [../../v1_core/languages/en/02_arquitectura_base.md](../../v1_core/languages/en/02_arquitectura_base.md)
+3) [../../v1_core/languages/en/03_flujo_operativo.md](../../v1_core/languages/en/03_flujo_operativo.md)
 
 Then try the simulator:
-- [../../v1_core/workflow/04_scenario_template.md](../.../../../v1_core/workflow/04_scenario_template.md)
-- [../../v1_core/workflow/scenario_001_partial_ceasefire.md](../.../../../v1_core/workflow/scenario_001_partial_ceasefire.md)
-- [../../v1_core/workflow/scenario_002_verified_ceasefire.md](../.../../../v1_core/workflow/scenario_002_verified_ceasefire.md)
-- [../../v1_core/workflow/05_meta_learning.md](../.../../../v1_core/workflow/05_meta_learning.md)
+- [../../v1_core/workflow/04_scenario_template.md](../../v1_core/workflow/04_scenario_template.md)
+- [../../v1_core/workflow/scenario_001_partial_ceasefire.md](../../v1_core/workflow/scenario_001_partial_ceasefire.md)
+- [../../v1_core/workflow/scenario_002_verified_ceasefire.md](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
+- [../../v1_core/workflow/05_meta_learning.md](../../v1_core/workflow/05_meta_learning.md)
 
 ---
 
