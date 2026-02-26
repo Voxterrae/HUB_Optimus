@@ -11,7 +11,7 @@ name: Repo maintenance bot
         type: choice
         options: [hygiene, i18n, full]
       allow_kernel_changes:
-        description: "Allow changes in docs/governance and v1_core/languages/en"
+        description: "Allow changes in docs/governance and v1_core/languages/es"
         required: true
         default: "false"
         type: choice
@@ -33,6 +33,9 @@ permissions:
 jobs:
   maintenance:
     runs-on: ubuntu-latest
+    env:
+      MAINT_MODE: ${{ github.event.inputs.mode || 'full' }}
+      ALLOW_KERNEL_CHANGES: ${{ github.event.inputs.allow_kernel_changes || 'false' }}
 
     steps:
       - name: Check required secrets
@@ -91,12 +94,16 @@ jobs:
       - name: Run maintenance bot
         if: steps.secrets.outputs.available == 'true'
         run: |
-          python tools/maintenance_bot.py "${{ inputs.mode }}"
+          python tools/maintenance_bot.py "${MAINT_MODE}"
 
       - name: Kernel guard (block protected changes unless allowed)
         if: steps.secrets.outputs.available == 'true'
         run: |
-          python tools/kernel_guard.py "${{ inputs.allow_kernel_changes }}"
+          if [ "${ALLOW_KERNEL_CHANGES}" = "true" ]; then
+            python tools/kernel_guard.py --allow-kernel-changes
+          else
+            python tools/kernel_guard.py
+          fi
 
       - name: Commit changes if any
         id: commit
@@ -108,7 +115,7 @@ jobs:
             echo "No changes to commit."
             exit 0
           fi
-          git commit -m "chore: automated maintenance (${{ inputs.mode }})"
+          git commit -m "chore: automated maintenance (${MAINT_MODE})"
           echo "NO_CHANGES=false" >> $GITHUB_OUTPUT
 
       - name: Push branch
@@ -122,10 +129,10 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           BRANCH="${{ steps.vars.outputs.BRANCH }}"
-          TITLE="chore: automated maintenance (${{ inputs.mode }})"
+          TITLE="chore: automated maintenance (${MAINT_MODE})"
           BODY="Automated maintenance PR.\n\n"
-          BODY+="Mode: ${{ inputs.mode }}\n"
-          BODY+="allow_kernel_changes: ${{ inputs.allow_kernel_changes }}\n"
+          BODY+="Mode: ${MAINT_MODE}\n"
+          BODY+="allow_kernel_changes: ${ALLOW_KERNEL_CHANGES}\n"
           gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" || true
           PR_NUMBER=$(gh pr view "$BRANCH" --json number --jq .number)
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
@@ -136,8 +143,8 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ env.PR_NUMBER }}
-          MODE: ${{ inputs.mode }}
-          ALLOW_KERNEL: ${{ inputs.allow_kernel_changes }}
+          MODE: ${{ env.MAINT_MODE }}
+          ALLOW_KERNEL: ${{ env.ALLOW_KERNEL_CHANGES }}
         run: |
           git fetch origin main
           python tools/pr_pro.py
