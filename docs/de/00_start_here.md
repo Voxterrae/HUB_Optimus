@@ -94,8 +94,8 @@ Sende diesen Link:
 
 **20 minutes (practitioner):**
 - Core spec (ES, canonical v1):  
-  [01_base_declaracion](../../v1_core/languages/es/01_base_declaracion.md) ? 
-  [02_arquitectura_base](../../v1_core/languages/es/02_arquitectura_base.md) ? 
+  [01_base_declaracion](../../v1_core/languages/es/01_base_declaracion.md)
+  [02_arquitectura_base](../../v1_core/languages/es/02_arquitectura_base.md)
   [03_flujo_operativo](../../v1_core/languages/es/03_flujo_operativo.md)
 - English reference:  
   [01_base_declaracion (EN)](../../v1_core/languages/en/01_base_declaracion.md)
