@@ -25,7 +25,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Check docs encoding (mojibake guard)
-        run: python tools/check_mojibake.py
+        run: python tools/check_mojibake.py v1_core docs README.md CONTRIBUTING.md
 
       - name: Run tests
         run: python -m pytest -q
