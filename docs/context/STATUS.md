@@ -7,6 +7,7 @@
 **docs/** (onboarding & navigation):
 - Priority languages: **es, de, en**
 - Additional languages: ca, fr, ru (structure complete; translation progressive)
+- Partial/nascent: zh, he (00_start_here.md present; remaining pages not yet translated)
 
 **Source-of-truth rule:**
 - If repository docs conflict, this file wins.
