@@ -6,75 +6,73 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
 
+import jsonschema
+
 from hub_optimus_simulator import Scenario, Simulator
 
 
-REQUIRED_FIELDS = ("title", "description", "roles", "success_criteria", "max_rounds")
 INPUT_ERROR_EXIT_CODE = 2
 
+_SCHEMA_PATH = Path(__file__).resolve().parent / "scenario.schema.json"
+_SCHEMA: dict[str, Any] | None = None
 
-def _validate_role(role: object, index: int) -> list[str]:
-    if not isinstance(role, dict):
-        return [f"roles[{index}] must be an object"]
 
-    errors: list[str] = []
-    name = role.get("name")
-    role_type = role.get("role")
+def _load_schema() -> dict[str, Any]:
+    global _SCHEMA
+    if _SCHEMA is None:
+        if not _SCHEMA_PATH.is_file():
+            raise FileNotFoundError(
+                f"Schema file not found: {_SCHEMA_PATH}. "
+                "Ensure scenario.schema.json is present in the repository root."
+            )
+        try:
+            _SCHEMA = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Invalid JSON in schema file {_SCHEMA_PATH}: {exc}"
+            ) from exc
+    return _SCHEMA
 
-    if not isinstance(name, str) or not name.strip():
-        errors.append(f"roles[{index}].name must be a non-empty string")
-    if not isinstance(role_type, str) or not role_type.strip():
-        errors.append(f"roles[{index}].role must be a non-empty string")
 
-    unknown_keys = sorted(set(role.keys()) - {"name", "role"})
-    if unknown_keys:
-        errors.append(f"roles[{index}] has unknown field(s): {', '.join(unknown_keys)}")
-
-    return errors
+def _friendly_message(err: jsonschema.ValidationError) -> str:
+    path = list(err.absolute_path)
+    if path == ["roles"] and err.validator == "minItems":
+        return "roles must be a non-empty list"
+    if path == ["success_criteria"] and err.validator == "minProperties":
+        return "success_criteria must be a non-empty object"
+    if path == ["max_rounds"] and err.validator in ("minimum", "type"):
+        return "max_rounds must be an integer >= 1"
+    if path == ["max_rounds"] and err.validator == "exclusiveMinimum":
+        return "max_rounds must be an integer >= 1"
+    if len(path) >= 2 and path[0] == "roles" and isinstance(path[1], int):
+        idx = path[1]
+        field = path[2] if len(path) > 2 else None
+        if field:
+            return f"roles[{idx}].{field} must be a non-empty string"
+        return f"roles[{idx}] {err.message}"
+    if not path and err.validator == "additionalProperties":
+        m = re.search(r"'([^']+)' was unexpected", err.message)
+        extra = m.group(1) if m else err.message
+        return f"Unknown field(s): {extra}"
+    if not path and err.validator == "required":
+        m = re.search(r"'([^']+)' is a required", err.message)
+        missing = m.group(1) if m else err.message
+        return f"Missing required field(s): {missing}"
+    if not path and err.validator == "type":
+        return "Scenario root must be a JSON object"
+    return err.message
 
 
 def validate_scenario_payload(payload: object) -> list[str]:
-    if not isinstance(payload, dict):
-        return ["Scenario root must be a JSON object"]
-
-    errors: list[str] = []
-
-    missing = [field for field in REQUIRED_FIELDS if field not in payload]
-    if missing:
-        errors.append(f"Missing required field(s): {', '.join(missing)}")
-
-    unknown = sorted(set(payload.keys()) - set(REQUIRED_FIELDS))
-    if unknown:
-        errors.append(f"Unknown field(s): {', '.join(unknown)}")
-
-    title = payload.get("title")
-    if not isinstance(title, str) or not title.strip():
-        errors.append("title must be a non-empty string")
-
-    description = payload.get("description")
-    if not isinstance(description, str) or not description.strip():
-        errors.append("description must be a non-empty string")
-
-    roles = payload.get("roles")
-    if not isinstance(roles, list) or not roles:
-        errors.append("roles must be a non-empty list")
-    elif isinstance(roles, list):
-        for idx, role in enumerate(roles):
-            errors.extend(_validate_role(role, idx))
-
-    success_criteria = payload.get("success_criteria")
-    if not isinstance(success_criteria, dict) or not success_criteria:
-        errors.append("success_criteria must be a non-empty object")
-
-    max_rounds = payload.get("max_rounds")
-    if type(max_rounds) is not int or max_rounds < 1:
-        errors.append("max_rounds must be an integer >= 1")
-
-    return errors
+    schema = _load_schema()
+    validator = jsonschema.Draft202012Validator(schema)
+    raw_errors = sorted(validator.iter_errors(payload), key=lambda e: list(e.absolute_path))
+    return [_friendly_message(e) for e in raw_errors]
 
 
 def load_validated_scenario(scenario_path: Path) -> Scenario:
