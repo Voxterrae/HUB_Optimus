@@ -7,6 +7,7 @@
 **docs/** (onboarding & navigation):
 - Priority languages: **es, de, en**
 - Additional languages: ca, fr, ru (structure complete; translation progressive)
+- Stub languages: **zh, he** (directory + governance stub only; full translation pending)
 
 **Source-of-truth rule:**
 - If repository docs conflict, this file wins.
