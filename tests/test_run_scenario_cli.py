@@ -28,16 +28,57 @@ def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_example_scenario_happy_path() -> None:
+def test_example_scenario_happy_path(tmp_path: Path) -> None:
     assert EXAMPLE.exists()
-    proc = _run_cli("--scenario", str(EXAMPLE), "--seed", "42")
+    output_path = tmp_path / "scenario_result.json"
+    proc = _run_cli(
+        "--scenario",
+        str(EXAMPLE),
+        "--output",
+        str(output_path),
+        "--seed",
+        "42",
+    )
     assert proc.returncode == 0
 
-    payload = json.loads(proc.stdout)
+    assert output_path.is_file()
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
     assert payload["status"] in {"success", "failure"}
     assert isinstance(payload["rounds"], int)
     assert isinstance(payload["history"], list)
     assert isinstance(payload["detail"], str)
+
+
+def test_cli_output_is_deterministic(tmp_path: Path) -> None:
+    assert EXAMPLE.exists()
+    output_a = tmp_path / "scenario_output_a.json"
+    output_b = tmp_path / "scenario_output_b.json"
+
+    proc_a = _run_cli(
+        "--scenario",
+        str(EXAMPLE),
+        "--output",
+        str(output_a),
+        "--seed",
+        "42",
+    )
+    proc_b = _run_cli(
+        "--scenario",
+        str(EXAMPLE),
+        "--output",
+        str(output_b),
+        "--seed",
+        "42",
+    )
+
+    assert proc_a.returncode == 0
+    assert proc_b.returncode == 0
+    assert output_a.is_file()
+    assert output_b.is_file()
+
+    payload_a = json.loads(output_a.read_text(encoding="utf-8"))
+    payload_b = json.loads(output_b.read_text(encoding="utf-8"))
+    assert payload_a == payload_b
 
 
 def test_invalid_schema_fails_fast_with_stable_exit_code(tmp_path: Path) -> None:
