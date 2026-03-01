@@ -66,9 +66,22 @@ def main() -> int:
         description="Run a HUB_Optimus negotiation scenario and output JSON results."
     )
     parser.add_argument(
+        "scenario_path_pos",
+        nargs="?",
+        help="Path to the scenario definition file in JSON format (positional).",
+    )
+    parser.add_argument(
         "--scenario",
-        required=True,
+        dest="scenario_path_opt",
+        required=False,
         help="Path to the scenario definition file in JSON format.",
+    )
+    parser.add_argument(
+        "--output",
+        help=(
+            "Optional path to write the JSON results. Defaults to the scenario path "
+            "with a .result.json suffix."
+        ),
     )
     parser.add_argument(
         "--seed",
@@ -81,7 +94,13 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    scenario_path = Path(args.scenario)
+    scenario_path_value = args.scenario_path_opt or args.scenario_path_pos
+    if not scenario_path_value:
+        parser.print_usage(sys.stderr)
+        print("[input-error] Scenario path is required.", file=sys.stderr)
+        return INPUT_ERROR_EXIT_CODE
+
+    scenario_path = Path(scenario_path_value)
     if not scenario_path.is_file():
         print(f"[input-error] Scenario file not found: {scenario_path}", file=sys.stderr)
         return INPUT_ERROR_EXIT_CODE
@@ -94,6 +113,11 @@ def main() -> int:
 
     simulator = Simulator(scenario)
     result = simulator.run(seed=args.seed)
+    output_path = Path(args.output) if args.output else scenario_path.with_suffix(".result.json")
+    output_path.write_text(
+        json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
