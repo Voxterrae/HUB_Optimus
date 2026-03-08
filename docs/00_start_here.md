@@ -1,5 +1,7 @@
 # Start Here — HUB_Optimus in 10 minutes
 
+> **Source-of-truth:** For HUB_Optimus v1, the canonical source is `v1_core/languages/es/`. English and other languages are reference or parity translations. If documentation conflicts, `docs/context/STATUS.md` is the authoritative governance record.
+
 ## What is HUB_Optimus?
 HUB_Optimus is an open, integrity-first framework that helps evaluate diplomatic and institutional decisions using:
 - systemic incentive analysis,

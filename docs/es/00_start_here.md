@@ -1,4 +1,4 @@
-> 🇬🇧 English source: [docs/00_start_here.md](../00_start_here.md)
+> 🇬🇧 English version: [docs/00_start_here.md](../00_start_here.md)
 
 # HUB_Optimus — Start Here (ES)
 
