@@ -54,3 +54,6 @@ __pycache__/
 site/
 out_pr41/
 .pytest_cache/
+
+# Benchmark runner temporary outputs
+*.actual.json

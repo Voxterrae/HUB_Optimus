@@ -1,0 +1,11 @@
+{
+  "title": "Fragile ceasefire under pressure",
+  "description": "Two factions with partially conflicting objectives attempt a ceasefire under external mediation. A third-party mediator increases complexity but limited rounds constrain convergence.",
+  "roles": [
+    {"name": "Faction_A", "role": "negotiator"},
+    {"name": "Faction_B", "role": "negotiator"},
+    {"name": "Mediator", "role": "mediator"}
+  ],
+  "success_criteria": {"offer": 5},
+  "max_rounds": 3
+}
