@@ -1,0 +1,34 @@
+# CODEOWNERS — HUB_Optimus
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ───── Protected zones (require maintainer review) ─────
+
+# Kernel (canonical + parity)
+v1_core/languages/          @Voxterrae
+v1_core/languages/es/       @Voxterrae
+v1_core/languages/en/       @Voxterrae
+
+# Governance documents
+docs/governance/            @Voxterrae
+
+# CI and repo infrastructure
+.github/                    @Voxterrae
+
+# Project root configs
+CONTRIBUTING.md             @Voxterrae
+README.md                   @Voxterrae
+scenario.schema.json        @Voxterrae
+
+# ───── Reviewed zones (maintainer notified) ─────
+
+# Simulator core
+hub_optimus_simulator.py    @Voxterrae
+run_scenario.py             @Voxterrae
+hub_optimus/                @Voxterrae
+
+# Benchmarks (deterministic contract)
+benchmarks/                 @Voxterrae
+
+# ───── Open zones (contributors welcome) ─────
+# No CODEOWNERS entry = no mandatory review gate.
+# Open zones: docs/ (non-governance), tools/, tests/, examples/, legacy/
