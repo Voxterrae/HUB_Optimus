@@ -1,0 +1,10 @@
+{
+  "title": "Irreconcilable territorial dispute",
+  "description": "Two factions with mutually exclusive demands over full territorial control. No feasible agreement exists under current constraints.",
+  "roles": [
+    {"name": "Faction_A", "role": "hardliner"},
+    {"name": "Faction_B", "role": "hardliner"}
+  ],
+  "success_criteria": {"offer": 99},
+  "max_rounds": 3
+}

@@ -1,0 +1,23 @@
+{
+  "detail": "Success criteria met at round 2",
+  "history": [
+    {
+      "Faction_A": {
+        "offer": 1
+      },
+      "Faction_B": {
+        "offer": 2
+      }
+    },
+    {
+      "Faction_A": {
+        "offer": 4
+      },
+      "Faction_B": {
+        "offer": 5
+      }
+    }
+  ],
+  "rounds": 2,
+  "status": "success"
+}

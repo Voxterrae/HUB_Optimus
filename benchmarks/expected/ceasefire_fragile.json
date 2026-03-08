@@ -1,0 +1,29 @@
+{
+  "detail": "Success criteria met at round 2",
+  "history": [
+    {
+      "Faction_A": {
+        "offer": 1
+      },
+      "Faction_B": {
+        "offer": 2
+      },
+      "Mediator": {
+        "offer": 4
+      }
+    },
+    {
+      "Faction_A": {
+        "offer": 5
+      },
+      "Faction_B": {
+        "offer": 3
+      },
+      "Mediator": {
+        "offer": 2
+      }
+    }
+  ],
+  "rounds": 2,
+  "status": "success"
+}

@@ -1,0 +1,10 @@
+{
+  "title": "Basic ceasefire negotiation",
+  "description": "Two factions negotiate a straightforward ceasefire with compatible objectives. Low conflict intensity, high convergence potential.",
+  "roles": [
+    {"name": "Faction_A", "role": "negotiator"},
+    {"name": "Faction_B", "role": "negotiator"}
+  ],
+  "success_criteria": {"offer": 5},
+  "max_rounds": 5
+}

@@ -1,0 +1,31 @@
+{
+  "detail": "Max rounds reached without meeting success criteria",
+  "history": [
+    {
+      "Faction_A": {
+        "offer": 1
+      },
+      "Faction_B": {
+        "offer": 2
+      }
+    },
+    {
+      "Faction_A": {
+        "offer": 4
+      },
+      "Faction_B": {
+        "offer": 5
+      }
+    },
+    {
+      "Faction_A": {
+        "offer": 3
+      },
+      "Faction_B": {
+        "offer": 2
+      }
+    }
+  ],
+  "rounds": 3,
+  "status": "failure"
+}
