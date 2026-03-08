@@ -50,4 +50,4 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Run benchmark pack v0 (non-blocking)
-        run: python benchmarks/run_benchmarks.py
+        run: python benchmarks/run_benchmarks.py --summary-file "$GITHUB_STEP_SUMMARY"
