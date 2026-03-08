@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 
-DEFAULT_TARGETS = ("docs", "README.md", "CONTRIBUTING.md")
+DEFAULT_TARGETS = ("docs", "v1_core", "README.md", "CONTRIBUTING.md")
 
 PATTERNS = (
     ("replacement_char", re.compile(r"\uFFFD")),
