@@ -1,0 +1,64 @@
+name: Scenario contribution
+description: Propose a new diplomatic scenario for evaluation
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Scenarios must follow the [canonical template](../../v1_core/workflow/04_scenario_template.md).
+        Every scenario requires: trigger, structural context, incentive analysis,
+        systemic evaluation, historical contrast, Kernel coherence check,
+        final classification, and memory integration notes.
+
+  - type: input
+    id: title
+    attributes:
+      label: Scenario title
+      description: Short descriptive name for the scenario.
+      placeholder: "e.g. SCN-004 — Ceasefire verification under asymmetric intelligence"
+    validations:
+      required: true
+
+  - type: textarea
+    id: trigger
+    attributes:
+      label: Trigger and structural context
+      description: What event or condition triggers this scenario? What is the structural context?
+    validations:
+      required: true
+
+  - type: textarea
+    id: incentives
+    attributes:
+      label: Incentive analysis
+      description: What incentive structures are at play? Where are the misalignments?
+    validations:
+      required: true
+
+  - type: textarea
+    id: historical
+    attributes:
+      label: Historical contrast
+      description: Which historical patterns does this scenario echo or diverge from?
+    validations:
+      required: true
+
+  - type: textarea
+    id: coherence
+    attributes:
+      label: Kernel coherence check
+      description: Which Layer 0 principles are exercised? Any tensions?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Preliminary classification
+      options:
+        - Structural success
+        - Fragile success
+        - Structural failure
+        - Undetermined
+    validations:
+      required: true
