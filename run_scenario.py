@@ -114,10 +114,14 @@ def main() -> int:
     simulator = Simulator(scenario)
     result = simulator.run(seed=args.seed)
     output_path = Path(args.output) if args.output else scenario_path.with_suffix(".result.json")
-    output_path.write_text(
-        json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    try:
+        output_path.write_text(
+            json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+    except OSError as exc:
+        print(f"[input-error] cannot write output file: {exc}", file=sys.stderr)
+        return INPUT_ERROR_EXIT_CODE
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
