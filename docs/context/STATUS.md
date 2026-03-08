@@ -10,7 +10,9 @@
 - Stub languages: **zh, he** (directory + governance stub only; full translation pending)
 
 **Source-of-truth rule:**
-- If repository docs conflict, this file wins.
+- If repository docs conflict, **this file (`docs/context/STATUS.md`) wins**.
+- For HUB_Optimus v1, the canonical source-of-truth is `v1_core/languages/es/`.
+- English and other languages are reference or parity translations unless explicitly stated otherwise.
 
 **Planned switch (later, not now):**
 - Once en reaches stable parity, we may declare **en as canonical** for a future version (v1.1 or v2).
