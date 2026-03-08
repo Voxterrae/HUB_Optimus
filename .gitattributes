@@ -1,1 +1,2 @@
 *.md text eol=lf
+benchmarks/expected/*.json text eol=lf
