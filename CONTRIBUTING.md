@@ -38,6 +38,39 @@ The active Kernel and simulator.
 
 ---
 
+## 2.1) Contributor zones
+
+### Open zones (contributors welcome, no mandatory review gate)
+
+| Path | What lives here |
+|---|---|
+| `docs/` (non-governance) | Onboarding guides, reading paths, translations |
+| `tools/` | Maintenance scripts, auditing utilities |
+| `tests/` | Regression tests, smoke tests |
+| `examples/` | Example scenarios and usage samples |
+| `legacy/` | Historical v0 materials (read-only — see above) |
+
+### Protected zones (require maintainer review via CODEOWNERS)
+
+| Path | Why it's protected |
+|---|---|
+| `v1_core/languages/` | Kernel specs — canonical (`es`) and parity (`en`) |
+| `docs/governance/` | Charter, consensus process, trust layer |
+| `.github/` | CI, issue forms, PR template, CODEOWNERS |
+| `scenario.schema.json` | Runtime contract — changes break benchmarks |
+| `run_scenario.py`, `hub_optimus_simulator.py` | Simulator core |
+| `benchmarks/` | Deterministic output contract |
+
+### How to pick up an issue
+
+1. Find an issue labelled `good first issue` or in an open zone.
+2. Comment on the issue to signal intent.
+3. Wait for informal assignment (to avoid duplicate work).
+4. Create a branch: `feat/<short-name>` or `chore/<short-name>`.
+5. Open a focused PR linked to the issue (`Fixes #N`).
+
+---
+
 ## 3) Contribution types
 
 ### A) Documentation improvements (low risk)
