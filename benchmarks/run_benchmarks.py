@@ -52,8 +52,23 @@ def run_benchmark(scenario: Path, actual_output: Path) -> subprocess.CompletedPr
     )
 
 
+def parse_args() -> tuple[str | None, str | None]:
+    name_filter = None
+    summary_file = None
+    args = sys.argv[1:]
+    i = 0
+    while i < len(args):
+        if args[i] == "--summary-file" and i + 1 < len(args):
+            summary_file = args[i + 1]
+            i += 2
+        else:
+            name_filter = args[i]
+            i += 1
+    return name_filter, summary_file
+
+
 def main() -> int:
-    name_filter = sys.argv[1] if len(sys.argv) > 1 else None
+    name_filter, summary_file = parse_args()
 
     scenarios = sorted(SCENARIOS_DIR.glob("*.json"))
     if name_filter:
@@ -65,6 +80,7 @@ def main() -> int:
 
     passed = 0
     failed = 0
+    results: list[tuple[str, str]] = []
 
     for scenario in scenarios:
         label = scenario.stem
@@ -72,6 +88,7 @@ def main() -> int:
 
         if not expected.is_file():
             print(f"  SKIP  {label}  (no expected file)")
+            results.append((label, "SKIP"))
             failed += 1
             continue
 
@@ -81,6 +98,7 @@ def main() -> int:
             if proc.returncode != 0:
                 print(f"  FAIL  {label}  runner exited {proc.returncode}")
                 print(f"        stderr: {proc.stderr.strip()}")
+                results.append((label, "FAIL"))
                 failed += 1
                 continue
 
@@ -89,16 +107,42 @@ def main() -> int:
 
             if actual_bytes == expected_bytes:
                 print(f"  PASS  {label}")
+                results.append((label, "PASS"))
                 passed += 1
             else:
                 print(f"  FAIL  {label}  output differs from expected")
+                results.append((label, "FAIL"))
                 failed += 1
         finally:
             if actual.exists():
                 actual.unlink()
 
     print(f"\n{passed} passed, {failed} failed, {passed + failed} total")
+
+    if summary_file:
+        _write_summary(summary_file, results, passed, failed)
+
     return 0 if failed == 0 else 1
+
+
+def _write_summary(
+    path: str,
+    results: list[tuple[str, str]],
+    passed: int,
+    failed: int,
+) -> None:
+    icon = {"PASS": "\u2705", "FAIL": "\u274c", "SKIP": "\u23ed\ufe0f"}
+    lines = [
+        "## Benchmark results\n",
+        "| Scenario | Result |",
+        "|---|---|",
+    ]
+    for label, status in results:
+        lines.append(f"| `{label}` | {icon.get(status, '')} {status} |")
+    lines.append("")
+    lines.append(f"**{passed} passed, {failed} failed, {passed + failed} total**")
+    with open(path, "a", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
 
 
 if __name__ == "__main__":
