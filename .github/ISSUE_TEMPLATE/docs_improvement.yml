@@ -1,0 +1,42 @@
+name: Documentation improvement
+description: Suggest a fix or improvement to documentation
+labels: [documentation]
+body:
+  - type: input
+    id: file
+    attributes:
+      label: Affected file(s)
+      description: Which document(s) need work?
+      placeholder: "e.g. docs/00_start_here.md, CONTRIBUTING.md"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type of improvement
+      options:
+        - Broken link
+        - Typo / grammar
+        - Unclear or misleading content
+        - Missing information
+        - Translation issue
+        - Formatting
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is wrong and what should change?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix (optional)
+      description: If you already know the fix, describe or paste it here.
+    validations:
+      required: false

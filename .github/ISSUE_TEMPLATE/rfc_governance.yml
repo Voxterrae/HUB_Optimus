@@ -1,0 +1,55 @@
+name: RFC / Governance proposal
+description: Propose a change to governance, Kernel, or project structure
+labels: [governance, needs-rfc]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Governance proposals are held to the highest standard.
+        Changes must be justified against Layer 0 principles and include impact analysis.
+        See [CHARTER](../../docs/governance/CHARTER.md) and [KERNEL](../../docs/governance/KERNEL.md).
+
+  - type: input
+    id: scope
+    attributes:
+      label: Scope
+      description: What area does this proposal affect?
+      placeholder: "e.g. Kernel Layer 0, CODEOWNERS policy, translation workflow"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the proposed change clearly and precisely.
+    validations:
+      required: true
+
+  - type: textarea
+    id: justification
+    attributes:
+      label: Justification
+      description: Why is this change necessary? Reference Layer 0 principles where applicable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact analysis
+      description: What does this change affect? What could go wrong?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: integrity
+    attributes:
+      label: Integrity check
+      options:
+        - label: This proposal preserves Layer 0 principles
+          required: true
+        - label: This proposal does not introduce coercive mechanisms
+          required: true
+        - label: This proposal prioritizes medium/long-term stability over short-term optics
+          required: true
