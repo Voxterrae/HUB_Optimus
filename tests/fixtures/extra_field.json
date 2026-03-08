@@ -1,0 +1,8 @@
+{
+  "title": "Valid title",
+  "description": "Valid description",
+  "roles": [{"name": "A", "role": "mediator"}],
+  "success_criteria": {"threshold": 5},
+  "max_rounds": 3,
+  "unexpected_field": true
+}
