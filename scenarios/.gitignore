@@ -1,4 +1,6 @@
-# Telemetry and index are ephemeral — regenerate with:
+# Telemetry, index, and boundaries are ephemeral — regenerate with:
 #   python tools/scenario_telemetry.py
+#   python tools/scenario_boundary_search.py
 telemetry.json
 index.json
+boundaries.json

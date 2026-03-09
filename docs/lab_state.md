@@ -123,6 +123,67 @@ Tool: `python tools/scenario_mutator.py` (3 axes, 62 mutations from
 
 ---
 
+## Boundary search (automatic instability discovery)
+
+Binary search finds the exact stability boundary for each axis on
+each family with O(log N) probes instead of exhaustive sweeps.
+
+Tool: `python tools/scenario_boundary_search.py --seeds 42,99,7,123,256`
+
+### Single-seed boundaries (seed 42)
+
+| Family | rounds_min | actors_min | threshold_max |
+|---|---|---|---|
+| incentive_misalignment | 2 | 1 | 5 |
+| info_asymmetry | 3 | 2 | 5 |
+| resource_scarcity | 1 | 2 | 5 |
+
+### Multi-seed consensus (worst-case across 5 seeds)
+
+| Family | rounds_min | actors_min | threshold_max |
+|---|---|---|---|
+| incentive_misalignment | **3** | **2** | 5 |
+| info_asymmetry | **4** | **2** | **4** |
+| resource_scarcity | **3** | **4** | 5 |
+
+### Key findings from multi-seed analysis
+
+1. **Single-seed results are optimistic.** Seed 42 showed
+   resource_scarcity stable at actors=2; but seed 99 requires actors=4.
+   Single-seed boundaries are necessary but not sufficient.
+
+2. **info_asymmetry is confirmed most fragile.** Needs 4 rounds AND
+   2+ actors AND threshold ≤ 4. It is the only family where threshold
+   constrains stability.
+
+3. **resource_scarcity shifts from most resilient to most demanding
+   in actor count.** Seed 99 pushes actors_min to 4 — the highest of
+   any family. The previous observation (resilient at rounds=1) was
+   seed-dependent.
+
+4. **Threshold is nearly always unconstrained.** Only info_asymmetry
+   at seed 99 shows threshold_max < 5. The random policy's uniform
+   distribution over [1, 5] makes threshold failures rare except under
+   tight round budgets.
+
+5. **Seed 99 is the most adversarial seed tested.** It shifts
+   boundaries for all three families, revealing that seed 42 was a
+   particularly lenient RNG path.
+
+### Per-seed detail
+
+| Family | Seed 42 | Seed 99 | Seed 7 | Seed 123 | Seed 256 |
+|---|---|---|---|---|---|
+| info_asymmetry rounds | 3 | 1 | 3 | **4** | 3 |
+| info_asymmetry actors | 2 | 1 | 2 | 2 | 2 |
+| info_asymmetry threshold | 5 | **4** | 5 | 5 | 5 |
+| resource_scarcity rounds | 1 | **3** | 1 | 1 | 1 |
+| resource_scarcity actors | 2 | **4** | 2 | 1 | 1 |
+| incentive_misalignment rounds | 2 | 1 | 2 | **3** | 2 |
+| incentive_misalignment actors | 1 | 1 | 2 | 2 | 2 |
+
+---
+
 ## Questions to investigate
 
 - ~~What is the agreement rate per family under seed 42?~~ Answered by
@@ -133,9 +194,13 @@ Tool: `python tools/scenario_mutator.py` (3 axes, 62 mutations from
   rounds=1 (threshold=4 with seed 42). It's fragile only at actors=1.
 - Do any scenarios produce the same negotiation history despite
   different initial configurations? (structural equivalence)
-- Does the mutation stability map change under different seeds?
+- ~~Does the mutation stability map change under different seeds?~~
+  Answered: yes, significantly. Seed 99 is adversarial; seed 42 is
+  lenient. Multi-seed consensus required for reliable boundaries.
 - What is the full bifurcation frontier: the set of (actors, rounds,
   threshold) triples that separate agreement from failure?
+- Can adversarial seed search find the single worst-case seed
+  automatically?
 
 ## Methodology notes
 
@@ -145,4 +210,7 @@ Tool: `python tools/scenario_mutator.py` (3 axes, 62 mutations from
 - Results are written to `scenarios/telemetry.json` (per-scenario)
   and `scenarios/index.json` (aggregate).
 - Mutation results go to `scenarios/mutations/` with per-axis subdirs.
-- Generated and mutation files are gitignored — regenerate locally.
+- Boundary search via `python tools/scenario_boundary_search.py`.
+- Boundary results go to `scenarios/boundaries.json`.
+- Generated, mutation, and boundary files are gitignored — regenerate
+  locally.
