@@ -1,4 +1,9 @@
 # HUB_Optimus
+
+[![CI](https://github.com/Voxterrae/HUB_Optimus/actions/workflows/ci.yml/badge.svg)](https://github.com/Voxterrae/HUB_Optimus/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Voxterrae/HUB_Optimus)](https://github.com/Voxterrae/HUB_Optimus/releases/latest)
+[![License](https://img.shields.io/badge/license-see%20IP__NOTICE-blue)](IP_NOTICE.md)
+
 **Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.**
 
 **Languages / Idiomas:** 
@@ -84,6 +89,7 @@ HUB_Optimus exists to **break that cycle** by evaluating scenarios **before** de
 ## Repository map
 - `docs/` → onboarding and reading paths (recommended entry point)
 - `v1_core/` → active kernel: architecture, operational flow, workflow, templates, scenarios, meta-learning
+- `docs/architecture/runtime_contract.md` → full technical contract (schema, runtime, CI, encoding)
 - `legacy/` → historical/exploratory materials (v0), preserved for transparency
 
 > Source-of-truth policy is defined in `docs/context/STATUS.md`: `v1_core/languages/es/` is canonical and `v1_core/languages/en/` is parity reference.
