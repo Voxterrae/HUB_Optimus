@@ -272,6 +272,128 @@ disappear with averaging across many seeds.
 
 ---
 
+## Two-axis stability frontier
+
+Two-axis mapping probes the full grid for parameter pairs, producing
+stability matrices that show the exact shape of the boundary surface
+instead of projecting it onto single axes.
+
+Tool: `python tools/scenario_frontier.py --seeds 1,42,123`
+
+### Actors × rounds (seed 42)
+
+incentive_misalignment:
+
+| actors \ rounds | 1 | 2 | 3 | 4 | 5 | 6–10 |
+|---|---|---|---|---|---|---|
+| 1 | X | X | X | X | R5 | R5 |
+| 2 | X | X | R3 | R3 | R3 | R3 |
+| 3 | X | R2 | R2 | R2 | R2 | R2 |
+| 4 | X | R2 | R2 | R2 | R2 | R2 |
+| 5 | R1 | R1 | R1 | R1 | R1 | R1 |
+| 6 | R1 | R1 | R1 | R1 | R1 | R1 |
+
+info_asymmetry: **identical matrix** to incentive_misalignment (seed 42).
+
+resource_scarcity:
+
+| actors \ rounds | 1 | 2 | 3 | 4 | 5–10 |
+|---|---|---|---|---|---|
+| 1 | X | X | X | R4 | R4 |
+| 2 | X | R2 | R2 | R2 | R2 |
+| 3 | X | R2 | R2 | R2 | R2 |
+| 4 | R1 | R1 | R1 | R1 | R1 |
+| 5–6 | R1 | R1 | R1 | R1 | R1 |
+
+### Key findings from actors × rounds
+
+1. **The frontier is hyperbolic, not linear.** actors × rounds ≈
+   constant for the boundary. This means actor count and round budget
+   are **substitutable resources** — more of one compensates for less
+   of the other.
+
+2. **info_asymmetry and incentive_misalignment share identical
+   stability geometry** on the actors×rounds plane (seed 42). The
+   family distinction only appears in the threshold dimension. On this
+   plane they are structurally equivalent.
+
+3. **actors=1 with rounds=1 is a universal dead zone.** Only
+   resource_scarcity (under lenient seeds) survives this corner.
+   For all other families and seeds, that cell always fails.
+
+4. **The frontier shape is seed-invariant.** Comparing seeds 1, 42,
+   123: the shape is always hyperbolic. Only the curve shifts:
+   - Seed 42 (lenient): 1 actor needs 5 rounds
+   - Seed 1: 1 actor needs 7 rounds
+   - Seed 123 (adversarial): 1 actor needs 8 rounds
+
+5. **resource_scarcity has a smaller unstable region.** Under seed 1,
+   the entire grid is stable (R1 everywhere). Under seed 42, only
+   actors < 4 with low rounds fails. This family is structurally
+   easier.
+
+### Threshold × rounds (seed 42)
+
+incentive_misalignment:
+
+| threshold \ rounds | 1 | 2 | 3–10 |
+|---|---|---|---|
+| 1 | R1 | R1 | R1 |
+| 2 | R1 | R1 | R1 |
+| 3 | X | R2 | R2 |
+| 4 | R1 | R1 | R1 |
+| 5 | X | R2 | R2 |
+
+info_asymmetry:
+
+| threshold \ rounds | 1 | 2 | 3 | 4–10 |
+|---|---|---|---|---|
+| 1 | R1 | R1 | R1 | R1 |
+| 2 | R1 | R1 | R1 | R1 |
+| 3 | X | X | R3 | R3 |
+| 4 | X | R2 | R2 | R2 |
+| 5 | X | R2 | R2 | R2 |
+
+resource_scarcity:
+
+| threshold \ rounds | 1 | 2 | 3–10 |
+|---|---|---|---|
+| 1 | R1 | R1 | R1 |
+| 2 | R1 | R1 | R1 |
+| 3 | X | R2 | R2 |
+| 4 | R1 | R1 | R1 |
+| 5 | R1 | R1 | R1 |
+
+### Key findings from threshold × rounds
+
+1. **Threshold non-monotonicity confirmed and explained.** T=3 is
+   harder than T=4 or T=5 because the RNG sequence at seed 42 happens
+   to produce offers that match 4 before 3. This is NOT a structural
+   property — it's an RNG-path artifact. The 2D map makes this
+   transparent: T=3 requires rounds=2 while T=4 passes at rounds=1.
+
+2. **Threshold failures cluster at odd values.** For seed 42, T=1,2
+   always pass (low bar), T=3,5 sometimes fail (RNG order), T=4
+   usually passes. This pattern changes completely with seed 1 where
+   T=1 needs 5 rounds. **Threshold behaviour is almost purely
+   seed-determined, not structurally determined.**
+
+3. **info_asymmetry is the only family where threshold creates a
+   genuine 2D boundary.** For incentive_misalignment and
+   resource_scarcity, the threshold plane is mostly flat (pass at
+   rounds ≥ 2). For info_asymmetry, T=3 needs 3 rounds — a real
+   interaction between the two axes.
+
+### Seed sensitivity summary
+
+| family | actors×rounds shape | seed effect |
+|---|---|---|
+| incentive_misalignment | hyperbolic | curve shifts, shape stable |
+| info_asymmetry | hyperbolic (same as above) | curve shifts, shape stable |
+| resource_scarcity | smaller unstable corner | seed 1: trivially stable |
+
+---
+
 ## Questions to investigate
 
 - ~~What is the agreement rate per family under seed 42?~~ Answered by
@@ -285,8 +407,11 @@ disappear with averaging across many seeds.
 - ~~Does the mutation stability map change under different seeds?~~
   Answered: yes, significantly. Seed 99 is adversarial; seed 42 is
   lenient. Multi-seed consensus required for reliable boundaries.
-- What is the full bifurcation frontier: the set of (actors, rounds,
-  threshold) triples that separate agreement from failure?
+- ~~What is the full bifurcation frontier: the set of (actors, rounds,
+  threshold) triples that separate agreement from failure?~~
+  Partially answered: 2D slices (actors×rounds, threshold×rounds)
+  mapped. Frontier is hyperbolic on actors×rounds; threshold dimension
+  is RNG-path-dominated. Full 3D surface not yet computed.
 - Can adversarial seed search find the single worst-case seed
   automatically?
 - ~~Do boundaries survive verification (boundary−1 fails)?~~ Answered:
@@ -296,8 +421,10 @@ disappear with averaging across many seeds.
   unused.
 - Does the "more actors hurts convergence" phenomenon emerge under
   adversarial seeds or different scenario families?
-- Can multi-axis boundary search (varying 2+ parameters simultaneously)
-  decouple the axis coupling observed with seed 1?
+- ~~Can multi-axis boundary search (varying 2+ parameters simultaneously)
+  decouple the axis coupling observed with seed 1?~~ Answered: yes.
+  2D actors×rounds maps show the coupling was threshold-mediated.
+  On the actors×rounds plane, all seeds produce valid boundaries.
 
 ## Methodology notes
 
@@ -312,5 +439,7 @@ disappear with averaging across many seeds.
 - Convergence gradient via `--gradient` flag (measures convergence
   round at each parameter value).
 - Boundary results go to `scenarios/boundaries.json`.
-- Generated, mutation, and boundary files are gitignored — regenerate
-  locally.
+- Two-axis frontier mapping via `python tools/scenario_frontier.py`.
+- Frontier results go to `scenarios/frontiers/` (gitignored).
+- Generated, mutation, boundary, and frontier files are gitignored —
+  regenerate locally.
