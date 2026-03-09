@@ -1,0 +1,4 @@
+# Telemetry and index are ephemeral — regenerate with:
+#   python tools/scenario_telemetry.py
+telemetry.json
+index.json
