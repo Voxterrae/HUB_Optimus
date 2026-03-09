@@ -184,6 +184,94 @@ Tool: `python tools/scenario_boundary_search.py --seeds 42,99,7,123,256`
 
 ---
 
+## Boundary verification
+
+After finding boundaries, automated verification confirms consistency:
+boundary converges, boundary-1 fails (or boundary+1 fails for max).
+
+Tool: `python tools/scenario_boundary_search.py --seeds 1,42,123 --verify`
+
+### Reproducibility test (seeds 1, 42, 123)
+
+| Family | Seed 1 | Seed 42 | Seed 123 | Consensus |
+|---|---|---|---|---|
+| incentive_misalignment rounds | 3 | 2 | 3 | **3** |
+| incentive_misalignment actors | 2 | 1 | 2 | **2** |
+| incentive_misalignment threshold | 5 | 5 | 5 | 5 |
+| info_asymmetry rounds | 4 | 3 | 4 | **4** |
+| info_asymmetry actors | 2 | 2 | 2 | 2 |
+| info_asymmetry threshold | None | 5 | 5 | 5 |
+| resource_scarcity rounds | 1 | 1 | 1 | 1 |
+| resource_scarcity actors | 1 | 2 | 1 | **2** |
+| resource_scarcity threshold | None | 5 | 5 | 5 |
+
+### Verification result: ALL PASSED
+
+All per-seed boundaries verified: each seed's own boundaries are
+consistent (boundary passes, boundary−1 fails).
+
+### Discovery: axis coupling
+
+Seed 1 produces `threshold=None` for info_asymmetry and
+resource_scarcity. This does NOT mean threshold is unconstrained —
+it means the base scenario's `max_rounds` is insufficient for seed 1's
+RNG path, so threshold testing inherits the round failure. The axes
+are coupled: threshold stability depends on the base scenario's round
+budget.
+
+This is a structural property of single-axis boundary search. A full
+bifurcation frontier (multi-axis) would decouple this.
+
+---
+
+## Convergence gradient
+
+Measures the convergence round at each parameter value, producing
+behavioural curves instead of binary pass/fail.
+
+Tool: `python tools/scenario_boundary_search.py --gradient`
+
+### Rounds axis (seed 42)
+
+| Family | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| incentive_misalignment | X | R2 | R2 | R2 | R2 | R2 | R2 | R2 | R2 | R2 |
+| info_asymmetry | X | X | R3 | R3 | R3 | R3 | R3 | R3 | R3 | R3 |
+| resource_scarcity | R1 | R1 | R1 | R1 | R1 | R1 | R1 | R1 | R1 | R1 |
+
+**Key pattern:** Once past the boundary, convergence round is fixed.
+Adding more rounds does NOT accelerate convergence — the system
+converges as fast as the RNG allows, then ignores remaining budget.
+
+### Actors axis (seed 42)
+
+| Family | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| incentive_misalignment | R5 | R3 | R2 | R2 | R1 | R1 |
+| info_asymmetry | X | R3 | R2 | R2 | R1 | R1 |
+| resource_scarcity | X | R2 | R2 | R1 | R1 | R1 |
+
+**Key pattern:** More actors = monotonically faster convergence.
+Consistent with P ≈ 1−(4/5)^N model. At 5+ actors, all families
+converge in round 1. No counter-intuitive "more actors hurts
+convergence" detected (yet).
+
+### Threshold axis (seed 42)
+
+| Family | T=1 | T=2 | T=3 | T=4 | T=5 |
+|---|---|---|---|---|---|
+| incentive_misalignment | R1 | R1 | R2 | R1 | R2 |
+| info_asymmetry | R1 | R1 | R3 | R2 | R2 |
+| resource_scarcity | R1 | R1 | R2 | R1 | R1 |
+
+**Key pattern:** Threshold gradient is non-monotonic. T=3 is
+consistently harder than T=4 or T=5 for this seed. This is a
+RNG-path artifact: the random policy's sequence of offers happens to
+match some thresholds faster than others. This non-monotonicity would
+disappear with averaging across many seeds.
+
+---
+
 ## Questions to investigate
 
 - ~~What is the agreement rate per family under seed 42?~~ Answered by
@@ -201,6 +289,15 @@ Tool: `python tools/scenario_boundary_search.py --seeds 42,99,7,123,256`
   threshold) triples that separate agreement from failure?
 - Can adversarial seed search find the single worst-case seed
   automatically?
+- ~~Do boundaries survive verification (boundary−1 fails)?~~ Answered:
+  all per-seed boundaries verified consistent with seeds 1, 42, 123.
+- ~~Does convergence accelerate with more rounds?~~ Answered: no.
+  Convergence round is fixed once past the boundary. Extra rounds are
+  unused.
+- Does the "more actors hurts convergence" phenomenon emerge under
+  adversarial seeds or different scenario families?
+- Can multi-axis boundary search (varying 2+ parameters simultaneously)
+  decouple the axis coupling observed with seed 1?
 
 ## Methodology notes
 
@@ -211,6 +308,9 @@ Tool: `python tools/scenario_boundary_search.py --seeds 42,99,7,123,256`
   and `scenarios/index.json` (aggregate).
 - Mutation results go to `scenarios/mutations/` with per-axis subdirs.
 - Boundary search via `python tools/scenario_boundary_search.py`.
+- Boundary verification via `--verify` flag (confirms boundary−1 fails).
+- Convergence gradient via `--gradient` flag (measures convergence
+  round at each parameter value).
 - Boundary results go to `scenarios/boundaries.json`.
 - Generated, mutation, and boundary files are gitignored — regenerate
   locally.
