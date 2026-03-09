@@ -1,4 +1,5 @@
-# Generated scenarios are ephemeral — regenerate with:
+# Generated scenarios and telemetry are ephemeral — regenerate with:
 #   python tools/scenario_generator/generate_scenarios.py
+#   python tools/scenario_telemetry.py
 *
 !.gitignore

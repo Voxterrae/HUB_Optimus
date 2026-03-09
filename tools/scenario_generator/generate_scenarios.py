@@ -128,10 +128,10 @@ FAMILIES = [
 # ── Core generation logic ───────────────────────────────────
 
 
-def generate(count: int, seed: int) -> list[tuple[str, dict]]:
+def generate(count: int, seed: int) -> list[tuple[str, str, dict]]:
     """Generate *count* scenarios (evenly split across families).
 
-    Returns a list of (filename_stem, scenario_dict) pairs.
+    Returns a list of (filename_stem, family_name, scenario_dict) tuples.
     """
     rng = random.Random(seed)
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
@@ -140,7 +140,7 @@ def generate(count: int, seed: int) -> list[tuple[str, dict]]:
     per_family = count // len(FAMILIES)
     remainder = count % len(FAMILIES)
 
-    results: list[tuple[str, dict]] = []
+    results: list[tuple[str, str, dict]] = []
     global_index = 0
 
     for family_index, (family_name, factory) in enumerate(FAMILIES):
@@ -159,17 +159,22 @@ def generate(count: int, seed: int) -> list[tuple[str, dict]]:
                 continue
 
             stem = f"{family_name}_{global_index:03d}"
-            results.append((stem, scenario))
+            results.append((stem, family_name, scenario))
 
     return results
 
 
-def write_scenarios(scenarios: list[tuple[str, dict]], output_dir: Path) -> int:
-    """Write scenarios to JSON files.  Returns the number of files written."""
+def write_scenarios(scenarios: list[tuple[str, str, dict]], output_dir: Path) -> int:
+    """Write scenarios to JSON files organised by family subdirectory.
+
+    Returns the number of files written.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     written = 0
-    for stem, scenario in scenarios:
-        path = output_dir / f"{stem}.json"
+    for stem, family, scenario in scenarios:
+        family_dir = output_dir / family
+        family_dir.mkdir(parents=True, exist_ok=True)
+        path = family_dir / f"{stem}.json"
         path.write_text(
             json.dumps(scenario, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
             encoding="utf-8",
