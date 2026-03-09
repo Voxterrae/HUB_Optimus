@@ -49,6 +49,13 @@ def _infer_family(path: Path) -> str:
     return parts[0] if len(parts) == 2 and parts[1].isdigit() else path.stem
 
 
+def _infer_mutation_axis(path: Path) -> str | None:
+    """Return the mutation axis if the scenario is a mutation, else None."""
+    if "mutations" in path.parts:
+        return path.parent.name
+    return None
+
+
 def _validate_schema(payload: Any) -> bool:
     """Check if the scenario payload passes schema validation."""
     import jsonschema
@@ -66,6 +73,8 @@ def collect_one(scenario_path: Path, seed: str) -> dict[str, Any]:
     record: dict[str, Any] = {
         "scenario_id": scenario_id,
         "family": family,
+        "mutation_axis": _infer_mutation_axis(scenario_path),
+        "seed": int(seed),
         "actors": 0,
         "max_rounds": 0,
         "result_status": "error",
@@ -127,7 +136,11 @@ def collect_one(scenario_path: Path, seed: str) -> dict[str, Any]:
 
 def collect_all(scenario_dir: Path, seed: str) -> list[dict[str, Any]]:
     """Collect telemetry for all scenarios in a directory (recursive)."""
-    scenarios = sorted(scenario_dir.rglob("*.json"))
+    skip = {"telemetry.json", "index.json"}
+    scenarios = sorted(
+        p for p in scenario_dir.rglob("*.json")
+        if p.name not in skip and ".telemetry_tmp" not in p.name
+    )
     records: list[dict[str, Any]] = []
 
     for path in scenarios:
