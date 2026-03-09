@@ -31,6 +31,7 @@ from typing import Any
 BENCHMARKS_DIR = Path(__file__).resolve().parent
 SCENARIOS_DIR = BENCHMARKS_DIR / "scenarios"
 EXPECTED_DIR = BENCHMARKS_DIR / "expected"
+GENERATED_DIR = BENCHMARKS_DIR.parent / "scenarios" / "generated"
 REPO_ROOT = BENCHMARKS_DIR.parent
 RUNNER = REPO_ROOT / "run_scenario.py"
 SEED = "42"
@@ -59,25 +60,31 @@ def run_benchmark(scenario: Path, actual_output: Path) -> subprocess.CompletedPr
     )
 
 
-def parse_args() -> tuple[str | None, str | None]:
+def parse_args() -> tuple[str | None, str | None, bool]:
     name_filter = None
     summary_file = None
+    include_generated = False
     args = sys.argv[1:]
     i = 0
     while i < len(args):
         if args[i] == "--summary-file" and i + 1 < len(args):
             summary_file = args[i + 1]
             i += 2
+        elif args[i] == "--include-generated":
+            include_generated = True
+            i += 1
         else:
             name_filter = args[i]
             i += 1
-    return name_filter, summary_file
+    return name_filter, summary_file, include_generated
 
 
 def main() -> int:
-    name_filter, summary_file = parse_args()
+    name_filter, summary_file, include_generated = parse_args()
 
     scenarios = sorted(SCENARIOS_DIR.glob("*.json"))
+    if include_generated and GENERATED_DIR.is_dir():
+        scenarios.extend(sorted(GENERATED_DIR.glob("*.json")))
     if name_filter:
         scenarios = [s for s in scenarios if name_filter in s.stem]
 
@@ -93,8 +100,9 @@ def main() -> int:
     for scenario in scenarios:
         label = scenario.stem
         expected = EXPECTED_DIR / scenario.name
+        is_generated = not expected.is_file()
 
-        if not expected.is_file():
+        if is_generated and not include_generated:
             print(f"  SKIP  {label}  (no expected file)")
             results.append((label, "SKIP"))
             drift_rows.append(DriftRow(label))
@@ -110,6 +118,14 @@ def main() -> int:
                 results.append((label, "FAIL"))
                 drift_rows.append(DriftRow(label))
                 failed += 1
+                continue
+
+            if is_generated:
+                # Generated scenarios: smoke test only (runner exited 0)
+                print(f"  RUN   {label}")
+                results.append((label, "RUN"))
+                drift_rows.append(DriftRow(label))
+                passed += 1
                 continue
 
             expected_bytes = expected.read_bytes()
@@ -250,7 +266,7 @@ def _write_summary(
     failed: int,
     drift_rows: list[DriftRow],
 ) -> None:
-    icon = {"PASS": "\u2705", "FAIL": "\u274c", "SKIP": "\u23ed\ufe0f"}
+    icon = {"PASS": "\u2705", "FAIL": "\u274c", "SKIP": "\u23ed\ufe0f", "RUN": "\U0001f504"}
     sev_icon = {"info": "\U0001f7e2", "warning": "\U0001f7e1", "critical": "\U0001f534", "skip": "\u23ed\ufe0f"}
     lines = [
         "## Benchmark results\n",

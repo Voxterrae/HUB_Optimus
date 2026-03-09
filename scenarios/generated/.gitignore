@@ -1,0 +1,4 @@
+# Generated scenarios are ephemeral — regenerate with:
+#   python tools/scenario_generator/generate_scenarios.py
+*
+!.gitignore
