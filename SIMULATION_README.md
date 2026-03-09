@@ -90,6 +90,22 @@ El núcleo es intencionadamente minimalista.  Algunas direcciones de ampliación
 3. **Índice de Integridad**: implementar el cálculo automático del índice definido en `INTEGRITY_SCORING_SYSTEM.md` y añadirlo al informe de salida.
 4. **Interfaz gráfica o web**: crear una CLI más amigable o un panel web para seleccionar escenarios, actores y parámetros sin necesidad de modificar archivos a mano.
 
+## 4b. Instrumentos del laboratorio experimental
+
+Además del núcleo base, el repositorio incluye un conjunto de herramientas de análisis
+que permiten mapear el espacio de estabilidad del simulador. Todos los resultados son
+efímeros (gitignored) y se regeneran localmente.
+
+| Herramienta | Comando | Propósito |
+|---|---|---|
+| Generador | `python tools/scenario_generator/generate_scenarios.py` | Genera escenarios sintéticos por familia |
+| Telemetría | `python tools/scenario_telemetry.py` | Métricas agregadas de convergencia |
+| Mutador | `python tools/scenario_mutator.py` | Barrido de estabilidad variando un eje |
+| Búsqueda de frontera | `python tools/scenario_boundary_search.py` | Frontera de estabilidad por eje (búsqueda binaria) |
+| Frontera 2D | `python tools/scenario_frontier.py` | Mapas de estabilidad en planos de dos ejes |
+
+La memoria científica del laboratorio se mantiene en `docs/lab_state.md`.
+
 ## 5. Sincronización de traducciones (opcional)
 
 El script `i18n_sync.py` ayuda a mantener sincronizada la documentación multilingüe.  Comprueba que todos los archivos en `docs/` que están en inglés tienen traducciones correspondientes en los subdirectorios de idiomas (`es`, `de`, `fr`, `ca`, `ru`).  Para ejecutarlo, coloca el script en la raíz del proyecto (o especifica la ruta `--docs_dir`) y ejecuta:
