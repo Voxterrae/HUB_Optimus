@@ -1,2 +1,4 @@
+* text=auto
 *.md text eol=lf
-benchmarks/expected/*.json text eol=lf
+*.py text eol=lf
+*.json text eol=lf
