@@ -15,6 +15,58 @@ import random
 from typing import Any, Callable, Dict, List, Optional
 
 
+# ── Negotiation policies ────────────────────────────────────
+
+
+class NegotiationPolicy:
+    """Base class for negotiation policies."""
+
+    name: str = "base"
+
+    def propose(self, actor_role: str, state: Dict[str, Any], rng: random.Random) -> Dict[str, Any]:
+        raise NotImplementedError
+
+
+class UniformRandomPolicy(NegotiationPolicy):
+    """Original default: uniform random offer in [1, 5]."""
+
+    name = "uniform"
+
+    def propose(self, actor_role: str, state: Dict[str, Any], rng: random.Random) -> Dict[str, Any]:
+        return {"offer": rng.randint(1, 5)}
+
+
+class BiasedRandomPolicy(NegotiationPolicy):
+    """Role-aware policy: offer range depends on actor role.
+
+    - hardliner: biased toward high offers (3–5)
+    - mediator:  biased toward middle offers (2–4)
+    - all others (negotiator, etc.): uniform [1, 5]
+    """
+
+    name = "biased"
+
+    def propose(self, actor_role: str, state: Dict[str, Any], rng: random.Random) -> Dict[str, Any]:
+        if actor_role == "hardliner":
+            return {"offer": rng.randint(3, 5)}
+        if actor_role == "mediator":
+            return {"offer": rng.randint(2, 4)}
+        return {"offer": rng.randint(1, 5)}
+
+
+POLICIES: Dict[str, NegotiationPolicy] = {
+    "uniform": UniformRandomPolicy(),
+    "biased": BiasedRandomPolicy(),
+}
+
+
+def get_policy(name: str) -> NegotiationPolicy:
+    """Look up a policy by name."""
+    if name not in POLICIES:
+        raise ValueError(f"Unknown policy: {name!r}. Available: {sorted(POLICIES)}")
+    return POLICIES[name]
+
+
 class Scenario:
     """Data container for a negotiation scenario.
 
@@ -73,6 +125,7 @@ class Actor:
         self.name = name
         self.role_type = role_type
         self.policy = policy or self.default_policy
+        self._negotiation_policy: Optional[NegotiationPolicy] = None
 
     def default_policy(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Default policy for actors.
@@ -84,6 +137,9 @@ class Actor:
 
     def act(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Return an action for the given negotiation state by calling the actor's policy."""
+        if self._negotiation_policy is not None:
+            rng = random.Random(random.random())
+            return self._negotiation_policy.propose(self.role_type, state, rng)
         return self.policy(state)
 
 
@@ -95,11 +151,15 @@ class Simulator:
     more complex negotiation logic, richer histories and evaluation metrics.
     """
 
-    def __init__(self, scenario: Scenario) -> None:
+    def __init__(self, scenario: Scenario, policy_name: Optional[str] = None) -> None:
         self.scenario = scenario
         # Instantiate actors based on scenario roles
         self.actors: List[Actor] = [Actor(role["name"], role.get("role", "")) for role in scenario.roles]
         self.history: List[Dict[str, Dict[str, Any]]] = []
+        if policy_name is not None:
+            neg_policy = get_policy(policy_name)
+            for actor in self.actors:
+                actor._negotiation_policy = neg_policy
 
     def assign_policy(
         self, actor_name: str, policy: Callable[[Dict[str, Any]], Dict[str, Any]]

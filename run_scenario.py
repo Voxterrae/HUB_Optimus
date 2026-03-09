@@ -12,7 +12,7 @@ from typing import Any
 
 import jsonschema
 
-from hub_optimus_simulator import Scenario, Simulator
+from hub_optimus_simulator import POLICIES, Scenario, Simulator
 
 
 SCHEMA_PATH = Path(__file__).parent / "scenario.schema.json"
@@ -92,6 +92,12 @@ def main() -> int:
             " enabling reproducible runs."
         ),
     )
+    parser.add_argument(
+        "--policy",
+        choices=sorted(POLICIES),
+        default=None,
+        help="Negotiation policy for all actors (default: uniform random).",
+    )
     args = parser.parse_args()
 
     scenario_path_value = args.scenario_path_opt or args.scenario_path_pos
@@ -111,7 +117,7 @@ def main() -> int:
         print(f"[schema-error] {exc}", file=sys.stderr)
         return INPUT_ERROR_EXIT_CODE
 
-    simulator = Simulator(scenario)
+    simulator = Simulator(scenario, policy_name=args.policy)
     result = simulator.run(seed=args.seed)
     output_path = Path(args.output) if args.output else scenario_path.with_suffix(".result.json")
     try:

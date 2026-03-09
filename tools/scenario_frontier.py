@@ -29,6 +29,7 @@ import json
 import sys
 from pathlib import Path
 
+import scenario_boundary_search
 from scenario_boundary_search import (
     EXTRA_ACTORS,
     OUTPUT_DIR,
@@ -267,7 +268,13 @@ def main() -> int:
         choices=list(PLANES.keys()),
         help="Map a specific plane only (default: both).",
     )
+    parser.add_argument(
+        "--policy", type=str, default=None,
+        help="Negotiation policy name (e.g. uniform, biased).",
+    )
     args = parser.parse_args()
+
+    scenario_boundary_search.ACTIVE_POLICY = args.policy
 
     bases = pick_base_scenarios()
     if not bases:

@@ -50,6 +50,9 @@ EXTRA_ACTORS = [
     {"name": "Faction_I", "role": "negotiator"},
 ]
 
+# Active policy for probes (None = simulator default).
+ACTIVE_POLICY: str | None = None
+
 
 # ── Probe ───────────────────────────────────────────────────
 
@@ -66,15 +69,19 @@ def probe(scenario: dict, seed: str) -> bool:
             encoding="utf-8",
         )
 
+        cmd = [
+            sys.executable, str(RUNNER),
+            str(scenario_path),
+            "--output", str(result_path),
+            "--seed", seed,
+        ]
+        if ACTIVE_POLICY is not None:
+            cmd.extend(["--policy", ACTIVE_POLICY])
+
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
         proc = subprocess.run(
-            [
-                sys.executable, str(RUNNER),
-                str(scenario_path),
-                "--output", str(result_path),
-                "--seed", seed,
-            ],
+            cmd,
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
@@ -106,15 +113,19 @@ def probe_detail(scenario: dict, seed: str) -> dict:
             encoding="utf-8",
         )
 
+        cmd = [
+            sys.executable, str(RUNNER),
+            str(scenario_path),
+            "--output", str(result_path),
+            "--seed", seed,
+        ]
+        if ACTIVE_POLICY is not None:
+            cmd.extend(["--policy", ACTIVE_POLICY])
+
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
         proc = subprocess.run(
-            [
-                sys.executable, str(RUNNER),
-                str(scenario_path),
-                "--output", str(result_path),
-                "--seed", seed,
-            ],
+            cmd,
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
@@ -517,7 +528,14 @@ def main() -> int:
         "--gradient", action="store_true",
         help="Measure convergence round at each parameter value (convergence curves).",
     )
+    parser.add_argument(
+        "--policy", type=str, default=None,
+        help="Negotiation policy name (e.g. uniform, biased).",
+    )
     args = parser.parse_args()
+
+    global ACTIVE_POLICY  # noqa: PLW0603
+    ACTIVE_POLICY = args.policy
 
     bases = pick_base_scenarios()
     if not bases:
