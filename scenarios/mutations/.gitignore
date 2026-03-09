@@ -1,0 +1,4 @@
+# Mutated scenarios are ephemeral — regenerate with:
+#   python tools/scenario_mutator.py
+*
+!.gitignore
