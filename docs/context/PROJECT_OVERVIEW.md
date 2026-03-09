@@ -26,7 +26,10 @@ It compares declared commitments against verifiable structure: incentives, seque
 - `run_scenario.py` and `hub_optimus_simulator.py`: scenario execution loop.
 - `v1_core/`: active kernel language specs and workflow scenarios.
 - `docs/`: onboarding and governance documentation.
-- `.github/workflows/` and `tools/`: CI checks and maintenance automation.
+- `docs/lab_state.md`: scientific memory — behavioural observations and stability maps.
+- `tools/`: CI checks, maintenance automation, and experimental lab instruments
+  (scenario generator, mutator, boundary search, 2D frontier mapping).
+- `.github/workflows/`: CI checks.
 
 ## Success metrics (MVP)
 - `pytest` passes on every `pull_request` and `push` to `main`.

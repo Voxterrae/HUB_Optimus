@@ -421,6 +421,10 @@ resource_scarcity:
   unused.
 - Does the "more actors hurts convergence" phenomenon emerge under
   adversarial seeds or different scenario families?
+- **How does the stability frontier change under a different
+  negotiation policy?** This is the next structural question —
+  compare stable area, minimum actors×rounds curve, seed sensitivity,
+  and convergence gradient across policies.
 - ~~Can multi-axis boundary search (varying 2+ parameters simultaneously)
   decouple the axis coupling observed with seed 1?~~ Answered: yes.
   2D actors×rounds maps show the coupling was threshold-mediated.
