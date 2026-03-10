@@ -140,6 +140,17 @@ Kernel changes require:
    - scenario links (if applicable),
    - risks and mitigations (if kernel-adjacent).
 
+### PR merge requirements
+
+Before a PR can be merged, all of the following must be true:
+
+- **Correct issue reference:** The PR must reference the correct issue. Double-check that the referenced issue matches the actual work done.
+- **Use `Related to #N`, not `Closes #N`:** Contributors should link issues with `Related to #N`. Only maintainers close issues at merge time. Keywords like `Closes`, `Fixes`, or `Resolves` auto-close the referenced issue, which can accidentally close tracking issues or ledgers.
+- **CI must pass:** All CI checks (pytest, benchmarks, kernel guard, link check) must be green.
+- **Scope limited to one issue:** Each PR should address a single issue or objective. Do not bundle unrelated changes.
+- **Description matches diff:** The files listed in the PR description must match the files actually changed.
+- **Runtime changes require review:** Any PR that touches the simulator, schema, benchmarks, or CI configuration requires explicit maintainer review.
+
 ---
 
 ## 6) Integrity-first review
