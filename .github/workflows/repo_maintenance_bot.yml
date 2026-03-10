@@ -17,13 +17,7 @@ name: Repo maintenance bot
         type: choice
         options: ["false", "true"]
   schedule:
-    - cron: "15 6 * * *"
-  pull_request:
-    paths:
-      - "docs/**"
-      - "v1_core/**"
-      - ".github/workflows/**"
-      - "tools/**"
+    - cron: "15 6 * * 1"
 
 permissions:
   contents: write
