@@ -394,6 +394,123 @@ resource_scarcity:
 
 ---
 
+## Policy comparative frontier
+
+Compares two negotiation policies (uniform vs biased) by running
+full two-axis frontier sweeps under identical seeds and measuring
+how the stability geometry changes.
+
+Tool: `python tools/scenario_frontier_compare.py --policy-a uniform --policy-b biased --seeds 1,42,123`
+
+### Role distribution (why policy effects are selective)
+
+| Family | negotiator | hardliner | mediator |
+|---|---|---|---|
+| info_asymmetry | 52 | 0 | 0 |
+| resource_scarcity | 54 | 0 | 0 |
+| incentive_misalignment | 27 | 29 | 6 |
+
+BiasedRandomPolicy changes offer ranges only for hardliner (→[3,5])
+and mediator (→[2,4]). Families with only negotiator roles fall
+through to uniform [1,5] — so info_asymmetry and resource_scarcity
+produce **identical frontiers** under both policies (Δ=0 everywhere).
+
+All non-zero effects below apply exclusively to incentive_misalignment.
+
+### Actors × rounds (uniform vs biased)
+
+| Seed | Uniform stable | Biased stable | Δ area | Avg round Δ |
+|---|---|---|---|---|
+| 1 | 59/60 | 59/60 | 0 | 0.0 |
+| 42 | 18/60 | 32/60 | **+14** | −3.08 |
+| 123 | 33/60 | 36/60 | +3 | −0.67 |
+| **avg** | | | **+5.7** | |
+
+Frontier shifts (seed 42, incentive_misalignment):
+
+| actors | uniform rounds_min | biased rounds_min | Δ |
+|---|---|---|---|
+| 3 | 9 | 2 | −7 |
+| 4 | 7 | 3 | −4 |
+| 6 | 5 | 2 | −3 |
+
+The biased policy **expands** the stable region on this plane. Under
+seed 42 the expansion is dramatic (+14 cells, from 30% to 53%). Under
+seed 1 the baseline is already nearly saturated (59/60) so the policy
+has no room to improve. This confirms seed sensitivity interacts with
+policy effects — the harder the RNG path, the larger the biased
+policy's advantage.
+
+### Threshold × rounds (uniform vs biased)
+
+| Seed | Uniform stable | Biased stable | Δ area | Avg round Δ |
+|---|---|---|---|---|
+| 1 | 48/50 | 46/50 | **−2** | +0.36 |
+| 42 | 38/50 | 47/50 | **+9** | −0.73 |
+| 123 | 43/50 | 42/50 | −1 | −0.14 |
+| **avg** | | | **+2.0** | |
+
+**Mixed result.** Seed 42 shows strong expansion (+9 cells), but
+seeds 1 and 123 show small **regressions** (−2, −1). The biased
+policy's hardliner range [3,5] has 0% probability of producing
+offers 1 or 2, whereas uniform [1,5] has 20% per value. For low
+thresholds (offer=1, offer=2), hardliners become structurally unable
+to match — shrinking the stable region under those threshold values
+when the RNG path doesn't compensate via other actors.
+
+### Key findings
+
+1. **The biased policy creates a structural change, not just
+   acceleration.** The frontier shifts — new (actors, rounds) pairs
+   become stable that were previously unstable. This is geometry
+   change, not speed change.
+
+2. **The effect is role-mediated.** Only families containing
+   hardliner and mediator roles are affected. The policy system
+   propagates through actor roles, not through scenario parameters.
+   This confirms that the role→offer mapping is the active mechanism.
+
+3. **The actors×rounds plane benefits consistently.** Average Δ=+5.7
+   cells, no negative seeds. The biased policy narrows the hardliner
+   offer range from [1,5] to [3,5], increasing the probability of
+   matching thresholds 3–5 from 20% to 33% per actor per round.
+
+4. **The threshold×rounds plane shows mixed results.** The same
+   mechanism that helps (higher match probability for T≥3) hurts at
+   low thresholds (T=1, T=2) where hardliners can no longer match.
+   Net effect depends on seed: positive under seed 42, slightly
+   negative under seeds 1 and 123.
+
+5. **Seed 1 is a ceiling effect.** With baseline stability at
+   59/60 (actors×rounds) and 48/50 (threshold×rounds), there is
+   little room for any policy to improve. Policy differences are most
+   visible under harder RNG paths (seed 42, seed 123).
+
+### Scientific interpretation
+
+> **Does the biased policy change stability geometry or just
+> accelerate the same behaviour?**
+
+Answer: **it changes the geometry.** The frontier expands on the
+actors×rounds plane (new stable cells appear), but contracts on
+parts of the threshold×rounds plane (low-threshold cells become
+unstable). This is a structural trade-off, not a uniform improvement.
+
+> **Does the frontier expand (the scientific rule for "policy
+> improves the system")?**
+
+Partially. On actors×rounds: yes, consistently. On
+threshold×rounds: seed-dependent, with possible regression. A policy
+that improves one plane can worsen another.
+
+> **Next step:** test whether a threshold-aware policy (one that
+> accounts for the success_criteria value) can expand both planes
+> simultaneously. The current biased policy is threshold-blind — it
+> shifts offer distributions without knowing what threshold it needs
+> to match.
+
+---
+
 ## Questions to investigate
 
 - ~~What is the agreement rate per family under seed 42?~~ Answered by
@@ -421,10 +538,12 @@ resource_scarcity:
   unused.
 - Does the "more actors hurts convergence" phenomenon emerge under
   adversarial seeds or different scenario families?
-- **How does the stability frontier change under a different
-  negotiation policy?** This is the next structural question —
-  compare stable area, minimum actors×rounds curve, seed sensitivity,
-  and convergence gradient across policies.
+- ~~**How does the stability frontier change under a different
+  negotiation policy?**~~ Answered: biased policy expands
+  actors×rounds frontier (avg Δ=+5.7 cells) but shows mixed results
+  on threshold×rounds (avg Δ=+2.0, with regressions under some
+  seeds). Effect is role-mediated — only incentive_misalignment
+  family is affected. See "Policy comparative frontier" section.
 - ~~Can multi-axis boundary search (varying 2+ parameters simultaneously)
   decouple the axis coupling observed with seed 1?~~ Answered: yes.
   2D actors×rounds maps show the coupling was threshold-mediated.
@@ -445,5 +564,9 @@ resource_scarcity:
 - Boundary results go to `scenarios/boundaries.json`.
 - Two-axis frontier mapping via `python tools/scenario_frontier.py`.
 - Frontier results go to `scenarios/frontiers/` (gitignored).
-- Generated, mutation, boundary, and frontier files are gitignored —
-  regenerate locally.
+- Policy comparative frontier via
+  `python tools/scenario_frontier_compare.py`.
+- Comparison results go to `scenarios/frontiers/comparisons/`
+  (gitignored).
+- Generated, mutation, boundary, frontier, and comparison files are
+  gitignored — regenerate locally.
