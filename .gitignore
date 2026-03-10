@@ -57,3 +57,11 @@ out_pr41/
 
 # Benchmark runner temporary outputs
 *.actual.json
+
+# Simulation output artifacts
+*.result.json
+*.simulation.json
+*.telemetry.json
+
+# Local IDE settings
+.vscode/

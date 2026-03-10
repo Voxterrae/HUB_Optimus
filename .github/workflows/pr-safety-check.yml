@@ -1,0 +1,80 @@
+name: PR Safety Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  safety-label:
+    name: Risk classification
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Classify PR risk level
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Paths that trigger HIGH RISK classification
+          HIGH_RISK_PATTERNS=(
+            "hub_optimus_simulator.py"
+            "run_scenario.py"
+            "hub_optimus/"
+            "scenario.schema.json"
+            "benchmarks/expected/"
+            ".github/workflows/"
+            ".github/CODEOWNERS"
+            "v1_core/languages/"
+            "docs/governance/"
+          )
+
+          # Paths that trigger MEDIUM RISK classification
+          MEDIUM_RISK_PATTERNS=(
+            "benchmarks/"
+            "v1_core/workflow/"
+            "tools/"
+            "requirements"
+          )
+
+          CHANGED_FILES=$(gh pr diff "${{ github.event.pull_request.number }}" --name-only 2>/dev/null || git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+
+          RISK="LOW"
+          REASONS=""
+
+          for file in $CHANGED_FILES; do
+            for pattern in "${HIGH_RISK_PATTERNS[@]}"; do
+              if [[ "$file" == $pattern* || "$file" == "$pattern" ]]; then
+                RISK="HIGH"
+                REASONS="${REASONS}- **HIGH**: \`${file}\` matches protected pattern \`${pattern}\`\n"
+              fi
+            done
+
+            if [ "$RISK" != "HIGH" ]; then
+              for pattern in "${MEDIUM_RISK_PATTERNS[@]}"; do
+                if [[ "$file" == $pattern* || "$file" == "$pattern" ]]; then
+                  if [ "$RISK" != "MEDIUM" ]; then
+                    RISK="MEDIUM"
+                  fi
+                  REASONS="${REASONS}- **MEDIUM**: \`${file}\` matches reviewed pattern \`${pattern}\`\n"
+                fi
+              done
+            fi
+          done
+
+          if [ "$RISK" = "LOW" ]; then
+            REASONS="All changed files are in open contributor zones."
+          fi
+
+          echo "## PR Safety Check" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Risk level: ${RISK}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo -e "${REASONS}" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$RISK" = "HIGH" ]; then
+            echo "::warning::This PR modifies protected files and requires maintainer review."
+          fi
