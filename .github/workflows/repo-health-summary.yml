@@ -42,7 +42,7 @@ jobs:
 
           # --- Extended metrics ---
           BRANCHES=$(git ls-remote --heads origin | wc -l | tr -d ' ')
-          BOT_BRANCHES=$(git ls-remote --heads origin | grep "chore/maintenance-" | wc -l | tr -d ' ')
+          BOT_BRANCHES=$(git ls-remote --heads origin | grep -c "chore/maintenance-" || true)
           WEEK_AGO=$(date -u -d '7 days ago' +"%Y-%m-%dT%H:%M:%SZ")
           PRS_CLOSED_WEEK=$(gh pr list --state closed --json closedAt \
             --jq "[.[] | select(.closedAt >= \"$WEEK_AGO\")] | length")
