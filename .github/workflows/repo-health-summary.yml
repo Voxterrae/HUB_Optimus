@@ -5,6 +5,10 @@ on:
     - cron: "0 8 * * 1"   # weekly Monday 08:00 UTC
   workflow_dispatch:       # manual trigger
 
+concurrency:
+  group: repo-health-summary
+  cancel-in-progress: true
+
 permissions:
   contents: read
   issues: write
@@ -24,7 +28,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          rm -f body.md
 
+          echo "Event: ${GITHUB_EVENT_NAME} | Actor: ${GITHUB_ACTOR}"
+
+          # --- Core metrics ---
           PRS=$(gh pr list --state open --json number --jq 'length')
           ISSUES=$(gh issue list --state open --json number --jq 'length')
           LAST5=$(gh run list --limit 5 --json conclusion --jq '.[].conclusion' | tr '\n' ' ')
@@ -32,36 +40,99 @@ jobs:
           LAST_COMMIT=$(git log -1 --pretty=format:"%h %s")
           DATE=$(date -u +"%Y-%m-%d %H:%M UTC")
 
-          # Anomaly detection
+          # --- Extended metrics ---
+          BRANCHES=$(git ls-remote --heads origin | wc -l | tr -d ' ')
+          BOT_BRANCHES=$(git ls-remote --heads origin | grep "chore/maintenance-" | wc -l | tr -d ' ')
+          WEEK_AGO=$(date -u -d '7 days ago' +"%Y-%m-%dT%H:%M:%SZ")
+          PRS_CLOSED_WEEK=$(gh pr list --state closed --json closedAt \
+            --jq "[.[] | select(.closedAt >= \"$WEEK_AGO\")] | length")
+          PRS_OPENED_WEEK=$(gh pr list --state all --json createdAt \
+            --jq "[.[] | select(.createdAt >= \"$WEEK_AGO\")] | length")
+          ISSUES_OPENED_WEEK=$(gh issue list --state all --json createdAt \
+            --jq "[.[] | select(.createdAt >= \"$WEEK_AGO\")] | length")
+
+          # --- Automation actor analysis ---
+          TOP_PR_AUTHOR=$(gh pr list --limit 100 --state all --json author \
+            --jq '[.[].author.login] | group_by(.) | map({author: .[0], count: length}) | sort_by(-.count) | .[0] | "\(.author) (\(.count))"')
+          DEPENDABOT_PRS=$(gh pr list --state open --search "author:app/dependabot" --json number --jq 'length')
+
+          # --- Anomaly detection ---
           ALERTS=""
+          ALERT_COUNT=0
+
           if [ "$PRS" -gt 10 ]; then
-            ALERTS="${ALERTS}
-> **Warning:** $PRS open PRs detected — check for bot loop or stale PRs."
+            ALERTS="${ALERTS}"$'\n'"- ⚠️ **High open PRs (${PRS})** — check for bot loop or stale PRs."
+            ALERT_COUNT=$((ALERT_COUNT + 1))
           fi
+
           if [ "$FAILURES" -gt 3 ]; then
-            ALERTS="${ALERTS}
-> **Warning:** $FAILURES CI failures in last 10 runs — investigate pipeline."
+            ALERTS="${ALERTS}"$'\n'"- ⚠️ **CI failures (${FAILURES}/10)** — investigate broken dependency or pipeline issue."
+            ALERT_COUNT=$((ALERT_COUNT + 1))
           fi
 
-          if [ -z "$ALERTS" ]; then
-            STATUS="All clear"
+          if [ "$BRANCHES" -gt 200 ]; then
+            ALERTS="${ALERTS}"$'\n'"- ⚠️ **Branch flood (${BRANCHES} branches)** — possible runaway workflow or bot loop."
+            ALERT_COUNT=$((ALERT_COUNT + 1))
+          fi
+
+          if [ "$BOT_BRANCHES" -gt 20 ]; then
+            ALERTS="${ALERTS}"$'\n'"- ⚠️ **Maintenance bot branches (${BOT_BRANCHES} chore/maintenance-* branches)** — likely bot loop, clean up stale branches."
+            ALERT_COUNT=$((ALERT_COUNT + 1))
+          fi
+
+          if [ "$PRS_OPENED_WEEK" -gt 5 ] && [ "$PRS_CLOSED_WEEK" -gt "$((PRS_OPENED_WEEK * 8 / 10))" ]; then
+            ALERTS="${ALERTS}"$'\n'"- ⚠️ **High PR close ratio (${PRS_CLOSED_WEEK} closed / ${PRS_OPENED_WEEK} opened this week)** — possible automated PR flood."
+            ALERT_COUNT=$((ALERT_COUNT + 1))
+          fi
+
+          if [ "$ISSUES_OPENED_WEEK" -gt 20 ]; then
+            ALERTS="${ALERTS}"$'\n'"- ⚠️ **Issue burst (${ISSUES_OPENED_WEEK} new issues this week)** — possible spam or automation."
+            ALERT_COUNT=$((ALERT_COUNT + 1))
+          fi
+
+          if [ "$DEPENDABOT_PRS" -gt 10 ]; then
+            ALERTS="${ALERTS}"$'\n'"- ⚠️ **Dependabot storm (${DEPENDABOT_PRS} open PRs)** — review dependency update flood."
+            ALERT_COUNT=$((ALERT_COUNT + 1))
+          fi
+
+          if [ "$ALERT_COUNT" -eq 0 ]; then
+            STATUS="✅ All clear"
+            ANOMALY_SECTION="> No anomalies detected."
           else
-            STATUS="Anomalies detected"
+            STATUS="⚠️ ${ALERT_COUNT} anomaly warning(s)"
+            ANOMALY_SECTION="${ALERTS}"
           fi
 
-          BODY="### Weekly Health Snapshot - ${DATE}
+          # --- Compose ledger entry via temp file ---
+          {
+            echo "<details>"
+            echo "<summary>📊 Weekly Repository Health Snapshot — ${DATE} | ${STATUS}</summary>"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|---|---|"
+            echo "| Open PRs | ${PRS} |"
+            echo "| Open Issues | ${ISSUES} |"
+            echo "| CI (last 5) | ${LAST5} |"
+            echo "| CI failures (last 10) | ${FAILURES} |"
+            echo "| Branches | ${BRANCHES} |"
+            echo "| Bot branches (chore/maintenance-*) | ${BOT_BRANCHES} |"
+            echo "| PRs opened (7d) | ${PRS_OPENED_WEEK} |"
+            echo "| PRs closed (7d) | ${PRS_CLOSED_WEEK} |"
+            echo "| Issues opened (7d) | ${ISSUES_OPENED_WEEK} |"
+            echo "| Top PR author (last 100) | ${TOP_PR_AUTHOR} |"
+            echo "| Dependabot open PRs | ${DEPENDABOT_PRS} |"
+            echo "| Latest commit | \`${LAST_COMMIT}\` |"
+            echo "| Status | **${STATUS}** |"
+            echo ""
+            echo "#### Anomaly Warnings"
+            echo "${ANOMALY_SECTION}"
+            echo ""
+            echo "</details>"
+            echo ""
+            echo "<sub>Monitoring version: v1.0</sub>"
+            echo ""
+            echo "---"
+            echo "*Generated by repo-health-summary workflow*"
+          } > body.md
 
-| Metric | Value |
-|---|---|
-| Open PRs | ${PRS} |
-| Open Issues | ${ISSUES} |
-| CI (last 5) | ${LAST5} |
-| CI failures (last 10) | ${FAILURES} |
-| Latest commit | \`${LAST_COMMIT}\` |
-| Status | **${STATUS}** |
-${ALERTS}
-
----
-*Generated by repo-health-summary workflow*"
-
-          gh issue comment 93 --body "$BODY"
+          gh issue comment 93 --body-file body.md
