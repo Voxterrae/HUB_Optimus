@@ -23,7 +23,7 @@ class TestCleanFiles:
 
     def test_clean_markdown(self, tmp_path: Path) -> None:
         f = tmp_path / "clean.md"
-        f.write_text("# Title\n\nNormal content with accents: È ‡ ¸ Ò ˆ\n", encoding="utf-8")
+        f.write_text("# Title\n\nNormal content with accents: √° √© √≠ √≥ √∫\n", encoding="utf-8")
         result = _run_guard(".", cwd=tmp_path)
         assert result.returncode == 0
         assert "passed" in result.stdout.lower()
@@ -53,14 +53,14 @@ class TestMojibakeDetection:
 
     def test_double_utf8_a_tilde(self, tmp_path: Path) -> None:
         f = tmp_path / "bad.md"
-        f.write_text("Badly encoded: √§\n", encoding="utf-8")
+        f.write_text("Badly encoded: √É¬©\n", encoding="utf-8")
         result = _run_guard(".", cwd=tmp_path)
         assert result.returncode == 1
         assert "double_utf8_A_tilde" in result.stderr
 
     def test_smart_punct_mojibake(self, tmp_path: Path) -> None:
         f = tmp_path / "bad.md"
-        f.write_text("Broken quotes: ‚??hello‚?\x9d\n", encoding="utf-8")
+        f.write_text("Broken quotes: √¢‚Ç¨≈ìhello√¢‚Ç¨\n", encoding="utf-8")
         result = _run_guard(".", cwd=tmp_path)
         assert result.returncode == 1
         assert "smart_punct_mojibake" in result.stderr
@@ -75,7 +75,7 @@ class TestDirectoryScan:
         clean = tmp_path / "ok.md"
         clean.write_text("# Fine\n", encoding="utf-8")
         bad = subdir / "corrupt.md"
-        bad.write_text("Double encoded: ¬\u00A0\n", encoding="utf-8")
+        bad.write_text("Double encoded: √ê¬º\n", encoding="utf-8")
         result = _run_guard(".", cwd=tmp_path)
         assert result.returncode == 1
         assert "corrupt.md" in result.stderr
