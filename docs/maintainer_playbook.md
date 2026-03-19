@@ -14,13 +14,13 @@ Quick-reference guide for repository maintainers. For full governance details se
 | Link Check | `link-check.yml` | Validates all Markdown links (Lychee) |
 | Kernel Guard | `kernel-guard.yml` | Blocks unauthorized changes to Layer 0 Kernel files |
 | PR Safety Check | `pr-safety-check.yml` | Risk classification of incoming PRs |
-| PR Quarantine | `pr-quarantine.yml` | Gates first-time contributor PRs for manual review |
+| PR Quarantine | `pr-quarantine.yml` | Metadata-only label/comment path for first-time external contributor PRs |
 | Repo Health Summary | `repo-health-summary.yml` | Weekly health snapshot with anomaly detection |
 | Maintenance Bot | `repo_maintenance_bot.yml` | Automated maintenance tasks |
 
 ### Health Ledger
 
-Issue **#93** stores weekly repository health snapshots posted by the `repo-health-summary` workflow every Monday at 08:00 UTC.
+Issue **#93** stores one weekly repository health snapshot comment per `repo-health-summary` run every Monday at 08:00 UTC.
 
 ### Manual Health Check
 
@@ -35,7 +35,7 @@ powershell -File scripts/repo_health.ps1
 ```
 Contributor opens PR
        ↓
-PR Quarantine Gate (first-time contributors held for review)
+PR Quarantine Gate (labels/comments first-time external PRs only)
        ↓
 PR Risk Classification (safety-check labels the PR)
        ↓
@@ -51,7 +51,7 @@ Weekly Repo Health Summary → Ledger (#93)
 ## Active Capabilities
 
 - CI validation (tests + policy)
-- PR quarantine for new contributors
+- PR quarantine signal for new external contributors
 - Risk classification on every PR
 - Anomaly detection (bot loops, branch floods, PR storms)
 - Bot-loop detection (chore/maintenance-* branch monitoring)
@@ -75,7 +75,7 @@ Weekly Repo Health Summary → Ledger (#93)
 ### Review a quarantined PR
 1. Check the `needs-maintainer-review` label
 2. Review the diff for kernel-adjacent or governance changes
-3. Approve or request changes; CI runs after approval
+3. Approve or request changes, then continue the normal CI and review flow
 
 ### Investigate a health alert
 1. Open Issue #93, read the latest snapshot
