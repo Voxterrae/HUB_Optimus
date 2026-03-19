@@ -1,0 +1,41 @@
+name: PR Quarantine Gate
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  quarantine-check:
+    if: |
+      github.event.pull_request.head.repo.fork == true &&
+      (
+      github.event.pull_request.author_association == 'FIRST_TIMER' ||
+      github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      # Keep this workflow metadata-only: do not checkout or execute PR code.
+      - name: Label PR for review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Author: ${{ github.event.pull_request.user.login }}"
+          echo "Association: ${{ github.event.pull_request.author_association }}"
+          gh pr edit "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --add-label "needs-maintainer-review"
+
+      - name: Comment on PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --body "Thanks for your contribution. This first-time external PR has been flagged for maintainer review before merge."
