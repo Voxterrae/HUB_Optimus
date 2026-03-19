@@ -1,4 +1,4 @@
-# 02 — Architecture Baseline (Layers 0–5)
+# 02 — Architecture Baseline (Layers 0-5)
 
 ## 1) Core design statement
 HUB_Optimus is a layered system designed to reduce future risk and increase medium/long-term stability by improving how outcomes are evaluated, and by enabling preventive correction before escalation.
@@ -9,9 +9,9 @@ The architecture is intentionally:
 - **anti-cycle** (active memory, early warning),
 - **human-compatible** (clear posture under time pressure).
 
-## 2) Layer model (0–5)
+## 2) Layer model (0-5)
 
-### Layer 0 — Immutable Ethical–Rational Kernel (INMUTABLE)
+### Layer 0 — Immutable Ethical—Rational Kernel (INMUTABLE)
 **Role:** constitutional core; prevents drift and capture.  
 **Contains (non-negotiable):**
 - Success = measurable reduction of future risk
@@ -47,7 +47,7 @@ The architecture is intentionally:
 **Focus:** incentives, feedback loops, reward/punishment structures.
 
 **Typical signals:**
-- “false successes” (short-term wins increasing long-term instability),
+- "false successes" (short-term wins increasing long-term instability),
 - decisions that reward escalation or punish rational restraint,
 - dependency creation (path dependence),
 - repeated historical patterns emerging.
@@ -71,10 +71,10 @@ The architecture is intentionally:
 **Outputs:**
 - evaluation report (systemic),
 - risk score / classification,
-- “intervention needed” decision (yes/no),
+- "intervention needed" decision (yes/no),
 - recommended preventive posture (if applicable).
 
-**Rule:** Layer 3 is the main decision engine for “works / does not work” within HUB_Optimus.
+**Rule:** Layer 3 is the main decision engine for "works / does not work" within HUB_Optimus.
 
 ---
 
@@ -87,7 +87,7 @@ The architecture is intentionally:
 - incentive adjustment proposals (remove reward for instability),
 - timing recommendations (use windows of opportunity).
 
-**Inputs:** Layer 3 activation (risk â†‘ + window open)  
+**Inputs:** Layer 3 activation (risk → + window open)  
 **Outputs:** discreet mediation briefs, options, corrective paths
 
 **Rule:** no public spectacle; preserve channels; minimize escalation.
@@ -100,7 +100,7 @@ The architecture is intentionally:
 **Provides:**
 - comparable past cycles,
 - recurrence patterns and thresholds,
-- “we have seen this before” warnings with structural similarity.
+- "we have seen this before" warnings with structural similarity.
 
 **Inputs:** evaluations, outcomes, scenario archives  
 **Outputs:** pattern matches, recurrence alerts, historical analog sets
@@ -116,12 +116,12 @@ The architecture is intentionally:
 4. **Layer 3** evaluates against Kernel criteria
 5. **Layer 5** contrasts with recurring historical patterns
 6. **Layer 0** validates coherence and blocks drift/capture
-7. If risk â†‘ and window open â†’ **Layer 4** activates preventive mediation
+7. If risk → and window open → **Layer 4** activates preventive mediation
 8. Outputs are recorded and fed back into **Layer 5** (memory strengthening)
 
 ## 4) Hard constraints (what the architecture forbids)
 - Personal scapegoating as a primary framing
-- Short-term “wins” counted as success when ML stability decreases
+- Short-term "wins" counted as success when ML stability decreases
 - Kernel modification without integrity-first review
 - Language drift (translations changing meaning)
 - Coercive enforcement mechanisms inside HUB_Optimus
