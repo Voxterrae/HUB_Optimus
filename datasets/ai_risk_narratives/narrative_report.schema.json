@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "narrative_report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "claim_id",
+    "claim",
+    "evidence",
+    "inference",
+    "mitigation"
+  ],
+  "properties": {
+    "claim_id": {
+      "type": "string",
+      "pattern": "^NR-[0-9]{3}$"
+    },
+    "claim": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": ".*\\S.*"
+      }
+    },
+    "inference": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "mitigation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": ".*\\S.*"
+      }
+    }
+  }
+}

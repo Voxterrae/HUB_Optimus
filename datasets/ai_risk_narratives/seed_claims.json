@@ -1,0 +1,182 @@
+[
+  {
+    "claim_id": "NR-001",
+    "claim_text": "A screenshot claims a Chrome plus Gemini browser integration bug exposed browsing context to prompt injection or leakage.",
+    "source_shown": "headline screenshot",
+    "risk_domain": "browser_security",
+    "verification_status": "mixed",
+    "evidence_tier": "reputable_press",
+    "jurisdiction": "global",
+    "notes": "Provisional paraphrase from operator brief; confirm exact exploit scope against primary vendor material."
+  },
+  {
+    "claim_id": "NR-002",
+    "claim_text": "A screenshot claims browser AI features make every visited website able to read private assistant context.",
+    "source_shown": "social post screenshot",
+    "risk_domain": "browser_security",
+    "verification_status": "misleading",
+    "evidence_tier": "unknown",
+    "jurisdiction": "global",
+    "notes": "Strong universal wording is likely broader than what a specific bug report can establish."
+  },
+  {
+    "claim_id": "NR-003",
+    "claim_text": "A screenshot claims Persona style age verification requires face or selfie capture and therefore creates a biometric risk surface.",
+    "source_shown": "product flow screenshot",
+    "risk_domain": "biometrics",
+    "verification_status": "mixed",
+    "evidence_tier": "official_secondary",
+    "jurisdiction": "US",
+    "notes": "Risk surface claim may be directionally valid, but retention and sharing behavior require provider documentation."
+  },
+  {
+    "claim_id": "NR-004",
+    "claim_text": "A screenshot claims age verification vendors keep identity images longer than users expect by default.",
+    "source_shown": "headline screenshot",
+    "risk_domain": "privacy",
+    "verification_status": "unsupported",
+    "evidence_tier": "unknown",
+    "jurisdiction": "US",
+    "notes": "Retention practice cannot be inferred from a screenshot without policy text or contract terms."
+  },
+  {
+    "claim_id": "NR-005",
+    "claim_text": "A screenshot claims online age gates create a reusable surveillance rail across the wider web.",
+    "source_shown": "commentary screenshot",
+    "risk_domain": "surveillance",
+    "verification_status": "misleading",
+    "evidence_tier": "advocacy",
+    "jurisdiction": "global",
+    "notes": "May overstate from one implementation to all deployments; keep as rhetorical-risk example."
+  },
+  {
+    "claim_id": "NR-006",
+    "claim_text": "A screenshot claims Italy moved against Perplexity specifically because of copyright violations.",
+    "source_shown": "news screenshot",
+    "risk_domain": "copyright",
+    "verification_status": "unsupported",
+    "evidence_tier": "reputable_press",
+    "jurisdiction": "Italy",
+    "notes": "Regulatory action may involve multiple theories; copyright as sole ground needs primary notice."
+  },
+  {
+    "claim_id": "NR-007",
+    "claim_text": "A screenshot claims current AI copyright lawsuits will immediately block frontier model launches.",
+    "source_shown": "headline screenshot",
+    "risk_domain": "copyright",
+    "verification_status": "misleading",
+    "evidence_tier": "unknown",
+    "jurisdiction": "US",
+    "notes": "Conflates active litigation with certain immediate product shutdown."
+  },
+  {
+    "claim_id": "NR-008",
+    "claim_text": "A screenshot claims a Seedance style video model was trained on protected works without consent.",
+    "source_shown": "social post screenshot",
+    "risk_domain": "copyright",
+    "verification_status": "unsupported",
+    "evidence_tier": "unknown",
+    "jurisdiction": "global",
+    "notes": "Training data provenance requires primary disclosure, litigation record, or reproducible evidence."
+  },
+  {
+    "claim_id": "NR-009",
+    "claim_text": "A screenshot claims a Pentagon or DHS contract proves full approval for autonomous offensive AI use.",
+    "source_shown": "headline screenshot",
+    "risk_domain": "defense",
+    "verification_status": "misleading",
+    "evidence_tier": "reputable_press",
+    "jurisdiction": "US",
+    "notes": "Procurement engagement does not by itself prove offensive autonomy approval."
+  },
+  {
+    "claim_id": "NR-010",
+    "claim_text": "A screenshot claims defense procurement red lines still allow analysis and support uses while restricting offensive autonomy.",
+    "source_shown": "policy excerpt screenshot",
+    "risk_domain": "defense",
+    "verification_status": "mixed",
+    "evidence_tier": "official_secondary",
+    "jurisdiction": "US",
+    "notes": "Directionally plausible but wording needs the actual policy or contract artifact."
+  },
+  {
+    "claim_id": "NR-011",
+    "claim_text": "A screenshot claims local AI will eliminate junior knowledge work first.",
+    "source_shown": "opinion post screenshot",
+    "risk_domain": "labor",
+    "verification_status": "unsupported",
+    "evidence_tier": "unknown",
+    "jurisdiction": "global",
+    "notes": "Projection claim, not a verified incident."
+  },
+  {
+    "claim_id": "NR-012",
+    "claim_text": "A screenshot claims cloud copilots already replace entire support teams end to end.",
+    "source_shown": "headline screenshot",
+    "risk_domain": "labor",
+    "verification_status": "misleading",
+    "evidence_tier": "reputable_press",
+    "jurisdiction": "global",
+    "notes": "Likely overgeneralizes from isolated workflow reductions to whole-team replacement."
+  },
+  {
+    "claim_id": "NR-013",
+    "claim_text": "A screenshot claims one AI query always consumes a bottle of water.",
+    "source_shown": "viral infographic screenshot",
+    "risk_domain": "environment",
+    "verification_status": "misleading",
+    "evidence_tier": "advocacy",
+    "jurisdiction": "global",
+    "notes": "Absolute per-query framing is usually too coarse and context-free."
+  },
+  {
+    "claim_id": "NR-014",
+    "claim_text": "A screenshot claims frontier AI scaling is constrained by high-bandwidth memory and accelerator supply.",
+    "source_shown": "industry report screenshot",
+    "risk_domain": "hardware",
+    "verification_status": "verified",
+    "evidence_tier": "reputable_press",
+    "jurisdiction": "global",
+    "notes": "Widely reported market condition; exact severity still depends on time and vendor."
+  },
+  {
+    "claim_id": "NR-015",
+    "claim_text": "A screenshot claims local AI fully solves privacy, copyright, and surveillance concerns.",
+    "source_shown": "opinion graphic screenshot",
+    "risk_domain": "local_vs_cloud",
+    "verification_status": "misleading",
+    "evidence_tier": "advocacy",
+    "jurisdiction": "global",
+    "notes": "Local execution changes exposure profile but does not fully remove licensing or misuse concerns."
+  },
+  {
+    "claim_id": "NR-016",
+    "claim_text": "A screenshot claims cloud AI always exfiltrates user prompts for model training.",
+    "source_shown": "social post screenshot",
+    "risk_domain": "local_vs_cloud",
+    "verification_status": "unsupported",
+    "evidence_tier": "unknown",
+    "jurisdiction": "global",
+    "notes": "Universal always-true wording needs explicit provider policy evidence and exceptions review."
+  },
+  {
+    "claim_id": "NR-017",
+    "claim_text": "A screenshot claims AI providers sell prompt data to third parties by default.",
+    "source_shown": "headline screenshot",
+    "risk_domain": "privacy",
+    "verification_status": "unsupported",
+    "evidence_tier": "unknown",
+    "jurisdiction": "global",
+    "notes": "High-stakes monetization claim requires primary privacy policy or enforcement record."
+  },
+  {
+    "claim_id": "NR-018",
+    "claim_text": "A screenshot claims consumer AI regulators in Europe have already intervened against AI services over privacy concerns.",
+    "source_shown": "news screenshot",
+    "risk_domain": "privacy",
+    "verification_status": "verified",
+    "evidence_tier": "official_secondary",
+    "jurisdiction": "EU",
+    "notes": "General statement is well grounded, but any service-specific framing still needs the exact notice."
+  }
+]

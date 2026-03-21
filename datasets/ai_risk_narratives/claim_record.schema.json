@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "claim_record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "claim_id",
+    "claim_text",
+    "source_shown",
+    "risk_domain",
+    "verification_status",
+    "evidence_tier",
+    "jurisdiction",
+    "notes"
+  ],
+  "properties": {
+    "claim_id": {
+      "type": "string",
+      "pattern": "^NR-[0-9]{3}$"
+    },
+    "claim_text": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "source_shown": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "risk_domain": {
+      "type": "string",
+      "enum": [
+        "privacy",
+        "biometrics",
+        "surveillance",
+        "browser_security",
+        "copyright",
+        "defense",
+        "labor",
+        "environment",
+        "hardware",
+        "local_vs_cloud"
+      ]
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "verified",
+        "mixed",
+        "misleading",
+        "unsupported"
+      ]
+    },
+    "evidence_tier": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "official_secondary",
+        "reputable_press",
+        "advocacy",
+        "unknown"
+      ]
+    },
+    "jurisdiction": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "notes": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    }
+  }
+}
