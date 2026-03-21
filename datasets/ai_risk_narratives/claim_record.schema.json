@@ -7,6 +7,8 @@
     "claim_id",
     "claim_text",
     "source_shown",
+    "source_type",
+    "approx_date",
     "risk_domain",
     "verification_status",
     "evidence_tier",
@@ -23,6 +25,21 @@
       "pattern": ".*\\S.*"
     },
     "source_shown": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "official",
+        "reputable_press",
+        "tech_press",
+        "advocacy",
+        "unknown"
+      ]
+    },
+    "approx_date": {
       "type": "string",
       "pattern": ".*\\S.*"
     },
