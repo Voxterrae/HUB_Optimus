@@ -1,0 +1,27 @@
+{
+  "risk_domains": [
+    "privacy",
+    "biometrics",
+    "surveillance",
+    "browser_security",
+    "copyright",
+    "defense",
+    "labor",
+    "environment",
+    "hardware",
+    "local_vs_cloud"
+  ],
+  "verification_statuses": [
+    "verified",
+    "mixed",
+    "misleading",
+    "unsupported"
+  ],
+  "evidence_tiers": [
+    "primary",
+    "official_secondary",
+    "reputable_press",
+    "advocacy",
+    "unknown"
+  ]
+}
