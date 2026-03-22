@@ -147,11 +147,11 @@
     "claim_id": "NR-013",
     "claim_text": "Nigeria just launched an AI-driven tracking system (March 2026) that:\n1. Monitors every traveler who entered the country in the last decade.\n2. Locates those who overstayed their visas.\n3. Uses \"data-driven performance management\" for border control.",
     "source_shown": "The Sun",
-    "source_type": "unknown",
+    "source_type": "reputable_press",
     "approx_date": "2026-03-05",
     "risk_domain": "surveillance",
     "verification_status": "verified",
-    "evidence_tier": "unknown",
+    "evidence_tier": "reputable_press",
     "jurisdiction": "Nigeria",
     "notes": "The image includes a visible newspaper headline about AI to track irregular migrants and overstayed visitors."
   },
