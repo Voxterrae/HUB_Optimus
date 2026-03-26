@@ -31,6 +31,20 @@ previously observed pattern changes after a code modification.
 | incentive_misalignment | 20 | 19 | 1 | 95% |
 | resource_scarcity | 20 | 16 | 4 | 80% |
 
+### Mobile Ingest (Termux)
+
+Capture a claim from a mobile terminal and append it to the dataset:
+
+```bash
+python tools/mobile_ingest.py "AI regulation in Europe is accelerating"
+```
+
+Or via stdin:
+
+```bash
+echo "AI regulation in Europe is accelerating" | python tools/mobile_ingest.py
+```
+
 ## Observed patterns
 
 - **Resource scarcity scenarios are failure-prone by design.** Tight
