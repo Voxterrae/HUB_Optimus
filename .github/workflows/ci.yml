@@ -41,6 +41,19 @@ jobs:
       - name: Run tests
         run: python -m pytest -q
 
+      - name: Traceability Snapshot
+        if: always()
+        run: python tools/trace_repo.py --output-md out/traceability/trace.md --output-json out/traceability/trace.json
+
+      - name: Upload traceability artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traceability
+          path: |
+            out/traceability/trace.md
+            out/traceability/trace.json
+
   benchmarks:
     name: Benchmarks
     runs-on: ubuntu-latest
