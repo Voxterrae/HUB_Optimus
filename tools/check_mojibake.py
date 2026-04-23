@@ -12,9 +12,9 @@ DEFAULT_TARGETS = ("docs", "v1_core", "README.md", "CONTRIBUTING.md")
 PATTERNS = (
     ("replacement_char", re.compile(r"\uFFFD")),
     ("double_utf8_A_tilde", re.compile(r"Ã[\w\u0080-\u00FF]")),
-    ("double_utf8_A_circumflex", re.compile(r"Â[\w\u0080-\u00FF]")),
-    ("smart_punct_mojibake", re.compile(r"â[€™“”–—€¦¢„™]")),
-    ("double_encoded_cyrillic", re.compile(r"Гўв‚¬|вЂ™|вЂњ|вЂќ|вЂ”|вЂ“")),
+    ("double_utf8_A_circumflex", re.compile(r"â[\w\u0080-\u00FF]")),
+    ("smart_punct_mojibake", re.compile(r"â[€œ€ €™‘]")),
+    ("double_encoded_cyrillic", re.compile(r"Ð[¼Ð°Ð½Ðµ]|Ñ[‚Ð¸]")),
 )
 
 

@@ -1,4 +1,4 @@
-ï»¿param(
+param(
   [string]$Path = "docs",
   [switch]$DryRun,
   [switch]$Backup,
@@ -12,7 +12,7 @@ $ErrorActionPreference = "Stop"
 $cp1252   = [System.Text.Encoding]::GetEncoding(1252)
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
-# Heuristic: detect typical mojibake chars (C3=Ãƒ, E2=Ã¢, F0=Ã°, C2=Ã‚)
+# Heuristic: detect typical mojibake chars (C3=Ã, E2=â, F0=ð, C2=Â)
 $bad = @([char]0x00C3, [char]0x00E2, [char]0x00F0, [char]0x00C2)
 $re  = "[" + (($bad | ForEach-Object { [regex]::Escape($_) }) -join "") + "]"
 
