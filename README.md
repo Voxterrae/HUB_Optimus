@@ -6,13 +6,16 @@
 
 **Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.**
 
-**Languages / Idiomas:** 
+**Languages / Idiomas:**
 
-> **Start here (Onboarding):**  
-> [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md) · [CA](docs/ca/00_start_here.md) · [FR](docs/fr/00_start_here.md) · [RU](docs/ru/00_start_here.md)
+> **Primary onboarding:** [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md)
+>
+> **Translation status:** CA / FR / RU = progressive translation (not language-faithful onboarding yet) · HE = stub / full translation pending · ZH = governance stub only
+>
+> Source of truth: [docs/context/STATUS.md](docs/context/STATUS.md)
 
 **Quick paths:**
-- 90 seconds: [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md) · [CA](docs/ca/00_start_here.md) · [FR](docs/fr/00_start_here.md) · [RU](docs/ru/00_start_here.md)
+- 90 seconds: [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md)
 - 20 minutes (canonical v1 ES): [v1_core/languages/es](v1_core/languages/es)
 - Hands-on: [Scenario Template](v1_core/workflow/04_scenario_template.md)
 
@@ -44,8 +47,9 @@ It is a tool for **better judgment**.
 
 ## Start in 60 seconds
 **New here?**
-- 🇬🇧 Start (EN): [docs/00_start_here.md](docs/00_start_here.md)
-- 🇪🇸 Empezar (ES): [docs/es/00_start_here.md](docs/es/00_start_here.md)
+- Start (EN): [docs/00_start_here.md](docs/00_start_here.md)
+- Empezar (ES): [docs/es/00_start_here.md](docs/es/00_start_here.md)
+- Start (DE): [docs/de/00_start_here.md](docs/de/00_start_here.md)
 
 **See it in practice (guided walkthrough):**
 - 🇬🇧 Try a scenario: [docs/03_try_a_scenario.md](docs/03_try_a_scenario.md)
