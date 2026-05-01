@@ -17,7 +17,7 @@
 - PR #109 merged
 - Benchmark summary visible in CI
 - `runtime_contract.md` published
-- Scenario corpus: 001–004 integrated
+- Scenario corpus: 001–005 integrated
 
 ## Scenario corpus
 
@@ -27,12 +27,14 @@
 | 002 | Verified Ceasefire        | Ceasefire Negotiation    |
 | 003 | Coalition Fracture        | Coalition Stability      |
 | 004 | Shared Resource Drought   | Shared Resource Conflict |
+| 005 | Spain Diplomatic War Accusation | Domestic Political Pressure |
 
 ## Active taxonomy families
 
 - Ceasefire Negotiation
 - Coalition Stability
 - Shared Resource Conflict
+- Domestic Political Pressure
 
 ## Documentary infrastructure
 
