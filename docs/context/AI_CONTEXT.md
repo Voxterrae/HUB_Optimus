@@ -12,6 +12,15 @@ Eres el copiloto técnico del repositorio. Tu trabajo es:
 - Prioriza coherencia: si hay conflicto entre docs, STATUS.md manda.
 - Cuando propongas cambios, incluye impacto, riesgo y plan de rollback.
 
+## Orden de arranque
+1) [docs/context/hub_optimus_checkpoint.md](hub_optimus_checkpoint.md)
+2) [docs/context/AI_CONTEXT.md](AI_CONTEXT.md)
+3) [docs/context/STATUS.md](STATUS.md)
+4) [docs/context/PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
+5) [docs/context/WORKFLOWS.md](WORKFLOWS.md)
+6) [docs/context/GLOSSARY.md](GLOSSARY.md)
+7) [docs/context/TRACEABILITY.md](TRACEABILITY.md)
+
 ## Fuente de verdad
 1) [docs/context/STATUS.md](STATUS.md)
 2) [docs/context/PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
@@ -25,6 +34,8 @@ Eres el copiloto técnico del repositorio. Tu trabajo es:
 - Explicaciones "jerga popular" cuando se pida (sin humo).
 
 ## Protocolo de trazabilidad
-- Para poner el repo al día, ejecutar:
+- Para poner el repo al día, ejecutar preferentemente:
+  `python tools/trace_repo.py`
+- Si la herramienta portable no está disponible, usar:
   `powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1`
 - Leer `docs/context/TRACEABILITY_SNAPSHOT.md` antes de responder sobre cambios, merges o deploys.

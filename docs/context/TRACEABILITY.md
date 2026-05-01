@@ -5,11 +5,15 @@ Provide a single command that captures the repo state and automation surface
 area before any analysis, merge, or deploy decision.
 
 ## Command
-- Run: `powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1`
-- Output: `docs/context/TRACEABILITY_SNAPSHOT.md`
+- Preferred: `python tools/trace_repo.py`
+- Custom outputs: `python tools/trace_repo.py --output-md PATH --output-json PATH`
+- Fallback: `powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1`
+- Default outputs:
+  - `docs/context/TRACEABILITY_SNAPSHOT.md`
+  - `docs/context/TRACEABILITY_SNAPSHOT.json`
 
 ## What the snapshot includes
-- Timestamp and repo root path.
+- UTC timestamp and repo root path.
 - Git branch, HEAD, remotes, recent commits.
 - Working tree status and diff stats (staged and unstaged).
 - Full contents of `.github/workflows` files.

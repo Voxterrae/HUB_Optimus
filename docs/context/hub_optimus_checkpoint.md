@@ -56,7 +56,7 @@ Phase 4 — behavioral diagnostics      ← current
 
 ## Next task
 
-Task 24 — structural drift analysis for benchmarks
+Bootstrap and operational state alignment for assistant entry points
 
 ## Next action
 
