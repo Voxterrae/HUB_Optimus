@@ -22,6 +22,7 @@ Scope notes:
 | [`scenario_002_verified_ceasefire`](../../v1_core/workflow/scenario_002_verified_ceasefire.md) | Ceasefire Negotiation | workflow reference | Narrative reference scenario showing a verified ceasefire as stabilizing |
 | [`scenario_003_coalition_fracture`](../../v1_core/workflow/scenario_003_coalition_fracture.md) | Coalition Stability | experimental | External negotiation constrained by an internal coalition veto player |
 | [`scenario_004_shared_resource_drought`](../../v1_core/workflow/scenario_004_shared_resource_drought.md) | Shared Resource Conflict | experimental | Drought negotiation between upstream and downstream actors sharing a river basin |
+| [`scenario_005_spain_diplomatic_war_accusation`](../../v1_core/workflow/scenario_005_spain_diplomatic_war_accusation.md) | Domestic Political Pressure | experimental | Accusation-driven diplomatic escalation where public framing can displace verification. |
 
 ---
 

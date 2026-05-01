@@ -40,6 +40,7 @@ Reference scenarios:
 - [./scenario_002_verified_ceasefire.md](./scenario_002_verified_ceasefire.md)
 - [./scenario_003_coalition_fracture.md](./scenario_003_coalition_fracture.md)
 - [./scenario_004_shared_resource_drought.md](./scenario_004_shared_resource_drought.md)
+- [./scenario_005_spain_diplomatic_war_accusation.md](./scenario_005_spain_diplomatic_war_accusation.md)
 
 ### Step 2 - Iterate and compare
 Use the follow-up workflow:
