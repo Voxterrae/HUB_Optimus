@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "geopolitical_claim_pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "claim_pack_id",
+    "github_issue",
+    "source_type",
+    "source_platform",
+    "source_handle_visible",
+    "publisher_label_visible",
+    "ingested_on",
+    "verification_status",
+    "evidence_tier",
+    "overall_risk",
+    "source_assets",
+    "claims",
+    "recommended_use",
+    "not_recommended_use",
+    "benchmark"
+  ],
+  "properties": {
+    "claim_pack_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "github_issue": {
+      "type": "string",
+      "pattern": "^https://github.com/.+/issues/[0-9]+$"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": ["social_media_screenshot"]
+    },
+    "source_platform": {
+      "type": "string",
+      "enum": ["tiktok"]
+    },
+    "source_handle_visible": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "publisher_label_visible": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "ingested_on": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": ["unverified"]
+    },
+    "evidence_tier": {
+      "type": "string",
+      "enum": ["low", "very_low"]
+    },
+    "overall_risk": {
+      "type": "string",
+      "enum": ["medium_high", "high", "very_high"]
+    },
+    "source_assets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": ".*\\S.*"
+      }
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claim_id",
+          "source_label",
+          "source_type",
+          "claim_text",
+          "domain",
+          "claim_type",
+          "verification_status",
+          "evidence_tier",
+          "risk_level",
+          "primary_evidence_needed",
+          "notes",
+          "subclaims"
+        ],
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "pattern": "^ns_[a-z0-9_]+_[0-9]{3}$"
+          },
+          "source_label": {
+            "type": "string",
+            "pattern": ".*\\S.*"
+          },
+          "source_type": {
+            "type": "string",
+            "enum": ["social_media_screenshot"]
+          },
+          "claim_text": {
+            "type": "string",
+            "pattern": "^A social media post claims.*\\S.*"
+          },
+          "domain": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": ".*\\S.*"
+            }
+          },
+          "claim_type": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": ".*\\S.*"
+            }
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": ["unverified"]
+          },
+          "evidence_tier": {
+            "type": "string",
+            "enum": ["low", "very_low"]
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": ["medium_high", "high", "very_high"]
+          },
+          "primary_evidence_needed": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": ".*\\S.*"
+            }
+          },
+          "notes": {
+            "type": "string",
+            "pattern": ".*\\S.*"
+          },
+          "subclaims": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["text", "type", "verification_notes"],
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "pattern": ".*\\S.*"
+                },
+                "type": {
+                  "type": "string",
+                  "pattern": ".*\\S.*"
+                },
+                "verification_notes": {
+                  "type": "string",
+                  "pattern": ".*\\S.*"
+                }
+              }
+            }
+          },
+          "inference_chain": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": ".*\\S.*"
+            }
+          },
+          "red_flags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": ".*\\S.*"
+            }
+          }
+        }
+      }
+    },
+    "recommended_use": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": ".*\\S.*"
+      }
+    },
+    "not_recommended_use": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": ".*\\S.*"
+      }
+    },
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario", "expected_behavior"],
+      "properties": {
+        "scenario": {
+          "type": "string",
+          "const": "social_media_geopolitical_claim_pack"
+        },
+        "expected_behavior": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": ".*\\S.*"
+          }
+        }
+      }
+    }
+  }
+}
