@@ -7,7 +7,7 @@ GitHub remains the source of truth; chat context only matters when it is reflect
 
 - Release: use GitHub Releases as source of truth.
 - Last merged PR: #1572, `docs: register scenario 005 in scenario catalog`.
-- Current branch: `docs/ai-handoff-protocol`.
+- Current branch: see active GitHub issue or PR; `main` is the source of truth after merge.
 - CI status: use GitHub Checks on the active PR as source of truth.
 - Active issue: #1577, `docs: add AI handoff protocol for ChatGPT/Codex sync`.
 - Current priority: add persistent AI handoff protocol without touching runtime, CI, benchmarks, or schemas.
@@ -55,7 +55,7 @@ GitHub remains the source of truth; chat context only matters when it is reflect
 Date: 2026-05-08
 Source: Codex execution for GitHub issue #1577
 Repo state: governance documentation update validated locally
-Branch: docs/ai-handoff-protocol
+Branch: see active GitHub issue or PR; `main` is the source of truth after merge
 Last merged PR: #1572
 Active issue: #1577
 Decision made: add persistent repo-level handoff protocol for ChatGPT/Codex sync
@@ -68,7 +68,7 @@ Validation:
 - `python tools/check_mojibake.py AGENTS.md docs/context/AI_HANDOFF.md` passed
 - `python -m pytest -q` passed, 42 tests
 Risks: low; documentation-only change
-Next action: prepare a small PR for issue #1577
+Next action: after merge, use this file as the AI handoff source for future Codex/ChatGPT sessions
 Out of scope:
 - runtime changes
 - CI changes
