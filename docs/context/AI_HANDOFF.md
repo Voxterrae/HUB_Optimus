@@ -6,11 +6,11 @@ GitHub remains the source of truth; chat context only matters when it is reflect
 ## Current System State
 
 - Release: use GitHub Releases as source of truth.
-- Last merged PR: #1572, `docs: register scenario 005 in scenario catalog`.
+- Last merged PR: #1578, `docs: add AI handoff protocol for ChatGPT/Codex sync`.
 - Current branch: see active GitHub issue or PR; `main` is the source of truth after merge.
 - CI status: use GitHub Checks on the active PR as source of truth.
-- Active issue: #1577, `docs: add AI handoff protocol for ChatGPT/Codex sync`.
-- Current priority: add persistent AI handoff protocol without touching runtime, CI, benchmarks, or schemas.
+- Active issue: none; use GitHub Issues/Project board for current assignment.
+- Current priority: observe -> detect -> decide -> act; no build without signal.
 
 ## Recent Decisions
 
@@ -29,18 +29,7 @@ GitHub remains the source of truth; chat context only matters when it is reflect
 
 ## Next Recommended Action
 
-- Issue: #1577.
-- Scope: add `AGENTS.md` and this handoff file only.
-- Acceptance criteria:
-  - `AGENTS.md` exists at repo root.
-  - `docs/context/AI_HANDOFF.md` exists.
-  - Both files state GitHub is the source of truth.
-  - Codex is instructed to update `AI_HANDOFF.md` after meaningful work.
-  - No runtime, CI, benchmark, or schema files are touched.
-- Validation command:
-  - `git diff --check`
-  - `python tools/check_mojibake.py AGENTS.md docs/context/AI_HANDOFF.md`
-  - `python -m pytest -q`
+No action until CI, collaborator friction, regression, or user request creates a concrete signal.
 
 ## Do Not Do
 
@@ -54,10 +43,10 @@ GitHub remains the source of truth; chat context only matters when it is reflect
 
 Date: 2026-05-08
 Source: Codex execution for GitHub issue #1577
-Repo state: governance documentation update validated locally
+Repo state: governance protocol merged to main
 Branch: see active GitHub issue or PR; `main` is the source of truth after merge
-Last merged PR: #1572
-Active issue: #1577
+Last merged PR: #1578
+Active issue: none
 Decision made: add persistent repo-level handoff protocol for ChatGPT/Codex sync
 Reason: align AI work through GitHub state instead of fragile chat-memory synchronization
 Files changed:
@@ -68,7 +57,7 @@ Validation:
 - `python tools/check_mojibake.py AGENTS.md docs/context/AI_HANDOFF.md` passed
 - `python -m pytest -q` passed, 42 tests
 Risks: low; documentation-only change
-Next action: after merge, use this file as the AI handoff source for future Codex/ChatGPT sessions
+Next action: observe CI and collaborator friction; open scoped issue only when signal appears
 Out of scope:
 - runtime changes
 - CI changes
