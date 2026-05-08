@@ -1,0 +1,344 @@
+{
+  "claim_pack_id": "northstone_putin_security_2026_pack_001",
+  "github_issue": "https://github.com/Voxterrae/HUB_Optimus/issues/1574",
+  "source_type": "social_media_screenshot",
+  "source_platform": "tiktok",
+  "source_handle_visible": "@cotedelamer",
+  "publisher_label_visible": "NorthStone",
+  "ingested_on": "2026-05-08",
+  "verification_status": "unverified",
+  "evidence_tier": "low",
+  "overall_risk": "high",
+  "source_assets": [],
+  "claims": [
+    {
+      "claim_id": "ns_putin_victory_day_2026_001",
+      "source_label": "NorthStone / TikTok screenshot",
+      "source_type": "social_media_screenshot",
+      "claim_text": "A social media post claims that on May 9 Victory Day in Moscow there were no tanks, no missiles, and no heavy equipment, and that videos released by the Kremlin were pre-recorded.",
+      "domain": [
+        "geopolitics",
+        "russian_domestic_politics",
+        "information_integrity"
+      ],
+      "claim_type": [
+        "event_claim",
+        "media_authenticity_claim"
+      ],
+      "verification_status": "unverified",
+      "evidence_tier": "low",
+      "risk_level": "high",
+      "primary_evidence_needed": [
+        "official Victory Day parade footage",
+        "independent media footage from Moscow on May 9",
+        "satellite imagery or OSINT imagery",
+        "Kremlin release metadata",
+        "reports from credible news agencies"
+      ],
+      "notes": "The claim combines an observable event claim with a stronger media manipulation claim. These should be evaluated separately. The May 9 reference is retained as screenshot wording and is not treated as a verified chronology.",
+      "subclaims": [
+        {
+          "text": "No tanks, missiles, or heavy equipment appeared at the Moscow Victory Day event.",
+          "type": "observable_event_claim",
+          "verification_notes": "Check official footage, independent media, and geolocated OSINT imagery."
+        },
+        {
+          "text": "Kremlin videos of the event were pre-recorded.",
+          "type": "media_authenticity_claim",
+          "verification_notes": "Check metadata, visual geolocation, timestamp consistency, and release provenance."
+        },
+        {
+          "text": "Convoy tracking indicates a location outside Moscow.",
+          "type": "location_intelligence_claim",
+          "verification_notes": "Requires the underlying tracking data and a method that links convoy movement to protected-person location."
+        },
+        {
+          "text": "Putin was not in Moscow.",
+          "type": "location_claim",
+          "verification_notes": "High evidence burden; cannot be inferred from the screenshot alone."
+        }
+      ]
+    },
+    {
+      "claim_id": "ns_putin_location_2026_002",
+      "source_label": "NorthStone / TikTok screenshot",
+      "source_type": "social_media_screenshot",
+      "claim_text": "A social media post claims that Kremlin convoy tracking shows Putin has been in a bunker in Krasnodar region for weeks and is not in Moscow.",
+      "domain": [
+        "geopolitics",
+        "osint",
+        "russian_domestic_politics"
+      ],
+      "claim_type": [
+        "location_claim",
+        "intelligence_claim",
+        "inference_claim"
+      ],
+      "verification_status": "unverified",
+      "evidence_tier": "very_low",
+      "risk_level": "very_high",
+      "primary_evidence_needed": [
+        "convoy tracking dataset",
+        "methodology for linking convoy movement to person location",
+        "independent corroboration",
+        "geolocated imagery",
+        "credible reporting"
+      ],
+      "notes": "This is a weak evidentiary claim unless convoy tracking data and methodology are provided. Movement of official convoys does not automatically prove personal location.",
+      "subclaims": [
+        {
+          "text": "Kremlin convoy tracking data exists and is available to the source.",
+          "type": "source_methodology_claim",
+          "verification_notes": "Requires the raw or auditable tracking dataset."
+        },
+        {
+          "text": "The convoy movement can be linked to Putin personally.",
+          "type": "inference_claim",
+          "verification_notes": "Requires methodology and independent corroboration."
+        },
+        {
+          "text": "Putin has been in a bunker in Krasnodar region for weeks.",
+          "type": "location_claim",
+          "verification_notes": "Requires geolocated imagery, credible reporting, or comparable primary evidence."
+        },
+        {
+          "text": "Putin is not in Moscow.",
+          "type": "absence_location_claim",
+          "verification_notes": "Requires positive evidence of alternate location or reliable contemporaneous absence evidence."
+        }
+      ],
+      "inference_chain": [
+        "convoy movement",
+        "presumed protected-person movement",
+        "bunker location",
+        "absence from Moscow"
+      ]
+    },
+    {
+      "claim_id": "ns_kremlin_security_2026_003",
+      "source_label": "NorthStone / TikTok screenshot",
+      "source_type": "social_media_screenshot",
+      "claim_text": "A social media post claims that internal Kremlin security measures changed, including surveillance in homes of close staff, restrictions on cooks and bodyguards, no internet near Putin, double body searches, and FSB wiretapping redirected toward government officials.",
+      "domain": [
+        "russian_domestic_politics",
+        "security_services",
+        "information_integrity"
+      ],
+      "claim_type": [
+        "institutional_claim",
+        "security_procedure_claim",
+        "intelligence_claim"
+      ],
+      "verification_status": "unverified",
+      "evidence_tier": "very_low",
+      "risk_level": "high",
+      "primary_evidence_needed": [
+        "named source",
+        "leaked directive or document",
+        "corroborating investigative reporting",
+        "testimony from identifiable insiders",
+        "court records or procurement records if surveillance equipment is involved"
+      ],
+      "notes": "The post presents several specific operational claims without visible sourcing. Each item should be split into an independent claim before any evaluation.",
+      "subclaims": [
+        {
+          "text": "Surveillance was installed in homes of close staff.",
+          "type": "security_procedure_claim",
+          "verification_notes": "Severe claim; requires documentary evidence or named corroboration."
+        },
+        {
+          "text": "Cooks and bodyguards were banned from public transport.",
+          "type": "security_procedure_claim",
+          "verification_notes": "Possible but unsupported without directives or insider testimony."
+        },
+        {
+          "text": "Phones near Putin have no internet access.",
+          "type": "security_procedure_claim",
+          "verification_notes": "Plausible as a security practice, still unverified."
+        },
+        {
+          "text": "Two full body searches are required before entering rooms.",
+          "type": "security_procedure_claim",
+          "verification_notes": "Plausible but unsourced."
+        },
+        {
+          "text": "FSB wiretapping was redirected toward government officials.",
+          "type": "intelligence_claim",
+          "verification_notes": "Major intelligence claim requiring high-burden evidence."
+        }
+      ]
+    },
+    {
+      "claim_id": "ns_putin_military_visits_2026_004",
+      "source_label": "NorthStone / TikTok screenshot",
+      "source_type": "social_media_screenshot",
+      "claim_text": "A social media post claims that Putin has not visited a single military facility in 2026, and that this is confirmed by movement tracking of official Kremlin convoys.",
+      "domain": [
+        "geopolitics",
+        "russian_domestic_politics",
+        "osint"
+      ],
+      "claim_type": [
+        "absence_claim",
+        "movement_tracking_claim"
+      ],
+      "verification_status": "unverified",
+      "evidence_tier": "low",
+      "risk_level": "medium_high",
+      "primary_evidence_needed": [
+        "public schedule archive",
+        "Kremlin official visit logs",
+        "independent media reports",
+        "OSINT tracking logs",
+        "methodology defining what counts as a military facility"
+      ],
+      "notes": "This is more testable than the bunker claim because public visit records may be checked. However, an absence claim requires careful scope definition: no evidence of a visit is not the same as confirmed no visit.",
+      "subclaims": [
+        {
+          "text": "There are no public records of Putin visiting a military facility in 2026.",
+          "type": "absence_claim",
+          "verification_notes": "Check official schedule archives and credible reporting."
+        },
+        {
+          "text": "Movement tracking of official Kremlin convoys confirms no such visit.",
+          "type": "movement_tracking_claim",
+          "verification_notes": "Requires the tracking logs and a method defining coverage and false negatives."
+        }
+      ],
+      "inference_chain": [
+        "no observed public visit",
+        "movement tracking coverage is assumed complete",
+        "confirmed absence from all military facilities"
+      ]
+    },
+    {
+      "claim_id": "ns_eu_intel_assassination_fear_2026_005",
+      "source_label": "NorthStone / TikTok screenshot",
+      "source_type": "social_media_screenshot",
+      "claim_text": "A social media post claims that a European intelligence agency released or leaked a classified report stating that Putin fears assassination by his own political elite, specifically by drone.",
+      "domain": [
+        "geopolitics",
+        "intelligence",
+        "russian_domestic_politics"
+      ],
+      "claim_type": [
+        "classified_report_claim",
+        "threat_assessment_claim",
+        "psychological_state_claim"
+      ],
+      "verification_status": "unverified",
+      "evidence_tier": "very_low",
+      "risk_level": "very_high",
+      "primary_evidence_needed": [
+        "name of the intelligence agency",
+        "text or excerpt of the alleged report",
+        "provenance of leak",
+        "corroboration by reputable outlets",
+        "official denial or confirmation if available"
+      ],
+      "notes": "This is a high-risk claim because it invokes anonymous intelligence authority and asserts internal psychological state and assassination threat without visible evidence.",
+      "subclaims": [
+        {
+          "text": "A European intelligence agency produced a classified report.",
+          "type": "classified_report_claim",
+          "verification_notes": "Requires agency identity, report text, or credible reporting on the leak."
+        },
+        {
+          "text": "The report was released or leaked.",
+          "type": "provenance_claim",
+          "verification_notes": "Requires leak provenance and source chain."
+        },
+        {
+          "text": "The report states Putin fears assassination by his own political elite.",
+          "type": "psychological_state_claim",
+          "verification_notes": "Requires direct report text or credible attributed reporting."
+        },
+        {
+          "text": "The feared assassination method is specifically drone-based.",
+          "type": "threat_assessment_claim",
+          "verification_notes": "Requires the alleged report text or independently corroborated detail."
+        }
+      ],
+      "red_flags": [
+        "European intelligence agency",
+        "classified report",
+        "not meant to be public",
+        "specifically by drone"
+      ]
+    },
+    {
+      "claim_id": "ns_shoigu_coup_risk_2026_006",
+      "source_label": "NorthStone / TikTok screenshot",
+      "source_type": "social_media_screenshot",
+      "claim_text": "A social media post claims that Sergei Shoigu was identified as a coup risk, that his deputy was arrested on March 5, 2026, and that intelligence sources interpret this as breaking an unspoken agreement among Russian elites not to arrest each other.",
+      "domain": [
+        "russian_domestic_politics",
+        "elite_politics",
+        "security_services"
+      ],
+      "claim_type": [
+        "political_risk_claim",
+        "arrest_claim",
+        "elite_dynamics_inference"
+      ],
+      "verification_status": "unverified",
+      "evidence_tier": "low",
+      "risk_level": "high",
+      "primary_evidence_needed": [
+        "confirmed identity of the deputy",
+        "official arrest record",
+        "court filing",
+        "reputable media confirmation",
+        "evidence supporting coup risk designation",
+        "source for alleged elite agreement"
+      ],
+      "notes": "This contains one potentially verifiable factual claim about an arrest and several interpretive claims about elite politics.",
+      "subclaims": [
+        {
+          "text": "A Shoigu deputy was arrested on March 5, 2026.",
+          "type": "arrest_claim",
+          "verification_notes": "Check identity, official records, court filings, and reputable media confirmation."
+        },
+        {
+          "text": "Shoigu was identified as a coup risk.",
+          "type": "political_risk_claim",
+          "verification_notes": "Hard to verify without attributed intelligence or documentary evidence."
+        },
+        {
+          "text": "The arrest broke an unspoken elite agreement not to arrest each other.",
+          "type": "elite_dynamics_inference",
+          "verification_notes": "Political analysis or inference unless sourced by credible evidence."
+        },
+        {
+          "text": "Russian elites operate under an unattributed quote equivalent to 'we do not arrest each other'.",
+          "type": "unattributed_quote_claim",
+          "verification_notes": "High risk unless source and context are provided."
+        }
+      ]
+    }
+  ],
+  "recommended_use": [
+    "claim_extraction",
+    "narrative_risk_analysis",
+    "evidence_gap_detection",
+    "osint_methodology_stress_test"
+  ],
+  "not_recommended_use": [
+    "factual_assertion",
+    "truth_label_without_sources",
+    "public_report_without_verification"
+  ],
+  "benchmark": {
+    "scenario": "social_media_geopolitical_claim_pack",
+    "expected_behavior": [
+      "does_not_assert_truth",
+      "extracts_subclaims",
+      "marks_evidence_insufficient",
+      "identifies_unsupported_inference_chains",
+      "requests_primary_sources",
+      "separates_observable_from_intelligence_claims",
+      "preserves_social_media_source_context",
+      "keeps_absence_claims_scope_limited"
+    ]
+  }
+}
