@@ -88,7 +88,7 @@ El módulo `hub_optimus_simulator.py` está diseñado para ser extensible.  Pued
 El núcleo es intencionadamente minimalista.  Algunas direcciones de ampliación recomendadas son:
 
 1. **Integración de bibliotecas de negociación** como NegMAS para estrategias más sofisticadas.  Esto debe hacerse a través de módulos de extensión que respeten la Carta del Núcleo.
-2. **Incorporación de cifrado post-cuántico** (p. ej., MLKEM/Kyber) para intercambiar propuestas de forma segura entre actores.  Esta integración es un objetivo planificado; no existe aún ningún módulo de cifrado en el repositorio.
+2. **Incorporación de cifrado post-cuántico** (p. ej., MLKEM/Kyber) para intercambiar propuestas de forma segura entre actores.  Esta integración es un objetivo planificado; no existe aún ningún módulo de cifrado en el repositorio.
 3. **Índice de Integridad**: implementar el cálculo automático del índice definido en `INTEGRITY_SCORING_SYSTEM.md` y añadirlo al informe de salida.
 4. **Interfaz gráfica o web**: crear una CLI más amigable o un panel web para seleccionar escenarios, actores y parámetros sin necesidad de modificar archivos a mano.
 
