@@ -70,9 +70,11 @@ II = 0,2\times 0,8 + 0,2\times 0,9 + 0,2\times 0,7 + 0,2\times 0,6 + 0,2\times 0
 
 Según la tabla, el escenario se clasificaría como **Integridad Media**.  Se recomendaría reforzar la alineación de incentivos y mejorar la sostenibilidad a largo plazo para alcanzar una integridad alta.
 
-## Integración con el núcleo de simulación
+## Integración con el núcleo de simulación (planificada)
 
-El núcleo debe calcular el Índice de Integridad en cada ronda o al finalizar la negociación.  Este índice se incluirá en los informes generados por el simulador y servirá para:
+> **Nota:** El cálculo automático del Índice de Integridad es una **capacidad planificada**, no una función del prototipo actual.  El núcleo existente (`hub_optimus_simulator.py`) no calcula este índice; su salida actual se limita a `status`, `rounds`, `history` y `detail`.
+
+Una vez implementada esta integración, el núcleo calculará el Índice de Integridad en cada ronda o al finalizar la negociación.  Este índice se incluirá en los informes generados por el simulador y servirá para:
 
 * Alertar a los usuarios de acuerdos que aparentan éxito pero presentan baja integridad (falsos éxitos).
 * Comparar distintas políticas o estrategias bajo un marco común.

@@ -16,18 +16,18 @@ Contar con recursos computacionales avanzados no habilita al sistema a **corromp
 
 ## 3. Arquitectura en capas
 
-HUB_Optimus se compone de varias capas claramente definidas:
+HUB_Optimus se compone de varias capas claramente definidas.  **Solo la capa 0 está implementada en el prototipo actual**; las capas 1–3 son objetivos de diseño planificados.
 
-1. **Núcleo (Layer 0)** – Motor de simulación minimalista que ejecuta rondas de negociación, registra historiales y aplica criterios de éxito.  Esta capa implementa la **Carta del Núcleo** y es inmutable en su filosofía.
-2. **Capas de Evaluación (Layer 1)** – Sistemas como el **Índice de Integridad** que miden la calidad de las propuestas y detectan falsos éxitos.  Incluyen métricas de estabilidad, transparencia y alineación de incentivos.
-3. **Capas de Extensión (Layer 2)** – Integraciones con bibliotecas de negociación (NegMAS), orquestadores multi‑agente (CrewAI) o protocolos de intercambio (ANEX).  Se conectan mediante APIs que respetan las reglas del núcleo; aportan funcionalidad adicional pero no alteran los principios.
-4. **Interfaces de Usuario (Layer 3)** – CLIs, GUIs o servicios web que permiten a usuarios no técnicos configurar escenarios, visualizar resultados y aprender.  Deben ser accesibles, multilingües y neutrales en su presentación.
+1. **Núcleo (Layer 0)** *(implementado)* – Motor de simulación minimalista que ejecuta rondas de negociación, registra historiales y aplica criterios de éxito.  Esta capa implementa la **Carta del Núcleo** y es inmutable en su filosofía.
+2. **Capas de Evaluación (Layer 1)** *(planificado)* – Sistemas como el **Índice de Integridad** que medirán la calidad de las propuestas y detectarán falsos éxitos.  Incluirán métricas de estabilidad, transparencia y alineación de incentivos.
+3. **Capas de Extensión (Layer 2)** *(planificado)* – Integraciones con bibliotecas de negociación (NegMAS), orquestadores multi‑agente (CrewAI) o protocolos de intercambio (ANEX).  Se conectarán mediante APIs que respeten las reglas del núcleo; aportarán funcionalidad adicional sin alterar los principios.
+4. **Interfaces de Usuario (Layer 3)** *(planificado)* – CLIs, GUIs o servicios web que permitirán a usuarios no técnicos configurar escenarios, visualizar resultados y aprender.  Deberán ser accesibles, multilingües y neutrales en su presentación.
 
 ## 4. Seguridad y Transparencia
 
 La seguridad es un pilar del manifiesto, no un accesorio.  HUB_Optimus incorpora:
 
-* **Criptografía post‑cuántica** (MLKEM/Kyber) para proteger el intercambio de propuestas durante las simulaciones.  Esto garantiza que las negociaciones en entornos sensibles no puedan ser interceptadas ni manipuladas.
+* **Criptografía post‑cuántica** (MLKEM/Kyber) *(planificado)* – se planea proteger el intercambio de propuestas con criptografía post-cuántica.  Esta funcionalidad no está implementada en el prototipo actual.
 * **Auditoría completa**: todos los algoritmos, evaluaciones y resultados son auditables.  No hay cajas negras.  El software libre y abierto es la base del proyecto.
 * **Gestión de permisos**: los modos didáctico y funcional limitan el acceso y la automatización de funciones críticas para evitar mal uso.
 

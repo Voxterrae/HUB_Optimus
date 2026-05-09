@@ -1,6 +1,8 @@
 # Guía de Uso del Núcleo de Simulación de HUB_Optimus
 
-Este documento explica cómo utilizar el núcleo de simulación prototípico que acompaña a HUB_Optimus.  El propósito de este núcleo es ofrecer una base de código mínima pero funcional para cargar escenarios, asignar políticas básicas a actores, ejecutar rondas de negociación y evaluar condiciones de éxito.  A partir de esta base se podrán incorporar políticas más sofisticadas, cifrado de comunicaciones y métricas de evaluación como el **Índice de Integridad**.
+Este documento explica cómo utilizar el núcleo de simulación prototípico que acompaña a HUB_Optimus.  El propósito de este núcleo es ofrecer una base de código mínima pero funcional para cargar escenarios, asignar políticas básicas a actores, ejecutar rondas de negociación y evaluar condiciones de éxito.
+
+> **Alcance actual:** El prototipo implementa carga de escenarios, políticas de oferta simples y un informe JSON con `status`, `rounds`, `history` y `detail`.  Funcionalidades como el **Índice de Integridad**, el cifrado de comunicaciones y políticas de negociación avanzadas son **ampliaciones planificadas** (ver sección 4), no características del núcleo actual.
 
 ## Archivos principales
 
@@ -86,7 +88,7 @@ El módulo `hub_optimus_simulator.py` está diseñado para ser extensible.  Pued
 El núcleo es intencionadamente minimalista.  Algunas direcciones de ampliación recomendadas son:
 
 1. **Integración de bibliotecas de negociación** como NegMAS para estrategias más sofisticadas.  Esto debe hacerse a través de módulos de extensión que respeten la Carta del Núcleo.
-2. **Incorporación de cifrado** (ver `hub_optimus_kyber_integration_demo.py`) para intercambiar propuestas de forma segura entre actores.
+2. **Incorporación de cifrado post-cuántico** (p. ej., MLKEM/Kyber) para intercambiar propuestas de forma segura entre actores.  Esta integración es un objetivo planificado; no existe aún ningún módulo de cifrado en el repositorio.
 3. **Índice de Integridad**: implementar el cálculo automático del índice definido en `INTEGRITY_SCORING_SYSTEM.md` y añadirlo al informe de salida.
 4. **Interfaz gráfica o web**: crear una CLI más amigable o un panel web para seleccionar escenarios, actores y parámetros sin necesidad de modificar archivos a mano.
 

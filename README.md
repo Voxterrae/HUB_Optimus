@@ -97,14 +97,21 @@ HUB_Optimus exists to **break that cycle** by evaluating scenarios **before** de
 ---
 
 ## The simulator
-The scenario simulator:
-- evaluates decisions and events,
-- classifies risk and stability,
-- detects false positives,
-- proposes non-coercive corrective options,
-- learns from failures and successes.
 
-It **does not predict outcomes**. It evaluates **structural soundness**.
+**Current prototype** (`hub_optimus_simulator.py` + `run_scenario.py`):
+- loads and validates scenario files against a JSON schema,
+- runs round-based negotiation with configurable actors and policies,
+- checks simple offer-based success criteria,
+- produces a deterministic JSON report (`status`, `rounds`, `history`, `detail`).
+
+**Framework design objectives** (not yet implemented in the runtime):
+- evaluate incentive alignment and sequencing,
+- classify long-term stability risk,
+- detect false successes (agreements that appear to succeed but carry systemic instability),
+- propose non-coercive corrective options,
+- support iterative meta-learning from historical scenario outcomes.
+
+It **does not predict outcomes**. The current runtime evaluates whether a simple configurable condition is met. The broader **structural evaluation** capabilities are part of the project vision described in the governance and methodology documents.
 
 Start here:
 - [v1_core/workflow/README.md](v1_core/workflow/README.md)

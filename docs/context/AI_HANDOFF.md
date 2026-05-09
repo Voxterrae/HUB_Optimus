@@ -41,23 +41,25 @@ No action until CI, collaborator friction, regression, or user request creates a
 
 ## AI Sync Block
 
-Date: 2026-05-08
-Source: Codex execution for GitHub issue #1577
-Repo state: governance protocol merged to main
-Branch: see active GitHub issue or PR; `main` is the source of truth after merge
+Date: 2026-05-09
+Source: Copilot execution for issue "clarify simulator capabilities vs. framework objectives"
+Repo state: documentation-only PR on branch `copilot/issue-1-clarify-simulator-capabilities`
 Last merged PR: #1578
-Active issue: none
-Decision made: add persistent repo-level handoff protocol for ChatGPT/Codex sync
-Reason: align AI work through GitHub state instead of fragile chat-memory synchronization
+Active issue: clarify implemented simulator capabilities versus planned/conceptual framework objectives
+Decision made: clarify in documentation that only Layer 0 (core kernel) is implemented; Layers 1–3, integrity scoring, false-success detection, long-term stability scoring, cryptographic exchange, and corrective option generation are planned objectives
+Reason: README.md and manifesto documents were overclaiming runtime capabilities not yet implemented in `hub_optimus_simulator.py` or `run_scenario.py`
 Files changed:
-- AGENTS.md
-- docs/context/AI_HANDOFF.md
+- README.md (The simulator section)
+- INTEGRITY_SCORING_SYSTEM.md (integration section — ES)
+- INTEGRITY_SCORING_SYSTEM_EN.md (integration section — EN)
+- TECHNICAL_MANIFESTO.md (sections 3 and 4 — ES)
+- TECHNICAL_MANIFESTO_EN.md (sections 3 and 4 — EN)
+- SIMULATION_README.md (intro paragraph and kyber reference — ES)
 Validation:
-- `git diff --check` passed
-- `python tools/check_mojibake.py AGENTS.md docs/context/AI_HANDOFF.md` passed
-- `python -m pytest -q` passed, 42 tests
-Risks: low; documentation-only change
-Next action: observe CI and collaborator friction; open scoped issue only when signal appears
+- `python tools/check_mojibake.py` passed on all modified files
+- `python -m pytest -q` passed, 46 tests
+Risks: low; documentation-only change; no runtime, CI, schema, or benchmark changes
+Next action: observe CI link-check results; no further changes unless signal appears
 Out of scope:
 - runtime changes
 - CI changes
