@@ -3,11 +3,16 @@
 HUB_Optimus is a structured evaluation system protected under applicable
 copyright, trademark, and patent-pending frameworks.
 
+This is a publicly visible repository with restricted rights. Contribution and use
+are governed by this notice; public visibility does not grant an unrestricted
+license, commercial authorization, or permission to create competing derivative
+systems.
+
 ## 1. Scope
 This repository contains materials with different legal statuses:
 - Immutable Kernel (protected)
 - Operational Method (restricted)
-- Reference Documentation (limited open use)
+- Reference Documentation (limited public reference use)
 - Examples & Scenarios (non-commercial)
 
 ## 2. Immutable Kernel

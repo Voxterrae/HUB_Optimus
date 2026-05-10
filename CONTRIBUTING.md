@@ -2,8 +2,9 @@
 
 Thank you for your interest in contributing to HUB_Optimus.
 
-HUB_Optimus is open-source by design, but **Kernel influence is integrity-gated**.
-Use is open. Contribution is structured. The Kernel is protected.
+HUB_Optimus is a publicly visible repository with restricted rights; contribution
+and use are governed by [IP_NOTICE.md](IP_NOTICE.md).
+Contribution is structured. The Kernel is protected.
 
 ---
 
@@ -40,7 +41,7 @@ The active Kernel and simulator.
 
 ## 2.1) Contributor zones
 
-### Open zones (contributors welcome, no mandatory review gate)
+### Lower-friction zones (contributors welcome, no mandatory review gate)
 
 | Path | What lives here |
 |---|---|
@@ -190,5 +191,10 @@ If sensitive data is accidentally committed:
 ---
 
 ## 9) License
-Contributions are accepted under the repository license.
-If no license is defined yet, contributions are assumed to be offered for inclusion under a future open-source license chosen by the maintainers.
+Contributions are accepted for review and possible inclusion under the rights posture
+defined in [IP_NOTICE.md](IP_NOTICE.md).
+
+Submitting a contribution does not create an unrestricted license, authorize commercial
+use, permit competing derivative systems, or imply adoption of an OSI-compatible
+open-source license. Any future licensing change must be explicit in repository
+documentation.
