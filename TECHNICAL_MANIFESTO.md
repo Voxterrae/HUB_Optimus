@@ -28,7 +28,7 @@ HUB_Optimus se compone de varias capas claramente definidas.  **Solo la capa 0 e
 La seguridad es un pilar del manifiesto, no un accesorio.  HUB_Optimus incorpora:
 
 * **Criptografía post‑cuántica** (MLKEM/Kyber) *(planificado)* – se planea proteger el intercambio de propuestas con criptografía post-cuántica.  Esta funcionalidad no está implementada en el prototipo actual.
-* **Auditoría completa**: todos los algoritmos, evaluaciones y resultados son auditables.  No hay cajas negras.  El software libre y abierto es la base del proyecto.
+* **Auditoría completa**: todos los algoritmos, evaluaciones y resultados son auditables.  No hay cajas negras.  La visibilidad pública del repositorio debe coexistir con la postura de derechos restringidos definida en `IP_NOTICE.md`.
 * **Gestión de permisos**: los modos didáctico y funcional limitan el acceso y la automatización de funciones críticas para evitar mal uso.
 
 ## 5. Mejora Incremental y Comunidad
@@ -43,7 +43,12 @@ El éxito global de HUB_Optimus radica en su comunidad: académicos, mediadores,
 
 ## 6. Responsabilidad y Licenciamiento
 
-HUB_Optimus se distribuye bajo licencias de software libre que permiten su uso y adaptación, siempre y cuando se respeten los principios del proyecto.  La responsabilidad última del uso recae en los implementadores y operadores; el equipo de desarrollo promueve usos éticos y se reserva el derecho de denunciar implementaciones que violen los principios de integridad y estabilidad.
+HUB_Optimus se publica como repositorio visible con derechos restringidos. Su uso,
+adaptación, contribución y cualquier autorización comercial se rigen por `IP_NOTICE.md`,
+no por una licencia de software libre u open source general. La responsabilidad última
+del uso recae en los implementadores y operadores; el equipo de desarrollo promueve
+usos éticos y se reserva el derecho de denunciar implementaciones que violen los
+principios de integridad y estabilidad.
 
 ## 7. Visión a futuro
 
@@ -51,7 +56,7 @@ A largo plazo, HUB_Optimus pretende ofrecer:
 
 * Un **repositorio de escenarios validados** que sirva como biblioteca de casos de estudio.
 * Integraciones con herramientas de visualización y análisis de datos para explorar dinámicas socio‑políticas de forma interactiva.
-* Un **fork empresarial** que, respetando los principios, ofrezca soporte multicliente, escalabilidad y cumplimiento normativo para organizaciones que deseen incorporar el sistema en sus procesos de mediación profesional.
+* Una **línea empresarial autorizada** que, respetando los principios y `IP_NOTICE.md`, ofrezca soporte multicliente, escalabilidad y cumplimiento normativo para organizaciones que deseen incorporar el sistema en sus procesos de mediación profesional.
 
 ## Conclusión
 

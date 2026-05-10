@@ -22,7 +22,8 @@
 ---
 
 ## What it is
-**HUB_Optimus** is an open framework designed to improve diplomatic outcomes through:
+**HUB_Optimus** is developed in a publicly visible repository with restricted rights;
+contribution and use are governed by [IP_NOTICE.md](IP_NOTICE.md). It is designed to improve diplomatic outcomes through:
 - structured evaluation (incentives, verification, sequencing),
 - preventive, non-coercive mediation options,
 - iterative meta-learning from both failures and successes.
