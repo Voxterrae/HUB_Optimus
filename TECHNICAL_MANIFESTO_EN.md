@@ -16,18 +16,18 @@ Possessing advanced computational resources does not enable the system to **corr
 
 ## 3. Layered architecture
 
-HUB_Optimus is composed of several clearly defined layers:
+HUB_Optimus is composed of several clearly defined layers.  **Only Layer 0 is implemented in the current prototype**; Layers 1–3 are planned design objectives.
 
-1. **Core (Layer 0)** – A minimalist simulation engine that runs negotiation rounds, records histories and applies success criteria.  This layer implements the **Core Charter** and is immutable in its philosophy.
-2. **Evaluation layers (Layer 1)** – Systems such as the **Integrity Index** that measure the quality of proposals and detect false positives.  They include metrics for stability, transparency and alignment of incentives.
-3. **Extension layers (Layer 2)** – Integrations with negotiation libraries (NegMAS), multi‑agent orchestrators (CrewAI) or exchange protocols (ANEX).  They connect via APIs that respect the core rules; they provide additional functionality but do not alter the principles.
-4. **User interfaces (Layer 3)** – CLIs, GUIs or web services that allow non‑technical users to configure scenarios, visualise results and learn.  They should be accessible, multilingual and neutral in their presentation.
+1. **Core (Layer 0)** *(implemented)* – A minimalist simulation engine that runs negotiation rounds, records histories and applies success criteria.  This layer implements the **Core Charter** and is immutable in its philosophy.
+2. **Evaluation layers (Layer 1)** *(planned)* – Systems such as the **Integrity Index** that will measure the quality of proposals and detect false positives.  They will include metrics for stability, transparency and alignment of incentives.
+3. **Extension layers (Layer 2)** *(planned)* – Integrations with negotiation libraries (NegMAS), multi‑agent orchestrators (CrewAI) or exchange protocols (ANEX).  They will connect via APIs that respect the core rules; they will provide additional functionality without altering the principles.
+4. **User interfaces (Layer 3)** *(planned)* – CLIs, GUIs or web services that will allow non‑technical users to configure scenarios, visualise results and learn.  They should be accessible, multilingual and neutral in their presentation.
 
 ## 4. Security and Transparency
 
 Security is a pillar of the manifesto, not an accessory.  HUB_Optimus incorporates:
 
-* **Post‑quantum cryptography** (MLKEM/Kyber) to protect the exchange of proposals during simulations.  This ensures that negotiations in sensitive environments cannot be intercepted or manipulated.
+* **Post‑quantum cryptography** (MLKEM/Kyber) *(planned)* – post-quantum protection of proposal exchange is a planned capability.  This feature is not implemented in the current prototype.
 * **Complete auditability** – all algorithms, evaluations and results are auditable.  There are no black boxes.  Free and open‑source software is the foundation of the project.
 * **Permission management** – the didactic and functional modes limit access and automation of critical functions to prevent misuse.
 
