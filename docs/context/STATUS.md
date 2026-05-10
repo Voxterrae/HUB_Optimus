@@ -13,6 +13,8 @@
 - If repository docs conflict, **this file (`docs/context/STATUS.md`) wins**.
 - For HUB_Optimus v1, the canonical source-of-truth is `v1_core/languages/es/`.
 - English and other languages are reference or parity translations unless explicitly stated otherwise.
+- Local labels such as "English source" or EN/ES cross-links are navigation/parity aids only;
+  they do not redefine canonical authority for `v1_core`.
 
 **Planned switch (later, not now):**
 - Once en reaches stable parity, we may declare **en as canonical** for a future version (v1.1 or v2).

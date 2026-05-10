@@ -1,9 +1,10 @@
 """
 Script to audit and synchronize translations in the HUB_Optimus documentation.
 
-This tool compares the set of English documentation files with the available translations
-in each language directory under ``docs``.  It reports missing translations, helping
-contributors keep all language versions up to date with the English source.
+This tool compares the set of root-level documentation files with the available
+translations in each language directory under ``docs``.  It reports missing
+translations for the docs baseline only; it does not define canonical authority for
+``v1_core``, which is governed by ``docs/context/STATUS.md``.
 
 Usage:
     python i18n_sync.py --docs-dir docs
@@ -22,10 +23,10 @@ from typing import Dict, List
 
 
 def gather_english_files(base_dir: str, languages: List[str]) -> List[str]:
-    """Collect relative paths of all English documentation files.
+    """Collect relative paths of root-level documentation files.
 
     This function traverses ``base_dir`` and returns a list of relative file paths for
-    Markdown files that are part of the English source (i.e. not located in language
+    Markdown files that are part of the docs baseline (i.e. not located in language
     subdirectories).  It skips directories named with two‑letter codes defined in
     ``languages``.
 
@@ -34,7 +35,7 @@ def gather_english_files(base_dir: str, languages: List[str]) -> List[str]:
         languages: A list of two‑letter language folder names to skip.
 
     Returns:
-        A list of relative file paths for English Markdown files.
+        A list of relative file paths for baseline Markdown files.
     """
     english_files: List[str] = []
     for root, dirs, files in os.walk(base_dir):
@@ -51,7 +52,7 @@ def gather_english_files(base_dir: str, languages: List[str]) -> List[str]:
 
 
 def audit_translations(docs_dir: str) -> Dict[str, List[str]]:
-    """Detect missing translation files relative to the English documentation.
+    """Detect missing translation files relative to the docs baseline.
 
     Args:
         docs_dir: The root documentation directory.
@@ -76,7 +77,7 @@ def audit_translations(docs_dir: str) -> Dict[str, List[str]]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Check documentation translations against the English source.")
+    parser = argparse.ArgumentParser(description="Check documentation translations against the docs baseline.")
     parser.add_argument(
         "--docs-dir",
         dest="docs_dir",

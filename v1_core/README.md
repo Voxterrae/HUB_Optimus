@@ -1,4 +1,6 @@
-> 🇬🇧 English source: [../README.md](../README.md)
+> Fuente canónica v1: [languages/es](./languages/es)
+> EN es traducción de paridad/referencia. Si hay conflicto de política lingüística,
+> [docs/context/STATUS.md](../docs/context/STATUS.md) prevalece.
 
 # Workflow (ES)
 
@@ -44,8 +46,9 @@ Este directorio contiene el **flujo operativo** para ejecutar simulaciones diplo
 - Flujo operativo (ES): [../../languages/es/03_flujo_operativo.md](./languages/es/03_flujo_operativo.md)
 
 ## Convención de idioma
-- EN es la referencia original.
-- ES se mantiene en paralelo para uso y lectura.
-- Cada documento incluye un enlace a su fuente EN/ES al inicio.
+- ES es la fuente canónica para `v1_core`.
+- EN es traducción de paridad/referencia, no fuente canónica.
+- Si hay conflicto entre documentos, prevalece `docs/context/STATUS.md`.
+- Los enlaces EN/ES al inicio de documentos son navegación de paridad; no cambian la autoridad canónica.
 
 Siguiente: [./04_scenario_template.md](./workflow/04_scenario_template.md)
