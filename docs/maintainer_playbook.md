@@ -21,6 +21,7 @@ Quick-reference guide for repository maintainers. For full governance details se
 ### Health Ledger
 
 Issue **#93** stores one weekly repository health snapshot comment per `repo-health-summary` run every Monday at 08:00 UTC.
+It also serves as the merge-cycle backlog tracker for active contributor-safe lanes.
 
 ### Manual Health Check
 
@@ -65,8 +66,9 @@ Weekly Repo Health Summary → Ledger (#93)
 | Issue | Purpose |
 |---|---|
 | #93 | Repository health ledger |
-| #94 | Contributor task tracking |
-| #118 | Feature request: scenario aggregation |
+| #94 | Mojibake cleanup batch A (observation lane) |
+| #1535 | Mutations: basic ceasefire pack (next execution lane) |
+| #1536 | Benchmark candidate promotion (blocked pending candidate completion) |
 
 ---
 

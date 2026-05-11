@@ -22,6 +22,7 @@ jobs:
 
     steps:
       # Keep this workflow metadata-only: do not checkout or execute PR code.
+      # Any expansion beyond metadata actions must be a separate reviewed change.
       - name: Label PR for review
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

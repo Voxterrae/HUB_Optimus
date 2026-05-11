@@ -66,3 +66,29 @@ Out of scope:
 - roadmap changes
 - LLM-as-judge
 - dashboards
+
+## AI Sync Block
+
+Date: 2026-05-11
+Source: Codex execution for GitHub issue #93
+Repo state: ledger/backlog tracker references aligned with latest merge-cycle update comments
+Branch: `copilot/update-project-state-ledger`
+Last merged PR: unchanged (use GitHub as source of truth)
+Active issue: #93
+Decision made: document backlog tracker lanes (#94, #1535, #1536) in maintainer playbook and reinforce quarantine metadata-only guardrail
+Reason: keep project-state ledger guidance synchronized with latest maintainer updates while preserving write-safe quarantine behavior
+Files changed:
+- .github/workflows/pr-quarantine.yml
+- docs/maintainer_playbook.md
+- docs/context/AI_HANDOFF.md
+Validation:
+- `python tools/check_mojibake.py docs/maintainer_playbook.md` passed
+- `git diff --check` passed
+Risks: low; docs/workflow-comment only
+What remains pending:
+- continue weekly automated issue #93 health snapshots
+- execute next lane tracked in #93 (#1535) separately
+What should not be done yet:
+- do not expand quarantine workflow to checkout or execute PR code without separate reviewed scope
+- do not mix runtime/schema/benchmark changes into this tracking update
+Next action: monitor issue #93 merge-cycle updates and keep tracker references current when lanes change
