@@ -126,8 +126,9 @@ Link-checking is enforced via GitHub Actions (Lychee).
 ---
 
 ## Contact / Collaboration
+Telegram collaborator: `@DevHia`
+
 If you want to collaborate (scenarios, methodology, review), open an issue or pull request including:
-- Telegram collaborator: `@DevHia`
 - intended use-case (training / policy review / research),
 - target domain,
 - constraints (time, verification, actors),
