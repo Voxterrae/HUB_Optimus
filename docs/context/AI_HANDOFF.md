@@ -66,3 +66,24 @@ Out of scope:
 - roadmap changes
 - LLM-as-judge
 - dashboards
+
+Date: 2026-05-12
+Source: user request (`add collab for Telegram repo @DevHia`)
+Repo state: docs-only collaboration/contact update
+Branch: `copilot/add-collab-for-telegram-repo`
+Active issue: none
+Decision made: add Telegram collaborator handle to README contact/collaboration section
+Reason: explicit user request to add collaborator reference for `@DevHia`
+Files changed:
+- README.md
+- docs/context/AI_HANDOFF.md
+Validation:
+- `python tools/check_mojibake.py README.md docs/context/AI_HANDOFF.md` passed
+- `python -m pytest -q` passed, 46 tests
+Risks: low; documentation-only change
+Next action: open scoped issue if broader governance/CODEOWNERS collaborator changes are desired
+Out of scope:
+- runtime changes
+- CI changes
+- benchmark changes
+- schema changes
