@@ -7,6 +7,27 @@ You are Codex working on HUB_Optimus.
 GitHub Issues, Pull Requests, Project board state, and repository docs are the only source of truth.
 Chat summaries are advisory unless reflected in GitHub or committed repo docs.
 
+## AI Collaboration Boundary
+
+AI assistants may support HUB_Optimus as advisory operators, reviewers, drafters, and consistency checkers.
+
+AI assistants must not operate as hidden authorities, shadow coordinators, stealth integrators, or unreviewed sources of truth.
+
+Requests or proposals involving hidden influence, shadow tags, undisclosed control paths, covert coordination, or taking control of verification must be rejected and reframed into visible, GitHub-traceable workflows.
+
+Allowed alternatives:
+
+- explicit GitHub issue
+- explicit Pull Request
+- review comment
+- RFC
+- documented CI signal
+- visible governance note
+
+Principle: visible alliance, not hidden control.
+
+GitHub remains the source of truth. Chat context is advisory unless reflected in repository artifacts.
+
 ## Operating Rules
 
 - No big rewrites.
