@@ -1,6 +1,6 @@
-> 🇬🇧 English source: [docs/00_start_here.md](../00_start_here.md)
+> 🇬🇧 Englische Quelle: [docs/00_start_here.md](../00_start_here.md)
 
-# HUB_Optimus — Start Here (DE)
+# HUB_Optimus — Start hier (DE)
 
 Schnelle diplomatische "Siege" zu erzielen ist leicht. **Verifizierbare Stabilität** mit **ausgerichteten Anreizen** aufzubauen, ist das Schwierige.  
 HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie irreversibel werden.
@@ -13,7 +13,7 @@ HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie
 - Konsensprozess: [governance/CONSENSUS_PROCESS.md](governance/CONSENSUS_PROCESS.md)
 - System-Kustodianship: [governance/CUSTODIANSHIP.md](governance/CUSTODIANSHIP.md)
 - Name & Identität: [governance/TRADEMARKS.md](governance/TRADEMARKS.md)
-- Trust Layer (Verifikation): [governance/TRUST_LAYER.md](governance/TRUST_LAYER.md)
+- Vertrauensebene (Verifikation): [governance/TRUST_LAYER.md](governance/TRUST_LAYER.md)
 - Evaluationsstandard: [governance/EVALUATION_STANDARD.md](governance/EVALUATION_STANDARD.md)
 - Szenario-Schema: [governance/SCENARIO_SCHEMA.md](governance/SCENARIO_SCHEMA.md)
 - Legitimitätsmodell: [governance/LEGITIMACY_MODEL.md](governance/LEGITIMACY_MODEL.md)
@@ -23,13 +23,13 @@ HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie
 > ✅ **Schnellstart**
 >
 > - ▶ **Start (DE):** [Startanleitung](00_start_here.md)
-> - ▶ **Start (EN source):** [English entry](../00_start_here.md)
+> - ▶ **Start (EN-Quelle):** [Englischer Einstieg](../00_start_here.md)
 
 ---
 
-## Repo-Struktur (Quick Map)
+## Repo-Struktur (Schnellüberblick)
 - [docs/](../) → Guides zum Orientieren und Starten (Haupteinstieg).
-- [v1_core/](../../v1_core/) → Kernel: Workflow, Templates und Szenarien (wo die "Simulation" stattfindet).
+- [v1_core/](../../v1_core/) → Kernel: Arbeitsablauf, Vorlagen und Szenarien (wo die "Simulation" stattfindet).
 - [legacy/](../../legacy/) → Historisches/experimentelles Material.
 
 ---
@@ -44,15 +44,15 @@ HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie
 
 ## Was du hier in 2–10 Minuten bekommst
 - Eine klare Methode, **Narrativ** von **Struktur** zu trennen.
-- Warnsignale, um **False Positives** zu erkennen ("wirkt wie Frieden", belohnt aber Verstöße).
-- Wiederverwendbare Templates für Szenarien, Vereinbarungen und Evaluation.
-- Einen Continuous-Improvement-Mechanismus (Meta-Learning), um rigoros zu iterieren.
+- Warnsignale, um **Fehlalarme** zu erkennen ("wirkt wie Frieden", belohnt aber Verstöße).
+- Wiederverwendbare Vorlagen für Szenarien, Vereinbarungen und Evaluation.
+- Einen kontinuierlichen Verbesserungsmechanismus (Meta-Lernen), um rigoros zu iterieren.
 
 ---
 
 ## Nützliche Links (Kernel)
-- Szenario-Template (ES): [04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
-- Meta-Learning (ES): [05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
+- Szenario-Vorlage (ES): [04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
+- Meta-Lernen (ES): [05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
 - Szenario 001 (ES): [scenario_001_partial_ceasefire.md](../../v1_core/workflow/es/scenario_001_partial_ceasefire.md)
 - Szenario 002 (ES): [scenario_002_verified_ceasefire.md](../../v1_core/workflow/es/scenario_002_verified_ceasefire.md)
 
@@ -65,7 +65,7 @@ HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie
 
 ---
 
-## Prinzipien (Executive Version)
+## Prinzipien (Kurzfassung)
 - **Stabilität > Optik**  
   Entscheidend ist Stabilität mittel-/langfristig, nicht die Ankündigung.
 
@@ -85,23 +85,23 @@ Sende diesen Link:
 - [docs/de/00_start_here.md](00_start_here.md)
 
 <!-- HUB:TRACKS -->
-## Choose your path
+## Wähle deinen Pfad
 
-**90 seconds (executive):**
-- What this is / isn't: [Kernel](governance/KERNEL.md)
-- How evaluation works: [Evaluation Standard](governance/EVALUATION_STANDARD.md)
-- How scenarios are defined: [Scenario Schema](governance/SCENARIO_SCHEMA.md)
+**90 Sekunden (Kurzfassung):**
+- Worum es geht / worum es nicht geht: [Kernel](governance/KERNEL.md)
+- Wie die Bewertung funktioniert: [Evaluationsstandard](governance/EVALUATION_STANDARD.md)
+- Wie Szenarien definiert werden: [Szenario-Schema](governance/SCENARIO_SCHEMA.md)
 
-**20 minutes (practitioner):**
-- Core spec (ES, canonical v1):  
+**20 Minuten (Praxis):**
+- Kernspezifikation (ES, kanonisches v1):  
   [01_base_declaracion](../../v1_core/languages/es/01_base_declaracion.md)
   [02_arquitectura_base](../../v1_core/languages/es/02_arquitectura_base.md)
   [03_flujo_operativo](../../v1_core/languages/es/03_flujo_operativo.md)
-- English reference:  
+- Englische Referenz:  
   [01_base_declaracion (EN)](../../v1_core/languages/en/01_base_declaracion.md)
 
-**Try it (hands-on):**
-- Template: [Scenario Template](../../v1_core/workflow/04_scenario_template.md)
-- Examples: [Scenario 001](../../v1_core/workflow/scenario_001_partial_ceasefire.md), [Scenario 002](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
-- Learning loop: [Meta Learning](../../v1_core/workflow/05_meta_learning.md)
+**Praktischer Test:**
+- Vorlage: [Szenario-Vorlage](../../v1_core/workflow/04_scenario_template.md)
+- Beispiele: [Szenario 001](../../v1_core/workflow/scenario_001_partial_ceasefire.md), [Szenario 002](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
+- Lernschleife: [Meta-Lernen](../../v1_core/workflow/05_meta_learning.md)
 <!-- /HUB:TRACKS -->
