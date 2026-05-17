@@ -4,6 +4,14 @@
 [![Release](https://img.shields.io/github/v/release/Voxterrae/HUB_Optimus)](https://github.com/Voxterrae/HUB_Optimus/releases/latest)
 [![License](https://img.shields.io/badge/license-see%20IP__NOTICE-blue)](IP_NOTICE.md)
 
+<p align="center">
+  <img src="assets/brand/hero/hub-optimus-hero.jpg" alt="HUB_Optimus — Human × Machine Governance Interface" width="100%" />
+</p>
+
+<p align="center">
+  <strong>Reality → Evidence → Inference → Narrative → Operational Signal</strong>
+</p>
+
 **Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.**
 
 **Languages / Idiomas:**
