@@ -1,5 +1,13 @@
 > 🇬🇧 English version: [docs/00_start_here.md](../00_start_here.md)
 
+<p align="center">
+  <img src="../../assets/brand/logo/hub-optimus-logo-lockup.jpg" alt="HUB_Optimus" width="420" />
+</p>
+
+<p align="center">
+  <strong>Realidad → Evidencia → Inferencia → Narrativa → Señal operativa</strong>
+</p>
+
 # HUB_Optimus — Start Here (ES)
 
 Ganar "victorias" diplomáticas rápidas es fácil. Construir **estabilidad verificable** con **incentivos alineados** es lo difícil.  
@@ -107,7 +115,6 @@ Envía este enlace:
 - Examples: [Scenario 001](../../v1_core/workflow/scenario_001_partial_ceasefire.md), [Scenario 002](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
 - Learning loop: [Meta Learning](../../v1_core/workflow/05_meta_learning.md)
 <!-- /HUB:TRACKS -->
-
 
 
 

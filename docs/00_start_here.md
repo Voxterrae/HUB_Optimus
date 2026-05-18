@@ -1,3 +1,11 @@
+<p align="center">
+  <img src="../assets/brand/logo/hub-optimus-logo-lockup.jpg" alt="HUB_Optimus" width="420" />
+</p>
+
+<p align="center">
+  <strong>Reality → Evidence → Inference → Narrative → Operational Signal</strong>
+</p>
+
 # Start Here — HUB_Optimus in 10 minutes
 
 > **Source-of-truth:** For HUB_Optimus v1, the canonical source is `v1_core/languages/es/`. English and other languages are reference or parity translations. If documentation conflicts, `docs/context/STATUS.md` is the authoritative governance record.
@@ -103,7 +111,6 @@ Next phases include:
 - multilingual synchronization,
 - quantitative evaluation model,
 - expanded scenario library.
-
 
 
 

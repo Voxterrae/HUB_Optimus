@@ -1,5 +1,13 @@
 > 🇬🇧 Englische Quelle: [docs/00_start_here.md](../00_start_here.md)
 
+<p align="center">
+  <img src="../../assets/brand/logo/hub-optimus-logo-lockup.jpg" alt="HUB_Optimus" width="420" />
+</p>
+
+<p align="center">
+  <strong>Realität → Evidenz → Schlussfolgerung → Narrativ → Operatives Signal</strong>
+</p>
+
 # HUB_Optimus — Start hier (DE)
 
 Schnelle diplomatische "Siege" zu erzielen ist leicht. **Verifizierbare Stabilität** mit **ausgerichteten Anreizen** aufzubauen, ist das Schwierige.  
