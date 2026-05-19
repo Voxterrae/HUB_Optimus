@@ -8,6 +8,11 @@ HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie
 ---
 
 ## Governance
+> Uebersetzungsstatus:
+> Diese Onboarding-Seite ist lokalisiert. Einige unten verlinkte Governance-Dokumente koennen weiterhin englische Mirrors sein.
+> Die kanonische Governance bleibt `docs/governance/`.
+> Jede Uebersetzung muss Bedeutung und normative Kraft erhalten.
+
 - Gründungsurkunde: [governance/CHARTER.md](governance/CHARTER.md)
 - Kernel (unveränderliche Prinzipien): [governance/KERNEL.md](governance/KERNEL.md)
 - Konsensprozess: [governance/CONSENSUS_PROCESS.md](governance/CONSENSUS_PROCESS.md)

@@ -8,6 +8,11 @@ HUB_Optimus existe para ayudar a evaluar escenarios y acuerdos **antes** de que 
 ---
 
 ## Gobernanza
+> Estado de traduccion:
+> Esta pagina de onboarding esta localizada. Algunos documentos de gobernanza enlazados abajo pueden seguir siendo espejos en ingles.
+> La gobernanza canonica sigue estando en `docs/governance/`.
+> Toda traduccion debe preservar significado y fuerza normativa.
+
 - Carta Fundacional: [governance/CHARTER.md](governance/CHARTER.md)
 - Kernel (principios inmutables): [governance/KERNEL.md](governance/KERNEL.md)
 - Proceso de Consenso: [governance/CONSENSUS_PROCESS.md](governance/CONSENSUS_PROCESS.md)
@@ -107,7 +112,6 @@ Envía este enlace:
 - Examples: [Scenario 001](../../v1_core/workflow/scenario_001_partial_ceasefire.md), [Scenario 002](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
 - Learning loop: [Meta Learning](../../v1_core/workflow/05_meta_learning.md)
 <!-- /HUB:TRACKS -->
-
 
 
 
