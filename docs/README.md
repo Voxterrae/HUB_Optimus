@@ -14,7 +14,7 @@ Canonical language policy is defined in [context/STATUS.md](context/STATUS.md). 
 | ca | [ca/00_start_here.md](ca/00_start_here.md) | progressive | not in the priority governance translation batch |
 | fr | [fr/00_start_here.md](fr/00_start_here.md) | progressive | not in the priority governance translation batch |
 | ru | [ru/00_start_here.md](ru/00_start_here.md) | progressive | not in the priority governance translation batch |
-| zh | [zh/governance/](zh/governance/) | stub | governance mirror/stub only; full translation pending |
+| zh | [zh/00_start_here.md](zh/00_start_here.md) | stub | onboarding stub only; governance mirror/stub only; full translation pending |
 | he | [he/00_start_here.md](he/00_start_here.md) | stub | governance mirror/stub only; full translation pending |
 
 Start here:
