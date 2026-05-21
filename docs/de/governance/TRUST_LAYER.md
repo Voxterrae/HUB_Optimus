@@ -1,129 +1,130 @@
-# HUB_Optimus — Trust Layer
+# HUB_Optimus — Vertrauensebene
 
-## Purpose
-The Trust Layer defines how HUB_Optimus evaluates **claims**, **commitments**, and **agreements** for operational reliability.
+## Zweck
+Die Vertrauensebene definiert, wie HUB_Optimus **Behauptungen**, **Verpflichtungen** und **Vereinbarungen** auf operative Zuverlässigkeit evaluiert.
 
-It does **not** evaluate intent, morality, or political legitimacy.
-It evaluates **verifiability**, **traceability**, and **structural trustworthiness**.
+Sie evaluiert **nicht** Absicht, Moral oder politische Legitimität.
+Sie evaluiert **Verifizierbarkeit**, **Nachvollziehbarkeit** und **strukturelle Vertrauenswürdigkeit**.
 
-## Core Principle
-A commitment that cannot be verified should not be treated as reliable, regardless of who makes it.
+## Kernprinzip
+Eine Verpflichtung, die nicht verifiziert werden kann, sollte nicht als zuverlässig behandelt werden, unabhängig davon, wer sie eingeht.
 
-Trust is not assumed.
-Trust is **earned through structure**.
-
----
-
-## Evidence Classes (A/B/C)
-### Class A — Verifiable Commitments (High trust)
-Characteristics:
-- Observable actions or states
-- Independent verification possible
-- Clear success/failure conditions
-- Time-bounded checkpoints
-
-Examples:
-- Agreements with inspection/monitoring mechanisms
-- Publicly auditable actions
-- Reversible steps with monitoring
-
-### Class B — Partially Verifiable Commitments (Conditional trust)
-Characteristics:
-- Some observable components
-- Limited verification scope
-- Ambiguous enforcement or coverage
-
-Examples:
-- Commitments with reporting but no independent verification
-- Conditional actions without defined penalties or rollback
-
-### Class C — Non-Verifiable Assertions (Low trust)
-Characteristics:
-- No external verification
-- Dependent on intent or goodwill
-- No measurable checkpoints
-
-Examples:
-- Verbal assurances
-- Statements of future intent without mechanisms
+Vertrauen wird nicht angenommen.
+Vertrauen wird **durch Struktur verdient**.
 
 ---
 
-## Trust Profile (how HUB_Optimus scores reliability)
-For any commitment, HUB_Optimus creates a **Trust Profile** using the following dimensions:
+## Nachweisklassen (A/B/C)
+### Klasse A — Verifizierbare Verpflichtungen (hohes Vertrauen)
+Merkmale:
+- Beobachtbare Handlungen oder Zustände
+- Unabhängige Verifikation möglich
+- Klare Erfolgs-/Fehlschlagsbedingungen
+- Zeitlich begrenzte Kontrollpunkte
 
-1) **Verifiability**
-- Can an independent actor verify the claim?
+Beispiele:
+- Vereinbarungen mit Inspektions-/Monitoring-Mechanismen
+- Öffentlich prüfbare Handlungen
+- Reversible Schritte mit Monitoring
 
-2) **Traceability**
-- Is there an audit trail (who/what/when/where)?
+### Klasse B — Teilweise verifizierbare Verpflichtungen (bedingtes Vertrauen)
+Merkmale:
+- Einige beobachtbare Komponenten
+- Begrenzter Verifikationsumfang
+- Mehrdeutige Durchsetzung oder Abdeckung
 
-3) **Independence**
-- Is verification independent from the claimant?
+Beispiele:
+- Verpflichtungen mit Berichterstattung, aber ohne unabhängige Verifikation
+- Bedingte Handlungen ohne definierte Sanktionen oder Rückabwicklung
 
-4) **Coverage**
-- Does verification cover the full commitment or only fragments?
+### Klasse C — Nicht verifizierbare Behauptungen (geringes Vertrauen)
+Merkmale:
+- Keine externe Verifikation
+- Abhängig von Absicht oder gutem Willen
+- Keine messbaren Kontrollpunkte
 
-5) **Recency**
-- How current is the evidence relative to the commitment window?
-
-6) **Reversibility**
-- Can the action be rolled back if verification fails?
-
-A commitment can be Class A but still weak if coverage/independence is poor.
-
----
-
-## Minimum Verification Protocol (MVP)
-A commitment is treated as "reliable enough to plan around" only if it includes:
-- A **clear observable outcome**
-- A **checkpoint schedule**
-- A **named verification method**
-- A **dispute pathway** (what happens if verification is contested)
-
----
-
-## Disputes and Degradation (non-coercive enforcement)
-HUB_Optimus does not enforce outcomes.
-It enforces **epistemic discipline**:
-
-- If verification fails → trust degrades.
-- If verification is blocked → trust degrades.
-- If evidence is partial → trust is conditional.
-- If evidence is independently confirmed → trust strengthens.
-
-This creates incentive pressure without coercion.
+Beispiele:
+- Mündliche Zusicherungen
+- Aussagen über künftige Absichten ohne Mechanismen
 
 ---
 
-## Anti-Gaming Rule
-"Paper compliance" (performative reporting without independent verification) is treated as Class B or C,
-even if presented as Class A.
+## Vertrauensprofil (wie HUB_Optimus Zuverlässigkeit bewertet)
+Für jede Verpflichtung erstellt HUB_Optimus ein **Vertrauensprofil** anhand der folgenden Dimensionen:
+
+1) **Verifizierbarkeit**
+- Kann ein unabhängiger Akteur die Behauptung verifizieren?
+
+2) **Nachvollziehbarkeit**
+- Gibt es eine Prüfspur (wer/was/wann/wo)?
+
+3) **Unabhängigkeit**
+- Ist die Verifikation unabhängig vom Anspruchsteller?
+
+4) **Abdeckung**
+- Deckt die Verifikation die gesamte Verpflichtung ab oder nur Fragmente?
+
+5) **Aktualität**
+- Wie aktuell ist der Nachweis im Verhältnis zum Verpflichtungszeitraum?
+
+6) **Reversibilität**
+- Kann die Handlung rückgängig gemacht werden, wenn die Verifikation scheitert?
+
+Eine Verpflichtung kann Klasse A sein und dennoch schwach bleiben, wenn Abdeckung/Unabhängigkeit mangelhaft ist.
 
 ---
 
-## Integration points
-- Scenario inputs should reference evidence using: `governance/SCENARIO_SCHEMA.md`
-- Evaluations should explicitly cite evidence class + trust profile dimensions using: `governance/EVALUATION_STANDARD.md`
+## Mindestprotokoll für Verifikation (MVP)
+Eine Verpflichtung wird nur dann als "zuverlässig genug für die Planung" behandelt, wenn sie Folgendes enthält:
+- Ein **klares beobachtbares Ergebnis**
+- Einen **Kontrollpunkt-Zeitplan**
+- Eine **benannte Verifikationsmethode**
+- Einen **Streitfallpfad** (was geschieht, wenn Verifikation bestritten wird)
 
 ---
 
-## Kernel access and anti-capture rules (hardening)
+## Streitfälle und Herabstufung (nicht zwangsausübende Durchsetzung)
+HUB_Optimus setzt keine Ergebnisse durch.
+Es setzt **epistemische Disziplin** durch:
 
-### Trust tiers (high-level)
-- Reader: may read and reference the system.
-- Contributor: may propose changes to non-Kernel materials under review.
-- Custodian: may approve governance-level changes under strict process.
+- Wenn Verifikation scheitert -> Vertrauen wird herabgestuft.
+- Wenn Verifikation blockiert wird -> Vertrauen wird herabgestuft.
+- Wenn Nachweise nur teilweise vorliegen -> Vertrauen ist bedingt.
+- Wenn Nachweise unabhängig bestätigt werden -> Vertrauen wird gestärkt.
 
-Direct modifications to Kernel documents require:
-1) explicit rationale referencing Kernel principles,
-2) consensus review per CONSENSUS_PROCESS,
-3) custodianship approval per CUSTODIANSHIP,
-4) synchronization across language mirrors.
+Dies erzeugt Anreizdruck ohne Zwang.
 
-### Anti-capture rule
-Attempts to:
-- introduce drift via translation,
-- rebrand the method while preserving claims,
-- convert governance into marketing,
-are treated as capture attempts and rejected.
+---
+
+## Anti-Gaming-Regel
+"Papier-Compliance" (performative Berichterstattung ohne unabhängige Verifikation) wird als Klasse B oder C behandelt,
+selbst wenn sie als Klasse A präsentiert wird.
+
+---
+
+## Integrationspunkte
+- Szenario-Eingaben sollten Nachweise über `governance/SCENARIO_SCHEMA.md` referenzieren.
+- Evaluationen sollten Nachweisklasse + Vertrauensprofil-Dimensionen über `governance/EVALUATION_STANDARD.md` ausdrücklich zitieren.
+
+---
+
+## Kernel-Zugriff und Anti-Vereinnahmungsregeln (Härtung)
+
+### Vertrauensstufen (allgemein)
+- Leser: dürfen das System lesen und referenzieren.
+- Beitragende: dürfen Änderungen an Nicht-Kernel-Materialien zur Prüfung vorschlagen.
+- Kustoden: dürfen Governance-Änderungen unter strengem Prozess genehmigen.
+
+### ## Kernel-Zugriff und Anti-Vereinnahmungsregeln (Härtung)
+Direkte Änderungen an Kernel-Dokumenten erfordern:
+1) ausdrückliche Begründung mit Bezug auf Kernel-Prinzipien,
+2) Konsensprüfung gemäß CONSENSUS_PROCESS,
+3) Zustimmung der Kustodianschaft gemäß CUSTODIANSHIP,
+4) Synchronisierung über Sprach-Mirrors hinweg.
+
+### Anti-Vereinnahmungsregel
+Versuche,
+- Drift durch Übersetzung einzuführen,
+- die Methode unter Beibehaltung ihrer Ansprüche umzubenennen,
+- Governance in Marketing umzuwandeln,
+werden als Vereinnahmungsversuche behandelt und zurückgewiesen.
