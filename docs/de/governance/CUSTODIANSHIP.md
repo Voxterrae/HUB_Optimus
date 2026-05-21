@@ -1,73 +1,73 @@
-# HUB_Optimus — Custodianship
+# HUB_Optimus — Kustodianschaft
 
-## Purpose
-Custodianship exists to protect the Kernel and the integrity of governance.
-It is not ownership, not authority over outcomes, and not a certification body.
+## Zweck
+Kustodianschaft besteht, um den Kernel und die Integrität der Governance zu schützen.
+Sie ist kein Eigentum, keine Autorität über Ergebnisse und keine Zertifizierungsstelle.
 
-Custodians protect:
-- meaning coherence across languages,
-- resistance to capture and commercialization pressure,
-- traceability of governance changes,
-- and the public record of deliberation.
+Kustoden schützen:
+- Bedeutungskohärenz über Sprachen hinweg,
+- Widerstand gegen Vereinnahmung und Kommerzialisierungsdruck,
+- Nachvollziehbarkeit von Governance-Änderungen,
+- und die öffentliche Aufzeichnung der Beratung.
 
-## What Custodianship is
-Custodianship is a constrained governance role that:
-- safeguards the Kernel (Layer 0),
-- enforces the consensus process for governance changes,
-- blocks semantic drift and deceptive rebranding,
-- ensures translations remain meaning-identical to the canonical set.
+## Was Kustodianschaft ist
+Kustodianschaft ist eine beschränkte Governance-Rolle, die:
+- den Kernel (Layer 0) schützt,
+- den Konsensprozess für Governance-Änderungen durchsetzt,
+- semantische Drift und irreführendes Rebranding blockiert,
+- sicherstellt, dass Übersetzungen bedeutungsidentisch mit dem kanonischen Set bleiben.
 
-## What Custodianship is not
-Custodianship is not:
-- a tribunal or enforcement authority,
-- a political mandate,
-- a private ownership claim,
-- a gatekeeping tool for personal preference.
+## Was Kustodianschaft nicht ist
+Kustodianschaft ist nicht:
+- ein Tribunal oder eine Durchsetzungsautorität,
+- ein politisches Mandat,
+- ein privater Eigentumsanspruch,
+- ein Gatekeeping-Instrument für persönliche Präferenzen.
 
-## Scope of powers (strictly limited)
-Custodians MAY:
-- reject governance changes that violate the Kernel,
-- require explicit rationale and traceability for governance edits,
-- require synchronization across language mirrors,
-- request removal/correction of misleading "official/endorsed" claims.
+## Geltungsbereich der Befugnisse (streng beschränkt)
+Kustoden DÜRFEN:
+- Governance-Änderungen zurückweisen, die den Kernel verletzen,
+- ausdrückliche Begründung und Nachvollziehbarkeit für Governance-Bearbeitungen verlangen,
+- Synchronisierung zwischen Sprach-Mirrors verlangen,
+- die Entfernung/Korrektur irreführender "offiziell/endorsed"-Behauptungen verlangen.
 
-Custodians MUST NOT:
-- impose political decisions,
-- grant "certification" status,
-- unilaterally change the Kernel,
-- rewrite history without traceable process.
+Kustoden DÜRFEN NICHT:
+- politische Entscheidungen auferlegen,
+- "Zertifizierungs"-Status vergeben,
+- den Kernel einseitig ändern,
+- Geschichte ohne nachvollziehbaren Prozess umschreiben.
 
-## Kernel change rule (high bar)
-Any Kernel change requires:
-1) an explicit written proposal,
-2) a rationale referencing Kernel principles,
-3) documented objections and responses,
-4) consensus review per `CONSENSUS_PROCESS.md`,
-5) custodianship approval,
-6) synchronization across all language mirrors.
+## Kernel-Änderungsregel (hohe Schwelle)
+Jede Kernel-Änderung erfordert:
+1) einen ausdrücklichen schriftlichen Vorschlag,
+2) eine Begründung mit Bezug auf Kernel-Prinzipien,
+3) dokumentierte Einwände und Antworten,
+4) Konsensprüfung gemäß `CONSENSUS_PROCESS.md`,
+5) Zustimmung der Kustodianschaft,
+6) Synchronisierung über alle Sprach-Mirrors hinweg.
 
-Unreviewed Kernel edits are invalid by definition.
+Nicht geprüfte Kernel-Bearbeitungen sind definitionsgemäß ungültig.
 
-## Conflict of interest and anti-capture
-Custodians must disclose conflicts of interest.
-Capture indicators include:
-- introducing exceptions via translation,
-- weakening MUST/NOT language,
-- rebranding the method as a private product,
-- shifting governance into marketing.
+## Interessenkonflikt und Anti-Vereinnahmung
+Kustoden müssen Interessenkonflikte offenlegen.
+Vereinnahmungsindikatoren umfassen:
+- Einführung von Ausnahmen durch Übersetzung,
+- Abschwächung von MUSS-/DARF-NICHT-Sprache,
+- Rebranding der Methode als privates Produkt,
+- Verlagerung von Governance in Marketing.
 
-If capture indicators appear, Custodians must block the change and document why.
+Wenn Vereinnahmungsindikatoren auftreten, müssen Kustoden die Änderung blockieren und dokumentieren, warum.
 
-## Transparency and record
-All custodian actions must be traceable:
-- what was blocked/approved,
-- why (Kernel reference),
-- and what changes were required.
+## Transparenz und Aufzeichnung
+Alle Kustodenhandlungen müssen nachvollziehbar sein:
+- was blockiert/genehmigt wurde,
+- warum (Kernel-Referenz),
+- und welche Änderungen verlangt wurden.
 
-## Removal / rotation (minimum rule)
-If a Custodian repeatedly violates the Kernel, hides conflicts, or acts deceptively,
-they lose custodianship status through the same consensus process.
+## Entfernung / Rotation (Mindestregel)
+Wenn ein Kustode wiederholt den Kernel verletzt, Konflikte verbirgt oder täuschend handelt,
+verliert er den Kustodianschaftsstatus durch denselben Konsensprozess.
 
-## Non-sovereign statement
-Custodianship does not create authority over participants or institutions.
-It only protects the integrity and clarity of the HUB_Optimus system definition.
+## Nicht-souveräne Erklärung
+Kustodianschaft schafft keine Autorität über Teilnehmende oder Institutionen.
+Sie schützt nur die Integrität und Klarheit der Systemdefinition von HUB_Optimus.

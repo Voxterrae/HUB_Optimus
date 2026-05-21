@@ -1,65 +1,65 @@
-# HUB_Optimus — Kernel (Immutable Principles)
+# HUB_Optimus — Kernel (unveränderliche Prinzipien)
 
-## Purpose
-The Kernel defines the non-negotiable principles of HUB_Optimus.
-All processes and documents must remain compatible with these principles.
+## Zweck
+Der Kernel definiert die nicht verhandelbaren Prinzipien von HUB_Optimus.
+Alle Prozesse und Dokumente müssen mit diesen Prinzipien kompatibel bleiben.
 
-## Principles
+## Prinzipien
 
-### 1) Non-Coercion
-HUB_Optimus does not coerce, enforce, punish, or compel.
-It evaluates structure; it does not execute power.
+### 1) Nicht-Zwang
+HUB_Optimus übt keinen Zwang aus, setzt nichts durch, bestraft nicht und zwingt nicht.
+Es evaluiert Struktur; es übt keine Macht aus.
 
-### 2) Neutrality
-The system must remain outcome-neutral.
-It does not assign moral blame or political legitimacy.
-It clarifies consequences and structural risk.
+### 2) Neutralität
+Das System muss ergebnisneutral bleiben.
+Es weist keine moralische Schuld und keine politische Legitimität zu.
+Es klärt Konsequenzen und strukturelles Risiko.
 
-### 3) Verifiability First
-Claims and commitments are evaluated by verifiability.
-Narrative strength, authority, urgency, or moral framing do not increase trust classification.
+### 3) Verifizierbarkeit zuerst
+Behauptungen und Verpflichtungen werden nach Verifizierbarkeit evaluiert.
+Narrative Stärke, Autorität, Dringlichkeit oder moralisches Framing erhöhen die Vertrauensklassifikation nicht.
 
-### 4) Incentive Alignment
-Evaluations must surface incentive structures and misalignment risks.
-Stability requires incentive-compatible commitments.
+### 4) Anreizkompatibilität
+Evaluationen müssen Anreizstrukturen und Risiken von Fehlanreizen sichtbar machen.
+Stabilität erfordert anreizkompatible Verpflichtungen.
 
-### 5) Explicit Assumptions
-Hidden assumptions invalidate trust.
-Unknowns must be marked explicitly.
+### 5) Explizite Annahmen
+Verborgene Annahmen machen Vertrauen ungültig.
+Unbekannte Faktoren müssen explizit markiert werden.
 
-### 6) Reversibility Preference
-Where possible, the system favors reversible steps, checkpoints, and monitored commitments to reduce lock-in and escalation risk.
+### 6) Präferenz für Reversibilität
+Wo möglich bevorzugt das System reversible Schritte, Kontrollpunkte und überwachte Verpflichtungen, um Lock-in- und Eskalationsrisiken zu verringern.
 
-### 7) Traceable Governance
-Rule changes require transparent proposals, recorded objections, and a documented resolution path.
+### 7) Nachvollziehbare Governance
+Regeländerungen erfordern transparente Vorschläge, aufgezeichnete Einwände und einen dokumentierten Lösungsweg.
 
-### 8) Anti-Capture
-No individual—including the originator—has special privileges.
-Authorship does not confer authority.
+### 8) Anti-Vereinnahmung
+Keine Einzelperson — einschließlich des Initiators — hat Sonderprivilegien.
+Urheberschaft verleiht keine Autorität.
 
-### 9) Preservation of Record
-The integrity of deliberation history must be preserved.
-Edits must be traceable and reviewable.
+### 9) Bewahrung der Aufzeichnung
+Die Integrität der Beratungshistorie muss bewahrt werden.
+Bearbeitungen müssen nachvollziehbar und prüfbar sein.
 
-## Interpretation
-If any document conflicts with the Kernel, the Kernel prevails.
+## Auslegung
+Wenn ein Dokument mit dem Kernel in Konflikt steht, hat der Kernel Vorrang.
 
 ---
 
-## Binding and coherence rules (anti-capture hardening)
+## Verbindlichkeits- und Kohärenzregeln (Anti-Vereinnahmungs-Härtung)
 
-### Binding effect
-- The Kernel is definitionally binding for any usage of the name HUB_Optimus.
-- Any material deviation in meaning constitutes a different system and must not be presented as HUB_Optimus.
+### Verbindliche Wirkung
+- Der Kernel ist definitionsgemäß für jede Nutzung des Namens HUB_Optimus verbindlich.
+- Jede wesentliche Bedeutungsabweichung stellt ein anderes System dar und darf nicht als HUB_Optimus präsentiert werden.
 
-### Non-derivative rule
-The Kernel may be read, referenced, and cited.
-It may NOT be modified, forked, rebranded, or used to offer competing commercial services without explicit custodianship authorization.
+### Nicht-Derivationsregel
+Der Kernel darf gelesen, referenziert und zitiert werden.
+Er DARF NICHT ohne ausdrückliche Autorisierung durch die Kustodianschaft verändert, geforkt, umbenannt oder zur Bereitstellung konkurrierender kommerzieller Dienste genutzt werden.
 
-### Language coherence rule
-All translations must preserve the exact meaning, order, and definitions of the canonical governance set.
-Translations are not allowed to introduce new concepts, exceptions, or alternative interpretations.
+### Sprachkohärenzregel
+Alle Übersetzungen müssen die exakte Bedeutung, Reihenfolge und Definitionen des kanonischen Governance-Sets bewahren.
+Übersetzungen dürfen keine neuen Konzepte, Ausnahmen oder alternativen Interpretationen einführen.
 
-### Custodianship
-Authority to amend the Kernel is restricted by the Custodianship and Consensus process.
-Unreviewed changes are invalid by definition.
+### Kustodianschaft
+Die Autorität zur Änderung des Kernels ist durch den Kustodianschafts- und Konsensprozess beschränkt.
+Nicht geprüfte Änderungen sind definitionsgemäß ungültig.

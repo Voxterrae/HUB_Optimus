@@ -1,64 +1,64 @@
-# HUB_Optimus — Consensus Process
+# HUB_Optimus — Konsensprozess
 
-## Purpose
-This document defines how changes to HUB_Optimus documents are proposed, reviewed, and adopted.
+## Zweck
+Dieses Dokument definiert, wie Änderungen an HUB_Optimus-Dokumenten vorgeschlagen, geprüft und angenommen werden.
 
-Consensus is used to prevent unilateral capture and to preserve system legitimacy through traceable agreement.
+Konsens wird genutzt, um einseitige Vereinnahmung zu verhindern und die Legitimität des Systems durch nachvollziehbare Einigung zu bewahren.
 
-## Definitions
-- **Proposal**: a documented change request (text + rationale).
-- **Objection**: a reasoned statement that a proposal violates the Kernel, reduces neutrality, weakens verifiability, or introduces capture risk.
-- **Sustained objection**: an objection that remains unresolved after good-faith revision attempts.
-- **Consensus**: adoption after review when no sustained objections remain.
+## Definitionen
+- **Vorschlag**: ein dokumentierter Änderungsantrag (Text + Begründung).
+- **Einwand**: eine begründete Aussage, dass ein Vorschlag den Kernel verletzt, Neutralität verringert, Verifizierbarkeit schwächt oder Vereinnahmungsrisiko einführt.
+- **Aufrechterhaltener Einwand**: ein Einwand, der nach gutgläubigen Überarbeitungsversuchen ungelöst bleibt.
+- **Konsens**: Annahme nach Prüfung, wenn keine aufrechterhaltenen Einwände verbleiben.
 
-## Process Overview
+## Prozessübersicht
 
-### Step 1 — Draft
-A proposal is submitted with:
-- a clear description of changes,
-- rationale and expected impact,
-- references to affected sections,
-- compatibility statement with the Kernel.
+### Schritt 1 — Entwurf
+Ein Vorschlag wird eingereicht mit:
+- einer klaren Beschreibung der Änderungen,
+- Begründung und erwarteter Auswirkung,
+- Verweisen auf betroffene Abschnitte,
+- einer Kompatibilitätserklärung mit dem Kernel.
 
-### Step 2 — Review Window
-A defined review window is opened (timeboxed).
-Participants may:
-- ask clarifying questions,
-- suggest improvements,
-- raise objections (must be reasoned).
+### Schritt 2 — Prüfungsfenster
+Ein definiertes Prüfungsfenster wird eröffnet (zeitlich begrenzt).
+Teilnehmende dürfen:
+- Klärungsfragen stellen,
+- Verbesserungen vorschlagen,
+- Einwände erheben (müssen begründet sein).
 
-### Step 3 — Objection Handling (Good Faith)
-If objections are raised, the proposer must:
-- address the objection directly,
-- revise the proposal, or
-- document why the objection is out of scope.
+### Schritt 3 — Behandlung von Einwänden (nach Treu und Glauben)
+Wenn Einwände erhoben werden, muss der Vorschlagende:
+- den Einwand direkt behandeln,
+- den Vorschlag überarbeiten, oder
+- dokumentieren, warum der Einwand außerhalb des Geltungsbereichs liegt.
 
-Objections must reference:
-- Kernel principles, or
-- verifiability/trust issues, or
-- anti-capture/neutrality risks.
+Einwände müssen sich beziehen auf:
+- Kernel-Prinzipien, oder
+- Verifizierbarkeits-/Vertrauensprobleme, oder
+- Anti-Vereinnahmungs-/Neutralitätsrisiken.
 
-### Step 4 — Resolution
-A proposal may be adopted if:
-- objections were resolved through revision, or
-- objections were withdrawn, or
-- a clear record shows objections were answered without Kernel conflict.
+### Schritt 4 — Lösung
+Ein Vorschlag darf angenommen werden, wenn:
+- Einwände durch Überarbeitung gelöst wurden, oder
+- Einwände zurückgezogen wurden, oder
+- eine klare Aufzeichnung zeigt, dass Einwände ohne Konflikt mit dem Kernel beantwortet wurden.
 
-If sustained objections remain, the proposal is not adopted.
+Wenn aufrechterhaltene Einwände verbleiben, wird der Vorschlag nicht angenommen.
 
-### Step 5 — Ratification and Record
-Adopted proposals must be:
-- merged with a traceable commit,
-- recorded with a short change summary,
-- linked to discussion/notes where applicable.
+### Schritt 5 — Ratifizierung und Aufzeichnung
+Angenommene Vorschläge müssen:
+- mit einem nachvollziehbaren Commit gemergt werden,
+- mit einer kurzen Änderungszusammenfassung aufgezeichnet werden,
+- wo zutreffend mit Diskussionen/Notizen verlinkt werden.
 
-## Special Rule: Changes to Governance Rules
-Any change to:
-- the Kernel,
-- consensus rules,
-- custodianship rules,
-requires heightened scrutiny and explicit compatibility justification.
+## Sonderregel: Änderungen an Governance-Regeln
+Jede Änderung an:
+- dem Kernel,
+- Konsensregeln,
+- Kustodianschaftsregeln,
+erfordert erhöhte Prüfung und ausdrückliche Kompatibilitätsbegründung.
 
-## Non-Authority Clause
-Consensus does not create authority over outcomes.
-It only governs the integrity of the system's documents and processes.
+## Nicht-Autoritätsklausel
+Konsens schafft keine Autorität über Ergebnisse.
+Er regelt nur die Integrität der Dokumente und Prozesse des Systems.
