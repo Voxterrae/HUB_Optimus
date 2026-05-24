@@ -41,6 +41,35 @@ No action until CI, collaborator friction, regression, or user request creates a
 
 ## AI Sync Block
 
+Date: 2026-05-24
+Source: Codex execution for RFC branch `rfc/post-quantum-control-plane`
+Repo state: local RFC branch
+Branch: `rfc/post-quantum-control-plane`
+Active issue: none provided in task
+Decision made: add RFC-only post-quantum control plane planning document
+Reason: explicit user request for a governed RFC covering artifact signing, sealed exchange, node identity, quorum access, auditability, and crypto-agility
+Files changed:
+- docs/rfc/post_quantum_control_plane.md
+- docs/context/AI_HANDOFF.md
+Validation:
+- `python tools/check_mojibake.py docs/rfc/post_quantum_control_plane.md` passed
+- `git diff --check -- docs/rfc/post_quantum_control_plane.md` passed
+- `python tools/check_mojibake.py docs/context/AI_HANDOFF.md` passed
+- `git diff --check -- docs/context/AI_HANDOFF.md` passed
+Risks: documentation-only; no runtime, CI, benchmark, schema, dependency, or production security claim changes
+Next action: review RFC scope and open follow-up issues only after explicit approval
+Out of scope:
+- crypto implementation
+- runtime changes
+- CI changes
+- benchmark changes
+- schema changes
+- roadmap changes
+- dashboards
+- LLM-as-judge
+
+## AI Sync Block
+
 Date: 2026-05-08
 Source: Codex execution for GitHub issue #1577
 Repo state: governance protocol merged to main
