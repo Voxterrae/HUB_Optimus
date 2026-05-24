@@ -6,8 +6,9 @@ This table separates implemented repository capabilities from planned or explici
 | --- | --- | --- | --- |
 | Scenario schema validation | Implemented | `docs/architecture/runtime_contract.md`; `scenario.schema.json`; `tests/test_run_scenario_cli.py` | The CLI validates scenario JSON against the schema before runtime execution. |
 | Deterministic simulator runtime | Implemented | `docs/architecture/runtime_contract.md`; `hub_optimus_simulator.py`; `run_scenario.py`; `tests/test_run_scenario_cli.py` | Seeded runs produce deterministic JSON output for the current prototype behavior. |
-| Benchmark hard gate | Not implemented | `docs/architecture/runtime_contract.md`; `.github/workflows/ci.yml` | Benchmark execution exists, but the CI benchmark job is non-blocking. |
-| Structural drift diagnostics | Planned / RFC | `docs/context/hub_optimus_checkpoint.md` | Listed as future benchmark drift analysis; not a runtime or CI gate. |
+| Benchmark byte-level comparison | Implemented | `benchmarks/run_benchmarks.py`; `benchmarks/expected/`; `docs/architecture/runtime_contract.md` | The runner compares benchmark output byte-for-byte and exits non-zero on mismatch. The CI benchmark job is currently non-blocking. |
+| Structural drift diagnostics | Implemented | `benchmarks/run_benchmarks.py` | The benchmark runner compares outcome/status, rounds, and actor count and classifies differences by severity. |
+| Blocking benchmark CI gate | Not implemented | `.github/workflows/ci.yml` | The benchmark job runs in CI but uses `continue-on-error: true`. |
 | CI summary / visibility | Implemented | `.github/workflows/ci.yml`; `docs/architecture/runtime_contract.md` | CI writes narrative consistency and benchmark summaries to `GITHUB_STEP_SUMMARY`. |
 | Multilingual documentation | Implemented | `README.md`; `docs/context/STATUS.md` | Documentation structure exists across priority, progressive, and stub languages; `v1_core/languages/es/` remains canonical for v1. |
 | Narrative-risk claim triage | Implemented | `tools/check_narrative_consistency.py`; `tests/test_narrative_consistency.py`; `tests/test_geopolitical_claim_packs.py`; `.github/workflows/ci.yml` | Implemented as deterministic dataset/schema consistency checks, not truth adjudication or LLM-as-judge. |
