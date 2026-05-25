@@ -42,6 +42,35 @@ No action until CI, collaborator friction, regression, or user request creates a
 ## AI Sync Block
 
 Date: 2026-05-24
+Source: Codex execution for GitHub issue #1589
+Repo state: local branch `docs/capability-status-table`
+Branch: `docs/capability-status-table`
+Active issue: #1589
+Decision made: add a capability status table and correct benchmark/drift rows to match implemented runner behavior
+Reason: issue #1589 requests a source-backed table to avoid overpromising or under-reporting current runtime behavior
+Files changed:
+- docs/architecture/capability_status.md
+- docs/context/AI_HANDOFF.md
+Validation:
+- `python tools/check_mojibake.py docs/architecture/capability_status.md` passed
+- `git diff --check -- docs/architecture/capability_status.md` passed
+- `python tools/check_mojibake.py docs/context/AI_HANDOFF.md` passed
+- `git diff --check -- docs/context/AI_HANDOFF.md` passed
+Risks: documentation-only; table wording must remain conservative and source-backed
+Next action: review table wording against issue #1589 and PR #1580 before opening a PR
+Out of scope:
+- runtime changes
+- CI changes
+- benchmark changes
+- schema changes
+- roadmap changes
+- multilingual docs
+- crypto implementation
+- dependency additions
+
+## AI Sync Block
+
+Date: 2026-05-24
 Source: Codex execution for RFC branch `rfc/post-quantum-control-plane`
 Repo state: local RFC branch
 Branch: `rfc/post-quantum-control-plane`
