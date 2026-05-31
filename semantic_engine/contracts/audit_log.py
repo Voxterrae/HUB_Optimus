@@ -13,6 +13,14 @@ def utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def copy_snapshot(snapshot: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Return a shallow copy of an audit snapshot if one exists."""
+
+    if snapshot is None:
+        return None
+    return dict(snapshot)
+
+
 @dataclass(frozen=True)
 class AuditLogEntry:
     """A durable audit event for a Semantic Engine action."""
@@ -36,8 +44,8 @@ class AuditLogEntry:
             "action": self.action,
             "object_type": self.object_type,
             "object_id": self.object_id,
-            "before": self.before,
-            "after": self.after,
+            "before": copy_snapshot(self.before),
+            "after": copy_snapshot(self.after),
             "reason": self.reason,
             "metadata": dict(self.metadata),
         }
