@@ -76,3 +76,25 @@ def test_contracts_are_stdlib_serializable_shapes():
     assert payload["decision_trace"] == []
     assert payload["audit_log"] == []
     assert payload["status"] == "draft"
+
+
+def test_audit_log_serialization_copies_before_after_snapshots():
+    before = {"status": "draft"}
+    after = {"status": "complete"}
+    audit = AuditLogEntry(
+        event_id="audit-2",
+        action="updated",
+        object_type="analysis_result",
+        object_id="analysis-2",
+        reason="Snapshot copy test.",
+        timestamp="2026-05-30T00:00:00+00:00",
+        before=before,
+        after=after,
+    )
+
+    payload = audit.to_dict()
+    payload["before"]["status"] = "mutated"
+    payload["after"]["status"] = "mutated"
+
+    assert audit.before == {"status": "draft"}
+    assert audit.after == {"status": "complete"}
