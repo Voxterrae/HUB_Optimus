@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -14,11 +15,11 @@ def utc_now_iso() -> str:
 
 
 def copy_snapshot(snapshot: dict[str, Any] | None) -> dict[str, Any] | None:
-    """Return a shallow copy of an audit snapshot if one exists."""
+    """Return a deep copy of an audit snapshot if one exists."""
 
     if snapshot is None:
         return None
-    return dict(snapshot)
+    return deepcopy(snapshot)
 
 
 @dataclass(frozen=True)

@@ -98,3 +98,39 @@ def test_audit_log_serialization_copies_before_after_snapshots():
 
     assert audit.before == {"status": "draft"}
     assert audit.after == {"status": "complete"}
+
+
+def test_audit_log_serialization_deep_copies_nested_snapshots():
+    before = {
+        "claims": [{"claim_id": "claim-1", "metadata": {"tier": "draft"}}],
+        "tags": ["initial"],
+    }
+    after = {
+        "claims": [{"claim_id": "claim-1", "metadata": {"tier": "complete"}}],
+        "tags": ["final"],
+    }
+    audit = AuditLogEntry(
+        event_id="audit-3",
+        action="updated",
+        object_type="analysis_result",
+        object_id="analysis-3",
+        reason="Nested snapshot copy test.",
+        timestamp="2026-05-30T00:00:00+00:00",
+        before=before,
+        after=after,
+    )
+
+    payload = audit.to_dict()
+    payload["before"]["claims"][0]["metadata"]["tier"] = "mutated"
+    payload["before"]["tags"].append("mutated")
+    payload["after"]["claims"][0]["metadata"]["tier"] = "mutated"
+    payload["after"]["tags"].append("mutated")
+
+    assert audit.before == {
+        "claims": [{"claim_id": "claim-1", "metadata": {"tier": "draft"}}],
+        "tags": ["initial"],
+    }
+    assert audit.after == {
+        "claims": [{"claim_id": "claim-1", "metadata": {"tier": "complete"}}],
+        "tags": ["final"],
+    }
