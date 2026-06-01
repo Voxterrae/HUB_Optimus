@@ -1,0 +1,5 @@
+{
+  "case_id": "case-minimal-001",
+  "core_version_ref": "main",
+  "input_summary": "Minimal CLI smoke case for Semantic Engine contracts."
+}
