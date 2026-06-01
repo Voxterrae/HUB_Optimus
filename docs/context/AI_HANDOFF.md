@@ -1,23 +1,15 @@
 # HUB_Optimus AI Handoff
 
-This file is the living bridge between ChatGPT PM/Tech Lead work and Codex repo execution.
-GitHub remains the source of truth; chat context only matters when it is reflected in issues, PRs, or repo docs.
+This file records operational handoff state for ChatGPT/Codex repo execution.
+GitHub remains the source of truth; chat summaries are advisory unless reflected in issues, PRs, commits, or repo docs.
 
-## Current System State
+## Operating Discipline
 
 - Release: use GitHub Releases as source of truth.
-- Last merged PR: #1578, `docs: add AI handoff protocol for ChatGPT/Codex sync`.
-- Current branch: see active GitHub issue or PR; `main` is the source of truth after merge.
+- Current branch and active assignment: use the active GitHub issue or PR.
 - CI status: use GitHub Checks on the active PR as source of truth.
-- Active issue: none; use GitHub Issues/Project board for current assignment.
-- Current priority: observe -> detect -> decide -> act; no build without signal.
-
-## Recent Decisions
-
-- Decision: synchronize ChatGPT and Codex through GitHub state, not through unsynchronized chat memory.
-- Reason: repository files, issues, and PRs are reviewable, durable, and reproducible.
-- Date: 2026-05-08.
-- Source: GitHub issue #1577 and ChatGPT PM handoff summary.
+- Default loop: observe -> detect -> decide -> act.
+- Default rule: no build without signal.
 
 ## Current Constraints
 
@@ -27,9 +19,30 @@ GitHub remains the source of truth; chat context only matters when it is reflect
 - Small PRs only.
 - Keep source-of-truth conflicts resolved by `docs/context/STATUS.md`.
 
-## Next Recommended Action
+## Handoff Update Discipline
+
+Update this file only when the scoped issue or PR changes operational handoff state, including:
+
+- operational state
+- active priorities
+- architecture
+- governance posture
+- runtime, CI, or benchmark posture
+- contributor handoff requirements
+
+Do not update this file for narrowly scoped translation, typo, link, formatting, or parity-only PRs unless the issue or PR explicitly requires it.
+
+If this file is not updated, say why in the PR body.
+
+## Current Recommended Action
 
 No action until CI, collaborator friction, regression, or user request creates a concrete signal.
+
+## Meta-learning Follow-up
+
+- `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
+- Other meta-learning copies or link targets require canonical/parity/legacy classification in a separate PR.
+- Do not consolidate or delete meta-learning files in this handoff/status discipline PR.
 
 ## Do Not Do
 
@@ -39,7 +52,11 @@ No action until CI, collaborator friction, regression, or user request creates a
 - Do not add dashboards, semantic scoring, or new metrics without approved issue scope.
 - Do not treat chat-only decisions as roadmap changes.
 
-## AI Sync Block
+## Historical AI Sync Blocks
+
+The entries below are retained as historical execution notes. They are not current branch, PR, issue, or priority state.
+
+### AI Sync Block
 
 Date: 2026-05-24
 Source: Codex execution for GitHub issue #1589
@@ -68,7 +85,7 @@ Out of scope:
 - crypto implementation
 - dependency additions
 
-## AI Sync Block
+### AI Sync Block
 
 Date: 2026-05-24
 Source: Codex execution for RFC branch `rfc/post-quantum-control-plane`
@@ -97,14 +114,14 @@ Out of scope:
 - dashboards
 - LLM-as-judge
 
-## AI Sync Block
+### AI Sync Block
 
 Date: 2026-05-08
 Source: Codex execution for GitHub issue #1577
 Repo state: governance protocol merged to main
-Branch: see active GitHub issue or PR; `main` is the source of truth after merge
-Last merged PR: #1578
-Active issue: none
+Branch at the time: see active GitHub issue or PR; `main` is the source of truth after merge
+Merged PR for this historical block: #1578
+Active issue at the time: none
 Decision made: add persistent repo-level handoff protocol for ChatGPT/Codex sync
 Reason: align AI work through GitHub state instead of fragile chat-memory synchronization
 Files changed:

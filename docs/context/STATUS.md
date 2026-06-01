@@ -1,3 +1,7 @@
+## Status freshness
+
+This file records stable repository policy and high-level status. For current PR/issue state, GitHub Issues, Pull Requests, and CI are authoritative.
+
 ### Canonical languages policy (v1)
 
 **v1_core/** (normative spec):
@@ -19,7 +23,8 @@
 **Planned switch (later, not now):**
 - Once en reaches stable parity, we may declare **en as canonical** for a future version (v1.1 or v2).
 
-## Next steps
-- [ ] Decidir si REPO_TREE.txt y SNAPSHOT.txt van a git (sí/no) y actuar en consecuencia
-- [ ] Validar/finalizar tools/fix_encoding_docs.ps1 (y documentar uso en WORKFLOWS.md)
-- [ ] Ejecutar link-check (Lychee) localmente o vía GitHub Actions y corregir rotos
+## Meta-learning file status
+
+- `.github/copilot-instructions.md` identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
+- Other meta-learning files exist as compatibility targets, translations, or unclassified copies and need separate canonical/parity/legacy classification.
+- Do not consolidate, delete, or rewrite meta-learning files without a scoped issue or PR.
