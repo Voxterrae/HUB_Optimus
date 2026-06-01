@@ -38,6 +38,28 @@ def test_cli_analyze_happy_path_outputs_contractual_json():
     assert payload["audit_log"] == []
 
 
+def test_cli_output_file_writes_contractual_json_and_keeps_stdout_empty(tmp_path):
+    output_path = tmp_path / "outputs" / "analysis_result.json"
+
+    result = run_cli(
+        "analyze",
+        "examples/semantic_engine/case_minimal.json",
+        "--output",
+        str(output_path),
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == ""
+    assert result.stderr == ""
+    assert output_path.exists()
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["case_id"] == "case-minimal-001"
+    assert payload["status"] == "draft"
+    assert payload["claims"] == []
+    assert output_path.read_text(encoding="utf-8").endswith("\n")
+
+
 def test_cli_missing_file_fails_cleanly():
     result = run_cli("analyze", "examples/semantic_engine/does_not_exist.json")
 
