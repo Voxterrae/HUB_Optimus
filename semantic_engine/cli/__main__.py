@@ -64,6 +64,22 @@ def analyze_case(input_path: Path) -> dict[str, Any]:
     return build_draft_result(load_case(input_path)).to_dict()
 
 
+def serialize_payload(payload: dict[str, Any]) -> str:
+    """Return stable JSON for CLI stdout or file output."""
+
+    return json.dumps(payload, indent=2, sort_keys=True) + "\n"
+
+
+def write_output(path: Path, content: str) -> None:
+    """Write CLI output to a UTF-8 file, creating parent directories."""
+
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    except OSError as exc:
+        raise ControlledCliError(f"cannot write output file {path}: {exc}") from exc
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m semantic_engine.cli",
@@ -76,6 +92,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Build a draft AnalysisResult from a minimal case JSON file.",
     )
     analyze.add_argument("input", help="Path to a minimal case JSON file.")
+    analyze.add_argument(
+        "--output",
+        help="Optional path for writing the contractual JSON result instead of stdout.",
+    )
 
     return parser
 
@@ -93,7 +113,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"semantic_engine.cli: error: {exc}", file=sys.stderr)
         return 1
 
-    print(json.dumps(payload, indent=2, sort_keys=True))
+    content = serialize_payload(payload)
+
+    if args.output:
+        try:
+            write_output(Path(args.output), content)
+        except ControlledCliError as exc:
+            print(f"semantic_engine.cli: error: {exc}", file=sys.stderr)
+            return 1
+    else:
+        print(content, end="")
+
     return 0
 
 
