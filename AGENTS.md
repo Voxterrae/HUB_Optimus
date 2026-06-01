@@ -70,11 +70,15 @@ Do not introduce LLM-as-judge, dashboards, semantic scoring, roadmap changes, or
 
 ## Handoff Discipline
 
-After meaningful work, update `docs/context/AI_HANDOFF.md` with:
+Update `docs/context/AI_HANDOFF.md` only when the scoped issue or PR changes operational handoff state, including:
 
-- What changed
-- Which issue or PR justified it
-- What validation ran
-- What remains pending
-- What should not be done yet
-- The next recommended action
+- operational state
+- active priorities
+- architecture
+- governance posture
+- runtime, CI, or benchmark posture
+- contributor handoff requirements
+
+Do not update `docs/context/AI_HANDOFF.md` for narrowly scoped translation, typo, link, formatting, or parity-only PRs unless the issue or PR explicitly requires it.
+
+If `docs/context/AI_HANDOFF.md` is not updated, say why in the PR body.
