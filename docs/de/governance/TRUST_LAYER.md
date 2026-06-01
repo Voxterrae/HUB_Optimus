@@ -59,7 +59,7 @@ Für jede Verpflichtung erstellt HUB_Optimus ein **Vertrauensprofil** anhand der
 - Gibt es eine Prüfspur (wer/was/wann/wo)?
 
 3) **Unabhängigkeit**
-- Ist die Verifikation unabhängig vom Anspruchsteller?
+- Ist die Verifikation unabhängig von der behauptenden Partei?
 
 4) **Abdeckung**
 - Deckt die Verifikation die gesamte Verpflichtung ab oder nur Fragmente?
@@ -83,7 +83,7 @@ Eine Verpflichtung wird nur dann als "zuverlässig genug für die Planung" behan
 
 ---
 
-## Streitfälle und Herabstufung (nicht zwangsausübende Durchsetzung)
+## Streitfälle und Herabstufung (nicht-zwanghafte Durchsetzung)
 HUB_Optimus setzt keine Ergebnisse durch.
 Es setzt **epistemische Disziplin** durch:
 
@@ -115,6 +115,7 @@ selbst wenn sie als Klasse A präsentiert wird.
 - Beitragende: dürfen Änderungen an Nicht-Kernel-Materialien zur Prüfung vorschlagen.
 - Kustoden: dürfen Governance-Änderungen unter strengem Prozess genehmigen.
 
+### ## Kernel-Zugriff und Anti-Vereinnahmungsregeln (Härtung)
 Direkte Änderungen an Kernel-Dokumenten erfordern:
 1) ausdrückliche Begründung mit Bezug auf Kernel-Prinzipien,
 2) Konsensprüfung gemäß CONSENSUS_PROCESS,

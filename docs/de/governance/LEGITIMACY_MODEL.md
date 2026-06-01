@@ -11,9 +11,9 @@ HUB_Optimus leitet Legitimität ab aus:
 - Verifizierbarkeit von Behauptungen,
 - anreizkompatibler Begründung,
 - nachvollziehbarem Konsens,
-- und Bewahrung der Beratungsaufzeichnung.
+- und Bewahrung des Beratungsprotokolls.
 
-Legitimität ist prozedural, nicht positional.
+Legitimität ist prozedural, nicht positionsgebunden.
 
 ## Worauf HUB_Optimus sich nicht stützt
 Es stützt sich NICHT auf:

@@ -1,4 +1,4 @@
-# HUB_Optimus — Szenario-Schema
+# HUB_Optimus Szenario-Schema
 
 ## Zweck
 Die Mindeststruktur definieren, die erforderlich ist, um `run_scenario.py` sicher auszuführen.

@@ -29,7 +29,7 @@ Verborgene Annahmen machen Vertrauen ungültig.
 ### 4. Anreizstruktur
 - Kurzfristige Anreize
 - Langfristige Anreize
-- Risiken von Fehlanreizen
+- Fehlausrichtungsrisiken
 
 ### 5. Klassifikation der Vertrauensebene
 - Nachweisklasse (A / B / C)
