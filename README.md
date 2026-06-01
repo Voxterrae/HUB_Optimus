@@ -18,7 +18,7 @@
 
 > **Primary onboarding:** [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md)
 >
-> **Translation status:** CA / FR / RU = progressive translation (not language-faithful onboarding yet) · HE = stub / full translation pending · ZH = governance stub only
+> **Translation status:** DE governance path translated · CA / FR / RU = progressive translation · HE / ZH = onboarding stubs, full translation pending
 >
 > Source of truth: [docs/context/STATUS.md](docs/context/STATUS.md)
 

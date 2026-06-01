@@ -1,4 +1,4 @@
-# Try a Scenario — HUB_Optimus in der Praxis
+# Szenario ausprobieren — HUB_Optimus in der Praxis
 
 Dieser Leitfaden zeigt anhand eines Beispiels, wie du HUB_Optimus nutzt, ohne den gesamten Kernel lesen zu müssen.
 
@@ -6,12 +6,14 @@ Du vergleichst zwei Szenarien, die an der Oberfläche ähnlich wirken, aber zu s
 
 Geschätzte Dauer: 10–15 Minuten.
 
+Hinweis: Die folgenden Links führen bewusst auf `v1_core`-Quellen und Referenzen. Sie sind keine vollständigen deutschen Übersetzungen.
+
 ---
 
 ## Schritt 1 — Öffne die Szenario-Vorlage
 
 Öffne:
-- [../../v1_core/workflow/04_scenario_template.md](../../v1_core/workflow/04_scenario_template.md)
+- Szenario-Vorlage (ES-Quelle): [../../v1_core/workflow/04_scenario_template.md](../../v1_core/workflow/04_scenario_template.md)
 
 Achte nur auf die Struktur:
 - Kontext
@@ -24,8 +26,8 @@ Achte nur auf die Struktur:
 
 ## Schritt 2 — Szenario 001: Teilweiser Waffenstillstand (falscher Erfolg)
 
-?ffne:
-- [../../v1_core/workflow/scenario_001_partial_ceasefire.md](../../v1_core/workflow/scenario_001_partial_ceasefire.md)
+Öffne:
+- Szenario 001 (EN-Referenz): [../../v1_core/workflow/scenario_001_partial_ceasefire.md](../../v1_core/workflow/scenario_001_partial_ceasefire.md)
 
 Fokussiere dich auf:
 - Was behauptet wird vs. was verifiziert wird
@@ -37,7 +39,7 @@ Fokussiere dich auf:
 ## Schritt 3 — Szenario 002: Verifizierter Waffenstillstand (struktureller Erfolg)
 
 Öffne:
-- [../../v1_core/workflow/scenario_002_verified_ceasefire.md](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
+- Szenario 002 (EN-Referenz): [../../v1_core/workflow/scenario_002_verified_ceasefire.md](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
 
 Fokussiere dich auf:
 - Was sich im Vergleich zu Szenario 001 geändert hat
@@ -64,7 +66,7 @@ Es fragt:
 ## Schritt 5 — Learning Layer
 
 Lies:
-- [../../v1_core/workflow/05_meta_learning.md](../../v1_core/workflow/05_meta_learning.md)
+- Meta-Lernen (ES-Quelle): [../../v1_core/workflow/05_meta_learning.md](../../v1_core/workflow/05_meta_learning.md)
 
 Dort wird erklärt, wie Muster extrahiert und "gemerkt" werden.
 
@@ -81,7 +83,7 @@ Das ist der Kern von HUB_Optimus.
 
 ## Nächste Schritte
 
-Grundlagen:
+Grundlagen (EN-Referenz):
 
 - [../../v1_core/languages/en/01_base_declaracion.md](../../v1_core/languages/en/01_base_declaracion.md)
 - [../../v1_core/languages/en/02_arquitectura_base.md](../../v1_core/languages/en/02_arquitectura_base.md)
@@ -91,6 +93,5 @@ Grundlagen:
 Mitmachen:
 - Lies [CONTRIBUTING.md](../../CONTRIBUTING.md)
 - Schlage ein neues Szenario mithilfe der Vorlage vor
-
 
 

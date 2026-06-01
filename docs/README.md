@@ -10,7 +10,7 @@ Canonical language policy is defined in [context/STATUS.md](context/STATUS.md). 
 | --- | --- | --- | --- |
 | en | [00_start_here.md](00_start_here.md) | reference/default docs | canonical governance in [governance/](governance/) |
 | es | [es/00_start_here.md](es/00_start_here.md) | priority onboarding | translation in progress; some governance files may still be English mirrors |
-| de | [de/00_start_here.md](de/00_start_here.md) | priority onboarding | translation in progress; some governance files may still be English mirrors |
+| de | [de/00_start_here.md](de/00_start_here.md) | priority onboarding | governance path translated; canonical governance remains [governance/](governance/) |
 | ca | [ca/00_start_here.md](ca/00_start_here.md) | progressive | not in the priority governance translation batch |
 | fr | [fr/00_start_here.md](fr/00_start_here.md) | progressive | not in the priority governance translation batch |
 | ru | [ru/00_start_here.md](ru/00_start_here.md) | progressive | not in the priority governance translation batch |
