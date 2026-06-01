@@ -8,10 +8,10 @@ HUB_Optimus hilft dabei, Szenarien und Vereinbarungen zu bewerten, **bevor** sie
 ---
 
 ## Governance
-> Uebersetzungsstatus:
-> Diese Onboarding-Seite ist lokalisiert. Einige unten verlinkte Governance-Dokumente koennen weiterhin englische Mirrors sein.
+> Übersetzungsstatus:
+> Diese Onboarding-Seite und die unten verlinkten Governance-Dokumente sind auf Deutsch verfügbar.
 > Die kanonische Governance bleibt `docs/governance/`.
-> Jede Uebersetzung muss Bedeutung und normative Kraft erhalten.
+> Bei Bedeutungsabweichungen gilt die kanonische Quelle.
 
 - Gründungsurkunde: [governance/CHARTER.md](governance/CHARTER.md)
 - Kernel (unveränderliche Prinzipien): [governance/KERNEL.md](governance/KERNEL.md)
@@ -106,7 +106,7 @@ Sende diesen Link:
   [01_base_declaracion (EN)](../../v1_core/languages/en/01_base_declaracion.md)
 
 **Praktischer Test:**
-- Vorlage: [Szenario-Vorlage](../../v1_core/workflow/04_scenario_template.md)
-- Beispiele: [Szenario 001](../../v1_core/workflow/scenario_001_partial_ceasefire.md), [Szenario 002](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
-- Lernschleife: [Meta-Lernen](../../v1_core/workflow/05_meta_learning.md)
+- Vorlage (ES-Quelle): [Szenario-Vorlage](../../v1_core/workflow/04_scenario_template.md)
+- Beispiele (EN-Referenz): [Szenario 001](../../v1_core/workflow/scenario_001_partial_ceasefire.md), [Szenario 002](../../v1_core/workflow/scenario_002_verified_ceasefire.md)
+- Lernschleife (ES-Quelle): [Meta-Lernen](../../v1_core/workflow/05_meta_learning.md)
 <!-- /HUB:TRACKS -->

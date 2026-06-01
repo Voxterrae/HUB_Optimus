@@ -34,22 +34,22 @@ und geh danach zurück in den Workflow.
 - `legacy/`  
   Älteres oder experimentelles Material. Nützlich als Referenz, aber nicht immer "up to date".
 
-## Language policy (STATUS)
-- Source-of-truth: `docs/context/STATUS.md`
-- canonical: `../../v1_core/languages/es/`
-- parity reference: `../../v1_core/languages/en/`
+## Sprachstatus (STATUS)
+- Verbindliche Quelle: `docs/context/STATUS.md`
+- Kanonisch: `../../v1_core/languages/es/`
+- Paritätsreferenz: `../../v1_core/languages/en/`
 
 ## Navigieren ohne Kontextverlust
-1) Nutze "Start here" und "Try a scenario", um das System in Aktion zu sehen.
+1) Nutze "Start hier" und "Szenario ausprobieren", um das System in Aktion zu sehen.
 2) Wenn ein Dokument etwas aus dem Kernel (`v1_core`) zitiert, folge dem Link und komm wieder zurück.
-3) Wenn ein Abschnitt auf EN ist, nutze den Link zur EN-Quelle, damit du nicht blockierst.
+3) Wenn ein Abschnitt auf ES oder EN verweist, ist das Quellen-/Referenzmaterial, keine vollständige deutsche Übersetzung.
 
 ## Wo das Wichtige ist (Shortcuts)
 - Einstieg (DE): [docs/de/00_start_here.md](00_start_here.md)
 - Szenario ausprobieren (DE): [docs/de/03_try_a_scenario.md](03_try_a_scenario.md)
 - Kernel-Workflow (ES): [../../v1_core/workflow/es/README.md](../../v1_core/workflow/es/README.md)
 - Szenario-Vorlage (ES): [../../v1_core/workflow/es/04_scenario_template.md](../../v1_core/workflow/es/04_scenario_template.md)
-- Meta-Learning (ES): [../../v1_core/workflow/es/05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
+- Meta-Lernen (ES): [../../v1_core/workflow/es/05_meta_learning.md](../../v1_core/workflow/es/05_meta_learning.md)
 
 ## Wenn du beitragen willst (ohne Links zu brechen)
 - Bevorzuge relative Links (damit sie in GitHub und lokal funktionieren).
