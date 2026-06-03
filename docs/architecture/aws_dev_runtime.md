@@ -23,7 +23,7 @@ AWS does not define semantic authority. GitHub remains the source of truth.
 Start simple:
 
 ```text
-OS: Ubuntu LTS
+OS: Ubuntu LTS with Python >= 3.11 available
 CPU/RAM: development-sized EC2 instance
 Disk: enough for repo, inputs, outputs, logs, and future artifacts
 Access: SSH with key pair
@@ -58,10 +58,12 @@ Meaning:
 After provisioning the EC2 instance and connecting through SSH, run:
 
 ```bash
-bash scripts/infra/bootstrap_aws_dev_runtime.sh
+sudo bash scripts/infra/bootstrap_aws_dev_runtime.sh
 ```
 
-The script installs the minimum system packages, creates `/opt/hub-optimus`, clones the repo if missing, creates a virtual environment, installs pytest, and runs a CLI smoke test.
+The script installs the minimum system packages, verifies Python `>=3.11`, creates `/opt/hub-optimus`, clones the repo if missing, creates a virtual environment, installs dependencies from `requirements-dev.txt`, and runs a CLI smoke test.
+
+The script must be launched with `sudo` because it installs packages and prepares `/opt/hub-optimus`. After root-only setup is done, repository operations, Python dependency installation, and CLI execution run as the invoking non-root user.
 
 ## Smoke test
 
