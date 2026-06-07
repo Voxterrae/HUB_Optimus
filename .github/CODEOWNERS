@@ -4,30 +4,30 @@
 # ───── Protected zones (require maintainer review) ─────
 
 # Kernel (canonical + parity)
-v1_core/languages/          @Voxterrae
-v1_core/languages/es/       @Voxterrae
-v1_core/languages/en/       @Voxterrae
+v1_core/languages/          @Voxterrae @itteamrod
+v1_core/languages/es/       @Voxterrae @itteamrod
+v1_core/languages/en/       @Voxterrae @itteamrod
 
 # Governance documents
-docs/governance/            @Voxterrae
+docs/governance/            @Voxterrae @itteamrod
 
 # CI and repo infrastructure
-.github/                    @Voxterrae
+.github/                    @Voxterrae @itteamrod
 
 # Project root configs
-CONTRIBUTING.md             @Voxterrae
-README.md                   @Voxterrae
-scenario.schema.json        @Voxterrae
+CONTRIBUTING.md             @Voxterrae @itteamrod
+README.md                   @Voxterrae @itteamrod
+scenario.schema.json        @Voxterrae @itteamrod
 
 # ───── Reviewed zones (maintainer notified) ─────
 
 # Simulator core
-hub_optimus_simulator.py    @Voxterrae
-run_scenario.py             @Voxterrae
-hub_optimus/                @Voxterrae
+hub_optimus_simulator.py    @Voxterrae @itteamrod
+run_scenario.py             @Voxterrae @itteamrod
+hub_optimus/                @Voxterrae @itteamrod
 
 # Benchmarks (deterministic contract)
-benchmarks/                 @Voxterrae
+benchmarks/                 @Voxterrae @itteamrod
 
 # ───── Open zones (contributors welcome) ─────
 # No CODEOWNERS entry = no mandatory review gate.
