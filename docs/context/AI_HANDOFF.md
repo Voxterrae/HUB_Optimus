@@ -141,3 +141,16 @@ Out of scope:
 - roadmap changes
 - LLM-as-judge
 - dashboards
+
+## Governance RFC handoff — constitutional governance and AI regulatory boundary
+
+PR #1628 introduces a draft RFC defining HUB_Optimus constitutional governance and AI regulatory boundary posture.
+
+Operational meaning:
+- HUB_Optimus is framed as an evidence-structured analysis and governance system, not an autonomous enforcement, censorship, surveillance, or persuasion system.
+- Future regulated, high-risk, automated, or externally exposed capabilities require explicit RFC review before implementation.
+- High-risk downstream use triggers include consequential decisions about people, surveillance/profiling, political persuasion, automated moderation/enforcement, and legal/regulatory bypass risk.
+- This PR is documentation-only and does not authorize runtime, CI, schema, benchmark, roadmap, licensing, IP, ingestion, dashboard, scoring, or provider changes.
+
+Review note:
+- The RFC lives under docs/rfc/ to avoid creating governance translation mirror drift under docs/governance/.
