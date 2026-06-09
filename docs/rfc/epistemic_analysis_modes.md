@@ -23,7 +23,7 @@ Every analytical input must declare its analysis mode before evaluation.
 Spanish reference:
 
 ```text
-Toda entrada analitica debe declarar su modo antes de ser evaluada.
+Toda entrada analítica debe declarar su modo antes de ser evaluada.
 ```
 
 ## Relationship to Existing Work
