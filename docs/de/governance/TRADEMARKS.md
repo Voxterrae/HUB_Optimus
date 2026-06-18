@@ -64,12 +64,5 @@ Kustoden vergeben keine "Zertifizierung". Sie schützen nur Klarheit und verhind
 - Benennung eines Forks oder Derivats als "HUB_Optimus" oder Nutzung verwechselbar ähnlicher Markenführung.
 - Irreführende "Kompatibilitäts"-Behauptungen, die Governance-Ausrichtung implizieren.
 
-## Erlaubte Nutzungen (ohne Genehmigung)
-Der Name/die Marke darf genutzt werden, um:
-- auf dieses Repository und seine Dokumente zu verweisen,
-- HUB_Optimus in akademischen oder gemeinwohlorientierten Diskussionen zu zitieren,
-- Werkzeuge zu bauen, die HUB_Optimus-Methoden *implementieren*,
-- Übersetzungen zu erstellen, die Bedeutung bewahren.
-
 ### Durchsetzung
 Nicht autorisierte Nutzung stellt eine Markenverletzung dar und kann rechtliche Schritte auslösen.
