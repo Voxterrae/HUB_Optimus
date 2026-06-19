@@ -45,7 +45,7 @@ HUB_Optimus may analyze judicial transparency structurally.
 HUB_Optimus must not:
 
 - assign guilt or innocence;
-- accuse living persons without official court sources;
+- make public accusations against living persons;
 - infer protected identities;
 - publish private or victim-sensitive material;
 - treat missing public information as proof of wrongdoing;
@@ -331,7 +331,7 @@ This RFC does not authorize scoring implementation.
 
 ## Reference Case Boundary
 
-EncroChat, Sky ECC, ANOM, Kinahan-related references, and Halle an der Saale macroprocess materials may be used as public-source test references only after separate follow-up issues or PRs.
+EncroChat, Sky ECC, ANOM, and Halle an der Saale macroprocess materials may be used as public-source test references only after separate follow-up issues or PRs.
 
 Any concrete case record must:
 
