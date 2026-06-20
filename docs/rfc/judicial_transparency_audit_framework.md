@@ -290,6 +290,29 @@ Use conservative source tiers.
 
 Tiering is not verification.
 
+## External Contribution Notes
+
+External input may inform RFC wording only when it remains public-safe, is classified under `user_provided` or `unknown`, and does not become evidence by attribution alone.
+
+A display name is not institutional attribution.
+
+Example retained framing from an external WhatsApp correspondent using the display name `SpaceX`:
+
+```text
+If access to large-scale encrypted communications truly revealed extensive criminal networks, one would expect investigative visibility to be evaluated beyond the commonly cited categories of narcotics, firearms, and money laundering, including human trafficking, abuse, and exploitation wherever evidence exists.
+
+Transparency, accountability, and traceability are essential for maintaining public trust. Technology itself does not judge outcomes; it creates visibility. What matters is how institutions choose to interpret, investigate, and act upon the information they obtain.
+
+The long-term challenge is ensuring that powerful tools are applied consistently, objectively, and without selective narratives. Traceability should illuminate facts, not merely reinforce predetermined conclusions.
+```
+
+Attribution status:
+
+- credited as external unverified contribution;
+- not attributed to SpaceX as a company;
+- retained as discussion input, not as evidence;
+- operationally relevant because it supports traceability over predetermined conclusions.
+
 ## Minimal Record Shape
 
 A public-safe audit record may use this conceptual shape:
