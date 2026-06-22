@@ -77,16 +77,24 @@ treated as verified fact.
 
 - `appointment_access_failure`: a person cannot obtain a timely official
   appointment through official channels.
+- `status_visibility_gap`: a person cannot verify whether appointment
+  availability, payment state, or processing status is progressing.
+- `deadline_breach`: actual waiting time conflicts with an official deadline,
+  published service expectation, or time-sensitive dependency.
 - `payment_channel_friction`: required fee payment is difficult, unavailable, or
   unclear through expected channels.
 - `paper_based_payment_dependency`: the process depends on printed documents,
   in-person bank handling, or paper forms.
 - `unclear_admin_ownership`: responsibility is unclear among Police,
   extranjeria, delegation/subdelegation, consulate, bank, or another actor.
+- `inconsistent_office_guidance`: web, office, bank, phone, or written
+  instructions conflict or leave the required next step unclear.
 - `unofficial_intermediary_pressure`: scarcity or confusion pushes the person
   toward paid intermediaries.
 - `fraud_or_resale_risk`: public reporting or case evidence indicates risk of
   black-market appointments, bots, false appointments, resale, or scams.
+- `unnecessary_physical_presence`: avoidable in-person visits are required or
+  caused by unclear appointment, payment, or status instructions.
 - `newcomer_dependency_gap`: a new resident needs the identifier for work,
   housing, banking, registration, contracts, or other basic setup but cannot
   access the process reliably.
@@ -167,11 +175,15 @@ claim:
   claim_date: "YYYY-MM-DD | unknown"
 alleged_failure_modes:
   - appointment_access_failure
+  - status_visibility_gap
+  - deadline_breach
   - payment_channel_friction
   - paper_based_payment_dependency
   - unclear_admin_ownership
+  - inconsistent_office_guidance
   - unofficial_intermediary_pressure
   - fraud_or_resale_risk
+  - unnecessary_physical_presence
   - newcomer_dependency_gap
   - digital_exclusion
 timeline:
@@ -266,9 +278,11 @@ claim:
   claim_date: unknown
 alleged_failure_modes:
   - appointment_access_failure
+  - status_visibility_gap
   - payment_channel_friction
   - paper_based_payment_dependency
   - unclear_admin_ownership
+  - inconsistent_office_guidance
   - newcomer_dependency_gap
 evidence:
   official_pages: []
@@ -280,7 +294,7 @@ evidence:
 evidence_tier: D
 claim_status: raw
 inference: "The case can be recorded as an initial weak signal for intake design."
-uncertainty: "No official record, screenshot, receipt, complaint outcome, or appointment availability data is attached."
+uncertainty: "No official record, screenshot, receipt, complaint outcome, appointment availability data, deadline evidence, or physical-visit evidence is attached."
 narrative_amplification_risk: medium
 operational_relevance: "Shows whether the intake template can represent a local Spain NIE friction signal without personal data."
 privacy_redactions:
@@ -353,6 +367,8 @@ claim:
 alleged_failure_modes:
   - payment_channel_friction
   - paper_based_payment_dependency
+  - inconsistent_office_guidance
+  - unnecessary_physical_presence
   - digital_exclusion
 evidence:
   redacted_fee_payment_documents:
@@ -362,7 +378,7 @@ evidence:
 evidence_tier: B
 claim_status: partially_supported
 inference: "Direct redacted payment evidence may support the existence of payment-channel friction in this case."
-uncertainty: "The record does not establish whether the friction was local, temporary, bank-specific, or systemic."
+uncertainty: "The record does not establish whether the friction was local, temporary, bank-specific, systemic, or whether any in-person step was avoidable."
 narrative_amplification_risk: low
 operational_relevance: "Shows how direct evidence can be classified without publishing payment identifiers."
 privacy_redactions:
