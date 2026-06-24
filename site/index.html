@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HUB_Optimus</title>
+  <meta name="description" content="Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0d1117;
+      --panel: #161b22;
+      --text: #f0f6fc;
+      --muted: #c9d1d9;
+      --accent: #58a6ff;
+      --border: #30363d;
+      --max-width: 72rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      background: radial-gradient(circle at top left, #1f6feb33, transparent 32rem), var(--bg);
+      color: var(--text);
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .page {
+      width: min(100% - 2rem, var(--max-width));
+      margin: 0 auto;
+      padding: 3rem 0;
+    }
+
+    .hero {
+      padding: clamp(2rem, 6vw, 5rem);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      box-shadow: 0 1rem 4rem #00000044;
+    }
+
+    .eyebrow {
+      margin: 0 0 1rem;
+      color: var(--accent);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.75rem, 9vw, 5.5rem);
+      line-height: 1;
+      letter-spacing: -0.06em;
+    }
+
+    .signal {
+      margin: 1.5rem 0;
+      color: var(--text);
+      font-size: clamp(1.25rem, 4vw, 2rem);
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .lead {
+      max-width: 58rem;
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1.1rem, 3vw, 1.35rem);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    section,
+    nav {
+      padding: 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      background: color-mix(in srgb, var(--panel) 86%, transparent);
+    }
+
+    h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.2rem;
+    }
+
+    p,
+    ul {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    ul {
+      padding-left: 1.25rem;
+    }
+
+    li + li {
+      margin-top: 0.35rem;
+    }
+
+    .wide {
+      grid-column: span 2;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .links a {
+      display: inline-block;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #0d1117;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    footer {
+      margin-top: 1.5rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    @media (max-width: 800px) {
+      .page {
+        width: min(100% - 1rem, var(--max-width));
+        padding: 0.5rem 0 2rem;
+      }
+
+      .hero,
+      section,
+      nav {
+        border-radius: 0.85rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .wide {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">Controlled development</p>
+      <h1>HUB_Optimus</h1>
+      <p class="signal">Reality → Evidence → Inference → Narrative → Operational Signal</p>
+      <p class="lead">Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.</p>
+    </header>
+
+    <div class="grid" aria-label="Project summary">
+      <section class="wide" aria-labelledby="what-it-is">
+        <h2 id="what-it-is">What it is</h2>
+        <p>HUB_Optimus is a public versioned research-and-engineering project for structured scenario evaluation, preventive mediation design, and systemic learning.</p>
+      </section>
+
+      <section aria-labelledby="status">
+        <h2 id="status">Status</h2>
+        <p>Controlled development.</p>
+      </section>
+
+      <section aria-labelledby="helps-with">
+        <h2 id="helps-with">What it helps with</h2>
+        <ul>
+          <li>Incentives</li>
+          <li>Verification</li>
+          <li>Sequencing</li>
+          <li>Escalation risks</li>
+          <li>False successes</li>
+          <li>Systemic learning</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="not">
+        <h2 id="not">What it is not</h2>
+        <ul>
+          <li>Not an authority.</li>
+          <li>Not a prediction engine.</li>
+          <li>Not a replacement for diplomacy.</li>
+          <li>A tool for better judgment.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="truth">
+        <h2 id="truth">Source of truth</h2>
+        <p>GitHub repository, Issues, Pull Requests, CI, and versioned documentation.</p>
+      </section>
+
+      <nav class="wide" aria-labelledby="links">
+        <h2 id="links">Links</h2>
+        <ul class="links">
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus">Repository</a></li>
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/00_start_here.md">EN onboarding</a></li>
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/es/00_start_here.md">ES onboarding</a></li>
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/de/00_start_here.md">DE onboarding</a></li>
+          <li><a href="mailto:contact@huboptimus.dev">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <footer>
+      <p>No analytics. No cookies. No forms. No external JavaScript.</p>
+    </footer>
+  </main>
+</body>
+</html>
