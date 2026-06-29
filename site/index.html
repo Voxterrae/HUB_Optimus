@@ -4,105 +4,196 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HUB_Optimus</title>
-  <meta name="description" content="Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.">
+  <meta name="description" content="High-integrity signal interface for structured evaluation, evidence separation, and operational judgment.">
   <style>
     :root {
-      color-scheme: light dark;
-      --bg: #0d1117;
-      --panel: #161b22;
-      --text: #f0f6fc;
-      --muted: #c9d1d9;
-      --accent: #58a6ff;
-      --border: #30363d;
-      --max-width: 72rem;
+      color-scheme: dark;
+      --bg: #020403;
+      --panel: #06120d;
+      --panel-2: #091a12;
+      --text: #eaffea;
+      --muted: #a6c9a8;
+      --dim: #6a8f70;
+      --phosphor: #7cff6b;
+      --phosphor-2: #33ff99;
+      --cyan: #4deeff;
+      --amber: #ffd166;
+      --danger: #ff5f7a;
+      --border: rgba(124, 255, 107, 0.38);
+      --border-strong: rgba(124, 255, 107, 0.72);
+      --shadow: rgba(51, 255, 153, 0.18);
+      --max: 76rem;
     }
 
     * {
       box-sizing: border-box;
     }
 
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
-      background: radial-gradient(circle at top left, #1f6feb33, transparent 32rem), var(--bg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      line-height: 1.55;
       color: var(--text);
+      background:
+        radial-gradient(circle at 15% 0%, rgba(51, 255, 153, 0.18), transparent 30rem),
+        radial-gradient(circle at 88% 12%, rgba(77, 238, 255, 0.12), transparent 26rem),
+        linear-gradient(180deg, #020403 0%, #031008 48%, #020403 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(124, 255, 107, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124, 255, 107, 0.025) 1px, transparent 1px);
+      background-size: 3rem 3rem;
+      mask-image: radial-gradient(circle at center, black 0%, transparent 82%);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.035) 0,
+        rgba(255, 255, 255, 0.035) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      opacity: 0.22;
+      mix-blend-mode: screen;
     }
 
     a {
-      color: var(--accent);
+      color: var(--phosphor);
+      text-decoration: none;
     }
 
-    a:focus-visible,
-    button:focus-visible {
-      outline: 3px solid var(--accent);
-      outline-offset: 3px;
+    a:hover {
+      color: var(--cyan);
     }
 
-    .page {
-      width: min(100% - 2rem, var(--max-width));
+    a:focus-visible {
+      outline: 3px solid var(--cyan);
+      outline-offset: 4px;
+    }
+
+    .shell {
+      width: min(100% - 2rem, var(--max));
       margin: 0 auto;
-      padding: 3rem 0;
+      padding: 2rem 0 2.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topline,
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      color: var(--dim);
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .topline {
+      padding: 0.75rem 0 1rem;
+      border-bottom: 1px solid rgba(124, 255, 107, 0.18);
     }
 
     .hero {
-      padding: clamp(2rem, 6vw, 5rem);
-      border: 1px solid var(--border);
-      border-radius: 1.5rem;
-      background: color-mix(in srgb, var(--panel) 92%, transparent);
-      box-shadow: 0 1rem 4rem #00000044;
+      margin-top: 1.25rem;
+      padding: clamp(1.4rem, 4vw, 3rem);
+      border: 1px solid var(--border-strong);
+      border-radius: 1.25rem;
+      background:
+        linear-gradient(135deg, rgba(124, 255, 107, 0.10), transparent 30%),
+        linear-gradient(180deg, rgba(9, 26, 18, 0.96), rgba(3, 12, 8, 0.98));
+      box-shadow:
+        0 0 0 1px rgba(124, 255, 107, 0.08) inset,
+        0 0 4rem var(--shadow);
     }
 
-    .eyebrow {
+    .kicker {
       margin: 0 0 1rem;
-      color: var(--accent);
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
+      color: var(--cyan);
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(2.75rem, 9vw, 5.5rem);
-      line-height: 1;
-      letter-spacing: -0.06em;
+      color: var(--phosphor);
+      font-size: clamp(3rem, 11vw, 7.5rem);
+      line-height: 0.88;
+      letter-spacing: -0.09em;
+      text-shadow:
+        0 0 0.6rem rgba(124, 255, 107, 0.55),
+        0 0 2rem rgba(51, 255, 153, 0.18);
     }
 
     .signal {
-      margin: 1.5rem 0;
+      max-width: 62rem;
+      margin: 1.35rem 0 0;
       color: var(--text);
-      font-size: clamp(1.25rem, 4vw, 2rem);
-      font-weight: 700;
-      line-height: 1.25;
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      font-weight: 800;
+      line-height: 1.18;
     }
 
     .lead {
-      max-width: 58rem;
-      margin: 0;
+      max-width: 60rem;
+      margin: 1rem 0 0;
       color: var(--muted);
-      font-size: clamp(1.1rem, 3vw, 1.35rem);
+      font-size: clamp(1rem, 2vw, 1.18rem);
     }
 
-    .grid {
+    .matrix {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(12, 1fr);
       gap: 1rem;
       margin-top: 1rem;
     }
 
-    section,
-    nav {
-      padding: 1.25rem;
+    .panel {
+      grid-column: span 4;
+      padding: 1rem;
       border: 1px solid var(--border);
       border-radius: 1rem;
-      background: color-mix(in srgb, var(--panel) 86%, transparent);
+      background:
+        linear-gradient(180deg, rgba(9, 26, 18, 0.92), rgba(3, 10, 7, 0.92));
+      box-shadow: 0 0 1.5rem rgba(51, 255, 153, 0.07);
+    }
+
+    .panel.wide {
+      grid-column: span 8;
+    }
+
+    .panel.full {
+      grid-column: 1 / -1;
     }
 
     h2 {
-      margin: 0 0 0.75rem;
-      font-size: 1.2rem;
+      margin: 0 0 0.7rem;
+      color: var(--phosphor);
+      font-size: 0.95rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
     }
 
     p,
@@ -112,118 +203,241 @@
     }
 
     ul {
-      padding-left: 1.25rem;
+      padding-left: 1.1rem;
     }
 
     li + li {
       margin-top: 0.35rem;
     }
 
-    .wide {
-      grid-column: span 2;
+    .status-grid,
+    .signal-grid {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .status-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .signal-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .chip,
+    .signal-step {
+      border: 1px solid rgba(124, 255, 107, 0.3);
+      border-radius: 0.75rem;
+      background: rgba(2, 8, 5, 0.72);
+    }
+
+    .chip {
+      padding: 0.75rem;
+    }
+
+    .chip b {
+      display: block;
+      color: var(--text);
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .chip span {
+      display: block;
+      margin-top: 0.25rem;
+      color: var(--phosphor);
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .chip.warning span {
+      color: var(--amber);
+    }
+
+    .signal-step {
+      padding: 0.8rem;
+      min-height: 5rem;
+    }
+
+    .signal-step strong {
+      display: block;
+      color: var(--phosphor);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .signal-step span {
+      display: block;
+      margin-top: 0.35rem;
+      color: var(--muted);
+      font-size: 0.9rem;
     }
 
     .links {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.75rem;
+      gap: 0.65rem;
       padding-left: 0;
       list-style: none;
     }
 
     .links a {
       display: inline-block;
-      padding: 0.65rem 0.85rem;
-      border: 1px solid var(--border);
+      padding: 0.7rem 0.9rem;
+      border: 1px solid rgba(124, 255, 107, 0.38);
       border-radius: 999px;
-      background: #0d1117;
-      text-decoration: none;
-      font-weight: 700;
+      background: rgba(2, 8, 5, 0.82);
+      color: var(--text);
+      font-weight: 800;
     }
 
-    footer {
-      margin-top: 1.5rem;
-      color: var(--muted);
-      font-size: 0.95rem;
-      text-align: center;
+    .links a:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 1rem rgba(77, 238, 255, 0.15);
     }
 
-    @media (max-width: 800px) {
-      .page {
-        width: min(100% - 1rem, var(--max-width));
-        padding: 0.5rem 0 2rem;
+    .footer {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(124, 255, 107, 0.18);
+    }
+
+    .ok {
+      color: var(--phosphor);
+    }
+
+    .hold {
+      color: var(--amber);
+    }
+
+    @media (max-width: 920px) {
+      .panel,
+      .panel.wide {
+        grid-column: 1 / -1;
+      }
+
+      .signal-grid,
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .shell {
+        width: min(100% - 1rem, var(--max));
+        padding-top: 0.75rem;
       }
 
       .hero,
-      section,
-      nav {
+      .panel {
         border-radius: 0.85rem;
       }
 
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .wide {
-        grid-column: span 1;
+      .topline,
+      .footer {
+        font-size: 0.7rem;
       }
     }
   </style>
 </head>
 <body>
-  <main class="page">
-    <header class="hero">
-      <p class="eyebrow">Controlled development</p>
-      <h1>HUB_Optimus</h1>
-      <p class="signal">Reality → Evidence → Inference → Narrative → Operational Signal</p>
-      <p class="lead">Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.</p>
+  <main class="shell">
+    <div class="topline" aria-label="Interface state">
+      <span>HUB_OPTIMUS // PUBLIC_INTERFACE</span>
+      <span>MODE: CONTROLLED_DEVELOPMENT</span>
+    </div>
+
+    <header class="hero" aria-labelledby="title">
+      <p class="kicker">Signal discipline for complex systems</p>
+      <h1 id="title">HUB_Optimus</h1>
+      <p class="signal">Separate reality, evidence, inference, narrative, and operational signal.</p>
+      <p class="lead">A public versioned research-and-engineering project for structured evaluation, preventive mediation design, and systemic learning.</p>
     </header>
 
-    <div class="grid" aria-label="Project summary">
-      <section class="wide" aria-labelledby="what-it-is">
+    <div class="matrix" aria-label="Project interface">
+      <section class="panel wide" aria-labelledby="status">
+        <h2 id="status">Operational state</h2>
+        <div class="status-grid">
+          <div class="chip">
+            <b>Public landing</b>
+            <span class="ok">active</span>
+          </div>
+          <div class="chip">
+            <b>Backend v0.1</b>
+            <span class="ok">local-operational</span>
+          </div>
+          <div class="chip warning">
+            <b>Public API</b>
+            <span class="hold">not exposed</span>
+          </div>
+          <div class="chip">
+            <b>Source of truth</b>
+            <span class="ok">GitHub</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="protocol">
+        <h2 id="protocol">Protocol</h2>
+        <p>Observe → detect → decide → act. No build without signal. GitHub remains authoritative.</p>
+      </section>
+
+      <section class="panel full" aria-labelledby="signal-stack">
+        <h2 id="signal-stack">Signal stack</h2>
+        <div class="signal-grid">
+          <div class="signal-step">
+            <strong>Reality</strong>
+            <span>What is directly observed.</span>
+          </div>
+          <div class="signal-step">
+            <strong>Evidence</strong>
+            <span>What supports the claim.</span>
+          </div>
+          <div class="signal-step">
+            <strong>Inference</strong>
+            <span>What follows, cautiously.</span>
+          </div>
+          <div class="signal-step">
+            <strong>Narrative</strong>
+            <span>What may amplify or distort.</span>
+          </div>
+          <div class="signal-step">
+            <strong>Operational</strong>
+            <span>What action is safe.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel wide" aria-labelledby="what-it-is">
         <h2 id="what-it-is">What it is</h2>
-        <p>HUB_Optimus is a public versioned research-and-engineering project for structured scenario evaluation, preventive mediation design, and systemic learning.</p>
+        <p>HUB_Optimus is a governed system for separating signal from noise in high-friction contexts. It supports better judgment through structured scenarios, traceable reasoning, and controlled execution.</p>
       </section>
 
-      <section aria-labelledby="status">
-        <h2 id="status">Status</h2>
-        <p>Controlled development.</p>
-      </section>
-
-      <section aria-labelledby="helps-with">
-        <h2 id="helps-with">What it helps with</h2>
-        <ul>
-          <li>Incentives</li>
-          <li>Verification</li>
-          <li>Sequencing</li>
-          <li>Escalation risks</li>
-          <li>False successes</li>
-          <li>Systemic learning</li>
-        </ul>
-      </section>
-
-      <section aria-labelledby="not">
-        <h2 id="not">What it is not</h2>
+      <section class="panel" aria-labelledby="what-it-is-not">
+        <h2 id="what-it-is-not">What it is not</h2>
         <ul>
           <li>Not an authority.</li>
           <li>Not a prediction engine.</li>
           <li>Not a replacement for diplomacy.</li>
-          <li>A tool for better judgment.</li>
+          <li>Not a public runtime service yet.</li>
         </ul>
       </section>
 
-      <section aria-labelledby="truth">
+      <section class="panel" aria-labelledby="scope">
+        <h2 id="scope">Public site scope</h2>
+        <p>huboptimus.dev serves the public landing page only. Runtime files, backend operations, and versioned materials remain in GitHub.</p>
+      </section>
+
+      <section class="panel wide" aria-labelledby="truth">
         <h2 id="truth">Source of truth</h2>
-        <p>GitHub repository, Issues, Pull Requests, CI, and versioned documentation. Repository files and documentation remain versioned in GitHub; huboptimus.dev serves the public landing page only.</p>
+        <p>GitHub repository, Issues, Pull Requests, commits, CI, and versioned documentation are authoritative. Chat is advisory. Public presentation does not override repository state.</p>
       </section>
 
-      <section aria-labelledby="site-scope">
-        <h2 id="site-scope">Public site scope</h2>
-        <p>README, IP notice, documentation, assets, and runtime files are not copied into this static site. Use the GitHub links below for authoritative repository materials.</p>
-      </section>
-
-      <nav class="wide" aria-labelledby="links">
-        <h2 id="links">Links</h2>
+      <nav class="panel full" aria-labelledby="links">
+        <h2 id="links">Navigation</h2>
         <ul class="links">
           <li><a href="https://github.com/Voxterrae/HUB_Optimus">Repository</a></li>
           <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/README.md">README</a></li>
@@ -231,13 +445,14 @@
           <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/00_start_here.md">EN onboarding</a></li>
           <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/es/00_start_here.md">ES onboarding</a></li>
           <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/de/00_start_here.md">DE onboarding</a></li>
-          <li><a href="mailto:contact@huboptimus.dev">Contact</a></li>
+          <li><a href="mailto:operator@huboptimus.dev">Operator</a></li>
         </ul>
       </nav>
     </div>
 
-    <footer>
-      <p>No analytics. No cookies. No forms. No external JavaScript.</p>
+    <footer class="footer">
+      <span>No analytics. No cookies. No forms. No external JavaScript.</span>
+      <span>Public API: not exposed.</span>
     </footer>
   </main>
 </body>
