@@ -10,6 +10,14 @@ This RFC does not authorize HERMES implementation, frontend work, backend API wo
 
 Parent issue: #1634
 
+## Roadmap execution (issues-first)
+
+Implementation planning is tracked in:
+
+- `docs/rfc/hermes_pwa_gate_issue_pack.md`
+
+This keeps the RFC as boundary documentation and defers all UI/frontend/backend implementation until gate issues are opened, reviewed, and approved.
+
 ## Decision
 
 HERMES must be an interface, not semantic authority.
