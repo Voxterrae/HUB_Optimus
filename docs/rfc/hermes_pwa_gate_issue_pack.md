@@ -1,4 +1,4 @@
-# HERMES PWA Gate Issue Pack (RFC execution, no implementation)
+# HERMES PWA Gate Issue Pack (implementation planning, no implementation)
 
 ## Status
 
