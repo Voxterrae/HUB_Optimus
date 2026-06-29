@@ -1,15 +1,16 @@
 # Guía de Uso del Núcleo de Simulación de HUB_Optimus
 
-Este documento explica cómo utilizar el núcleo de simulación prototípico que acompaña a HUB_Optimus.  El propósito de este núcleo es ofrecer una base de código mínima pero funcional para cargar escenarios, asignar políticas básicas a actores, ejecutar rondas de negociación y evaluar condiciones de éxito.
+Este documento explica cómo utilizar el núcleo de simulación prototípico que acompaña a HUB_Optimus.  El propósito de este núcleo es ofrecer una base de código mínima pero funcional para cargar escenarios JSON, asignar políticas básicas a actores, ejecutar rondas de negociación y evaluar condiciones de éxito.
 
-> **Alcance actual:** El prototipo implementa carga de escenarios, políticas de oferta simples y un informe JSON con `status`, `rounds`, `history` y `detail`.  Funcionalidades como el **Índice de Integridad**, el cifrado de comunicaciones y políticas de negociación avanzadas son **ampliaciones planificadas** (ver sección 4), no características del núcleo actual.
+> **Alcance actual:** El prototipo implementa carga de escenarios JSON estrictos, políticas de oferta simples y un informe JSON con `status`, `rounds`, `history` y `detail`.  Funcionalidades como el **Índice de Integridad**, el cifrado de comunicaciones y políticas de negociación avanzadas son **ampliaciones planificadas** (ver sección 4), no características del núcleo actual.
 
 ## Archivos principales
 
 | Archivo                      | Descripción                                                                                                      |
 |-----------------------------|------------------------------------------------------------------------------------------------------------------|
-| `hub_optimus_simulator.py`  | Módulo que define las clases `Scenario`, `Actor` y `Simulator`, así como políticas sencillas de ejemplo.  Permite cargar escenarios desde JSON/YAML y ejecutar rondas de negociación. |
-| `run_scenario.py`           | Script de línea de comandos que invoca al simulador sobre un escenario determinado y devuelve un informe JSON.   |
+| `hub_optimus_simulator.py`  | Módulo que define las clases `Scenario`, `Actor` y `Simulator`, así como políticas sencillas de ejemplo.  Ejecuta rondas de negociación sobre escenarios ya validados. |
+| `run_scenario.py`           | Script de línea de comandos que valida un escenario JSON estricto e invoca el simulador para devolver un informe JSON.   |
+| `scenario.schema.json`      | Contrato JSON Schema canónico para los archivos de escenario ejecutables.                                         |
 | `example_scenario.json`     | Escenario de ejemplo donde dos facciones negocian un alto el fuego parcial.                                        |
 | `i18n_sync.py`              | Utilidad para comprobar la coherencia de traducciones en la documentación (ver sección 5).                        |
 
@@ -26,7 +27,7 @@ source venv/bin/activate
 
 ## 2. Estructura de un escenario
 
-Los escenarios se describen mediante un archivo JSON (también se acepta YAML) con los campos siguientes:
+Los escenarios ejecutables se describen mediante un archivo JSON que debe validar contra `scenario.schema.json`. El contrato actual es estricto: no se aceptan campos extra en la raíz del documento ni dentro de `roles[]`.
 
 ```json
 {
@@ -41,10 +42,12 @@ Los escenarios se describen mediante un archivo JSON (también se acepta YAML) c
 }
 ```
 
-* `title` y `description` proporcionan contexto humano.
-* `roles` define los actores que participarán en la negociación.  Cada elemento puede incluir campos adicionales (por ejemplo, la política a usar).
+* `title` y `description` proporcionan contexto humano mínimo para el runtime.
+* `roles` define los actores que participarán en la negociación.  Cada elemento debe contener solo `name` y `role`.
 * `success_criteria` es un mapa de clave/valor.  La simulación se detiene cuando cualquier actor emite una acción que coincida con una clave y valor del criterio (por ejemplo, `{"offer": 5}`).
 * `max_rounds` limita el número máximo de rondas para evitar bucles infinitos.
+
+La plantilla de trabajo más rica (`v1_core/workflow/04_scenario_template.md`) sirve para diseñar escenarios humanos con contexto, verificación, riesgos, evaluación y meta-learning. Esas secciones no forman parte del JSON ejecutable actual salvo que el schema, los ejemplos, los tests y la documentación se actualicen en un PR específico.
 
 ## 3. Ejecución desde la línea de comandos
 
@@ -54,7 +57,7 @@ Para ejecutar un escenario:
 python run_scenario.py --scenario example_scenario.json --seed 42
 ```
 
-* `--scenario` especifica la ruta al archivo de escenario.  Puede ser una ruta relativa o absoluta.
+* `--scenario` especifica la ruta al archivo de escenario JSON.  Puede ser una ruta relativa o absoluta.
 * `--seed` es opcional; fija la semilla del generador aleatorio para obtener resultados reproducibles.
 
 El script imprimirá un informe JSON como el siguiente:
@@ -81,7 +84,7 @@ El campo `status` indica si se alcanzó el criterio de éxito (`"success"`) o se
 
 ### Opciones adicionales
 
-El módulo `hub_optimus_simulator.py` está diseñado para ser extensible.  Puedes definir políticas personalizadas para los actores proporcionando funciones que acepten el estado de la negociación y devuelvan la siguiente acción.  También puedes cargar escenarios desde YAML o definirlos directamente como diccionarios en Python y pasarlos al simulador.
+El módulo `hub_optimus_simulator.py` está diseñado para ser extensible.  Puedes definir políticas personalizadas para los actores proporcionando funciones que acepten el estado de la negociación y devuelvan la siguiente acción.  Esas políticas se asignan desde Python o mediante las opciones soportadas por el runner; no se declaran como campos extra dentro del JSON de escenario actual.
 
 ## 4. Ampliaciones futuras
 
