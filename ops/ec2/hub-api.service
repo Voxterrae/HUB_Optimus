@@ -1,0 +1,17 @@
+[Unit]
+Description=HUB_Optimus local API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/hub-optimus/current
+Environment=PATH=/opt/hub-optimus/shared/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/opt/hub-optimus/shared/bin/hub-api
+Restart=on-failure
+RestartSec=3
+StandardOutput=append:/opt/hub-optimus/shared/logs/hub-api.systemd.log
+StandardError=append:/opt/hub-optimus/shared/logs/hub-api.systemd.log
+
+[Install]
+WantedBy=multi-user.target
