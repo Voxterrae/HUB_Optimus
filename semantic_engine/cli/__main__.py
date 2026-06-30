@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from semantic_engine.contracts import AnalysisResult
+from semantic_engine.contracts import AnalysisResult, ClaimRecord, EvidenceRecord
 
 REQUIRED_CASE_FIELDS = ("case_id", "core_version_ref", "input_summary")
 
@@ -47,14 +47,165 @@ def require_string_field(payload: dict[str, Any], field_name: str) -> str:
     return value
 
 
+def require_object_item(collection_name: str, index: int, value: Any) -> dict[str, Any]:
+    """Return an object item from a collection or raise a controlled error."""
+
+    if not isinstance(value, dict):
+        raise ControlledCliError(f"{collection_name}[{index}] must be an object")
+    return value
+
+
+def optional_string_field(
+    payload: dict[str, Any],
+    field_name: str,
+    default: str,
+) -> str:
+    """Return an optional string field with a stable default."""
+
+    if field_name not in payload:
+        return default
+
+    value = payload[field_name]
+    if not isinstance(value, str) or not value.strip():
+        raise ControlledCliError(f"{field_name} must be a non-empty string")
+    return value
+
+
+def optional_bool_field(
+    payload: dict[str, Any],
+    field_name: str,
+    default: bool,
+) -> bool:
+    """Return an optional boolean field with a stable default."""
+
+    if field_name not in payload:
+        return default
+
+    value = payload[field_name]
+    if not isinstance(value, bool):
+        raise ControlledCliError(f"{field_name} must be a boolean")
+    return value
+
+
+def optional_metadata(payload: dict[str, Any]) -> dict[str, Any]:
+    """Return optional metadata as an object."""
+
+    if "metadata" not in payload:
+        return {}
+
+    value = payload["metadata"]
+    if not isinstance(value, dict):
+        raise ControlledCliError("metadata must be an object")
+    return dict(value)
+
+
+def optional_string_tuple(
+    payload: dict[str, Any],
+    field_name: str,
+) -> tuple[str, ...]:
+    """Return an optional list of strings as a tuple."""
+
+    if field_name not in payload:
+        return ()
+
+    value = payload[field_name]
+    if not isinstance(value, list):
+        raise ControlledCliError(f"{field_name} must be a list of strings")
+
+    items: list[str] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item.strip():
+            raise ControlledCliError(f"{field_name}[{index}] must be a non-empty string")
+        items.append(item)
+
+    return tuple(items)
+
+
+def load_claims(payload: dict[str, Any]) -> tuple[ClaimRecord, ...]:
+    """Load optional structured claims from the case payload."""
+
+    raw_claims = payload.get("claims", [])
+    if not isinstance(raw_claims, list):
+        raise ControlledCliError("claims must be a list")
+
+    claims: list[ClaimRecord] = []
+    for index, raw_claim in enumerate(raw_claims):
+        claim = require_object_item("claims", index, raw_claim)
+        claims.append(
+            ClaimRecord(
+                claim_id=require_string_field(claim, "claim_id"),
+                text=require_string_field(claim, "text"),
+                source_ref=require_string_field(claim, "source_ref"),
+                claim_type=optional_string_field(claim, "claim_type", "unknown"),
+                requires_evidence=optional_bool_field(
+                    claim,
+                    "requires_evidence",
+                    True,
+                ),
+                status=optional_string_field(claim, "status", "pending"),
+                metadata=optional_metadata(claim),
+            )
+        )
+
+    return tuple(claims)
+
+
+def load_evidence(payload: dict[str, Any]) -> tuple[EvidenceRecord, ...]:
+    """Load optional structured evidence from the case payload."""
+
+    raw_evidence = payload.get("evidence", [])
+    if not isinstance(raw_evidence, list):
+        raise ControlledCliError("evidence must be a list")
+
+    evidence: list[EvidenceRecord] = []
+    for index, raw_item in enumerate(raw_evidence):
+        item = require_object_item("evidence", index, raw_item)
+        evidence.append(
+            EvidenceRecord(
+                evidence_id=require_string_field(item, "evidence_id"),
+                text=require_string_field(item, "text"),
+                source_ref=require_string_field(item, "source_ref"),
+                source_type=optional_string_field(item, "source_type", "unknown"),
+                supports_claim_ids=optional_string_tuple(item, "supports_claim_ids"),
+                contradicts_claim_ids=optional_string_tuple(
+                    item,
+                    "contradicts_claim_ids",
+                ),
+                limitations=optional_string_tuple(item, "limitations"),
+                metadata=optional_metadata(item),
+            )
+        )
+
+    return tuple(evidence)
+
+
 def build_draft_result(payload: dict[str, Any]) -> AnalysisResult:
-    """Build a draft AnalysisResult from a minimal case payload."""
+    """Build a draft AnalysisResult from a structured case payload.
+
+    This preserves submitted claims, evidence, process notes, and operational
+    signal fields without adding scoring, model-judge behavior, or autonomous
+    conclusions.
+    """
 
     return AnalysisResult(
         case_id=require_string_field(payload, "case_id"),
         core_version_ref=require_string_field(payload, "core_version_ref"),
         input_summary=require_string_field(payload, "input_summary"),
-        status="draft",
+        claims=load_claims(payload),
+        evidence=load_evidence(payload),
+        inferences=optional_string_tuple(payload, "inferences"),
+        uncertainties=optional_string_tuple(payload, "uncertainties"),
+        narrative_amplification=optional_string_tuple(
+            payload,
+            "narrative_amplification",
+        ),
+        operational_signal=optional_string_field(
+            payload,
+            "operational_signal",
+            "none",
+        ),
+        status=optional_string_field(payload, "status", "draft"),
+        metadata=optional_metadata(payload),
     )
 
 

@@ -97,3 +97,57 @@ def test_cli_missing_required_field_fails_cleanly(tmp_path):
     assert result.stdout == ""
     assert "semantic_engine.cli: error: missing required string field: input_summary" in result.stderr
     assert "Traceback" not in result.stderr
+
+
+def test_cli_analyze_preserves_structured_claims_and_evidence():
+    result = run_cli("analyze", "examples/semantic_engine/case_with_claims.json")
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+
+    payload = json.loads(result.stdout)
+    assert payload["case_id"] == "case-claims-001"
+    assert payload["status"] == "draft"
+    assert payload["operational_signal"] == "triage"
+
+    assert payload["claims"] == [
+        {
+            "claim_id": "claim-001",
+            "text": "A submitted case reports unresolved status visibility in a public-facing process.",
+            "source_ref": "operator-submission",
+            "claim_type": "operational-friction",
+            "requires_evidence": True,
+            "status": "pending",
+            "metadata": {
+                "priority": "review",
+            },
+        }
+    ]
+
+    assert payload["evidence"] == [
+        {
+            "evidence_id": "evidence-001",
+            "text": "The submitted timeline says the expected window was exceeded and communication channels did not resolve the case.",
+            "source_ref": "operator-submission",
+            "source_type": "statement",
+            "supports_claim_ids": ["claim-001"],
+            "contradicts_claim_ids": [],
+            "limitations": [
+                "User-submitted account; administrative records still need verification.",
+            ],
+            "metadata": {},
+        }
+    ]
+
+    assert payload["inferences"] == [
+        "Further verification is required before treating the claim as established."
+    ]
+    assert payload["uncertainties"] == [
+        "The cause of the delay is not established from the submitted case alone."
+    ]
+    assert payload["narrative_amplification"] == [
+        "Avoid generalizing from one submitted case to a full institution."
+    ]
+    assert payload["metadata"] == {
+        "intake_channel": "operator-console-demo",
+    }
