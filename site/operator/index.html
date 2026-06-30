@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HUB_Optimus Operator</title>
+  <meta name="description" content="Installable HUB_Optimus operator console for composing structured cases and reviewing analysis outputs.">
+  <meta name="theme-color" content="#020403">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #020403;
+      --panel: #06120d;
+      --panel-2: #091a12;
+      --text: #eaffea;
+      --muted: #a6c9a8;
+      --dim: #6a8f70;
+      --phosphor: #7cff6b;
+      --cyan: #4deeff;
+      --amber: #ffd166;
+      --red: #ff5f7a;
+      --border: rgba(124, 255, 107, 0.36);
+      --strong: rgba(124, 255, 107, 0.72);
+      --shadow: rgba(51, 255, 153, 0.14);
+      --max: 86rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(51, 255, 153, 0.18), transparent 28rem),
+        radial-gradient(circle at 92% 10%, rgba(77, 238, 255, 0.10), transparent 24rem),
+        linear-gradient(180deg, #020403 0%, #031008 52%, #020403 100%);
+      line-height: 1.55;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(124, 255, 107, 0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124, 255, 107, 0.02) 1px, transparent 1px);
+      background-size: 2.6rem 2.6rem;
+      mask-image: radial-gradient(circle at center, black 0%, transparent 84%);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.03) 0,
+        rgba(255, 255, 255, 0.03) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      opacity: 0.18;
+      mix-blend-mode: screen;
+    }
+
+    a {
+      color: var(--phosphor);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--cyan);
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible,
+    a:focus-visible {
+      outline: 3px solid var(--cyan);
+      outline-offset: 3px;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(100% - 1rem, var(--max));
+      margin: 0 auto;
+      padding: 0.75rem 0 2rem;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      padding: 0.75rem 0 1rem;
+      border-bottom: 1px solid rgba(124, 255, 107, 0.18);
+      color: var(--dim);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .hero {
+      margin-top: 1rem;
+      padding: clamp(1rem, 4vw, 2.25rem);
+      border: 1px solid var(--strong);
+      border-radius: 1rem;
+      background:
+        linear-gradient(135deg, rgba(124, 255, 107, 0.10), transparent 28%),
+        linear-gradient(180deg, rgba(9, 26, 18, 0.96), rgba(3, 12, 8, 0.98));
+      box-shadow: 0 0 3rem var(--shadow);
+    }
+
+    .kicker {
+      margin: 0 0 0.8rem;
+      color: var(--cyan);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--phosphor);
+      font-size: clamp(2rem, 9vw, 5rem);
+      line-height: 0.92;
+      letter-spacing: -0.08em;
+      text-shadow: 0 0 1.5rem rgba(124, 255, 107, 0.32);
+    }
+
+    .lead {
+      max-width: 62rem;
+      margin: 1rem 0 0;
+      color: var(--muted);
+      font-size: clamp(0.95rem, 2vw, 1.12rem);
+    }
+
+    .status-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+
+    .chip,
+    .panel,
+    .mini-card {
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(9, 26, 18, 0.92), rgba(3, 10, 7, 0.94));
+      box-shadow: 0 0 1.2rem rgba(51, 255, 153, 0.06);
+    }
+
+    .chip {
+      padding: 0.75rem;
+      border-radius: 0.85rem;
+    }
+
+    .chip b {
+      display: block;
+      color: var(--text);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .chip span {
+      display: block;
+      margin-top: 0.2rem;
+      color: var(--phosphor);
+      font-weight: 800;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .panel {
+      grid-column: span 6;
+      padding: 1rem;
+      border-radius: 1rem;
+    }
+
+    .panel.third {
+      grid-column: span 4;
+    }
+
+    .panel.full {
+      grid-column: 1 / -1;
+    }
+
+    h2 {
+      margin: 0 0 0.7rem;
+      color: var(--phosphor);
+      font-size: 0.92rem;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    h3 {
+      margin: 0 0 0.45rem;
+      color: var(--cyan);
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .field {
+      display: grid;
+      gap: 0.32rem;
+      margin-top: 0.75rem;
+    }
+
+    label,
+    .label {
+      color: var(--dim);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid rgba(124, 255, 107, 0.28);
+      border-radius: 0.65rem;
+      background: rgba(2, 8, 5, 0.82);
+      color: var(--text);
+      padding: 0.75rem;
+    }
+
+    textarea {
+      min-height: 6rem;
+      resize: vertical;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.9rem;
+    }
+
+    button {
+      border: 1px solid rgba(124, 255, 107, 0.45);
+      border-radius: 999px;
+      background: rgba(2, 8, 5, 0.9);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 800;
+      padding: 0.65rem 0.9rem;
+    }
+
+    button.primary {
+      color: #031008;
+      background: var(--phosphor);
+      border-color: var(--phosphor);
+    }
+
+    button.warn {
+      color: var(--amber);
+      border-color: rgba(255, 209, 102, 0.55);
+    }
+
+    button:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 1rem rgba(77, 238, 255, 0.12);
+    }
+
+    button.primary:hover {
+      color: #031008;
+      box-shadow: 0 0 1.2rem rgba(124, 255, 107, 0.25);
+    }
+
+    .list {
+      display: grid;
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+    }
+
+    .mini-card {
+      border-radius: 0.8rem;
+      padding: 0.75rem;
+    }
+
+    .mini-card p + p {
+      margin-top: 0.35rem;
+    }
+
+    .mini-card .meta {
+      color: var(--dim);
+      font-size: 0.78rem;
+    }
+
+    .mini-card .remove {
+      margin-top: 0.55rem;
+      padding: 0.45rem 0.7rem;
+      color: var(--red);
+      border-color: rgba(255, 95, 122, 0.5);
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text);
+      background: rgba(2, 8, 5, 0.86);
+      border: 1px solid rgba(124, 255, 107, 0.24);
+      border-radius: 0.8rem;
+      padding: 0.9rem;
+      max-height: 28rem;
+      overflow: auto;
+    }
+
+    .empty {
+      color: var(--dim);
+      font-style: italic;
+    }
+
+    .output-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .output-card {
+      border: 1px solid rgba(124, 255, 107, 0.24);
+      border-radius: 0.85rem;
+      padding: 0.8rem;
+      background: rgba(2, 8, 5, 0.68);
+    }
+
+    .output-card.full {
+      grid-column: 1 / -1;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(124, 255, 107, 0.18);
+      color: var(--dim);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .ok {
+      color: var(--phosphor);
+    }
+
+    .hold {
+      color: var(--amber);
+    }
+
+    @media (max-width: 980px) {
+      .status-strip,
+      .row,
+      .output-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel,
+      .panel.third {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app {
+        width: min(100% - 0.75rem, var(--max));
+      }
+
+      .hero,
+      .panel {
+        border-radius: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="topline">
+      <span>HUB_OPTIMUS // OPERATOR_PWA</span>
+      <span>MODE: LOCAL_COMPOSER</span>
+      <span><a href="../">PUBLIC LANDING</a></span>
+    </div>
+
+    <header class="hero">
+      <p class="kicker">Input → process → output</p>
+      <h1>Operator Console</h1>
+      <p class="lead">Compose structured cases, preserve claims and evidence, and review HUB_Optimus analysis results without exposing the backend publicly.</p>
+    </header>
+
+    <section class="status-strip" aria-label="PWA status">
+      <div class="chip">
+        <b>Installable</b>
+        <span class="ok">PWA shell</span>
+      </div>
+      <div class="chip">
+        <b>Network</b>
+        <span class="hold">static only</span>
+      </div>
+      <div class="chip">
+        <b>Backend API</b>
+        <span class="hold">not public</span>
+      </div>
+      <div class="chip">
+        <b>Data</b>
+        <span class="ok">local device</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="panel full">
+        <h2>Case core</h2>
+        <div class="row">
+          <div class="field">
+            <label for="case_id">Case ID</label>
+            <input id="case_id" value="operator-case-001">
+          </div>
+          <div class="field">
+            <label for="core_version_ref">Core version ref</label>
+            <input id="core_version_ref" value="main">
+          </div>
+        </div>
+        <div class="field">
+          <label for="input_summary">Input summary</label>
+          <textarea id="input_summary">Describe the submitted situation, conflict, or operational friction without drawing conclusions.</textarea>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="operational_signal">Operational signal</label>
+            <select id="operational_signal">
+              <option value="none">none</option>
+              <option value="triage">triage</option>
+              <option value="monitor">monitor</option>
+              <option value="defer">defer</option>
+              <option value="escalate">escalate</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="intake_channel">Intake channel</label>
+            <input id="intake_channel" value="operator-pwa">
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Claims</h2>
+        <p>Capture what is asserted. Do not treat submitted claims as verified facts.</p>
+        <div class="field">
+          <label for="claim_text">Claim text</label>
+          <textarea id="claim_text" placeholder="A submitted situation reports unresolved operational friction."></textarea>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="claim_source">Source ref</label>
+            <input id="claim_source" value="operator-submission">
+          </div>
+          <div class="field">
+            <label for="claim_type">Claim type</label>
+            <input id="claim_type" value="operational-friction">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="claim_status">Status</label>
+            <select id="claim_status">
+              <option value="pending">pending</option>
+              <option value="submitted">submitted</option>
+              <option value="needs-evidence">needs-evidence</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="label">Evidence required</span>
+            <label><input id="claim_requires" type="checkbox" checked> yes</label>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="add_claim" type="button">Add claim</button>
+        </div>
+        <div class="list" id="claims_list"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Evidence</h2>
+        <p>Capture support, contradiction, limitations, and source type.</p>
+        <div class="field">
+          <label for="evidence_text">Evidence text</label>
+          <textarea id="evidence_text" placeholder="The submitted account describes delay, lack of status visibility, and unclear escalation path."></textarea>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="evidence_source">Source ref</label>
+            <input id="evidence_source" value="operator-submission">
+          </div>
+          <div class="field">
+            <label for="evidence_type">Source type</label>
+            <input id="evidence_type" value="statement">
+          </div>
+        </div>
+        <div class="field">
+          <label for="evidence_supports">Supports claim IDs, comma-separated</label>
+          <input id="evidence_supports" placeholder="claim-001">
+        </div>
+        <div class="field">
+          <label for="evidence_limitations">Limitations, one per line</label>
+          <textarea id="evidence_limitations" placeholder="User-submitted account; independent verification required."></textarea>
+        </div>
+        <div class="actions">
+          <button class="primary" id="add_evidence" type="button">Add evidence</button>
+        </div>
+        <div class="list" id="evidence_list"></div>
+      </section>
+
+      <section class="panel third">
+        <h2>Inferences</h2>
+        <textarea id="inferences" placeholder="The case may require structured triage before any conclusion is drawn."></textarea>
+      </section>
+
+      <section class="panel third">
+        <h2>Uncertainties</h2>
+        <textarea id="uncertainties" placeholder="The cause and responsibility are not established from the submitted account alone."></textarea>
+      </section>
+
+      <section class="panel third">
+        <h2>Narrative amplification</h2>
+        <textarea id="narrative_amplification" placeholder="Avoid generalizing from one situation to a systemic accusation without broader evidence."></textarea>
+      </section>
+
+      <section class="panel full">
+        <h2>Generated case JSON</h2>
+        <p>Copy this JSON into the local backend workflow when operating inside the secured environment.</p>
+        <div class="actions">
+          <button class="primary" id="build_json" type="button">Build JSON</button>
+          <button id="copy_json" type="button">Copy JSON</button>
+          <button id="save_draft" type="button">Save draft locally</button>
+          <button id="load_draft" type="button">Load saved draft</button>
+          <button id="load_demo" type="button">Load demo</button>
+          <button class="warn" id="clear_all" type="button">Clear</button>
+        </div>
+        <pre id="case_json">{}</pre>
+      </section>
+
+      <section class="panel full">
+        <h2>Analysis output viewer</h2>
+        <p>Paste the JSON response returned by HUB_Optimus `/analyze` to visualize the result.</p>
+        <div class="field">
+          <label for="result_input">Backend response JSON</label>
+          <textarea id="result_input" placeholder='{"status":"ok","run_id":"...","analysis_result":{...}}'></textarea>
+        </div>
+        <div class="actions">
+          <button class="primary" id="render_result" type="button">Render output</button>
+        </div>
+        <div id="result_view" class="output-grid"></div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <span>No analytics. No cookies. No external JavaScript.</span>
+      <span>Public API: not exposed.</span>
+      <span>Data stays on this device unless you copy/export it.</span>
+    </footer>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const storageKey = "hub_optimus_operator_case_v1";
+
+    let claims = [];
+    let evidence = [];
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function value(id) {
+      return $(id).value.trim();
+    }
+
+    function lines(id) {
+      return value(id).split(/\n+/).map((line) => line.trim()).filter(Boolean);
+    }
+
+    function splitComma(raw) {
+      return raw.split(",").map((item) => item.trim()).filter(Boolean);
+    }
+
+    function nextId(prefix, count) {
+      return `${prefix}-${String(count + 1).padStart(3, "0")}`;
+    }
+
+    function buildPayload() {
+      const payload = {
+        case_id: value("case_id") || "operator-case-001",
+        core_version_ref: value("core_version_ref") || "main",
+        input_summary: value("input_summary") || "Submitted case pending summary."
+      };
+
+      if (claims.length) payload.claims = claims;
+      if (evidence.length) payload.evidence = evidence;
+
+      const inferenceItems = lines("inferences");
+      if (inferenceItems.length) payload.inferences = inferenceItems;
+
+      const uncertaintyItems = lines("uncertainties");
+      if (uncertaintyItems.length) payload.uncertainties = uncertaintyItems;
+
+      const narrativeItems = lines("narrative_amplification");
+      if (narrativeItems.length) payload.narrative_amplification = narrativeItems;
+
+      const signal = value("operational_signal");
+      if (signal) payload.operational_signal = signal;
+
+      const intake = value("intake_channel");
+      if (intake) payload.metadata = { intake_channel: intake };
+
+      return payload;
+    }
+
+    function updateJson() {
+      $("case_json").textContent = JSON.stringify(buildPayload(), null, 2);
+    }
+
+    function renderClaims() {
+      $("claims_list").innerHTML = claims.length
+        ? claims.map((claim, index) => `
+          <article class="mini-card">
+            <h3>${escapeHtml(claim.claim_id)} // ${escapeHtml(claim.claim_type)}</h3>
+            <p>${escapeHtml(claim.text)}</p>
+            <p class="meta">source=${escapeHtml(claim.source_ref)} · status=${escapeHtml(claim.status)} · requires_evidence=${claim.requires_evidence}</p>
+            <button class="remove" type="button" data-remove-claim="${index}">Remove</button>
+          </article>
+        `).join("")
+        : `<p class="empty">No claims added yet.</p>`;
+      updateJson();
+    }
+
+    function renderEvidence() {
+      $("evidence_list").innerHTML = evidence.length
+        ? evidence.map((item, index) => `
+          <article class="mini-card">
+            <h3>${escapeHtml(item.evidence_id)} // ${escapeHtml(item.source_type)}</h3>
+            <p>${escapeHtml(item.text)}</p>
+            <p class="meta">source=${escapeHtml(item.source_ref)} · supports=${escapeHtml(item.supports_claim_ids.join(", ") || "none")}</p>
+            <button class="remove" type="button" data-remove-evidence="${index}">Remove</button>
+          </article>
+        `).join("")
+        : `<p class="empty">No evidence added yet.</p>`;
+      updateJson();
+    }
+
+    function addClaim() {
+      const text = value("claim_text");
+      if (!text) {
+        alert("Claim text is required.");
+        return;
+      }
+
+      claims.push({
+        claim_id: nextId("claim", claims.length),
+        text,
+        source_ref: value("claim_source") || "operator-submission",
+        claim_type: value("claim_type") || "unknown",
+        requires_evidence: $("claim_requires").checked,
+        status: value("claim_status") || "pending",
+        metadata: {}
+      });
+
+      $("claim_text").value = "";
+      renderClaims();
+    }
+
+    function addEvidence() {
+      const text = value("evidence_text");
+      if (!text) {
+        alert("Evidence text is required.");
+        return;
+      }
+
+      evidence.push({
+        evidence_id: nextId("evidence", evidence.length),
+        text,
+        source_ref: value("evidence_source") || "operator-submission",
+        source_type: value("evidence_type") || "unknown",
+        supports_claim_ids: splitComma(value("evidence_supports")),
+        contradicts_claim_ids: [],
+        limitations: lines("evidence_limitations"),
+        metadata: {}
+      });
+
+      $("evidence_text").value = "";
+      renderEvidence();
+    }
+
+    async function copyJson() {
+      const content = $("case_json").textContent;
+      try {
+        await navigator.clipboard.writeText(content);
+        alert("Case JSON copied.");
+      } catch {
+        alert("Copy failed. Select and copy manually.");
+      }
+    }
+
+    function saveDraft() {
+      localStorage.setItem(storageKey, JSON.stringify({
+        payload: buildPayload(),
+        claims,
+        evidence,
+        fields: {
+          inferences: value("inferences"),
+          uncertainties: value("uncertainties"),
+          narrative_amplification: value("narrative_amplification"),
+          operational_signal: value("operational_signal"),
+          intake_channel: value("intake_channel")
+        }
+      }));
+      alert("Draft saved locally on this device.");
+    }
+
+    function loadPayload(payload) {
+      $("case_id").value = payload.case_id || "operator-case-001";
+      $("core_version_ref").value = payload.core_version_ref || "main";
+      $("input_summary").value = payload.input_summary || "";
+      $("operational_signal").value = payload.operational_signal || "none";
+      $("intake_channel").value = payload.metadata?.intake_channel || "operator-pwa";
+
+      claims = Array.isArray(payload.claims) ? payload.claims : [];
+      evidence = Array.isArray(payload.evidence) ? payload.evidence : [];
+
+      $("inferences").value = Array.isArray(payload.inferences) ? payload.inferences.join("\n") : "";
+      $("uncertainties").value = Array.isArray(payload.uncertainties) ? payload.uncertainties.join("\n") : "";
+      $("narrative_amplification").value = Array.isArray(payload.narrative_amplification) ? payload.narrative_amplification.join("\n") : "";
+
+      renderClaims();
+      renderEvidence();
+      updateJson();
+    }
+
+    function loadDraft() {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) {
+        alert("No local draft found.");
+        return;
+      }
+
+      const saved = JSON.parse(raw);
+      loadPayload(saved.payload || {});
+    }
+
+    function loadDemo() {
+      loadPayload({
+        case_id: "operator-demo-001",
+        core_version_ref: "main",
+        input_summary: "Submitted situation reports delay, unclear status visibility, and unresolved escalation path.",
+        claims: [
+          {
+            claim_id: "claim-001",
+            text: "A submitted situation reports unresolved operational friction.",
+            source_ref: "operator-submission",
+            claim_type: "operational-friction",
+            requires_evidence: true,
+            status: "pending",
+            metadata: {}
+          }
+        ],
+        evidence: [
+          {
+            evidence_id: "evidence-001",
+            text: "The submitted account describes delay, lack of status visibility, and unclear escalation path.",
+            source_ref: "operator-submission",
+            source_type: "statement",
+            supports_claim_ids: ["claim-001"],
+            contradicts_claim_ids: [],
+            limitations: ["User-submitted account; independent verification required."],
+            metadata: {}
+          }
+        ],
+        inferences: ["The case may require structured triage before any conclusion is drawn."],
+        uncertainties: ["Cause and responsibility are not established from the submitted account alone."],
+        narrative_amplification: ["Avoid generalizing from one situation to a systemic accusation without broader evidence."],
+        operational_signal: "triage",
+        metadata: { intake_channel: "operator-pwa-demo" }
+      });
+    }
+
+    function clearAll() {
+      if (!confirm("Clear current operator case?")) return;
+
+      document.querySelectorAll("input, textarea").forEach((field) => {
+        if (field.type === "checkbox") field.checked = false;
+        else field.value = "";
+      });
+      $("claim_requires").checked = true;
+      $("case_id").value = "operator-case-001";
+      $("core_version_ref").value = "main";
+      $("operational_signal").value = "none";
+      $("intake_channel").value = "operator-pwa";
+      claims = [];
+      evidence = [];
+      renderClaims();
+      renderEvidence();
+      $("result_input").value = "";
+      $("result_view").innerHTML = "";
+      updateJson();
+    }
+
+    function renderList(items, renderItem) {
+      if (!Array.isArray(items) || !items.length) {
+        return `<p class="empty">none</p>`;
+      }
+
+      return items.map(renderItem).join("");
+    }
+
+    function renderResult() {
+      let parsed;
+      try {
+        parsed = JSON.parse(value("result_input"));
+      } catch (error) {
+        alert(`Invalid result JSON: ${error.message}`);
+        return;
+      }
+
+      const result = parsed.analysis_result || parsed;
+
+      $("result_view").innerHTML = `
+        <section class="output-card">
+          <h3>Run</h3>
+          <p>status=${escapeHtml(parsed.status || result.status || "unknown")}</p>
+          <p>run_id=${escapeHtml(parsed.run_id || "not provided")}</p>
+          <p>signal=${escapeHtml(result.operational_signal || "none")}</p>
+        </section>
+
+        <section class="output-card">
+          <h3>Case</h3>
+          <p>case_id=${escapeHtml(result.case_id || "unknown")}</p>
+          <p>core=${escapeHtml(result.core_version_ref || "unknown")}</p>
+          <p>${escapeHtml(result.input_summary || "")}</p>
+        </section>
+
+        <section class="output-card full">
+          <h3>Claims</h3>
+          ${renderList(result.claims, (claim) => `
+            <article class="mini-card">
+              <p><b>${escapeHtml(claim.claim_id)}</b> · ${escapeHtml(claim.claim_type || "unknown")} · ${escapeHtml(claim.status || "unknown")}</p>
+              <p>${escapeHtml(claim.text)}</p>
+              <p class="meta">source=${escapeHtml(claim.source_ref)}</p>
+            </article>
+          `)}
+        </section>
+
+        <section class="output-card full">
+          <h3>Evidence</h3>
+          ${renderList(result.evidence, (item) => `
+            <article class="mini-card">
+              <p><b>${escapeHtml(item.evidence_id)}</b> · ${escapeHtml(item.source_type || "unknown")}</p>
+              <p>${escapeHtml(item.text)}</p>
+              <p class="meta">supports=${escapeHtml((item.supports_claim_ids || []).join(", ") || "none")}</p>
+              <p class="meta">limitations=${escapeHtml((item.limitations || []).join(" | ") || "none")}</p>
+            </article>
+          `)}
+        </section>
+
+        <section class="output-card">
+          <h3>Inferences</h3>
+          ${renderList(result.inferences, (item) => `<p>${escapeHtml(item)}</p>`)}
+        </section>
+
+        <section class="output-card">
+          <h3>Uncertainties</h3>
+          ${renderList(result.uncertainties, (item) => `<p>${escapeHtml(item)}</p>`)}
+        </section>
+
+        <section class="output-card full">
+          <h3>Narrative amplification</h3>
+          ${renderList(result.narrative_amplification, (item) => `<p>${escapeHtml(item)}</p>`)}
+        </section>
+      `;
+    }
+
+    document.addEventListener("click", (event) => {
+      if (event.target.dataset.removeClaim !== undefined) {
+        claims.splice(Number(event.target.dataset.removeClaim), 1);
+        renderClaims();
+      }
+
+      if (event.target.dataset.removeEvidence !== undefined) {
+        evidence.splice(Number(event.target.dataset.removeEvidence), 1);
+        renderEvidence();
+      }
+    });
+
+    [
+      "case_id",
+      "core_version_ref",
+      "input_summary",
+      "operational_signal",
+      "intake_channel",
+      "inferences",
+      "uncertainties",
+      "narrative_amplification"
+    ].forEach((id) => $(id).addEventListener("input", updateJson));
+
+    $("add_claim").addEventListener("click", addClaim);
+    $("add_evidence").addEventListener("click", addEvidence);
+    $("build_json").addEventListener("click", updateJson);
+    $("copy_json").addEventListener("click", copyJson);
+    $("save_draft").addEventListener("click", saveDraft);
+    $("load_draft").addEventListener("click", loadDraft);
+    $("load_demo").addEventListener("click", loadDemo);
+    $("clear_all").addEventListener("click", clearAll);
+    $("render_result").addEventListener("click", renderResult);
+
+    renderClaims();
+    renderEvidence();
+    updateJson();
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js");
+      });
+    }
+  </script>
+</body>
+</html>

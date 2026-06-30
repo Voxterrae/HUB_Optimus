@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">HUB_Optimus Operator</title>
+  <desc id="desc">Phosphor green HUB_Optimus operator mark.</desc>
+  <rect width="512" height="512" rx="112" fill="#020403"/>
+  <rect x="44" y="44" width="424" height="424" rx="84" fill="#06120d" stroke="#7cff6b" stroke-width="14"/>
+  <path d="M118 158h276M118 256h276M118 354h276" stroke="#33ff99" stroke-width="18" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="146" cy="158" r="18" fill="#7cff6b"/>
+  <circle cx="226" cy="256" r="18" fill="#4deeff"/>
+  <circle cx="342" cy="354" r="18" fill="#ffd166"/>
+  <text x="256" y="292" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="92" font-weight="800" fill="#eaffea">HO</text>
+</svg>
