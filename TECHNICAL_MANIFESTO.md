@@ -28,6 +28,7 @@ HUB_Optimus se compone de varias capas claramente definidas.  **Solo la capa 0 e
 La seguridad es un pilar del manifiesto, no un accesorio.  HUB_Optimus incorpora:
 
 * **Criptografía post‑cuántica** (MLKEM/Kyber) *(planificado)* – se planea proteger el intercambio de propuestas con criptografía post-cuántica.  Esta funcionalidad no está implementada en el prototipo actual.
+* **Auditoría completa**: todos los algoritmos, evaluaciones y resultados son auditables.  No hay cajas negras.  El software libre y abierto es la base del proyecto.
 * **Auditoría completa**: todos los algoritmos, evaluaciones y resultados son auditables.  No hay cajas negras.  La visibilidad pública del repositorio debe coexistir con la postura de derechos restringidos definida en `IP_NOTICE.md`.
 * **Gestión de permisos**: los modos didáctico y funcional limitan el acceso y la automatización de funciones críticas para evitar mal uso.
 

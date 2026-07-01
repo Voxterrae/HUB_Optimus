@@ -1,5 +1,8 @@
 # Guía de Uso del Núcleo de Simulación de HUB_Optimus
 
+Este documento explica cómo utilizar el núcleo de simulación prototípico que acompaña a HUB_Optimus.  El propósito de este núcleo es ofrecer una base de código mínima pero funcional para cargar escenarios, asignar políticas básicas a actores, ejecutar rondas de negociación y evaluar condiciones de éxito.
+
+> **Alcance actual:** El prototipo implementa carga de escenarios, políticas de oferta simples y un informe JSON con `status`, `rounds`, `history` y `detail`.  Funcionalidades como el **Índice de Integridad**, el cifrado de comunicaciones y políticas de negociación avanzadas son **ampliaciones planificadas** (ver sección 4), no características del núcleo actual.
 Este documento explica cómo utilizar el núcleo de simulación prototípico que acompaña a HUB_Optimus.  El propósito de este núcleo es ofrecer una base de código mínima pero funcional para cargar escenarios JSON, asignar políticas básicas a actores, ejecutar rondas de negociación y evaluar condiciones de éxito.
 
 > **Alcance actual:** El prototipo implementa carga de escenarios JSON estrictos, políticas de oferta simples y un informe JSON con `status`, `rounds`, `history` y `detail`.  Funcionalidades como el **Índice de Integridad**, el cifrado de comunicaciones y políticas de negociación avanzadas son **ampliaciones planificadas** (ver sección 4), no características del núcleo actual.
