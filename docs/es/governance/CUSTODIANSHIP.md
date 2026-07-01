@@ -1,73 +1,73 @@
-# HUB_Optimus — Custodianship
+# HUB_Optimus — Custodia
 
-## Purpose
-Custodianship exists to protect the Kernel and the integrity of governance.
-It is not ownership, not authority over outcomes, and not a certification body.
+## Propósito
+La custodia existe para proteger el Kernel y la integridad de la gobernanza.
+No es propiedad, no es autoridad sobre resultados y no es un organismo de certificación.
 
-Custodians protect:
-- meaning coherence across languages,
-- resistance to capture and commercialization pressure,
-- traceability of governance changes,
-- and the public record of deliberation.
+Los custodios protegen:
+- la coherencia de significado entre lenguas,
+- la resistencia a la captura y a la presión de comercialización,
+- la trazabilidad de los cambios de gobernanza,
+- y el registro público de la deliberación.
 
-## What Custodianship is
-Custodianship is a constrained governance role that:
-- safeguards the Kernel (Layer 0),
-- enforces the consensus process for governance changes,
-- blocks semantic drift and deceptive rebranding,
-- ensures translations remain meaning-identical to the canonical set.
+## Qué es la custodia
+La custodia es un rol de gobernanza restringido que:
+- salvaguarda el Kernel (Capa 0),
+- hace cumplir el proceso de consenso para cambios de gobernanza,
+- bloquea la deriva semántica y el cambio de marca engañoso,
+- asegura que las traducciones permanezcan idénticas en significado al conjunto canónico.
 
-## What Custodianship is not
-Custodianship is not:
-- a tribunal or enforcement authority,
-- a political mandate,
-- a private ownership claim,
-- a gatekeeping tool for personal preference.
+## Qué no es la custodia
+La custodia no es:
+- un tribunal ni una autoridad de ejecución,
+- un mandato político,
+- una reclamación de propiedad privada,
+- una herramienta de control de acceso por preferencia personal.
 
-## Scope of powers (strictly limited)
-Custodians MAY:
-- reject governance changes that violate the Kernel,
-- require explicit rationale and traceability for governance edits,
-- require synchronization across language mirrors,
-- request removal/correction of misleading "official/endorsed" claims.
+## Alcance de poderes (estrictamente limitado)
+Los custodios PUEDEN:
+- rechazar cambios de gobernanza que violen el Kernel,
+- exigir justificación explícita y trazabilidad para ediciones de gobernanza,
+- exigir sincronización entre réplicas lingüísticas,
+- solicitar la retirada/corrección de afirmaciones engañosas de tipo "oficial/respaldado".
 
-Custodians MUST NOT:
-- impose political decisions,
-- grant "certification" status,
-- unilaterally change the Kernel,
-- rewrite history without traceable process.
+Los custodios NO DEBEN:
+- imponer decisiones políticas,
+- otorgar estado de "certificación",
+- cambiar unilateralmente el Kernel,
+- reescribir la historia sin proceso trazable.
 
-## Kernel change rule (high bar)
-Any Kernel change requires:
-1) an explicit written proposal,
-2) a rationale referencing Kernel principles,
-3) documented objections and responses,
-4) consensus review per `CONSENSUS_PROCESS.md`,
-5) custodianship approval,
-6) synchronization across all language mirrors.
+## Regla de cambio del Kernel (umbral alto)
+Cualquier cambio del Kernel requiere:
+1) una propuesta escrita explícita,
+2) una justificación que haga referencia a principios del Kernel,
+3) objeciones y respuestas documentadas,
+4) revisión por consenso según `CONSENSUS_PROCESS.md`,
+5) aprobación de custodia,
+6) sincronización entre todas las réplicas lingüísticas.
 
-Unreviewed Kernel edits are invalid by definition.
+Las ediciones del Kernel no revisadas son inválidas por definición.
 
-## Conflict of interest and anti-capture
-Custodians must disclose conflicts of interest.
-Capture indicators include:
-- introducing exceptions via translation,
-- weakening MUST/NOT language,
-- rebranding the method as a private product,
-- shifting governance into marketing.
+## Conflicto de intereses y anti-captura
+Los custodios deben revelar conflictos de intereses.
+Los indicadores de captura incluyen:
+- introducir excepciones mediante traducción,
+- debilitar lenguaje DEBE/NO DEBE,
+- renombrar el método como un producto privado,
+- desplazar la gobernanza hacia marketing.
 
-If capture indicators appear, Custodians must block the change and document why.
+Si aparecen indicadores de captura, los custodios deben bloquear el cambio y documentar por qué.
 
-## Transparency and record
-All custodian actions must be traceable:
-- what was blocked/approved,
-- why (Kernel reference),
-- and what changes were required.
+## Transparencia y registro
+Todas las acciones de custodia deben ser trazables:
+- qué fue bloqueado/aprobado,
+- por qué (referencia al Kernel),
+- y qué cambios fueron requeridos.
 
-## Removal / rotation (minimum rule)
-If a Custodian repeatedly violates the Kernel, hides conflicts, or acts deceptively,
-they lose custodianship status through the same consensus process.
+## Remoción / rotación (regla mínima)
+Si un custodio viola repetidamente el Kernel, oculta conflictos o actúa de forma engañosa,
+pierde el estado de custodia mediante el mismo proceso de consenso.
 
-## Non-sovereign statement
-Custodianship does not create authority over participants or institutions.
-It only protects the integrity and clarity of the HUB_Optimus system definition.
+## Declaración no soberana
+La custodia no crea autoridad sobre participantes ni instituciones.
+Solo protege la integridad y claridad de la definición del sistema HUB_Optimus.

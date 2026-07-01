@@ -1,0 +1,45 @@
+{
+  "case_id": "case-claims-001",
+  "core_version_ref": "main",
+  "input_summary": "Structured case intake example with submitted claims, evidence, uncertainties, and operational signal.",
+  "claims": [
+    {
+      "claim_id": "claim-001",
+      "text": "A submitted case reports unresolved status visibility in a public-facing process.",
+      "source_ref": "operator-submission",
+      "claim_type": "operational-friction",
+      "requires_evidence": true,
+      "status": "pending",
+      "metadata": {
+        "priority": "review"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "evidence-001",
+      "text": "The submitted timeline says the expected window was exceeded and communication channels did not resolve the case.",
+      "source_ref": "operator-submission",
+      "source_type": "statement",
+      "supports_claim_ids": [
+        "claim-001"
+      ],
+      "limitations": [
+        "User-submitted account; administrative records still need verification."
+      ]
+    }
+  ],
+  "inferences": [
+    "Further verification is required before treating the claim as established."
+  ],
+  "uncertainties": [
+    "The cause of the delay is not established from the submitted case alone."
+  ],
+  "narrative_amplification": [
+    "Avoid generalizing from one submitted case to a full institution."
+  ],
+  "operational_signal": "triage",
+  "metadata": {
+    "intake_channel": "operator-console-demo"
+  }
+}

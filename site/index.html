@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HUB_Optimus</title>
+  <meta name="description" content="High-integrity signal interface for structured evaluation, evidence separation, and operational judgment.">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #020403;
+      --panel: #06120d;
+      --panel-2: #091a12;
+      --text: #eaffea;
+      --muted: #a6c9a8;
+      --dim: #6a8f70;
+      --phosphor: #7cff6b;
+      --phosphor-2: #33ff99;
+      --cyan: #4deeff;
+      --amber: #ffd166;
+      --danger: #ff5f7a;
+      --border: rgba(124, 255, 107, 0.38);
+      --border-strong: rgba(124, 255, 107, 0.72);
+      --shadow: rgba(51, 255, 153, 0.18);
+      --max: 76rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      line-height: 1.55;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 0%, rgba(51, 255, 153, 0.18), transparent 30rem),
+        radial-gradient(circle at 88% 12%, rgba(77, 238, 255, 0.12), transparent 26rem),
+        linear-gradient(180deg, #020403 0%, #031008 48%, #020403 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(124, 255, 107, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124, 255, 107, 0.025) 1px, transparent 1px);
+      background-size: 3rem 3rem;
+      mask-image: radial-gradient(circle at center, black 0%, transparent 82%);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.035) 0,
+        rgba(255, 255, 255, 0.035) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      opacity: 0.22;
+      mix-blend-mode: screen;
+    }
+
+    a {
+      color: var(--phosphor);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--cyan);
+    }
+
+    a:focus-visible {
+      outline: 3px solid var(--cyan);
+      outline-offset: 4px;
+    }
+
+    .shell {
+      width: min(100% - 2rem, var(--max));
+      margin: 0 auto;
+      padding: 2rem 0 2.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topline,
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      color: var(--dim);
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .topline {
+      padding: 0.75rem 0 1rem;
+      border-bottom: 1px solid rgba(124, 255, 107, 0.18);
+    }
+
+    .hero {
+      margin-top: 1.25rem;
+      padding: clamp(1.4rem, 4vw, 3rem);
+      border: 1px solid var(--border-strong);
+      border-radius: 1.25rem;
+      background:
+        linear-gradient(135deg, rgba(124, 255, 107, 0.10), transparent 30%),
+        linear-gradient(180deg, rgba(9, 26, 18, 0.96), rgba(3, 12, 8, 0.98));
+      box-shadow:
+        0 0 0 1px rgba(124, 255, 107, 0.08) inset,
+        0 0 4rem var(--shadow);
+    }
+
+    .kicker {
+      margin: 0 0 1rem;
+      color: var(--cyan);
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--phosphor);
+      font-size: clamp(3rem, 11vw, 7.5rem);
+      line-height: 0.88;
+      letter-spacing: -0.09em;
+      text-shadow:
+        0 0 0.6rem rgba(124, 255, 107, 0.55),
+        0 0 2rem rgba(51, 255, 153, 0.18);
+    }
+
+    .signal {
+      max-width: 62rem;
+      margin: 1.35rem 0 0;
+      color: var(--text);
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      font-weight: 800;
+      line-height: 1.18;
+    }
+
+    .lead {
+      max-width: 60rem;
+      margin: 1rem 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .panel {
+      grid-column: span 4;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      background:
+        linear-gradient(180deg, rgba(9, 26, 18, 0.92), rgba(3, 10, 7, 0.92));
+      box-shadow: 0 0 1.5rem rgba(51, 255, 153, 0.07);
+    }
+
+    .panel.wide {
+      grid-column: span 8;
+    }
+
+    .panel.full {
+      grid-column: 1 / -1;
+    }
+
+    h2 {
+      margin: 0 0 0.7rem;
+      color: var(--phosphor);
+      font-size: 0.95rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    p,
+    ul {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    ul {
+      padding-left: 1.1rem;
+    }
+
+    li + li {
+      margin-top: 0.35rem;
+    }
+
+    .status-grid,
+    .signal-grid {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .status-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .signal-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .chip,
+    .signal-step {
+      border: 1px solid rgba(124, 255, 107, 0.3);
+      border-radius: 0.75rem;
+      background: rgba(2, 8, 5, 0.72);
+    }
+
+    .chip {
+      padding: 0.75rem;
+    }
+
+    .chip b {
+      display: block;
+      color: var(--text);
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .chip span {
+      display: block;
+      margin-top: 0.25rem;
+      color: var(--phosphor);
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .chip.warning span {
+      color: var(--amber);
+    }
+
+    .signal-step {
+      padding: 0.8rem;
+      min-height: 5rem;
+    }
+
+    .signal-step strong {
+      display: block;
+      color: var(--phosphor);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .signal-step span {
+      display: block;
+      margin-top: 0.35rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .links a {
+      display: inline-block;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid rgba(124, 255, 107, 0.38);
+      border-radius: 999px;
+      background: rgba(2, 8, 5, 0.82);
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .links a:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 1rem rgba(77, 238, 255, 0.15);
+    }
+
+    .footer {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(124, 255, 107, 0.18);
+    }
+
+    .ok {
+      color: var(--phosphor);
+    }
+
+    .hold {
+      color: var(--amber);
+    }
+
+    @media (max-width: 920px) {
+      .panel,
+      .panel.wide {
+        grid-column: 1 / -1;
+      }
+
+      .signal-grid,
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .shell {
+        width: min(100% - 1rem, var(--max));
+        padding-top: 0.75rem;
+      }
+
+      .hero,
+      .panel {
+        border-radius: 0.85rem;
+      }
+
+      .topline,
+      .footer {
+        font-size: 0.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topline" aria-label="Interface state">
+      <span>HUB_OPTIMUS // PUBLIC_INTERFACE</span>
+      <span>MODE: CONTROLLED_DEVELOPMENT</span>
+    </div>
+
+    <header class="hero" aria-labelledby="title">
+      <p class="kicker">Signal discipline for complex systems</p>
+      <h1 id="title">HUB_Optimus</h1>
+      <p class="signal">Separate reality, evidence, inference, narrative, and operational signal.</p>
+      <p class="lead">A public versioned research-and-engineering project for structured evaluation, preventive mediation design, and systemic learning.</p>
+    </header>
+
+    <div class="matrix" aria-label="Project interface">
+      <section class="panel wide" aria-labelledby="status">
+        <h2 id="status">Operational state</h2>
+        <div class="status-grid">
+          <div class="chip">
+            <b>Public landing</b>
+            <span class="ok">active</span>
+          </div>
+          <div class="chip">
+            <b>Backend v0.1</b>
+            <span class="ok">local-operational</span>
+          </div>
+          <div class="chip warning">
+            <b>Public API</b>
+            <span class="hold">not exposed</span>
+          </div>
+          <div class="chip">
+            <b>Source of truth</b>
+            <span class="ok">GitHub</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="protocol">
+        <h2 id="protocol">Protocol</h2>
+        <p>Observe → detect → decide → act. No build without signal. GitHub remains authoritative.</p>
+      </section>
+
+      <section class="panel full" aria-labelledby="signal-stack">
+        <h2 id="signal-stack">Signal stack</h2>
+        <div class="signal-grid">
+          <div class="signal-step">
+            <strong>Reality</strong>
+            <span>What is directly observed.</span>
+          </div>
+          <div class="signal-step">
+            <strong>Evidence</strong>
+            <span>What supports the claim.</span>
+          </div>
+          <div class="signal-step">
+            <strong>Inference</strong>
+            <span>What follows, cautiously.</span>
+          </div>
+          <div class="signal-step">
+            <strong>Narrative</strong>
+            <span>What may amplify or distort.</span>
+          </div>
+          <div class="signal-step">
+            <strong>Operational</strong>
+            <span>What action is safe.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel wide" aria-labelledby="what-it-is">
+        <h2 id="what-it-is">What it is</h2>
+        <p>HUB_Optimus is a governed system for separating signal from noise in high-friction contexts. It supports better judgment through structured scenarios, traceable reasoning, and controlled execution.</p>
+      </section>
+
+      <section class="panel" aria-labelledby="what-it-is-not">
+        <h2 id="what-it-is-not">What it is not</h2>
+        <ul>
+          <li>Not an authority.</li>
+          <li>Not a prediction engine.</li>
+          <li>Not a replacement for diplomacy.</li>
+          <li>Not a public runtime service yet.</li>
+        </ul>
+      </section>
+
+      <section class="panel" aria-labelledby="scope">
+        <h2 id="scope">Public site scope</h2>
+        <p>huboptimus.dev serves the public landing page only. Runtime files, backend operations, and versioned materials remain in GitHub.</p>
+      </section>
+
+      <section class="panel wide" aria-labelledby="truth">
+        <h2 id="truth">Source of truth</h2>
+        <p>GitHub repository, Issues, Pull Requests, commits, CI, and versioned documentation are authoritative. Chat is advisory. Public presentation does not override repository state.</p>
+      </section>
+
+      <nav class="panel full" aria-labelledby="links">
+        <h2 id="links">Navigation</h2>
+        <ul class="links">
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus">Repository</a></li>
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/README.md">README</a></li>
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/IP_NOTICE.md">IP Notice</a></li>
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/00_start_here.md">EN onboarding</a></li>
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/es/00_start_here.md">ES onboarding</a></li>
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/de/00_start_here.md">DE onboarding</a></li>
+          <li><a href="./operator/">Operator PWA</a></li>
+          <li><a href="mailto:operator@huboptimus.dev">Operator</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <footer class="footer">
+      <span>No analytics. No cookies. No forms. No external JavaScript.</span>
+      <span>Public API: not exposed.</span>
+    </footer>
+  </main>
+</body>
+</html>

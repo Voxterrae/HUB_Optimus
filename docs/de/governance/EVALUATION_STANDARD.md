@@ -1,72 +1,72 @@
-# HUB_Optimus — Evaluation Standard
+# HUB_Optimus — Evaluationsstandard
 
-## Purpose
-This document defines the minimum structure required for an evaluation to be considered compatible with HUB_Optimus.
+## Zweck
+Dieses Dokument definiert die Mindeststruktur, die eine Evaluation erfüllen muss, um als mit HUB_Optimus kompatibel zu gelten.
 
-It standardizes *how* analysis is expressed, not *what* conclusions are reached.
+Es standardisiert, *wie* Analyse ausgedrückt wird, nicht *welche* Schlussfolgerungen erreicht werden.
 
-## Core Rule
-An evaluation is valid only if assumptions, risks, incentives, and verification limits are explicit.
+## Kernregel
+Eine Evaluation ist nur gültig, wenn Annahmen, Risiken, Anreize und Verifikationsgrenzen explizit sind.
 
-Hidden assumptions invalidate trust.
+Verborgene Annahmen machen Vertrauen ungültig.
 
-## Required Sections
+## Erforderliche Abschnitte
 
-### 1. Scenario Definition
-- Parties involved
-- Time horizon
-- Scope (what is included / excluded)
+### 1. Szenariodefinition
+- Beteiligte Parteien
+- Zeithorizont
+- Geltungsbereich (was eingeschlossen / ausgeschlossen ist)
 
-### 2. Stated Objectives
-- Declared goals of each party
-- Conflicting or incompatible objectives must be noted
+### 2. Erklärte Ziele
+- Erklärte Ziele jeder Partei
+- Widersprüchliche oder unvereinbare Ziele müssen vermerkt werden
 
-### 3. Constraints
-- Legal constraints
-- Political constraints
-- Material or operational constraints
+### 3. Beschränkungen
+- Rechtliche Beschränkungen
+- Politische Beschränkungen
+- Materielle oder operative Beschränkungen
 
-### 4. Incentive Structure
-- Short-term incentives
-- Long-term incentives
-- Misalignment risks
+### 4. Anreizstruktur
+- Kurzfristige Anreize
+- Langfristige Anreize
+- Fehlausrichtungsrisiken
 
-### 5. Trust Layer Classification
-- Evidence class (A / B / C)
-- Verification mechanisms
-- Structural trust level
+### 5. Klassifikation der Vertrauensebene
+- Nachweisklasse (A / B / C)
+- Verifikationsmechanismen
+- Strukturelles Vertrauensniveau
 
-### 6. Risk Vectors
-- Escalation risk
-- Lock-in risk
-- Reversibility risk
-- Precedent risk
+### 6. Risikovektoren
+- Eskalationsrisiko
+- Lock-in-Risiko
+- Reversibilitätsrisiko
+- Präzedenzrisiko
 
-### 7. Failure Modes
-- How the scenario could fail
-- Early warning signals
+### 7. Fehlermodi
+- Wie das Szenario scheitern könnte
+- Frühwarnsignale
 
-### 8. Stability Assessment
-- Conditions under which stability improves
-- Conditions under which instability increases
+### 8. Stabilitätsbewertung
+- Bedingungen, unter denen Stabilität zunimmt
+- Bedingungen, unter denen Instabilität zunimmt
 
-### 9. Explicit Unknowns
-- Known unknowns
-- Areas requiring additional data
+### 9. Explizite Unbekannte
+- Bekannte Unbekannte
+- Bereiche, die zusätzliche Daten erfordern
 
-## Prohibited Content
-Evaluations must NOT:
-- assign moral blame,
-- declare winners or losers,
-- predict behavior as certainty,
-- appeal to authority or urgency.
+## Verbotene Inhalte
+Evaluationen DÜRFEN NICHT:
+- moralische Schuld zuweisen,
+- Gewinner oder Verlierer erklären,
+- Verhalten als Gewissheit vorhersagen,
+- an Autorität oder Dringlichkeit appellieren.
 
-## Outcome Neutrality
-HUB_Optimus evaluations do not recommend actions.
-They clarify consequences and structural risk.
+## Ergebnisneutralität
+HUB_Optimus-Evaluationen empfehlen keine Handlungen.
+Sie klären Konsequenzen und strukturelles Risiko.
 
-## Reviewability
-Any evaluation must be:
-- reproducible,
-- challengeable section by section,
-- improvable via consensus.
+## Prüfbarkeit
+Jede Evaluation muss:
+- reproduzierbar sein,
+- Abschnitt für Abschnitt anfechtbar sein,
+- durch Konsens verbesserbar sein.

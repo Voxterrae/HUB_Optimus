@@ -4,25 +4,36 @@
 [![Release](https://img.shields.io/github/v/release/Voxterrae/HUB_Optimus)](https://github.com/Voxterrae/HUB_Optimus/releases/latest)
 [![License](https://img.shields.io/badge/license-see%20IP__NOTICE-blue)](IP_NOTICE.md)
 
+<p align="center">
+  <img src="assets/brand/hero/hub-optimus-hero.jpg" alt="HUB_Optimus — Human × Machine Governance Interface" width="100%" />
+</p>
+
+<p align="center">
+  <strong>Reality → Evidence → Inference → Narrative → Operational Signal</strong>
+</p>
+
 **Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.**
 
-**Languages / Idiomas:** 
+**Languages / Idiomas:**
 
-> **Start here (Onboarding):**  
-> [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md) · [CA](docs/ca/00_start_here.md) · [FR](docs/fr/00_start_here.md) · [RU](docs/ru/00_start_here.md)
+> **Primary onboarding:** [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md)
+>
+> **Translation status:** DE governance path translated · CA / FR / RU = progressive translation · HE / ZH = onboarding stubs, full translation pending
+>
+> Source of truth: [docs/context/STATUS.md](docs/context/STATUS.md)
 
 **Quick paths:**
-- 90 seconds: [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md) · [CA](docs/ca/00_start_here.md) · [FR](docs/fr/00_start_here.md) · [RU](docs/ru/00_start_here.md)
+- 90 seconds: [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md)
 - 20 minutes (canonical v1 ES): [v1_core/languages/es](v1_core/languages/es)
 - Hands-on: [Scenario Template](v1_core/workflow/04_scenario_template.md)
-
 
 
 
 ---
 
 ## What it is
-**HUB_Optimus** is an open framework designed to improve diplomatic outcomes through:
+**HUB_Optimus** is developed in a publicly visible repository with restricted rights;
+contribution and use are governed by [IP_NOTICE.md](IP_NOTICE.md). It is designed to improve diplomatic outcomes through:
 - structured evaluation (incentives, verification, sequencing),
 - preventive, non-coercive mediation options,
 - iterative meta-learning from both failures and successes.
@@ -44,8 +55,9 @@ It is a tool for **better judgment**.
 
 ## Start in 60 seconds
 **New here?**
-- 🇬🇧 Start (EN): [docs/00_start_here.md](docs/00_start_here.md)
-- 🇪🇸 Empezar (ES): [docs/es/00_start_here.md](docs/es/00_start_here.md)
+- Start (EN): [docs/00_start_here.md](docs/00_start_here.md)
+- Empezar (ES): [docs/es/00_start_here.md](docs/es/00_start_here.md)
+- Start (DE): [docs/de/00_start_here.md](docs/de/00_start_here.md)
 
 **See it in practice (guided walkthrough):**
 - 🇬🇧 Try a scenario: [docs/03_try_a_scenario.md](docs/03_try_a_scenario.md)
@@ -90,6 +102,7 @@ HUB_Optimus exists to **break that cycle** by evaluating scenarios **before** de
 - `docs/` → onboarding and reading paths (recommended entry point)
 - `v1_core/` → active kernel: architecture, operational flow, workflow, templates, scenarios, meta-learning
 - `docs/architecture/runtime_contract.md` → full technical contract (schema, runtime, CI, encoding)
+- `docs/architecture/platform_compatibility.md` → platform-neutral access and execution policy
 - `legacy/` → historical/exploratory materials (v0), preserved for transparency
 
 > Source-of-truth policy is defined in `docs/context/STATUS.md`: `v1_core/languages/es/` is canonical and `v1_core/languages/en/` is parity reference.

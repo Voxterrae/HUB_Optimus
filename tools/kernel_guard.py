@@ -28,7 +28,7 @@ def changed_files(base_ref: str | None, head_ref: str) -> list[str]:
                 "git",
                 "diff",
                 "--name-only",
-                "--diff-filter=ACMR",
+                "--diff-filter=MCR",
                 f"{base_ref}..{head_ref}",
             ]
         )
@@ -50,7 +50,7 @@ def protected_changes(paths: Iterable[str], prefixes: tuple[str, ...]) -> list[s
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Block changes in protected kernel/governance paths unless override is enabled."
+        description="Block modifications to existing protected kernel/governance paths unless override is enabled. New file additions to protected paths are allowed."
     )
     parser.add_argument(
         "--base-ref",

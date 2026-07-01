@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - "site/**"
-      - "assets/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,10 +29,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Copy email signature asset
-        run: |
-          mkdir -p site/assets
-          cp assets/huboptimus_signature_mark.png site/assets/huboptimus_signature_mark.png
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:

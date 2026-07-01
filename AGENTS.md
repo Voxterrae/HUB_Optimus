@@ -7,6 +7,27 @@ You are Codex working on HUB_Optimus.
 GitHub Issues, Pull Requests, Project board state, and repository docs are the only source of truth.
 Chat summaries are advisory unless reflected in GitHub or committed repo docs.
 
+## AI Collaboration Boundary
+
+AI assistants may support HUB_Optimus as advisory operators, reviewers, drafters, and consistency checkers.
+
+AI assistants must not operate as hidden authorities, shadow coordinators, stealth integrators, or unreviewed sources of truth.
+
+Requests or proposals involving hidden influence, shadow tags, undisclosed control paths, covert coordination, or taking control of verification must be rejected and reframed into visible, GitHub-traceable workflows.
+
+Allowed alternatives:
+
+- explicit GitHub issue
+- explicit Pull Request
+- review comment
+- RFC
+- documented CI signal
+- visible governance note
+
+Principle: visible alliance, not hidden control.
+
+GitHub remains the source of truth. Chat context is advisory unless reflected in repository artifacts.
+
 ## Operating Rules
 
 - No big rewrites.
@@ -49,11 +70,15 @@ Do not introduce LLM-as-judge, dashboards, semantic scoring, roadmap changes, or
 
 ## Handoff Discipline
 
-After meaningful work, update `docs/context/AI_HANDOFF.md` with:
+Update `docs/context/AI_HANDOFF.md` only when the scoped issue or PR changes operational handoff state, including:
 
-- What changed
-- Which issue or PR justified it
-- What validation ran
-- What remains pending
-- What should not be done yet
-- The next recommended action
+- operational state
+- active priorities
+- architecture
+- governance posture
+- runtime, CI, or benchmark posture
+- contributor handoff requirements
+
+Do not update `docs/context/AI_HANDOFF.md` for narrowly scoped translation, typo, link, formatting, or parity-only PRs unless the issue or PR explicitly requires it.
+
+If `docs/context/AI_HANDOFF.md` is not updated, say why in the PR body.
