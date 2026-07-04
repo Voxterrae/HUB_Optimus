@@ -83,3 +83,14 @@ class TestDirectoryScan:
     def test_nonexistent_target(self, tmp_path: Path) -> None:
         result = _run_guard(str(tmp_path / "does_not_exist"), cwd=tmp_path)
         assert result.returncode == 0  # no files found, no errors
+
+    def test_excluded_directories_are_ignored(self, tmp_path: Path) -> None:
+        for dirname in (".venv", "node_modules", "site", "out_report"):
+            excluded = tmp_path / dirname
+            excluded.mkdir()
+            bad = excluded / "ignored.md"
+            bad.write_text("Double encoded: ÃƒÂ¤\n", encoding="utf-8")
+
+        result = _run_guard(".", cwd=tmp_path)
+
+        assert result.returncode == 0
