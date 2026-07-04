@@ -2,7 +2,7 @@
 
 **Estado:** borrador técnico para generación asistida por GitHub Copilot  
 **Fecha:** 2026-07-04  
-**Ámbito:** arquitectura, integración de datos, GIS, IA, alertas, auditoría y apoyo a coordinación operativa.
+**Ámbito:** arquitectura, integración de datos, GIS, IA, alertas, auditoría y apoyo a la coordinación operativa.
 
 > Este documento define una especificación técnica para construir módulos de apoyo a la decisión dentro de HUB_Optimus. No sustituye al mando oficial, a los protocolos públicos de emergencia ni a la cadena de decisión de Bombers, ADF, Protección Civil, Mossos, SEM u otros organismos competentes. Las alertas del sistema deben entenderse como señal operativa y evidencia técnica, no como órdenes automáticas.
 
