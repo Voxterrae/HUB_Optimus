@@ -29,7 +29,7 @@ Este documento sirve como fuente para GitHub Copilot y herramientas de generaci�
 
 ## 2. Principios de diseño
 
-1. **Apoyo a decisión, no sustitución del mando.**  
+1. **Apoyo a la decisión, no sustitución del mando.**  
    HUB_Optimus debe generar señales verificables, no órdenes autónomas.
 
 2. **Human-in-the-loop obligatorio.**  
