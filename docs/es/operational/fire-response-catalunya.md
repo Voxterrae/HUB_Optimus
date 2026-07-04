@@ -77,7 +77,7 @@ Este documento sirve como fuente para GitHub Copilot y herramientas de generaci�
 
 - **Alertas automáticas**
   - Umbral 1: alerta temprana.
-  - Umbral 2: alerta operativa.
+  - Umbral 2: alerta operativa con validación humana obligatoria.
   - Umbral 3: alerta crítica con validación humana obligatoria.
 
 - **Coordinación operativa asistida**
