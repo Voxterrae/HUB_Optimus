@@ -136,7 +136,7 @@ DRONE_TACTICO_1_OPERATOR="Bombers Sector 3"
   "provider": "satellite_provider",
   "endpoint": "https://api.satelliteprovider.example/v1/tasks",
   "products": ["thermal", "ndvi", "true_color"],
-  "notify_url": "https://huboptimus.example/api/satellite/callback",
+  "notify_url": "https://huboptimus.example/api/ingest/satellite/callback",
   "output_format": ["COG", "GeoTIFF"],
   "priority": "emergency"
 }
