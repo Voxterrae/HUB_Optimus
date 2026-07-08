@@ -1,69 +1,129 @@
-# WORKFLOWS — Merge / Deploy / Automatización
+# WORKFLOWS - CI and automation
 
-## Qué es "automatización" aquí (en humano)
-Define qué proceso se dispara: tests, build, lint, generación de docs, releases, etc.
+This document tracks the automation surface currently present under
+`.github/workflows`. The workflow YAML files are the source of truth for
+exact behavior.
 
----
+## Local validation baseline
 
-## Fix encoding / mojibake en docs (PowerShell)
-Cuando veas texto corrupto o caracteres rotos en Markdown dentro de `docs/`, usa el fixer **en modo seguro**.
-Regla de codificación: todos los `.md` deben guardarse en **UTF-8**.
+Run these checks before opening or merging code changes:
 
-### 1) Preview (DryRun)
-No toca archivos; lista qué cambiaría:
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\fix_encoding_docs.ps1 -Path .\docs -DryRun
+python tools/check_mojibake.py v1_core docs README.md CONTRIBUTING.md
+python -m pytest -q
 ```
 
-### 2) Guard local de mojibake
-Para validar antes de abrir PR:
+For scenario runtime changes, also run:
+
 ```powershell
-python tools/check_mojibake.py
+python run_scenario.py example_scenario.json --seed 42
+python benchmarks/run_benchmarks.py --summary-file out/benchmark_summary.md
 ```
 
-----
+For merge, deploy, or automation decisions, refresh traceability:
 
-## Checklist PRE-MERGE
-- [ ] Pull de main actualizado
-- [ ] Snapshot de trazabilidad actualizado (`tools/trace_repo.ps1`)
-- [ ] Tests pasan localmente
-- [ ] Revisión de cambios en docs críticas (README/START_HERE)
-- [ ] Workflows CI no cambian sin revisión
-- [ ] Plan de rollback definido (revert vs reset)
-- [ ] Changelog/STATUS actualizado
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
+```
 
+## Workflow inventory
 
-## Checklist PRE-DEPLOY (si existe deploy)
-- [ ] Tag/versión definida
-- [ ] Artefactos generados correctamente
-- [ ] Variables/secretos verificados
-- [ ] Monitoreo/logs listos
-- [ ] Rollback confirmado
+### ci.yml
 
-## Rollback cookbook
-- Revert seguro:
-- Reset + force (solo emergencia y con rulesets claros):
+- Triggers:
+  - `pull_request`
+  - `push` to `main`
+- Permissions: `contents: read`
+- Jobs:
+  - `pytest`: installs `requirements-dev.txt`, runs the mojibake guard, runs narrative consistency, then `python -m pytest -q`.
+  - `benchmarks`: non-blocking benchmark pack with `continue-on-error: true`.
+- Writes to repo: no.
 
-## Inventario actual de workflows
-- .github/workflows/ci.yml
-  - Trigger: pull_request, push (main)
-  - Pasos: mojibake guard (`v1_core docs README.md CONTRIBUTING.md`), pytest
-  - Escribe en repo: no (solo lectura)
+### link-check.yml
 
-- .github/workflows/link-check.yml
-  - Trigger: push, pull_request, workflow_dispatch
-  - Accion: lycheeverse/lychee-action@v1
-  - Alcance: README.md, CONTRIBUTING.md, docs/**/*.md, v1_core/**/*.md, legacy/**/*.md
-  - Escribe en repo: no (solo lectura)
+- Triggers:
+  - `push`
+  - `pull_request`
+  - `workflow_dispatch`
+- Permissions: `contents: read`
+- Job:
+  - Runs Lychee against `README.md`, `CONTRIBUTING.md`, `docs/CONTRIBUTING.md`, and `docs/**/*.md`.
+- Writes to repo: no.
 
-- .github/workflows/repo_maintenance_bot.yml
-  - Trigger: schedule (06:15 UTC daily), workflow_dispatch (mode: hygiene/i18n/full), pull_request (docs/**, v1_core/**, .github/workflows/**, tools/**)
-  - Pasos: kernel_guard, maintenance_bot, pr_pro
-  - Escribe en repo: sí (crea PRs de mantenimiento automático)
-  - Requiere secrets: GH_APP_ID, GH_APP_PRIVATE_KEY (si no están configurados, el workflow se salta limpiamente)
+### kernel-guard.yml
 
-## Regla de cambio
-- Cualquier cambio en `.github/workflows` se documenta en `docs/context/STATUS.md`.
+- Triggers:
+  - `pull_request` events: opened, synchronize, reopened, labeled, unlabeled.
+- Permissions: `contents: read`
+- Job:
+  - Runs `tools/kernel_guard.py` against the pull request diff.
+  - Allows explicit override only when the PR has the `allow-kernel-change` label.
+- Writes to repo: no.
 
+### pr-safety-check.yml
 
----
+- Triggers:
+  - `pull_request` events: opened, synchronize, reopened, edited.
+- Permissions: `contents: read`
+- Job:
+  - Classifies PR path risk as LOW, MEDIUM, or HIGH.
+  - High-risk paths include runtime, schema, workflows, CODEOWNERS, `v1_core/languages/`, and governance docs.
+- Writes to repo: no.
+
+### pr-quarantine.yml
+
+- Triggers:
+  - `pull_request_target` events: opened, synchronize, reopened.
+- Permissions:
+  - `contents: read`
+  - `issues: write`
+  - `pull-requests: write`
+- Job:
+  - For first-time external fork PRs, adds `needs-maintainer-review` and comments on the PR.
+  - Does not checkout or execute PR code.
+- Writes to repo: no; writes labels/comments on PRs.
+
+### repo_maintenance_bot.yml
+
+- Triggers:
+  - `workflow_dispatch` with `mode` and `allow_kernel_changes` inputs.
+  - weekly schedule: Monday 06:15 UTC.
+- Permissions:
+  - `contents: write`
+  - `pull-requests: write`
+  - `issues: write`
+- Job:
+  - Skips cleanly when `GH_APP_ID` or `GH_APP_PRIVATE_KEY` are missing.
+  - Creates a maintenance branch, runs `tools/maintenance_bot.py`, runs `tools/kernel_guard.py`, commits changes, pushes the branch, opens a PR, then runs `tools/pr_pro.py`.
+- Writes to repo: yes, only through an explicit maintenance PR branch.
+
+### repo-health-summary.yml
+
+- Triggers:
+  - weekly schedule: Monday 08:00 UTC.
+  - `workflow_dispatch`
+- Permissions:
+  - `contents: read`
+  - `issues: write`
+- Job:
+  - Collects repository health metrics with `gh`.
+  - Posts a summary comment to issue `#93`.
+- Writes to repo: no; writes issue comments.
+
+### pages.yml
+
+- Triggers:
+  - `push` to `main` when `site/**` or `pages.yml` changes.
+  - `workflow_dispatch`
+- Permissions:
+  - `contents: read`
+  - `pages: write`
+  - `id-token: write`
+- Job:
+  - Publishes the static `site/` directory to GitHub Pages.
+- Writes to repo: no; deploys Pages artifact.
+
+## Change rule
+
+Any change under `.github/workflows/` must update this document in the same PR,
+or the PR body must explicitly explain why no documentation update is needed.
