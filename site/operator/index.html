@@ -16,14 +16,17 @@
       --text: #eaffea;
       --muted: #a6c9a8;
       --dim: #6a8f70;
-      --phosphor: #7cff6b;
-      --cyan: #4deeff;
-      --amber: #ffd166;
+      --phosphor: #b8ff5c;
+      --cyan: #64f4ff;
+      --amber: #ffe066;
       --red: #ff5f7a;
-      --border: rgba(124, 255, 107, 0.36);
-      --strong: rgba(124, 255, 107, 0.72);
-      --shadow: rgba(51, 255, 153, 0.14);
+      --border: rgba(184, 255, 92, 0.36);
+      --strong: rgba(184, 255, 92, 0.72);
+      --shadow: rgba(184, 255, 92, 0.16);
       --max: 86rem;
+      --melon-soft: #d7ff8a;
+      --melon-deep: #8fe83d;
+      --glass: rgba(6, 18, 13, 0.76);
     }
 
     * {
@@ -53,8 +56,8 @@
       inset: 0;
       pointer-events: none;
       background:
-        linear-gradient(rgba(124, 255, 107, 0.028) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(124, 255, 107, 0.02) 1px, transparent 1px);
+        linear-gradient(rgba(184, 255, 92, 0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184, 255, 92, 0.02) 1px, transparent 1px);
       background-size: 2.6rem 2.6rem;
       mask-image: radial-gradient(circle at center, black 0%, transparent 84%);
     }
@@ -114,7 +117,7 @@
       gap: 0.75rem;
       flex-wrap: wrap;
       padding: 0.75rem 0 1rem;
-      border-bottom: 1px solid rgba(124, 255, 107, 0.18);
+      border-bottom: 1px solid rgba(184, 255, 92, 0.18);
       color: var(--dim);
       font-size: 0.72rem;
       letter-spacing: 0.12em;
@@ -127,7 +130,7 @@
       border: 1px solid var(--strong);
       border-radius: 1rem;
       background:
-        linear-gradient(135deg, rgba(124, 255, 107, 0.10), transparent 28%),
+        linear-gradient(135deg, rgba(184, 255, 92, 0.12), transparent 28%),
         linear-gradient(180deg, rgba(9, 26, 18, 0.96), rgba(3, 12, 8, 0.98));
       box-shadow: 0 0 3rem var(--shadow);
     }
@@ -147,7 +150,7 @@
       font-size: clamp(2rem, 9vw, 5rem);
       line-height: 0.92;
       letter-spacing: -0.08em;
-      text-shadow: 0 0 1.5rem rgba(124, 255, 107, 0.32);
+      text-shadow: 0 0 1.5rem rgba(184, 255, 92, 0.34);
     }
 
     .lead {
@@ -190,6 +193,84 @@
       margin-top: 0.2rem;
       color: var(--phosphor);
       font-weight: 800;
+    }
+
+    .flow-rail {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding: 0.8rem;
+      border: 1px solid rgba(184, 255, 92, 0.24);
+      border-radius: 1rem;
+      background:
+        linear-gradient(135deg, rgba(184, 255, 92, 0.08), transparent 32%),
+        rgba(2, 8, 5, 0.68);
+    }
+
+    .flow-step {
+      position: relative;
+      min-height: 7rem;
+      padding: 0.85rem;
+      border: 1px solid rgba(184, 255, 92, 0.22);
+      border-radius: 0.9rem;
+      background: rgba(6, 18, 13, 0.72);
+      overflow: hidden;
+    }
+
+    .flow-step::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 0.22rem;
+      background: rgba(184, 255, 92, 0.18);
+    }
+
+    .flow-step.is-active {
+      border-color: rgba(184, 255, 92, 0.72);
+      box-shadow: 0 0 1.35rem rgba(184, 255, 92, 0.13);
+    }
+
+    .flow-step.is-active::after {
+      background: linear-gradient(90deg, var(--melon-deep), var(--melon-soft));
+    }
+
+    .flow-step span {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      color: #031008;
+      background: var(--phosphor);
+      font-weight: 900;
+    }
+
+    .flow-step b {
+      display: block;
+      margin-top: 0.7rem;
+      color: var(--text);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .flow-step small {
+      display: block;
+      margin-top: 0.35rem;
+      color: var(--muted);
+    }
+
+    .operator-note {
+      margin-top: 1rem;
+      padding: 0.9rem;
+      border: 1px dashed rgba(184, 255, 92, 0.34);
+      border-radius: 0.85rem;
+      color: var(--muted);
+      background: rgba(2, 8, 5, 0.55);
+    }
+
+    .operator-note b {
+      color: var(--melon-soft);
     }
 
     .grid {
@@ -253,7 +334,7 @@
     textarea,
     select {
       width: 100%;
-      border: 1px solid rgba(124, 255, 107, 0.28);
+      border: 1px solid rgba(184, 255, 92, 0.30);
       border-radius: 0.65rem;
       background: rgba(2, 8, 5, 0.82);
       color: var(--text);
@@ -279,7 +360,7 @@
     }
 
     button {
-      border: 1px solid rgba(124, 255, 107, 0.45);
+      border: 1px solid rgba(184, 255, 92, 0.48);
       border-radius: 999px;
       background: rgba(2, 8, 5, 0.9);
       color: var(--text);
@@ -307,7 +388,7 @@
 
     button.primary:hover {
       color: #031008;
-      box-shadow: 0 0 1.2rem rgba(124, 255, 107, 0.25);
+      box-shadow: 0 0 1.2rem rgba(184, 255, 92, 0.28);
     }
 
     .list {
@@ -343,7 +424,7 @@
       word-break: break-word;
       color: var(--text);
       background: rgba(2, 8, 5, 0.86);
-      border: 1px solid rgba(124, 255, 107, 0.24);
+      border: 1px solid rgba(184, 255, 92, 0.26);
       border-radius: 0.8rem;
       padding: 0.9rem;
       max-height: 28rem;
@@ -363,7 +444,7 @@
     }
 
     .output-card {
-      border: 1px solid rgba(124, 255, 107, 0.24);
+      border: 1px solid rgba(184, 255, 92, 0.26);
       border-radius: 0.85rem;
       padding: 0.8rem;
       background: rgba(2, 8, 5, 0.68);
@@ -380,7 +461,7 @@
       flex-wrap: wrap;
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: 1px solid rgba(124, 255, 107, 0.18);
+      border-top: 1px solid rgba(184, 255, 92, 0.18);
       color: var(--dim);
       font-size: 0.72rem;
       letter-spacing: 0.1em;
@@ -397,6 +478,7 @@
 
     @media (max-width: 980px) {
       .status-strip,
+      .flow-rail,
       .row,
       .output-grid {
         grid-template-columns: 1fr;
@@ -431,7 +513,7 @@
     <header class="hero">
       <p class="kicker">Input → process → output</p>
       <h1>Operator Console</h1>
-      <p class="lead">Compose structured cases, preserve claims and evidence, and review HUB_Optimus analysis results without exposing the backend publicly.</p>
+      <p class="lead">Compose structured cases, normalize claims and evidence, and review HUB_Optimus analysis results through a mobile-first operator workflow.</p>
     </header>
 
     <section class="status-strip" aria-label="PWA status">
@@ -452,6 +534,33 @@
         <span class="ok">local device</span>
       </div>
     </section>
+
+    <section class="flow-rail" aria-label="Operator workflow">
+      <div class="flow-step is-active" id="flow_input">
+        <span>01</span>
+        <b>Input</b>
+        <small id="metric_input">case draft ready</small>
+      </div>
+      <div class="flow-step" id="flow_normalize">
+        <span>02</span>
+        <b>Normalize</b>
+        <small id="metric_normalize">0 claims · 0 evidence</small>
+      </div>
+      <div class="flow-step" id="flow_analyze">
+        <span>03</span>
+        <b>Analyze</b>
+        <small id="metric_analyze">backend not public</small>
+      </div>
+      <div class="flow-step" id="flow_output">
+        <span>04</span>
+        <b>Output</b>
+        <small id="metric_output">no rendered result</small>
+      </div>
+    </section>
+
+    <p class="operator-note">
+      <b>Operator flow:</b> compose a structured case, normalize claims and evidence into HUB_Optimus format, run analysis inside the secured environment, then paste/render the returned output.
+    </p>
 
     <div class="grid">
       <section class="panel full">
@@ -667,8 +776,32 @@
       return payload;
     }
 
+    function setActive(id, active) {
+      const node = $(id);
+      if (!node) return;
+      node.classList.toggle("is-active", Boolean(active));
+    }
+
+    function refreshFlow(resultRendered = false) {
+      const hasCase = Boolean(value("case_id") && value("input_summary"));
+      const hasClaims = claims.length > 0;
+      const hasEvidence = evidence.length > 0;
+      const hasProcessNotes = lines("inferences").length || lines("uncertainties").length || lines("narrative_amplification").length;
+
+      $("metric_input").textContent = hasCase ? "case draft ready" : "case needs summary";
+      $("metric_normalize").textContent = `${claims.length} claims · ${evidence.length} evidence`;
+      $("metric_analyze").textContent = hasClaims || hasEvidence || hasProcessNotes ? "ready for secured backend" : "waiting for normalized input";
+      $("metric_output").textContent = resultRendered ? "result rendered" : "no rendered result";
+
+      setActive("flow_input", hasCase);
+      setActive("flow_normalize", hasClaims || hasEvidence);
+      setActive("flow_analyze", hasClaims || hasEvidence || hasProcessNotes);
+      setActive("flow_output", resultRendered);
+    }
+
     function updateJson() {
       $("case_json").textContent = JSON.stringify(buildPayload(), null, 2);
+      refreshFlow(false);
     }
 
     function renderClaims() {
@@ -873,6 +1006,8 @@
       }
 
       const result = parsed.analysis_result || parsed;
+
+      refreshFlow(true);
 
       $("result_view").innerHTML = `
         <section class="output-card">
