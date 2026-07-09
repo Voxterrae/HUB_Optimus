@@ -58,6 +58,37 @@ The entries below are retained as historical execution notes. They are not curre
 
 ### AI Sync Block
 
+Date: 2026-07-08
+Source: Copilot Coding Agent execution for GitHub issue #1690
+Repo state: local branch for RFC/github-platform-strategy
+Branch: rfc/github-platform-strategy
+Active issue: #1690
+Decision made: add RFC-only GitHub platform strategy document
+Reason: issue #1690 requests a governed, traceable record of which GitHub platform capabilities HUB_Optimus should adopt now, next, later, or avoid — grounded in current repository evidence
+Files changed:
+- docs/rfc/github_platform_strategy.md
+- docs/context/AI_HANDOFF.md
+Validation:
+- `python tools/check_mojibake.py docs/rfc/github_platform_strategy.md` passed
+- `git diff --check -- docs/rfc/github_platform_strategy.md` passed
+- `python tools/check_mojibake.py docs/context/AI_HANDOFF.md` passed
+- `git diff --check -- docs/context/AI_HANDOFF.md` passed
+Risks: documentation-only; no runtime, CI, benchmark, schema, settings, or security claim changes
+Next action: review RFC content and open follow-up issues only after explicit approval
+Out of scope:
+- runtime changes
+- CI changes
+- benchmark changes
+- schema changes
+- GitHub Settings mutation
+- GitHub Organization migration
+- Copilot/GitHub App automation
+- dashboards
+- LLM-as-judge
+- roadmap changes
+
+### AI Sync Block
+
 Date: 2026-05-24
 Source: Codex execution for GitHub issue #1589
 Repo state: local branch `docs/capability-status-table`
