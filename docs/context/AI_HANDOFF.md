@@ -19,6 +19,14 @@ GitHub remains the source of truth; chat summaries are advisory unless reflected
 - Small PRs only.
 - Keep source-of-truth conflicts resolved by `docs/context/STATUS.md`.
 
+## Human Stewardship and Technical Review Boundary
+
+- Benjamin Gerrit Hoff is the creator, project owner, primary human steward, and final human-accountability layer of HUB_Optimus.
+- `@Voxterrae` is the GitHub repository identity used for administration under that human authority.
+- Rodrigo / `@itteamrod` is a scoped Technical CODEOWNER only for the paths explicitly assigned in `.github/CODEOWNERS`.
+- Scoped technical review does not imply project co-ownership, Kernel authority, constitutional governance ownership, or repository-settings authority.
+- AI operators must read `docs/governance/PROJECT_STEWARDSHIP.md` and must not infer authority beyond versioned GitHub records.
+
 ## Handoff Update Discipline
 
 Update this file only when the scoped issue or PR changes operational handoff state, including:
