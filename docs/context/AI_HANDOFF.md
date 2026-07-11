@@ -23,9 +23,11 @@ GitHub remains the source of truth; chat summaries are advisory unless reflected
 
 - Benjamin Gerrit Hoff is the creator, project owner, primary human steward, and final human-accountability layer of HUB_Optimus.
 - `@Voxterrae` is the GitHub repository identity used for administration under that human authority.
-- Rodrigo / `@itteamrod` is a scoped Technical CODEOWNER only for the paths explicitly assigned in `.github/CODEOWNERS`.
-- Scoped technical review does not imply project co-ownership, Kernel authority, constitutional governance ownership, or repository-settings authority.
+- Rodrigo / `@itteamrod` is the trusted Core Technical Steward of HUB_Optimus.
+- The GitHub enforcement of Rodrigo's role remains limited to paths explicitly assigned in `.github/CODEOWNERS` and requires Write collaborator access.
+- Core Technical Stewardship does not imply project co-ownership, final human accountability, constitutional governance ownership, or unilateral repository-settings authority.
 - AI operators must read `docs/governance/PROJECT_STEWARDSHIP.md` and must not infer authority beyond versioned GitHub records.
+- Foundational principle: technology amplifies human judgment; it never replaces human responsibility.
 
 ## Handoff Update Discipline
 
