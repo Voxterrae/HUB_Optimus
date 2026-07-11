@@ -17,12 +17,15 @@ Benjamin Gerrit Hoff is the originating human intelligence and final human
 accountability layer of HUB_Optimus. The authoritative role boundary is defined
 in `docs/governance/PROJECT_STEWARDSHIP.md`.
 
-## Trusted Technical Contributors
+## Core Technical Steward
 
 ### Rodrigo / @itteamrod
 
-**Role:** Trusted Technical Contributor and Scoped Technical CODEOWNER —
-Interface & Semantic Engine
+**Role:** Core Technical Steward and Scoped Technical CODEOWNER
+
+Rodrigo is entrusted with protecting the technical quality, coherence,
+maintainability, and repository integrity of HUB_Optimus within governed GitHub
+workflows.
 
 **Recognized contributions:**
 
@@ -32,13 +35,10 @@ Interface & Semantic Engine
 
 **Authority boundary:**
 
-- `@itteamrod` holds scoped CODEOWNERS responsibility only for the paths
-  explicitly assigned in `.github/CODEOWNERS`.
-- This role does not grant Kernel authority.
-- This role does not grant governance ownership or project co-ownership.
-- This role does not change branch protection, rulesets, repository settings,
-  or permission levels.
-- Project ownership and final human accountability remain with Benjamin Gerrit
-  Hoff.
-- Repository authority remains controlled through GitHub issues, pull requests,
-  CODEOWNERS, protected settings, and the governed RFC process.
+- Core Technical Stewardship is a trusted human governance role for technical evolution.
+- `@itteamrod` holds enforceable CODEOWNERS responsibility only for paths explicitly assigned in `.github/CODEOWNERS`.
+- Expansion of CODEOWNERS scope requires a scoped governance issue or approved RFC.
+- This role does not transfer project ownership, final human accountability, or constitutional governance ownership.
+- This role does not independently change branch protection, rulesets, repository settings, or roadmap authority.
+- Project ownership and final human accountability remain with Benjamin Gerrit Hoff.
+- Repository authority remains controlled through GitHub issues, pull requests, CODEOWNERS, protected settings, and the governed RFC process.
