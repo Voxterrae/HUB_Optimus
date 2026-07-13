@@ -1,9 +1,9 @@
 # HUB_Optimus — Governance Intelligence Protocol
 
-Status: Active upon merge of the ratifying Pull Request  
-Proposal record: [#1694](https://github.com/Voxterrae/HUB_Optimus/issues/1694)  
-Authority: Canonical governance protocol  
-Scope: Documentation and analytical process only
+- Status: Active upon merge of the ratifying Pull Request
+- Proposal record: [#1694](https://github.com/Voxterrae/HUB_Optimus/issues/1694)
+- Authority: Canonical governance protocol
+- Scope: Documentation and analytical process only
 
 ## Purpose
 
