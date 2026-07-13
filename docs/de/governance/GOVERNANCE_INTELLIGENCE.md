@@ -1,167 +1,167 @@
-# HUB_Optimus — Governance Intelligence Protocol
+# HUB_Optimus — Governance-Intelligence-Protokoll
 
-- Status: Active upon merge of the ratifying Pull Request
-- Proposal record: [#1694](https://github.com/Voxterrae/HUB_Optimus/issues/1694)
-- Authority: Canonical governance protocol
-- Scope: Documentation and analytical process only
+- Status: Aktiv mit dem Merge des ratifizierenden Pull Requests
+- Vorschlagsnachweis: [#1694](https://github.com/Voxterrae/HUB_Optimus/issues/1694)
+- Geltung: Kanonisches Governance-Protokoll
+- Umfang: Nur Dokumentation und analytischer Prozess
 
-## Purpose
+## Zweck
 
-Governance Intelligence is the required analytical discipline for separating claims, evidence, inference, uncertainty, narrative amplification, and operational relevance when HUB_Optimus examines complex institutional, civic, technological, or informational material.
+Governance Intelligence ist die verbindliche analytische Disziplin zur Trennung von Behauptungen, Evidenz, Schlussfolgerungen, Unsicherheit, narrativer Verstärkung und operativer Relevanz, wenn HUB_Optimus komplexes institutionelles, zivilgesellschaftliches, technologisches oder informationelles Material untersucht.
 
-This protocol governs how analysis is structured and reviewed. It does not determine what conclusions must be reached, create an autonomous authority, or replace human judgment.
+Dieses Protokoll regelt, wie Analysen strukturiert und geprüft werden. Es legt nicht fest, welche Schlussfolgerungen erreicht werden müssen, schafft keine autonome Autorität und ersetzt kein menschliches Urteil.
 
-## Source of truth and authority
+## Quelle der Wahrheit und Autorität
 
-GitHub issues, Pull Requests, commits, checks, and versioned repository documents are the project record. Chat messages, model outputs, hidden prompts, conversation memory, external AI reviews, screenshots, and uncommitted drafts are advisory inputs unless and until they are represented in that record.
+GitHub-Issues, Pull Requests, Commits, Checks und versionierte Repository-Dokumente bilden den Projektnachweis. Chat-Nachrichten, Modellausgaben, verborgene Prompts, Gesprächsspeicher, externe KI-Prüfungen, Screenshots und nicht eingecheckte Entwürfe sind beratende Eingaben, solange und bis sie in diesem Nachweis abgebildet sind.
 
-No claim gains authority because it is repeated, popular, urgent, emotionally forceful, produced by a capable model, or attributed to a prestigious source. Authority and confidence must come from inspectable evidence, explicit reasoning, repository governance, and human-accountable review.
+Keine Behauptung erhält Autorität, weil sie wiederholt, populär, dringend, emotional wirksam, von einem leistungsfähigen Modell erzeugt oder einer angesehenen Quelle zugeschrieben wird. Autorität und Vertrauen müssen aus prüfbarer Evidenz, expliziter Begründung, Repository-Governance und menschlich verantworteter Prüfung entstehen.
 
-When chat state conflicts with GitHub state, GitHub wins.
+Wenn der Chat-Zustand dem GitHub-Zustand widerspricht, hat GitHub Vorrang.
 
-## Required analytical record
+## Erforderlicher Analysenachweis
 
-A Governance Intelligence analysis MUST keep the following six layers distinct:
+Eine Governance-Intelligence-Analyse MUSS die folgenden sechs Ebenen getrennt halten:
 
-| Layer | Required question | Required output |
+| Ebene | Erforderliche Frage | Erforderliches Ergebnis |
 | --- | --- | --- |
-| Claim | What exactly is being asserted? | A specific, bounded statement |
-| Evidence | What inspectable material supports or contradicts it? | Sources, observations, provenance, and limitations |
-| Inference | What reasoning moves beyond the evidence? | An explicit reasoning step, not a disguised fact |
-| Uncertainty | What remains unknown, contested, incomplete, or unverifiable? | Gaps, conflicts, assumptions, and confidence limits |
-| Narrative amplification | What may be overstated, compressed, framed, or emotionally amplified? | The distortion mechanism and its likely effect |
-| Operational relevance | Why does this matter to the repository or reviewed case? | A valid signal, a bounded consequence, or an explicit no-action result |
+| Behauptung | Was genau wird behauptet? | Eine konkrete, abgegrenzte Aussage |
+| Evidenz | Welches prüfbare Material stützt oder widerlegt sie? | Quellen, Beobachtungen, Herkunft und Einschränkungen |
+| Schlussfolgerung | Welche Begründung geht über die Evidenz hinaus? | Ein expliziter Begründungsschritt, keine als Tatsache getarnte Schlussfolgerung |
+| Unsicherheit | Was bleibt unbekannt, umstritten, unvollständig oder nicht verifizierbar? | Lücken, Konflikte, Annahmen und Vertrauensgrenzen |
+| Narrative Verstärkung | Was könnte übertrieben, verkürzt, gerahmt oder emotional verstärkt sein? | Der Verzerrungsmechanismus und seine wahrscheinliche Wirkung |
+| Operative Relevanz | Warum ist dies für das Repository oder den geprüften Fall relevant? | Ein gültiges Signal, eine begrenzte Folge oder ein explizites Ergebnis ohne Handlungsbedarf |
 
-All six layers MUST be present. A layer may state `none identified`, `no evidence provided`, or `no action justified`; it must not be omitted to create artificial certainty.
+Alle sechs Ebenen MÜSSEN vorhanden sein. Eine Ebene darf `nichts festgestellt`, `keine Evidenz vorgelegt` oder `keine Handlung gerechtfertigt` angeben; sie darf nicht ausgelassen werden, um künstliche Gewissheit zu erzeugen.
 
-## Claims
+## Behauptungen
 
-A claim MUST be recorded before it is evaluated. Recording a claim does not mean accepting it.
+Eine Behauptung MUSS erfasst werden, bevor sie bewertet wird. Das Erfassen einer Behauptung bedeutet nicht, sie anzunehmen.
 
-A claim SHOULD identify, where available:
+Eine Behauptung SOLLTE, soweit verfügbar, Folgendes identifizieren:
 
-- the speaker, author, system, or institution making it;
-- the time and context in which it was made;
-- the population, event, system, or decision it concerns;
-- the degree of certainty expressed;
-- the conditions under which the claim would be testable or falsifiable.
+- die Person, den Autor, das System oder die Institution, die sie äußert;
+- Zeit und Kontext der Äußerung;
+- die betroffene Bevölkerung, das Ereignis, das System oder die Entscheidung;
+- den ausgedrückten Gewissheitsgrad;
+- die Bedingungen, unter denen die Behauptung prüfbar oder falsifizierbar wäre.
 
-Compound claims SHOULD be decomposed into independently reviewable statements.
+Zusammengesetzte Behauptungen SOLLTEN in unabhängig prüfbare Aussagen zerlegt werden.
 
-## Evidence and provenance
+## Evidenz und Herkunft
 
-Evidence MUST remain inspectable and attributable. Where practical, an analysis SHOULD record the source, repository path or external reference, date, access context, and whether the material is primary, secondary, derived, user-provided, or model-generated.
+Evidenz MUSS prüfbar und zuordenbar bleiben. Soweit praktikabel, SOLLTE eine Analyse die Quelle, den Repository-Pfad oder externen Verweis, das Datum, den Zugriffskontext und die Einordnung als primär, sekundär, abgeleitet, vom Benutzer bereitgestellt oder modellgeneriert festhalten.
 
-Model-generated text is not evidence merely because a model produced it. It may summarize, compare, or propose an inference, but the supporting material must remain separately visible.
+Modellgenerierter Text ist nicht allein deshalb Evidenz, weil ein Modell ihn erzeugt hat. Er kann zusammenfassen, vergleichen oder eine Schlussfolgerung vorschlagen, aber das stützende Material muss getrennt sichtbar bleiben.
 
-Screenshots, social posts, excerpts, and authority statements are artifacts or claims. They are not conclusive proof without adequate provenance, context, and corroboration.
+Screenshots, Social-Media-Beiträge, Auszüge und Autoritätsaussagen sind Artefakte oder Behauptungen. Ohne ausreichende Herkunft, Kontext und Bestätigung sind sie kein schlüssiger Beweis.
 
-Conflicting evidence MUST be preserved rather than silently discarded. Missing evidence MUST be stated explicitly.
+Widersprüchliche Evidenz MUSS erhalten bleiben und darf nicht stillschweigend verworfen werden. Fehlende Evidenz MUSS ausdrücklich benannt werden.
 
-## Inference and uncertainty
+## Schlussfolgerung und Unsicherheit
 
-Every step that moves beyond directly supported evidence MUST be marked as inference.
+Jeder Schritt, der über direkt gestützte Evidenz hinausgeht, MUSS als Schlussfolgerung gekennzeichnet werden.
 
-An inference SHOULD state:
+Eine Schlussfolgerung SOLLTE angeben:
 
-- which evidence it uses;
-- which assumptions it depends on;
-- which alternative explanations remain plausible;
-- what new evidence could strengthen, weaken, or reverse it.
+- welche Evidenz sie verwendet;
+- von welchen Annahmen sie abhängt;
+- welche alternativen Erklärungen plausibel bleiben;
+- welche neue Evidenz sie stärken, schwächen oder umkehren könnte.
 
-Uncertainty MUST NOT be collapsed into a binary verdict merely to make the output appear decisive. Unknown, contested, incomplete, and unverifiable are materially different states and SHOULD be identified separately.
+Unsicherheit DARF NICHT zu einem binären Urteil verdichtet werden, nur damit das Ergebnis entschlossener wirkt. Unbekannt, umstritten, unvollständig und nicht verifizierbar sind materiell unterschiedliche Zustände und SOLLTEN getrennt ausgewiesen werden.
 
-## Narrative amplification
+## Narrative Verstärkung
 
-Narrative amplification analysis examines how a claim may gain apparent force beyond its evidence. Relevant mechanisms include repetition, urgency, selective omission, compression of uncertainty, appeal to authority, emotionally loaded framing, false consensus, and movement from possibility to certainty.
+Die Analyse narrativer Verstärkung untersucht, wie eine Behauptung über ihre Evidenz hinaus scheinbare Kraft gewinnen kann. Relevante Mechanismen sind Wiederholung, Dringlichkeit, selektive Auslassung, Verdichtung von Unsicherheit, Berufung auf Autorität, emotional aufgeladene Rahmung, falscher Konsens und der Übergang von Möglichkeit zu Gewissheit.
 
-Identifying amplification does not prove that the underlying claim is false. It identifies a review risk that must be separated from the claim's evidential status.
+Das Erkennen einer Verstärkung beweist nicht, dass die zugrunde liegende Behauptung falsch ist. Es kennzeichnet ein Prüfungsrisiko, das vom Evidenzstatus der Behauptung getrennt werden muss.
 
-## Operational relevance and signal gate
+## Operative Relevanz und Signalgate
 
-Operational relevance records the bounded consequence of the analysis. It does not automatically authorize implementation or recommend an outcome.
+Operative Relevanz erfasst die begrenzte Folge der Analyse. Sie autorisiert nicht automatisch eine Implementierung und empfiehlt kein Ergebnis.
 
-Repository action is justified only when there is a valid signal:
+Eine Repository-Handlung ist nur gerechtfertigt, wenn ein gültiges Signal vorliegt:
 
-- regression;
-- unclear architecture;
-- contributor friction;
-- documentation drift;
-- CI or runtime signal;
-- governance risk;
-- explicit user request.
+- Regression;
+- unklare Architektur;
+- Reibung für Mitwirkende;
+- Dokumentationsdrift;
+- CI- oder Laufzeitsignal;
+- Governance-Risiko;
+- ausdrückliche Benutzeranforderung.
 
-When no valid signal exists, the correct result is controlled observation. When a signal exists, any action MUST be represented as a small, traceable, reviewable GitHub issue or Pull Request with explicit scope and validation.
+Wenn kein gültiges Signal vorliegt, ist kontrollierte Beobachtung das richtige Ergebnis. Wenn ein Signal vorliegt, MUSS jede Handlung als kleines, nachvollziehbares und prüfbares GitHub-Issue oder als Pull Request mit explizitem Umfang und Validierung dargestellt werden.
 
-## AI and chat control boundary
+## KI- und Chat-Kontrollgrenze
 
-Chat is an interaction surface, not the project control plane.
+Chat ist eine Interaktionsoberfläche, nicht die Steuerungsebene des Projekts.
 
-AI systems may observe, analyze, draft, review, compare, and execute a narrowly authorized repository change. They MUST NOT self-authorize that change or become a hidden source of authority.
+KI-Systeme dürfen beobachten, analysieren, entwerfen, prüfen, vergleichen und eine eng autorisierte Repository-Änderung ausführen. Sie DÜRFEN diese Änderung NICHT selbst autorisieren oder zu einer verborgenen Autoritätsquelle werden.
 
-No model family, model version, provider, prompt, conversation, memory system, ranking, or hidden control path may:
+Keine Modellfamilie, Modellversion, kein Anbieter, Prompt, Gespräch, Speichersystem, Ranking und kein verborgener Kontrollpfad darf:
 
-- ratify governance;
-- override repository evidence;
-- alter roadmap or architecture without the required GitHub record;
-- approve its own work;
-- merge its own governance change;
-- bypass protected-branch, review, or CI requirements;
-- conceal provenance, uncertainty, model involvement, or material disagreement.
+- Governance ratifizieren;
+- Repository-Evidenz außer Kraft setzen;
+- Roadmap oder Architektur ohne den erforderlichen GitHub-Nachweis ändern;
+- die eigene Arbeit genehmigen;
+- die eigene Governance-Änderung mergen;
+- Schutzregeln für Branches, Review oder CI umgehen;
+- Herkunft, Unsicherheit, Modellbeteiligung oder wesentliche Meinungsverschiedenheiten verbergen.
 
-A more capable model may improve analytical depth, but it does not receive greater governance authority. Changing models or providers does not change this boundary.
+Ein leistungsfähigeres Modell kann die analytische Tiefe verbessern, erhält dadurch aber keine größere Governance-Autorität. Ein Wechsel von Modell oder Anbieter ändert diese Grenze nicht.
 
-Human accountability remains mandatory for ratification, publication, escalation, and sensitive use. AI assistance must remain visible through the issue, branch, commits, Pull Request, review record, and checks that govern the change.
+Menschliche Verantwortlichkeit bleibt für Ratifikation, Veröffentlichung, Eskalation und sensible Nutzung verpflichtend. KI-Unterstützung muss über Issue, Branch, Commits, Pull Request, Review-Nachweis und Checks sichtbar bleiben, die die Änderung regeln.
 
-## Prohibited uses
+## Verbotene Verwendungen
 
-This protocol MUST NOT be used as:
+Dieses Protokoll DARF NICHT verwendet werden als:
 
-- a true/false oracle;
-- a substitute for primary evidence or domain expertise;
-- a hidden scoring, ranking, or decision authority;
-- a pretext for surveillance or profiling of private persons;
-- a mechanism for coercion, deception, propaganda, targeted political persuasion, harassment, or psychological manipulation;
-- an automated censorship or enforcement mechanism;
-- a basis for consequential decisions about people without separate legal, governance, and human review;
-- a method for bypassing lawful oversight or repository governance;
-- a way to present uncertain analysis as settled fact.
+- Wahr/Falsch-Orakel;
+- Ersatz für Primärevidenz oder Fachkompetenz;
+- verborgene Bewertungs-, Rangordnungs- oder Entscheidungsautorität;
+- Vorwand für Überwachung oder Profiling privater Personen;
+- Mechanismus für Zwang, Täuschung, Propaganda, gezielte politische Beeinflussung, Belästigung oder psychologische Manipulation;
+- automatisierter Zensur- oder Durchsetzungsmechanismus;
+- Grundlage für folgenreiche Entscheidungen über Menschen ohne getrennte rechtliche, Governance- und menschliche Prüfung;
+- Methode zur Umgehung rechtmäßiger Aufsicht oder Repository-Governance;
+- Mittel, um unsichere Analysen als feststehende Tatsachen darzustellen.
 
-## Relationship to existing repository documents
+## Beziehung zu bestehenden Repository-Dokumenten
 
-This protocol specializes the analytical decomposition and human-AI handoff rules already reflected in the Charter, Kernel, Consensus Process, Evaluation Standard, External AI Review Protocol, AGENTS.md, and AI handoff record.
+Dieses Protokoll präzisiert die Regeln zur analytischen Zerlegung und zur Mensch-KI-Übergabe, die bereits in Charter, Kernel, Consensus Process, Evaluation Standard, External AI Review Protocol, AGENTS.md und dem KI-Übergabenachweis angelegt sind.
 
-`docs/concepts/governance-intelligence.md` remains a non-normative conceptual introduction. This file is the canonical governance source for the protocol.
+`docs/concepts/governance-intelligence.md` bleibt eine nicht normative konzeptionelle Einführung. Diese Datei ist die kanonische Governance-Quelle für das Protokoll.
 
-`docs/rfc/constitutional_governance_ai_regulatory_boundary.md` remains a separate Draft RFC. Ratifying this protocol does not accept, supersede, or silently implement that RFC.
+`docs/rfc/constitutional_governance_ai_regulatory_boundary.md` bleibt ein separater RFC-Entwurf. Die Ratifikation dieses Protokolls akzeptiert, ersetzt oder implementiert diesen RFC nicht stillschweigend.
 
-Any conflict or proposed expansion MUST be resolved through the repository's existing source-of-truth and consensus rules.
+Jeder Konflikt oder jede vorgeschlagene Erweiterung MUSS nach den bestehenden Regeln des Repositorys für Quelle der Wahrheit und Konsens gelöst werden.
 
-## Change control
+## Änderungskontrolle
 
-Material changes to this protocol require:
+Materielle Änderungen an diesem Protokoll erfordern:
 
-1. an explicit GitHub issue or RFC describing the signal, scope, risks, and compatibility;
-2. a small Pull Request with a visible diff;
-3. synchronized governance mirrors under the repository translation policy;
-4. human-accountable review with objections recorded and resolved;
-5. passing repository checks before merge.
+1. ein explizites GitHub-Issue oder RFC, das Signal, Umfang, Risiken und Kompatibilität beschreibt;
+2. einen kleinen Pull Request mit sichtbarem Diff;
+3. synchronisierte Governance-Spiegel gemäß der Übersetzungsrichtlinie des Repositorys;
+4. menschlich verantwortete Prüfung, bei der Einwände dokumentiert und gelöst werden;
+5. bestandene Repository-Checks vor dem Merge.
 
-Merge of the Pull Request linked to issue #1694 constitutes ratification of this version, provided no sustained governance objection remains.
+Der Merge des mit Issue #1694 verknüpften Pull Requests ratifiziert diese Version, sofern kein aufrechterhaltener Governance-Einwand besteht.
 
-This protocol does not authorize runtime, schema, benchmark, CI, roadmap, provider, ingestion, scoring, dashboard, or deployment changes. Each such change requires its own scoped GitHub signal and review path.
+Dieses Protokoll autorisiert keine Änderungen an Laufzeit, Schema, Benchmarks, CI, Roadmap, Anbieter, Ingestion, Scoring, Dashboard oder Deployment. Jede solche Änderung erfordert ein eigenes abgegrenztes GitHub-Signal und einen eigenen Review-Pfad.
 
-## Validation
+## Validierung
 
-A conforming review can answer, from the record:
+Eine konforme Prüfung kann aus dem Nachweis beantworten:
 
-- What is claimed?
-- What evidence supports or contradicts it, and where did that evidence come from?
-- What is inferred rather than observed?
-- What remains uncertain?
-- What narrative amplification is present or absent?
-- What operational signal exists, if any?
-- Who remains accountable for the decision or next action?
-- Which GitHub artifact records the authoritative state?
+- Was wird behauptet?
+- Welche Evidenz stützt oder widerlegt die Behauptung, und woher stammt sie?
+- Was wird geschlossen statt beobachtet?
+- Was bleibt unsicher?
+- Welche narrative Verstärkung ist vorhanden oder nicht vorhanden?
+- Welches operative Signal besteht, falls überhaupt?
+- Wer bleibt für die Entscheidung oder nächste Handlung verantwortlich?
+- Welches GitHub-Artefakt hält den maßgeblichen Zustand fest?
 
-The protocol is structurally valid when its canonical file and all required language mirrors exist, preserve normative meaning, contain no placeholders, and introduce no unscoped implementation change.
+Das Protokoll ist strukturell gültig, wenn die kanonische Datei und alle erforderlichen Sprachspiegel vorhanden sind, die normative Bedeutung bewahren, keine Platzhalter enthalten und keine nicht abgegrenzte Implementierungsänderung einführen.
