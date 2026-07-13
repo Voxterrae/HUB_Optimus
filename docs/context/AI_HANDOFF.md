@@ -21,11 +21,11 @@ GitHub remains the source of truth; chat summaries are advisory unless reflected
 
 ## Governance Intelligence Boundary
 
-Issue #1694 is the active ratification signal for the canonical Governance Intelligence protocol.
+Issue #1694 and PR #1695 are the ratification record for the canonical Governance Intelligence protocol.
 
 Operational boundary:
 
-- The canonical protocol lives at `docs/governance/GOVERNANCE_INTELLIGENCE.md` and becomes active only through its reviewed and merged Pull Request.
+- The canonical protocol lives at `docs/governance/GOVERNANCE_INTELLIGENCE.md` and is active through the reviewed merge record of PR #1695.
 - Governance Intelligence requires explicit separation of claim, evidence, inference, uncertainty, narrative amplification, and operational relevance.
 - Chat messages, hidden prompts, conversation memory, model output, and external AI reviews remain advisory until represented in versioned GitHub artifacts.
 - No model family, model version, provider, or hidden control path may ratify governance, override repository evidence, approve its own work, or merge its own governance change.
@@ -50,7 +50,7 @@ If this file is not updated, say why in the PR body.
 
 ## Current Recommended Action
 
-Review issue #1694 and its implementing Pull Request as the active governance signal. Do not merge while a sustained governance objection, mirror drift, authority ambiguity, or failed required check remains. After ratification is resolved, return to controlled observation unless another concrete signal exists.
+Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
 ## Meta-learning Follow-up
 
@@ -135,7 +135,7 @@ Out of scope:
 Date: 2026-05-24
 Source: Codex execution for RFC branch `rfc/post-quantum-control-plane`
 Repo state: local RFC branch
-Branch: `rfc/post-quantum-control-plane`
+Branch: rfc/post-quantum-control-plane
 Active issue: none provided in task
 Decision made: add RFC-only post-quantum control plane planning document
 Reason: explicit user request for a governed RFC covering artifact signing, sealed exchange, node identity, quorum access, auditability, and crypto-agility
