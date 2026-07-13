@@ -19,6 +19,20 @@ GitHub remains the source of truth; chat summaries are advisory unless reflected
 - Small PRs only.
 - Keep source-of-truth conflicts resolved by `docs/context/STATUS.md`.
 
+## Governance Intelligence Boundary
+
+Issue #1694 is the active ratification signal for the canonical Governance Intelligence protocol.
+
+Operational boundary:
+
+- The canonical protocol lives at `docs/governance/GOVERNANCE_INTELLIGENCE.md` and becomes active only through its reviewed and merged Pull Request.
+- Governance Intelligence requires explicit separation of claim, evidence, inference, uncertainty, narrative amplification, and operational relevance.
+- Chat messages, hidden prompts, conversation memory, model output, and external AI reviews remain advisory until represented in versioned GitHub artifacts.
+- No model family, model version, provider, or hidden control path may ratify governance, override repository evidence, approve its own work, or merge its own governance change.
+- Model capability may improve analytical depth; it does not increase governance authority.
+- Human accountability remains mandatory for ratification, publication, escalation, and sensitive use.
+- `docs/rfc/constitutional_governance_ai_regulatory_boundary.md` remains a separate Draft RFC and is not accepted or superseded by this ratification.
+
 ## Handoff Update Discipline
 
 Update this file only when the scoped issue or PR changes operational handoff state, including:
@@ -36,7 +50,7 @@ If this file is not updated, say why in the PR body.
 
 ## Current Recommended Action
 
-No action until CI, collaborator friction, regression, or user request creates a concrete signal.
+Review issue #1694 and its implementing Pull Request as the active governance signal. Do not merge while a sustained governance objection, mirror drift, authority ambiguity, or failed required check remains. After ratification is resolved, return to controlled observation unless another concrete signal exists.
 
 ## Meta-learning Follow-up
 

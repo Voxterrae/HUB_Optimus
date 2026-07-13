@@ -1,5 +1,13 @@
 # Governance Intelligence
 
+## Status and authority
+
+This page is a non-normative concept overview.
+
+The canonical governance protocol is [Governance Intelligence Protocol](../governance/GOVERNANCE_INTELLIGENCE.md). The canonical protocol and its ratification record govern when this page is incomplete, ambiguous, or inconsistent.
+
+This page does not independently create permissions, prohibitions, implementation work, or governance authority.
+
 ## Purpose
 
 Governance Intelligence is a structured analytical discipline for separating claims, evidence, inference, uncertainty, narrative amplification, and operational relevance in complex institutional, civic, technological, and informational environments.
@@ -8,7 +16,7 @@ It is a method for improving analysis quality. It is not an authority layer, pre
 
 ## Relationship to HUB_Optimus
 
-HUB_Optimus uses this concept as a documentation frame for disciplined analysis.
+HUB_Optimus uses this concept as an explanatory frame for disciplined analysis. Binding analytical-process and AI/chat-control requirements live in the canonical governance protocol.
 
 The concept supports the existing sequence:
 
@@ -16,7 +24,7 @@ The concept supports the existing sequence:
 observe -> detect -> decide -> act
 ```
 
-This file is documentation-only. It does not change runtime behavior, schemas, benchmarks, CI, roadmap, or governance rules.
+This page is documentation-only. It does not change runtime behavior, schemas, benchmarks, CI, or roadmap. Governance authority comes from the canonical protocol, its GitHub issue and Pull Request record, and the repository's existing review rules.
 
 ## Analytical layers
 
@@ -27,7 +35,7 @@ This file is documentation-only. It does not change runtime behavior, schemas, b
 | Inference | What is concluded from the evidence? | Reasoned interpretation |
 | Uncertainty | What remains unknown? | Gaps and ambiguity |
 | Narrative amplification | What may be overstated? | Distortion risk |
-| Operational relevance | Why does it matter? | Small reviewable next step |
+| Operational relevance | Why does it matter? | Small reviewable next step or explicit no-action result |
 
 ## Conceptual hierarchy
 
@@ -75,7 +83,8 @@ This concept must not be used as:
 - a substitute for primary evidence;
 - a substitute for domain expertise;
 - a source of unsupported claims;
-- a reason to bypass repository governance.
+- a reason to bypass repository governance;
+- an independent source of governance authority.
 
 ## Relation to e-governance and digital government
 
@@ -105,9 +114,10 @@ If no valid signal exists, remain in controlled observation mode.
 
 ## Validation
 
-This change is valid when:
+This page is valid when:
 
-- it remains documentation-only;
-- it introduces no runtime, CI, schema, or benchmark changes;
-- it frames the concept as analytical, not authoritative;
-- future implementation work remains scoped to separate issues or PRs.
+- it remains a non-normative conceptual introduction;
+- it points to the canonical governance protocol;
+- it introduces no independent permissions or authority;
+- it introduces no runtime, CI, schema, benchmark, or roadmap changes;
+- future implementation work remains scoped to separate issues or Pull Requests.
