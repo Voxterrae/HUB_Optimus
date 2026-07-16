@@ -26,6 +26,13 @@ hub_optimus_simulator.py    @Voxterrae
 run_scenario.py             @Voxterrae
 hub_optimus/                @Voxterrae
 
+# Scoped technical ownership — Interface & Semantic Engine
+semantic_engine/                         @Voxterrae @itteamrod
+tests/semantic_engine/                   @Voxterrae @itteamrod
+examples/semantic_engine/                @Voxterrae @itteamrod
+docs/architecture/semantic_engine_cli.md @Voxterrae @itteamrod
+site/                                    @Voxterrae @itteamrod
+
 # Benchmarks (deterministic contract)
 benchmarks/                 @Voxterrae
 
