@@ -1028,22 +1028,17 @@ La comprobación de enlaces de CI debe validar las referencias externas.
 2. MITECO / International Workshop on the Interactions between Iberian Killer Whales and Vessels. *Report of the Workshop*, Madrid, febrero de 2024.
    https://www.miteco.gob.es/content/dam/miteco/es/biodiversidad/temas/biodiversidad-marina/orcas/informe-taller-orcas-miteco-en.pdf
 
-3. IUCN Red List. *Orcinus orca, Strait of Gibraltar subpopulation*.
-   https://www.iucnredlist.org/species/132948040/132949669
+3. IUCN Red List. *Orcinus orca, Strait of Gibraltar subpopulation*. Evaluación citada y enlazada en el informe oficial del taller de 2024.
 
-4. IUCN Red List. *Thunnus thynnus*.
-   https://www.iucnredlist.org/species/21860/46913402
+4. IUCN Red List. *Thunnus thynnus*. Evaluación citada y enlazada en el informe oficial del taller de 2024.
 
 ### Publicaciones científicas citadas por el proceso de expertos
 
-5. Esteban, R. et al. (2016). Dynamics of killer whale, bluefin tuna and human fisheries in the Strait of Gibraltar.
-   https://doi.org/10.1016/j.biocon.2015.11.031
+5. Esteban, R. et al. (2016). Dynamics of killer whale, bluefin tuna and human fisheries in the Strait of Gibraltar. DOI: `10.1016/j.biocon.2015.11.031`.
 
-6. Esteban, R. et al. (2016). Using a multi-disciplinary approach to identify a critically endangered killer whale management unit.
-   https://doi.org/10.1016/j.ecolind.2016.01.043
+6. Esteban, R. et al. (2016). Using a multi-disciplinary approach to identify a critically endangered killer whale management unit. DOI: `10.1016/j.ecolind.2016.01.043`.
 
-7. Esteban, R. et al. (2022). Killer whales of the Strait of Gibraltar, an endangered subpopulation showing a disruptive behavior.
-   https://doi.org/10.1111/mms.12947
+7. Esteban, R. et al. (2022). Killer whales of the Strait of Gibraltar, an endangered subpopulation showing a disruptive behavior. DOI: `10.1111/mms.12947`.
 
 ## 27. Siguiente decisión permitida
 
