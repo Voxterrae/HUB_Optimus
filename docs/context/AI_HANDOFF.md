@@ -19,6 +19,7 @@ GitHub remains the source of truth; chat summaries are advisory unless reflected
 - Small PRs only.
 - Keep source-of-truth conflicts resolved by `docs/context/STATUS.md`.
 
+<<<<<<< HEAD
 ## Governance Intelligence Boundary
 
 Issue #1694 and PR #1695 are the ratification record for the canonical Governance Intelligence protocol.
@@ -32,6 +33,17 @@ Operational boundary:
 - Model capability may improve analytical depth; it does not increase governance authority.
 - Human accountability remains mandatory for ratification, publication, escalation, and sensitive use.
 - `docs/rfc/constitutional_governance_ai_regulatory_boundary.md` remains a separate Draft RFC and is not accepted or superseded by this ratification.
+=======
+## Human Stewardship and Technical Review Boundary
+
+- Benjamin Gerrit Hoff is the creator, project owner, primary human steward, and final human-accountability layer of HUB_Optimus.
+- `@Voxterrae` is the GitHub repository identity used for administration under that human authority.
+- Rodrigo / `@itteamrod` is the trusted Core Technical Steward of HUB_Optimus.
+- The GitHub enforcement of Rodrigo's role remains limited to paths explicitly assigned in `.github/CODEOWNERS` and requires Write collaborator access.
+- Core Technical Stewardship does not imply project co-ownership, final human accountability, constitutional governance ownership, or unilateral repository-settings authority.
+- AI operators must read `docs/governance/PROJECT_STEWARDSHIP.md` and must not infer authority beyond versioned GitHub records.
+- Foundational principle: technology amplifies human judgment; it never replaces human responsibility.
+>>>>>>> origin/main
 
 ## Handoff Update Discipline
 
