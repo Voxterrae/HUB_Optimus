@@ -27,6 +27,10 @@
       --melon-soft: #d7ff8a;
       --melon-deep: #8fe83d;
       --glass: rgba(6, 18, 13, 0.76);
+      --reactor-core: rgba(184, 255, 92, 0.22);
+      --reactor-core-soft: rgba(215, 255, 138, 0.12);
+      --reactor-amber: rgba(255, 224, 102, 0.18);
+      --containment: rgba(255, 224, 102, 0.38);
     }
 
     * {
@@ -44,9 +48,11 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       color: var(--text);
       background:
-        radial-gradient(circle at 10% 0%, rgba(51, 255, 153, 0.18), transparent 28rem),
-        radial-gradient(circle at 92% 10%, rgba(77, 238, 255, 0.10), transparent 24rem),
-        linear-gradient(180deg, #020403 0%, #031008 52%, #020403 100%);
+        radial-gradient(circle at 50% -10%, rgba(184, 255, 92, 0.18), transparent 30rem),
+        radial-gradient(circle at 12% 8%, rgba(255, 224, 102, 0.12), transparent 24rem),
+        radial-gradient(circle at 92% 10%, rgba(100, 244, 255, 0.10), transparent 24rem),
+        radial-gradient(circle at 50% 110%, rgba(184, 255, 92, 0.09), transparent 34rem),
+        linear-gradient(180deg, #020403 0%, #031008 48%, #020403 100%);
       line-height: 1.55;
     }
 
@@ -135,6 +141,149 @@
       box-shadow: 0 0 3rem var(--shadow);
     }
 
+    .reactor-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
+      align-items: center;
+      gap: 1rem;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .reactor-hero::before {
+      content: "";
+      position: absolute;
+      inset: -35%;
+      z-index: -1;
+      background:
+        repeating-conic-gradient(
+          from 0deg,
+          rgba(184, 255, 92, 0.10) 0deg 8deg,
+          transparent 8deg 18deg
+        );
+      opacity: 0.18;
+      filter: blur(0.4px);
+      transform: rotate(8deg);
+    }
+
+    .reactor-hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      box-shadow:
+        inset 0 0 2.2rem rgba(184, 255, 92, 0.10),
+        inset 0 0 0 1px rgba(255, 224, 102, 0.08);
+    }
+
+    .reactor-core {
+      display: grid;
+      place-items: center;
+      min-height: 16rem;
+      border: 1px solid rgba(184, 255, 92, 0.32);
+      border-radius: 1rem;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(215, 255, 138, 0.30), transparent 0 22%),
+        radial-gradient(circle at 50% 50%, rgba(184, 255, 92, 0.12), transparent 0 42%),
+        linear-gradient(180deg, rgba(2, 8, 5, 0.72), rgba(2, 8, 5, 0.92));
+      box-shadow:
+        inset 0 0 2rem rgba(184, 255, 92, 0.16),
+        0 0 2rem rgba(184, 255, 92, 0.10);
+    }
+
+    .core-glyph {
+      width: min(12rem, 72vw);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 224, 102, 0.44);
+      background:
+        repeating-conic-gradient(
+          rgba(255, 224, 102, 0.22) 0deg 16deg,
+          transparent 16deg 32deg
+        ),
+        radial-gradient(circle, rgba(184, 255, 92, 0.36), rgba(184, 255, 92, 0.08) 42%, transparent 43%);
+      box-shadow: 0 0 2.4rem rgba(184, 255, 92, 0.18);
+    }
+
+    .core-glyph b {
+      display: grid;
+      place-items: center;
+      width: 48%;
+      aspect-ratio: 1;
+      border-radius: 999px;
+      color: #031008;
+      background: var(--phosphor);
+      font-size: 1.35rem;
+      letter-spacing: -0.08em;
+      box-shadow: 0 0 1.4rem rgba(184, 255, 92, 0.32);
+    }
+
+    .reactor-band {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border: 1px solid rgba(255, 224, 102, 0.28);
+      border-radius: 1rem;
+      background:
+        linear-gradient(90deg, rgba(255, 224, 102, 0.10), transparent 32%),
+        linear-gradient(180deg, rgba(6, 18, 13, 0.78), rgba(2, 8, 5, 0.84));
+    }
+
+    .reactor-cell {
+      min-height: 5rem;
+      padding: 0.75rem;
+      border: 1px solid rgba(184, 255, 92, 0.22);
+      border-radius: 0.85rem;
+      background:
+        linear-gradient(180deg, rgba(184, 255, 92, 0.06), transparent),
+        rgba(2, 8, 5, 0.68);
+    }
+
+    .reactor-cell b {
+      display: block;
+      color: var(--amber);
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .reactor-cell span {
+      display: block;
+      margin-top: 0.35rem;
+      color: var(--melon-soft);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .warning-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-top: 1rem;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid rgba(255, 224, 102, 0.44);
+      border-radius: 999px;
+      color: var(--amber);
+      background: rgba(255, 224, 102, 0.08);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .warning-tag::before {
+      content: "△";
+      color: var(--phosphor);
+    }
+
+
     .kicker {
       margin: 0 0 0.8rem;
       color: var(--cyan);
@@ -172,7 +321,9 @@
     .mini-card {
       border: 1px solid var(--border);
       background: linear-gradient(180deg, rgba(9, 26, 18, 0.92), rgba(3, 10, 7, 0.94));
-      box-shadow: 0 0 1.2rem rgba(51, 255, 153, 0.06);
+      box-shadow:
+        0 0 1.2rem rgba(184, 255, 92, 0.07),
+        inset 0 0 0 1px rgba(255, 224, 102, 0.035);
     }
 
     .chip {
@@ -336,7 +487,9 @@
       width: 100%;
       border: 1px solid rgba(184, 255, 92, 0.30);
       border-radius: 0.65rem;
-      background: rgba(2, 8, 5, 0.82);
+      background:
+        linear-gradient(180deg, rgba(184, 255, 92, 0.035), transparent),
+        rgba(2, 8, 5, 0.82);
       color: var(--text);
       padding: 0.75rem;
     }
@@ -362,7 +515,9 @@
     button {
       border: 1px solid rgba(184, 255, 92, 0.48);
       border-radius: 999px;
-      background: rgba(2, 8, 5, 0.9);
+      background:
+        linear-gradient(180deg, rgba(184, 255, 92, 0.07), transparent),
+        rgba(2, 8, 5, 0.9);
       color: var(--text);
       cursor: pointer;
       font-weight: 800;
@@ -478,10 +633,19 @@
 
     @media (max-width: 980px) {
       .status-strip,
+      .reactor-band,
       .flow-rail,
       .row,
       .output-grid {
         grid-template-columns: 1fr;
+      }
+
+      .reactor-hero {
+        grid-template-columns: 1fr;
+      }
+
+      .reactor-core {
+        min-height: 12rem;
       }
 
       .panel,
@@ -505,16 +669,43 @@
 <body>
   <main class="app">
     <div class="topline">
-      <span>HUB_OPTIMUS // OPERATOR_PWA</span>
-      <span>MODE: LOCAL_COMPOSER</span>
+      <span>HUB_OPTIMUS // REACTOR_CONSOLE</span>
+      <span>CONTAINMENT: STATIC_ONLY</span>
       <span><a href="../">PUBLIC LANDING</a></span>
     </div>
 
-    <header class="hero">
-      <p class="kicker">Input → process → output</p>
-      <h1>Operator Console</h1>
-      <p class="lead">Compose structured cases, normalize claims and evidence, and review HUB_Optimus analysis results through a mobile-first operator workflow.</p>
+    <header class="hero reactor-hero">
+      <div>
+        <p class="kicker">Input → normalize → analyze → output</p>
+        <h1>Operator Console</h1>
+        <p class="lead">A sealed reactor-console interface for transforming raw situations into structured claims, evidence, uncertainty, and operational signal.</p>
+        <span class="warning-tag">Critical system shell · backend sealed</span>
+      </div>
+      <div class="reactor-core" aria-label="HUB_Optimus reactor core visual">
+        <div class="core-glyph" aria-hidden="true">
+          <b>HO</b>
+        </div>
+      </div>
     </header>
+
+    <section class="reactor-band" aria-label="Reactor containment state">
+      <div class="reactor-cell">
+        <b>Core state</b>
+        <span>controlled</span>
+      </div>
+      <div class="reactor-cell">
+        <b>Signal intake</b>
+        <span>manual</span>
+      </div>
+      <div class="reactor-cell">
+        <b>Runtime exposure</b>
+        <span>sealed</span>
+      </div>
+      <div class="reactor-cell">
+        <b>Operator mode</b>
+        <span>mobile</span>
+      </div>
+    </section>
 
     <section class="status-strip" aria-label="PWA status">
       <div class="chip">
@@ -559,7 +750,7 @@
     </section>
 
     <p class="operator-note">
-      <b>Operator flow:</b> compose a structured case, normalize claims and evidence into HUB_Optimus format, run analysis inside the secured environment, then paste/render the returned output.
+      <b>Containment flow:</b> compose a structured case, normalize claims and evidence into HUB_Optimus format, run analysis only inside the secured environment, then paste/render the returned output.
     </p>
 
     <div class="grid">
