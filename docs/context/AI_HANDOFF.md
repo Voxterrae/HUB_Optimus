@@ -29,6 +29,20 @@ GitHub remains the source of truth; chat summaries are advisory unless reflected
 - AI operators must read `docs/governance/PROJECT_STEWARDSHIP.md` and must not infer authority beyond versioned GitHub records.
 - Foundational principle: technology amplifies human judgment; it never replaces human responsibility.
 
+## Governance Intelligence Boundary
+
+Issue #1694 and PR #1695 are the ratification record for the canonical Governance Intelligence protocol.
+
+Operational boundary:
+
+- The canonical protocol lives at `docs/governance/GOVERNANCE_INTELLIGENCE.md` and is active through the reviewed merge record of PR #1695.
+- Governance Intelligence requires explicit separation of claim, evidence, inference, uncertainty, narrative amplification, and operational relevance.
+- Chat messages, hidden prompts, conversation memory, model output, and external AI reviews remain advisory until represented in versioned GitHub artifacts.
+- No model family, model version, provider, or hidden control path may ratify governance, override repository evidence, approve its own work, or merge its own governance change.
+- Model capability may improve analytical depth; it does not increase governance authority.
+- Human accountability remains mandatory for ratification, publication, escalation, and sensitive use.
+- `docs/rfc/constitutional_governance_ai_regulatory_boundary.md` remains a separate Draft RFC and is not accepted or superseded by this ratification.
+
 ## Handoff Update Discipline
 
 Update this file only when the scoped issue or PR changes operational handoff state, including:
@@ -46,7 +60,7 @@ If this file is not updated, say why in the PR body.
 
 ## Current Recommended Action
 
-No action until CI, collaborator friction, regression, or user request creates a concrete signal.
+Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
 ## Meta-learning Follow-up
 
@@ -131,7 +145,7 @@ Out of scope:
 Date: 2026-05-24
 Source: Codex execution for RFC branch `rfc/post-quantum-control-plane`
 Repo state: local RFC branch
-Branch: `rfc/post-quantum-control-plane`
+Branch: rfc/post-quantum-control-plane
 Active issue: none provided in task
 Decision made: add RFC-only post-quantum control plane planning document
 Reason: explicit user request for a governed RFC covering artifact signing, sealed exchange, node identity, quorum access, auditability, and crypto-agility
