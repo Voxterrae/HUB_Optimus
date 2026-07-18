@@ -936,6 +936,16 @@
       </section>
 
       <section class="panel full">
+        <h2>Local analyze handoff</h2>
+        <p>Generate a copy/paste command for the secured EC2/local backend. This PWA does not call the backend directly and does not expose the API publicly.</p>
+        <div class="actions">
+          <button class="primary" id="build_analyze_command" type="button">Build local analyze command</button>
+          <button id="copy_analyze_command" type="button">Copy command</button>
+        </div>
+        <pre id="analyze_command">Build JSON first, then generate the local analyze command.</pre>
+      </section>
+
+      <section class="panel full">
         <h2>Analysis output viewer</h2>
         <p>Paste the JSON response returned by HUB_Optimus `/analyze` to visualize the result.</p>
         <div class="field">
@@ -1042,6 +1052,7 @@
 
     function updateJson() {
       $("case_json").textContent = JSON.stringify(buildPayload(), null, 2);
+      updateAnalyzeCommand();
       refreshFlow(false);
     }
 
@@ -1121,6 +1132,38 @@
       try {
         await navigator.clipboard.writeText(content);
         alert("Case JSON copied.");
+      } catch {
+        alert("Copy failed. Select and copy manually.");
+      }
+    }
+
+    function buildAnalyzeCommand() {
+      const payloadJson = JSON.stringify(buildPayload(), null, 2);
+
+      return [
+        "cat > /tmp/hub-optimus-operator-case.json <<'JSON'",
+        payloadJson,
+        "JSON",
+        "",
+        "curl -sS -X POST http://127.0.0.1:8080/analyze \\",
+        "  -H 'Content-Type: application/json' \\",
+        "  --data-binary @/tmp/hub-optimus-operator-case.json"
+      ].join("\n");
+    }
+
+    function updateAnalyzeCommand() {
+      const node = $("analyze_command");
+      if (!node) return;
+      node.textContent = buildAnalyzeCommand();
+    }
+
+    async function copyAnalyzeCommand() {
+      updateAnalyzeCommand();
+      const content = $("analyze_command").textContent;
+
+      try {
+        await navigator.clipboard.writeText(content);
+        alert("Local analyze command copied.");
       } catch {
         alert("Copy failed. Select and copy manually.");
       }
@@ -1423,6 +1466,10 @@
       updateJson();
     }
 
+    function firstArrayItem(items, fallback) {
+      return Array.isArray(items) && items.length ? items[0] : fallback;
+    }
+
     function renderList(items, renderItem) {
       if (!Array.isArray(items) || !items.length) {
         return `<p class="empty">none</p>`;
@@ -1441,10 +1488,44 @@
       }
 
       const result = parsed.analysis_result || parsed;
+      const resultClaims = Array.isArray(result.claims) ? result.claims : [];
+      const resultEvidence = Array.isArray(result.evidence) ? result.evidence : [];
+      const signal = result.operational_signal || "none";
+      const headlineClaim = resultClaims.length ? resultClaims[0].text : "No explicit claim record is present.";
+      const evidenceSummary = resultEvidence.length
+        ? `${resultEvidence.length} evidence record(s) captured for review.`
+        : "No evidence records are present.";
+      const inferenceBoundary = firstArrayItem(
+        result.inferences,
+        "No inference boundary was returned."
+      );
+      const uncertaintyBoundary = firstArrayItem(
+        result.uncertainties,
+        "No uncertainty boundary was returned."
+      );
+      const amplificationBoundary = firstArrayItem(
+        result.narrative_amplification,
+        "No narrative amplification note was returned."
+      );
+      const safeNextAction = signal === "none"
+        ? "Keep this as a draft until a concrete operational signal exists."
+        : "Review primary sources, preserve uncertainty, and avoid converting this into a conclusion without corroboration.";
 
       refreshFlow(true);
 
       $("result_view").innerHTML = `
+        <section class="output-card full">
+          <h3>Human-readable report</h3>
+          <p><b>Operational summary:</b> ${escapeHtml(result.input_summary || "No summary returned.")}</p>
+          <p><b>What is asserted:</b> ${escapeHtml(headlineClaim)}</p>
+          <p><b>Evidence position:</b> ${escapeHtml(evidenceSummary)}</p>
+          <p><b>Inference boundary:</b> ${escapeHtml(inferenceBoundary)}</p>
+          <p><b>Uncertainty:</b> ${escapeHtml(uncertaintyBoundary)}</p>
+          <p><b>Narrative amplification:</b> ${escapeHtml(amplificationBoundary)}</p>
+          <p><b>Operational relevance:</b> signal=${escapeHtml(signal)}</p>
+          <p><b>Safe next action:</b> ${escapeHtml(safeNextAction)}</p>
+        </section>
+
         <section class="output-card">
           <h3>Run</h3>
           <p>status=${escapeHtml(parsed.status || result.status || "unknown")}</p>
@@ -1527,6 +1608,8 @@
     $("load_github_demo").addEventListener("click", loadGithubDemo);
     $("add_claim").addEventListener("click", addClaim);
     $("add_evidence").addEventListener("click", addEvidence);
+    $("build_analyze_command").addEventListener("click", updateAnalyzeCommand);
+    $("copy_analyze_command").addEventListener("click", copyAnalyzeCommand);
     $("build_json").addEventListener("click", updateJson);
     $("copy_json").addEventListener("click", copyJson);
     $("save_draft").addEventListener("click", saveDraft);
