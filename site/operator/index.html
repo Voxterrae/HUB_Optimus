@@ -937,7 +937,7 @@
 
       <section class="panel full">
         <h2>Local analyze handoff</h2>
-        <p>Generate a copy/paste command for the secured EC2/local backend. This PWA does not call the backend directly and does not expose the API publicly.</p>
+        <p>Generate a copy/paste command for the secured EC2/local backend. The command validates the case JSON, checks local API health, saves the backend response, validates that analysis_result exists, and prints JSON ready for the output viewer. This PWA does not call the backend directly and does not expose the API publicly.</p>
         <div class="actions">
           <button class="primary" id="build_analyze_command" type="button">Build local analyze command</button>
           <button id="copy_analyze_command" type="button">Copy command</button>
@@ -1141,14 +1141,35 @@
       const payloadJson = JSON.stringify(buildPayload(), null, 2);
 
       return [
-        "cat > /tmp/hub-optimus-operator-case.json <<'JSON'",
+        "set -euo pipefail",
+        "",
+        "CASE_FILE=\"/tmp/hub-optimus-operator-case.json\"",
+        "RESPONSE_FILE=\"/tmp/hub-optimus-operator-response.json\"",
+        "",
+        "cat > \"$CASE_FILE\" <<'JSON'",
         payloadJson,
         "JSON",
         "",
-        "curl -sS -X POST http://127.0.0.1:8080/analyze \\",
+        "python3 -m json.tool \"$CASE_FILE\" >/dev/null",
+        "curl -fsS http://127.0.0.1:8080/health >/dev/null",
+        "",
+        "curl -fsS -X POST http://127.0.0.1:8080/analyze \\",
         "  -H 'Content-Type: application/json' \\",
-        "  --data-binary @/tmp/hub-optimus-operator-case.json"
-      ].join("\n");
+        "  --data-binary @\"$CASE_FILE\" \\",
+        "  -o \"$RESPONSE_FILE\"",
+        "",
+        "python3 - <<'PY_CHECK'",
+        "import json",
+        "from pathlib import Path",
+        "path = Path('/tmp/hub-optimus-operator-response.json')",
+        "data = json.loads(path.read_text(encoding='utf-8'))",
+        "if 'analysis_result' not in data:",
+        "    raise SystemExit('Missing analysis_result in backend response')",
+        "print('[OK] response saved to {}'.format(path))",
+        "print(json.dumps(data, indent=2, ensure_ascii=False))",
+        "PY_CHECK"
+      ].join("
+");
     }
 
     function updateAnalyzeCommand() {
