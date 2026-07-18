@@ -670,6 +670,46 @@
         border-radius: 0.8rem;
       }
     }
+    .product-intake textarea {
+      min-height: 11rem;
+    }
+
+    .product-progress-status {
+      margin: 1rem 0 0;
+      color: var(--melon-nuke);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .advanced-shell {
+      margin-top: 1rem;
+    }
+
+    .advanced-shell > summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      cursor: pointer;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      background: linear-gradient(180deg, rgba(var(--melon-nuke-rgb), 0.07), transparent), var(--panel);
+      color: var(--text);
+    }
+
+    .advanced-shell > summary span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .advanced-shell[open] > summary {
+      border-color: var(--strong);
+    }
+
+
   </style>
 </head>
 <body>
@@ -758,6 +798,64 @@
     <p class="operator-note">
       <b>Containment flow:</b> compose a structured case, normalize claims and evidence into HUB_Optimus format, run analysis only inside the secured environment, then paste/render the returned output.
     </p>
+
+    <section class="panel full product-intake" id="product_intake">
+      <h2>Analyze with HUB_Optimus</h2>
+      <p>Paste a source URL for reference and the article text, GitHub signal, CI excerpt, or written situation. HUB_Optimus will normalize the signal, keep uncertainty visible, and render a final draft output. URL-only fetching is intentionally not performed in the browser.</p>
+
+      <div class="row">
+        <div class="field">
+          <label for="product_source_url">Source URL, optional</label>
+          <input id="product_source_url" placeholder="https://example.com/news-or-github-source">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="product_source_text">Text, copied article, or situation</label>
+        <textarea id="product_source_text" placeholder="Paste the article text, copied post, GitHub issue body, CI failure excerpt, or describe the situation here."></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="product_analyze" type="button">Analyze with HUB_Optimus</button>
+        <button id="product_load_news_demo" type="button">Load example</button>
+        <button id="product_show_advanced" type="button">Advanced / Audit JSON</button>
+      </div>
+
+      <section class="flow-rail" aria-label="Product analysis progress">
+        <div class="flow-step" id="product_step_capture">
+          <span>01</span>
+          <b>Capture</b>
+          <small>waiting</small>
+        </div>
+        <div class="flow-step" id="product_step_normalize">
+          <span>02</span>
+          <b>Normalize</b>
+          <small>waiting</small>
+        </div>
+        <div class="flow-step" id="product_step_boundary">
+          <span>03</span>
+          <b>Boundaries</b>
+          <small>waiting</small>
+        </div>
+        <div class="flow-step" id="product_step_output">
+          <span>04</span>
+          <b>Output</b>
+          <small>waiting</small>
+        </div>
+      </section>
+
+      <p class="product-progress-status" id="product_wait_status">Waiting for input.</p>
+
+      <div id="product_output" class="output-grid">
+        <section class="output-card full">
+          <h3>Final output</h3>
+          <p class="empty">No signal analyzed yet.</p>
+        </section>
+      </div>
+    </section>
+
+    <details class="advanced-shell" id="advanced_operator_console">
+      <summary><b>Advanced / Audit JSON</b><span>Open technical normalizer, generated JSON, local backend command and raw response viewer.</span></summary>
 
     <div class="grid">
       <section class="panel full" id="source_normalizer">
@@ -959,6 +1057,7 @@
         <div id="result_view" class="output-grid"></div>
       </section>
     </div>
+    </details>
 
     <footer class="footer">
       <span>No analytics. No cookies. No external JavaScript.</span>
@@ -1441,6 +1540,133 @@
       renderCaseOutput();
     }
 
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function productStep(id, label, active = true) {
+      const node = $(id);
+      if (!node) return;
+      node.classList.toggle("is-active", active);
+      const small = node.querySelector("small");
+      if (small) small.textContent = label;
+    }
+
+    function resetProductProgress() {
+      [
+        "product_step_capture",
+        "product_step_normalize",
+        "product_step_boundary",
+        "product_step_output"
+      ].forEach((id) => productStep(id, "waiting", false));
+
+      $("product_wait_status").textContent = "Waiting for input.";
+    }
+
+    function inferProductSourceType(sourceUrl, raw) {
+      const combined = `${sourceUrl || ""} ${raw || ""}`.toLowerCase();
+
+      if (combined.includes("github.com") && combined.includes("/pull")) return "github-pr";
+      if (combined.includes("github.com")) return "github-issue";
+      if (
+        combined.includes("pytest") ||
+        combined.includes("traceback") ||
+        combined.includes("failed") ||
+        combined.includes("ci ")
+      ) return "ci-failure";
+      if (combined.includes("documentation") || combined.includes("readme")) return "documentation-drift";
+      if (sourceUrl || combined.includes("article") || combined.includes("news") || combined.includes("report")) return "news-article";
+
+      return "human-situation";
+    }
+
+    function scenarioCards(signal) {
+      const normalizedSignal = signal || "triage";
+
+      return `
+        <section class="output-card full">
+          <h3>Possible scenarios</h3>
+          <article class="mini-card">
+            <h3>Scenario A // isolated signal</h3>
+            <p>The submitted material remains a single report or statement. Treat it as an intake signal and preserve uncertainty.</p>
+          </article>
+          <article class="mini-card">
+            <h3>Scenario B // emerging pattern</h3>
+            <p>If independent sources later corroborate the same friction, the case may justify structured review or escalation.</p>
+          </article>
+          <article class="mini-card">
+            <h3>Scenario C // low-confidence or false-positive signal</h3>
+            <p>If the source lacks evidence, context, or direct relevance, keep the case as monitor/defer rather than a conclusion.</p>
+          </article>
+          <p class="meta">scenario_basis=normalized draft · operational_signal=${escapeHtml(normalizedSignal)} · no truth verdict</p>
+        </section>
+      `;
+    }
+
+    function renderProductOutput() {
+      const output = $("product_output");
+      const resultView = $("result_view");
+
+      output.innerHTML = `
+        ${resultView.innerHTML}
+        ${scenarioCards(value("operational_signal"))}
+      `;
+    }
+
+    async function runProductAnalyze() {
+      const raw = value("product_source_text");
+      const sourceUrl = value("product_source_url");
+
+      if (!raw) {
+        alert("Text or situation is required. URL-only fetching is not performed in the browser.");
+        return;
+      }
+
+      resetProductProgress();
+      $("product_wait_status").textContent = "1/4 Capturing signal…";
+      productStep("product_step_capture", "running");
+      await wait(180);
+
+      $("source_url").value = sourceUrl;
+      $("source_text").value = raw;
+      $("signal_source_type").value = inferProductSourceType(sourceUrl, raw);
+
+      productStep("product_step_capture", "done");
+      productStep("product_step_normalize", "running");
+      $("product_wait_status").textContent = "2/4 Normalizing claim, evidence and source boundary…";
+      await wait(220);
+
+      normalizeSignal();
+
+      productStep("product_step_normalize", "done");
+      productStep("product_step_boundary", "running");
+      $("product_wait_status").textContent = "3/4 Checking inference, uncertainty and amplification boundaries…";
+      await wait(220);
+
+      productStep("product_step_boundary", "done");
+      productStep("product_step_output", "running");
+      $("product_wait_status").textContent = "4/4 Rendering final output and possible scenarios…";
+      await wait(180);
+
+      renderProductOutput();
+
+      productStep("product_step_output", "done");
+      $("product_wait_status").textContent = "Analysis draft ready. Backend analysis remains available in Advanced / Audit JSON.";
+      window.location.hash = "product_output";
+    }
+
+    function loadProductNewsDemo() {
+      $("product_source_url").value = "https://example.com/news-report";
+      $("product_source_text").value = "A news report says a public institution has introduced an automated decision system. The article says affected users may not receive clear explanations when decisions are made. The report cites complaints from several users but does not include the full administrative record or official technical documentation.";
+    }
+
+    function openAdvancedConsole() {
+      const advanced = $("advanced_operator_console");
+      if (!advanced) return;
+      advanced.open = true;
+      advanced.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
     function loadNewsDemo() {
       $("signal_source_type").value = "news-article";
       $("source_url").value = "https://example.com/news-report";
@@ -1647,6 +1873,9 @@
       "narrative_amplification"
     ].forEach((id) => $(id).addEventListener("input", updateJson));
 
+    $("product_analyze").addEventListener("click", runProductAnalyze);
+    $("product_load_news_demo").addEventListener("click", loadProductNewsDemo);
+    $("product_show_advanced").addEventListener("click", openAdvancedConsole);
     $("normalize_signal").addEventListener("click", normalizeSignal);
     $("load_news_demo").addEventListener("click", loadNewsDemo);
     $("load_github_demo").addEventListener("click", loadGithubDemo);
