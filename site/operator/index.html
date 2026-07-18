@@ -760,6 +760,50 @@
     </p>
 
     <div class="grid">
+      <section class="panel full" id="source_normalizer">
+        <h2>Source-aware normalizer</h2>
+        <p>Paste a news URL, GitHub signal, copied article text, or human situation. HUB_Optimus will convert it into a structured, editable case without deciding whether the source is true.</p>
+
+        <div class="row">
+          <div class="field">
+            <label for="signal_source_type">Source type</label>
+            <select id="signal_source_type">
+              <option value="news-article">news article</option>
+              <option value="github-issue">GitHub issue</option>
+              <option value="github-pr">GitHub PR</option>
+              <option value="ci-failure">CI/runtime signal</option>
+              <option value="review-friction">review friction</option>
+              <option value="documentation-drift">documentation drift</option>
+              <option value="human-situation">human situation</option>
+              <option value="public-service-friction">public-service friction</option>
+              <option value="conflict-situation">conflict situation</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="source_url">Source URL, optional</label>
+            <input id="source_url" placeholder="https://example.com/article-or-github-link">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="source_text">Source text / copied article / situation</label>
+          <textarea id="source_text" placeholder="Paste the article text, GitHub issue body, PR description, CI failure excerpt, or human situation here."></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="normalize_signal" type="button">Normalize into HUB_Optimus case</button>
+          <button id="load_news_demo" type="button">Load news demo</button>
+          <button id="load_github_demo" type="button">Load GitHub demo</button>
+        </div>
+
+        <div id="normalizer_readout" class="output-grid">
+          <section class="output-card full">
+            <h3>Human readout</h3>
+            <p class="empty">No source normalized yet.</p>
+          </section>
+        </div>
+      </section>
+
       <section class="panel full">
         <h2>Case core</h2>
         <div class="row">
@@ -1128,6 +1172,200 @@
       loadPayload(saved.payload || {});
     }
 
+    function sourceTypeToSignal(sourceType) {
+      const map = {
+        "news-article": "monitor",
+        "github-issue": "triage",
+        "github-pr": "triage",
+        "ci-failure": "triage",
+        "review-friction": "triage",
+        "documentation-drift": "monitor",
+        "human-situation": "triage",
+        "public-service-friction": "triage",
+        "conflict-situation": "triage"
+      };
+
+      return map[sourceType] || "triage";
+    }
+
+    function sourceTypeToClaimType(sourceType) {
+      const map = {
+        "news-article": "external-report",
+        "github-issue": "github-issue-signal",
+        "github-pr": "github-pr-signal",
+        "ci-failure": "ci-runtime-signal",
+        "review-friction": "contributor-friction",
+        "documentation-drift": "documentation-drift",
+        "human-situation": "operator-submission",
+        "public-service-friction": "public-service-friction",
+        "conflict-situation": "conflict-signal"
+      };
+
+      return map[sourceType] || "operator-submission";
+    }
+
+    function sourceTypeToEvidenceType(sourceType) {
+      if (sourceType.startsWith("github")) return "github-text";
+      if (sourceType === "ci-failure") return "ci-log-excerpt";
+      if (sourceType === "news-article") return "article-text";
+      return "statement";
+    }
+
+    function compactText(raw, maxLength = 520) {
+      const normalized = String(raw || "").replace(/\s+/g, " ").trim();
+      if (normalized.length <= maxLength) return normalized;
+      return `${normalized.slice(0, maxLength - 1).trim()}…`;
+    }
+
+    function firstReadableSentence(raw) {
+      const normalized = String(raw || "").replace(/\s+/g, " ").trim();
+      const parts = normalized
+        .split(/(?<=[.!?])\s+|\n+/)
+        .map((item) => item.trim())
+        .filter((item) => item.length >= 24);
+
+      return parts[0] || compactText(normalized, 220);
+    }
+
+    function buildNormalizedPayload() {
+      const raw = value("source_text");
+      const sourceType = value("signal_source_type") || "human-situation";
+      const sourceUrl = value("source_url");
+      const sourceRef = sourceUrl || "operator-pasted-text";
+      const claimType = sourceTypeToClaimType(sourceType);
+      const signal = sourceTypeToSignal(sourceType);
+      const sourceLabel = sourceType.replaceAll("-", " ");
+
+      if (!raw) {
+        alert("Source text is required. Paste article text, GitHub content, or a human situation.");
+        return null;
+      }
+
+      const claimText = `Submitted ${sourceLabel} states: ${firstReadableSentence(raw)}`;
+      const evidenceText = compactText(raw);
+
+      const payload = {
+        case_id: `operator-signal-${Date.now()}`,
+        core_version_ref: value("core_version_ref") || "main",
+        input_summary: `Source-aware operator normalization from ${sourceLabel}. This is an intake draft, not a truth verdict.`,
+        claims: [
+          {
+            claim_id: "claim-001",
+            text: claimText,
+            source_ref: sourceRef,
+            claim_type: claimType,
+            requires_evidence: true,
+            status: "pending",
+            metadata: {
+              source_type: sourceType,
+              source_url: sourceUrl || null,
+              normalized_by: "operator-source-normalizer-v0.1"
+            }
+          }
+        ],
+        evidence: [
+          {
+            evidence_id: "evidence-001",
+            text: evidenceText,
+            source_ref: sourceRef,
+            source_type: sourceTypeToEvidenceType(sourceType),
+            supports_claim_ids: ["claim-001"],
+            contradicts_claim_ids: [],
+            limitations: [
+              "Source text was submitted by the operator and still requires independent verification.",
+              "The normalizer preserves claims for review; it does not establish truth, causality, or institutional responsibility."
+            ],
+            metadata: {
+              source_type: sourceType,
+              source_url: sourceUrl || null,
+              normalized_by: "operator-source-normalizer-v0.1"
+            }
+          }
+        ],
+        inferences: [
+          "The submitted material may require structured review before any conclusion is drawn."
+        ],
+        uncertainties: [
+          "The source text alone does not establish independent verification, full context, causality, or broader representativeness."
+        ],
+        narrative_amplification: [
+          "Avoid treating a single article, post, issue, or statement as proof of a wider pattern without corroborating evidence."
+        ],
+        operational_signal: signal,
+        metadata: {
+          intake_channel: "operator-pwa-source-normalizer",
+          source_type: sourceType,
+          source_url: sourceUrl || null,
+          normalizer_version: "operator-source-normalizer-v0.1"
+        }
+      };
+
+      return payload;
+    }
+
+    function renderNormalizerReadout(payload) {
+      $("normalizer_readout").innerHTML = `
+        <section class="output-card">
+          <h3>Readout</h3>
+          <p><b>Signal:</b> ${escapeHtml(payload.operational_signal)}</p>
+          <p><b>Source:</b> ${escapeHtml(payload.metadata.source_type)}</p>
+          <p><b>URL:</b> ${escapeHtml(payload.metadata.source_url || "not provided")}</p>
+        </section>
+
+        <section class="output-card">
+          <h3>Safe next action</h3>
+          <p>Review the generated claim and evidence before analysis. Keep uncertainty visible. Do not treat the source as verified fact without corroboration.</p>
+        </section>
+
+        <section class="output-card full">
+          <h3>Claim detected</h3>
+          <p>${escapeHtml(payload.claims[0].text)}</p>
+        </section>
+
+        <section class="output-card full">
+          <h3>Evidence captured</h3>
+          <p>${escapeHtml(payload.evidence[0].text)}</p>
+          <p class="meta">source_ref=${escapeHtml(payload.evidence[0].source_ref)}</p>
+        </section>
+
+        <section class="output-card">
+          <h3>Inference boundary</h3>
+          <p>${escapeHtml(payload.inferences[0])}</p>
+        </section>
+
+        <section class="output-card">
+          <h3>Uncertainty</h3>
+          <p>${escapeHtml(payload.uncertainties[0])}</p>
+        </section>
+
+        <section class="output-card full">
+          <h3>Narrative amplification risk</h3>
+          <p>${escapeHtml(payload.narrative_amplification[0])}</p>
+        </section>
+      `;
+    }
+
+    function normalizeSignal() {
+      const payload = buildNormalizedPayload();
+      if (!payload) return;
+
+      loadPayload(payload);
+      renderNormalizerReadout(payload);
+      window.location.hash = "case_json";
+    }
+
+    function loadNewsDemo() {
+      $("signal_source_type").value = "news-article";
+      $("source_url").value = "https://example.com/news-report";
+      $("source_text").value = "A news report says a public institution has introduced an automated decision system. The article says affected users may not receive clear explanations when decisions are made. The report cites complaints from several users but does not include the full administrative record or official technical documentation.";
+    }
+
+    function loadGithubDemo() {
+      $("signal_source_type").value = "github-issue";
+      $("source_url").value = "https://github.com/Voxterrae/HUB_Optimus/issues/example";
+      $("source_text").value = "A contributor reports that the current workflow is unclear because the documentation says to use Related to #N while the PR template still suggests an auto-closing keyword. This may create contributor friction and accidental issue closure risk.";
+    }
+
     function loadDemo() {
       loadPayload({
         case_id: "operator-demo-001",
@@ -1284,6 +1522,9 @@
       "narrative_amplification"
     ].forEach((id) => $(id).addEventListener("input", updateJson));
 
+    $("normalize_signal").addEventListener("click", normalizeSignal);
+    $("load_news_demo").addEventListener("click", loadNewsDemo);
+    $("load_github_demo").addEventListener("click", loadGithubDemo);
     $("add_claim").addEventListener("click", addClaim);
     $("add_evidence").addEventListener("click", addEvidence);
     $("build_json").addEventListener("click", updateJson);
