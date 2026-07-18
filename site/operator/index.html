@@ -1268,8 +1268,7 @@
         "print('[OK] response saved to {}'.format(path))",
         "print(json.dumps(data, indent=2, ensure_ascii=False))",
         "PY_CHECK"
-      ].join("
-");
+      ].join("\n");
     }
 
     function updateAnalyzeCommand() {
@@ -1618,7 +1617,18 @@
       const sourceUrl = value("product_source_url");
 
       if (!raw) {
-        alert("Text or situation is required. URL-only fetching is not performed in the browser.");
+        const message = sourceUrl
+          ? "URL reference captured, but browser URL fetching is intentionally not performed. Paste the article text or copied content to produce a meaningful analysis draft."
+          : "Text or situation is required. Paste article text, copied content, or describe the situation.";
+
+        $("product_output").innerHTML = `
+          <section class="output-card full">
+            <h3>Input required</h3>
+            <p>${escapeHtml(message)}</p>
+            <p class="meta">No browser fetch · no scraping · no backend exposed</p>
+          </section>
+        `;
+        $("product_wait_status").textContent = "Input required before analysis.";
         return;
       }
 
