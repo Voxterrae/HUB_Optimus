@@ -926,6 +926,7 @@
         <p>Copy this JSON into the local backend workflow when operating inside the secured environment.</p>
         <div class="actions">
           <button class="primary" id="build_json" type="button">Build JSON</button>
+          <button id="render_case_output" type="button">Render normalized draft output</button>
           <button id="copy_json" type="button">Copy JSON</button>
           <button id="save_draft" type="button">Save draft locally</button>
           <button id="load_draft" type="button">Load saved draft</button>
@@ -947,7 +948,7 @@
 
       <section class="panel full">
         <h2>Analysis output viewer</h2>
-        <p>Paste the JSON response returned by HUB_Optimus `/analyze` to visualize the result.</p>
+        <p>Paste the JSON response returned by HUB_Optimus `/analyze`, or render the current normalized case as a draft output before backend analysis. Draft output is not a backend run.</p>
         <div class="field">
           <label for="result_input">Backend response JSON</label>
           <textarea id="result_input" placeholder='{"status":"ok","run_id":"...","analysis_result":{...}}'></textarea>
@@ -1190,6 +1191,28 @@
       }
     }
 
+    function buildNormalizedDraftResponse() {
+      const resultPayload = buildPayload();
+      resultPayload.metadata = Object.assign({}, resultPayload.metadata || {}, {
+        output_mode: "normalized-draft",
+        backend_run: false
+      });
+
+      return {
+        status: "normalized-draft",
+        run_id: "operator-normalized-draft",
+        run_path: "browser-local-draft",
+        analysis_result: resultPayload
+      };
+    }
+
+    function renderCaseOutput() {
+      updateJson();
+      $("result_input").value = JSON.stringify(buildNormalizedDraftResponse(), null, 2);
+      renderResult();
+      window.location.hash = "result_view";
+    }
+
     function saveDraft() {
       localStorage.setItem(storageKey, JSON.stringify({
         payload: buildPayload(),
@@ -1415,7 +1438,7 @@
 
       loadPayload(payload);
       renderNormalizerReadout(payload);
-      window.location.hash = "case_json";
+      renderCaseOutput();
     }
 
     function loadNewsDemo() {
@@ -1632,6 +1655,7 @@
     $("build_analyze_command").addEventListener("click", updateAnalyzeCommand);
     $("copy_analyze_command").addEventListener("click", copyAnalyzeCommand);
     $("build_json").addEventListener("click", updateJson);
+    $("render_case_output").addEventListener("click", renderCaseOutput);
     $("copy_json").addEventListener("click", copyJson);
     $("save_draft").addEventListener("click", saveDraft);
     $("load_draft").addEventListener("click", loadDraft);
