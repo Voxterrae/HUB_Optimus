@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - "site/**"
+      - "docs/**"
+      - "assets/brand/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
