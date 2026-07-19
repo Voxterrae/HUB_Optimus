@@ -299,6 +299,26 @@
       box-shadow: 0 0 1rem rgba(77, 238, 255, 0.15);
     }
 
+    .runbook {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    pre {
+      margin: 0;
+      padding: 0.85rem;
+      overflow-x: auto;
+      border: 1px solid rgba(124, 255, 107, 0.28);
+      border-radius: 0.75rem;
+      background: rgba(2, 8, 5, 0.88);
+      color: var(--text);
+      font-size: 0.86rem;
+    }
+
+    code {
+      font: inherit;
+    }
+
     .footer {
       margin-top: 1rem;
       padding-top: 1rem;
@@ -369,6 +389,10 @@
             <b>Backend v0.1</b>
             <span class="ok">local-operational</span>
           </div>
+          <div class="chip">
+            <b>Release v2.3.4</b>
+            <span class="ok">verified</span>
+          </div>
           <div class="chip warning">
             <b>Public API</b>
             <span class="hold">not exposed</span>
@@ -436,6 +460,19 @@
         <p>GitHub repository, Issues, Pull Requests, commits, CI, and versioned documentation are authoritative. Chat is advisory. Public presentation does not override repository state.</p>
       </section>
 
+      <section class="panel full" aria-labelledby="runbook">
+        <h2 id="runbook">Run locally</h2>
+        <div class="runbook">
+          <p>The current public release is a Python simulator and Semantic Engine CLI, plus static documentation. The validated v2.3.4 smoke path is:</p>
+          <pre><code>git clone --branch v2.3.4 https://github.com/Voxterrae/HUB_Optimus.git
+cd HUB_Optimus
+python3 -m pip install -r requirements-dev.txt
+python3 run_scenario.py --scenario example_scenario.json --seed 42
+python3 -m semantic_engine.cli analyze examples/semantic_engine/case_minimal.json</code></pre>
+          <p>Expected simulator result: <strong class="ok">success</strong>, with the configured success criteria reached in round 2.</p>
+        </div>
+      </section>
+
       <nav class="panel full" aria-labelledby="links">
         <h2 id="links">Navigation</h2>
         <ul class="links">
@@ -445,6 +482,7 @@
           <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/00_start_here.md">EN onboarding</a></li>
           <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/es/00_start_here.md">ES onboarding</a></li>
           <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/de/00_start_here.md">DE onboarding</a></li>
+          <li><a href="https://github.com/Voxterrae/HUB_Optimus/releases/tag/v2.3.4">Release v2.3.4</a></li>
           <li><a href="./operator/">Operator PWA</a></li>
           <li><a href="mailto:operator@huboptimus.dev">Operator</a></li>
         </ul>
