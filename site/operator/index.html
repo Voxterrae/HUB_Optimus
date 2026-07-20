@@ -965,7 +965,7 @@
 
       <div class="actions memory-actions">
         <button id="save_memory_result" type="button" disabled>Save memory</button>
-        <button id="share_memory_link" type="button" disabled>Copy share link</button>
+        <button id="share_memory_link" type="button" disabled>Copy share summary</button>
         <button id="share_memory_whatsapp" type="button" disabled>WhatsApp</button>
       </div>
       <p class="memory-status" id="memory_status">Run an analysis to unlock memory and sharing.</p>
@@ -2414,17 +2414,44 @@
       return currentMemoryRecord || saveCurrentMemoryResult();
     }
 
+    function buildCleanOperatorUrl() {
+      return `${window.location.origin}${window.location.pathname}`;
+    }
+
+    function buildHumanShareText(record) {
+      const lines = [
+        "HUB_Optimus Operator memory",
+        "",
+        `Dominio: ${record.signal_domain_label || "not detected"}`,
+        `Señal: ${record.operational_signal || "triage"}`,
+        "",
+        `Resumen: ${compactText(record.summary, 280)}`,
+        "",
+        `Afirmación: ${compactText(record.claim, 320)}`,
+        "",
+        `Incertidumbre: ${compactText(record.uncertainty, 260)}`,
+        "",
+        `Siguiente acción: ${compactText(record.safe_next_action, 220)}`,
+        "",
+        "Límite: señal no verificada; no es veredicto de verdad.",
+        record.source_url ? `Fuente: ${compactText(record.source_url, 240)}` : "",
+        `Abrir Operator: ${buildCleanOperatorUrl()}`
+      ];
+
+      return lines.filter(Boolean).join("\n");
+    }
+
     async function shareMemoryLink() {
       const record = currentShareableMemory();
       if (!record) return;
 
-      const url = buildMemoryShareUrl(record);
+      const shareText = buildHumanShareText(record);
 
       try {
-        await navigator.clipboard.writeText(url);
-        renderMemoryStatus("Share link copied. It contains a compact result snapshot.", true);
+        await navigator.clipboard.writeText(shareText);
+        renderMemoryStatus("Resumen legible copiado. Sin URL codificada.", true);
       } catch {
-        renderMemoryStatus(url, true);
+        renderMemoryStatus("No se pudo copiar el resumen. Use WhatsApp o seleccione el resultado manualmente.", false);
       }
     }
 
@@ -2432,16 +2459,10 @@
       const record = currentShareableMemory();
       if (!record) return;
 
-      const url = buildMemoryShareUrl(record);
-      const shareText = [
-        "HUB_Optimus Operator memory",
-        record.signal_domain_label,
-        record.claim,
-        url
-      ].filter(Boolean).join("\n\n");
+      const shareText = buildHumanShareText(record);
 
       window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer");
-      renderMemoryStatus("WhatsApp share opened with compact memory snapshot.", true);
+      renderMemoryStatus("WhatsApp abierto con resumen legible. Sin URL codificada.", true);
     }
 
     function renderSharedMemorySnapshot(snapshot) {
