@@ -782,6 +782,36 @@
     }
 
 
+    .product-lede {
+      color: var(--melon-nuke-muted);
+      font-size: 1.02rem;
+      max-width: 78ch;
+    }
+
+    .field-hint {
+      color: var(--melon-nuke-dim);
+      font-size: 0.86rem;
+      margin: 0.45rem 0 0;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.46;
+      filter: grayscale(0.35);
+    }
+
+    .reactor-band,
+    .status-strip,
+    main > .flow-rail,
+    .operator-note {
+      display: none;
+    }
+
+    .memory-actions {
+      align-items: center;
+    }
+
+
   </style>
 </head>
 <body>
@@ -873,24 +903,26 @@
 
     <section class="panel full product-intake" id="product_intake">
       <h2>Analyze with HUB_Optimus</h2>
-      <p>Paste a source URL for reference and the article text, GitHub signal, CI excerpt, or written situation. HUB_Optimus will normalize the signal, keep uncertainty visible, and render a final draft output. URL-only fetching is intentionally not performed in the browser.</p>
+      <p class="product-lede">Paste a source and HUB_Optimus will separate claim, evidence, inference, uncertainty, narrative amplification, and safe next action. URL reading is handled as a controlled backend step; for now, paste the article text or situation below.</p>
 
       <div class="row">
         <div class="field">
-          <label for="product_source_url">Source URL, optional</label>
+          <label for="product_source_url">Source URL</label>
           <input id="product_source_url" placeholder="https://example.com/news-or-github-source">
+          <p class="field-hint">Used as source reference. Controlled URL reading is the next backend step; the browser does not scrape pages.</p>
         </div>
       </div>
 
       <div class="field">
-        <label for="product_source_text">Text, copied article, or situation</label>
+        <label for="product_source_text">Article text or situation to analyze</label>
         <textarea id="product_source_text" placeholder="Paste the article text, copied post, GitHub issue body, CI failure excerpt, or describe the situation here."></textarea>
+        <p class="field-hint">Required for analysis until controlled URL intake is added.</p>
       </div>
 
       <div class="actions">
-        <button class="primary" id="product_analyze" type="button">Analyze with HUB_Optimus</button>
-        <button id="product_load_news_demo" type="button">Load example</button>
-        <button id="product_show_advanced" type="button">Advanced / Audit JSON</button>
+        <button class="primary" id="product_analyze" type="button">Analyze</button>
+        <button id="product_load_news_demo" type="button">Example</button>
+        <button id="product_show_advanced" type="button">Advanced</button>
       </div>
 
       <section class="flow-rail" aria-label="Product analysis progress">
@@ -926,17 +958,17 @@
 
       <div id="product_output" class="output-grid">
         <section class="output-card full">
-          <h3>Final output</h3>
-          <p class="empty">No signal analyzed yet.</p>
+          <h3>Result</h3>
+          <p class="empty">Paste text and run analysis. The result will separate claim, evidence, uncertainty, and safe next action.</p>
         </section>
       </div>
 
       <div class="actions memory-actions">
-        <button id="save_memory_result" type="button">Save result memory</button>
-        <button id="share_memory_link" type="button">Share memory link</button>
-        <button id="share_memory_whatsapp" type="button">Share to WhatsApp</button>
+        <button id="save_memory_result" type="button" disabled>Save memory</button>
+        <button id="share_memory_link" type="button" disabled>Copy share link</button>
+        <button id="share_memory_whatsapp" type="button" disabled>WhatsApp</button>
       </div>
-      <p class="memory-status" id="memory_status">No saved memory result yet.</p>
+      <p class="memory-status" id="memory_status">Run an analysis to unlock memory and sharing.</p>
     </section>
 
     <details class="advanced-shell" id="advanced_operator_console">
@@ -2011,6 +2043,36 @@
       node.classList.toggle("ok", Boolean(ok));
     }
 
+    function setMemoryActionsEnabled(enabled) {
+      [
+        "save_memory_result",
+        "share_memory_link",
+        "share_memory_whatsapp"
+      ].forEach((id) => {
+        const button = $(id);
+        if (button) button.disabled = !enabled;
+      });
+    }
+
+    function syncProductInputState() {
+      const raw = value("product_source_text");
+      const sourceUrl = value("product_source_url");
+      const analyzeButton = $("product_analyze");
+
+      if (!analyzeButton) return;
+
+      if (raw) {
+        analyzeButton.disabled = false;
+        $("product_wait_status").textContent = "Ready to analyze.";
+        return;
+      }
+
+      analyzeButton.disabled = true;
+      $("product_wait_status").textContent = sourceUrl
+        ? "URL captured. Paste the article text below to analyze."
+        : "Paste text or load the example to begin.";
+    }
+
     function saveCurrentMemoryResult() {
       if (!hasShareableResult()) {
         renderMemoryStatus("No result to save yet. Run Analyze with HUB_Optimus first.", false);
@@ -2023,7 +2085,8 @@
       saveMemoryRecords(records);
 
       currentMemoryRecord = record;
-      renderMemoryStatus(`Saved memory result: ${record.saved_at_utc}`, true);
+      setMemoryActionsEnabled(true);
+      renderMemoryStatus(`Memory saved: ${record.saved_at_utc}`, true);
 
       return record;
     }
@@ -2116,6 +2179,7 @@
         </section>
       `;
 
+      setMemoryActionsEnabled(false);
       renderMemoryStatus("Shared memory snapshot loaded. It is not canonical until reviewed/versioned in GitHub.", true);
       window.location.hash = "product_output";
     }
@@ -2149,11 +2213,14 @@
             <p class="meta">No browser fetch · no scraping · no backend exposed</p>
           </section>
         `;
-        $("product_wait_status").textContent = "Input required before analysis.";
+        $("product_wait_status").textContent = "Paste text to enable analysis.";
+        setMemoryActionsEnabled(false);
         return;
       }
 
       resetProductProgress();
+      setMemoryActionsEnabled(false);
+      currentMemoryRecord = null;
 
       $("source_url").value = sourceUrl;
       $("source_text").value = raw;
@@ -2187,13 +2254,14 @@
       currentMemoryRecord = saveCurrentMemoryResult();
 
       productStep("product_step_output", "done");
-      $("product_wait_status").textContent = "Analysis draft ready. Backend analysis remains available in Advanced / Audit JSON.";
+      $("product_wait_status").textContent = "Result ready. Memory and sharing are available.";
       window.location.hash = "product_output";
     }
 
     function loadProductNewsDemo() {
       $("product_source_url").value = "https://example.com/news-report";
       $("product_source_text").value = "A news report says a public institution has introduced an automated decision system. The article says affected users may not receive clear explanations when decisions are made. The report cites complaints from several users but does not include the full administrative record or official technical documentation.";
+      syncProductInputState();
     }
 
     function openAdvancedConsole() {
@@ -2409,6 +2477,9 @@
       "narrative_amplification"
     ].forEach((id) => $(id).addEventListener("input", updateJson));
 
+    ["product_source_url", "product_source_text"].forEach((id) => {
+      $(id).addEventListener("input", syncProductInputState);
+    });
     $("save_memory_result").addEventListener("click", saveCurrentMemoryResult);
     $("share_memory_link").addEventListener("click", shareMemoryLink);
     $("share_memory_whatsapp").addEventListener("click", shareMemoryWhatsapp);
@@ -2435,6 +2506,8 @@
     renderEvidence();
     buildProductLoader();
     setProductLoader(0, "idle");
+    setMemoryActionsEnabled(false);
+    syncProductInputState();
     updateJson();
     loadSharedMemoryFromHash();
 
