@@ -29,3 +29,15 @@ def test_operator_service_worker_cache_bumped_for_button_fix():
     sw = SW.read_text(encoding="utf-8")
 
     assert "hub-optimus-operator-v0-7" in sw
+
+
+def test_operator_product_loader_pacing_present():
+    html = INDEX.read_text(encoding="utf-8")
+    sw = SW.read_text(encoding="utf-8")
+
+    assert "melon-loader" in html
+    assert "product_loader_percent" in html
+    assert "runMelonLoaderPlan" in html
+    assert "assembling possible scenarios" in html
+    assert "rendering final output" in html
+    assert "hub-optimus-operator-v0-8" in sw
