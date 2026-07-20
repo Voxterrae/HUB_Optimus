@@ -1620,11 +1620,17 @@
         },
         {
           id: "security-conflict",
-          label: "seguridad / conflicto armado",
+          label: "geopolítica / conflicto internacional",
           keywords: [
             "guerra", "bombardeo", "bombardea", "ataque", "ataques", "militar",
-            "ejercito", "ejército", "iran", "irán", "ee.uu", "estados unidos",
-            "centcom", "base militar", "soldado", "armas", "nuclear", "frontera"
+            "ejercito", "ejército", "iran", "irán", "teherán", "teheran",
+            "ee.uu", "ee. uu", "estados unidos", "washington", "centcom",
+            "base militar", "soldado", "armas", "nuclear", "frontera",
+            "otan", "nato", "ucrania", "rusia", "israel", "gaza", "china",
+            "taiwan", "taiwán", "sahel", "golfo", "ormuz", "estrecho",
+            "sanciones", "diplomacia", "alto el fuego", "represalia",
+            "escalada", "desescalada", "rutas comerciales", "energia", "energía",
+            "actor estatal", "aliado", "milicia", "proxy", "maritimo", "marítimo"
           ]
         },
         {
@@ -1810,29 +1816,62 @@
         },
         "security-conflict": {
           domain_id: "security-conflict",
-          domain_label: "seguridad / conflicto armado",
-          summary: "Análisis temático preliminar: el texto describe una señal de escalada militar y narrativa de justificación política. No verifica los hechos ni sustituye fuentes primarias.",
-          problem: "El problema real es distinguir hechos militares confirmables, declaraciones políticas, atribución de responsabilidad y riesgo de escalada.",
-          incentives: "Los actores pueden intentar mostrar disuasión, justificar coste humano, controlar narrativa doméstica o elevar presión negociadora.",
-          affected: "Afecta a población civil, militares, rutas comerciales, aliados regionales y estabilidad diplomática.",
+          domain_label: "geopolítica / conflicto internacional",
+          summary: "Análisis temático preliminar: el texto describe una señal de conflicto internacional donde deben separarse hechos militares, narrativa política, intereses estratégicos, riesgo de escalada, impacto civil y vías diplomáticas. No verifica los hechos ni sustituye fuentes primarias.",
+          problem: "El problema real no es solo que haya un ataque o una declaración; es entender qué actor afirma qué, qué objetivo estratégico persigue, qué capacidad militar se atribuye, qué coste humano existe, qué respuesta puede activar y qué parte pertenece a propaganda, disuasión o negociación.",
+          incentives: "Los actores estatales y aliados pueden buscar disuasión, castigo, control de rutas comerciales, presión energética, cohesión doméstica, ventaja negociadora o legitimación internacional. Los actores no estatales pueden buscar visibilidad, desgaste, represalia o arrastrar a terceros al conflicto.",
+          affected: "Afecta a población civil, militares, comercio marítimo, energía, aliados regionales, instituciones diplomáticas, mercados, diásporas y credibilidad de los actores implicados.",
           evidence_to_check: [
-            "Comunicados oficiales originales y hora/localización de ataques.",
-            "Confirmación independiente de víctimas y daños.",
-            "Respuesta del actor atacado y posición de aliados.",
-            "Diferencia entre declaración política y hecho militar verificado."
+            "Comunicados oficiales originales de cada parte y hora exacta de publicación.",
+            "Confirmación independiente de objetivos, daños, víctimas y localización.",
+            "Evidencia geoespacial, imágenes verificables, reportes locales y fuentes humanitarias.",
+            "Respuesta del actor atacado, aliados, organismos internacionales y mediadores.",
+            "Impacto sobre rutas comerciales, energía, sanciones, evacuaciones o escalada regional.",
+            "Diferencia entre declaración política, propaganda, hecho militar y análisis externo."
           ],
-          safe_action: "Mantener seguimiento con fuentes primarias, separar declaración de evidencia y evitar lenguaje de certeza hasta corroboración independiente.",
+          actor_matrix: [
+            "Actor iniciador: qué afirma, qué objetivo declara y qué capacidad demuestra.",
+            "Actor objetivo: qué niega, confirma o promete responder.",
+            "Aliados y socios: qué apoyo ofrecen y qué límites intentan imponer.",
+            "Población civil: qué daños, desplazamientos o riesgos quedan documentados.",
+            "Mediadores e instituciones: qué canales diplomáticos siguen abiertos."
+          ],
+          geopolitical_questions: [
+            "¿El hecho descrito cambia equilibrio militar o solo comunica voluntad política?",
+            "¿La acción busca destruir capacidad, enviar señal, forzar negociación o responder a presión doméstica?",
+            "¿Qué rutas, recursos, bases, fronteras o alianzas vuelven estratégico el evento?",
+            "¿Qué contradicciones aparecen entre versiones oficiales, prensa local y fuentes independientes?",
+            "¿Qué indicador separaría una escalada puntual de una campaña sostenida?"
+          ],
+          escalation_scenarios: [
+            "Escenario A // contención: el ataque queda limitado, se preservan canales diplomáticos y ambas partes controlan narrativa interna.",
+            "Escenario B // escalada regional: represalias, ataques a bases, rutas marítimas o aliados amplían el coste y elevan presión internacional.",
+            "Escenario C // guerra informativa: cifras, imágenes y declaraciones se usan para justificar nuevas acciones antes de verificación independiente.",
+            "Escenario D // negociación bajo fuego: las partes mantienen intercambio diplomático mientras usan presión militar para mejorar posición."
+          ],
+          contradiction_checks: [
+            "Comparar cifras de bajas con fuentes hospitalarias, militares, humanitarias y prensa local.",
+            "Ver si la hora/lugar del ataque coincide entre comunicados, imágenes y reportes independientes.",
+            "Separar bajas confirmadas de desaparecidos, heridos o cifras atribuidas.",
+            "Contrastar si el objetivo descrito era militar, logístico, civil o simbólico.",
+            "Revisar si el lenguaje de defensa, represalia u honor está apoyado por hechos verificables."
+          ],
+          safe_action: "Mantener el caso como señal geopolítica de seguimiento: construir línea temporal, separar hechos de declaraciones, bloquear conclusiones hasta corroboración independiente y vigilar indicadores de escalada, desescalada y guerra informativa.",
           inferences: [
-            "El texto apunta a posible escalada o continuación operativa, pero no confirma por sí solo magnitud ni legalidad.",
-            "La narrativa de honor, represalia o defensa puede ser parte de la justificación política, no evidencia independiente."
+            "La señal puede indicar escalada, coerción o negociación bajo presión, pero el texto por sí solo no confirma magnitud, proporcionalidad ni legalidad.",
+            "La narrativa política alrededor del ataque puede ser tan relevante como el hecho militar porque condiciona represalias, alianzas y opinión pública.",
+            "La relevancia operativa depende de si aparecen indicadores de continuidad: nuevos ataques, movilización aliada, cierre de rutas, sanciones, evacuaciones o ruptura diplomática."
           ],
           uncertainties: [
-            "Faltan confirmaciones independientes sobre daños, víctimas, objetivos y proporcionalidad.",
-            "No se sabe si las cifras citadas proceden de fuente primaria, parte interesada o agregación periodística."
+            "Faltan confirmaciones independientes sobre daños, víctimas, objetivos y localización.",
+            "No se sabe si las cifras citadas proceden de fuente primaria, parte interesada, agregación periodística o propaganda.",
+            "No está claro si el evento es un episodio aislado, una campaña sostenida o una señal negociadora.",
+            "La situación humanitaria y el impacto regional requieren fuentes separadas de las declaraciones militares."
           ],
           narrative_amplification: [
             "Riesgo: convertir declaraciones de actores armados en hechos confirmados.",
-            "Riesgo: amplificar lenguaje de guerra sin separar evidencia, propaganda e incertidumbre."
+            "Riesgo: amplificar lenguaje de guerra sin separar evidencia, propaganda, disuasión e incertidumbre.",
+            "Riesgo inverso: tratar una escalada real como ruido informativo si solo se mira una fuente o un comunicado."
           ]
         },
         "repo-governance": {
@@ -1872,11 +1911,23 @@
       });
     }
 
-    function thematicAnalysisCard(profile) {
-      const analysis = buildThematicAnalysis(profile);
-      const evidenceItems = analysis.evidence_to_check
+    function themeList(items) {
+      return (items || [])
         .map((item) => `<li>${escapeHtml(item)}</li>`)
         .join("");
+    }
+
+    function optionalThemeSection(title, items) {
+      if (!Array.isArray(items) || !items.length) return "";
+
+      return `
+        <p><b>${escapeHtml(title)}:</b></p>
+        <ul>${themeList(items)}</ul>
+      `;
+    }
+
+    function thematicAnalysisCard(profile) {
+      const analysis = buildThematicAnalysis(profile);
 
       return `
         <section class="output-card full">
@@ -1885,13 +1936,16 @@
           <p><b>Dinámica / incentivos:</b> ${escapeHtml(analysis.incentives)}</p>
           <p><b>A quién afecta:</b> ${escapeHtml(analysis.affected)}</p>
           <p><b>Evidencia que falta comprobar:</b></p>
-          <ul>${evidenceItems}</ul>
+          <ul>${themeList(analysis.evidence_to_check)}</ul>
+          ${optionalThemeSection("Matriz de actores / intereses", analysis.actor_matrix)}
+          ${optionalThemeSection("Preguntas geopolíticas", analysis.geopolitical_questions)}
+          ${optionalThemeSection("Escenarios operativos", analysis.escalation_scenarios)}
+          ${optionalThemeSection("Contradicciones a buscar", analysis.contradiction_checks)}
           <p><b>Siguiente acción útil:</b> ${escapeHtml(analysis.safe_action)}</p>
           <p class="meta">topic_analysis=${escapeHtml(analysis.domain_id)} · no truth verdict · no legal/financial advice</p>
         </section>
       `;
     }
-
     function buildProtocolNotes(profile) {
       const thematic = buildThematicAnalysis(profile);
 
