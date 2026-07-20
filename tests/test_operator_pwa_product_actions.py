@@ -38,7 +38,7 @@ def test_operator_product_loader_pacing_present():
     assert "runMelonLoaderPlan" in html
     assert "assembling possible scenarios" in html
     assert "rendering final output" in html
-    assert "hub-optimus-operator-v0-13" in sw
+    assert "hub-optimus-operator-v0-14" in sw
 
 
 def test_operator_source_intelligence_v2_present():
@@ -51,7 +51,7 @@ def test_operator_source_intelligence_v2_present():
     assert "operator-source-intelligence-v0.2" in html
     assert "HUB_Optimus procedure" in html
     assert "evidence lock" in html
-    assert "hub-optimus-operator-v0-13" in sw
+    assert "hub-optimus-operator-v0-14" in sw
 
 
 def test_operator_memory_share_snapshot_present():
@@ -67,7 +67,7 @@ def test_operator_memory_share_snapshot_present():
     assert "loadSharedMemoryFromHash" in html
     assert "https://wa.me/" in html
     assert "og:title" in html
-    assert "hub-optimus-operator-v0-13" in sw
+    assert "hub-optimus-operator-v0-14" in sw
     assert "./og.svg" in sw
 
 
@@ -78,7 +78,7 @@ def test_operator_install_icon_reactor_mark_present():
     assert "Melon nuke reactor icon" in icon
     assert "url(#segment)" in icon
     assert ">HO</text>" in icon
-    assert "hub-optimus-operator-v0-13" in sw
+    assert "hub-optimus-operator-v0-14" in sw
 
 
 def test_operator_product_ux_controls_are_gated():
@@ -95,7 +95,7 @@ def test_operator_product_ux_controls_are_gated():
     assert "Result ready. Memory and sharing are available." in html
     assert ".status-strip" in html
     assert ".reactor-band" in html
-    assert "hub-optimus-operator-v0-13" in sw
+    assert "hub-optimus-operator-v0-14" in sw
 
 
 def test_operator_url_only_fallback_message_present():
@@ -109,4 +109,21 @@ def test_operator_url_only_fallback_message_present():
     assert "readControlledUrlText" in html
     assert "renderUrlIntakeFallback" in html
     assert "Ready to read URL from controlled intake" in html
-    assert "hub-optimus-operator-v0-13" in sw
+    assert "hub-optimus-operator-v0-14" in sw
+
+
+def test_operator_topic_aware_analysis_present():
+    html = INDEX.read_text(encoding="utf-8")
+    sw = SW.read_text(encoding="utf-8")
+
+    assert "buildThematicAnalysis" in html
+    assert "thematicAnalysisCard" in html
+    assert "housing-finance" in html
+    assert "vivienda / financiación doméstica" in html
+    assert "El problema real no es solo que una vivienda sea barata o cara" in html
+    assert "cuota mensual" in html
+    assert "security-conflict" in html
+    assert "seguridad / conflicto armado" in html
+    assert "topic_analysis_version" in html
+    assert "operator-topic-analysis-v0.1" in html
+    assert "hub-optimus-operator-v0-14" in sw

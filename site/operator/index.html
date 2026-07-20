@@ -1603,34 +1603,71 @@
         .filter((item) => item.length >= 28);
     }
 
+
     function detectSignalDomain(raw, sourceType) {
       const combined = `${sourceType || ""} ${raw || ""}`.toLowerCase();
 
       const domains = [
         {
-          id: "ai-governance",
-          label: "AI governance / automated decision systems",
-          keywords: ["ai", "artificial intelligence", "automated decision", "algorithm", "model", "explanation", "technical documentation", "automated system"]
-        },
-        {
-          id: "public-service-friction",
-          label: "public service / administrative friction",
-          keywords: ["public institution", "administrative", "record", "complaints", "service", "status", "escalation", "consulate", "citizen"]
-        },
-        {
-          id: "repo-governance",
-          label: "repository governance / contributor workflow",
-          keywords: ["github", "pull request", "issue", "ci", "pytest", "workflow", "readme", "documentation", "branch"]
+          id: "housing-finance",
+          label: "vivienda / financiación doméstica",
+          keywords: [
+            "hipoteca", "prestamo", "préstamo", "banco", "bancos", "cuota", "euribor",
+            "interes", "interés", "vivienda", "casa barata", "casas baratas", "comprar una casa",
+            "inmueble", "cajas rurales", "broker", "bróker", "tasacion", "tasación",
+            "alquiler", "100.000 euros", "financiacion", "financiación"
+          ]
         },
         {
           id: "security-conflict",
-          label: "security / conflict signal",
-          keywords: ["threat", "attack", "defense", "military", "war", "security", "border", "state actor"]
+          label: "seguridad / conflicto armado",
+          keywords: [
+            "guerra", "bombardeo", "bombardea", "ataque", "ataques", "militar",
+            "ejercito", "ejército", "iran", "irán", "ee.uu", "estados unidos",
+            "centcom", "base militar", "soldado", "armas", "nuclear", "frontera"
+          ]
+        },
+        {
+          id: "public-service-friction",
+          label: "servicio público / fricción administrativa",
+          keywords: [
+            "consulado", "pasaporte", "ayuntamiento", "administracion", "administración",
+            "licencia", "expediente", "cita", "ciudadano", "estado del tramite",
+            "estado del trámite", "reclamacion", "reclamación", "registro oficial"
+          ]
+        },
+        {
+          id: "repo-governance",
+          label: "gobernanza de repositorio / flujo de contribución",
+          keywords: [
+            "github", "pull request", "issue", "ci", "pytest", "workflow", "branch",
+            "readme", "commit", "merge", "deploy", "runtime", "documentation drift"
+          ]
+        },
+        {
+          id: "ai-governance",
+          label: "gobernanza de IA / decisión automatizada",
+          keywords: [
+            "inteligencia artificial", "ia", "ai", "algorithm", "algoritmo",
+            "automated decision", "decision automatizada", "decisión automatizada",
+            "modelo", "explicabilidad", "dataset", "sesgo"
+          ]
+        },
+        {
+          id: "health-social-risk",
+          label: "salud / riesgo social",
+          keywords: [
+            "hospital", "medico", "médico", "salud", "paciente", "tratamiento",
+            "medicamento", "riesgo sanitario", "emergencia", "enfermedad"
+          ]
         },
         {
           id: "information-integrity",
-          label: "information integrity / narrative signal",
-          keywords: ["claim", "report", "source", "rumor", "narrative", "viral", "misinformation", "amplification"]
+          label: "integridad informativa / señal narrativa",
+          keywords: [
+            "rumor", "viral", "fuente", "reporte", "informe", "noticia",
+            "desinformacion", "desinformación", "narrativa", "amplificacion", "amplificación"
+          ]
         }
       ];
 
@@ -1641,7 +1678,7 @@
 
       return scored[0].score > 0 ? scored[0] : {
         id: "general-operational-signal",
-        label: "general operational signal",
+        label: "señal operativa general",
         keywords: [],
         score: 0
       };
@@ -1709,23 +1746,159 @@
       return `${actorText}${profile.primarySentence}`;
     }
 
-    function buildProtocolNotes(profile) {
-      const actorText = profile.actors.length ? profile.actors.join(", ") : "the mentioned actor(s)";
-      const domainText = profile.domain.label;
 
-      return {
+    function buildThematicAnalysis(profile) {
+      const sourceLabel = profile.sourceLabel || "material";
+      const actorText = profile.actors.length ? profile.actors.join(", ") : "las partes mencionadas";
+
+      const fallback = {
+        domain_id: "general-operational-signal",
+        domain_label: "señal operativa general",
+        summary: `Análisis temático preliminar: el material enviado debe tratarse como una señal operativa de baja confianza hasta entender contexto, fuente, actores, incentivos y evidencias independientes. No es un veredicto de verdad.`,
+        problem: "El problema real aún no está suficientemente identificado: el texto describe una situación, pero hace falta separar hecho, afirmación, contexto y consecuencia.",
+        incentives: "Todavía no hay base suficiente para describir incentivos concretos sin añadir interpretación externa.",
+        affected: `Potencialmente afecta a ${actorText}, pero la afectación debe confirmarse con fuentes adicionales.`,
+        evidence_to_check: [
+          "Fuente primaria o documento original.",
+          "Datos que confirmen magnitud, fecha, lugar y actores.",
+          "Fuentes independientes que apoyen o contradigan la afirmación."
+        ],
+        safe_action: "Mantener el caso como señal de monitorización, pedir más evidencia y evitar conclusiones públicas.",
         inferences: [
-          `The submitted material indicates a ${domainText} signal that should be treated as an intake draft until corroborated.`,
-          `Operational relevance depends on whether ${actorText} can be linked to primary documentation, direct records, or repeat evidence.`
+          "El material describe una señal que requiere clasificación antes de convertirse en conclusión operativa.",
+          "La relevancia depende de corroboración independiente, contexto completo y contradicciones disponibles."
         ],
         uncertainties: [
-          "The submitted text alone does not establish full context, causality, responsibility, or representativeness.",
-          "Primary sources, official records, technical documentation, and contradiction checks are still required before escalation."
+          "No se sabe si la fuente representa el fenómeno completo o solo un caso aislado.",
+          "Faltan documentos primarios, contradicciones y contexto temporal suficiente."
         ],
         narrative_amplification: [
-          `Risk: converting a ${profile.sourceLabel} into a broad conclusion without independent corroboration.`,
-          "Keep claim, evidence, inference, uncertainty, and operational signal separated before any public or governance action."
+          "Riesgo: convertir una señal aislada en conclusión general.",
+          "Separar afirmación, evidencia, inferencia e incertidumbre antes de actuar."
         ]
+      };
+
+      const playbooks = {
+        "housing-finance": {
+          domain_id: "housing-finance",
+          domain_label: "vivienda / financiación doméstica",
+          summary: "Análisis temático preliminar: el texto describe una fricción de acceso a vivienda barata causada por el encaje entre precio bajo, producto financiero disponible, plazo, cuota mensual y apetito del banco. No es un veredicto de verdad.",
+          problem: "El problema real no es solo que una vivienda sea barata o cara; es que una compra pequeña puede quedar fuera del producto hipotecario habitual y acabar desplazada hacia préstamos personales más caros o de menor plazo.",
+          incentives: "El banco puede preferir operaciones hipotecarias más grandes, con más garantías y más margen; el comprador de bajo presupuesto queda atrapado entre una casa asequible en precio total y una cuota mensual inviable.",
+          affected: "Afecta sobre todo a compradores con poco capital, ingresos ajustados o necesidad de financiación pequeña, especialmente en zonas donde hay vivienda barata pero el crédito no encaja.",
+          evidence_to_check: [
+            "TAE, plazo, cuota y comisiones comparadas entre préstamo personal e hipoteca.",
+            "Condiciones reales ofrecidas por varios bancos para importes inferiores a 100.000 euros.",
+            "Tasación, estado legal del inmueble, ingresos del comprador y ratio deuda/ingresos.",
+            "Si el obstáculo es política bancaria, riesgo del inmueble, coste operativo o perfil del comprador."
+          ],
+          safe_action: "Transformar el artículo en una hipótesis verificable: recopilar ofertas bancarias reales, calcular cuotas comparables y separar problema financiero de problema inmobiliario.",
+          inferences: [
+            "El cuello de botella descrito parece estar en el diseño e incentivo del producto financiero, no solo en el precio de la vivienda.",
+            "La operación puede ser barata en precio total pero cara en liquidez mensual si se financia con préstamo personal a corto plazo.",
+            "La relevancia social depende de si este patrón se repite en varios bancos, compradores y territorios."
+          ],
+          uncertainties: [
+            "No se puede saber solo con el artículo si el rechazo bancario se debe al importe, al riesgo del inmueble, al perfil del comprador o a políticas comerciales.",
+            "Faltan simulaciones reales de TAE, plazo, cuota, comisiones y condiciones de aprobación.",
+            "Falta comparar el caso con bancos, cooperativas, intermediarios y alternativas públicas o locales."
+          ],
+          narrative_amplification: [
+            "Riesgo: convertir un caso de financiación difícil en la conclusión general de que todas las casas baratas son inaccesibles.",
+            "Riesgo inverso: reducirlo a una anécdota y ocultar una posible fricción sistémica entre vivienda barata y crédito disponible."
+          ]
+        },
+        "security-conflict": {
+          domain_id: "security-conflict",
+          domain_label: "seguridad / conflicto armado",
+          summary: "Análisis temático preliminar: el texto describe una señal de escalada militar y narrativa de justificación política. No verifica los hechos ni sustituye fuentes primarias.",
+          problem: "El problema real es distinguir hechos militares confirmables, declaraciones políticas, atribución de responsabilidad y riesgo de escalada.",
+          incentives: "Los actores pueden intentar mostrar disuasión, justificar coste humano, controlar narrativa doméstica o elevar presión negociadora.",
+          affected: "Afecta a población civil, militares, rutas comerciales, aliados regionales y estabilidad diplomática.",
+          evidence_to_check: [
+            "Comunicados oficiales originales y hora/localización de ataques.",
+            "Confirmación independiente de víctimas y daños.",
+            "Respuesta del actor atacado y posición de aliados.",
+            "Diferencia entre declaración política y hecho militar verificado."
+          ],
+          safe_action: "Mantener seguimiento con fuentes primarias, separar declaración de evidencia y evitar lenguaje de certeza hasta corroboración independiente.",
+          inferences: [
+            "El texto apunta a posible escalada o continuación operativa, pero no confirma por sí solo magnitud ni legalidad.",
+            "La narrativa de honor, represalia o defensa puede ser parte de la justificación política, no evidencia independiente."
+          ],
+          uncertainties: [
+            "Faltan confirmaciones independientes sobre daños, víctimas, objetivos y proporcionalidad.",
+            "No se sabe si las cifras citadas proceden de fuente primaria, parte interesada o agregación periodística."
+          ],
+          narrative_amplification: [
+            "Riesgo: convertir declaraciones de actores armados en hechos confirmados.",
+            "Riesgo: amplificar lenguaje de guerra sin separar evidencia, propaganda e incertidumbre."
+          ]
+        },
+        "repo-governance": {
+          domain_id: "repo-governance",
+          domain_label: "gobernanza de repositorio / flujo de contribución",
+          summary: "Análisis temático preliminar: el material describe una señal de flujo técnico, revisión o coordinación de repositorio. No equivale a fallo confirmado hasta revisar PRs, issues, commits y CI.",
+          problem: "El problema real es preservar trazabilidad: qué cambió, quién lo propuso, qué validó CI y qué riesgo operativo queda.",
+          incentives: "Los colaboradores necesitan cambios pequeños y revisables; el proyecto necesita evitar mezclar arquitectura, feature, refactor y documentación sin señal.",
+          affected: "Afecta a revisores, operadores, colaboradores externos y estabilidad del sistema desplegado.",
+          evidence_to_check: [
+            "Diff exacto del PR o commit.",
+            "Checks CI y logs relevantes.",
+            "Archivos de gobernanza o contratos tocados.",
+            "Riesgo de despliegue, rollback y compatibilidad."
+          ],
+          safe_action: "Crear una tarea pequeña, un PR por problema, validar tests y mantener rollback claro.",
+          inferences: [
+            "La señal puede indicar fricción de contribución o deriva operativa si no se mantiene alcance pequeño.",
+            "La relevancia depende de evidencia versionada en GitHub, no de chat ni capturas aisladas."
+          ],
+          uncertainties: [
+            "Sin revisar diff, checks y comentarios, no se puede saber si hay regresión real.",
+            "La intención del colaborador no debe inferirse solo por el resultado técnico."
+          ],
+          narrative_amplification: [
+            "Riesgo: convertir una fricción de workflow en acusación personal.",
+            "Riesgo: convertir una mejora estética o de proceso en cambio de arquitectura no revisado."
+          ]
+        }
+      };
+
+      const selected = playbooks[profile.domain.id] || fallback;
+      return Object.assign({}, selected, {
+        source_label: sourceLabel,
+        actors: profile.actors,
+        primary_sentence: profile.primarySentence
+      });
+    }
+
+    function thematicAnalysisCard(profile) {
+      const analysis = buildThematicAnalysis(profile);
+      const evidenceItems = analysis.evidence_to_check
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join("");
+
+      return `
+        <section class="output-card full">
+          <h3>Lectura temática</h3>
+          <p><b>Problema real:</b> ${escapeHtml(analysis.problem)}</p>
+          <p><b>Dinámica / incentivos:</b> ${escapeHtml(analysis.incentives)}</p>
+          <p><b>A quién afecta:</b> ${escapeHtml(analysis.affected)}</p>
+          <p><b>Evidencia que falta comprobar:</b></p>
+          <ul>${evidenceItems}</ul>
+          <p><b>Siguiente acción útil:</b> ${escapeHtml(analysis.safe_action)}</p>
+          <p class="meta">topic_analysis=${escapeHtml(analysis.domain_id)} · no truth verdict · no legal/financial advice</p>
+        </section>
+      `;
+    }
+
+    function buildProtocolNotes(profile) {
+      const thematic = buildThematicAnalysis(profile);
+
+      return {
+        inferences: thematic.inferences,
+        uncertainties: thematic.uncertainties,
+        narrative_amplification: thematic.narrative_amplification
       };
     }
 
@@ -1743,6 +1916,7 @@
       }
 
       const profile = buildSourceProfile(raw, sourceType, sourceUrl);
+      const thematic = buildThematicAnalysis(profile);
       const protocol = buildProtocolNotes(profile);
       const claimText = buildSpecificClaim(profile);
       const evidenceText = profile.keySentences.length
@@ -1752,7 +1926,7 @@
       const payload = {
         case_id: `operator-signal-${Date.now()}`,
         core_version_ref: value("core_version_ref") || "main",
-        input_summary: `HUB_Optimus draft analysis: ${profile.summary} This is not a truth verdict.`,
+        input_summary: thematic.summary,
         claims: [
           {
             claim_id: "claim-001",
@@ -1804,7 +1978,9 @@
           signal_domain_label: profile.domain.label,
           actors: profile.actors,
           key_sentences: profile.keySentences,
-          normalizer_version: "operator-source-intelligence-v0.2"
+          thematic_analysis: thematic,
+          normalizer_version: "operator-source-intelligence-v0.2",
+          topic_analysis_version: "operator-topic-analysis-v0.1"
         }
       };
 
@@ -1984,6 +2160,7 @@
 
       output.innerHTML = `
         ${resultView.innerHTML}
+        ${thematicAnalysisCard(profile)}
         ${scenarioCards(value("operational_signal"), profile)}
       `;
     }
