@@ -710,6 +710,56 @@
     }
 
 
+    .melon-loader {
+      display: grid;
+      grid-template-columns: repeat(18, minmax(0, 1fr));
+      gap: 0.35rem;
+      margin: 1rem 0;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      background:
+        linear-gradient(180deg, rgba(var(--melon-nuke-rgb), 0.06), transparent),
+        rgba(2, 8, 5, 0.72);
+    }
+
+    .melon-loader-cell {
+      min-height: 1.05rem;
+      border: 1px solid rgba(var(--melon-nuke-rgb), 0.24);
+      border-radius: 0.35rem;
+      background: rgba(var(--melon-nuke-rgb), 0.035);
+      box-shadow: inset 0 0 0 1px rgba(var(--melon-nuke-rgb), 0.02);
+    }
+
+    .melon-loader-cell.is-lit {
+      border-color: rgba(var(--melon-nuke-rgb), 0.84);
+      background: var(--melon-nuke);
+      box-shadow:
+        0 0 0.8rem rgba(var(--melon-nuke-rgb), 0.36),
+        inset 0 0 0 1px rgba(2, 8, 5, 0.22);
+    }
+
+    .melon-loader-cell.is-current {
+      transform: translateY(-1px);
+      box-shadow:
+        0 0 1.25rem rgba(var(--melon-nuke-rgb), 0.52),
+        inset 0 0 0 1px rgba(2, 8, 5, 0.28);
+    }
+
+    .melon-loader-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .melon-loader-meta b {
+      color: var(--melon-nuke);
+    }
+
+
   </style>
 </head>
 <body>
@@ -845,6 +895,12 @@
       </section>
 
       <p class="product-progress-status" id="product_wait_status">Waiting for input.</p>
+
+      <div class="melon-loader" id="product_loader" aria-label="HUB_Optimus analysis load progress"></div>
+      <div class="melon-loader-meta">
+        <span id="product_loader_phase">idle</span>
+        <b id="product_loader_percent">0%</b>
+      </div>
 
       <div id="product_output" class="output-grid">
         <section class="output-card full">
@@ -1591,6 +1647,47 @@
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
+    const productLoaderCellCount = 18;
+
+    function buildProductLoader() {
+      const loader = $("product_loader");
+      if (!loader) return;
+
+      loader.innerHTML = Array.from({ length: productLoaderCellCount }, (_, index) => (
+        `<span class="melon-loader-cell" data-loader-cell="${index}" aria-hidden="true"></span>`
+      )).join("");
+    }
+
+    function setProductLoader(activeCells, phase) {
+      const cells = Array.from(document.querySelectorAll("[data-loader-cell]"));
+      const safeActive = Math.max(0, Math.min(activeCells, cells.length));
+      const percent = cells.length ? Math.round((safeActive / cells.length) * 100) : 0;
+
+      cells.forEach((cell, index) => {
+        cell.classList.toggle("is-lit", index < safeActive);
+        cell.classList.toggle("is-current", index === safeActive - 1);
+      });
+
+      $("product_loader_percent").textContent = `${percent}%`;
+      $("product_loader_phase").textContent = phase || "idle";
+    }
+
+    async function runMelonLoaderPlan() {
+      const plan = [
+        { cells: 3, wait: 1050, phase: "capturing source signal" },
+        { cells: 6, wait: 1350, phase: "normalizing claim and evidence" },
+        { cells: 9, wait: 1350, phase: "mapping inference boundaries" },
+        { cells: 12, wait: 1450, phase: "checking uncertainty and amplification" },
+        { cells: 15, wait: 1450, phase: "assembling possible scenarios" },
+        { cells: 18, wait: 1250, phase: "rendering final output" }
+      ];
+
+      for (const step of plan) {
+        setProductLoader(step.cells, step.phase);
+        await wait(step.wait);
+      }
+    }
+
     function productStep(id, label, active = true) {
       const node = $(id);
       if (!node) return;
@@ -1608,6 +1705,7 @@
       ].forEach((id) => productStep(id, "waiting", false));
 
       $("product_wait_status").textContent = "Waiting for input.";
+      setProductLoader(0, "idle");
     }
 
     function inferProductSourceType(sourceUrl, raw) {
@@ -1681,31 +1779,35 @@
       }
 
       resetProductProgress();
-      $("product_wait_status").textContent = "1/4 Capturing signal…";
-      productStep("product_step_capture", "running");
-      await wait(180);
 
       $("source_url").value = sourceUrl;
       $("source_text").value = raw;
       $("signal_source_type").value = inferProductSourceType(sourceUrl, raw);
 
+      productStep("product_step_capture", "running");
+      $("product_wait_status").textContent = "1/4 Capturing signal…";
+      setProductLoader(1, "capturing source signal");
+
+      const loaderTask = runMelonLoaderPlan();
+
+      await wait(1050);
       productStep("product_step_capture", "done");
       productStep("product_step_normalize", "running");
       $("product_wait_status").textContent = "2/4 Normalizing claim, evidence and source boundary…";
-      await wait(220);
 
+      await wait(2700);
       normalizeSignal();
 
       productStep("product_step_normalize", "done");
       productStep("product_step_boundary", "running");
       $("product_wait_status").textContent = "3/4 Checking inference, uncertainty and amplification boundaries…";
-      await wait(220);
 
+      await wait(2900);
       productStep("product_step_boundary", "done");
       productStep("product_step_output", "running");
       $("product_wait_status").textContent = "4/4 Rendering final output and possible scenarios…";
-      await wait(180);
 
+      await loaderTask;
       renderProductOutput();
 
       productStep("product_step_output", "done");
@@ -1952,6 +2054,8 @@
 
     renderClaims();
     renderEvidence();
+    buildProductLoader();
+    setProductLoader(0, "idle");
     updateJson();
 
     if ("serviceWorker" in navigator) {
