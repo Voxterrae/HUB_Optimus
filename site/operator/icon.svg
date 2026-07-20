@@ -1,11 +1,69 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
   <title id="title">HUB_Optimus Operator</title>
-  <desc id="desc">Phosphor green HUB_Optimus operator mark.</desc>
+  <desc id="desc">Melon nuke reactor icon for the HUB_Optimus Operator installable app.</desc>
+
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="46%" r="72%">
+      <stop offset="0%" stop-color="#17310f"/>
+      <stop offset="54%" stop-color="#06120d"/>
+      <stop offset="100%" stop-color="#020403"/>
+    </radialGradient>
+
+    <radialGradient id="core" cx="48%" cy="42%" r="68%">
+      <stop offset="0%" stop-color="#d9ff7a"/>
+      <stop offset="56%" stop-color="#b8ff5c"/>
+      <stop offset="100%" stop-color="#78d928"/>
+    </radialGradient>
+
+    <linearGradient id="segment" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d9ff7a"/>
+      <stop offset="48%" stop-color="#a8f043"/>
+      <stop offset="100%" stop-color="#386b1f"/>
+    </linearGradient>
+
+    <filter id="softGlow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.55 0 0 0 0 1 0 0 0 0 0.12 0 0 0 0.75 0" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="tightGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
   <rect width="512" height="512" rx="112" fill="#020403"/>
-  <rect x="44" y="44" width="424" height="424" rx="84" fill="#06120d" stroke="#b8ff5c" stroke-width="14"/>
-  <path d="M118 158h276M118 256h276M118 354h276" stroke="#d7ff8a" stroke-width="18" stroke-linecap="round" opacity="0.85"/>\n  <circle cx="256" cy="256" r="142" fill="none" stroke="#ffe066" stroke-width="10" stroke-dasharray="34 20" opacity="0.55"/>
-  <circle cx="146" cy="158" r="18" fill="#b8ff5c"/>
-  <circle cx="226" cy="256" r="18" fill="#64f4ff"/>
-  <circle cx="342" cy="354" r="18" fill="#ffd166"/>
-  <text x="256" y="292" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="92" font-weight="800" fill="#eaffea">HO</text>
+  <rect x="18" y="18" width="476" height="476" rx="96" fill="url(#bg)"/>
+
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#b8ff5c" stroke-width="4" opacity="0.9" filter="url(#softGlow)"/>
+  <circle cx="256" cy="256" r="148" fill="none" stroke="#13240f" stroke-width="50" opacity="0.96"/>
+
+  <g filter="url(#tightGlow)">
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(0 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(30 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(60 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(90 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(120 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(150 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(180 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(210 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(240 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(270 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(300 256 256)"/>
+    <rect x="238" y="58" width="36" height="116" rx="8" fill="url(#segment)" transform="rotate(330 256 256)"/>
+  </g>
+
+  <circle cx="256" cy="256" r="104" fill="url(#core)" filter="url(#softGlow)"/>
+  <circle cx="256" cy="256" r="104" fill="none" stroke="#d9ff7a" stroke-width="4" opacity="0.72"/>
+
+  <text x="256" y="292" text-anchor="middle"
+        font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        font-size="94" font-weight="900" letter-spacing="-8" fill="#020403">HO</text>
 </svg>
