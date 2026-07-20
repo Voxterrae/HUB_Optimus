@@ -2261,7 +2261,7 @@
         evidence: compactText(evidenceText, 520),
         uncertainty: compactText((payload.uncertainties || []).join(" "), 360),
         amplification: compactText((payload.narrative_amplification || []).join(" "), 360),
-        safe_next_action: "Review primary sources, preserve uncertainty, and convert into a versioned claim only after human review.",
+        safe_next_action: payload.metadata?.thematic_analysis?.safe_action || "Revisar fuentes primarias, preservar incertidumbre y convertir esto en una señal versionada solo tras revisión humana.",
         learning_status: "candidate-signal-not-canonical",
         backend_run: false
       };
@@ -2420,7 +2420,7 @@
 
     function buildHumanShareText(record) {
       const lines = [
-        "HUB_Optimus Operator memory",
+        "HUB_Optimus Operator snapshot",
         "",
         `Dominio: ${record.signal_domain_label || "not detected"}`,
         `Señal: ${record.operational_signal || "triage"}`,
@@ -2434,8 +2434,9 @@
         `Siguiente acción: ${compactText(record.safe_next_action, 220)}`,
         "",
         "Límite: señal no verificada; no es veredicto de verdad.",
+        "Memoria: este resumen viaja en el mensaje. El enlace abre una consola limpia; no restaura este análisis.",
         record.source_url ? `Fuente: ${compactText(record.source_url, 240)}` : "",
-        `Abrir Operator: ${buildCleanOperatorUrl()}`
+        `Abrir Operator limpio: ${buildCleanOperatorUrl()}`
       ];
 
       return lines.filter(Boolean).join("\n");
@@ -2449,7 +2450,7 @@
 
       try {
         await navigator.clipboard.writeText(shareText);
-        renderMemoryStatus("Resumen legible copiado. Sin URL codificada.", true);
+        renderMemoryStatus("Resumen legible copiado. La memoria va en el texto, no en la URL.", true);
       } catch {
         renderMemoryStatus("No se pudo copiar el resumen. Use WhatsApp o seleccione el resultado manualmente.", false);
       }
@@ -2462,7 +2463,7 @@
       const shareText = buildHumanShareText(record);
 
       window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer");
-      renderMemoryStatus("WhatsApp abierto con resumen legible. Sin URL codificada.", true);
+      renderMemoryStatus("WhatsApp abierto con resumen legible. La memoria va en el mensaje, no en la URL.", true);
     }
 
     function renderSharedMemorySnapshot(snapshot) {
@@ -2698,8 +2699,8 @@
         "No narrative amplification note was returned."
       );
       const safeNextAction = signal === "none"
-        ? "Keep this as a draft until a concrete operational signal exists."
-        : "Review primary sources, preserve uncertainty, and avoid converting this into a conclusion without corroboration.";
+        ? "Mantener esto como borrador hasta que exista una señal operativa concreta."
+        : "Revisar fuentes primarias, preservar incertidumbre y evitar convertir esto en una conclusión sin corroboración.";
 
       refreshFlow(true);
 

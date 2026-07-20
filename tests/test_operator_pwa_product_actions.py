@@ -38,7 +38,7 @@ def test_operator_product_loader_pacing_present():
     assert "runMelonLoaderPlan" in html
     assert "assembling possible scenarios" in html
     assert "rendering final output" in html
-    assert "hub-optimus-operator-v0-16" in sw
+    assert "hub-optimus-operator-v0-17" in sw
 
 
 def test_operator_source_intelligence_v2_present():
@@ -51,7 +51,7 @@ def test_operator_source_intelligence_v2_present():
     assert "operator-source-intelligence-v0.2" in html
     assert "HUB_Optimus procedure" in html
     assert "evidence lock" in html
-    assert "hub-optimus-operator-v0-16" in sw
+    assert "hub-optimus-operator-v0-17" in sw
 
 
 def test_operator_memory_share_snapshot_present():
@@ -67,7 +67,7 @@ def test_operator_memory_share_snapshot_present():
     assert "loadSharedMemoryFromHash" in html
     assert "https://wa.me/" in html
     assert "og:title" in html
-    assert "hub-optimus-operator-v0-16" in sw
+    assert "hub-optimus-operator-v0-17" in sw
     assert "./og.svg" in sw
 
 
@@ -78,7 +78,7 @@ def test_operator_install_icon_reactor_mark_present():
     assert "Melon nuke reactor icon" in icon
     assert "url(#segment)" in icon
     assert ">HO</text>" in icon
-    assert "hub-optimus-operator-v0-16" in sw
+    assert "hub-optimus-operator-v0-17" in sw
 
 
 def test_operator_product_ux_controls_are_gated():
@@ -95,7 +95,7 @@ def test_operator_product_ux_controls_are_gated():
     assert "Result ready. Memory and sharing are available." in html
     assert ".status-strip" in html
     assert ".reactor-band" in html
-    assert "hub-optimus-operator-v0-16" in sw
+    assert "hub-optimus-operator-v0-17" in sw
 
 
 def test_operator_url_only_fallback_message_present():
@@ -109,7 +109,7 @@ def test_operator_url_only_fallback_message_present():
     assert "readControlledUrlText" in html
     assert "renderUrlIntakeFallback" in html
     assert "Ready to read URL from controlled intake" in html
-    assert "hub-optimus-operator-v0-16" in sw
+    assert "hub-optimus-operator-v0-17" in sw
 
 
 def test_operator_topic_aware_analysis_present():
@@ -126,7 +126,7 @@ def test_operator_topic_aware_analysis_present():
     assert "geopolítica / conflicto internacional" in html
     assert "topic_analysis_version" in html
     assert "operator-topic-analysis-v0.1" in html
-    assert "hub-optimus-operator-v0-16" in sw
+    assert "hub-optimus-operator-v0-17" in sw
 
 
 def test_operator_geopolitical_conflict_analysis_is_specific():
@@ -143,7 +143,7 @@ def test_operator_geopolitical_conflict_analysis_is_specific():
     assert "alto el fuego" in html
     assert "Escenario B // escalada regional" in html
     assert "negociación bajo fuego" in html
-    assert "hub-optimus-operator-v0-16" in sw
+    assert "hub-optimus-operator-v0-17" in sw
 
 
 def test_operator_share_output_is_readable_without_encoded_snapshot_url():
@@ -153,10 +153,33 @@ def test_operator_share_output_is_readable_without_encoded_snapshot_url():
     assert "Copy share summary" in html
     assert "buildHumanShareText" in html
     assert "buildCleanOperatorUrl" in html
-    assert "Resumen legible copiado. Sin URL codificada." in html
-    assert "WhatsApp abierto con resumen legible. Sin URL codificada." in html
+    assert "Resumen legible copiado. La memoria va en el texto, no en la URL." in html
+    assert "WhatsApp abierto con resumen legible. La memoria va en el mensaje, no en la URL." in html
     assert "Límite: señal no verificada; no es veredicto de verdad." in html
-    assert "`Abrir Operator: ${buildCleanOperatorUrl()}`" in html
+    assert "`Abrir Operator limpio: ${buildCleanOperatorUrl()}`" in html
     assert "const url = buildMemoryShareUrl(record);" not in html
     assert "record.claim,\n        url" not in html
-    assert "hub-optimus-operator-v0-16" in sw
+    assert "hub-optimus-operator-v0-17" in sw
+
+
+def test_operator_share_semantics_do_not_claim_url_restores_memory():
+    html = INDEX.read_text(encoding="utf-8")
+    sw = SW.read_text(encoding="utf-8")
+
+    assert "HUB_Optimus Operator snapshot" in html
+    assert "Memoria: este resumen viaja en el mensaje. El enlace abre una consola limpia; no restaura este análisis." in html
+    assert "Abrir Operator limpio" in html
+    assert "La memoria va en el mensaje, no en la URL." in html
+    assert "payload.metadata?.thematic_analysis?.safe_action" in html
+    assert "Revisar fuentes primarias, preservar incertidumbre" in html
+    assert "Review primary sources" not in html
+    assert "hub-optimus-operator-v0-17" in sw
+
+
+def test_operator_result_safe_next_action_is_spanish():
+    html = INDEX.read_text(encoding="utf-8")
+
+    assert "Mantener esto como borrador hasta que exista una señal operativa concreta." in html
+    assert "Revisar fuentes primarias, preservar incertidumbre y evitar convertir esto en una conclusión sin corroboración." in html
+    assert "Keep this as a draft" not in html
+    assert "Review primary sources" not in html
