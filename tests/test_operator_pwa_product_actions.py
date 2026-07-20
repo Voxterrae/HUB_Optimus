@@ -34,7 +34,7 @@ def test_operator_product_loader_pacing_present():
     assert "runMelonLoaderPlan" in html
     assert "assembling possible scenarios" in html
     assert "rendering final output" in html
-    assert "hub-optimus-operator-v0-10" in sw
+    assert "hub-optimus-operator-v0-11" in sw
 
 
 def test_operator_source_intelligence_v2_present():
@@ -47,7 +47,7 @@ def test_operator_source_intelligence_v2_present():
     assert "operator-source-intelligence-v0.2" in html
     assert "HUB_Optimus procedure" in html
     assert "evidence lock" in html
-    assert "hub-optimus-operator-v0-10" in sw
+    assert "hub-optimus-operator-v0-11" in sw
 
 
 def test_operator_memory_share_snapshot_present():
@@ -63,5 +63,15 @@ def test_operator_memory_share_snapshot_present():
     assert "loadSharedMemoryFromHash" in html
     assert "https://wa.me/" in html
     assert "og:title" in html
-    assert "hub-optimus-operator-v0-10" in sw
+    assert "hub-optimus-operator-v0-11" in sw
     assert "./og.svg" in sw
+
+
+def test_operator_install_icon_reactor_mark_present():
+    icon = (ROOT / "site" / "operator" / "icon.svg").read_text(encoding="utf-8")
+    sw = SW.read_text(encoding="utf-8")
+
+    assert "Melon nuke reactor icon" in icon
+    assert "url(#segment)" in icon
+    assert ">HO</text>" in icon
+    assert "hub-optimus-operator-v0-11" in sw
