@@ -1,8 +1,9 @@
-const CACHE_NAME = "hub-optimus-operator-v0-9";
+const CACHE_NAME = "hub-optimus-operator-v0-10";
 const OFFLINE_FALLBACK = "./index.html";
 const STATIC_ASSETS = [
   "./manifest.webmanifest",
-  "./icon.svg"
+  "./icon.svg",
+  "./og.svg"
 ];
 
 async function cacheStaticAssets() {
