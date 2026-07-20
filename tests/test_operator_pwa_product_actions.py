@@ -34,4 +34,17 @@ def test_operator_product_loader_pacing_present():
     assert "runMelonLoaderPlan" in html
     assert "assembling possible scenarios" in html
     assert "rendering final output" in html
-    assert "hub-optimus-operator-v0-8" in sw
+    assert "hub-optimus-operator-v0-9" in sw
+
+
+def test_operator_source_intelligence_v2_present():
+    html = INDEX.read_text(encoding="utf-8")
+    sw = SW.read_text(encoding="utf-8")
+
+    assert "buildSourceProfile" in html
+    assert "detectSignalDomain" in html
+    assert "extractActors" in html
+    assert "operator-source-intelligence-v0.2" in html
+    assert "HUB_Optimus procedure" in html
+    assert "evidence lock" in html
+    assert "hub-optimus-operator-v0-9" in sw

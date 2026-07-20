@@ -1516,6 +1516,156 @@
       return parts[0] || compactText(normalized, 220);
     }
 
+    function uniqueList(items, limit = 6) {
+      const seen = new Set();
+      const result = [];
+
+      items.forEach((item) => {
+        const normalized = String(item || "").replace(/\s+/g, " ").trim();
+        const key = normalized.toLowerCase();
+
+        if (!normalized || seen.has(key)) return;
+        seen.add(key);
+        result.push(normalized);
+      });
+
+      return result.slice(0, limit);
+    }
+
+    function sourceSentences(raw) {
+      return String(raw || "")
+        .replace(/\s+/g, " ")
+        .split(/(?<=[.!?])\s+|;\s+|\n+/)
+        .map((item) => item.trim())
+        .filter((item) => item.length >= 28);
+    }
+
+    function detectSignalDomain(raw, sourceType) {
+      const combined = `${sourceType || ""} ${raw || ""}`.toLowerCase();
+
+      const domains = [
+        {
+          id: "ai-governance",
+          label: "AI governance / automated decision systems",
+          keywords: ["ai", "artificial intelligence", "automated decision", "algorithm", "model", "explanation", "technical documentation", "automated system"]
+        },
+        {
+          id: "public-service-friction",
+          label: "public service / administrative friction",
+          keywords: ["public institution", "administrative", "record", "complaints", "service", "status", "escalation", "consulate", "citizen"]
+        },
+        {
+          id: "repo-governance",
+          label: "repository governance / contributor workflow",
+          keywords: ["github", "pull request", "issue", "ci", "pytest", "workflow", "readme", "documentation", "branch"]
+        },
+        {
+          id: "security-conflict",
+          label: "security / conflict signal",
+          keywords: ["threat", "attack", "defense", "military", "war", "security", "border", "state actor"]
+        },
+        {
+          id: "information-integrity",
+          label: "information integrity / narrative signal",
+          keywords: ["claim", "report", "source", "rumor", "narrative", "viral", "misinformation", "amplification"]
+        }
+      ];
+
+      const scored = domains.map((domain) => ({
+        ...domain,
+        score: domain.keywords.reduce((total, keyword) => total + (combined.includes(keyword) ? 1 : 0), 0)
+      })).sort((a, b) => b.score - a.score);
+
+      return scored[0].score > 0 ? scored[0] : {
+        id: "general-operational-signal",
+        label: "general operational signal",
+        keywords: [],
+        score: 0
+      };
+    }
+
+    function extractActors(raw) {
+      const matches = String(raw || "").match(/[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ0-9_.-]+(?:\s+(?:de|del|la|el|los|las|y|and|of|the|for|[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ0-9_.-]+)){0,5}/g) || [];
+      const stop = new Set(["A", "The", "This", "That", "If", "No", "El", "La", "Los", "Las", "Una", "Un", "HUB_Optimus"]);
+
+      return uniqueList(matches
+        .map((item) => item.replace(/\s+/g, " ").trim())
+        .filter((item) => item.length >= 4)
+        .filter((item) => !stop.has(item))
+        .filter((item) => !/^(A news|The article|The report|This source)$/i.test(item)), 5);
+    }
+
+    function scoreEvidenceSentence(sentence, domain, sourceType) {
+      const lower = sentence.toLowerCase();
+      let score = 0;
+
+      ["says", "states", "reports", "cites", "according", "claims", "complaints", "record", "documentation", "evidence", "official"].forEach((keyword) => {
+        if (lower.includes(keyword)) score += 2;
+      });
+
+      domain.keywords.forEach((keyword) => {
+        if (lower.includes(keyword)) score += 1;
+      });
+
+      if (sourceType.startsWith("github") && /issue|pull request|workflow|documentation|ci|pytest/i.test(sentence)) score += 2;
+      if (sourceType === "ci-failure" && /failed|traceback|error|pytest|exit code/i.test(sentence)) score += 3;
+
+      return score;
+    }
+
+    function buildSourceProfile(raw, sourceType, sourceUrl) {
+      const sentences = sourceSentences(raw);
+      const domain = detectSignalDomain(raw, sourceType);
+      const actors = extractActors(raw);
+      const ranked = sentences
+        .map((sentence, index) => ({
+          sentence,
+          index,
+          score: scoreEvidenceSentence(sentence, domain, sourceType)
+        }))
+        .sort((a, b) => b.score - a.score || a.index - b.index);
+
+      const keySentences = uniqueList(ranked.map((item) => item.sentence), 3);
+      const primarySentence = keySentences[0] || firstReadableSentence(raw);
+      const sourceLabel = sourceType.replaceAll("-", " ");
+
+      return {
+        sourceType,
+        sourceUrl,
+        sourceLabel,
+        domain,
+        actors,
+        keySentences,
+        primarySentence,
+        summary: `${sourceLabel} signal in ${domain.label}${actors.length ? ` involving ${actors.join(", ")}` : ""}.`
+      };
+    }
+
+    function buildSpecificClaim(profile) {
+      const actorText = profile.actors.length ? `${profile.actors.join(", ")}: ` : "";
+      return `${actorText}${profile.primarySentence}`;
+    }
+
+    function buildProtocolNotes(profile) {
+      const actorText = profile.actors.length ? profile.actors.join(", ") : "the mentioned actor(s)";
+      const domainText = profile.domain.label;
+
+      return {
+        inferences: [
+          `The submitted material indicates a ${domainText} signal that should be treated as an intake draft until corroborated.`,
+          `Operational relevance depends on whether ${actorText} can be linked to primary documentation, direct records, or repeat evidence.`
+        ],
+        uncertainties: [
+          "The submitted text alone does not establish full context, causality, responsibility, or representativeness.",
+          "Primary sources, official records, technical documentation, and contradiction checks are still required before escalation."
+        ],
+        narrative_amplification: [
+          `Risk: converting a ${profile.sourceLabel} into a broad conclusion without independent corroboration.`,
+          "Keep claim, evidence, inference, uncertainty, and operational signal separated before any public or governance action."
+        ]
+      };
+    }
+
     function buildNormalizedPayload() {
       const raw = value("source_text");
       const sourceType = value("signal_source_type") || "human-situation";
@@ -1523,20 +1673,23 @@
       const sourceRef = sourceUrl || "operator-pasted-text";
       const claimType = sourceTypeToClaimType(sourceType);
       const signal = sourceTypeToSignal(sourceType);
-      const sourceLabel = sourceType.replaceAll("-", " ");
 
       if (!raw) {
         alert("Source text is required. Paste article text, GitHub content, or a human situation.");
         return null;
       }
 
-      const claimText = `Submitted ${sourceLabel} states: ${firstReadableSentence(raw)}`;
-      const evidenceText = compactText(raw);
+      const profile = buildSourceProfile(raw, sourceType, sourceUrl);
+      const protocol = buildProtocolNotes(profile);
+      const claimText = buildSpecificClaim(profile);
+      const evidenceText = profile.keySentences.length
+        ? profile.keySentences.join(" ")
+        : compactText(raw);
 
       const payload = {
         case_id: `operator-signal-${Date.now()}`,
         core_version_ref: value("core_version_ref") || "main",
-        input_summary: `Source-aware operator normalization from ${sourceLabel}. This is an intake draft, not a truth verdict.`,
+        input_summary: `HUB_Optimus draft analysis: ${profile.summary} This is not a truth verdict.`,
         claims: [
           {
             claim_id: "claim-001",
@@ -1548,7 +1701,9 @@
             metadata: {
               source_type: sourceType,
               source_url: sourceUrl || null,
-              normalized_by: "operator-source-normalizer-v0.1"
+              signal_domain: profile.domain.id,
+              actors: profile.actors,
+              normalized_by: "operator-source-intelligence-v0.2"
             }
           }
         ],
@@ -1562,30 +1717,31 @@
             contradicts_claim_ids: [],
             limitations: [
               "Source text was submitted by the operator and still requires independent verification.",
+              "The selected evidence sentences are source-bound excerpts, not independent corroboration.",
               "The normalizer preserves claims for review; it does not establish truth, causality, or institutional responsibility."
             ],
             metadata: {
               source_type: sourceType,
               source_url: sourceUrl || null,
-              normalized_by: "operator-source-normalizer-v0.1"
+              signal_domain: profile.domain.id,
+              key_sentences: profile.keySentences,
+              normalized_by: "operator-source-intelligence-v0.2"
             }
           }
         ],
-        inferences: [
-          "The submitted material may require structured review before any conclusion is drawn."
-        ],
-        uncertainties: [
-          "The source text alone does not establish independent verification, full context, causality, or broader representativeness."
-        ],
-        narrative_amplification: [
-          "Avoid treating a single article, post, issue, or statement as proof of a wider pattern without corroborating evidence."
-        ],
+        inferences: protocol.inferences,
+        uncertainties: protocol.uncertainties,
+        narrative_amplification: protocol.narrative_amplification,
         operational_signal: signal,
         metadata: {
           intake_channel: "operator-pwa-source-normalizer",
           source_type: sourceType,
           source_url: sourceUrl || null,
-          normalizer_version: "operator-source-normalizer-v0.1"
+          signal_domain: profile.domain.id,
+          signal_domain_label: profile.domain.label,
+          actors: profile.actors,
+          key_sentences: profile.keySentences,
+          normalizer_version: "operator-source-intelligence-v0.2"
         }
       };
 
@@ -1598,6 +1754,8 @@
           <h3>Readout</h3>
           <p><b>Signal:</b> ${escapeHtml(payload.operational_signal)}</p>
           <p><b>Source:</b> ${escapeHtml(payload.metadata.source_type)}</p>
+          <p><b>Domain:</b> ${escapeHtml(payload.metadata.signal_domain_label || payload.metadata.signal_domain || "not detected")}</p>
+          <p><b>Actors:</b> ${escapeHtml((payload.metadata.actors || []).join(", ") || "not detected")}</p>
           <p><b>URL:</b> ${escapeHtml(payload.metadata.source_url || "not provided")}</p>
         </section>
 
@@ -1725,25 +1883,32 @@
       return "human-situation";
     }
 
-    function scenarioCards(signal) {
+    function scenarioCards(signal, profile) {
       const normalizedSignal = signal || "triage";
+      const safeProfile = profile || buildSourceProfile(value("source_text"), value("signal_source_type") || "human-situation", value("source_url"));
+      const actorText = safeProfile.actors.length ? safeProfile.actors.join(", ") : "the mentioned actor(s)";
+      const domainText = safeProfile.domain.label;
 
       return `
         <section class="output-card full">
           <h3>Possible scenarios</h3>
           <article class="mini-card">
-            <h3>Scenario A // isolated signal</h3>
-            <p>The submitted material remains a single report or statement. Treat it as an intake signal and preserve uncertainty.</p>
+            <h3>Scenario A // intake remains low-confidence</h3>
+            <p>The submitted ${escapeHtml(safeProfile.sourceLabel)} remains a single source-bound signal. Keep it as monitor/triage until primary records or corroborating sources are available.</p>
           </article>
           <article class="mini-card">
-            <h3>Scenario B // emerging pattern</h3>
-            <p>If independent sources later corroborate the same friction, the case may justify structured review or escalation.</p>
+            <h3>Scenario B // corroborated operational friction</h3>
+            <p>If independent evidence confirms the same ${escapeHtml(domainText)} pattern involving ${escapeHtml(actorText)}, escalate to structured review with evidence lock, contradiction check, and documented uncertainty.</p>
           </article>
           <article class="mini-card">
-            <h3>Scenario C // low-confidence or false-positive signal</h3>
-            <p>If the source lacks evidence, context, or direct relevance, keep the case as monitor/defer rather than a conclusion.</p>
+            <h3>Scenario C // narrative amplification risk</h3>
+            <p>If the claim spreads faster than the evidence, treat it as amplification risk. Separate what is asserted from what is proven before any public conclusion.</p>
           </article>
-          <p class="meta">scenario_basis=normalized draft · operational_signal=${escapeHtml(normalizedSignal)} · no truth verdict</p>
+          <article class="mini-card">
+            <h3>HUB_Optimus procedure</h3>
+            <p>1. Preserve source reference → 2. Extract claim → 3. Bind evidence → 4. Mark inference → 5. Mark uncertainty → 6. Check amplification → 7. Choose safe next action.</p>
+          </article>
+          <p class="meta">scenario_basis=normalized draft · domain=${escapeHtml(safeProfile.domain.id)} · operational_signal=${escapeHtml(normalizedSignal)} · no truth verdict</p>
         </section>
       `;
     }
@@ -1752,9 +1917,11 @@
       const output = $("product_output");
       const resultView = $("result_view");
 
+      const profile = buildSourceProfile(value("source_text"), value("signal_source_type") || "human-situation", value("source_url"));
+
       output.innerHTML = `
         ${resultView.innerHTML}
-        ${scenarioCards(value("operational_signal"))}
+        ${scenarioCards(value("operational_signal"), profile)}
       `;
     }
 
