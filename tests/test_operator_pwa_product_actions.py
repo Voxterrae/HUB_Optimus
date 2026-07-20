@@ -34,7 +34,7 @@ def test_operator_product_loader_pacing_present():
     assert "runMelonLoaderPlan" in html
     assert "assembling possible scenarios" in html
     assert "rendering final output" in html
-    assert "hub-optimus-operator-v0-11" in sw
+    assert "hub-optimus-operator-v0-12" in sw
 
 
 def test_operator_source_intelligence_v2_present():
@@ -47,7 +47,7 @@ def test_operator_source_intelligence_v2_present():
     assert "operator-source-intelligence-v0.2" in html
     assert "HUB_Optimus procedure" in html
     assert "evidence lock" in html
-    assert "hub-optimus-operator-v0-11" in sw
+    assert "hub-optimus-operator-v0-12" in sw
 
 
 def test_operator_memory_share_snapshot_present():
@@ -55,15 +55,15 @@ def test_operator_memory_share_snapshot_present():
     sw = SW.read_text(encoding="utf-8")
 
     assert "hub_optimus_operator_memory_v1" in html
-    assert "Save result memory" in html
-    assert "Share memory link" in html
-    assert "Share to WhatsApp" in html
+    assert "Save memory" in html
+    assert "Copy share link" in html
+    assert "WhatsApp" in html
     assert "candidate-signal-not-canonical" in html
     assert "buildMemoryShareUrl" in html
     assert "loadSharedMemoryFromHash" in html
     assert "https://wa.me/" in html
     assert "og:title" in html
-    assert "hub-optimus-operator-v0-11" in sw
+    assert "hub-optimus-operator-v0-12" in sw
     assert "./og.svg" in sw
 
 
@@ -74,4 +74,21 @@ def test_operator_install_icon_reactor_mark_present():
     assert "Melon nuke reactor icon" in icon
     assert "url(#segment)" in icon
     assert ">HO</text>" in icon
-    assert "hub-optimus-operator-v0-11" in sw
+    assert "hub-optimus-operator-v0-12" in sw
+
+
+def test_operator_product_ux_controls_are_gated():
+    html = INDEX.read_text(encoding="utf-8")
+    sw = SW.read_text(encoding="utf-8")
+
+    assert "Run an analysis to unlock memory and sharing." in html
+    assert 'id="save_memory_result" type="button" disabled' in html
+    assert 'id="share_memory_link" type="button" disabled' in html
+    assert 'id="share_memory_whatsapp" type="button" disabled' in html
+    assert "setMemoryActionsEnabled" in html
+    assert "syncProductInputState" in html
+    assert "URL captured. Paste the article text below to analyze." in html
+    assert "Result ready. Memory and sharing are available." in html
+    assert ".status-strip" in html
+    assert ".reactor-band" in html
+    assert "hub-optimus-operator-v0-12" in sw
