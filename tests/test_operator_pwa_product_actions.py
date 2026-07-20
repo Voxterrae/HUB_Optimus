@@ -34,7 +34,7 @@ def test_operator_product_loader_pacing_present():
     assert "runMelonLoaderPlan" in html
     assert "assembling possible scenarios" in html
     assert "rendering final output" in html
-    assert "hub-optimus-operator-v0-9" in sw
+    assert "hub-optimus-operator-v0-10" in sw
 
 
 def test_operator_source_intelligence_v2_present():
@@ -47,4 +47,21 @@ def test_operator_source_intelligence_v2_present():
     assert "operator-source-intelligence-v0.2" in html
     assert "HUB_Optimus procedure" in html
     assert "evidence lock" in html
-    assert "hub-optimus-operator-v0-9" in sw
+    assert "hub-optimus-operator-v0-10" in sw
+
+
+def test_operator_memory_share_snapshot_present():
+    html = INDEX.read_text(encoding="utf-8")
+    sw = SW.read_text(encoding="utf-8")
+
+    assert "hub_optimus_operator_memory_v1" in html
+    assert "Save result memory" in html
+    assert "Share memory link" in html
+    assert "Share to WhatsApp" in html
+    assert "candidate-signal-not-canonical" in html
+    assert "buildMemoryShareUrl" in html
+    assert "loadSharedMemoryFromHash" in html
+    assert "https://wa.me/" in html
+    assert "og:title" in html
+    assert "hub-optimus-operator-v0-10" in sw
+    assert "./og.svg" in sw

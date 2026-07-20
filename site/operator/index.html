@@ -7,6 +7,13 @@
   <meta name="description" content="Installable HUB_Optimus operator console for composing structured cases and reviewing analysis outputs.">
   <meta name="theme-color" content="#020403">
   <link rel="manifest" href="./manifest.webmanifest">
+  <meta property="og:title" content="HUB_Optimus Operator">
+  <meta property="og:description" content="Signal intake, claim/evidence separation, uncertainty mapping, and safe operational scenarios.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://huboptimus.dev/operator/og.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#b8ff5c">
+
   <style>
     :root {
       color-scheme: dark;
@@ -760,6 +767,21 @@
     }
 
 
+    .memory-actions {
+      margin-top: 1rem;
+    }
+
+    .memory-status {
+      color: var(--muted);
+      margin: 0.85rem 0 0;
+    }
+
+    .memory-status.ok {
+      color: var(--melon-nuke);
+      font-weight: 900;
+    }
+
+
   </style>
 </head>
 <body>
@@ -908,6 +930,13 @@
           <p class="empty">No signal analyzed yet.</p>
         </section>
       </div>
+
+      <div class="actions memory-actions">
+        <button id="save_memory_result" type="button">Save result memory</button>
+        <button id="share_memory_link" type="button">Share memory link</button>
+        <button id="share_memory_whatsapp" type="button">Share to WhatsApp</button>
+      </div>
+      <p class="memory-status" id="memory_status">No saved memory result yet.</p>
     </section>
 
     <details class="advanced-shell" id="advanced_operator_console">
@@ -1125,6 +1154,8 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const storageKey = "hub_optimus_operator_case_v1";
+    const memoryKey = "hub_optimus_operator_memory_v1";
+    let currentMemoryRecord = null;
 
     let claims = [];
     let evidence = [];
@@ -1925,6 +1956,183 @@
       `;
     }
 
+    function loadMemoryRecords() {
+      try {
+        return JSON.parse(localStorage.getItem(memoryKey) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function saveMemoryRecords(records) {
+      localStorage.setItem(memoryKey, JSON.stringify(records.slice(0, 20)));
+    }
+
+    function hasShareableResult() {
+      const outputText = $("product_output").textContent.trim();
+
+      return Boolean(
+        outputText &&
+        !outputText.includes("No signal analyzed yet") &&
+        !outputText.includes("Input required")
+      );
+    }
+
+    function buildMemoryRecord() {
+      const payload = buildPayload();
+      const profile = buildSourceProfile(value("source_text"), value("signal_source_type") || "human-situation", value("source_url"));
+      const claim = payload.claims?.[0]?.text || "No claim generated.";
+      const evidenceText = payload.evidence?.[0]?.text || "No evidence generated.";
+
+      return {
+        version: "operator-memory-v0.1",
+        saved_at_utc: new Date().toISOString(),
+        source_url: value("product_source_url") || value("source_url") || null,
+        source_type: value("signal_source_type") || "human-situation",
+        signal_domain: profile.domain.id,
+        signal_domain_label: profile.domain.label,
+        actors: profile.actors,
+        operational_signal: payload.operational_signal || "triage",
+        summary: payload.input_summary || profile.summary,
+        claim: compactText(claim, 420),
+        evidence: compactText(evidenceText, 520),
+        uncertainty: compactText((payload.uncertainties || []).join(" "), 360),
+        amplification: compactText((payload.narrative_amplification || []).join(" "), 360),
+        safe_next_action: "Review primary sources, preserve uncertainty, and convert into a versioned claim only after human review.",
+        learning_status: "candidate-signal-not-canonical",
+        backend_run: false
+      };
+    }
+
+    function renderMemoryStatus(message, ok = false) {
+      const node = $("memory_status");
+      if (!node) return;
+      node.textContent = message;
+      node.classList.toggle("ok", Boolean(ok));
+    }
+
+    function saveCurrentMemoryResult() {
+      if (!hasShareableResult()) {
+        renderMemoryStatus("No result to save yet. Run Analyze with HUB_Optimus first.", false);
+        return null;
+      }
+
+      const record = buildMemoryRecord();
+      const records = loadMemoryRecords();
+      records.unshift(record);
+      saveMemoryRecords(records);
+
+      currentMemoryRecord = record;
+      renderMemoryStatus(`Saved memory result: ${record.saved_at_utc}`, true);
+
+      return record;
+    }
+
+    function base64UrlEncode(value) {
+      return btoa(unescape(encodeURIComponent(value)))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/g, "");
+    }
+
+    function base64UrlDecode(value) {
+      const padded = `${value}${"=".repeat((4 - value.length % 4) % 4)}`
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+      return decodeURIComponent(escape(atob(padded)));
+    }
+
+    function buildShareSnapshot(record) {
+      return {
+        v: 1,
+        type: "hub-optimus-operator-memory",
+        saved_at_utc: record.saved_at_utc,
+        source_url: record.source_url,
+        domain: record.signal_domain_label,
+        actors: record.actors,
+        signal: record.operational_signal,
+        summary: compactText(record.summary, 300),
+        claim: compactText(record.claim, 360),
+        evidence: compactText(record.evidence, 360),
+        uncertainty: compactText(record.uncertainty, 260),
+        safe_next_action: compactText(record.safe_next_action, 240),
+        learning_status: record.learning_status
+      };
+    }
+
+    function buildMemoryShareUrl(record) {
+      const snapshot = base64UrlEncode(JSON.stringify(buildShareSnapshot(record)));
+      return `${window.location.origin}${window.location.pathname}#memory=${snapshot}`;
+    }
+
+    function currentShareableMemory() {
+      return currentMemoryRecord || saveCurrentMemoryResult();
+    }
+
+    async function shareMemoryLink() {
+      const record = currentShareableMemory();
+      if (!record) return;
+
+      const url = buildMemoryShareUrl(record);
+
+      try {
+        await navigator.clipboard.writeText(url);
+        renderMemoryStatus("Share link copied. It contains a compact result snapshot.", true);
+      } catch {
+        renderMemoryStatus(url, true);
+      }
+    }
+
+    function shareMemoryWhatsapp() {
+      const record = currentShareableMemory();
+      if (!record) return;
+
+      const url = buildMemoryShareUrl(record);
+      const shareText = [
+        "HUB_Optimus Operator memory",
+        record.signal_domain_label,
+        record.claim,
+        url
+      ].filter(Boolean).join("\n\n");
+
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer");
+      renderMemoryStatus("WhatsApp share opened with compact memory snapshot.", true);
+    }
+
+    function renderSharedMemorySnapshot(snapshot) {
+      $("product_output").innerHTML = `
+        <section class="output-card full">
+          <h3>Shared HUB_Optimus memory</h3>
+          <p><b>Domain:</b> ${escapeHtml(snapshot.domain || "not provided")}</p>
+          <p><b>Actors:</b> ${escapeHtml((snapshot.actors || []).join(", ") || "not provided")}</p>
+          <p><b>Signal:</b> ${escapeHtml(snapshot.signal || "not provided")}</p>
+          <p><b>Summary:</b> ${escapeHtml(snapshot.summary || "not provided")}</p>
+          <p><b>Claim:</b> ${escapeHtml(snapshot.claim || "not provided")}</p>
+          <p><b>Evidence:</b> ${escapeHtml(snapshot.evidence || "not provided")}</p>
+          <p><b>Uncertainty:</b> ${escapeHtml(snapshot.uncertainty || "not provided")}</p>
+          <p><b>Safe next action:</b> ${escapeHtml(snapshot.safe_next_action || "not provided")}</p>
+          <p class="meta">learning_status=${escapeHtml(snapshot.learning_status || "candidate-signal-not-canonical")} · shared snapshot · no truth verdict</p>
+        </section>
+      `;
+
+      renderMemoryStatus("Shared memory snapshot loaded. It is not canonical until reviewed/versioned in GitHub.", true);
+      window.location.hash = "product_output";
+    }
+
+    function loadSharedMemoryFromHash() {
+      const match = window.location.hash.match(/memory=([^&]+)/);
+      if (!match) return;
+
+      try {
+        const snapshot = JSON.parse(base64UrlDecode(match[1]));
+        if (snapshot?.type !== "hub-optimus-operator-memory") return;
+        renderSharedMemorySnapshot(snapshot);
+      } catch {
+        renderMemoryStatus("Could not load shared memory snapshot.", false);
+      }
+    }
+
     async function runProductAnalyze() {
       const raw = value("product_source_text");
       const sourceUrl = value("product_source_url");
@@ -1976,6 +2184,7 @@
 
       await loaderTask;
       renderProductOutput();
+      currentMemoryRecord = saveCurrentMemoryResult();
 
       productStep("product_step_output", "done");
       $("product_wait_status").textContent = "Analysis draft ready. Backend analysis remains available in Advanced / Audit JSON.";
@@ -2200,6 +2409,9 @@
       "narrative_amplification"
     ].forEach((id) => $(id).addEventListener("input", updateJson));
 
+    $("save_memory_result").addEventListener("click", saveCurrentMemoryResult);
+    $("share_memory_link").addEventListener("click", shareMemoryLink);
+    $("share_memory_whatsapp").addEventListener("click", shareMemoryWhatsapp);
     $("product_analyze").addEventListener("click", runProductAnalyze);
     $("product_load_news_demo").addEventListener("click", loadProductNewsDemo);
     $("product_show_advanced").addEventListener("click", openAdvancedConsole);
@@ -2224,6 +2436,7 @@
     buildProductLoader();
     setProductLoader(0, "idle");
     updateJson();
+    loadSharedMemoryFromHash();
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
