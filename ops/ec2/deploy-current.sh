@@ -9,7 +9,7 @@ RELEASE_DIR="$APP_ROOT/releases/$RELEASE_ID"
 echo "[deploy] Starting HUB_Optimus deploy"
 echo "[deploy] Release: $RELEASE_ID"
 
-mkdir -p "$APP_ROOT/releases" "$APP_ROOT/shared/logs"
+mkdir -p "$APP_ROOT/releases" "$APP_ROOT/shared/logs" "$APP_ROOT/shared/bin"
 
 if [ -e "$RELEASE_DIR" ]; then
   echo "[deploy:error] Release directory already exists: $RELEASE_DIR"
@@ -37,6 +37,12 @@ deactivate
 echo "[deploy] Hiding local venv from git status"
 grep -qxF ".venv/" "$RELEASE_DIR/.git/info/exclude" || echo ".venv/" >> "$RELEASE_DIR/.git/info/exclude"
 
+echo "[deploy] Verifying hub-api launcher source"
+if [ ! -f "$RELEASE_DIR/ops/ec2/hub-api.sh" ]; then
+  echo "[deploy:error] Missing hub-api launcher source: $RELEASE_DIR/ops/ec2/hub-api.sh"
+  exit 1
+fi
+
 if [ -L "$APP_ROOT/current" ]; then
   PREVIOUS="$(readlink -f "$APP_ROOT/current")"
   echo "$PREVIOUS" > "$APP_ROOT/shared/previous_release"
@@ -48,6 +54,9 @@ fi
 echo "[deploy] Switching current symlink"
 ln -sfn "$RELEASE_DIR" "$APP_ROOT/current.new"
 mv -Tf "$APP_ROOT/current.new" "$APP_ROOT/current"
+
+echo "[deploy] Syncing hub-api launcher"
+install -m 0755 "$APP_ROOT/current/ops/ec2/hub-api.sh" "$APP_ROOT/shared/bin/hub-api"
 
 cd "$APP_ROOT/current"
 
