@@ -1073,6 +1073,57 @@
     let claims = [];
     let evidence = [];
 
+    // OPERATOR_RECORD_INTEGRITY_START
+    let recordSequences = { claim: 0, evidence: 0 };
+
+    function recordSequenceNumber(prefix, recordId) {
+      const match = new RegExp("^" + prefix + "-([0-9]+)$").exec(String(recordId || ""));
+      return match ? Number(match[1]) : 0;
+    }
+
+    function syncRecordSequences() {
+      claims.forEach((record) => {
+        recordSequences.claim = Math.max(
+          recordSequences.claim,
+          recordSequenceNumber("claim", record?.claim_id)
+        );
+      });
+      evidence.forEach((record) => {
+        recordSequences.evidence = Math.max(
+          recordSequences.evidence,
+          recordSequenceNumber("evidence", record?.evidence_id)
+        );
+      });
+    }
+
+    function nextRecordId(prefix) {
+      if (!Object.prototype.hasOwnProperty.call(recordSequences, prefix)) {
+        throw new Error("Unknown record ID prefix: " + prefix);
+      }
+
+      recordSequences[prefix] += 1;
+      return prefix + "-" + String(recordSequences[prefix]).padStart(3, "0");
+    }
+
+    function removeClaimAt(index) {
+      const [removedClaim] = claims.splice(index, 1);
+      if (removedClaim?.claim_id) {
+        evidence = evidence.map((item) => ({
+          ...item,
+          supports_claim_ids: Array.isArray(item.supports_claim_ids)
+            ? item.supports_claim_ids.filter((id) => id !== removedClaim.claim_id)
+            : [],
+          contradicts_claim_ids: Array.isArray(item.contradicts_claim_ids)
+            ? item.contradicts_claim_ids.filter((id) => id !== removedClaim.claim_id)
+            : []
+        }));
+      }
+
+      renderClaims();
+      renderEvidence();
+    }
+    // OPERATOR_RECORD_INTEGRITY_END
+
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, (char) => ({
         "&": "&amp;",
@@ -1093,10 +1144,6 @@
 
     function splitComma(raw) {
       return raw.split(",").map((item) => item.trim()).filter(Boolean);
-    }
-
-    function nextId(prefix, count) {
-      return `${prefix}-${String(count + 1).padStart(3, "0")}`;
     }
 
     function buildPayload() {
@@ -1192,7 +1239,7 @@
       }
 
       claims.push({
-        claim_id: nextId("claim", claims.length),
+        claim_id: nextRecordId("claim"),
         text,
         source_ref: value("claim_source") || "operator-submission",
         claim_type: value("claim_type") || "unknown",
@@ -1213,7 +1260,7 @@
       }
 
       evidence.push({
-        evidence_id: nextId("evidence", evidence.length),
+        evidence_id: nextRecordId("evidence"),
         text,
         source_ref: value("evidence_source") || "operator-submission",
         source_type: value("evidence_type") || "unknown",
@@ -1336,6 +1383,7 @@
 
       claims = Array.isArray(payload.claims) ? payload.claims : [];
       evidence = Array.isArray(payload.evidence) ? payload.evidence : [];
+      syncRecordSequences();
 
       $("inferences").value = Array.isArray(payload.inferences) ? payload.inferences.join("\n") : "";
       $("uncertainties").value = Array.isArray(payload.uncertainties) ? payload.uncertainties.join("\n") : "";
@@ -1739,6 +1787,7 @@
       $("intake_channel").value = "operator-pwa";
       claims = [];
       evidence = [];
+      recordSequences = { claim: 0, evidence: 0 };
       renderClaims();
       renderEvidence();
       $("result_input").value = "";
@@ -1862,8 +1911,7 @@
 
     document.addEventListener("click", (event) => {
       if (event.target.dataset.removeClaim !== undefined) {
-        claims.splice(Number(event.target.dataset.removeClaim), 1);
-        renderClaims();
+        removeClaimAt(Number(event.target.dataset.removeClaim));
       }
 
       if (event.target.dataset.removeEvidence !== undefined) {
