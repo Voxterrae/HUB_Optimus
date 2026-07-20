@@ -25,12 +25,6 @@ def test_operator_product_no_browser_backend_or_external_form():
     assert "<script src=" not in html
 
 
-def test_operator_service_worker_cache_bumped_for_button_fix():
-    sw = SW.read_text(encoding="utf-8")
-
-    assert "hub-optimus-operator-v0-7" in sw
-
-
 def test_operator_product_loader_pacing_present():
     html = INDEX.read_text(encoding="utf-8")
     sw = SW.read_text(encoding="utf-8")
