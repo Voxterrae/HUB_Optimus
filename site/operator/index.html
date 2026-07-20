@@ -903,20 +903,20 @@
 
     <section class="panel full product-intake" id="product_intake">
       <h2>Analyze with HUB_Optimus</h2>
-      <p class="product-lede">Paste a source and HUB_Optimus will separate claim, evidence, inference, uncertainty, narrative amplification, and safe next action. URL reading is handled as a controlled backend step; for now, paste the article text or situation below.</p>
+      <p class="product-lede">Paste a URL or article text. HUB_Optimus will try controlled URL intake first, then separate claim, evidence, inference, uncertainty, narrative amplification, and safe next action. If a source blocks controlled intake, paste the article text below.</p>
 
       <div class="row">
         <div class="field">
           <label for="product_source_url">Source URL</label>
           <input id="product_source_url" placeholder="https://example.com/news-or-github-source">
-          <p class="field-hint">Used as source reference. Controlled URL reading is the next backend step; the browser does not scrape pages.</p>
+          <p class="field-hint">Used for controlled URL intake. If the source blocks access, paste the article text below.</p>
         </div>
       </div>
 
       <div class="field">
         <label for="product_source_text">Article text or situation to analyze</label>
         <textarea id="product_source_text" placeholder="Paste the article text, copied post, GitHub issue body, CI failure excerpt, or describe the situation here."></textarea>
-        <p class="field-hint">Required for analysis until controlled URL intake is added.</p>
+        <p class="field-hint">Optional when a URL is available. Required only if the URL cannot be read from controlled intake.</p>
       </div>
 
       <div class="actions">
@@ -2054,6 +2054,8 @@
       });
     }
 
+    const CONTROLLED_URL_INTAKE_ENDPOINT = "https://api.huboptimus.dev/intake/url";
+
     function syncProductInputState() {
       const raw = value("product_source_text");
       const sourceUrl = value("product_source_url");
@@ -2067,10 +2069,58 @@
         return;
       }
 
+      if (sourceUrl) {
+        analyzeButton.disabled = false;
+        $("product_wait_status").textContent = "Ready to read URL from controlled intake. If the source blocks access, paste the article text.";
+        return;
+      }
+
       analyzeButton.disabled = true;
-      $("product_wait_status").textContent = sourceUrl
-        ? "URL captured. Paste the article text below to analyze."
-        : "Paste text or load the example to begin.";
+      $("product_wait_status").textContent = "Paste a URL, paste text, or load the example to begin.";
+    }
+
+    function renderUrlIntakeFallback(sourceUrl, detail = "") {
+      const detailLine = detail ? `<p class="meta">${escapeHtml(detail)}</p>` : "";
+      $("product_output").innerHTML = `
+        <section class="output-card full">
+          <h3>URL not accessible from controlled intake</h3>
+          <p>The URL could not be read from the controlled HUB_Optimus origin. Paste the article text or relevant excerpt below and run Analyze again.</p>
+          <p>This does not mean the source is false or invalid. Some sources block automated access, DNS may not be ready, or the origin may reject cross-origin requests.</p>
+          ${detailLine}
+          <p class="meta">No browser scraping · no paywall bypass · source remains unreviewed</p>
+        </section>
+      `;
+      $("product_wait_status").textContent = "URL unavailable from controlled intake. Paste text to analyze.";
+      $("product_source_text").focus();
+      setMemoryActionsEnabled(false);
+    }
+
+    async function readControlledUrlText(sourceUrl) {
+      let response;
+      try {
+        response = await fetch(CONTROLLED_URL_INTAKE_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ url: sourceUrl })
+        });
+      } catch (error) {
+        throw new Error(`Controlled intake service is unreachable: ${error.message}`);
+      }
+
+      let payload;
+      try {
+        payload = await response.json();
+      } catch {
+        throw new Error(`Controlled intake returned HTTP ${response.status} without readable JSON.`);
+      }
+
+      if (!response.ok || payload.status !== "ok" || !payload.text) {
+        throw new Error(payload.message || payload.error || `Controlled intake returned HTTP ${response.status}.`);
+      }
+
+      return payload;
     }
 
     function saveCurrentMemoryResult() {
@@ -2198,22 +2248,18 @@
     }
 
     async function runProductAnalyze() {
-      const raw = value("product_source_text");
+      let raw = value("product_source_text");
       const sourceUrl = value("product_source_url");
 
-      if (!raw) {
-        const message = sourceUrl
-          ? "URL reference captured, but browser URL fetching is intentionally not performed. Paste the article text or copied content to produce a meaningful analysis draft."
-          : "Text or situation is required. Paste article text, copied content, or describe the situation.";
-
+      if (!raw && !sourceUrl) {
         $("product_output").innerHTML = `
           <section class="output-card full">
             <h3>Input required</h3>
-            <p>${escapeHtml(message)}</p>
-            <p class="meta">No browser fetch · no scraping · no backend exposed</p>
+            <p>Paste a URL, article text, copied content, or describe the situation.</p>
+            <p class="meta">No browser scraping · no paywall bypass · no truth verdict</p>
           </section>
         `;
-        $("product_wait_status").textContent = "Paste text to enable analysis.";
+        $("product_wait_status").textContent = "Paste a URL or text to enable analysis.";
         setMemoryActionsEnabled(false);
         return;
       }
@@ -2221,6 +2267,23 @@
       resetProductProgress();
       setMemoryActionsEnabled(false);
       currentMemoryRecord = null;
+
+      if (!raw && sourceUrl) {
+        productStep("product_step_capture", "running");
+        $("product_wait_status").textContent = "Reading URL through controlled intake…";
+        setProductLoader(1, "controlled URL intake");
+
+        try {
+          const intake = await readControlledUrlText(sourceUrl);
+          raw = intake.text;
+          $("product_source_text").value = raw;
+          $("product_wait_status").textContent = "URL read successfully. Preparing analysis…";
+        } catch (error) {
+          productStep("product_step_capture", "done");
+          renderUrlIntakeFallback(sourceUrl, error.message);
+          return;
+        }
+      }
 
       $("source_url").value = sourceUrl;
       $("source_text").value = raw;
