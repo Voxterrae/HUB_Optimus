@@ -48,7 +48,7 @@ jobs:
       - name: Create GitHub App token
         id: app-token
         if: steps.secrets.outputs.available == 'true'
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
