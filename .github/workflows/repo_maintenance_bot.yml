@@ -57,7 +57,7 @@ jobs:
 
       - name: Checkout
         if: steps.secrets.outputs.available == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
