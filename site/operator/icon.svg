@@ -5,13 +5,13 @@
   <defs>
     <radialGradient id="bg" cx="50%" cy="46%" r="72%">
       <stop offset="0%" stop-color="#17310f"/>
-      <stop offset="54%" stop-color="#06120d"/>
-      <stop offset="100%" stop-color="#020403"/>
+      <stop offset="54%" stop-color="#061828"/>
+      <stop offset="100%" stop-color="#00040e"/>
     </radialGradient>
 
     <radialGradient id="core" cx="48%" cy="42%" r="68%">
       <stop offset="0%" stop-color="#d9ff7a"/>
-      <stop offset="56%" stop-color="#b8ff5c"/>
+      <stop offset="56%" stop-color="#38ecfc"/>
       <stop offset="100%" stop-color="#78d928"/>
     </radialGradient>
 
@@ -39,10 +39,10 @@
     </filter>
   </defs>
 
-  <rect width="512" height="512" rx="112" fill="#020403"/>
+  <rect width="512" height="512" rx="112" fill="#00040e"/>
   <rect x="18" y="18" width="476" height="476" rx="96" fill="url(#bg)"/>
 
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#b8ff5c" stroke-width="4" opacity="0.9" filter="url(#softGlow)"/>
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#38ecfc" stroke-width="4" opacity="0.9" filter="url(#softGlow)"/>
   <circle cx="256" cy="256" r="148" fill="none" stroke="#13240f" stroke-width="50" opacity="0.96"/>
 
   <g filter="url(#tightGlow)">
@@ -65,5 +65,5 @@
 
   <text x="256" y="292" text-anchor="middle"
         font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-        font-size="94" font-weight="900" letter-spacing="-8" fill="#020403">HO</text>
+        font-size="94" font-weight="900" letter-spacing="-8" fill="#00040e">HO</text>
 </svg>

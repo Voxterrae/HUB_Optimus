@@ -3,495 +3,274 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HUB_Optimus</title>
-  <meta name="description" content="High-integrity signal interface for structured evaluation, evidence separation, and operational judgment.">
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #020403;
-      --panel: #06120d;
-      --panel-2: #091a12;
-      --text: #eaffea;
-      --muted: #a6c9a8;
-      --dim: #6a8f70;
-      --phosphor: #7cff6b;
-      --phosphor-2: #33ff99;
-      --cyan: #4deeff;
-      --amber: #ffd166;
-      --danger: #ff5f7a;
-      --border: rgba(124, 255, 107, 0.38);
-      --border-strong: rgba(124, 255, 107, 0.72);
-      --shadow: rgba(51, 255, 153, 0.18);
-      --max: 76rem;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      min-height: 100%;
-      background: var(--bg);
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      line-height: 1.55;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 15% 0%, rgba(51, 255, 153, 0.18), transparent 30rem),
-        radial-gradient(circle at 88% 12%, rgba(77, 238, 255, 0.12), transparent 26rem),
-        linear-gradient(180deg, #020403 0%, #031008 48%, #020403 100%);
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background:
-        linear-gradient(rgba(124, 255, 107, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(124, 255, 107, 0.025) 1px, transparent 1px);
-      background-size: 3rem 3rem;
-      mask-image: radial-gradient(circle at center, black 0%, transparent 82%);
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background: repeating-linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.035) 0,
-        rgba(255, 255, 255, 0.035) 1px,
-        transparent 1px,
-        transparent 4px
-      );
-      opacity: 0.22;
-      mix-blend-mode: screen;
-    }
-
-    a {
-      color: var(--phosphor);
-      text-decoration: none;
-    }
-
-    a:hover {
-      color: var(--cyan);
-    }
-
-    a:focus-visible {
-      outline: 3px solid var(--cyan);
-      outline-offset: 4px;
-    }
-
-    .shell {
-      width: min(100% - 2rem, var(--max));
-      margin: 0 auto;
-      padding: 2rem 0 2.5rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    .topline,
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-      color: var(--dim);
-      font-size: 0.78rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .topline {
-      padding: 0.75rem 0 1rem;
-      border-bottom: 1px solid rgba(124, 255, 107, 0.18);
-    }
-
-    .hero {
-      margin-top: 1.25rem;
-      padding: clamp(1.4rem, 4vw, 3rem);
-      border: 1px solid var(--border-strong);
-      border-radius: 1.25rem;
-      background:
-        linear-gradient(135deg, rgba(124, 255, 107, 0.10), transparent 30%),
-        linear-gradient(180deg, rgba(9, 26, 18, 0.96), rgba(3, 12, 8, 0.98));
-      box-shadow:
-        0 0 0 1px rgba(124, 255, 107, 0.08) inset,
-        0 0 4rem var(--shadow);
-    }
-
-    .kicker {
-      margin: 0 0 1rem;
-      color: var(--cyan);
-      font-size: 0.85rem;
-      font-weight: 800;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      margin: 0;
-      color: var(--phosphor);
-      font-size: clamp(3rem, 11vw, 7.5rem);
-      line-height: 0.88;
-      letter-spacing: -0.09em;
-      text-shadow:
-        0 0 0.6rem rgba(124, 255, 107, 0.55),
-        0 0 2rem rgba(51, 255, 153, 0.18);
-    }
-
-    .signal {
-      max-width: 62rem;
-      margin: 1.35rem 0 0;
-      color: var(--text);
-      font-size: clamp(1.25rem, 3vw, 2rem);
-      font-weight: 800;
-      line-height: 1.18;
-    }
-
-    .lead {
-      max-width: 60rem;
-      margin: 1rem 0 0;
-      color: var(--muted);
-      font-size: clamp(1rem, 2vw, 1.18rem);
-    }
-
-    .matrix {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .panel {
-      grid-column: span 4;
-      padding: 1rem;
-      border: 1px solid var(--border);
-      border-radius: 1rem;
-      background:
-        linear-gradient(180deg, rgba(9, 26, 18, 0.92), rgba(3, 10, 7, 0.92));
-      box-shadow: 0 0 1.5rem rgba(51, 255, 153, 0.07);
-    }
-
-    .panel.wide {
-      grid-column: span 8;
-    }
-
-    .panel.full {
-      grid-column: 1 / -1;
-    }
-
-    h2 {
-      margin: 0 0 0.7rem;
-      color: var(--phosphor);
-      font-size: 0.95rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    p,
-    ul {
-      margin: 0;
-      color: var(--muted);
-    }
-
-    ul {
-      padding-left: 1.1rem;
-    }
-
-    li + li {
-      margin-top: 0.35rem;
-    }
-
-    .status-grid,
-    .signal-grid {
-      display: grid;
-      gap: 0.6rem;
-    }
-
-    .status-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .signal-grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-
-    .chip,
-    .signal-step {
-      border: 1px solid rgba(124, 255, 107, 0.3);
-      border-radius: 0.75rem;
-      background: rgba(2, 8, 5, 0.72);
-    }
-
-    .chip {
-      padding: 0.75rem;
-    }
-
-    .chip b {
-      display: block;
-      color: var(--text);
-      font-size: 0.82rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    .chip span {
-      display: block;
-      margin-top: 0.25rem;
-      color: var(--phosphor);
-      font-size: 0.95rem;
-      font-weight: 800;
-    }
-
-    .chip.warning span {
-      color: var(--amber);
-    }
-
-    .signal-step {
-      padding: 0.8rem;
-      min-height: 5rem;
-    }
-
-    .signal-step strong {
-      display: block;
-      color: var(--phosphor);
-      font-size: 0.82rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .signal-step span {
-      display: block;
-      margin-top: 0.35rem;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.65rem;
-      padding-left: 0;
-      list-style: none;
-    }
-
-    .links a {
-      display: inline-block;
-      padding: 0.7rem 0.9rem;
-      border: 1px solid rgba(124, 255, 107, 0.38);
-      border-radius: 999px;
-      background: rgba(2, 8, 5, 0.82);
-      color: var(--text);
-      font-weight: 800;
-    }
-
-    .links a:hover {
-      border-color: var(--cyan);
-      color: var(--cyan);
-      box-shadow: 0 0 1rem rgba(77, 238, 255, 0.15);
-    }
-
-    .runbook {
-      display: grid;
-      gap: 0.75rem;
-    }
-
-    pre {
-      margin: 0;
-      padding: 0.85rem;
-      overflow-x: auto;
-      border: 1px solid rgba(124, 255, 107, 0.28);
-      border-radius: 0.75rem;
-      background: rgba(2, 8, 5, 0.88);
-      color: var(--text);
-      font-size: 0.86rem;
-    }
-
-    code {
-      font: inherit;
-    }
-
-    .footer {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid rgba(124, 255, 107, 0.18);
-    }
-
-    .ok {
-      color: var(--phosphor);
-    }
-
-    .hold {
-      color: var(--amber);
-    }
-
-    @media (max-width: 920px) {
-      .panel,
-      .panel.wide {
-        grid-column: 1 / -1;
-      }
-
-      .signal-grid,
-      .status-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 560px) {
-      .shell {
-        width: min(100% - 1rem, var(--max));
-        padding-top: 0.75rem;
-      }
-
-      .hero,
-      .panel {
-        border-radius: 0.85rem;
-      }
-
-      .topline,
-      .footer {
-        font-size: 0.7rem;
-      }
-    }
-  </style>
+  <title>HUB Optimus — Human × Machine Governance Interface</title>
+  <meta name="description" content="Integrity-first diplomatic simulation for evaluation, preventive mediation, and systemic learning.">
+  <meta name="theme-color" content="#00040e">
+  <link rel="canonical" href="https://huboptimus.dev/">
+  <meta property="og:title" content="HUB Optimus — Human × Machine Governance Interface">
+  <meta property="og:description" content="Better judgment before decisions become irreversible.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://huboptimus.dev/">
+  <meta name="twitter:card" content="summary">
+  <link rel="stylesheet" href="./signal-atlas.css">
 </head>
 <body>
-  <main class="shell">
-    <div class="topline" aria-label="Interface state">
-      <span>HUB_OPTIMUS // PUBLIC_INTERFACE</span>
-      <span>MODE: CONTROLLED_DEVELOPMENT</span>
-    </div>
+  <main class="site-shell">
+    <a class="skip-link" href="#system">Skip to system</a>
 
-    <header class="hero" aria-labelledby="title">
-      <p class="kicker">Signal discipline for complex systems</p>
-      <h1 id="title">HUB_Optimus</h1>
-      <p class="signal">Separate reality, evidence, inference, narrative, and operational signal.</p>
-      <p class="lead">A public versioned research-and-engineering project for structured evaluation, preventive mediation design, and systemic learning.</p>
+    <header class="site-header">
+      <a class="wordmark" href="#top" aria-label="HUB Optimus home">
+        <span>HUB_</span><strong>Optimus</strong>
+      </a>
+
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="#system">System</a>
+        <a href="#method">Method</a>
+        <a href="#engines">Engines</a>
+        <a href="#research">Research</a>
+      </nav>
+
+      <div class="language-switcher" aria-label="Language onboarding">
+        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/es/00_start_here.md">ES</a>
+        <a class="is-active" href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/00_start_here.md" aria-current="page">EN</a>
+        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/de/00_start_here.md">DE</a>
+      </div>
+
+      <div class="integrity-state">
+        <span class="integrity-dot"></span>
+        <span>Traceable by design</span>
+      </div>
     </header>
 
-    <div class="matrix" aria-label="Project interface">
-      <section class="panel wide" aria-labelledby="status">
-        <h2 id="status">Operational state</h2>
-        <div class="status-grid">
-          <div class="chip">
-            <b>Public landing</b>
-            <span class="ok">active</span>
-          </div>
-          <div class="chip">
-            <b>Backend v0.1</b>
-            <span class="ok">local-operational</span>
-          </div>
-          <div class="chip">
-            <b>Release v2.3.4</b>
-            <span class="ok">verified</span>
-          </div>
-          <div class="chip warning">
-            <b>Public API</b>
-            <span class="hold">not exposed</span>
-          </div>
-          <div class="chip">
-            <b>Source of truth</b>
-            <span class="ok">GitHub</span>
-          </div>
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span>Human × machine governance interface</p>
+        <h1><span>Human × Machine</span><strong>Governance Interface</strong></h1>
+        <p class="hero-claim">Better judgment before decisions become irreversible.</p>
+        <span class="amber-rule"></span>
+        <p class="hero-lead">Integrity-first diplomatic simulation for evaluation, preventive mediation, and systemic learning.</p>
+        <div class="hero-actions">
+          <a class="button button--primary" href="./operator/">
+            <span>Explore the system</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 12h15M14 6l6 6-6 6"></path></svg>
+          </a>
+          <a class="button button--secondary" href="https://github.com/Voxterrae/HUB_Optimus">
+            <span>View on GitHub</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg>
+          </a>
         </div>
-      </section>
+      </div>
 
-      <section class="panel" aria-labelledby="protocol">
-        <h2 id="protocol">Protocol</h2>
-        <p>Observe → detect → decide → act. No build without signal. GitHub remains authoritative.</p>
-      </section>
+      <div class="atlas" aria-label="Animated global signal atlas" role="img">
+        <div class="atlas-meta atlas-meta--top"><span>LAT 41.39</span><span>LON 02.17</span></div>
+        <svg class="atlas-svg" viewBox="0 0 720 480" aria-hidden="true">
+          <defs>
+            <radialGradient id="atlas-glow">
+              <stop offset="0" stop-color="#38ecfc" stop-opacity=".42"></stop>
+              <stop offset=".34" stop-color="#1fa8b0" stop-opacity=".16"></stop>
+              <stop offset="1" stop-color="#000816" stop-opacity="0"></stop>
+            </radialGradient>
+            <linearGradient id="route-gradient" x1="0" x2="1">
+              <stop stop-color="#38ecfc" stop-opacity=".3"></stop>
+              <stop offset=".52" stop-color="#f3f1f3" stop-opacity=".9"></stop>
+              <stop offset="1" stop-color="#e7aa4a" stop-opacity=".42"></stop>
+            </linearGradient>
+            <filter id="node-glow" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="4" result="blur"></feGaussianBlur>
+              <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+            <path id="route-a" d="M122 194Q270 74 379 118T620 164"></path>
+            <path id="route-b" d="M181 332Q310 128 428 289T559 355"></path>
+            <path id="route-c" d="M246 170Q332 332 508 201"></path>
+          </defs>
 
-      <section class="panel full" aria-labelledby="signal-stack">
-        <h2 id="signal-stack">Signal stack</h2>
-        <div class="signal-grid">
-          <div class="signal-step">
-            <strong>Reality</strong>
-            <span>What is directly observed.</span>
-          </div>
-          <div class="signal-step">
-            <strong>Evidence</strong>
-            <span>What supports the claim.</span>
-          </div>
-          <div class="signal-step">
-            <strong>Inference</strong>
-            <span>What follows, cautiously.</span>
-          </div>
-          <div class="signal-step">
-            <strong>Narrative</strong>
-            <span>What may amplify or distort.</span>
-          </div>
-          <div class="signal-step">
-            <strong>Operational</strong>
-            <span>What action is safe.</span>
-          </div>
+          <circle class="atlas-glow" cx="424" cy="238" r="250" fill="url(#atlas-glow)"></circle>
+          <g class="globe-lines">
+            <ellipse cx="378" cy="239" rx="280" ry="172"></ellipse>
+            <ellipse cx="378" cy="239" rx="280" ry="106"></ellipse>
+            <ellipse cx="378" cy="239" rx="280" ry="42"></ellipse>
+            <ellipse cx="378" cy="239" rx="112" ry="172"></ellipse>
+            <ellipse cx="378" cy="239" rx="205" ry="172"></ellipse>
+            <path d="M98 239h560M378 67v344"></path>
+          </g>
+
+          <g class="world-dots">
+            <path d="M118 171c31-42 72-65 115-52 19 6 21 27 46 34 19 5 24 23 8 38-18 17-47 10-60 35-8 15-5 43-26 47-18 4-26-24-35-39-11-19-39-18-51-36-7-10-6-19 3-27Z"></path>
+            <path d="M241 278c18 2 42 12 50 31 8 20-8 42-15 60-9 24-16 55-33 68-12-22-11-48-20-70-7-17-26-34-22-55 3-17 19-35 40-34Z"></path>
+            <path d="M319 154c30-28 75-38 105-17 13 9 21 25 39 27 33 3 58-35 91-23 14 5 17 22 32 25 23 4 53-4 64 19 7 16-9 30-24 36-18 7-38 0-54 12-13 10-15 32-30 40-18 10-42-4-60 3-19 7-28 32-47 37-18 5-38-8-50-22-18-20-26-49-52-62-18-9-47-8-54-30-7-21 18-34 34-45Z"></path>
+            <path d="M355 263c31-10 67 14 74 47 6 27-10 59-27 79-14 17-38 14-51-4-13-17-12-40-23-58-11-18-29-38-19-57 8-15 29-20 46-7Z"></path>
+            <path d="M548 329c19-13 51-12 69 2 13 11 2 28-12 34-19 9-48 7-64-7-10-9-4-21 7-29Z"></path>
+          </g>
+
+          <g class="radar radar--one" transform="translate(379 118)"><circle r="25"></circle><circle r="44"></circle><circle r="66"></circle></g>
+          <g class="radar radar--two" transform="translate(181 332)"><circle r="20"></circle><circle r="39"></circle></g>
+          <g class="radar radar--three" transform="translate(508 201)"><circle r="22"></circle><circle r="47"></circle></g>
+
+          <g class="routes">
+            <use href="#route-a" class="route route--one"></use>
+            <use href="#route-b" class="route route--two"></use>
+            <use href="#route-c" class="route route--three"></use>
+            <path class="route route--four" d="M122 194Q218 278 320 236T508 201"></path>
+            <path class="route route--five" d="M428 289Q544 254 620 164"></path>
+            <circle class="traveller traveller--cyan" r="3">
+              <animateMotion dur="12s" repeatCount="indefinite"><mpath href="#route-a"></mpath></animateMotion>
+            </circle>
+            <circle class="traveller traveller--amber" r="3">
+              <animateMotion dur="15s" begin="-6s" repeatCount="indefinite"><mpath href="#route-b"></mpath></animateMotion>
+            </circle>
+            <circle class="traveller traveller--cyan" r="2.5">
+              <animateMotion dur="10s" begin="-3s" repeatCount="indefinite"><mpath href="#route-c"></mpath></animateMotion>
+            </circle>
+          </g>
+
+          <g class="nodes" filter="url(#node-glow)">
+            <g class="atlas-node atlas-node--1" transform="translate(122 194)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
+            <g class="atlas-node atlas-node--2" transform="translate(181 332)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
+            <g class="atlas-node atlas-node--3" transform="translate(246 170)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
+            <g class="atlas-node atlas-node--4" transform="translate(320 236)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
+            <g class="atlas-node atlas-node--5" transform="translate(379 118)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="5"></circle></g>
+            <g class="atlas-node atlas-node--6" transform="translate(428 289)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
+            <g class="atlas-node atlas-node--7" transform="translate(508 201)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
+            <g class="atlas-node atlas-node--8" transform="translate(559 355)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
+            <g class="atlas-node atlas-node--9" transform="translate(620 164)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
+          </g>
+        </svg>
+        <div class="atlas-meta atlas-meta--bottom"><span>TRACE // 05</span><span>HUMAN REVIEW REQUIRED</span></div>
+      </div>
+    </section>
+
+    <section class="signal-flow" aria-label="Reality to operational signal">
+      <div class="signal-grid">
+        <a class="signal-card" href="#reality">
+          <span class="signal-index">01</span>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><ellipse cx="24" cy="11" rx="14" ry="6"></ellipse><path d="M10 11v12c0 3.4 6.3 6 14 6s14-2.6 14-6V11M10 23v13c0 3.4 6.3 6 14 6s14-2.6 14-6V23"></path></svg>
+          <span class="signal-copy"><strong>Reality</strong><small>What is directly observed.</small></span>
+        </a>
+        <a class="signal-card" href="#evidence">
+          <span class="signal-index">02</span>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="21" cy="21" r="12"></circle><path d="m30 30 10 10"></path><circle class="icon-node" cx="38" cy="38" r="3"></circle></svg>
+          <span class="signal-copy"><strong>Evidence</strong><small>What supports the claim.</small></span>
+        </a>
+        <a class="signal-card" href="#inference">
+          <span class="signal-index">03</span>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 35 18 14l13-5 6 22-14 8-11-4Z"></path><path d="m18 14 5 25M18 14l19 17M12 35l25-4M31 9l-8 30"></path><circle cx="18" cy="14" r="3"></circle><circle cx="31" cy="9" r="3"></circle><circle cx="37" cy="31" r="3"></circle><circle cx="23" cy="39" r="3"></circle><circle cx="12" cy="35" r="3"></circle></svg>
+          <span class="signal-copy"><strong>Inference</strong><small>What follows, cautiously.</small></span>
+        </a>
+        <a class="signal-card" href="#narrative">
+          <span class="signal-index">04</span>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="6" width="28" height="36" rx="2"></rect><path d="M17 17h14M17 24h14M17 31h9"></path></svg>
+          <span class="signal-copy"><strong>Narrative</strong><small>What may amplify or distort.</small></span>
+        </a>
+        <a class="signal-card" href="#operational">
+          <span class="signal-index">05</span>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="17"></circle><circle cx="24" cy="24" r="10"></circle><circle class="icon-node" cx="24" cy="24" r="3"></circle></svg>
+          <span class="signal-copy"><strong>Operational Signal</strong><small>What action is safe.</small></span>
+        </a>
+      </div>
+      <div class="sequence-line" aria-hidden="true"><span></span><i></i><i></i><i></i></div>
+      <p class="sequence-copy">Reality → Evidence → Inference → Narrative → Operational Signal</p>
+    </section>
+
+    <section class="content-section system-section" id="system">
+      <div class="section-heading">
+        <p>System</p>
+        <h2>One interface. Clear operational boundaries.</h2>
+        <span>The public experience connects every working layer without pretending that a static website can replace the secured runtime.</span>
+      </div>
+
+      <div class="system-status-grid">
+        <article class="status-card"><span class="status-card-index">01</span><div><h3>Public surface</h3><strong>Available</strong><p>Multilingual orientation and repository-backed navigation.</p></div></article>
+        <article class="status-card"><span class="status-card-index">02</span><div><h3>Operator PWA</h3><strong>Browser-local</strong><p>Structured intake, topic playbooks, memory, sharing, and JSON.</p></div></article>
+        <article class="status-card"><span class="status-card-index">03</span><div><h3>Controlled URL intake</h3><strong>Bounded API</strong><p>Fetches a submitted public URL; retrieval is not verification.</p></div></article>
+        <article class="status-card"><span class="status-card-index">04</span><div><h3>Semantic Engine</h3><strong>Secure / local</strong><p>Contract-preserving analysis stays behind the protected execution boundary.</p></div></article>
+      </div>
+
+      <div class="architecture-panel">
+        <div class="architecture-intro">
+          <p class="mini-label">Containment architecture</p>
+          <h3>Every transition keeps claim, evidence, inference, uncertainty, narrative amplification, and operational relevance distinct.</h3>
         </div>
-      </section>
-
-      <section class="panel wide" aria-labelledby="what-it-is">
-        <h2 id="what-it-is">What it is</h2>
-        <p>HUB_Optimus is a governed system for separating signal from noise in high-friction contexts. It supports better judgment through structured scenarios, traceable reasoning, and controlled execution.</p>
-      </section>
-
-      <section class="panel" aria-labelledby="what-it-is-not">
-        <h2 id="what-it-is-not">What it is not</h2>
-        <ul>
-          <li>Not an authority.</li>
-          <li>Not a prediction engine.</li>
-          <li>Not a replacement for diplomacy.</li>
-          <li>Not a public runtime service yet.</li>
-        </ul>
-      </section>
-
-      <section class="panel" aria-labelledby="scope">
-        <h2 id="scope">Public site scope</h2>
-        <p>huboptimus.dev serves the public landing page only. Runtime files, backend operations, and versioned materials remain in GitHub.</p>
-      </section>
-
-      <section class="panel wide" aria-labelledby="truth">
-        <h2 id="truth">Source of truth</h2>
-        <p>GitHub repository, Issues, Pull Requests, commits, CI, and versioned documentation are authoritative. Chat is advisory. Public presentation does not override repository state.</p>
-      </section>
-
-      <section class="panel full" aria-labelledby="runbook">
-        <h2 id="runbook">Run locally</h2>
-        <div class="runbook">
-          <p>The current public release is a Python simulator and Semantic Engine CLI, plus static documentation. The validated v2.3.4 smoke path is:</p>
-          <pre><code>git clone --branch v2.3.4 https://github.com/Voxterrae/HUB_Optimus.git
-cd HUB_Optimus
-python3 -m pip install -r requirements-dev.txt
-python3 run_scenario.py --scenario example_scenario.json --seed 42
-python3 -m semantic_engine.cli analyze examples/semantic_engine/case_minimal.json</code></pre>
-          <p>Expected simulator result: <strong class="ok">success</strong>, with the configured success criteria reached in round 2.</p>
+        <div class="architecture-flow">
+          <article><span>01</span><h4>Signal intake</h4><p>URL or pasted material enters through the Operator. Pasted text stays in the browser.</p></article>
+          <article><span>02</span><h4>Structured case</h4><p>The Operator produces traceable records instead of an unqualified answer.</p></article>
+          <article><span>03</span><h4>Secured analysis</h4><p>The complete Python Semantic Engine runs through the local analysis handoff.</p></article>
+          <article><span>04</span><h4>Human review</h4><p>Outputs remain advisory until a human validates them against versioned evidence.</p></article>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <nav class="panel full" aria-labelledby="links">
-        <h2 id="links">Navigation</h2>
-        <ul class="links">
-          <li><a href="https://github.com/Voxterrae/HUB_Optimus">Repository</a></li>
-          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/README.md">README</a></li>
-          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/IP_NOTICE.md">IP Notice</a></li>
-          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/00_start_here.md">EN onboarding</a></li>
-          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/es/00_start_here.md">ES onboarding</a></li>
-          <li><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/de/00_start_here.md">DE onboarding</a></li>
-          <li><a href="https://github.com/Voxterrae/HUB_Optimus/releases/tag/v2.3.4">Release v2.3.4</a></li>
-          <li><a href="./operator/">Operator PWA</a></li>
-          <li><a href="mailto:operator@huboptimus.dev">Operator</a></li>
-        </ul>
-      </nav>
-    </div>
+    <section class="content-section method-section" id="method">
+      <div class="section-heading">
+        <p>Method</p>
+        <h2>Signal separation before interpretation.</h2>
+        <span>The sequence is a discipline, not a decorative pipeline. Each stage constrains what the next stage is allowed to claim.</span>
+      </div>
 
-    <footer class="footer">
-      <span>No analytics. No cookies. No forms. No external JavaScript.</span>
-      <span>Public API: not exposed.</span>
+      <div class="method-stack">
+        <article class="method-card" id="reality"><div class="method-card-topline"><span>01</span></div><h3>Reality</h3><p>What is directly observed.</p><small>02</small></article>
+        <article class="method-card" id="evidence"><div class="method-card-topline"><span>02</span></div><h3>Evidence</h3><p>What supports the claim.</p><small>03</small></article>
+        <article class="method-card" id="inference"><div class="method-card-topline"><span>03</span></div><h3>Inference</h3><p>What follows, cautiously.</p><small>04</small></article>
+        <article class="method-card" id="narrative"><div class="method-card-topline"><span>04</span></div><h3>Narrative</h3><p>What may amplify or distort.</p><small>05</small></article>
+        <article class="method-card" id="operational"><div class="method-card-topline"><span>05</span></div><h3>Operational Signal</h3><p>What action is safe.</p><small>Human review gate</small></article>
+      </div>
+    </section>
+
+    <section class="content-section engines-section" id="engines">
+      <div class="section-heading">
+        <p>Engines</p>
+        <h2>The repository is the product surface.</h2>
+        <span>HUB_Optimus combines a browser Operator, a contract-first Semantic Engine, a deterministic scenario simulator, and research tools. Each remains explicit about what it does—and does not—do.</span>
+      </div>
+
+      <div class="engine-grid">
+        <article class="engine-card"><div class="engine-card-heading"><span>ENGINE // 01</span><strong>Implemented</strong></div><h3>Operator Intelligence</h3><p>Source-aware browser normalization, bounded topic playbooks, scenarios, local memory, and share snapshots.</p><a href="./operator/">Open Operator <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 12h15M14 6l6 6-6 6"></path></svg></a></article>
+        <article class="engine-card"><div class="engine-card-heading"><span>ENGINE // 02</span><strong>Implemented</strong></div><h3>Semantic Engine CLI</h3><p>Preserves structured case records and produces an auditable analysis result inside the secured runtime.</p><a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/semantic_engine">Inspect engine <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg></a></article>
+        <article class="engine-card"><div class="engine-card-heading"><span>ENGINE // 03</span><strong>Implemented</strong></div><h3>Scenario Simulator</h3><p>Schema-validated, seedable round simulation with deterministic JSON output.</p><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/SIMULATION_README.md">Run a scenario <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg></a></article>
+        <article class="engine-card"><div class="engine-card-heading"><span>ENGINE // 04</span><strong>Research tooling</strong></div><h3>Narrative Consistency</h3><p>Deterministic checks for narrative-risk datasets and source-backed reports.</p><a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/datasets/ai_risk_narratives">View research <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg></a></article>
+      </div>
+
+      <aside class="boundary-note">
+        <span>!</span>
+        <div><h3>A crucial distinction</h3><p>The public Analyze action uses deterministic browser heuristics. It is not the Python Semantic Engine, an authority, a prediction engine, or an LLM verdict. Full analysis remains deliberately contained.</p></div>
+      </aside>
+    </section>
+
+    <section class="content-section research-section" id="research">
+      <div class="section-heading">
+        <p>Research & governance</p>
+        <h2>GitHub remains the source of truth.</h2>
+        <span>Issues, pull requests, commits, CI, releases, and versioned documentation outrank chat, screenshots, or presentation layers.</span>
+      </div>
+
+      <div class="research-layout">
+        <nav class="research-paths" aria-label="Research and onboarding">
+          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/00_start_here.md"><span>01</span><div><strong>Start in English</strong><small>90-second onboarding and repository reading path.</small></div></a>
+          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/es/00_start_here.md"><span>02</span><div><strong>Empezar en español</strong><small>Priority onboarding and access to the canonical v1 core.</small></div></a>
+          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/de/00_start_here.md"><span>03</span><div><strong>Auf Deutsch starten</strong><small>German governance and onboarding path.</small></div></a>
+          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/governance/GOVERNANCE_INTELLIGENCE.md"><span>04</span><div><strong>Governance Intelligence</strong><small>Canonical claim, evidence, inference, and uncertainty protocol.</small></div></a>
+        </nav>
+
+        <article class="runbook">
+          <p class="mini-label">Run the verified core</p>
+          <h3>The public repository exposes the deterministic simulator and Semantic Engine CLI without claiming predictive capability.</h3>
+          <pre><code>python3 run_scenario.py \
+  --scenario example_scenario.json \
+  --seed 42
+
+python3 -m semantic_engine.cli analyze \
+  examples/semantic_engine/case_minimal.json</code></pre>
+          <div class="runbook-actions">
+            <a class="button button--primary" href="https://github.com/Voxterrae/HUB_Optimus"><span>Open the repository</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg></a>
+            <a class="button button--secondary" href="https://github.com/Voxterrae/HUB_Optimus/issues/1736"><span>Review current work</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <a class="wordmark" href="#top"><span>HUB_</span><strong>Optimus</strong></a>
+      <div><p>GitHub is authoritative. Human accountability is mandatory.</p><span>No analytics. No advertising cookies. No hidden scoring.</span></div>
+      <a href="mailto:operator@huboptimus.dev">operator@huboptimus.dev</a>
     </footer>
   </main>
 </body>
