@@ -1,13 +1,13 @@
 {
-  "name": "HUB_Optimus Operator Console",
+  "name": "HUB_Optimus Operator",
   "short_name": "HUB Operator",
-  "description": "Installable local operator console for composing structured HUB_Optimus cases and viewing analysis outputs.",
+  "description": "Local-first browser prototype for drafting structured HUB_Optimus cases and handing them to a controlled runtime.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#00040e",
-  "theme_color": "#00040e",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14",
   "icons": [
     {
       "src": "./icon.svg",

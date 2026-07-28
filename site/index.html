@@ -3,275 +3,487 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HUB Optimus — Human × Machine Governance Interface</title>
-  <meta name="description" content="Integrity-first diplomatic simulation for evaluation, preventive mediation, and systemic learning.">
-  <meta name="theme-color" content="#00040e">
-  <link rel="canonical" href="https://huboptimus.dev/">
-  <meta property="og:title" content="HUB Optimus — Human × Machine Governance Interface">
-  <meta property="og:description" content="Better judgment before decisions become irreversible.">
+  <meta name="theme-color" content="#0B0F14">
+  <meta name="color-scheme" content="dark light">
+  <title>HUB_Optimus — Versioned public portfolio</title>
+  <meta name="description" content="The evidence-backed public portfolio of HUB_Optimus: Core, deterministic simulator, Semantic Engine contracts and CLI, Operator, research, governance, and Labs.">
+  <meta property="og:title" content="HUB_Optimus — Versioned public portfolio">
+  <meta property="og:description" content="Reality → Evidence → Inference → Narrative → Operational Signal.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://huboptimus.dev/">
-  <meta name="twitter:card" content="summary">
-  <link rel="stylesheet" href="./signal-atlas.css">
+  <meta property="og:image" content="https://huboptimus.dev/assets/brand/hub-optimus-hero.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://huboptimus.dev/">
+  <link rel="preload" href="./assets/brand/hub-optimus-hero.jpg" as="image">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
 </head>
-<body>
-  <main class="site-shell">
-    <a class="skip-link" href="#system">Skip to system</a>
+<body class="no-js">
+  <a class="skip-link" href="#portfolio" data-i18n="skip">Skip to portfolio</a>
 
-    <header class="site-header">
-      <a class="wordmark" href="#top" aria-label="HUB Optimus home">
-        <span>HUB_</span><strong>Optimus</strong>
-      </a>
+  <header class="site-header" id="top">
+    <a class="brand" href="#top" aria-label="HUB_Optimus home" data-i18n-aria="homeAria">
+      <span class="brand-name">HUB<span>_</span>Optimus</span>
+      <small data-i18n="brandDescriptor">Versioned public portfolio</small>
+    </a>
 
-      <nav class="primary-nav" aria-label="Primary">
-        <a href="#system">System</a>
-        <a href="#method">Method</a>
-        <a href="#engines">Engines</a>
-        <a href="#research">Research</a>
-      </nav>
+    <nav class="primary-nav" aria-label="Primary navigation" data-i18n-aria="navAria">
+      <a href="#method" data-i18n="navMethod">Method</a>
+      <a href="#portfolio" data-i18n="navPortfolio">Portfolio</a>
+      <a href="#labs" data-i18n="navLabs">Labs</a>
+      <a href="#boundaries" data-i18n="navBoundaries">Boundaries</a>
+    </nav>
 
-      <div class="language-switcher" aria-label="Language onboarding">
-        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/es/00_start_here.md">ES</a>
-        <a class="is-active" href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/00_start_here.md" aria-current="page">EN</a>
-        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/de/00_start_here.md">DE</a>
-      </div>
+    <div class="language-switcher" role="group" aria-label="Language" data-i18n-aria="languageAria">
+      <button type="button" data-language="es" lang="es">ES</button>
+      <button type="button" data-language="en" lang="en">EN</button>
+      <button type="button" data-language="de" lang="de">DE</button>
+    </div>
 
-      <div class="integrity-state">
-        <span class="integrity-dot"></span>
-        <span>Traceable by design</span>
-      </div>
-    </header>
+    <a class="header-github" href="https://github.com/Voxterrae/HUB_Optimus" data-i18n="openGithub">
+      Open GitHub
+      <span aria-hidden="true">↗</span>
+    </a>
+  </header>
 
-    <section class="hero" id="top">
-      <div class="hero-copy">
-        <p class="eyebrow"><span></span>Human × machine governance interface</p>
-        <h1><span>Human × Machine</span><strong>Governance Interface</strong></h1>
-        <p class="hero-claim">Better judgment before decisions become irreversible.</p>
-        <span class="amber-rule"></span>
-        <p class="hero-lead">Integrity-first diplomatic simulation for evaluation, preventive mediation, and systemic learning.</p>
-        <div class="hero-actions">
-          <a class="button button--primary" href="./operator/">
-            <span>Explore the system</span>
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 12h15M14 6l6 6-6 6"></path></svg>
-          </a>
-          <a class="button button--secondary" href="https://github.com/Voxterrae/HUB_Optimus">
-            <span>View on GitHub</span>
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg>
-          </a>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-backdrop" aria-hidden="true"></div>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">
+            <span class="status-dot"></span>
+            <span data-i18n="heroEyebrow">Public, versioned, evidence-backed</span>
+          </p>
+          <h1 id="hero-title">HUB<span>_</span>Optimus</h1>
+          <p class="signal-sequence" data-i18n="sequence">
+            Reality → Evidence → Inference → Narrative → Operational Signal
+          </p>
+          <p class="hero-lead" data-i18n="heroLead">
+            An integrity-first diplomatic simulation workflow for structured evaluation,
+            preventive mediation, and systemic learning.
+          </p>
+          <p class="hero-boundary" data-i18n="heroBoundary">
+            It supports better judgment. It is not an authority, a prediction engine,
+            or a replacement for diplomacy.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button button-primary" href="#portfolio" data-i18n="explorePortfolio">Explore the portfolio</a>
+            <a class="button button-secondary" href="./operator/" data-i18n="openOperator">Open Operator</a>
+          </div>
+
+          <dl class="truth-strip">
+            <div>
+              <dt data-i18n="truthSource">Source of truth</dt>
+              <dd>GitHub</dd>
+            </div>
+            <div>
+              <dt data-i18n="truthCore">Canonical v1 language</dt>
+              <dd data-i18n="truthCoreValue">Spanish</dd>
+            </div>
+            <div>
+              <dt data-i18n="truthPublic">Public layer</dt>
+              <dd data-i18n="truthPublicValue">Static Pages</dd>
+            </div>
+            <div>
+              <dt data-i18n="truthRuntime">Analysis runtime</dt>
+              <dd data-i18n="truthRuntimeValue">Local / controlled</dd>
+            </div>
+          </dl>
         </div>
-      </div>
 
-      <div class="atlas" aria-label="Animated global signal atlas" role="img">
-        <div class="atlas-meta atlas-meta--top"><span>LAT 41.39</span><span>LON 02.17</span></div>
-        <svg class="atlas-svg" viewBox="0 0 720 480" aria-hidden="true">
-          <defs>
-            <radialGradient id="atlas-glow">
-              <stop offset="0" stop-color="#38ecfc" stop-opacity=".42"></stop>
-              <stop offset=".34" stop-color="#1fa8b0" stop-opacity=".16"></stop>
-              <stop offset="1" stop-color="#000816" stop-opacity="0"></stop>
-            </radialGradient>
-            <linearGradient id="route-gradient" x1="0" x2="1">
-              <stop stop-color="#38ecfc" stop-opacity=".3"></stop>
-              <stop offset=".52" stop-color="#f3f1f3" stop-opacity=".9"></stop>
-              <stop offset="1" stop-color="#e7aa4a" stop-opacity=".42"></stop>
-            </linearGradient>
-            <filter id="node-glow" x="-80%" y="-80%" width="260%" height="260%">
-              <feGaussianBlur stdDeviation="4" result="blur"></feGaussianBlur>
-              <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
-            </filter>
-            <path id="route-a" d="M122 194Q270 74 379 118T620 164"></path>
-            <path id="route-b" d="M181 332Q310 128 428 289T559 355"></path>
-            <path id="route-c" d="M246 170Q332 332 508 201"></path>
-          </defs>
-
-          <circle class="atlas-glow" cx="424" cy="238" r="250" fill="url(#atlas-glow)"></circle>
-          <g class="globe-lines">
-            <ellipse cx="378" cy="239" rx="280" ry="172"></ellipse>
-            <ellipse cx="378" cy="239" rx="280" ry="106"></ellipse>
-            <ellipse cx="378" cy="239" rx="280" ry="42"></ellipse>
-            <ellipse cx="378" cy="239" rx="112" ry="172"></ellipse>
-            <ellipse cx="378" cy="239" rx="205" ry="172"></ellipse>
-            <path d="M98 239h560M378 67v344"></path>
-          </g>
-
-          <g class="world-dots">
-            <path d="M118 171c31-42 72-65 115-52 19 6 21 27 46 34 19 5 24 23 8 38-18 17-47 10-60 35-8 15-5 43-26 47-18 4-26-24-35-39-11-19-39-18-51-36-7-10-6-19 3-27Z"></path>
-            <path d="M241 278c18 2 42 12 50 31 8 20-8 42-15 60-9 24-16 55-33 68-12-22-11-48-20-70-7-17-26-34-22-55 3-17 19-35 40-34Z"></path>
-            <path d="M319 154c30-28 75-38 105-17 13 9 21 25 39 27 33 3 58-35 91-23 14 5 17 22 32 25 23 4 53-4 64 19 7 16-9 30-24 36-18 7-38 0-54 12-13 10-15 32-30 40-18 10-42-4-60 3-19 7-28 32-47 37-18 5-38-8-50-22-18-20-26-49-52-62-18-9-47-8-54-30-7-21 18-34 34-45Z"></path>
-            <path d="M355 263c31-10 67 14 74 47 6 27-10 59-27 79-14 17-38 14-51-4-13-17-12-40-23-58-11-18-29-38-19-57 8-15 29-20 46-7Z"></path>
-            <path d="M548 329c19-13 51-12 69 2 13 11 2 28-12 34-19 9-48 7-64-7-10-9-4-21 7-29Z"></path>
-          </g>
-
-          <g class="radar radar--one" transform="translate(379 118)"><circle r="25"></circle><circle r="44"></circle><circle r="66"></circle></g>
-          <g class="radar radar--two" transform="translate(181 332)"><circle r="20"></circle><circle r="39"></circle></g>
-          <g class="radar radar--three" transform="translate(508 201)"><circle r="22"></circle><circle r="47"></circle></g>
-
-          <g class="routes">
-            <use href="#route-a" class="route route--one"></use>
-            <use href="#route-b" class="route route--two"></use>
-            <use href="#route-c" class="route route--three"></use>
-            <path class="route route--four" d="M122 194Q218 278 320 236T508 201"></path>
-            <path class="route route--five" d="M428 289Q544 254 620 164"></path>
-            <circle class="traveller traveller--cyan" r="3">
-              <animateMotion dur="12s" repeatCount="indefinite"><mpath href="#route-a"></mpath></animateMotion>
-            </circle>
-            <circle class="traveller traveller--amber" r="3">
-              <animateMotion dur="15s" begin="-6s" repeatCount="indefinite"><mpath href="#route-b"></mpath></animateMotion>
-            </circle>
-            <circle class="traveller traveller--cyan" r="2.5">
-              <animateMotion dur="10s" begin="-3s" repeatCount="indefinite"><mpath href="#route-c"></mpath></animateMotion>
-            </circle>
-          </g>
-
-          <g class="nodes" filter="url(#node-glow)">
-            <g class="atlas-node atlas-node--1" transform="translate(122 194)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
-            <g class="atlas-node atlas-node--2" transform="translate(181 332)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
-            <g class="atlas-node atlas-node--3" transform="translate(246 170)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
-            <g class="atlas-node atlas-node--4" transform="translate(320 236)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
-            <g class="atlas-node atlas-node--5" transform="translate(379 118)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="5"></circle></g>
-            <g class="atlas-node atlas-node--6" transform="translate(428 289)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
-            <g class="atlas-node atlas-node--7" transform="translate(508 201)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
-            <g class="atlas-node atlas-node--8" transform="translate(559 355)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
-            <g class="atlas-node atlas-node--9" transform="translate(620 164)"><circle class="node-orbit" r="11"></circle><circle class="node-core" r="3.5"></circle></g>
-          </g>
-        </svg>
-        <div class="atlas-meta atlas-meta--bottom"><span>TRACE // 05</span><span>HUMAN REVIEW REQUIRED</span></div>
+        <figure class="globe-card">
+          <div class="globe-toolbar">
+            <div>
+              <span data-i18n="globeLabel">Geographic orientation</span>
+              <small data-i18n="globeNotice">Illustrative coordinates · no live telemetry</small>
+            </div>
+            <button type="button" id="globe-motion" data-i18n="pauseGlobe">Pause</button>
+          </div>
+          <div class="globe-stage">
+            <img
+              class="globe-fallback"
+              src="./assets/brand/hub-optimus-hero.jpg"
+              alt="HUB_Optimus approved geographic brand artwork"
+              data-i18n-alt="globeFallbackAlt"
+            >
+            <canvas
+              id="world-globe"
+              data-geo-source="./assets/geo/land-110m.geojson"
+              tabindex="0"
+              role="img"
+              aria-label="Interactive globe projected from real coastline coordinates. Routes are illustrative and are not live telemetry."
+              data-i18n-aria="globeAria"
+            ></canvas>
+            <div class="globe-core" aria-hidden="true">
+              <span>HUB_</span>
+              <strong>Optimus</strong>
+            </div>
+          </div>
+          <figcaption>
+            <span data-i18n="globeControls">Drag, swipe, or use the arrow keys to rotate.</span>
+            <a href="./assets/geo/README.md" data-i18n="globeData">Geographic data</a>
+          </figcaption>
+          <noscript>
+            <p class="globe-noscript">
+              The approved repository artwork is shown because interactive geography requires JavaScript.
+              It does not represent live telemetry.
+            </p>
+          </noscript>
+        </figure>
       </div>
     </section>
 
-    <section class="signal-flow" aria-label="Reality to operational signal">
-      <div class="signal-grid">
-        <a class="signal-card" href="#reality">
-          <span class="signal-index">01</span>
-          <svg viewBox="0 0 48 48" aria-hidden="true"><ellipse cx="24" cy="11" rx="14" ry="6"></ellipse><path d="M10 11v12c0 3.4 6.3 6 14 6s14-2.6 14-6V11M10 23v13c0 3.4 6.3 6 14 6s14-2.6 14-6V23"></path></svg>
-          <span class="signal-copy"><strong>Reality</strong><small>What is directly observed.</small></span>
-        </a>
-        <a class="signal-card" href="#evidence">
-          <span class="signal-index">02</span>
-          <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="21" cy="21" r="12"></circle><path d="m30 30 10 10"></path><circle class="icon-node" cx="38" cy="38" r="3"></circle></svg>
-          <span class="signal-copy"><strong>Evidence</strong><small>What supports the claim.</small></span>
-        </a>
-        <a class="signal-card" href="#inference">
-          <span class="signal-index">03</span>
-          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 35 18 14l13-5 6 22-14 8-11-4Z"></path><path d="m18 14 5 25M18 14l19 17M12 35l25-4M31 9l-8 30"></path><circle cx="18" cy="14" r="3"></circle><circle cx="31" cy="9" r="3"></circle><circle cx="37" cy="31" r="3"></circle><circle cx="23" cy="39" r="3"></circle><circle cx="12" cy="35" r="3"></circle></svg>
-          <span class="signal-copy"><strong>Inference</strong><small>What follows, cautiously.</small></span>
-        </a>
-        <a class="signal-card" href="#narrative">
-          <span class="signal-index">04</span>
-          <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="6" width="28" height="36" rx="2"></rect><path d="M17 17h14M17 24h14M17 31h9"></path></svg>
-          <span class="signal-copy"><strong>Narrative</strong><small>What may amplify or distort.</small></span>
-        </a>
-        <a class="signal-card" href="#operational">
-          <span class="signal-index">05</span>
-          <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="17"></circle><circle cx="24" cy="24" r="10"></circle><circle class="icon-node" cx="24" cy="24" r="3"></circle></svg>
-          <span class="signal-copy"><strong>Operational Signal</strong><small>What action is safe.</small></span>
-        </a>
-      </div>
-      <div class="sequence-line" aria-hidden="true"><span></span><i></i><i></i><i></i></div>
-      <p class="sequence-copy">Reality → Evidence → Inference → Narrative → Operational Signal</p>
+    <section class="principle-band" aria-label="Operating principle" data-i18n-aria="principleAria">
+      <p data-i18n="principle">Observe → detect → decide → act.</p>
+      <span></span>
+      <p data-i18n="noBuild">No build without signal.</p>
+      <span></span>
+      <p data-i18n="accountability">Human accountability remains mandatory.</p>
     </section>
 
-    <section class="content-section system-section" id="system">
+    <section class="section section-light" id="method" aria-labelledby="method-title">
       <div class="section-heading">
-        <p>System</p>
-        <h2>One interface. Clear operational boundaries.</h2>
-        <span>The public experience connects every working layer without pretending that a static website can replace the secured runtime.</span>
+        <p class="section-kicker" data-i18n="methodKicker">The method</p>
+        <h2 id="method-title" data-i18n="methodTitle">Separate before interpreting.</h2>
+        <p data-i18n="methodLead">
+          The five stages are an operating discipline. Each stage limits what the next
+          stage is allowed to claim.
+        </p>
       </div>
 
-      <div class="system-status-grid">
-        <article class="status-card"><span class="status-card-index">01</span><div><h3>Public surface</h3><strong>Available</strong><p>Multilingual orientation and repository-backed navigation.</p></div></article>
-        <article class="status-card"><span class="status-card-index">02</span><div><h3>Operator PWA</h3><strong>Browser-local</strong><p>Structured intake, topic playbooks, memory, sharing, and JSON.</p></div></article>
-        <article class="status-card"><span class="status-card-index">03</span><div><h3>Controlled URL intake</h3><strong>Bounded API</strong><p>Fetches a submitted public URL; retrieval is not verification.</p></div></article>
-        <article class="status-card"><span class="status-card-index">04</span><div><h3>Semantic Engine</h3><strong>Secure / local</strong><p>Contract-preserving analysis stays behind the protected execution boundary.</p></div></article>
-      </div>
-
-      <div class="architecture-panel">
-        <div class="architecture-intro">
-          <p class="mini-label">Containment architecture</p>
-          <h3>Every transition keeps claim, evidence, inference, uncertainty, narrative amplification, and operational relevance distinct.</h3>
-        </div>
-        <div class="architecture-flow">
-          <article><span>01</span><h4>Signal intake</h4><p>URL or pasted material enters through the Operator. Pasted text stays in the browser.</p></article>
-          <article><span>02</span><h4>Structured case</h4><p>The Operator produces traceable records instead of an unqualified answer.</p></article>
-          <article><span>03</span><h4>Secured analysis</h4><p>The complete Python Semantic Engine runs through the local analysis handoff.</p></article>
-          <article><span>04</span><h4>Human review</h4><p>Outputs remain advisory until a human validates them against versioned evidence.</p></article>
-        </div>
-      </div>
+      <ol class="method-grid">
+        <li>
+          <span>01</span>
+          <h3 data-i18n="methodReality">Reality</h3>
+          <p data-i18n="methodRealityCopy">What is directly observed.</p>
+        </li>
+        <li>
+          <span>02</span>
+          <h3 data-i18n="methodEvidence">Evidence</h3>
+          <p data-i18n="methodEvidenceCopy">What supports or contradicts a claim.</p>
+        </li>
+        <li>
+          <span>03</span>
+          <h3 data-i18n="methodInference">Inference</h3>
+          <p data-i18n="methodInferenceCopy">What follows cautiously from the evidence.</p>
+        </li>
+        <li>
+          <span>04</span>
+          <h3 data-i18n="methodNarrative">Narrative</h3>
+          <p data-i18n="methodNarrativeCopy">What may amplify, simplify, or distort.</p>
+        </li>
+        <li>
+          <span>05</span>
+          <h3 data-i18n="methodSignal">Operational Signal</h3>
+          <p data-i18n="methodSignalCopy">What is operationally relevant for human review.</p>
+        </li>
+      </ol>
     </section>
 
-    <section class="content-section method-section" id="method">
+    <section class="section section-dark" id="portfolio" aria-labelledby="portfolio-title">
       <div class="section-heading">
-        <p>Method</p>
-        <h2>Signal separation before interpretation.</h2>
-        <span>The sequence is a discipline, not a decorative pipeline. Each stage constrains what the next stage is allowed to claim.</span>
+        <p class="section-kicker" data-i18n="portfolioKicker">Repository-backed portfolio</p>
+        <h2 id="portfolio-title" data-i18n="portfolioTitle">What exists today.</h2>
+        <p data-i18n="portfolioLead">
+          Every surface carries a status and a direct evidence path. Implemented work is
+          kept separate from prototypes, controlled services, and RFC-only plans.
+        </p>
       </div>
 
-      <div class="method-stack">
-        <article class="method-card" id="reality"><div class="method-card-topline"><span>01</span></div><h3>Reality</h3><p>What is directly observed.</p><small>02</small></article>
-        <article class="method-card" id="evidence"><div class="method-card-topline"><span>02</span></div><h3>Evidence</h3><p>What supports the claim.</p><small>03</small></article>
-        <article class="method-card" id="inference"><div class="method-card-topline"><span>03</span></div><h3>Inference</h3><p>What follows, cautiously.</p><small>04</small></article>
-        <article class="method-card" id="narrative"><div class="method-card-topline"><span>04</span></div><h3>Narrative</h3><p>What may amplify or distort.</p><small>05</small></article>
-        <article class="method-card" id="operational"><div class="method-card-topline"><span>05</span></div><h3>Operational Signal</h3><p>What action is safe.</p><small>Human review gate</small></article>
-      </div>
-    </section>
+      <div class="portfolio-grid">
+        <article class="portfolio-card" data-portfolio-component="core" data-status="active-methodology">
+          <div class="card-topline">
+            <span data-i18n="cardCoreLabel">01 / CORE</span>
+            <strong class="status status-active" data-i18n="statusActive">Active methodology</strong>
+          </div>
+          <h3>HUB_Optimus Core</h3>
+          <p data-i18n="coreCopy">
+            Canonical v1 methodology, operational flow, scenarios, and meta-learning.
+            Spanish is authoritative for v1; English is the parity reference.
+          </p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/v1_core/languages/es" data-i18n="viewCanonical">Canonical core</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/context/STATUS.md" data-i18n="viewStatus">Status policy</a>
+          </div>
+        </article>
 
-    <section class="content-section engines-section" id="engines">
-      <div class="section-heading">
-        <p>Engines</p>
-        <h2>The repository is the product surface.</h2>
-        <span>HUB_Optimus combines a browser Operator, a contract-first Semantic Engine, a deterministic scenario simulator, and research tools. Each remains explicit about what it does—and does not—do.</span>
-      </div>
+        <article class="portfolio-card" data-portfolio-component="simulator" data-status="working-deterministic-prototype">
+          <div class="card-topline">
+            <span data-i18n="cardSimulatorLabel">02 / SIMULATOR</span>
+            <strong class="status status-working" data-i18n="statusSimulator">Working deterministic prototype</strong>
+          </div>
+          <h3 data-i18n="simulatorTitle">Deterministic Scenario Simulator</h3>
+          <p data-i18n="simulatorCopy">
+            Strict JSON-schema validation, seeded round execution, deterministic JSON
+            output, frozen benchmarks, and structural drift diagnostics.
+          </p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/SIMULATION_README.md" data-i18n="runScenario">Run a scenario</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/architecture/runtime_contract.md" data-i18n="runtimeContract">Runtime contract</a>
+          </div>
+        </article>
 
-      <div class="engine-grid">
-        <article class="engine-card"><div class="engine-card-heading"><span>ENGINE // 01</span><strong>Implemented</strong></div><h3>Operator Intelligence</h3><p>Source-aware browser normalization, bounded topic playbooks, scenarios, local memory, and share snapshots.</p><a href="./operator/">Open Operator <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 12h15M14 6l6 6-6 6"></path></svg></a></article>
-        <article class="engine-card"><div class="engine-card-heading"><span>ENGINE // 02</span><strong>Implemented</strong></div><h3>Semantic Engine CLI</h3><p>Preserves structured case records and produces an auditable analysis result inside the secured runtime.</p><a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/semantic_engine">Inspect engine <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg></a></article>
-        <article class="engine-card"><div class="engine-card-heading"><span>ENGINE // 03</span><strong>Implemented</strong></div><h3>Scenario Simulator</h3><p>Schema-validated, seedable round simulation with deterministic JSON output.</p><a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/SIMULATION_README.md">Run a scenario <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg></a></article>
-        <article class="engine-card"><div class="engine-card-heading"><span>ENGINE // 04</span><strong>Research tooling</strong></div><h3>Narrative Consistency</h3><p>Deterministic checks for narrative-risk datasets and source-backed reports.</p><a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/datasets/ai_risk_narratives">View research <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg></a></article>
-      </div>
+        <article class="portfolio-card" data-portfolio-component="semantic-engine" data-status="early-implementation">
+          <div class="card-topline">
+            <span data-i18n="cardSemanticLabel">03 / SEMANTIC ENGINE</span>
+            <strong class="status status-early" data-i18n="statusSemantic">Early implementation</strong>
+          </div>
+          <h3 data-i18n="semanticTitle">Contracts & CLI</h3>
+          <p data-i18n="semanticCopy">
+            Minimal claim, evidence, result, audit-log, and decision-trace contracts with
+            a local CLI that validates and preserves structured case records. It does not
+            evaluate or score claims.
+          </p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/semantic_engine" data-i18n="inspectEngine">Inspect the engine</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/architecture/semantic_engine_cli.md" data-i18n="cliContract">CLI contract</a>
+          </div>
+        </article>
 
-      <aside class="boundary-note">
-        <span>!</span>
-        <div><h3>A crucial distinction</h3><p>The public Analyze action uses deterministic browser heuristics. It is not the Python Semantic Engine, an authority, a prediction engine, or an LLM verdict. Full analysis remains deliberately contained.</p></div>
-      </aside>
-    </section>
+        <article class="portfolio-card" data-portfolio-component="operator" data-status="browser-prototype">
+          <div class="card-topline">
+            <span data-i18n="cardOperatorLabel">04 / OPERATOR</span>
+            <strong class="status status-browser" data-i18n="statusBrowser">Browser prototype</strong>
+          </div>
+          <h3>HUB_Optimus Operator</h3>
+          <p data-i18n="operatorCopy">
+            A local-first PWA for structured intake, editable case records, deterministic
+            browser triage, local memory, readable sharing, JSON, and result rendering.
+          </p>
+          <div class="card-links">
+            <a href="./operator/" data-i18n="openOperator">Open Operator</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/site/operator" data-i18n="inspectSource">Inspect source</a>
+          </div>
+        </article>
 
-    <section class="content-section research-section" id="research">
-      <div class="section-heading">
-        <p>Research & governance</p>
-        <h2>GitHub remains the source of truth.</h2>
-        <span>Issues, pull requests, commits, CI, releases, and versioned documentation outrank chat, screenshots, or presentation layers.</span>
-      </div>
+        <article class="portfolio-card" data-portfolio-component="controlled-url-intake" data-status="implementation-present-deployment-unverified">
+          <div class="card-topline">
+            <span data-i18n="cardIntakeLabel">05 / URL INTAKE</span>
+            <strong class="status status-intake" data-i18n="statusIntake">Implementation present · deployment unverified</strong>
+          </div>
+          <h3 data-i18n="intakeTitle">Controlled URL intake</h3>
+          <p data-i18n="intakeCopy">
+            Repository code and tests define bounded URL retrieval. GitHub alone does not
+            establish that a public endpoint is deployed or available. Retrieved text is
+            not verified evidence.
+          </p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/ops/ec2/hub-api.sh" data-i18n="inspectIntake">Inspect intake source</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/tests/test_hub_api_controlled_url_intake.py" data-i18n="intakeTests">Inspect tests</a>
+          </div>
+        </article>
 
-      <div class="research-layout">
-        <nav class="research-paths" aria-label="Research and onboarding">
-          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/00_start_here.md"><span>01</span><div><strong>Start in English</strong><small>90-second onboarding and repository reading path.</small></div></a>
-          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/es/00_start_here.md"><span>02</span><div><strong>Empezar en español</strong><small>Priority onboarding and access to the canonical v1 core.</small></div></a>
-          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/de/00_start_here.md"><span>03</span><div><strong>Auf Deutsch starten</strong><small>German governance and onboarding path.</small></div></a>
-          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/governance/GOVERNANCE_INTELLIGENCE.md"><span>04</span><div><strong>Governance Intelligence</strong><small>Canonical claim, evidence, inference, and uncertainty protocol.</small></div></a>
-        </nav>
+        <article class="portfolio-card" data-portfolio-component="research" data-status="experimental-tooling">
+          <div class="card-topline">
+            <span data-i18n="cardResearchLabel">06 / RESEARCH</span>
+            <strong class="status status-experimental" data-i18n="statusResearch">Experimental tooling</strong>
+          </div>
+          <h3 data-i18n="researchTitle">Scenario & Narrative Research</h3>
+          <p data-i18n="researchCopy">
+            Scenario generation, mutation sweeps, boundary search, scenario telemetry,
+            narrative consistency checks, and source-labelled research datasets.
+          </p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/lab_state.md" data-i18n="labState">Lab state</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/tools" data-i18n="researchTools">Research tools</a>
+          </div>
+        </article>
 
-        <article class="runbook">
-          <p class="mini-label">Run the verified core</p>
-          <h3>The public repository exposes the deterministic simulator and Semantic Engine CLI without claiming predictive capability.</h3>
-          <pre><code>python3 run_scenario.py \
-  --scenario example_scenario.json \
-  --seed 42
-
-python3 -m semantic_engine.cli analyze \
-  examples/semantic_engine/case_minimal.json</code></pre>
-          <div class="runbook-actions">
-            <a class="button button--primary" href="https://github.com/Voxterrae/HUB_Optimus"><span>Open the repository</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg></a>
-            <a class="button button--secondary" href="https://github.com/Voxterrae/HUB_Optimus/issues/1736"><span>Review current work</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 5h6v6M19 5l-9 9"></path></svg></a>
+        <article class="portfolio-card" data-portfolio-component="governance-intelligence" data-status="active-ratified-protocol">
+          <div class="card-topline">
+            <span data-i18n="cardGovernanceLabel">07 / GOVERNANCE</span>
+            <strong class="status status-protocol" data-i18n="statusGovernance">Active · ratified protocol</strong>
+          </div>
+          <h3 data-i18n="governanceTitle">Governance Intelligence</h3>
+          <p data-i18n="governanceCopy">
+            A versioned protocol for separating claim, evidence, inference, uncertainty,
+            narrative amplification, and operational relevance under human accountability.
+          </p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/governance/GOVERNANCE_INTELLIGENCE.md" data-i18n="readProtocol">Read protocol</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/governance/SYSTEM_PROTECTION_MATRIX.md" data-i18n="protectionMatrix">Protection matrix</a>
           </div>
         </article>
       </div>
+
+      <aside class="truth-note">
+        <span aria-hidden="true">i</span>
+        <p data-i18n="truthNote">
+          The public Operator produces browser-side triage drafts. The minimal Python
+          Semantic Engine CLI runs locally. Controlled URL intake has repository code and
+          tests, but GitHub does not confirm a live deployment. Retrieval is not verification.
+        </p>
+      </aside>
     </section>
 
-    <footer class="site-footer">
-      <a class="wordmark" href="#top"><span>HUB_</span><strong>Optimus</strong></a>
-      <div><p>GitHub is authoritative. Human accountability is mandatory.</p><span>No analytics. No advertising cookies. No hidden scoring.</span></div>
-      <a href="mailto:operator@huboptimus.dev">operator@huboptimus.dev</a>
-    </footer>
+    <section class="section section-labs" id="labs" aria-labelledby="labs-title">
+      <div class="labs-identity">
+        <p class="section-kicker" data-i18n="labsKicker">Official incubation space</p>
+        <h2 id="labs-title">HUB-Optimus <span>Labs</span></h2>
+        <p data-i18n="labsLead">
+          Labs is part of the HUB_Optimus portfolio: a governed space for experiments
+          before they are eligible for the Core or a product surface.
+        </p>
+        <a class="button button-primary" href="https://github.com/Voxterrae/HUB-Optimus-labs" data-i18n="openLabs">
+          Open HUB-Optimus Labs
+        </a>
+      </div>
+
+      <div class="labs-state" data-portfolio-component="labs" data-status="official-empty-incubation">
+        <div class="labs-state-header">
+          <span data-i18n="checkedOn">Repository checked on 28 July 2026</span>
+          <strong data-i18n="labsEmpty">Repository exists · no released artifacts</strong>
+        </div>
+        <p data-i18n="labsTruth">
+          The repository is official and currently empty. The site does not attribute
+          unreleased engines, datasets, deployments, or security capabilities to it.
+        </p>
+        <div class="labs-rules">
+          <div>
+            <span>01</span>
+            <p data-i18n="labsRuleOne">Experiments remain explicitly non-canonical.</p>
+          </div>
+          <div>
+            <span>02</span>
+            <p data-i18n="labsRuleTwo">Promotion requires evidence, tests, and a reviewed PR.</p>
+          </div>
+          <div>
+            <span>03</span>
+            <p data-i18n="labsRuleThree">The Core remains authoritative.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-light" id="boundaries" aria-labelledby="boundaries-title">
+      <div class="section-heading">
+        <p class="section-kicker" data-i18n="boundariesKicker">Architecture & authority</p>
+        <h2 id="boundaries-title" data-i18n="boundariesTitle">One truth, explicit execution boundaries.</h2>
+        <p data-i18n="boundariesLead">
+          GitHub holds the authoritative project state. Public presentation, local tools,
+          and future private deployments may consume that truth but cannot redefine it.
+        </p>
+      </div>
+
+      <div class="boundary-layout">
+        <div class="boundary-table" role="table" aria-label="Capability boundaries" data-i18n-aria="boundaryTableAria">
+          <div class="boundary-row boundary-head" role="row">
+            <span role="columnheader" data-i18n="layer">Layer</span>
+            <span role="columnheader" data-i18n="state">State</span>
+            <span role="columnheader" data-i18n="authority">Authority</span>
+          </div>
+          <div class="boundary-row" role="row">
+            <strong role="cell" data-i18n="layerGithub">GitHub repository</strong>
+            <span role="cell" data-i18n="stateVersioned">Versioned / reviewed</span>
+            <span role="cell" data-i18n="authorityCanonical">Project source of truth</span>
+          </div>
+          <div class="boundary-row" role="row">
+            <strong role="cell" data-i18n="layerPages">Public portfolio</strong>
+            <span role="cell" data-i18n="stateStatic">Static GitHub Pages</span>
+            <span role="cell" data-i18n="authorityNone">Presentation only</span>
+          </div>
+          <div class="boundary-row" role="row">
+            <strong role="cell">Operator PWA</strong>
+            <span role="cell" data-i18n="stateLocal">Browser-local / controlled handoff</span>
+            <span role="cell" data-i18n="authorityAdvisory">Advisory output</span>
+          </div>
+          <div class="boundary-row" role="row">
+            <strong role="cell" data-i18n="layerIntake">Controlled URL intake</strong>
+            <span role="cell" data-i18n="stateRepository">Code and tests in repository</span>
+            <span role="cell" data-i18n="authorityRetrieval">Retrieval only · deployment unverified</span>
+          </div>
+          <div class="boundary-row" role="row">
+            <strong role="cell" data-i18n="layerEngine">Semantic Engine CLI</strong>
+            <span role="cell" data-i18n="statePrivate">Local minimal CLI</span>
+            <span role="cell" data-i18n="authorityContract">Contract-bound draft</span>
+          </div>
+          <div class="boundary-row" role="row">
+            <strong role="cell" data-i18n="layerHuman">Human review</strong>
+            <span role="cell" data-i18n="stateMandatory">Mandatory</span>
+            <span role="cell" data-i18n="authorityAccountability">Final accountability</span>
+          </div>
+        </div>
+
+        <aside class="provider-note">
+          <p class="section-kicker" data-i18n="providerKicker">Provider position</p>
+          <h3 data-i18n="providerTitle">Portable by design.</h3>
+          <p data-i18n="providerCopy">
+            GitHub provides versioning, review, CI, and the public static site. Analysis
+            execution remains local or controlled and provider-independent. A hosting or
+            model provider does not gain project or semantic authority.
+          </p>
+          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/architecture/platform_compatibility.md" data-i18n="platformPolicy">
+            Platform compatibility policy
+          </a>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section section-future" aria-labelledby="future-title">
+      <div class="section-heading">
+        <p class="section-kicker" data-i18n="futureKicker">Future work</p>
+        <h2 id="future-title" data-i18n="futureTitle">Designed boundaries, not released capabilities.</h2>
+        <p data-i18n="futureLead">
+          These documents define constraints for possible future work. They do not prove
+          that a product, deployment, cryptographic control plane, or enterprise service exists.
+        </p>
+      </div>
+
+      <div class="future-grid">
+        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/rfc/hermes_pwa_interface_boundary.md" data-status="rfc-not-implemented">
+          <span data-i18n="futureHermesLabel">RFC / UI</span>
+          <h3>HERMES</h3>
+          <p data-i18n="hermesCopy">Future PWA interface boundary. Not implemented.</p>
+        </a>
+        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/rfc/enterprise_boundary.md" data-status="rfc-not-implemented">
+          <span data-i18n="futureEnterpriseLabel">RFC / OPERATING MODEL</span>
+          <h3>Enterprise</h3>
+          <p data-i18n="enterpriseCopy">Private operating boundary. No public service is released.</p>
+        </a>
+        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/rfc/post_quantum_control_plane.md" data-status="rfc-not-implemented">
+          <span data-i18n="futurePostQuantumLabel">RFC / SECURITY</span>
+          <h3 data-i18n="postQuantumTitle">Post-quantum control plane</h3>
+          <p data-i18n="postQuantumCopy">Standards-only planning. No cryptographic implementation.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="evidence-cta">
+      <img
+        src="./assets/brand/hub-optimus-logo-lockup.png"
+        alt="HUB_Optimus approved repository logo lockup"
+        data-i18n-alt="logoAlt"
+      >
+      <div>
+        <p class="section-kicker" data-i18n="evidenceKicker">Inspect the evidence</p>
+        <h2 data-i18n="evidenceTitle">The repository outranks the presentation.</h2>
+        <p data-i18n="evidenceCopy">
+          Review code, contracts, tests, issues, pull requests, releases, governance,
+          security policy, and intellectual-property terms directly on GitHub.
+        </p>
+      </div>
+      <div class="evidence-links">
+        <a class="button button-primary" href="https://github.com/Voxterrae/HUB_Optimus" data-i18n="openRepository">Open repository</a>
+        <a class="button button-secondary" href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/architecture/capability_status.md" data-i18n="capabilityStatus">Capability status</a>
+      </div>
+    </section>
   </main>
+
+  <footer class="site-footer">
+    <a class="brand" href="#top" aria-label="HUB_Optimus home" data-i18n-aria="homeAria">
+      <span class="brand-name">HUB<span>_</span>Optimus</span>
+      <small data-i18n="footerPortfolio">Public portfolio</small>
+    </a>
+    <p data-i18n="footerBoundary">
+      No analytics. No advertising cookies. No hidden scoring. GitHub remains authoritative.
+    </p>
+    <nav aria-label="Legal and project links" data-i18n-aria="footerNavAria">
+      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/IP_NOTICE.md">IP</a>
+      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/SECURITY.md" data-i18n="security">Security</a>
+      <a href="https://github.com/Voxterrae/HUB_Optimus/issues" data-i18n="issues">Issues</a>
+    </nav>
+  </footer>
 </body>
 </html>
