@@ -2,147 +2,86 @@
 name: Repo maintenance bot
 
 "on":
-  workflow_dispatch:
-    inputs:
-      mode:
-        description: "Scope"
-        required: true
-        default: "full"
-        type: choice
-        options: [hygiene, i18n, full]
-      allow_kernel_changes:
-        description: "Allow changes in docs/governance and v1_core/languages/es"
-        required: true
-        default: "false"
-        type: choice
-        options: ["false", "true"]
+  # Manual dispatch is intentionally disabled by issue #1740. Restore it only
+  # through a reviewed change that binds this job to a protected Environment
+  # with required reviewers and rejects every ref except the trusted default
+  # branch before Environment secrets are released.
   schedule:
     - cron: "15 6 * * 1"
 
 permissions:
-  contents: write
-  pull-requests: write
-  issues: write
+  contents: read
 
 jobs:
   maintenance:
     runs-on: ubuntu-latest
     env:
-      MAINT_MODE: ${{ github.event.inputs.mode || 'full' }}
-      ALLOW_KERNEL_CHANGES: ${{ github.event.inputs.allow_kernel_changes || 'false' }}
+      MAINT_MODE: full
 
     steps:
-      - name: Check required secrets
-        id: secrets
-        env:
-          GH_APP_ID: ${{ secrets.GH_APP_ID }}
-          GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
-        run: |
-          if [ -z "${GH_APP_ID}" ] || [ -z "${GH_APP_PRIVATE_KEY}" ]; then
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skipping maintenance bot: GH_APP_ID or GH_APP_PRIVATE_KEY is not configured."
-          else
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create GitHub App token
-        id: app-token
-        if: steps.secrets.outputs.available == 'true'
-        uses: actions/create-github-app-token@v3
+      - name: Checkout trusted default branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          app-id: ${{ secrets.GH_APP_ID }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          owner: Voxterrae
-          repositories: HUB_Optimus
-
-      - name: Checkout
-        if: steps.secrets.outputs.available == 'true'
-        uses: actions/checkout@v7
-        with:
-          token: ${{ steps.app-token.outputs.token }}
+          ref: main
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Python
-        if: steps.secrets.outputs.available == 'true'
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
 
       - name: Create working branch
         id: vars
-        if: steps.secrets.outputs.available == 'true'
         run: |
-          echo "BRANCH=chore/maintenance-${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::Checkout is not the trusted origin/main commit."
+            exit 1
+          fi
+          echo "BRANCH=chore/maintenance-${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
           git config user.name "hub-optimus-maintainer[bot]"
           git config user.email "hub-optimus-maintainer[bot]@users.noreply.github.com"
-          git fetch origin main
-          git checkout main
-          git reset --hard origin/main
-          SCRIPT_SHA=${GITHUB_SHA}
-          mkdir -p tools
-          git show "$SCRIPT_SHA:tools/maintenance_bot.py" > tools/maintenance_bot.py
-          git show "$SCRIPT_SHA:tools/kernel_guard.py" > tools/kernel_guard.py
-          git show "$SCRIPT_SHA:tools/pr_pro.py" > tools/pr_pro.py
           git checkout -b "chore/maintenance-${GITHUB_RUN_NUMBER}"
 
       - name: Run maintenance bot
-        if: steps.secrets.outputs.available == 'true'
         run: |
           python tools/maintenance_bot.py "${MAINT_MODE}"
 
       - name: Kernel guard (block protected changes unless allowed)
-        if: steps.secrets.outputs.available == 'true'
         run: |
-          if [ "${ALLOW_KERNEL_CHANGES}" = "true" ]; then
-            python tools/kernel_guard.py --allow-kernel-changes
-          else
-            python tools/kernel_guard.py
-          fi
+          python tools/kernel_guard.py
 
       - name: Commit changes if any
         id: commit
-        if: steps.secrets.outputs.available == 'true'
         run: |
           git add -A
           if git diff --cached --quiet; then
-            echo "NO_CHANGES=true" >> $GITHUB_OUTPUT
+            echo "NO_CHANGES=true" >> "$GITHUB_OUTPUT"
             echo "No changes to commit."
             exit 0
           fi
           git commit -m "chore: automated maintenance (${MAINT_MODE})"
-          echo "NO_CHANGES=false" >> $GITHUB_OUTPUT
+          echo "NO_CHANGES=false" >> "$GITHUB_OUTPUT"
 
-      - name: Push branch
-        if: steps.secrets.outputs.available == 'true' && steps.commit.outputs.NO_CHANGES == 'false'
-        run: |
-          git push -u origin "${{ steps.vars.outputs.BRANCH }}"
+      - name: Create short-lived GitHub App token
+        id: app-token
+        if: steps.commit.outputs.NO_CHANGES == 'false'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          owner: Voxterrae
+          repositories: HUB_Optimus
+          permission-contents: write
 
-      - name: Create PR automatically
-        if: steps.secrets.outputs.available == 'true' && steps.commit.outputs.NO_CHANGES == 'false'
+      - name: Push maintenance branch with ephemeral App token
+        if: steps.commit.outputs.NO_CHANGES == 'false'
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_APP_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          BRANCH="${{ steps.vars.outputs.BRANCH }}"
-          TITLE="chore: automated maintenance (${MAINT_MODE})"
-          BODY="Automated maintenance PR.\n\n"
-          BODY+="Mode: ${MAINT_MODE}\n"
-          BODY+="allow_kernel_changes: ${ALLOW_KERNEL_CHANGES}\n"
-          gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY" || true
-          PR_NUMBER=$(gh pr view "$BRANCH" --json number --jq .number)
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-          echo "BRANCH_NAME=$BRANCH" >> $GITHUB_ENV
-
-      - name: "PRO: labels + summary comment"
-        if: steps.secrets.outputs.available == 'true' && steps.commit.outputs.NO_CHANGES == 'false'
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PR_NUMBER: ${{ env.PR_NUMBER }}
-          MODE: ${{ env.MAINT_MODE }}
-          ALLOW_KERNEL: ${{ env.ALLOW_KERNEL_CHANGES }}
-        run: |
-          git fetch origin main
-          python tools/pr_pro.py
-
-      - name: Skip summary
-        if: steps.secrets.outputs.available != 'true'
-        run: echo "Maintenance workflow skipped cleanly due to missing secrets."
+          auth_header="$(printf 'x-access-token:%s' "${GH_APP_TOKEN}" | base64 | tr -d '\n')"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0="http.https://github.com/.extraheader"
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic ${auth_header}"
+          git push origin "HEAD:refs/heads/${{ steps.vars.outputs.BRANCH }}"
+          unset GIT_CONFIG_VALUE_0 auth_header
