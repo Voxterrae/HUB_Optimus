@@ -10,6 +10,7 @@ definitions.
 
 from __future__ import annotations
 
+import copy
 import json
 import random
 from typing import Any, Callable, Dict, List, Optional
@@ -124,23 +125,34 @@ class Actor:
     ) -> None:
         self.name = name
         self.role_type = role_type
-        self.policy = policy or self.default_policy
+        self.policy = policy
         self._negotiation_policy: Optional[NegotiationPolicy] = None
 
-    def default_policy(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    def default_policy(
+        self,
+        state: Dict[str, Any],
+        rng: Optional[random.Random] = None,
+    ) -> Dict[str, Any]:
         """Default policy for actors.
 
         Produces a random integer offer between 1 and 5.  Real implementations should assign more
         meaningful policies depending on the actor role and the scenario context.
         """
-        return {"offer": random.randint(1, 5)}
+        source = rng if rng is not None else random.Random()
+        return {"offer": source.randint(1, 5)}
 
-    def act(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    def act(
+        self,
+        state: Dict[str, Any],
+        rng: Optional[random.Random] = None,
+    ) -> Dict[str, Any]:
         """Return an action for the given negotiation state by calling the actor's policy."""
+        source = rng if rng is not None else random.Random()
         if self._negotiation_policy is not None:
-            rng = random.Random(random.random())
-            return self._negotiation_policy.propose(self.role_type, state, rng)
-        return self.policy(state)
+            return self._negotiation_policy.propose(self.role_type, state, source)
+        if self.policy is not None:
+            return self.policy(state)
+        return self.default_policy(state, source)
 
 
 class Simulator:
@@ -190,18 +202,18 @@ class Simulator:
             the history of actions and a detail message.
         """
         rng = random.Random(seed)
+        self.history = []
         status: str = "failure"
         for round_number in range(1, self.scenario.max_rounds + 1):
             actions: Dict[str, Dict[str, Any]] = {}
             for actor in self.actors:
-                # Use a deterministic seed to reproduce each actor's random choices
-                random.seed(rng.random())
                 actions[actor.name] = actor.act(
                     {
                         "round": round_number,
                         "history": self.history,
                         "actors": [a.name for a in self.actors],
-                    }
+                    },
+                    rng,
                 )
             self.history.append(actions)
             if self.check_success(actions):
@@ -209,12 +221,12 @@ class Simulator:
                 return {
                     "status": status,
                     "rounds": round_number,
-                    "history": self.history,
+                    "history": copy.deepcopy(self.history),
                     "detail": f"Success criteria met at round {round_number}",
                 }
         return {
             "status": status,
             "rounds": self.scenario.max_rounds,
-            "history": self.history,
+            "history": copy.deepcopy(self.history),
             "detail": "Max rounds reached without meeting success criteria",
         }

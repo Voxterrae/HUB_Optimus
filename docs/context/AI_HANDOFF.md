@@ -62,6 +62,27 @@ If this file is not updated, say why in the PR body.
 
 Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
+## Simulator Isolation Follow-up
+
+Issue #1755 records a verified mismatch between the runtime contract and the
+simulation kernel: seeded runs used module-global random state, repeated runs
+accumulated history, and previously returned results exposed the simulator's
+mutable history.
+
+The scoped correction requires protected review because it changes the
+simulator and frozen benchmark outputs. Its intended post-merge state is:
+
+- one run-local `random.Random` instance drives all built-in actor policies;
+- seeded execution does not mutate caller-global random state;
+- each `run()` starts with empty run history;
+- returned history is a snapshot rather than live simulator state;
+- changed seed-42 benchmark bytes are reviewed and frozen explicitly.
+
+Until the corresponding PR is reviewed and merged, `main` remains the
+authoritative runtime. Laboratory observations derived from the previous
+random stream require separate regeneration after merge; they must not be
+silently rewritten in the runtime PR.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
