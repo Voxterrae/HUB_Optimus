@@ -40,6 +40,27 @@ Example:
 - `docs/governance/KERNEL.md`
 - `docs/de/governance/KERNEL.md`
 
+Structural presence is not evidence of translation or linguistic parity. Current
+file-level maturity is declared in:
+
+- `docs/i18n/maturity.v1.json`
+
+The manifest distinguishes:
+
+- `missing`,
+- `stub`,
+- `draft-machine`,
+- `review-needed`,
+- `reviewed`,
+- `canonical`,
+- `parity`.
+
+A green automated audit means that the declaration matches repository evidence
+and tier-required files exist. It does not certify a translation. `reviewed`
+requires versioned reviewer identity and review evidence. A byte-identical copy
+of the English docs baseline MUST be declared `stub`, unless it is that baseline
+itself.
+
 ## Change Workflow
 1) Edit canonical (`docs/governance/...`) first.
 2) Commit canonical changes.
@@ -47,7 +68,11 @@ Example:
 4) Run placeholder check (see below) before merging.
 
 ## Placeholder Prohibition
-Placeholders are forbidden in any published documentation.
+Undeclared placeholders are forbidden in any published documentation.
+
+An explicit navigation or translation-pending stub is allowed only when the
+versioned maturity manifest declares that file as `stub`. Such a file MUST NOT
+be described as translated, reviewed, canonical, or at parity.
 
 Forbidden patterns include (non-exhaustive):
 - `PEGA AQUI`

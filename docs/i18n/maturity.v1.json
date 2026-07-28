@@ -1,0 +1,276 @@
+{
+  "manifest_version": 1,
+  "policy": {
+    "authority": "docs/context/STATUS.md",
+    "canonical_v1": "es",
+    "parity_target_v1": "en",
+    "docs_structural_baseline": "en",
+    "green_meaning": "Declarations match repository evidence and tier-required files exist; linguistic parity is not implied.",
+    "chinese_scope": {
+      "current": "zh-Hans",
+      "repository_path": "docs/zh",
+      "not_in_scope": [
+        "zh-Hant"
+      ]
+    }
+  },
+  "states": {
+    "missing": {
+      "linguistic_claim": false,
+      "description": "The optional surface is not present."
+    },
+    "stub": {
+      "linguistic_claim": false,
+      "description": "Navigation, an explicit placeholder, or a source-language copy; not a translation."
+    },
+    "draft-machine": {
+      "linguistic_claim": false,
+      "description": "Machine-generated candidate with no human linguistic approval."
+    },
+    "review-needed": {
+      "linguistic_claim": false,
+      "description": "Non-identical candidate whose accuracy and freshness have not been evidenced."
+    },
+    "reviewed": {
+      "linguistic_claim": true,
+      "description": "Human-reviewed translation; reviewer identity and evidence are mandatory."
+    },
+    "canonical": {
+      "linguistic_claim": true,
+      "description": "Authoritative source designated by repository policy."
+    },
+    "parity": {
+      "linguistic_claim": true,
+      "description": "Designated parity reference or an evidenced translation at parity."
+    }
+  },
+  "tiers": {
+    "parity-target": {
+      "required": {
+        "onboarding": "all",
+        "governance": "all"
+      }
+    },
+    "priority": {
+      "required": {
+        "onboarding": "all",
+        "governance": "all"
+      }
+    },
+    "progressive": {
+      "required": {
+        "onboarding": [
+          "00_start_here.md"
+        ],
+        "governance": "all"
+      }
+    },
+    "stub": {
+      "required": {
+        "onboarding": [
+          "00_start_here.md"
+        ],
+        "governance": "all"
+      }
+    }
+  },
+  "locales": {
+    "en": {
+      "path": ".",
+      "direction": "ltr",
+      "tier": "parity-target"
+    },
+    "es": {
+      "path": "es",
+      "direction": "ltr",
+      "tier": "priority"
+    },
+    "de": {
+      "path": "de",
+      "direction": "ltr",
+      "tier": "priority"
+    },
+    "ca": {
+      "path": "ca",
+      "direction": "ltr",
+      "tier": "progressive"
+    },
+    "fr": {
+      "path": "fr",
+      "direction": "ltr",
+      "tier": "progressive"
+    },
+    "ru": {
+      "path": "ru",
+      "direction": "ltr",
+      "tier": "progressive"
+    },
+    "he": {
+      "path": "he",
+      "direction": "rtl",
+      "tier": "stub"
+    },
+    "zh-Hans": {
+      "path": "zh",
+      "direction": "ltr",
+      "tier": "stub"
+    }
+  },
+  "surfaces": {
+    "onboarding": {
+      "source_locale": "en",
+      "subdir": ".",
+      "inventory": "selected",
+      "files": [
+        "00_start_here.md",
+        "02_how_to_read_this_repo.md",
+        "03_try_a_scenario.md"
+      ],
+      "maturity": {
+        "en": {
+          "default": "parity"
+        },
+        "es": {
+          "default": "review-needed"
+        },
+        "de": {
+          "default": "review-needed"
+        },
+        "ca": {
+          "default": "stub"
+        },
+        "fr": {
+          "default": "stub"
+        },
+        "ru": {
+          "default": "stub"
+        },
+        "he": {
+          "default": "missing",
+          "overrides": {
+            "00_start_here.md": "review-needed"
+          }
+        },
+        "zh-Hans": {
+          "default": "missing",
+          "overrides": {
+            "00_start_here.md": "stub"
+          }
+        }
+      }
+    },
+    "governance": {
+      "source_locale": "en",
+      "subdir": "governance",
+      "inventory": "complete",
+      "files": [
+        "CHARTER.md",
+        "CONSENSUS_PROCESS.md",
+        "CUSTODIANSHIP.md",
+        "EVALUATION_STANDARD.md",
+        "EXTERNAL_AI_REVIEW_PROTOCOL.md",
+        "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md",
+        "GOVERNANCE_INTELLIGENCE.md",
+        "IP_NOTICE.md",
+        "KERNEL.md",
+        "LEGITIMACY_MODEL.md",
+        "PROJECT_STEWARDSHIP.md",
+        "PUBLIC_CALCULATION_INTEGRITY_RESEARCH.md",
+        "SCENARIO_SCHEMA.md",
+        "SYSTEM_PROTECTION_MATRIX.md",
+        "TRADEMARKS.md",
+        "TRANSLATION_POLICY.md",
+        "TRUST_LAYER.md"
+      ],
+      "maturity": {
+        "en": {
+          "default": "parity"
+        },
+        "es": {
+          "default": "review-needed",
+          "overrides": {
+            "EVALUATION_STANDARD.md": "stub",
+            "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md": "stub",
+            "GOVERNANCE_INTELLIGENCE.md": "stub",
+            "IP_NOTICE.md": "stub",
+            "LEGITIMACY_MODEL.md": "stub",
+            "PROJECT_STEWARDSHIP.md": "stub",
+            "TRANSLATION_POLICY.md": "stub"
+          }
+        },
+        "de": {
+          "default": "review-needed",
+          "overrides": {
+            "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md": "stub",
+            "IP_NOTICE.md": "stub",
+            "PROJECT_STEWARDSHIP.md": "stub",
+            "TRANSLATION_POLICY.md": "stub"
+          }
+        },
+        "ca": {
+          "default": "review-needed",
+          "overrides": {
+            "CHARTER.md": "stub",
+            "CONSENSUS_PROCESS.md": "stub",
+            "CUSTODIANSHIP.md": "stub",
+            "EVALUATION_STANDARD.md": "stub",
+            "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md": "stub",
+            "GOVERNANCE_INTELLIGENCE.md": "stub",
+            "IP_NOTICE.md": "stub",
+            "KERNEL.md": "stub",
+            "LEGITIMACY_MODEL.md": "stub",
+            "PROJECT_STEWARDSHIP.md": "stub",
+            "PUBLIC_CALCULATION_INTEGRITY_RESEARCH.md": "stub",
+            "TRANSLATION_POLICY.md": "stub"
+          }
+        },
+        "fr": {
+          "default": "review-needed",
+          "overrides": {
+            "CHARTER.md": "stub",
+            "CONSENSUS_PROCESS.md": "stub",
+            "CUSTODIANSHIP.md": "stub",
+            "EVALUATION_STANDARD.md": "stub",
+            "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md": "stub",
+            "GOVERNANCE_INTELLIGENCE.md": "stub",
+            "IP_NOTICE.md": "stub",
+            "KERNEL.md": "stub",
+            "LEGITIMACY_MODEL.md": "stub",
+            "PROJECT_STEWARDSHIP.md": "stub",
+            "PUBLIC_CALCULATION_INTEGRITY_RESEARCH.md": "stub",
+            "TRANSLATION_POLICY.md": "stub"
+          }
+        },
+        "ru": {
+          "default": "review-needed",
+          "overrides": {
+            "CHARTER.md": "stub",
+            "CONSENSUS_PROCESS.md": "stub",
+            "CUSTODIANSHIP.md": "stub",
+            "EVALUATION_STANDARD.md": "stub",
+            "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md": "stub",
+            "GOVERNANCE_INTELLIGENCE.md": "stub",
+            "IP_NOTICE.md": "stub",
+            "KERNEL.md": "stub",
+            "LEGITIMACY_MODEL.md": "stub",
+            "PROJECT_STEWARDSHIP.md": "stub",
+            "PUBLIC_CALCULATION_INTEGRITY_RESEARCH.md": "stub",
+            "TRANSLATION_POLICY.md": "stub"
+          }
+        },
+        "he": {
+          "default": "stub",
+          "overrides": {
+            "EXTERNAL_AI_REVIEW_PROTOCOL.md": "review-needed"
+          }
+        },
+        "zh-Hans": {
+          "default": "stub",
+          "overrides": {
+            "EXTERNAL_AI_REVIEW_PROTOCOL.md": "review-needed"
+          }
+        }
+      }
+    }
+  }
+}

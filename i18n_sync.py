@@ -1,106 +1,119 @@
-"""
-Script to audit and synchronize translations in the HUB_Optimus documentation.
+"""Audit declared documentation translation maturity.
 
-This tool compares the set of root-level documentation files with the available
-translations in each language directory under ``docs``.  It reports missing
-translations for the docs baseline only; it does not define canonical authority for
-``v1_core``, which is governed by ``docs/context/STATUS.md``.
+The audit is policy-aware.  It checks only the onboarding and governance files
+versioned in ``docs/i18n/maturity.v1.json`` and applies each locale's declared
+coverage tier.  A green result means that declarations match repository evidence;
+it is not a claim that every file is translated or professionally reviewed.
 
 Usage:
+    python i18n_sync.py
     python i18n_sync.py --docs-dir docs
-
-The default ``docs`` directory is used if no argument is provided.  The script prints a
-summary of missing files for each language directory found (two‑letter ISO codes) and
-returns a non‑zero exit status if any missing translations are detected.
+    python i18n_sync.py --manifest docs/i18n/maturity.v1.json
 """
 
 from __future__ import annotations
 
 import argparse
-import os
 import sys
-from typing import Dict, List
+from pathlib import Path
+
+from tools.i18n_maturity import (
+    AuditResult,
+    ManifestError,
+    audit_repository,
+    state_counts,
+)
 
 
-def gather_english_files(base_dir: str, languages: List[str]) -> List[str]:
-    """Collect relative paths of root-level documentation files.
+def _display_summary(result: AuditResult) -> None:
+    manifest = result.manifest
+    policy = manifest["policy"]
+    counts = state_counts(result.observations)
 
-    This function traverses ``base_dir`` and returns a list of relative file paths for
-    Markdown files that are part of the docs baseline (i.e. not located in language
-    subdirectories).  It skips directories named with two‑letter codes defined in
-    ``languages``.
+    print("HUB_Optimus translation maturity audit")
+    print(f"Manifest version: {manifest['manifest_version']}")
+    print(
+        "Policy: "
+        f"v1 canonical={policy['canonical_v1']}; "
+        f"parity target={policy['parity_target_v1']}; "
+        f"docs baseline={policy['docs_structural_baseline']}"
+    )
+    print()
 
-    Args:
-        base_dir: The root documentation directory (e.g. ``docs``).
-        languages: A list of two‑letter language folder names to skip.
+    for locale, metadata in manifest["locales"].items():
+        locale_counts = counts.get(locale, {})
+        details = ", ".join(
+            f"{state}={count}" for state, count in sorted(locale_counts.items())
+        )
+        print(
+            f"- {locale} ({metadata['direction']}, tier={metadata['tier']}): "
+            f"{details or 'no declared files'}"
+        )
 
-    Returns:
-        A list of relative file paths for baseline Markdown files.
-    """
-    english_files: List[str] = []
-    for root, dirs, files in os.walk(base_dir):
-        # Skip traversing into language directories at the first level
-        rel_root = os.path.relpath(root, base_dir)
-        parts = rel_root.split(os.sep)
-        if parts[0] in languages:
-            continue
-        for filename in files:
-            if filename.lower().endswith(".md"):
-                rel_path = os.path.relpath(os.path.join(root, filename), base_dir)
-                english_files.append(rel_path)
-    return english_files
+    if result.warnings:
+        print("\nWarnings:")
+        for warning in result.warnings:
+            print(f"  - {warning}")
 
-
-def audit_translations(docs_dir: str) -> Dict[str, List[str]]:
-    """Detect missing translation files relative to the docs baseline.
-
-    Args:
-        docs_dir: The root documentation directory.
-
-    Returns:
-        A dictionary mapping each language code to a list of missing file paths.
-    """
-    # Language directories are top‑level subdirectories with two letters (e.g. 'es', 'fr')
-    langs = [d for d in os.listdir(docs_dir) if os.path.isdir(os.path.join(docs_dir, d)) and len(d) == 2]
-    english_files = gather_english_files(docs_dir, langs)
-    missing: Dict[str, List[str]] = {lang: [] for lang in langs}
-    for file_rel in english_files:
-        # Skip comparing English files that already live inside a language directory (shouldn't happen)
-        parts = file_rel.split(os.sep)
-        if parts[0] in langs:
-            continue
-        for lang in langs:
-            translated_path = os.path.join(docs_dir, lang, file_rel)
-            if not os.path.isfile(translated_path):
-                missing[lang].append(file_rel)
-    return missing
+    if result.errors:
+        print("\nErrors:", file=sys.stderr)
+        for error in result.errors:
+            print(f"  - {error}", file=sys.stderr)
+        print(
+            "\nFAILED: maturity declarations or tier requirements do not match "
+            "repository evidence.",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            "\nPASS: declarations match repository evidence and every "
+            "tier-required file exists."
+        )
+        print("This result does not certify linguistic parity.")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Check documentation translations against the docs baseline.")
+    parser = argparse.ArgumentParser(
+        description="Audit documentation against the versioned i18n maturity policy."
+    )
     parser.add_argument(
         "--docs-dir",
+        "--docs_dir",
         dest="docs_dir",
         default="docs",
-        help="Path to the documentation directory containing language subfolders.",
+        help="Documentation root containing the manifest and locale directories.",
+    )
+    parser.add_argument(
+        "--manifest",
+        default=None,
+        help="Maturity manifest path (default: <docs-dir>/i18n/maturity.v1.json).",
     )
     args = parser.parse_args()
-    docs_dir = args.docs_dir
-    if not os.path.isdir(docs_dir):
+
+    repo_root = Path.cwd()
+    docs_dir = Path(args.docs_dir)
+    if not docs_dir.is_absolute():
+        docs_dir = repo_root / docs_dir
+    if not docs_dir.is_dir():
         print(f"Documentation directory not found: {docs_dir}", file=sys.stderr)
-        sys.exit(2)
-    missing = audit_translations(docs_dir)
-    any_missing = False
-    for lang, files in sorted(missing.items()):
-        if files:
-            any_missing = True
-            print(f"Missing translations for '{lang}':")
-            for f in files:
-                print(f"  - {f}")
-        else:
-            print(f"All files translated for '{lang}'.")
-    if any_missing:
-        sys.exit(1)
+        raise SystemExit(2)
+
+    manifest_path = Path(args.manifest) if args.manifest else None
+    if manifest_path is not None and not manifest_path.is_absolute():
+        manifest_path = repo_root / manifest_path
+
+    try:
+        result = audit_repository(
+            repo_root,
+            docs_dir=docs_dir,
+            manifest_path=manifest_path,
+        )
+    except (ManifestError, OSError, UnicodeError) as exc:
+        print(f"Translation maturity audit configuration error: {exc}", file=sys.stderr)
+        raise SystemExit(2) from exc
+
+    _display_summary(result)
+    raise SystemExit(0 if result.ok else 1)
 
 
 if __name__ == "__main__":

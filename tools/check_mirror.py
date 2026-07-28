@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-check_mirror.py - Validate governance document mirroring across languages
+check_mirror.py - Validate governance mirror structure and declared maturity
 
 This script checks that:
-1. Governance documents are properly mirrored across all language directories
-2. No git conflict markers exist in documentation files
-3. File structure is consistent across language mirrors
+1. Governance paths required by each declared language tier exist
+2. Mirror maturity matches the versioned i18n manifest
+3. Byte-identical English copies are declared as stubs, not translations
+4. No git conflict markers exist in documentation files
 
 Usage:
     python tools/check_mirror.py
@@ -19,11 +20,17 @@ import argparse
 import re
 import subprocess
 from pathlib import Path
-from typing import List, Dict
+from typing import List
+
+REPO_MODULE_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_MODULE_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_MODULE_ROOT))
+
+from tools.i18n_maturity import ManifestError, audit_repository, state_counts
 
 
 class MirrorChecker:
-    """Check governance document mirroring and consistency."""
+    """Check governance document structure and declared maturity."""
     
     # Conflict marker patterns
     CONFLICT_MARKERS = [
@@ -32,22 +39,30 @@ class MirrorChecker:
         re.compile(r'^>{7}\s+', re.MULTILINE),
     ]
     
-    # Canonical governance directory
-    CANONICAL_DIR = "docs/governance"
-    
-    # Language codes to check (subdirectories of docs/)
-    LANGUAGE_DIRS = ["de", "es", "fr", "ca", "ru"]
-    
-    def __init__(self, repo_root: str = None, verbose: bool = False):
+    def __init__(
+        self,
+        repo_root: str = None,
+        verbose: bool = False,
+        manifest_path: str = None,
+    ):
         """
         Initialize the mirror checker.
         
         Args:
             repo_root: Path to repository root (default: auto-detect via git)
             verbose: Enable verbose output
+            manifest_path: Optional path to the versioned maturity manifest
         """
         self.verbose = verbose
         self.repo_root = self._find_repo_root() if repo_root is None else Path(repo_root)
+        if manifest_path is None:
+            self.manifest_path = (
+                self.repo_root / "docs" / "i18n" / "maturity.v1.json"
+            )
+        else:
+            self.manifest_path = Path(manifest_path)
+            if not self.manifest_path.is_absolute():
+                self.manifest_path = self.repo_root / self.manifest_path
         self.errors: List[str] = []
         self.warnings: List[str] = []
         
@@ -124,85 +139,58 @@ class MirrorChecker:
     
     def check_governance_structure(self) -> int:
         """
-        Check that governance files are mirrored across all language directories.
+        Check governance paths and maturity against the versioned manifest.
+
+        Structural presence is not treated as evidence of linguistic parity.
         
         Returns:
-            Number of structural issues found
+            Number of structural or maturity issues found
         """
-        canonical_path = self.repo_root / self.CANONICAL_DIR
-        
-        if not canonical_path.exists():
-            self.errors.append(f"Canonical directory does not exist: {self.CANONICAL_DIR}")
-            print(f"❌ Canonical directory not found: {self.CANONICAL_DIR}")
+        try:
+            result = audit_repository(
+                self.repo_root,
+                manifest_path=self.manifest_path,
+                surfaces={"governance"},
+            )
+        except (ManifestError, OSError, UnicodeError) as exc:
+            error = f"Governance maturity audit configuration error: {exc}"
+            self.errors.append(error)
+            print(f"❌ {error}")
             return 1
-        
-        # Get list of files in canonical directory
-        canonical_files = set()
-        for f in canonical_path.glob("*.md"):
-            canonical_files.add(f.name)
-        
-        if not canonical_files:
-            self.warnings.append("No markdown files found in canonical governance directory")
-            print("⚠️  No markdown files in canonical governance directory")
-            return 0
-        
-        self.log(f"Found {len(canonical_files)} files in canonical directory", "INFO")
-        print(f"\n📋 Canonical governance files: {len(canonical_files)}")
-        
-        issues = 0
-        missing_by_lang: Dict[str, List[str]] = {}
-        extra_by_lang: Dict[str, List[str]] = {}
-        
-        # Check each language directory
-        for lang in self.LANGUAGE_DIRS:
-            lang_gov_path = self.repo_root / "docs" / lang / "governance"
-            
-            if not lang_gov_path.exists():
-                self.errors.append(f"Language governance directory missing: {lang}/governance")
-                print(f"❌ Missing directory: docs/{lang}/governance")
-                issues += 1
-                missing_by_lang[lang] = list(canonical_files)
-                continue
-            
-            # Get files in this language's governance directory
-            lang_files = set()
-            for f in lang_gov_path.glob("*.md"):
-                lang_files.add(f.name)
-            
-            # Find missing files
-            missing = canonical_files - lang_files
-            if missing:
-                missing_by_lang[lang] = sorted(missing)
-                for filename in missing:
-                    self.errors.append(f"Missing mirror: docs/{lang}/governance/{filename}")
-                    issues += 1
-            
-            # Find extra files (not in canonical)
-            extra = lang_files - canonical_files
-            if extra:
-                extra_by_lang[lang] = sorted(extra)
-                for filename in extra:
-                    self.warnings.append(f"Extra file (not in canonical): docs/{lang}/governance/{filename}")
-        
-        # Report results
-        if issues == 0 and not extra_by_lang:
-            print("✅ All governance files properly mirrored across languages")
+
+        governance = result.manifest["surfaces"]["governance"]
+        print(f"\n📋 Versioned governance files: {len(governance['files'])}")
+        counts = state_counts(result.observations)
+        for locale, metadata in result.manifest["locales"].items():
+            locale_counts = counts.get(locale, {})
+            details = ", ".join(
+                f"{state}={count}" for state, count in sorted(locale_counts.items())
+            )
+            print(
+                f"   {locale} ({metadata['direction']}, "
+                f"tier={metadata['tier']}): {details}"
+            )
+
+        self.errors.extend(result.errors)
+        self.warnings.extend(result.warnings)
+
+        if result.errors:
+            print(f"\n❌ Governance maturity issues ({len(result.errors)}):")
+            for error in result.errors:
+                print(f"   - {error}")
         else:
-            if missing_by_lang:
-                print(f"\n❌ Missing mirrors found ({issues} issues):")
-                for lang, files in missing_by_lang.items():
-                    print(f"\n   {lang}/ ({len(files)} missing):")
-                    for f in files:
-                        print(f"     - {f}")
-            
-            if extra_by_lang:
-                print(f"\n⚠️  Extra files (not in canonical):")
-                for lang, files in extra_by_lang.items():
-                    print(f"\n   {lang}/ ({len(files)} extra):")
-                    for f in files:
-                        print(f"     - {f}")
-        
-        return issues
+            print(
+                "✅ Required governance paths exist and maturity declarations "
+                "match observed content"
+            )
+            print("ℹ️  Structural presence does not certify linguistic parity")
+
+        if result.warnings:
+            print("\n⚠️  Governance maturity warnings:")
+            for warning in result.warnings:
+                print(f"   - {warning}")
+
+        return len(result.errors)
     
     def run_all_checks(self) -> bool:
         """
@@ -272,10 +260,19 @@ def main():
         type=str,
         help="Repository root path (default: auto-detect)"
     )
+    parser.add_argument(
+        "--manifest",
+        type=str,
+        help="Maturity manifest path (default: docs/i18n/maturity.v1.json)"
+    )
     
     args = parser.parse_args()
     
-    checker = MirrorChecker(repo_root=args.repo_root, verbose=args.verbose)
+    checker = MirrorChecker(
+        repo_root=args.repo_root,
+        verbose=args.verbose,
+        manifest_path=args.manifest,
+    )
     
     # Run specific checks or all checks
     if args.check_conflicts:

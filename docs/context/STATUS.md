@@ -11,7 +11,13 @@ This file records stable repository policy and high-level status. For current PR
 **docs/** (onboarding & navigation):
 - Priority languages: **es, de, en**
 - Additional languages: ca, fr, ru (structure complete; translation progressive)
-- Stub languages: **zh, he** (directory + governance stub only; full translation pending)
+- Stub languages: **zh-Hans, he** (repository directories `zh` / `he`; governance stubs; full translation pending)
+
+File presence is structural evidence only, not proof of translation. The
+versioned, machine-verifiable maturity record for onboarding and governance is
+`docs/i18n/maturity.v1.json`. Hebrew is declared right-to-left. The current
+Chinese scope is Simplified Chinese (`zh-Hans`); Traditional Chinese
+(`zh-Hant`) is not yet in scope.
 
 **Source-of-truth rule:**
 - If repository docs conflict, **this file (`docs/context/STATUS.md`) wins**.
