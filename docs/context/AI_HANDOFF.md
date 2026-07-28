@@ -62,6 +62,21 @@ If this file is not updated, say why in the PR body.
 
 Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
+## GitHub Actions supply-chain boundary
+
+The CI, link-check, Pages, PR-safety, and repository-health workflows pin
+external Actions to reviewed full commit SHAs. The corresponding release
+version remains beside each SHA as an inline comment, and
+`tests/test_workflow_action_pins.py` is the reviewed allowlist for those
+workflows.
+
+Dependabot may propose Action updates, but it must not auto-merge them. Review
+the upstream tag, commit, release notes, `action.yml`, runtime, inputs, and
+permission impact before updating the SHA, version comment, and allowlist
+together. The complete procedure is versioned in `docs/context/WORKFLOWS.md`.
+Kernel Guard and the maintenance workflow remain separate security scopes
+because their changes also affect execution or credential behavior.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
