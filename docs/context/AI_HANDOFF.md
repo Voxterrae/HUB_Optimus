@@ -62,6 +62,38 @@ If this file is not updated, say why in the PR body.
 
 Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
+## Controlled URL Intake Network Follow-up
+
+- Issue #1761 converts malformed and out-of-range URL ports into controlled
+  intake errors.
+- URL intake resolves and validates every address once per URL/redirect hop,
+  rejects the hop if any address is non-global or multicast, disables
+  environment proxies, opens a numeric family-specific socket, and verifies
+  the connected peer against the validated IP set.
+- Raw spaces, control characters, and Unicode IRIs are rejected before DNS;
+  international hostnames require an IDNA A-label, international path/query
+  text must be supplied as a percent-encoded ASCII URI, and redirects follow
+  the same policy.
+- Known IPv6 transition formats are rejected when they embed a non-global IPv4
+  destination, including the `64:ff9b::/96` NAT64 well-known prefix.
+- Candidate IP connections, redirects, TLS, headers, and response reading share
+  one eight-second monotonic application budget on the current synchronous
+  Linux main-thread server.
+- The budget is checked immediately after system DNS returns. `SIGALRM`
+  interruption of a blocking libc resolver is best-effort, not a portable DNS
+  cancellation guarantee; off-main-thread deadline use fails with a controlled
+  service error.
+- The original hostname remains in HTTP `Host` handling and HTTPS SNI and
+  certificate verification.
+- Intake still accepts one user-supplied URL, follows at most three validated
+  redirects, and never fetches document links or embedded resources.
+- Fetched material and failure records remain unreviewed provenance, not truth
+  verification.
+- Infrastructure-specific NAT64/6rd prefixes and egress routing remain outside
+  application pinning and require outbound-network controls.
+- Repository tests and launcher source do not assert that this change is
+  deployed on any host.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
