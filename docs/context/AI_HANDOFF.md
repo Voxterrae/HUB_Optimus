@@ -62,6 +62,27 @@ If this file is not updated, say why in the PR body.
 
 Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
+## Python Packaging Follow-up
+
+Issue #1763 records drift between the documented Python minimum, executable
+syntax, bootstrap checks, and the dependency files. The scoped correction
+requires review because it changes the supported installation and bootstrap
+contract.
+
+Its intended post-merge state is:
+
+- supported Python is 3.11 or newer;
+- `requirements.txt` is the runtime tier and contains `jsonschema`;
+- `requirements-dev.txt` includes the runtime tier and adds `pytest`;
+- `python scripts/bootstrap.py --runtime-only` installs/checks runtime
+  dependencies and executes the supported scenario CLI smoke test;
+- the default bootstrap remains the development path and fails when tests or
+  frozen benchmarks fail rather than printing an ambiguous ready state.
+
+The runtime-only install path has been verified in a newly created virtual
+environment without development requirements. Until the corresponding PR is
+reviewed and merged, `main` remains the authoritative packaging contract.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.

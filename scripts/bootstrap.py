@@ -12,12 +12,15 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-REQUIREMENTS = REPO_ROOT / "requirements-dev.txt"
+RUNTIME_REQUIREMENTS = REPO_ROOT / "requirements.txt"
+DEVELOPMENT_REQUIREMENTS = REPO_ROOT / "requirements-dev.txt"
 MIN_PYTHON = (3, 11)
 
 # ── Checks ──────────────────────────────────────────────────
@@ -57,10 +60,11 @@ def check_tool(name: str) -> bool:
 # ── Install ─────────────────────────────────────────────────
 
 
-def install_requirements() -> bool:
-    print(f"\nInstalling from {REQUIREMENTS.name} ...")
+def install_requirements(requirements: Path) -> bool:
+    """Install one explicit dependency tier."""
+    print(f"\nInstalling from {requirements.name} ...")
     proc = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-r", str(REQUIREMENTS), "-q"],
+        [sys.executable, "-m", "pip", "install", "-r", str(requirements), "-q"],
         check=False,
     )
     return proc.returncode == 0
@@ -87,13 +91,78 @@ def run_benchmarks() -> bool:
     return proc.returncode == 0
 
 
+def run_runtime_smoke() -> bool:
+    """Run the documented scenario CLI without development-only packages."""
+    print("\nRunning runtime smoke test ...")
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "run_scenario.py"),
+            str(REPO_ROOT / "example_scenario.json"),
+            "--seed",
+            "42",
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if proc.returncode != 0:
+        diagnostic = proc.stderr.strip() or proc.stdout.strip() or "no diagnostic"
+        print(f"  [FAIL] runtime smoke: {diagnostic}")
+        return False
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        print(f"  [FAIL] runtime smoke returned invalid JSON: {exc}")
+        return False
+    ok = (
+        payload.get("status") in {"success", "failure"}
+        and isinstance(payload.get("rounds"), int)
+        and isinstance(payload.get("history"), list)
+    )
+    print(f"  [{'OK' if ok else 'FAIL'}]   scenario CLI")
+    return ok
+
+
 # ── Main ────────────────────────────────────────────────────
 
 
-def main() -> int:
-    check_only = "--check" in sys.argv
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Prepare or verify a HUB_Optimus Python environment."
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Verify the selected dependency tier without installing or running tests.",
+    )
+    parser.add_argument(
+        "--runtime-only",
+        action="store_true",
+        help=(
+            "Install/check requirements.txt and run only the scenario CLI smoke test; "
+            "do not require pytest."
+        ),
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    check_only = args.check
+    requirements = (
+        RUNTIME_REQUIREMENTS if args.runtime_only else DEVELOPMENT_REQUIREMENTS
+    )
 
     print("=== HUB_Optimus Environment Bootstrap ===\n")
+    print(
+        "Mode: "
+        f"{'runtime' if args.runtime_only else 'development'} "
+        f"({requirements.name})"
+    )
 
     # 1. Python version
     print("1. Python")
@@ -104,7 +173,7 @@ def main() -> int:
 
     # 2. Key packages
     print("\n2. Packages")
-    packages = ["jsonschema", "pytest"]
+    packages = ["jsonschema"] if args.runtime_only else ["jsonschema", "pytest"]
     missing = [p for p in packages if not check_package(p)]
 
     # 3. Git
@@ -113,7 +182,7 @@ def main() -> int:
 
     # 4. Install if needed
     if missing and not check_only:
-        if not install_requirements():
+        if not install_requirements(requirements):
             print("\n   pip install failed.")
             return 1
         # Re-check
@@ -127,11 +196,20 @@ def main() -> int:
 
     # 5. Health check
     if not check_only:
-        tests_ok = run_tests()
-        benchmarks_ok = run_benchmarks()
-        print("\n=== Summary ===")
-        print(f"  Tests:      {'PASS' if tests_ok else 'FAIL'}")
-        print(f"  Benchmarks: {'PASS' if benchmarks_ok else 'FAIL (expected on Windows/CRLF)'}")
+        if args.runtime_only:
+            smoke_ok = run_runtime_smoke()
+            print("\n=== Summary ===")
+            print(f"  Runtime smoke: {'PASS' if smoke_ok else 'FAIL'}")
+            if not smoke_ok:
+                return 1
+        else:
+            tests_ok = run_tests()
+            benchmarks_ok = run_benchmarks()
+            print("\n=== Summary ===")
+            print(f"  Tests:      {'PASS' if tests_ok else 'FAIL'}")
+            print(f"  Benchmarks: {'PASS' if benchmarks_ok else 'FAIL'}")
+            if not tests_ok or not benchmarks_ok:
+                return 1
     else:
         print("\n=== Check complete (no install, no tests) ===")
 
