@@ -62,6 +62,30 @@ If this file is not updated, say why in the PR body.
 
 Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
+## Telemetry Input Follow-up
+
+Issue #1757 records that malformed scenario files could crash telemetry or
+be subtracted from multiple aggregate categories. The scoped correction
+requires review because it changes telemetry records, index fields, and
+partial-run exit behavior.
+
+Its intended post-merge state is:
+
+- every discovered input receives exactly one processing outcome:
+  `agreement`, `no_agreement`, `parse_error`, `schema_error`, or
+  `runtime_error`;
+- malformed JSON roots, invalid UTF-8, schema errors, and runner-output
+  errors are recorded per file without stopping safe collection;
+- aggregate counts remain non-negative and sum to the discovered total;
+- exit `0` means complete collection, exit `2` means outputs were written
+  with one or more partial data errors, and exit `1` means fatal setup or
+  output failure;
+- the canonical generated seed-42 set remains 60/60 runtime-complete with
+  55 agreements, 5 no-agreements, and average convergence round 1.8.
+
+Until the corresponding PR is reviewed and merged, `main` remains the
+authoritative telemetry behavior.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
