@@ -62,6 +62,22 @@ If this file is not updated, say why in the PR body.
 
 Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
+## Semantic CaseInput Integrity Follow-up
+
+- Issue #1756 defines `semantic_engine/contracts/case_input.schema.json` as the
+  versioned `CaseInput v1` source of truth.
+- The Semantic Engine CLI rejects unknown fields, duplicate claim/evidence IDs,
+  and evidence references to undeclared claims with controlled JSON-path
+  errors.
+- `metadata` is the only open extension object, remains preserved in output,
+  and is opaque rather than executable or authoritative.
+- Input `decision_trace` and `audit_log` are forbidden; they remain output-only
+  engine records.
+- Operator `/analyze` handoff and the local API reach the same contract through
+  `hub-core analyze`; browser-local draft rendering remains a non-authoritative
+  preview.
+- This change adds no evaluator, scoring, model judge, or autonomous conclusion.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.

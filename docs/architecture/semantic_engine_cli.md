@@ -41,6 +41,11 @@ exit 1 = expected input/output error
 
 ## Current input contract
 
+The source of truth is the versioned JSON Schema:
+[`semantic_engine/contracts/case_input.schema.json`](../../semantic_engine/contracts/case_input.schema.json).
+The CLI validates every case against `CaseInput v1` before constructing an
+`AnalysisResult`.
+
 The minimal case JSON must be an object with non-empty string fields:
 
 ```json
@@ -51,9 +56,29 @@ The minimal case JSON must be an object with non-empty string fields:
 }
 ```
 
+Contract rules:
+
+- unknown fields are rejected at the root and inside claim/evidence records;
+- arbitrary JSON is allowed only inside an explicit `metadata` object, which is
+  preserved in the output but remains opaque and non-authoritative; metadata
+  keys do not become executable fields, evidence, verification, scoring,
+  decision traces, audit events, or governance authority;
+- `claim_id` and `evidence_id` values must be unique within their collections;
+- every `supports_claim_ids` and `contradicts_claim_ids` entry must identify a
+  submitted claim;
+- input `decision_trace` and `audit_log` fields are forbidden because those are
+  output-only engine records;
+- errors identify the rejected JSON path, for example
+  `$.claims[1].claim_id`.
+
+The Operator handoff posts this CaseInput shape to the local `/analyze`
+endpoint. The API delegates analysis to `hub-core analyze`, which invokes this
+same CLI validator. Browser-local draft rendering remains a preview, not a
+backend analysis or a substitute contract.
+
 ## Out of scope
 
-- API
+- New public API surface
 - HERMES PWA
 - AWS runtime
 - S3 persistence
