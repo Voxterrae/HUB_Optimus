@@ -9,22 +9,26 @@ structured telemetry per execution, and writes:
 
 Each telemetry record captures:
   scenario_id, family, actors, max_rounds, result_status,
-  rounds_used, convergence_round, schema_valid, runtime_error
+  rounds_used, convergence_round, schema_valid, runtime_error,
+  processing_outcome, error_code, and generation provenance
 
 Usage:
   python tools/scenario_telemetry.py                          # default dirs
   python tools/scenario_telemetry.py --scenario-dir DIR       # custom input
+  python tools/scenario_telemetry.py --manifest FILE          # manifested run
   python tools/scenario_telemetry.py --seed 99                # different seed
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import subprocess
 import os
+import re
+import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -41,6 +45,144 @@ PROCESSING_OUTCOMES = (
     "runtime_error",
 )
 PARTIAL_ERROR_OUTCOMES = {"parse_error", "schema_error", "runtime_error"}
+MANIFEST_NAME = "generation_manifest.json"
+MANIFEST_VERSION = 1
+GENERATOR_ID = "tools/scenario_generator/generate_scenarios.py"
+GENERATOR_FAMILIES = frozenset(
+    {"info_asymmetry", "resource_scarcity", "incentive_misalignment"}
+)
+
+
+class ManifestError(ValueError):
+    """Raised when a generation manifest cannot define a safe, verified run."""
+
+
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return False
+    return True
+
+
+def _manifest_run_id(payload: dict[str, Any]) -> str:
+    descriptor = {
+        "format_version": payload.get("format_version"),
+        "generator": payload.get("generator"),
+        "seed": payload.get("seed"),
+        "requested_count": payload.get("requested_count"),
+        "produced_count": payload.get("produced_count"),
+        "files": payload.get("files"),
+    }
+    digest_input = json.dumps(
+        descriptor, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+    return f"sha256:{hashlib.sha256(digest_input).hexdigest()}"
+
+
+def load_manifest(
+    scenario_dir: Path,
+    manifest_path: Path,
+) -> tuple[list[tuple[Path, str]], dict[str, Any]]:
+    """Load a generator manifest and verify every selected file by hash."""
+    root = scenario_dir.resolve()
+    resolved_manifest = manifest_path.resolve()
+    if resolved_manifest.parent != root:
+        raise ManifestError(
+            "manifest must be located directly in the scenario directory"
+        )
+
+    try:
+        payload = json.loads(resolved_manifest.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, UnicodeError) as exc:
+        raise ManifestError(f"cannot read manifest: {exc}") from exc
+
+    if not isinstance(payload, dict):
+        raise ManifestError("manifest root must be a JSON object")
+    if payload.get("format_version") != MANIFEST_VERSION:
+        raise ManifestError(
+            f"unsupported manifest format_version: {payload.get('format_version')!r}"
+        )
+    if payload.get("generator") != GENERATOR_ID:
+        raise ManifestError(
+            f"unexpected manifest generator: {payload.get('generator')!r}"
+        )
+    seed = payload.get("seed")
+    requested_count = payload.get("requested_count")
+    produced_count = payload.get("produced_count")
+    if seed is not None and (not isinstance(seed, int) or isinstance(seed, bool)):
+        raise ManifestError("manifest seed must be an integer or null")
+    if (
+        not isinstance(requested_count, int)
+        or isinstance(requested_count, bool)
+        or requested_count < 0
+    ):
+        raise ManifestError("manifest requested_count must be a non-negative integer")
+    if (
+        not isinstance(produced_count, int)
+        or isinstance(produced_count, bool)
+        or produced_count < 0
+    ):
+        raise ManifestError("manifest produced_count must be a non-negative integer")
+    if produced_count > requested_count:
+        raise ManifestError("manifest produced_count exceeds requested_count")
+
+    files = payload.get("files")
+    if not isinstance(files, list):
+        raise ManifestError("manifest files must be a list")
+    if payload.get("produced_count") != len(files):
+        raise ManifestError("manifest produced_count does not match files")
+    if payload.get("run_id") != _manifest_run_id(payload):
+        raise ManifestError("manifest run_id does not match its content")
+
+    selected: list[tuple[Path, str]] = []
+    seen: set[str] = set()
+    for entry in files:
+        if not isinstance(entry, dict):
+            raise ManifestError("manifest file entries must be objects")
+        relative = entry.get("path")
+        expected_hash = entry.get("sha256")
+        if (
+            not isinstance(relative, str)
+            or not isinstance(expected_hash, str)
+            or re.fullmatch(r"[0-9a-f]{64}", expected_hash) is None
+        ):
+            raise ManifestError(
+                "manifest file entries require a path and lowercase SHA-256"
+            )
+        pure = PurePosixPath(relative)
+        if (
+            pure.is_absolute()
+            or ".." in pure.parts
+            or pure.as_posix() != relative
+            or len(pure.parts) != 2
+            or pure.parts[0] not in GENERATOR_FAMILIES
+            or not pure.stem.startswith(f"{pure.parts[0]}_")
+            or not pure.stem.removeprefix(f"{pure.parts[0]}_").isdigit()
+            or pure.suffix != ".json"
+        ):
+            raise ManifestError(f"unsafe manifest path: {relative!r}")
+        if relative in seen:
+            raise ManifestError(f"duplicate manifest path: {relative!r}")
+        seen.add(relative)
+
+        path = root.joinpath(*pure.parts)
+        resolved = path.resolve()
+        if not _is_relative_to(resolved, root):
+            raise ManifestError(
+                f"manifest path escapes scenario directory: {relative!r}"
+            )
+        if not path.is_file():
+            raise ManifestError(f"manifest file not found: {relative!r}")
+        try:
+            actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            raise ManifestError(f"cannot read manifest file {relative!r}: {exc}") from exc
+        if actual_hash != expected_hash:
+            raise ManifestError(f"manifest hash mismatch: {relative!r}")
+        selected.append((path, actual_hash))
+
+    return selected, payload
 
 
 # ── Telemetry collection ───────────────────────────────────
@@ -73,7 +215,15 @@ def _validate_schema(payload: Any) -> bool:
     return not list(validator.iter_errors(payload))
 
 
-def collect_one(scenario_path: Path, seed: int) -> dict[str, Any]:
+def collect_one(
+    scenario_path: Path,
+    seed: int,
+    *,
+    generation_run_id: str | None = None,
+    generation_seed: int | None = None,
+    scenario_sha256: str | None = None,
+    manifest_verified: bool = False,
+) -> dict[str, Any]:
     """Run one scenario and return a telemetry record."""
     scenario_id = scenario_path.stem
     family = _infer_family(scenario_path)
@@ -83,6 +233,10 @@ def collect_one(scenario_path: Path, seed: int) -> dict[str, Any]:
         "family": family,
         "mutation_axis": _infer_mutation_axis(scenario_path),
         "seed": seed,
+        "generation_run_id": generation_run_id,
+        "generation_seed": generation_seed,
+        "scenario_sha256": scenario_sha256,
+        "manifest_verified": manifest_verified,
         "actors": 0,
         "max_rounds": 0,
         "result_status": "error",
@@ -154,7 +308,11 @@ def collect_one(scenario_path: Path, seed: int) -> dict[str, Any]:
         if result_status not in {"success", "failure"}:
             record["error_code"] = "runner_status_invalid"
             return record
-        if not isinstance(rounds_used, int) or isinstance(rounds_used, bool) or rounds_used < 0:
+        if (
+            not isinstance(rounds_used, int)
+            or isinstance(rounds_used, bool)
+            or rounds_used < 0
+        ):
             record["error_code"] = "runner_rounds_invalid"
             return record
 
@@ -183,17 +341,44 @@ def collect_one(scenario_path: Path, seed: int) -> dict[str, Any]:
     return record
 
 
-def collect_all(scenario_dir: Path, seed: int) -> list[dict[str, Any]]:
-    """Collect telemetry for all scenarios in a directory (recursive)."""
-    skip = {"telemetry.json", "index.json"}
-    scenarios = sorted(
-        p for p in scenario_dir.rglob("*.json")
-        if p.name not in skip and ".telemetry_tmp" not in p.name
-    )
+def collect_all(
+    scenario_dir: Path,
+    seed: int,
+    manifest_path: Path | None = None,
+) -> list[dict[str, Any]]:
+    """Collect telemetry for one manifested run or a legacy directory scan."""
+    if manifest_path is not None:
+        selected, manifest = load_manifest(scenario_dir, manifest_path)
+        scenarios = [
+            (
+                path,
+                file_hash,
+                manifest["run_id"],
+                manifest.get("seed"),
+                True,
+            )
+            for path, file_hash in selected
+        ]
+    else:
+        skip = {"telemetry.json", "index.json", MANIFEST_NAME}
+        scenarios = [
+            (path, None, None, None, False)
+            for path in sorted(
+                p for p in scenario_dir.rglob("*.json")
+                if p.name not in skip and ".telemetry_tmp" not in p.name
+            )
+        ]
     records: list[dict[str, Any]] = []
 
-    for path in scenarios:
-        record = collect_one(path, seed)
+    for path, file_hash, run_id, generation_seed, verified in scenarios:
+        record = collect_one(
+            path,
+            seed,
+            generation_run_id=run_id,
+            generation_seed=generation_seed,
+            scenario_sha256=file_hash,
+            manifest_verified=verified,
+        )
         status_icon = {
             "agreement": "\u2705",
             "no_agreement": "\u274c",
@@ -252,6 +437,24 @@ def build_index(records: list[dict[str, Any]]) -> dict[str, Any]:
         if r["processing_outcome"] in PARTIAL_ERROR_OUTCOMES:
             families[fam]["errors"] += 1
 
+    run_ids = sorted(
+        {
+            r["generation_run_id"]
+            for r in records
+            if r.get("generation_run_id") is not None
+        }
+    )
+    generation_seeds = sorted(
+        {
+            r["generation_seed"]
+            for r in records
+            if r.get("generation_seed") is not None
+        }
+    )
+    manifest_verified = bool(records) and all(
+        r.get("manifest_verified", False) for r in records
+    )
+
     return {
         "total": total,
         "passed_runtime": passed,
@@ -262,6 +465,11 @@ def build_index(records: list[dict[str, Any]]) -> dict[str, Any]:
         "no_agreements": no_agreements,
         "avg_convergence_round": avg_convergence,
         "processing_outcomes": outcome_counts,
+        "generation": {
+            "run_id": run_ids[0] if len(run_ids) == 1 else None,
+            "seed": generation_seeds[0] if len(generation_seeds) == 1 else None,
+            "manifest_verified": manifest_verified,
+        },
         "by_family": families,
     }
 
@@ -328,6 +536,15 @@ def main() -> int:
         help=f"Directory with scenario JSON files (default: {DEFAULT_SCENARIO_DIR}).",
     )
     parser.add_argument(
+        "--manifest",
+        type=str,
+        default=None,
+        help=(
+            f"Generation manifest to verify and select the current run "
+            f"(auto-detected as {MANIFEST_NAME} in the scenario directory)."
+        ),
+    )
+    parser.add_argument(
         "--output-dir", type=str, default=None,
         help=f"Where to write telemetry.json and index.json (default: {DEFAULT_OUTPUT_DIR}).",
     )
@@ -337,7 +554,13 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    scenario_dir = Path(args.scenario_dir) if args.scenario_dir else DEFAULT_SCENARIO_DIR
+    explicit_manifest = Path(args.manifest) if args.manifest else None
+    if args.scenario_dir:
+        scenario_dir = Path(args.scenario_dir)
+    elif explicit_manifest is not None:
+        scenario_dir = explicit_manifest.parent
+    else:
+        scenario_dir = DEFAULT_SCENARIO_DIR
     output_dir = Path(args.output_dir) if args.output_dir else DEFAULT_OUTPUT_DIR
 
     if not scenario_dir.is_dir():
@@ -347,9 +570,27 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
+    manifest_path = explicit_manifest
+    if manifest_path is None:
+        candidate = scenario_dir / MANIFEST_NAME
+        if candidate.is_file():
+            manifest_path = candidate
+
     print(f"Collecting telemetry from {scenario_dir} ...\n")
+    if manifest_path is None:
+        print(
+            "  Warning: no generation manifest; scanning legacy directory "
+            "without generation-run provenance.\n",
+            file=sys.stderr,
+        )
+    else:
+        print(f"  Manifest: {manifest_path}\n")
+
     try:
-        records = collect_all(scenario_dir, args.seed)
+        records = collect_all(scenario_dir, args.seed, manifest_path)
+    except ManifestError as exc:
+        print(f"[manifest-error] {exc}", file=sys.stderr)
+        return 1
     except OSError as exc:
         print(f"Unable to scan scenario directory: {exc}", file=sys.stderr)
         return 1

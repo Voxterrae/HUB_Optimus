@@ -109,6 +109,22 @@ efímeros (gitignored) y se regeneran localmente.
 | Búsqueda de frontera | `python tools/scenario_boundary_search.py` | Frontera de estabilidad por eje (búsqueda binaria) |
 | Frontera 2D | `python tools/scenario_frontier.py` | Mapas de estabilidad en planos de dos ejes |
 
+Cada ejecución del generador escribe `generation_manifest.json`. Ese manifiesto
+identifica el conjunto actual mediante un `run_id` reproducible y hashes SHA-256;
+la telemetría lo detecta y verifica automáticamente, por lo que no mezcla archivos
+sobrantes de ejecuciones anteriores. El espacio que el generador considera propio
+se limita a rutas inmediatas con la forma
+`<familia>/<familia>_<número>.json`. Para eliminar archivos obsoletos solo dentro
+de ese espacio explícito:
+
+```bash
+python tools/scenario_generator/generate_scenarios.py --count 20 --clean
+```
+
+Sin `--clean`, los archivos obsoletos se conservan y se notifican, pero quedan
+fuera del manifiesto actual. Otros JSON, subdirectorios y notas dentro del
+directorio de salida nunca se eliminan.
+
 La memoria científica del laboratorio se mantiene en `docs/lab_state.md`.
 
 ## 5. Sincronización de traducciones (opcional)

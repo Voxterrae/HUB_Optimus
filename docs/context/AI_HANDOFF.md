@@ -86,6 +86,26 @@ Its intended post-merge state is:
 Until the corresponding PR is reviewed and merged, `main` remains the
 authoritative telemetry behavior.
 
+## Scenario Generation Provenance Follow-up
+
+Issue #1758 scopes the laboratory generator/telemetry correction for stale
+generated scenarios.
+
+Operational boundary:
+
+- Each generator run writes a content-addressed
+  `generation_manifest.json` containing the exact current scenario set and
+  SHA-256 hashes.
+- Telemetry auto-detects and verifies that manifest, excludes retained stale
+  files, and records the generation run identifier in records and the index.
+- Default generation reports but retains stale generator-owned files.
+  `--clean` removes only immediate
+  `<family>/<family>_<number>.json` paths inside the resolved output
+  directory; unrelated files and nested user content remain outside cleanup
+  ownership.
+- A missing manifest remains a supported legacy telemetry scan, explicitly
+  marked as unverified and without generation-run provenance.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
