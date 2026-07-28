@@ -19,6 +19,22 @@ GitHub remains the source of truth; chat summaries are advisory unless reflected
 - Small PRs only.
 - Keep source-of-truth conflicts resolved by `docs/context/STATUS.md`.
 
+## PowerShell Tooling Boundary
+
+- Mutation-capable PowerShell utilities are preview-only unless the operator
+  supplies `-Apply`.
+- They are limited to Git-tracked, non-link paths inside the detected repository.
+- Their current support status is provisional/manual and requires PowerShell 7
+  plus Git.
+- The dedicated `PowerShell tooling` CI job must fail when `pwsh` 7 is missing
+  and must execute the temporary-repository behavior tests. Local or generic
+  pytest runs without `pwsh` report those tests as skipped; a skip is not
+  certification.
+- Do not describe PowerShell behavior as CI-verified from repository code or a
+  local result alone. Only a green dedicated job on the reviewed PR is evidence
+  for the behavior covered on its Ubuntu runner; Windows and macOS remain
+  unverified by that job.
+
 ## Human Stewardship and Technical Review Boundary
 
 - Benjamin Gerrit Hoff is the creator, project owner, primary human steward, and final human-accountability layer of HUB_Optimus.
