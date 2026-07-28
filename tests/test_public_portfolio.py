@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -12,8 +13,14 @@ SITE = ROOT / "site"
 INDEX = SITE / "index.html"
 STYLES = SITE / "styles.css"
 APP = SITE / "app.js"
+NOT_FOUND = SITE / "404.html"
+NOT_FOUND_APP = SITE / "404.js"
+LOCALE_METADATA = SITE / "i18n" / "locale-metadata.v1.json"
+TERMBASE = SITE / "i18n" / "termbase.v1.json"
+I18N_README = SITE / "i18n" / "README.md"
 GEOJSON = SITE / "assets" / "geo" / "land-110m.geojson"
 GEO_ATTRIBUTION = SITE / "assets" / "geo" / "README.md"
+PUBLIC_LOCALES = {"en", "es", "de", "ru", "he", "zh-Hans"}
 
 
 class PublicPageParser(HTMLParser):
@@ -70,17 +77,117 @@ def parse_public_page():
     return parser
 
 
-def extract_translation_keys(source):
+def extract_translation_dictionaries(source):
     blocks = {}
     pattern = re.compile(
-        r"^    (en|es|de): \{\n(?P<body>.*?)(?=^    \}(?:,)?$)",
+        r'^    (?:"(?P<quoted>zh-Hans)"|(?P<plain>en|es|de|ru|he)): '
+        r"\{\n(?P<body>.*?)(?=^    \}(?:,)?$)",
         re.MULTILINE | re.DOTALL,
     )
     for match in pattern.finditer(source):
-        blocks[match.group(1)] = set(
-            re.findall(r"^      ([A-Za-z][A-Za-z0-9]*):", match.group("body"), re.MULTILINE)
+        locale = match.group("quoted") or match.group("plain")
+        entries = re.findall(
+            r'^      ([A-Za-z][A-Za-z0-9]*): "((?:\\.|[^"\\])*)",?$',
+            match.group("body"),
+            re.MULTILINE,
         )
+        blocks[locale] = dict(entries)
     return blocks
+
+
+def run_locale_dom_probe(script, *, saved="", browser="en-US", click="", key):
+    node = shutil.which("node")
+    assert node, "Node.js is required to validate locale DOM behavior"
+    harness = r"""
+const fs = require("fs");
+const vm = require("vm");
+
+class Element {
+  constructor(attributes = {}) {
+    this.attributes = {...attributes};
+    this.textContent = "";
+    this.listeners = {};
+    this.classList = {
+      add() {},
+      remove() {},
+      toggle() {}
+    };
+  }
+  getAttribute(name) { return this.attributes[name] || null; }
+  setAttribute(name, value) { this.attributes[name] = String(value); }
+  addEventListener(name, callback) { this.listeners[name] = callback; }
+}
+
+const localeCodes = ["es", "en", "de", "ru", "he", "zh-Hans"];
+const buttons = localeCodes.map((code) => new Element({"data-language": code}));
+const textNode = new Element({"data-i18n": process.env.PROBE_KEY});
+const ariaNode = new Element({"data-i18n-aria": "languageAria"});
+const altNode = new Element({"data-i18n-alt": "globeFallbackAlt"});
+const storage = {};
+if (process.env.SAVED_LANGUAGE) storage.hub_optimus_language = process.env.SAVED_LANGUAGE;
+
+const document = {
+  body: new Element(),
+  documentElement: {lang: "en", dir: "ltr"},
+  title: "",
+  querySelector() { return null; },
+  querySelectorAll(selector) {
+    if (selector === "[data-language]") return buttons;
+    if (selector === "[data-i18n]") return [textNode];
+    if (selector === "[data-i18n-aria]") return [ariaNode];
+    if (selector === "[data-i18n-alt]") return [altNode];
+    return [];
+  },
+  getElementById() { return null; }
+};
+const window = {
+  localStorage: {
+    getItem(key) { return storage[key] || null; },
+    setItem(key, value) { storage[key] = String(value); }
+  },
+  navigator: {language: process.env.BROWSER_LANGUAGE}
+};
+const context = {document, window};
+vm.runInNewContext(fs.readFileSync(process.env.SCRIPT_PATH, "utf8"), context);
+
+function snapshot() {
+  return {
+    lang: document.documentElement.lang,
+    dir: document.documentElement.dir,
+    title: document.title,
+    text: textNode.textContent,
+    aria: ariaNode.attributes["aria-label"] || "",
+    selected: buttons
+      .filter((button) => button.attributes["aria-pressed"] === "true")
+      .map((button) => button.attributes["data-language"]),
+    saved: storage.hub_optimus_language || ""
+  };
+}
+
+const initial = snapshot();
+const clicked = buttons.find(
+  (button) => button.attributes["data-language"] === process.env.CLICK_LANGUAGE
+);
+if (clicked && clicked.listeners.click) clicked.listeners.click();
+process.stdout.write(JSON.stringify({initial, after: snapshot()}));
+"""
+    environment = {
+        **os.environ,
+        "SCRIPT_PATH": str(script),
+        "SAVED_LANGUAGE": saved,
+        "BROWSER_LANGUAGE": browser,
+        "CLICK_LANGUAGE": click,
+        "PROBE_KEY": key,
+    }
+    result = subprocess.run(
+        [node, "-e", harness],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
 
 
 def iter_positions(value):
@@ -100,22 +207,286 @@ def iter_positions(value):
 def test_public_javascript_syntax_and_translation_key_parity():
     node = shutil.which("node")
     assert node, "Node.js is required to validate the public JavaScript syntax"
-    result = subprocess.run(
-        [node, "--check", str(APP)],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, result.stderr
+    for script in (APP, NOT_FOUND_APP):
+        result = subprocess.run(
+            [node, "--check", str(script)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stderr
 
     source = APP.read_text(encoding="utf-8")
-    dictionaries = extract_translation_keys(source)
-    assert set(dictionaries) == {"en", "es", "de"}
-    assert dictionaries["en"] == dictionaries["es"] == dictionaries["de"]
+    dictionaries = extract_translation_dictionaries(source)
+    assert set(dictionaries) == PUBLIC_LOCALES
+    assert len(dictionaries["en"]) == 155
+    assert all(set(dictionary) == set(dictionaries["en"]) for dictionary in dictionaries.values())
+    assert all(
+        value.strip()
+        for dictionary in dictionaries.values()
+        for value in dictionary.values()
+    )
 
     parser = parse_public_page()
-    assert parser.i18n_keys <= dictionaries["en"]
-    assert {"title", "description", "resumeGlobe"} <= dictionaries["en"]
+    assert parser.i18n_keys <= set(dictionaries["en"])
+    assert {"title", "description", "resumeGlobe"} <= set(dictionaries["en"])
+
+    not_found_dictionaries = extract_translation_dictionaries(
+        NOT_FOUND_APP.read_text(encoding="utf-8")
+    )
+    assert set(not_found_dictionaries) == PUBLIC_LOCALES
+    assert all(
+        set(dictionary) == set(not_found_dictionaries["en"])
+        for dictionary in not_found_dictionaries.values()
+    )
+    assert all(
+        value.strip()
+        for dictionary in not_found_dictionaries.values()
+        for value in dictionary.values()
+    )
+
+
+def test_locale_selection_persistence_fallback_and_rtl_dom_behavior():
+    hebrew_then_russian = run_locale_dom_probe(
+        APP,
+        saved="he",
+        browser="en-US",
+        click="ru",
+        key="navMethod",
+    )
+    assert hebrew_then_russian["initial"] == {
+        "lang": "he",
+        "dir": "rtl",
+        "title": "HUB_Optimus — פורטפוליו ציבורי מנוהל בגרסאות",
+        "text": "שיטה",
+        "aria": "שפה",
+        "selected": ["he"],
+        "saved": "he",
+    }
+    assert hebrew_then_russian["after"]["lang"] == "ru"
+    assert hebrew_then_russian["after"]["dir"] == "ltr"
+    assert hebrew_then_russian["after"]["text"] == "Метод"
+    assert hebrew_then_russian["after"]["selected"] == ["ru"]
+    assert hebrew_then_russian["after"]["saved"] == "ru"
+
+    unknown_locale = run_locale_dom_probe(
+        APP,
+        saved="unsupported",
+        browser="xx-YY",
+        key="navMethod",
+    )
+    assert unknown_locale["initial"]["lang"] == "en"
+    assert unknown_locale["initial"]["dir"] == "ltr"
+    assert unknown_locale["initial"]["text"] == "Method"
+    assert unknown_locale["initial"]["saved"] == "en"
+
+    simplified_chinese = run_locale_dom_probe(
+        APP,
+        browser="zh-CN",
+        key="navMethod",
+    )
+    assert simplified_chinese["initial"]["lang"] == "zh-Hans"
+    assert simplified_chinese["initial"]["dir"] == "ltr"
+    assert simplified_chinese["initial"]["text"] == "方法"
+
+    traditional_chinese_is_not_implied = run_locale_dom_probe(
+        APP,
+        browser="zh-TW",
+        key="navMethod",
+    )
+    assert traditional_chinese_is_not_implied["initial"]["lang"] == "en"
+    assert traditional_chinese_is_not_implied["initial"]["text"] == "Method"
+
+    not_found_hebrew = run_locale_dom_probe(
+        NOT_FOUND_APP,
+        saved="he",
+        click="de",
+        key="heading",
+    )
+    assert not_found_hebrew["initial"]["lang"] == "he"
+    assert not_found_hebrew["initial"]["dir"] == "rtl"
+    assert not_found_hebrew["initial"]["text"] == "הדף לא נמצא"
+    assert not_found_hebrew["after"]["lang"] == "de"
+    assert not_found_hebrew["after"]["dir"] == "ltr"
+    assert not_found_hebrew["after"]["text"] == "Seite nicht gefunden"
+
+
+def test_locale_controls_statuses_limitations_and_operator_disclosure_are_translated():
+    dictionaries = extract_translation_dictionaries(APP.read_text(encoding="utf-8"))
+    required_keys = {
+        "navMethod",
+        "languageAria",
+        "pauseGlobe",
+        "resumeGlobe",
+        "globeAria",
+        "statusSimulator",
+        "statusIntake",
+        "truthNote",
+        "operatorCopy",
+        "operatorDisclosure",
+        "authorityRetrieval",
+        "futureTitle",
+        "translationReview",
+    }
+    for locale in ("ru", "he", "zh-Hans"):
+        assert required_keys <= set(dictionaries[locale])
+        for key in required_keys:
+            assert dictionaries[locale][key].strip()
+            assert dictionaries[locale][key] != dictionaries["en"][key]
+
+        disclosure = dictionaries[locale]["operatorDisclosure"]
+        assert "Operator" in disclosure
+        assert "Semantic Engine" in disclosure
+
+    html = INDEX.read_text(encoding="utf-8")
+    locale_buttons = re.findall(r'data-language="([^"]+)"', html)
+    assert locale_buttons == ["es", "en", "de", "ru", "he", "zh-Hans"]
+    assert html.count('type="button" data-language=') == len(PUBLIC_LOCALES)
+    assert 'lang="zh-Hans"' in html
+    assert 'data-i18n="operatorDisclosure"' in html
+    assert 'data-i18n="translationReview"' in html
+
+
+def test_hebrew_uses_document_rtl_and_logical_layout_properties_only_for_hebrew():
+    html = INDEX.read_text(encoding="utf-8")
+    app = APP.read_text(encoding="utf-8")
+    css = STYLES.read_text(encoding="utf-8")
+    not_found = NOT_FOUND.read_text(encoding="utf-8")
+
+    assert '<html lang="en" dir="ltr">' in html
+    assert 'document.documentElement.dir = nextLanguage === "he" ? "rtl" : "ltr"' in app
+    assert '[dir="rtl"] [data-i18n]' in css
+    assert "unicode-bidi: isolate" in css
+    assert "unicode-bidi: plaintext" not in css
+    assert "unicode-bidi: isolate" in not_found
+    assert "unicode-bidi: plaintext" not in not_found
+    assert "inset-inline-start" in css
+    assert "inset-inline-end" in css
+    assert "border-inline-start" in css
+    assert "border-inline-end" in css
+    assert "padding-inline" in css
+    assert "text-align: start" in css
+
+    metadata = json.loads(LOCALE_METADATA.read_text(encoding="utf-8"))
+    assert metadata["locales"]["he"]["direction"] == "rtl"
+    assert all(
+        locale["direction"] == "ltr"
+        for code, locale in metadata["locales"].items()
+        if code != "he"
+    )
+
+
+def test_hebrew_ltr_leading_product_tokens_keep_an_rtl_paragraph_base():
+    dictionaries = extract_translation_dictionaries(APP.read_text(encoding="utf-8"))
+    hebrew = dictionaries["he"]
+    ltr_leading_sentence_keys = {
+        "truthNote": "Operator",
+        "labsLead": "Labs",
+        "boundariesLead": "GitHub",
+        "providerCopy": "GitHub",
+    }
+    for key, product_name in ltr_leading_sentence_keys.items():
+        assert hebrew[key].startswith(product_name)
+        probe = run_locale_dom_probe(
+            APP,
+            saved="he",
+            key=key,
+        )
+        assert probe["initial"]["lang"] == "he"
+        assert probe["initial"]["dir"] == "rtl"
+        assert probe["initial"]["text"] == hebrew[key]
+
+    css = STYLES.read_text(encoding="utf-8")
+    assert '[dir="rtl"] [data-i18n]' in css
+    assert "unicode-bidi: isolate" in css
+    assert "unicode-bidi: plaintext" not in css
+
+
+def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
+    metadata = json.loads(LOCALE_METADATA.read_text(encoding="utf-8"))
+    termbase = json.loads(TERMBASE.read_text(encoding="utf-8"))
+    readme = I18N_README.read_text(encoding="utf-8")
+    html = INDEX.read_text(encoding="utf-8")
+
+    assert metadata["manifest_version"] == "1.0.0"
+    assert metadata["issue"] == 1750
+    assert metadata["canonical_v1_language"] == "es"
+    assert metadata["constitutional_translation_status"] == "not ratified"
+    assert metadata["operator_interface_localized"] is False
+    assert metadata["portfolio_translation_key_count"] == 155
+    assert set(metadata["locales"]) == PUBLIC_LOCALES
+    assert len(metadata["field_status"]) >= 10
+
+    for locale in ("ru", "he", "zh-Hans"):
+        record = metadata["locales"][locale]
+        assert record["translation_method"] == "machine-assisted draft"
+        assert record["review_status"] == "qualified human review required"
+        assert record["named_reviewer"] is None
+        assert all(
+            field_status[locale]
+            == "machine-assisted draft; qualified human review required"
+            for field_status in metadata["field_status"].values()
+        )
+
+    assert all(
+        set(field_status) == PUBLIC_LOCALES
+        for field_status in metadata["field_status"].values()
+    )
+
+    metadata_text = LOCALE_METADATA.read_text(encoding="utf-8").lower()
+    for unsupported_claim in ("professional", "approved", "native-reviewed"):
+        assert unsupported_claim not in metadata_text
+
+    assert termbase["termbase_version"] == "1.0.0"
+    assert termbase["canonical_v1_language"] == "es"
+    assert termbase["terms"]
+    for term in termbase["terms"]:
+        assert PUBLIC_LOCALES <= set(term)
+        assert all(term[locale].strip() for locale in PUBLIC_LOCALES)
+
+    assert "Semantic Engine" in termbase["protected_product_names"]
+    assert "GitHub Issues" in termbase["protected_product_names"]
+    assert {
+        record["label"] for record in termbase["protected_interface_labels"]
+    } == {"Labs", "Issues"}
+    assert "Machine-assisted draft; qualified human review required" in readme
+    assert "No constitutional translation is ratified" in readme
+    assert "does not execute the Semantic Engine" in readme
+    assert "Unverified provenance remains" in readme
+    assert './i18n/README.md' in html
+    assert './i18n/termbase.v1.json' in html
+
+
+def test_small_screen_header_preserves_home_and_language_controls():
+    css = STYLES.read_text(encoding="utf-8")
+    mobile_section = css.split("@media (max-width: 540px)", 1)[1].split(
+        "@media (prefers-reduced-motion: reduce)",
+        1,
+    )[0]
+    assert ".site-header" in mobile_section
+    assert ".language-switcher button" in mobile_section
+    assert ".site-header > .brand" not in mobile_section
+    assert "display: none" not in mobile_section
+    assert "min-height: 2.25rem" in mobile_section
+
+
+def test_not_found_page_has_six_locales_and_resolving_routes():
+    html = NOT_FOUND.read_text(encoding="utf-8")
+    assert '<html lang="en" dir="ltr">' in html
+    assert 'src="/404.js"' in html
+    assert re.findall(r'data-language="([^"]+)"', html) == [
+        "es",
+        "en",
+        "de",
+        "ru",
+        "he",
+        "zh-Hans",
+    ]
+    for route in ("/", "/operator/", "https://github.com/Voxterrae/HUB_Optimus"):
+        assert f'href="{route}"' in html
+
+    assert (SITE / "index.html").is_file()
+    assert (SITE / "operator" / "index.html").is_file()
 
 
 def test_public_identity_uses_approved_repository_brand():
@@ -319,7 +690,17 @@ def test_globe_uses_real_geojson_with_attribution_and_accessible_controls():
 
 def test_public_files_exclude_rejected_branding_and_aggressive_language():
     public_source = "\n".join(
-        path.read_text(encoding="utf-8") for path in (INDEX, STYLES, APP)
+        path.read_text(encoding="utf-8")
+        for path in (
+            INDEX,
+            STYLES,
+            APP,
+            NOT_FOUND,
+            NOT_FOUND_APP,
+            I18N_README,
+            LOCALE_METADATA,
+            TERMBASE,
+        )
     )
     rejected_patterns = (
         r"signal[\s_-]*atlas",
