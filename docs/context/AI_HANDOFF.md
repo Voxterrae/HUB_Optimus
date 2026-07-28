@@ -62,6 +62,29 @@ If this file is not updated, say why in the PR body.
 
 Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
+## Mobile Intake Storage Follow-up
+
+Issue #1759 records that the mobile helper wrote raw claims to a non-ignored
+repository-root file without stable classification or retention guidance.
+
+Its intended post-merge state is:
+
+- default raw mobile intake is stored under the git-ignored
+  `.local/intake/` directory;
+- the default directory and JSONL file use private POSIX permissions where
+  supported;
+- each record carries schema version, intake ID, capture time, source,
+  classification, verification status, and publication status;
+- raw intake remains unverified, local-only material and is never promoted or
+  published automatically;
+- `--output` permits an explicit operator-managed path with a warning;
+- the operator remains responsible for classification, access, retention,
+  backup, and deletion.
+
+No encryption, managed confidential storage, or evidence verification is
+claimed. Until the corresponding PR is reviewed and merged, `main` remains the
+authoritative mobile-intake behavior.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.

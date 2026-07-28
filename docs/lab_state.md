@@ -33,7 +33,8 @@ previously observed pattern changes after a code modification.
 
 ### Mobile Ingest (Termux)
 
-Capture a claim from a mobile terminal and append it to the dataset:
+Capture an unverified raw claim from a mobile terminal into the private local
+intake area:
 
 ```bash
 python tools/mobile_ingest.py "AI regulation in Europe is accelerating"
@@ -44,6 +45,26 @@ Or via stdin:
 ```bash
 echo "AI regulation in Europe is accelerating" | python tools/mobile_ingest.py
 ```
+
+The default file is `.local/intake/mobile_ingest.jsonl`. The directory is
+git-ignored and created with private permissions where the platform supports
+them. A different operator-managed path may be selected explicitly:
+
+```bash
+python tools/mobile_ingest.py --output /private/path/mobile.jsonl "raw claim"
+```
+
+Every record is classified `private_raw_intake`, remains `unverified`, and has
+`local_only` publication status. Intake is not evidence validation, analysis,
+or project truth, and the tool never publishes or promotes records
+automatically.
+
+The operator is responsible for data classification, access, retention, secure
+backup, and deletion. Do not enter credentials or secrets. Regulated,
+client-confidential, or otherwise sensitive content requires an approved
+private process. Existing root-level `mobile_ingest.jsonl` files are not moved
+or deleted automatically; review and dispose of any such legacy local file
+manually.
 
 ## Observed patterns
 
