@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -38,6 +38,9 @@
       <button type="button" data-language="es" lang="es">ES</button>
       <button type="button" data-language="en" lang="en">EN</button>
       <button type="button" data-language="de" lang="de">DE</button>
+      <button type="button" data-language="ru" lang="ru" aria-label="Русский">RU</button>
+      <button type="button" data-language="he" lang="he" aria-label="עברית">HE</button>
+      <button type="button" data-language="zh-Hans" lang="zh-Hans" aria-label="简体中文">简中</button>
     </div>
 
     <a class="header-github" href="https://github.com/Voxterrae/HUB_Optimus" data-i18n="openGithub">
@@ -252,6 +255,11 @@
             A local-first PWA for structured intake, editable case records, deterministic
             browser triage, local memory, readable sharing, JSON, and result rendering.
           </p>
+          <p class="card-disclosure" data-i18n="operatorDisclosure">
+            This locale pack translates the portfolio description, not the Operator
+            interface. Operator performs deterministic browser-side triage and does not
+            execute the Semantic Engine. Unverified provenance remains unverified.
+          </p>
           <div class="card-links">
             <a href="./operator/" data-i18n="openOperator">Open Operator</a>
             <a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/site/operator" data-i18n="inspectSource">Inspect source</a>
@@ -315,6 +323,19 @@
           Semantic Engine CLI runs locally. Controlled URL intake has repository code and
           tests, but GitHub does not confirm a live deployment. Retrieval is not verification.
         </p>
+      </aside>
+
+      <aside class="translation-note">
+        <p data-i18n="translationReview">
+          Russian, Hebrew, and Simplified Chinese are machine-assisted drafts; qualified
+          human review by named reviewers is required. These interface translations are
+          non-authoritative: canonical v1 Spanish remains authoritative, and no
+          constitutional translation is ratified.
+        </p>
+        <div>
+          <a href="./i18n/README.md" data-i18n="translationStatus">Translation status</a>
+          <a href="./i18n/termbase.v1.json" data-i18n="termbase">Versioned termbase</a>
+        </div>
       </aside>
     </section>
 

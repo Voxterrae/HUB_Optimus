@@ -45,6 +45,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+[dir="rtl"] [data-i18n],
+[dir="rtl"] [data-i18n-aria],
+[dir="rtl"] [data-i18n-alt] {
+  unicode-bidi: isolate;
+}
+
+[dir="rtl"] .brand-name,
+[dir="rtl"] .hero h1,
+[dir="rtl"] .globe-core,
+[dir="rtl"] .card-topline > span,
+[dir="rtl"] .portfolio-card h3:not([data-i18n]),
+[dir="rtl"] .boundary-row strong:not([data-i18n]),
+[dir="rtl"] .future-grid h3:not([data-i18n]),
+[dir="rtl"] .truth-strip dd:not([data-i18n]),
+[dir="rtl"] .labs-identity h2 {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 body::selection {
   background: var(--signal-amber);
   color: var(--graphite);
@@ -79,7 +98,7 @@ canvas {
   position: fixed;
   z-index: 1000;
   top: 0.75rem;
-  left: 0.75rem;
+  inset-inline-start: 0.75rem;
   padding: 0.7rem 1rem;
   border-radius: var(--radius-small);
   background: var(--signal-amber);
@@ -160,15 +179,19 @@ canvas {
 
 .primary-nav a::after {
   position: absolute;
-  right: 0;
   bottom: -0.45rem;
-  left: 0;
+  inset-inline: 0;
   height: 2px;
   background: var(--copper);
   content: "";
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 180ms ease;
+}
+
+[dir="rtl"] .primary-nav a::after,
+[dir="rtl"] .method-grid li::before {
+  transform-origin: right;
 }
 
 .primary-nav a:hover,
@@ -201,6 +224,8 @@ canvas {
   font-size: 0.7rem;
   font-weight: 760;
   letter-spacing: 0.08em;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .language-switcher button:hover {
@@ -252,7 +277,7 @@ canvas {
 .hero-backdrop {
   position: absolute;
   top: 10%;
-  right: -8%;
+  inset-inline-end: -8%;
   width: min(74rem, 80vw);
   aspect-ratio: 3 / 1;
   background: url("./assets/brand/hub-optimus-hero.jpg") center / cover no-repeat;
@@ -556,7 +581,7 @@ canvas {
   position: absolute;
   z-index: 2;
   top: 50%;
-  left: 50%;
+  inset-inline-start: 50%;
   display: flex;
   align-items: baseline;
   gap: 0.12rem;
@@ -685,17 +710,17 @@ canvas {
   position: relative;
   min-height: 17rem;
   padding: 1.4rem;
-  border-left: 1px solid var(--line-light);
+  border-inline-start: 1px solid var(--line-light);
 }
 
 .method-grid li:last-child {
-  border-right: 1px solid var(--line-light);
+  border-inline-end: 1px solid var(--line-light);
 }
 
 .method-grid li::before {
   position: absolute;
   bottom: -1px;
-  left: 0;
+  inset-inline-start: 0;
   width: 100%;
   height: 3px;
   background: var(--copper);
@@ -824,6 +849,14 @@ canvas {
   font-size: 0.88rem;
 }
 
+.portfolio-card > .card-disclosure {
+  margin-top: 0.9rem;
+  padding-inline-start: 0.8rem;
+  border-inline-start: 2px solid rgba(214, 164, 79, 0.55);
+  color: rgba(234, 231, 220, 0.52);
+  font-size: 0.72rem;
+}
+
 .card-links {
   display: flex;
   flex-wrap: wrap;
@@ -877,6 +910,38 @@ canvas {
   margin: 0;
   color: rgba(234, 231, 220, 0.68);
   font-size: 0.84rem;
+}
+
+.translation-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  margin-top: 1rem;
+  padding: 1rem 1.3rem;
+  border: 1px solid var(--line-dark);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.translation-note p {
+  max-width: 74rem;
+  margin: 0;
+  color: rgba(234, 231, 220, 0.6);
+  font-size: 0.76rem;
+}
+
+.translation-note div {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.translation-note a {
+  color: var(--signal-amber);
+  font-size: 0.7rem;
+  font-weight: 780;
 }
 
 .section-labs {
@@ -966,16 +1031,17 @@ canvas {
 
 .labs-rules div {
   min-height: 9rem;
-  padding: 1.2rem 1rem 0 0;
-  border-right: 1px solid var(--line-light);
+  padding-block: 1.2rem 0;
+  padding-inline: 0 1rem;
+  border-inline-end: 1px solid var(--line-light);
 }
 
 .labs-rules div + div {
-  padding-left: 1rem;
+  padding-inline-start: 1rem;
 }
 
 .labs-rules div:last-child {
-  border-right: 0;
+  border-inline-end: 0;
 }
 
 .labs-rules span {
@@ -1288,7 +1354,7 @@ canvas {
   }
 
   .principle-band p {
-    text-align: left;
+    text-align: start;
   }
 
   .section {
@@ -1359,7 +1425,7 @@ canvas {
   .labs-rules div + div {
     min-height: auto;
     padding: 1rem 0;
-    border-right: 0;
+    border-inline-end: 0;
     border-bottom: 1px solid var(--line-light);
   }
 
@@ -1399,7 +1465,27 @@ canvas {
   }
 
   .site-footer p {
-    text-align: left;
+    text-align: start;
+  }
+
+  .translation-note {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 540px) {
+  .site-header {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+    justify-items: center;
+    padding-block: 0.55rem;
+  }
+
+  .language-switcher button {
+    min-height: 2.25rem;
+    min-width: 2rem;
+    padding-inline: 0.42rem;
   }
 }
 

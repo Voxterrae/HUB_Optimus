@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="es">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b0f14">
-  <title>404 — HUB_Optimus</title>
+  <title>Page not found — HUB_Optimus</title>
+  <script src="/404.js" defer></script>
   <style>
     :root {
       color-scheme: dark;
@@ -59,13 +60,15 @@
       line-height: 1.7;
     }
 
-    nav {
+    nav,
+    .languages {
       display: flex;
       flex-wrap: wrap;
       gap: .7rem;
       margin-top: 2rem;
     }
 
+    button,
     a {
       display: inline-flex;
       align-items: center;
@@ -73,40 +76,76 @@
       padding: .65rem 1rem;
       border: 1px solid #3b4d5d;
       border-radius: 999px;
+      background: transparent;
       color: #eae7dc;
+      font: inherit;
       font-weight: 700;
       text-decoration: none;
     }
 
-    a:first-child {
+    button {
+      min-height: 2.35rem;
+      padding: .42rem .7rem;
+      cursor: pointer;
+      direction: ltr;
+      font-size: .78rem;
+      unicode-bidi: isolate;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: #eae7dc;
+      background: #eae7dc;
+      color: #0b0f14;
+    }
+
+    nav a:first-child {
       border-color: #d6a44f;
       background: #d6a44f;
       color: #0b0f14;
     }
 
     a:focus-visible,
-    a:hover {
+    a:hover,
+    button:focus-visible,
+    button:hover {
       outline: 2px solid #d6a44f;
       outline-offset: 3px;
     }
 
-    .languages {
+    .review-note {
       color: #8ca0b3;
-      font-size: .92rem;
+      font-size: .82rem;
+    }
+
+    [dir="rtl"] [data-i18n] {
+      unicode-bidi: isolate;
+    }
+
+    [dir="rtl"] .eyebrow {
+      direction: ltr;
+      unicode-bidi: isolate;
     }
   </style>
 </head>
 <body>
   <main>
     <p class="eyebrow">HUB_Optimus · 404</p>
-    <h1>Ruta no encontrada</h1>
-    <p>Esta dirección no forma parte de la superficie pública versionada. Vuelve al portfolio o consulta el repositorio, que sigue siendo la fuente de verdad del proyecto.</p>
-    <p class="languages">EN: Page not found. · DE: Seite nicht gefunden.</p>
-    <nav aria-label="Rutas disponibles">
-      <a href="/">Volver al portfolio</a>
-      <a href="/operator/">Abrir Operator</a>
-      <a href="https://github.com/Voxterrae/HUB_Optimus">Ver GitHub</a>
+    <h1 data-i18n="heading">Page not found</h1>
+    <p data-i18n="copy">This address is not part of the versioned public surface. Return to the portfolio or inspect the repository, which remains the project source of truth.</p>
+    <div class="languages" role="group" aria-label="Language" data-i18n-aria="languageAria">
+      <button type="button" data-language="es" lang="es">ES</button>
+      <button type="button" data-language="en" lang="en">EN</button>
+      <button type="button" data-language="de" lang="de">DE</button>
+      <button type="button" data-language="ru" lang="ru" aria-label="Русский">RU</button>
+      <button type="button" data-language="he" lang="he" aria-label="עברית">HE</button>
+      <button type="button" data-language="zh-Hans" lang="zh-Hans" aria-label="简体中文">简中</button>
+    </div>
+    <nav aria-label="Available routes" data-i18n-aria="routesAria">
+      <a href="/" data-i18n="portfolio">Return to portfolio</a>
+      <a href="/operator/" data-i18n="operator">Open Operator</a>
+      <a href="https://github.com/Voxterrae/HUB_Optimus" data-i18n="github">View GitHub</a>
     </nav>
+    <p class="review-note" data-i18n="review">Russian, Hebrew, and Simplified Chinese are machine-assisted drafts. Qualified human review is required.</p>
   </main>
 </body>
 </html>
