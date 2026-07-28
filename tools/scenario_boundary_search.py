@@ -1,10 +1,9 @@
 """
 Boundary search for HUB_Optimus scenarios.
 
-Uses binary search to find the exact stability boundary for each
-parameter axis on each scenario family.  Instead of sweeping the full
-range (like the mutator), this finds the minimum stable value with
-O(log N) probes per axis.
+Uses binary search for the rounds and actors axes, whose historical
+behaviour is retained, and exhaustive enumeration for the threshold
+axis, whose exact-equality success condition is not monotonic.
 
 Axes searched
 -------------
@@ -35,12 +34,18 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import Literal
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RUNNER = REPO_ROOT / "run_scenario.py"
 SCHEMA_PATH = REPO_ROOT / "scenario.schema.json"
 GENERATED_DIR = REPO_ROOT / "scenarios" / "generated"
 OUTPUT_DIR = REPO_ROOT / "scenarios"
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from hub_optimus_simulator import POLICIES  # noqa: E402
 
 EXTRA_ACTORS = [
     {"name": "Faction_E", "role": "negotiator"},
@@ -53,56 +58,29 @@ EXTRA_ACTORS = [
 # Active policy for probes (None = simulator default).
 ACTIVE_POLICY: str | None = None
 
+ProbeState = Literal["success", "failure", "error"]
+
+BOUNDARY_METHODS = {
+    "rounds_min": "binary_search",
+    "actors_min": "binary_search",
+    "threshold_max": "exhaustive_enumeration",
+}
+
+
+class ProbeExecutionError(RuntimeError):
+    """Raised when a runner error prevents a scientific observation."""
+
+
+def active_policy_name() -> str:
+    """Return an explicit label for the policy used by the current probes."""
+    return ACTIVE_POLICY if ACTIVE_POLICY is not None else "simulator_default"
+
 
 # ── Probe ───────────────────────────────────────────────────
 
 
-def probe(scenario: dict, seed: str) -> bool:
-    """Run a scenario once and return True if agreement is reached."""
-    with tempfile.TemporaryDirectory() as tmp:
-        scenario_path = Path(tmp) / "probe.json"
-        result_path = Path(tmp) / "result.json"
-
-        scenario_path.write_text(
-            json.dumps(scenario, indent=2, sort_keys=True, ensure_ascii=False)
-            + "\n",
-            encoding="utf-8",
-        )
-
-        cmd = [
-            sys.executable, str(RUNNER),
-            str(scenario_path),
-            "--output", str(result_path),
-            "--seed", seed,
-        ]
-        if ACTIVE_POLICY is not None:
-            cmd.extend(["--policy", ACTIVE_POLICY])
-
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
-        proc = subprocess.run(
-            cmd,
-            cwd=REPO_ROOT,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            env=env,
-            check=False,
-        )
-
-        if proc.returncode != 0:
-            return False
-
-        try:
-            result = json.loads(result_path.read_text(encoding="utf-8"))
-            return result.get("status") == "success"
-        except (json.JSONDecodeError, OSError):
-            return False
-
-
 def probe_detail(scenario: dict, seed: str) -> dict:
-    """Run a scenario and return status + convergence round."""
+    """Run a scenario and return an explicit success/failure/error observation."""
     with tempfile.TemporaryDirectory() as tmp:
         scenario_path = Path(tmp) / "probe.json"
         result_path = Path(tmp) / "result.json"
@@ -124,28 +102,101 @@ def probe_detail(scenario: dict, seed: str) -> dict:
 
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
-        proc = subprocess.run(
-            cmd,
-            cwd=REPO_ROOT,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            env=env,
-            check=False,
-        )
+        try:
+            proc = subprocess.run(
+                cmd,
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=env,
+                check=False,
+            )
+        except OSError as exc:
+            return {
+                "status": "error",
+                "rounds": None,
+                "error": f"cannot execute runner: {exc}",
+            }
 
         if proc.returncode != 0:
-            return {"status": "error", "rounds": None}
+            diagnostic = proc.stderr.strip() or proc.stdout.strip() or "no diagnostic"
+            return {
+                "status": "error",
+                "rounds": None,
+                "error": f"runner exited with code {proc.returncode}: {diagnostic}",
+            }
 
         try:
             result = json.loads(result_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
             return {
-                "status": result.get("status", "error"),
-                "rounds": result.get("rounds"),
+                "status": "error",
+                "rounds": None,
+                "error": f"cannot read runner result: {exc}",
             }
-        except (json.JSONDecodeError, OSError):
-            return {"status": "error", "rounds": None}
+
+        if not isinstance(result, dict):
+            return {
+                "status": "error",
+                "rounds": None,
+                "error": "runner result is not a JSON object",
+            }
+
+        status = result.get("status")
+        rounds = result.get("rounds")
+        if status not in {"success", "failure"}:
+            return {
+                "status": "error",
+                "rounds": None,
+                "error": f"runner returned invalid status: {status!r}",
+            }
+        if not isinstance(rounds, int):
+            return {
+                "status": "error",
+                "rounds": None,
+                "error": f"runner returned invalid rounds value: {rounds!r}",
+            }
+        return {"status": status, "rounds": rounds}
+
+
+def probe(scenario: dict, seed: str) -> ProbeState:
+    """Run a scenario once and return an explicit tri-state observation."""
+    return probe_detail(scenario, seed)["status"]
+
+
+def _probe_state(
+    scenario: dict,
+    seed: str,
+    *,
+    axis: str,
+    value: int,
+) -> ProbeState:
+    detail = probe_detail(scenario, seed)
+    state = detail["status"]
+    if state == "error":
+        raise ProbeExecutionError(
+            f"{axis}={value}, seed={seed}, policy={active_policy_name()}: "
+            f"{detail.get('error', 'unknown runner error')}"
+        )
+    return state
+
+
+def _convergence_round(
+    detail: dict,
+    seed: str,
+    *,
+    axis: str,
+    value: int,
+) -> int | None:
+    """Convert a valid probe detail to a curve value without hiding errors."""
+    if detail["status"] == "error":
+        raise ProbeExecutionError(
+            f"{axis}={value}, seed={seed}, policy={active_policy_name()}: "
+            f"{detail.get('error', 'unknown runner error')}"
+        )
+    return detail["rounds"] if detail["status"] == "success" else None
 
 
 # ── Mutation helpers ────────────────────────────────────────
@@ -173,16 +224,26 @@ def set_threshold(base: dict, value: int) -> dict:
     return m
 
 
-# ── Binary search ───────────────────────────────────────────
+# ── Boundary search ─────────────────────────────────────────
 
 
-def find_min_stable(base: dict, mutate_fn, lo: int, hi: int, seed: str) -> int | None:
+def find_min_stable(
+    base: dict,
+    mutate_fn,
+    lo: int,
+    hi: int,
+    seed: str,
+    *,
+    axis: str = "parameter",
+) -> int | None:
     """Find minimum value in [lo, hi] where the scenario converges.
 
     Returns the boundary value, or None if no stable point exists.
     """
     # First check: does the highest value work?
-    if not probe(mutate_fn(base, hi), seed):
+    if _probe_state(
+        mutate_fn(base, hi), seed, axis=axis, value=hi
+    ) != "success":
         return None
 
     # Binary search: lo = last known failure, hi = last known success
@@ -191,14 +252,18 @@ def find_min_stable(base: dict, mutate_fn, lo: int, hi: int, seed: str) -> int |
     succeed = hi
 
     # Check lo directly
-    if probe(mutate_fn(base, lo), seed):
+    if _probe_state(
+        mutate_fn(base, lo), seed, axis=axis, value=lo
+    ) == "success":
         return lo
 
     fail = lo
 
     while succeed - fail > 1:
         mid = (fail + succeed) // 2
-        if probe(mutate_fn(base, mid), seed):
+        if _probe_state(
+            mutate_fn(base, mid), seed, axis=axis, value=mid
+        ) == "success":
             succeed = mid
         else:
             fail = mid
@@ -206,44 +271,77 @@ def find_min_stable(base: dict, mutate_fn, lo: int, hi: int, seed: str) -> int |
     return succeed
 
 
-def find_max_stable(base: dict, mutate_fn, lo: int, hi: int, seed: str) -> int | None:
-    """Find maximum value in [lo, hi] where the scenario converges.
+def find_max_stable_with_states(
+    base: dict,
+    mutate_fn,
+    lo: int,
+    hi: int,
+    seed: str,
+    *,
+    axis: str = "parameter",
+) -> tuple[int | None, dict[str, ProbeState]]:
+    """Enumerate [lo, hi] and return its maximum success plus every state.
 
-    Returns the boundary value, or None if no stable point exists.
+    Exhaustive enumeration is required because exact-equality success is not
+    monotonic across threshold values.
     """
-    # First check: does the lowest value work?
-    if not probe(mutate_fn(base, lo), seed):
-        return None
+    states: dict[str, ProbeState] = {}
+    successes: list[int] = []
+    for value in range(lo, hi + 1):
+        state = _probe_state(
+            mutate_fn(base, value), seed, axis=axis, value=value
+        )
+        states[str(value)] = state
+        if state == "success":
+            successes.append(value)
 
-    # Binary search for the highest succeeding value
-    succeed = lo
-    fail = hi + 1
+    return (max(successes) if successes else None), states
 
-    # Check hi directly
-    if probe(mutate_fn(base, hi), seed):
-        return hi
 
-    fail = hi
-
-    while fail - succeed > 1:
-        mid = (succeed + fail) // 2
-        if probe(mutate_fn(base, mid), seed):
-            succeed = mid
-        else:
-            fail = mid
-
-    return succeed
+def find_max_stable(
+    base: dict,
+    mutate_fn,
+    lo: int,
+    hi: int,
+    seed: str,
+    *,
+    axis: str = "parameter",
+) -> int | None:
+    """Return the maximum successful value from exhaustive enumeration."""
+    boundary, _states = find_max_stable_with_states(
+        base, mutate_fn, lo, hi, seed, axis=axis
+    )
+    return boundary
 
 
 # ── Boundary verification ──────────────────────────────────
 
 
 def verify_boundary_min(
-    base: dict, mutate_fn, boundary: int, lo: int, seed: str
+    base: dict,
+    mutate_fn,
+    boundary: int,
+    lo: int,
+    seed: str,
+    *,
+    axis: str = "parameter",
 ) -> dict:
     """Verify a minimum boundary: boundary-1 should fail, boundary should succeed."""
-    at_boundary = probe(mutate_fn(base, boundary), seed)
-    below = boundary > lo and not probe(mutate_fn(base, boundary - 1), seed)
+    at_boundary = (
+        _probe_state(
+            mutate_fn(base, boundary), seed, axis=axis, value=boundary
+        )
+        == "success"
+    )
+    below = boundary > lo and (
+        _probe_state(
+            mutate_fn(base, boundary - 1),
+            seed,
+            axis=axis,
+            value=boundary - 1,
+        )
+        == "failure"
+    )
     # If boundary == lo, there's nothing below to test
     if boundary <= lo:
         below = True  # trivially valid — no lower value to test
@@ -256,18 +354,30 @@ def verify_boundary_min(
 
 
 def verify_boundary_max(
-    base: dict, mutate_fn, boundary: int, hi: int, seed: str
+    base: dict,
+    mutate_fn,
+    boundary: int,
+    hi: int,
+    seed: str,
+    *,
+    axis: str = "parameter",
 ) -> dict:
-    """Verify a maximum boundary: boundary should succeed, boundary+1 should fail."""
-    at_boundary = probe(mutate_fn(base, boundary), seed)
-    above = boundary < hi and not probe(mutate_fn(base, boundary + 1), seed)
-    if boundary >= hi:
-        above = True  # trivially valid — no higher value to test
+    """Verify a maximum boundary against a fresh exhaustive enumeration."""
+    exhaustive_boundary, states = find_max_stable_with_states(
+        base, mutate_fn, 1, hi, seed, axis=axis
+    )
+    at_boundary = states.get(str(boundary)) == "success"
+    above = all(
+        states[str(value)] == "failure"
+        for value in range(boundary + 1, hi + 1)
+    )
     return {
         "boundary": boundary,
         "at_boundary": at_boundary,
         "above_fails": above,
-        "valid": at_boundary and above,
+        "exhaustive_boundary": exhaustive_boundary,
+        "probe_states": states,
+        "valid": boundary == exhaustive_boundary,
     }
 
 
@@ -287,21 +397,32 @@ def verify_boundaries(
         rounds_min = entry.get("rounds_min")
         if rounds_min is not None:
             print(f"    {family} rounds_min={rounds_min} ...", end=" ", flush=True)
-            r = verify_boundary_min(scenario, set_rounds, rounds_min, 1, seed)
+            r = verify_boundary_min(
+                scenario, set_rounds, rounds_min, 1, seed, axis="rounds"
+            )
             v["rounds_min"] = r
             print("ok" if r["valid"] else "FAIL")
 
         actors_min = entry.get("actors_min")
         if actors_min is not None:
             print(f"    {family} actors_min={actors_min} ...", end=" ", flush=True)
-            r = verify_boundary_min(scenario, set_actors, actors_min, 1, seed)
+            r = verify_boundary_min(
+                scenario, set_actors, actors_min, 1, seed, axis="actors"
+            )
             v["actors_min"] = r
             print("ok" if r["valid"] else "FAIL")
 
         threshold_max = entry.get("threshold_max")
         if threshold_max is not None:
             print(f"    {family} threshold_max={threshold_max} ...", end=" ", flush=True)
-            r = verify_boundary_max(scenario, set_threshold, threshold_max, 5, seed)
+            r = verify_boundary_max(
+                scenario,
+                set_threshold,
+                threshold_max,
+                5,
+                seed,
+                axis="threshold",
+            )
             v["threshold_max"] = r
             print("ok" if r["valid"] else "FAIL")
 
@@ -330,10 +451,9 @@ def measure_gradient(
         rounds_curve: dict = {}
         for r in range(1, 11):
             detail = probe_detail(set_rounds(scenario, r), seed)
-            if detail["status"] == "success":
-                rounds_curve[str(r)] = detail["rounds"]
-            else:
-                rounds_curve[str(r)] = None
+            rounds_curve[str(r)] = _convergence_round(
+                detail, seed, axis="rounds", value=r
+            )
         print("done")
         fam["rounds"] = rounds_curve
 
@@ -342,10 +462,9 @@ def measure_gradient(
         actors_curve: dict = {}
         for a in range(1, 7):
             detail = probe_detail(set_actors(scenario, a), seed)
-            if detail["status"] == "success":
-                actors_curve[str(a)] = detail["rounds"]
-            else:
-                actors_curve[str(a)] = None
+            actors_curve[str(a)] = _convergence_round(
+                detail, seed, axis="actors", value=a
+            )
         print("done")
         fam["actors"] = actors_curve
 
@@ -354,10 +473,9 @@ def measure_gradient(
         threshold_curve: dict = {}
         for t in range(1, 6):
             detail = probe_detail(set_threshold(scenario, t), seed)
-            if detail["status"] == "success":
-                threshold_curve[str(t)] = detail["rounds"]
-            else:
-                threshold_curve[str(t)] = None
+            threshold_curve[str(t)] = _convergence_round(
+                detail, seed, axis="threshold", value=t
+            )
         print("done")
         fam["threshold"] = threshold_curve
 
@@ -398,24 +516,36 @@ def search_boundaries(
 
     for stem, family, scenario in bases:
         print(f"\n  {family} ({stem})")
-        entry: dict = {"base_scenario": stem, "seed": int(seed)}
+        entry: dict = {
+            "base_scenario": stem,
+            "seed": int(seed),
+            "policy": active_policy_name(),
+            "methods": dict(BOUNDARY_METHODS),
+        }
 
         # rounds: find minimum stable (range 1–10)
         print("    rounds ...", end=" ", flush=True)
-        rounds_min = find_min_stable(scenario, set_rounds, 1, 10, seed)
+        rounds_min = find_min_stable(
+            scenario, set_rounds, 1, 10, seed, axis="rounds"
+        )
         entry["rounds_min"] = rounds_min
         print(rounds_min)
 
         # actors: find minimum stable (range 1–6)
         print("    actors ...", end=" ", flush=True)
-        actors_min = find_min_stable(scenario, set_actors, 1, 6, seed)
+        actors_min = find_min_stable(
+            scenario, set_actors, 1, 6, seed, axis="actors"
+        )
         entry["actors_min"] = actors_min
         print(actors_min)
 
         # threshold: find maximum viable (range 1–5)
         print("    threshold ...", end=" ", flush=True)
-        threshold_max = find_max_stable(scenario, set_threshold, 1, 5, seed)
+        threshold_max, threshold_states = find_max_stable_with_states(
+            scenario, set_threshold, 1, 5, seed, axis="threshold"
+        )
         entry["threshold_max"] = threshold_max
+        entry["threshold_probe_states"] = threshold_states
         print(threshold_max)
 
         boundaries[family] = entry
@@ -462,6 +592,9 @@ def search_multi_seed(
             "actors_min": max(actors_vals) if actors_vals else None,
             "threshold_max": min(threshold_vals) if threshold_vals else None,
             "seeds_tested": len(seeds),
+            "seeds": [int(seed) for seed in seeds],
+            "policy": active_policy_name(),
+            "methods": dict(BOUNDARY_METHODS),
             "per_seed": {
                 s: all_results[s][family] for s in seeds if family in all_results[s]
             },
@@ -491,6 +624,17 @@ def print_summary(boundaries: dict) -> None:
     for family in sorted(boundaries):
         entry = boundaries[family]
         print(f"\n  {family}")
+        seeds = entry.get("seeds", [entry.get("seed")])
+        seed_label = ",".join(str(seed) for seed in seeds if seed is not None)
+        methods = entry.get("methods", {})
+        method_label = ", ".join(
+            f"{name}={method}" for name, method in sorted(methods.items())
+        )
+        print(
+            f"    provenance: seed={seed_label}; "
+            f"policy={entry.get('policy', 'unknown')}"
+        )
+        print(f"    methods: {method_label}")
 
         if "per_seed" in entry:
             # Multi-seed consensus
@@ -510,7 +654,10 @@ def print_summary(boundaries: dict) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Find stability boundaries via binary search."
+        description=(
+            "Find stability boundaries via binary search for rounds/actors "
+            "and exhaustive threshold enumeration."
+        )
     )
     parser.add_argument(
         "--seed", type=str, default="42",
@@ -522,14 +669,17 @@ def main() -> int:
     )
     parser.add_argument(
         "--verify", action="store_true",
-        help="After searching, verify each boundary (boundary passes, boundary-1 fails).",
+        help="After searching, verify each boundary using its recorded method.",
     )
     parser.add_argument(
         "--gradient", action="store_true",
         help="Measure convergence round at each parameter value (convergence curves).",
     )
     parser.add_argument(
-        "--policy", type=str, default=None,
+        "--policy",
+        type=str,
+        choices=sorted(POLICIES),
+        default=None,
         help="Negotiation policy name (e.g. uniform, biased).",
     )
     args = parser.parse_args()
@@ -551,11 +701,15 @@ def main() -> int:
     for stem, family, _ in bases:
         print(f"    {family} ({stem})")
 
-    if args.seeds:
-        seeds = [s.strip() for s in args.seeds.split(",")]
-        boundaries = search_multi_seed(bases, seeds)
-    else:
-        boundaries = search_boundaries(bases, args.seed)
+    try:
+        if args.seeds:
+            seeds = [s.strip() for s in args.seeds.split(",")]
+            boundaries = search_multi_seed(bases, seeds)
+        else:
+            boundaries = search_boundaries(bases, args.seed)
+    except ProbeExecutionError as exc:
+        print(f"[probe-error] {exc}", file=sys.stderr)
+        return 1
 
     out = write_boundaries(boundaries, OUTPUT_DIR)
     print_summary(boundaries)
@@ -640,4 +794,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except ProbeExecutionError as exc:
+        print(f"[probe-error] {exc}", file=sys.stderr)
+        raise SystemExit(1) from None
