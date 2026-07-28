@@ -31,6 +31,7 @@ SHARED = APP_ROOT / "shared"
 
 MAX_URL_LENGTH = 2048
 MAX_URL_BODY_LENGTH = 4096
+MAX_ANALYZE_BODY_LENGTH = 64_000
 MAX_URL_BYTES = 1_000_000
 MAX_EXTRACTED_TEXT_CHARS = 24_000
 MAX_REDIRECTS = 3
@@ -394,14 +395,38 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
-    def read_json_body(self) -> dict | None:
-        length = int(self.headers.get("Content-Length", "0"))
+    def read_json_body(self, max_body_length: int) -> dict | None:
+        content_length = self.headers.get("Content-Length")
 
-        if length > MAX_URL_BODY_LENGTH:
-            self.send_json(413, {"error": "request body too large"})
+        if content_length is None:
+            self.send_json(411, {"error": "Content-Length header is required"})
             return None
 
-        raw = self.rfile.read(length).decode("utf-8")
+        try:
+            length = int(content_length)
+        except ValueError:
+            self.send_json(400, {"error": "Content-Length header must be an integer"})
+            return None
+
+        if length < 0:
+            self.send_json(400, {"error": "Content-Length header must not be negative"})
+            return None
+
+        if length > max_body_length:
+            self.send_json(
+                413,
+                {
+                    "error": "request body too large",
+                    "limit_bytes": max_body_length,
+                },
+            )
+            return None
+
+        try:
+            raw = self.rfile.read(length).decode("utf-8")
+        except UnicodeDecodeError:
+            self.send_json(400, {"error": "request body must be valid UTF-8"})
+            return None
 
         try:
             payload = json.loads(raw)
@@ -416,7 +441,7 @@ class Handler(BaseHTTPRequestHandler):
         return payload
 
     def handle_url_intake(self) -> None:
-        payload = self.read_json_body()
+        payload = self.read_json_body(MAX_URL_BODY_LENGTH)
         if payload is None:
             return
 
@@ -440,7 +465,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json(200, result)
 
     def handle_analyze(self) -> None:
-        payload = self.read_json_body()
+        payload = self.read_json_body(MAX_ANALYZE_BODY_LENGTH)
         if payload is None:
             return
 
