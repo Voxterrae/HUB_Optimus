@@ -62,6 +62,23 @@ If this file is not updated, say why in the PR body.
 
 Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
+## PR Enrichment Helper Boundary
+
+Issue #1762 keeps `tools/pr_pro.py` as a supported, optional helper for an
+existing PR. It is not a PR creator, merge authority, or authentication
+provider.
+
+Operational boundary:
+
+- Write mode requires an existing PR target and the GitHub CLI.
+- The helper uses the caller's existing authentication and scopes; it does
+  not create, persist, exchange, or expand tokens.
+- Failed GitHub or required local diff commands return non-zero and cannot
+  emit the success status.
+- `--dry-run` invokes no GitHub commands and performs no GitHub mutation.
+- The active workflow file, not this helper or chat context, determines
+  whether scheduled maintenance invokes it.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
