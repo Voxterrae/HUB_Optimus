@@ -1,3 +1,4 @@
+import json
 import re
 import shutil
 import subprocess
@@ -11,6 +12,9 @@ INDEX = ROOT / "site" / "operator" / "index.html"
 ICON = ROOT / "site" / "operator" / "icon.svg"
 LOCKUP = ROOT / "site" / "assets" / "brand" / "hub-optimus-logo-lockup.png"
 SW = ROOT / "site" / "operator" / "sw.js"
+URL_INTAKE_SCHEMA = (
+    ROOT / "ops" / "ec2" / "controlled_url_intake.v1.schema.json"
+)
 NODE = shutil.which("node")
 
 
@@ -191,10 +195,32 @@ if (
 
 def test_operator_uses_only_controlled_url_intake_fetch():
     html = _read(INDEX)
+    schema = json.loads(_read(URL_INTAKE_SCHEMA))
+    request = schema["$defs"]["request"]
+    success_fields = set(schema["$defs"]["success_response"]["required"])
+    limits = schema["x-hub-optimus-runtime-limits"]
 
     assert "CONTROLLED_URL_INTAKE_ENDPOINT" in html
-    assert "https://api.huboptimus.dev/intake/url" in html
+    assert f"https://api.huboptimus.dev{limits['endpoint']}" in html
     assert "fetch(CONTROLLED_URL_INTAKE_ENDPOINT" in html
+    assert "JSON.stringify({ url: sourceUrl })" in html
+    assert request["required"] == ["url"]
+    assert set(request["properties"]) == {"url"}
+    assert {"status", "text"} <= success_fields
+    for field in (
+        "url",
+        "final_url",
+        "source_domain",
+        "title",
+        "retrieved_at_utc",
+        "redirects",
+        "content_type",
+        "truncated",
+        "verification_status",
+        "bytes_read",
+    ):
+        assert field in success_fields
+        assert f"intakePayload.{field}" in html
     assert "fetch(sourceUrl" not in html
     assert "fetch(url" not in html
     assert "<form" not in html

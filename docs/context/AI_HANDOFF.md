@@ -405,6 +405,19 @@ because their changes also affect execution or credential behavior.
 
 ## Controlled URL Intake Network Follow-up
 
+- Issue #1753 establishes
+  `ops/ec2/controlled_url_intake.v1.schema.json` as the versioned application
+  payload contract for `POST /intake/url`.
+- The only meaningful request field is `url`. Success and application errors
+  are flat objects: `final_url` is the accepted final resource and `error` is
+  the stable failure-code field. There is no nested `intake`, `resolved_url`,
+  or `error_code` contract.
+- HTTP framing, malformed UTF-8/JSON, non-object JSON, and oversized request
+  bodies fail before the URL-intake application contract.
+- Contract tests couple the schema examples, exact application error set,
+  Operator request, launcher User-Agent, 4,096-byte request body, 2,048
+  URL-character, 1,000,000 raw-byte, 24,000 extracted-character, three
+  redirect, and eight-second limits.
 - Issue #1761 converts malformed and out-of-range URL ports into controlled
   intake errors.
 - URL intake resolves and validates every address once per URL/redirect hop,

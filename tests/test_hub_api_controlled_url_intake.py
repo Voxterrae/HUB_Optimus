@@ -1,4 +1,7 @@
+import ast
 import io
+import json
+import re
 import socket
 import sys
 import threading
@@ -8,10 +11,75 @@ from http.client import BadStatusLine, IncompleteRead, LineTooLong
 from pathlib import Path
 from urllib.error import URLError
 
+import jsonschema
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 API_SCRIPT = ROOT / "ops" / "ec2" / "hub-api.sh"
+CONTRACT_SCHEMA = ROOT / "ops" / "ec2" / "controlled_url_intake.v1.schema.json"
+RFC = ROOT / "docs" / "rfc" / "operator_controlled_url_intake.md"
+
+
+def load_contract_schema() -> dict:
+    return json.loads(CONTRACT_SCHEMA.read_text(encoding="utf-8"))
+
+
+def validate_contract_payload(payload: dict) -> None:
+    schema = load_contract_schema()
+    jsonschema.Draft202012Validator(
+        schema,
+        format_checker=jsonschema.FormatChecker(),
+    ).validate(payload)
+
+
+def embedded_api_source() -> str:
+    source = API_SCRIPT.read_text(encoding="utf-8")
+    return source.split('cat > "$API_FILE" <<\'PY\'\n', 1)[1].split(
+        "\nPY\n",
+        1,
+    )[0]
+
+
+def static_intake_error_statuses() -> dict[str, int]:
+    tree = ast.parse(embedded_api_source())
+    statuses: dict[str, int] = {}
+
+    def record(call: ast.Call) -> None:
+        if len(call.args) < 2:
+            return
+        status_node, code_node = call.args[:2]
+        if not (
+            isinstance(status_node, ast.Constant)
+            and isinstance(status_node.value, int)
+            and isinstance(code_node, ast.Constant)
+            and isinstance(code_node.value, str)
+        ):
+            return
+        previous = statuses.setdefault(code_node.value, status_node.value)
+        assert previous == status_node.value
+
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "IntakeError"
+        ):
+            record(node)
+
+    deadline_error = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "FetchDeadlineExceeded"
+    )
+    for node in ast.walk(deadline_error):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "__init__"
+        ):
+            record(node)
+
+    return statuses
 
 
 def make_body_reader(namespace: dict, content_length: str | None, body: bytes):
@@ -51,6 +119,67 @@ def address_info(ip_text, port):
         else (ip_text, port)
     )
     return (family, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", socket_address)
+
+
+def test_controlled_url_intake_schema_and_examples_are_valid():
+    schema = load_contract_schema()
+    jsonschema.Draft202012Validator.check_schema(schema)
+
+    examples = [
+        schema["$defs"][name]["examples"][0]
+        for name in ("request", "success_response", "error_response")
+    ]
+    for example in examples:
+        validate_contract_payload(example)
+
+    assert schema["$id"].endswith("/controlled-url-intake-v1.schema.json")
+
+
+def test_rfc_examples_are_the_canonical_schema_examples():
+    schema = load_contract_schema()
+    rfc = RFC.read_text(encoding="utf-8")
+    documented_examples = [
+        json.loads(block)
+        for block in re.findall(r"```json\n(.*?)\n```", rfc, re.DOTALL)
+    ]
+    canonical_examples = [
+        schema["$defs"][name]["examples"][0]
+        for name in ("request", "success_response", "error_response")
+    ]
+
+    assert documented_examples == canonical_examples
+    assert '"intake": {' not in rfc
+    assert '"resolved_url":' not in rfc
+    assert '"error_code":' not in rfc
+    assert "max 40,000 characters" not in rfc
+    assert "HUB_Optimus-Operator-Intake/0.1" not in rfc
+
+
+def test_runtime_limits_user_agent_and_error_codes_match_schema(hub_api):
+    schema = load_contract_schema()
+    limits = schema["x-hub-optimus-runtime-limits"]
+
+    assert limits["request_body_bytes"] == hub_api.MAX_URL_BODY_LENGTH
+    assert limits["url_characters"] == hub_api.MAX_URL_LENGTH
+    assert limits["raw_response_bytes"] == hub_api.MAX_URL_BYTES
+    assert limits["extracted_text_characters"] == hub_api.MAX_EXTRACTED_TEXT_CHARS
+    assert (
+        limits["maximum_returned_text_characters"]
+        == hub_api.MAX_EXTRACTED_TEXT_CHARS + 1
+    )
+    assert limits["redirects"] == hub_api.MAX_REDIRECTS
+    assert limits["timeout_seconds"] == hub_api.URL_TIMEOUT_SECONDS
+    assert limits["user_agent"] == hub_api.USER_AGENT
+    assert limits["endpoint"] == "/intake/url"
+    assert limits["remote_request_method"] == "GET"
+    assert limits["accepted_schemes"] == ["http", "https"]
+
+    schema_statuses = schema["x-hub-optimus-error-http-status"]
+    error_enum = set(
+        schema["$defs"]["error_response"]["properties"]["error"]["enum"]
+    )
+    assert set(schema_statuses) == error_enum
+    assert static_intake_error_statuses() == schema_statuses
 
 
 def test_hub_api_controlled_url_intake_endpoint_present():
@@ -548,6 +677,7 @@ def test_success_fetches_one_url_without_crawling_and_marks_provenance(
 
     result = hub_api.fetch_url_text("https://public.example/article")
 
+    validate_contract_payload(result)
     assert len(requests) == 1
     assert requests[0][0] == "https://public.example/article"
     assert 0 < requests[0][1] <= hub_api.URL_TIMEOUT_SECONDS
@@ -697,6 +827,7 @@ def test_handler_preserves_unreviewed_provenance_for_malformed_http(
     hub_api.Handler.handle_url_intake(handler)
 
     status, payload = handler.response
+    validate_contract_payload(payload)
     assert status == 502
     assert payload["status"] == "error"
     assert payload["error"] == "url_fetch_failed"

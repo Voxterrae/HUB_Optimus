@@ -49,6 +49,7 @@ Validated endpoints:
 
 - GET /health
 - GET /status
+- POST /intake/url
 - POST /analyze
 
 POST /analyze returns direct JSON with:
@@ -102,6 +103,13 @@ service when the process should load the restored launcher.
 The repository launcher source also defines `POST /intake/url`. This records the
 reviewed code boundary; it is not evidence that any particular host or public
 endpoint is currently deployed.
+
+The versioned application request/success/error payload contract is
+[`controlled_url_intake.v1.schema.json`](controlled_url_intake.v1.schema.json).
+The endpoint accepts `{"url": "..."}` as its only meaningful application field
+and returns the schema's flat `status=ok` or `status=error` shape. HTTP framing
+and malformed-body errors occur before that application contract. Executable
+tests bind the schema to the launcher constants and the Operator request.
 
 For each supplied URL and each permitted redirect hop, the launcher:
 

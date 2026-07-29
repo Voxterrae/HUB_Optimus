@@ -9,320 +9,325 @@ and a browser fallback exist in the repository (implementation PRs #1717 and
 #1720), with contract tests in
 `tests/test_hub_api_controlled_url_intake.py`. This is not evidence of a public
 deployment, complete RFC implementation, source verification, crawling, or
-truth adjudication. Issue #1753 tracks detailed RFC/implementation
-reconciliation.
+truth adjudication.
 
-## Decision
+Issue #1753 reconciles this record with the implementation. The versioned
+application payload contract is
+[`ops/ec2/controlled_url_intake.v1.schema.json`](../../ops/ec2/controlled_url_intake.v1.schema.json).
+When prose and that schema disagree about request fields, response fields,
+error codes, or limits, the schema and executable tests are the narrower source
+of truth. Network and security behavior remains implemented by
+`ops/ec2/hub-api.sh`.
 
-HUB_Optimus Operator should support URL-only analysis only through a controlled backend intake step.
+## Decision boundary
 
-A submitted URL is a source reference until the backend explicitly retrieves, bounds, extracts, and records source text. Intake does not verify truth, does not bypass access controls, and does not convert a URL into a conclusion.
+HUB_Optimus Operator may request URL-only intake only through a controlled
+backend step.
 
-The RFC text itself authorizes no additional implementation, public API
-exposure, scraping infrastructure, crawler behavior, browser-side third-party
-fetching, authentication changes, storage changes, or analysis contract
-changes. Existing code must be evaluated against its own reviewed issues,
-tests, and deployment evidence.
+A submitted URL is a source reference until the backend retrieves, bounds,
+extracts, and records source text. Intake does not verify truth, bypass access
+controls, or convert a URL into a conclusion.
+
+This RFC authorizes no additional public API exposure, crawler behavior,
+browser-side third-party fetching, authentication changes, storage changes, or
+analysis contract changes. Existing code must be evaluated against its reviewed
+issues, tests, and deployment evidence.
 
 ## Parent boundary
 
 This RFC extends `docs/rfc/ingestion_evidence_intake_boundary.md`.
 
-That parent boundary already states that URL intake may preserve URL, retrieval date, visible title, source domain, source type, and whether content was actually fetched or merely referenced. It also requires separate issues/RFCs before implementation beyond manual/raw intake.
+That parent boundary permits preservation of the submitted URL, retrieval date,
+visible title, source domain, source type, and whether content was fetched or
+merely referenced. It does not turn retrieved material into verified evidence.
 
-## Problem
-
-Operator currently accepts a URL as reference but cannot read or analyze a URL by itself.
-
-This creates product friction:
-
-- users expect a news/article URL to produce a draft analysis;
-- the current browser-only flow requires pasted article text;
-- browser-side fetching would be fragile and unsafe;
-- the product needs clear error behavior when a site blocks access, requires cookies, uses paywalls, or returns non-article content.
-
-## Goals
-
-- Allow a user to paste a public HTTP/HTTPS URL and request controlled intake.
-- Fetch only the supplied URL, not a crawl of linked pages.
-- Extract bounded plain text suitable for the existing Operator normalizer.
-- Preserve source metadata and uncertainty.
-- Fail clearly when content cannot be fetched or safely extracted.
-- Keep the backend private/local by default unless a separate public deployment RFC approves exposure.
-- Prevent SSRF, crawler drift, credential use, hidden tracking, and source laundering.
-
-## Non-goals
-
-This RFC does not add:
-
-- implementation code;
-- public API exposure;
-- browser-side `fetch()` to third-party news sites;
-- crawler infrastructure;
-- recursive link traversal;
-- paywall bypass;
-- authentication or cookie replay;
-- JavaScript browser automation;
-- OCR;
-- PDF/document extraction;
-- vector storage;
-- server-side memory persistence;
-- dynamic OG per analyzed result;
-- LLM-as-judge;
-- truth verdicts;
-- legal or geopolitical conclusions.
-
-## Proposed controlled flow
+## Implemented narrow flow
 
 ```text
-operator URL
--> validate URL
--> block unsafe destinations
--> controlled backend fetch
--> content-type and size checks
--> bounded HTML/text extraction
--> source metadata record
--> normalizer input draft
--> existing claim/evidence/inference/uncertainty rendering
+Operator URL
+-> POST /intake/url with {"url": "..."}
+-> validate URI, host, port and resolved addresses
+-> controlled single-resource fetch
+-> content-type and byte bounds
+-> bounded HTML/plain-text extraction
+-> flat provenance response
+-> Operator browser-local draft
 ```
 
-## Endpoint shape for a later implementation
+The endpoint fetches one supplied resource and validated redirect hops. It does
+not crawl links, execute page JavaScript, retrieve embedded resources, run the
+Semantic Engine, or make a truth decision.
 
-A later implementation may add a local-only endpoint:
+## Canonical application payload contract
+
+The canonical v1 schema contains three document shapes:
+
+- `request`;
+- `success_response`;
+- `error_response`.
+
+It also records the reviewed runtime limits and stable application error-code
+mapping. HTTP framing, invalid UTF-8, malformed JSON, non-object JSON, and
+oversized request-body errors occur before the URL-intake application handler;
+those generic API error bodies are intentionally outside this application
+schema.
+
+### Endpoint and request
 
 ```text
 POST /intake/url
+Content-Type: application/json
 ```
-
-Example request:
 
 ```json
 {
-  "url": "https://example.com/article",
-  "source_hint": "news-article",
-  "operator_context": "operator-pwa"
+  "url": "https://example.com/article"
 }
 ```
 
-Example success response:
+Only `url` has application meaning. The current v1 handler ignores additional
+object properties. In particular, it does not implement `source_hint` or
+`operator_context`, and ignored fields do not become context, evidence,
+analysis input, or provenance.
+
+### Flat success response
 
 ```json
 {
   "status": "ok",
-  "intake": {
-    "url": "https://example.com/article",
-    "resolved_url": "https://example.com/article",
-    "source_domain": "example.com",
-    "retrieved_at_utc": "2026-07-20T00:00:00Z",
-    "content_type": "text/html; charset=utf-8",
-    "title": "Article title if available",
-    "text": "Plain extracted article text...",
-    "text_length": 12345,
-    "truncated": false,
-    "fetch_status": "fetched",
-    "verification_status": "unreviewed",
-    "limitations": [
-      "Fetched content is not verification.",
-      "Extraction may omit navigation, embeds, captions, or dynamic content."
-    ]
-  }
-}
-```
-
-Example failure response:
-
-```json
-{
-  "status": "error",
-  "error_code": "fetch_blocked_or_unavailable",
-  "message": "The URL could not be fetched or safely extracted.",
-  "limitations": [
-    "No claim was analyzed from URL-only input.",
-    "Paste article text manually or try another public source."
+  "intake_type": "controlled_url",
+  "url": "https://example.com/article",
+  "final_url": "https://example.com/article",
+  "source_domain": "example.com",
+  "retrieved_at_utc": "2026-07-20T00:00:00+00:00",
+  "title": "Public source article title.",
+  "text": "Plain extracted article text.",
+  "content_type": "text/html; charset=utf-8",
+  "bytes_read": 4096,
+  "truncated": false,
+  "redirects": [],
+  "verification_status": "unreviewed",
+  "learning_status": "candidate-source-not-verified",
+  "extraction_notes": [
+    "Fetched by local backend controlled URL intake.",
+    "No cookies, authentication, browser automation, or paywall bypass were used.",
+    "Text extraction is source-bound and does not verify truth."
   ]
 }
 ```
 
-## URL validation requirements
+The response is flat. There is no nested `intake` object. The accepted final
+resource is `final_url`, not `resolved_url`. `bytes_read` replaces the earlier
+proposal's `text_length`; it records retained response bytes, not character
+count.
 
-A later implementation must reject:
+### Flat application error response
+
+```json
+{
+  "status": "error",
+  "error": "url_fetch_failed",
+  "message": "URL fetch failed with HTTP 403.",
+  "url": "https://example.com/article",
+  "verification_status": "unreviewed"
+}
+```
+
+The stable code field is `error`, not `error_code`. The current handler echoes
+the submitted `url` value for provenance, including a non-string value on the
+`invalid_url` path. A controlled fetch failure says nothing about whether the
+source is true, false, valid, or invalid.
+
+## URL validation boundary
+
+The implementation rejects:
 
 - non-HTTP/HTTPS schemes;
 - empty or malformed URLs;
+- raw spaces, control characters, and Unicode IRIs;
 - URLs containing credentials;
-- local hostnames;
-- private, loopback, link-local, multicast, or unspecified IPs;
-- redirects to blocked destinations;
-- responses above configured size limits;
+- missing, malformed, local, or non-public hosts;
+- non-default HTTP/HTTPS ports;
+- private, loopback, link-local, multicast, unspecified, and other non-global
+  resolved addresses;
+- known IPv6 transition forms that embed a non-global IPv4 destination;
+- redirects to a rejected destination;
+- redirects without `Location`;
 - unsupported content types;
-- suspicious binary payloads;
-- requests requiring cookies, login, or session replay.
+- empty extracted text.
 
-## SSRF boundary
+International hostnames must use an IDNA A-label. Non-ASCII path and query text
+must be percent-encoded before submission.
 
-URL intake must defend against server-side request forgery.
+## SSRF and network boundary
 
-Minimum requirements:
+For each supplied URL and permitted redirect hop, the current launcher:
 
-- parse and normalize the URL before fetch;
-- resolve DNS and block private/internal addresses before request;
-- re-check the final resolved URL after redirects;
-- cap redirect count;
-- cap timeout;
-- cap response size;
-- never send local credentials, cookies, authorization headers, or cloud metadata headers;
-- block cloud metadata endpoints and localhost ranges explicitly.
+- parses the URL before fetching;
+- resolves the hostname and rejects the whole hop when any returned address is
+  not permitted;
+- disables environment proxies;
+- opens a numeric socket to one of the validated addresses;
+- verifies that the connected peer remains in the validated set;
+- preserves the hostname for the HTTP `Host` header and HTTPS SNI/certificate
+  verification;
+- validates every redirect before the next request;
+- sends no cookies, authorization header, local credentials, or browser state.
 
-## Fetch limits
+The synchronous Linux server uses one monotonic eight-second application budget
+across address candidates, redirects, TLS, headers, and body reading.
+Interruption of a blocking system DNS resolver is best-effort rather than a
+portable cancellation guarantee. Infrastructure egress controls, NAT, firewall,
+resolver configuration, and host deployment remain outside the repository's
+application-level proof boundary.
 
-Initial recommended limits:
+## Runtime limits
 
-- timeout: 8 seconds;
-- redirects: max 3;
-- response size: max 1 MB raw body;
-- extracted text size: max 40,000 characters;
-- request method: GET only;
-- accepted schemes: `http`, `https`;
-- default User-Agent: `HUB_Optimus-Operator-Intake/0.1 (+https://huboptimus.dev/operator/)`.
+These are implemented values, not recommendations:
 
-These values may change during implementation review, but limits must exist before merge.
+| Boundary | Implemented value |
+| --- | --- |
+| JSON request body | 4,096 bytes |
+| Submitted URL | 2,048 characters |
+| Total fetch budget | 8 seconds |
+| Redirects | At most 3 |
+| Retained raw response body | 1,000,000 bytes |
+| Extracted source text | At most 24,000 characters before an optional ellipsis |
+| Maximum returned `text` | 24,001 characters including an optional ellipsis |
+| Remote request method | `GET` |
+| Accepted schemes | `http`, `https` |
+| User-Agent | `HUB_Optimus-Operator-URL-Intake/0.1 (+https://huboptimus.dev/operator/)` |
 
-## Extraction rules
+The reader requests one byte beyond the raw-body limit to detect overflow,
+retains at most 1,000,000 bytes, and sets `truncated=true`; it does not claim to
+have read or extracted the remainder.
 
-The extractor should:
+## Extraction behavior
 
-- prefer visible text from article-like HTML;
-- remove scripts, styles, forms, navigation, cookie banners where reasonably detectable, and hidden elements;
-- preserve title when available;
-- preserve source URL and resolved URL;
-- preserve retrieval timestamp;
-- mark extraction as lossy and unverified;
-- avoid inventing missing article text;
-- fail clearly when content is too short, blocked, unsupported, or unusable.
+The current extractor:
 
-The extractor must not:
+- accepts HTML, XHTML, and plain-text responses;
+- decodes the declared charset when known and falls back to UTF-8 with
+  replacement for undecodable bytes;
+- ignores `canvas`, `iframe`, `noscript`, `script`, `style`, `svg`, and
+  `template` element content;
+- preserves a cleaned document title when available;
+- normalizes whitespace, removes duplicate cleaned lines, and drops short
+  non-sentence fragments;
+- returns non-empty bounded text or a controlled `empty_extraction` error.
+
+It is a bounded text extractor, not a complete article parser. It may retain
+navigation or other visible boilerplate and may omit meaningful dynamic,
+embedded, caption, or short-form content. It does not:
 
 - execute JavaScript;
 - interact with cookie banners;
 - log in;
 - bypass paywalls;
-- scrape related links;
-- follow article recommendations;
-- infer unavailable content.
+- fetch document links or embedded resources;
+- infer unavailable text.
 
-## Output contract
+## Operator behavior
 
-URL intake output may populate the existing source normalizer fields:
+The repository Operator posts only `{"url": sourceUrl}` to the controlled
+endpoint when a URL exists and source text is empty.
 
-- `source_url` from the final accepted URL;
-- `source_text` from extracted plain text;
-- `signal_source_type` from explicit source hint or conservative inference;
-- metadata fields for retrieval time, source domain, title, fetch status, and extraction limitations.
+On success, it:
 
-URL intake must remain upstream of analysis. It prepares material; it does not decide truth.
+- uses `text` as the browser-local draft input;
+- preserves submitted and final URL, source domain, title, retrieval time,
+  redirect chain, content type, byte count, truncation, and unreviewed status;
+- continues through the existing local conservative-triage UI.
 
-## Operator UI behavior
+On failure, it:
 
-When a URL is present and text is empty, a later UI implementation may show:
+- shows the controlled error message;
+- asks the operator to paste source text;
+- does not fetch the third-party URL directly from the browser;
+- does not classify the failed source as false or invalid.
 
-```text
-Read URL
-```
+If the operator supplies text and a URL, the browser treats the URL as
+operator-provided, unfetched attribution. The primary action analyzes actual
+text only: pasted text or text returned by controlled intake.
 
-If intake succeeds:
-
-```text
-URL read. Review extracted text, then analyze.
-```
-
-If intake fails:
-
-```text
-URL could not be read safely. Paste article text manually.
-```
-
-The primary `Analyze` action should only analyze actual text, whether pasted manually or extracted by controlled intake.
+The hard-coded endpoint URL in the static Operator is repository configuration,
+not proof that the service is publicly deployed, reachable, secure, or
+available.
 
 ## Storage and privacy
 
-Initial implementation should not store fetched text server-side beyond transient request handling unless a separate storage policy is approved.
+The endpoint returns fetched text within the request/response lifecycle and
+does not add a server-side fetched-text store. No persistence, retention,
+encryption, or deletion guarantee is established by this RFC.
 
-If request/response logs are needed, they must be limited to public-safe metadata:
+No implementation may log full article text, personal data, cookies,
+authorization headers, or sensitive operator content by default without a
+separately reviewed policy and change.
 
-- URL domain;
-- status code category;
-- error code;
-- timestamp;
-- byte counts;
-- duration.
+## Stable application failure codes
 
-Do not log full article text, personal data, cookies, headers, or user-provided sensitive content by default.
-
-## Failure codes
-
-A later implementation should use stable error codes such as:
+The schema and launcher currently define:
 
 - `invalid_url`;
-- `blocked_scheme`;
-- `blocked_private_address`;
-- `redirect_blocked`;
-- `timeout`;
-- `response_too_large`;
+- `invalid_url_host`;
+- `invalid_url_port`;
+- `unsupported_url_iri`;
+- `unsupported_url_scheme`;
+- `unsupported_url_credentials`;
+- `unsupported_url_port`;
+- `blocked_url_host`;
+- `unresolvable_url_host`;
 - `unsupported_content_type`;
-- `fetch_blocked_or_unavailable`;
-- `extractor_empty_text`;
-- `extractor_low_confidence`.
+- `empty_extraction`;
+- `redirect_without_location`;
+- `too_many_redirects`;
+- `url_fetch_failed`;
+- `url_fetch_timeout`;
+- `url_fetch_unavailable`;
+- `url_too_long`.
+
+The schema's `x-hub-optimus-error-http-status` map records the current HTTP
+status for each code. Generic request-body errors remain outside this list
+because URL intake has not started when they occur.
 
 ## Security review checklist
 
-Before implementation merge:
+The repository tests cover:
 
-- SSRF protections are covered by tests;
-- redirects are tested;
-- private IPs are blocked;
-- response size is capped;
-- timeout is capped;
-- no credentials/cookies are sent;
-- no browser-side third-party fetch is added;
-- extraction is bounded and non-executing;
-- failure states are clear to the user;
-- output marks intake as unverified.
+- URI, port, address, and redirect rejection;
+- DNS rebinding/connection pinning boundaries;
+- IPv6 transition-address cases;
+- response size and extracted-text bounds;
+- one total timeout budget;
+- disabled environment proxies;
+- absent cookies and authorization headers;
+- malformed HTTP and read failures;
+- single-resource fetching;
+- unreviewed success and failure provenance.
 
-## Acceptance criteria for this RFC
+Passing tests prove only those reviewed code paths. They do not attest the
+configuration or behavior of a deployed host.
 
-This RFC is acceptable when it:
+## Acceptance criteria for issue #1753
 
-- states that URL intake is not verification;
-- requires backend-controlled intake rather than browser scraping;
-- defines URL validation boundaries;
-- defines SSRF protections;
-- defines fetch and extraction limits;
-- defines success/failure response shapes;
-- defines Operator UI behavior;
-- keeps implementation out of this PR;
-- preserves GitHub as source of truth.
-
-## Follow-up implementation plan
-
-If accepted, implementation should proceed in small PRs:
-
-1. `ops/api: add controlled URL intake endpoint`
-   - endpoint only;
-   - local/private API only;
-   - SSRF/timeout/size tests.
-2. `site/operator: add URL read action`
-   - button and UI state only;
-   - no browser third-party fetch;
-   - consumes controlled endpoint.
-3. `tests: add URL intake smoke fixtures`
-   - local fixture server or mocked HTTP responses;
-   - blocked private URL tests;
-   - extraction failure tests.
+- One versioned schema defines current request, success, and application error
+  payloads.
+- The RFC, backend constants, Operator request, schema examples, limits,
+  User-Agent, and error-code set are coupled by executable tests.
+- No nested response, `resolved_url`, `error_code`, 40,000-character limit, or
+  obsolete User-Agent is presented as the active contract.
+- No network, deployment, storage, verification, or analysis capability is
+  added by the reconciliation.
+- GitHub remains the source of truth.
 
 ## Validation
 
-Documentation-only validation:
-
 ```bash
-python tools/check_mojibake.py docs/rfc/operator_controlled_url_intake.md
+python -m pytest -q \
+  tests/test_hub_api_controlled_url_intake.py \
+  tests/test_operator_pwa_product_actions.py
+python -m json.tool \
+  ops/ec2/controlled_url_intake.v1.schema.json >/dev/null
+python tools/check_mojibake.py \
+  docs/rfc/operator_controlled_url_intake.md
 ```
