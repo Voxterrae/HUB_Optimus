@@ -3,6 +3,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+from semantic_engine.cli.__main__ import ControlledCliError, serialize_payload
+
 
 def run_cli(*args):
     return subprocess.run(
@@ -79,6 +83,74 @@ def test_cli_invalid_json_fails_cleanly(tmp_path):
     assert result.stdout == ""
     assert "semantic_engine.cli: error: invalid JSON" in result.stderr
     assert "Traceback" not in result.stderr
+
+
+@pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
+def test_cli_rejects_non_standard_numeric_constants_in_nested_metadata(
+    tmp_path,
+    constant,
+):
+    case_path = tmp_path / "non-standard-number.json"
+    case_path.write_text(
+        (
+            "{"
+            '"case_id":"case-non-standard-number",'
+            '"core_version_ref":"main",'
+            '"input_summary":"Strict JSON regression fixture.",'
+            f'"metadata":{{"nested":{{"value":{constant}}}}}'
+            "}"
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_cli("analyze", str(case_path))
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert (
+        f"non-standard numeric constant {constant} is not valid JSON"
+        in result.stderr
+    )
+    assert "Traceback" not in result.stderr
+
+
+def test_cli_round_trips_finite_numeric_metadata(tmp_path):
+    case_path = tmp_path / "finite-numbers.json"
+    metadata = {
+        "nested": {
+            "negative": -12.5,
+            "zero": 0,
+            "positive": 6.25e18,
+        }
+    }
+    write_json(
+        case_path,
+        {
+            "case_id": "case-finite-numbers",
+            "core_version_ref": "main",
+            "input_summary": "Finite numeric metadata regression fixture.",
+            "metadata": metadata,
+        },
+    )
+
+    result = run_cli("analyze", str(case_path))
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert json.loads(result.stdout)["metadata"] == metadata
+
+
+@pytest.mark.parametrize(
+    "value",
+    [float("nan"), float("inf"), float("-inf")],
+    ids=["nan", "positive-infinity", "negative-infinity"],
+)
+def test_semantic_serializer_fails_closed_for_non_finite_values(value):
+    with pytest.raises(
+        ControlledCliError,
+        match="cannot serialize output as strict JSON",
+    ):
+        serialize_payload({"metadata": {"nested": {"value": value}}})
 
 
 def test_cli_missing_required_field_fails_cleanly(tmp_path):

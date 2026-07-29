@@ -388,6 +388,22 @@ multi-writer locking is claimed.
 - Missing, unreadable, invalid UTF-8, invalid JSON, and contract-invalid inputs
   fail through the CLI's controlled error channel without a traceback.
 - This change adds no evaluator, scoring, model judge, or autonomous conclusion.
+
+## Strict JSON Boundary
+
+Issue #1803 closes the permissive-number gap at the Semantic Engine file
+boundary and the embedded API JSON body boundary.
+
+- `NaN`, `Infinity`, and `-Infinity` are rejected during decoding, including
+  when nested inside open metadata.
+- `/analyze` and `/intake/url` share the same strict request-body decoder.
+- Semantic Engine output, temporary API case input, and API responses use
+  fail-closed serialization and cannot emit those non-standard constants.
+- Analysis-result files containing a non-standard constant are rejected before
+  the API constructs its response.
+- Finite numeric metadata remains opaque and round-trippable. These checks add
+  no scoring, truth evaluation, or public-service claim.
+
 ## GitHub Actions supply-chain boundary
 
 The CI, link-check, Pages, PR-safety, and repository-health workflows pin
