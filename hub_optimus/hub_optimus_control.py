@@ -2,15 +2,13 @@
 hub_optimus_control.py
 -----------------------
 
-This module provides a minimal, self‑contained draft implementation of a
-"control plane" inspired by the HUB_Optimus architecture discussed in the
-previous conversation. The goal of this implementation is to demonstrate
-how a central gateway might mediate access to external tools while
-enforcing simple policies and maintaining an audit trail. It does not
-attempt to integrate with external systems such as OpenTelemetry, SPIFFE,
-or Open Policy Agent; instead, it uses in‑memory data structures and
-Python exceptions to illustrate the core ideas without external
-dependencies.
+Status: local educational prototype.
+
+This module demonstrates how an in-memory gateway can apply a simple
+actor-to-tool allowlist and retain an inspection log. It is not imported by
+the supported scenario runtime, Semantic Engine, Operator, or deployment
+scripts. It provides no authentication, production authorization, durable
+audit, distributed identity, policy service, or telemetry integration.
 
 Key components:
   * ``PolicyEngine`` – Evaluates whether a given actor is allowed to
@@ -23,19 +21,52 @@ Key components:
     ``PermissionError``, while calls to unknown tools raise
     ``ValueError``.
 
-This code is intended for educational purposes and serves as a starting
-point for more sophisticated prototypes. In a production system you
-would likely replace the ``PolicyEngine`` with a call to OPA, replace
-the internal log with structured telemetry (for example, via OpenTelemetry),
-and secure identities using SPIFFE/SPIRE. Nevertheless, this simple
-implementation shows how the core control loop might be structured.
+The names Open Policy Agent (OPA), OpenTelemetry, SPIFFE, and SPIRE describe
+capabilities that this module explicitly does not implement. The actor string
+is only an in-memory lookup key, not an authenticated identity. The log is
+process-local inspection data, not a security or compliance audit record.
+Accepted call arguments are restricted to plain, string-keyed built-in
+containers and scalar values so snapshots never invoke user-defined copy hooks.
 """
 
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
-from typing import Any, Dict, List, Mapping, MutableMapping, Optional
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Mapping, MutableMapping
+
+
+SNAPSHOT_VALUE_ERROR = (
+    "Arguments must contain only snapshot-safe built-in values: "
+    "None, bool, int, float, str, list, tuple, and string-keyed dict."
+)
+
+
+def _snapshot_value(value: Any) -> Any:
+    """Copy the prototype's restricted value domain without user hooks."""
+    value_type = type(value)
+    if value is None or value_type in {bool, int, float, str}:
+        return value
+    if value_type is list:
+        return [_snapshot_value(item) for item in value]
+    if value_type is tuple:
+        return tuple(_snapshot_value(item) for item in value)
+    if value_type is dict:
+        snapshot: Dict[str, Any] = {}
+        for key, item in value.items():
+            if type(key) is not str:
+                raise TypeError(SNAPSHOT_VALUE_ERROR)
+            snapshot[key] = _snapshot_value(item)
+        return snapshot
+    raise TypeError(SNAPSHOT_VALUE_ERROR)
+
+
+def _snapshot_arguments(args: Dict[str, Any]) -> Dict[str, Any]:
+    """Copy one plain dictionary without invoking mapping hooks."""
+    if type(args) is not dict:
+        raise TypeError(SNAPSHOT_VALUE_ERROR)
+    snapshot = _snapshot_value(args)
+    return snapshot
 
 
 class PolicyEngine:
@@ -97,8 +128,9 @@ class ControlPlane:
       5. Returns the result of the tool or raises an exception if
          unauthorized or unknown.
 
-    All completed and attempted calls (including denied ones) are
-    recorded in ``self._log`` for inspection.
+    All completed and attempted calls (including denied ones) are recorded in
+    ``self._log`` for inspection. Records follow process-local append order;
+    this prototype makes no concurrency or durable-ordering guarantee.
     """
 
     def __init__(self, policies: Mapping[str, List[str]]) -> None:
@@ -106,7 +138,7 @@ class ControlPlane:
         # Internal log of call metadata and results. Each entry is a dict.
         self._log: List[MutableMapping[str, Any]] = []
 
-    def process_tool_call(self, actor: str, tool_name: str, args: Mapping[str, Any]) -> Any:
+    def process_tool_call(self, actor: str, tool_name: str, args: Dict[str, Any]) -> Any:
         """Handle a tool invocation request.
 
         Parameters
@@ -117,9 +149,12 @@ class ControlPlane:
             policy definitions.
         tool_name : str
             The canonical name of the tool to invoke (e.g. ``"sum"``).
-        args : Mapping[str, Any]
-            Arguments for the tool call. The structure depends on
-            individual tool semantics (see ``execute_tool`` for details).
+        args : Dict[str, Any]
+            Arguments for the tool call. Snapshot-safe arguments use plain
+            string-keyed dictionaries containing only ``None``, booleans,
+            numbers, strings, lists, tuples, and dictionaries. The structure
+            otherwise depends on individual tool semantics (see
+            ``execute_tool`` for details).
 
         Returns
         -------
@@ -127,33 +162,74 @@ class ControlPlane:
             The return value of the tool call if allowed and the tool
             exists. The type depends on the tool implementation. If the
             call is forbidden, a ``PermissionError`` is raised. If the
-            tool name is unrecognized, a ``ValueError`` is raised.
+            tool name is unrecognized, a ``ValueError`` is raised. A
+            ``TypeError`` is raised for non-plain actor/tool identifiers.
+            Arguments outside the snapshot-safe built-in value domain raise
+            ``TypeError`` only for an otherwise allowed call; denied calls
+            retain ``PermissionError`` precedence.
         """
         # Unique identifier and timestamp for this call
         call_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
+
+        if type(actor) is not str or type(tool_name) is not str:
+            self._log.append(
+                {
+                    "call_id": call_id,
+                    "timestamp": timestamp,
+                    "actor": actor if type(actor) is str else "<invalid>",
+                    "tool_name": (
+                        tool_name if type(tool_name) is str else "<invalid>"
+                    ),
+                    "args": {},
+                    "args_snapshot_status": "not-attempted",
+                    "allowed": False,
+                    "status": "error",
+                    "error": "Actor and tool_name must be plain strings.",
+                }
+            )
+            raise TypeError("Actor and tool_name must be plain strings.")
 
         # Check the policy
         decision = self.policy_engine.evaluate(actor, tool_name, args)
         allowed = decision["allowed"]
 
-        # Build log entry; result will be inserted after execution if allowed
+        # Build the base entry before copying arguments so an unsupported value
+        # cannot suppress the attempt record.
         entry: MutableMapping[str, Any] = {
             "call_id": call_id,
             "timestamp": timestamp,
             "actor": actor,
             "tool_name": tool_name,
-            "args": dict(args),
             "allowed": allowed,
         }
+
+        try:
+            execution_args = _snapshot_arguments(args)
+            entry["args"] = _snapshot_value(execution_args)
+            entry["args_snapshot_status"] = "complete"
+        except Exception as error:
+            entry["args"] = {}
+            entry["args_snapshot_status"] = "rejected"
+            if allowed:
+                entry["status"] = "error"
+                entry["error"] = SNAPSHOT_VALUE_ERROR
+                self._log.append(entry)
+                raise TypeError(SNAPSHOT_VALUE_ERROR) from error
+
+            entry["status"] = "denied"
+            self._log.append(entry)
+            raise PermissionError(
+                f"Actor '{actor}' is not permitted to invoke tool '{tool_name}'"
+            ) from None
 
         # Perform action based on policy
         if allowed:
             # Attempt to execute the tool.  Use try/except/else so we can
             # append to the log in both success and failure cases.
             try:
-                result = self.execute_tool(tool_name, args)
-                entry["result"] = result
+                result = self.execute_tool(tool_name, execution_args)
+                entry["result"] = _snapshot_value(result)
                 entry["status"] = "success"
             except Exception as e:
                 # Capture any error raised by the tool and propagate it
@@ -215,8 +291,8 @@ class ControlPlane:
         Returns
         -------
         List[Mapping[str, Any]]
-            A list of dictionaries representing each call attempt in
-            chronological order. The list is a shallow copy to prevent
-            external modification of internal state.
+            A snapshot of each call attempt in process-local append order.
+            Mutating the returned list or any nested value cannot alter the
+            internal log. No cross-thread chronological ordering is promised.
         """
-        return list(self._log)
+        return _snapshot_value(self._log)
