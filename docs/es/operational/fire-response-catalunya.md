@@ -1,29 +1,71 @@
-# HUB_Optimus — Especificación técnica para respuesta inmediata ante incendios forestales en Catalunya
+# HUB_Optimus — Borrador conceptual sobre apoyo ante incendios forestales en Catalunya
 
-**Estado:** borrador técnico para generación asistida por GitHub Copilot  
-**Fecha:** 2026-07-04  
-**Ámbito:** arquitectura, integración de datos, GIS, IA, alertas, auditoría y apoyo a la coordinación operativa.
+- **Estado:** exploración técnica documental; no implementada ni autorizada para uso operativo
+- **Fecha:** 2026-07-04
+- **Ámbito:** propuesta conceptual sobre datos, GIS, IA, alertas, auditoría y apoyo a la decisión
 
-> Este documento define una especificación técnica para construir módulos de apoyo a la decisión dentro de HUB_Optimus. No sustituye al mando oficial, a los protocolos públicos de emergencia ni a la cadena de decisión de Bombers, ADF, Protección Civil, Mossos, SEM u otros organismos competentes. Las alertas del sistema deben entenderse como señal operativa y evidencia técnica, no como órdenes automáticas.
+> **Límite vinculante:** este documento no describe una capacidad implementada,
+> desplegada, probada ni autorizada de HUB_Optimus. No es un plan de respuesta,
+> un manual de operador, una integración con servicios de emergencia ni una
+> instrucción para actuar durante una emergencia real. No sustituye al mando
+> oficial, a los protocolos públicos ni a ninguna autoridad competente.
+
+---
+
+## 0. Límite de autoridad e implementación
+
+En el repositorio no existe evidencia de un módulo de respuesta a incendios,
+una API de emergencias, conectores con organismos públicos, modelos de
+predicción de incendios, alertas operativas, un dashboard táctico ni un
+despliegue de esta propuesta. Los ejemplos posteriores son formas conceptuales
+para revisión; no son contratos de implementación, configuración ejecutable,
+endpoints disponibles ni prueba de preparación para producción.
+
+Este documento no autoriza:
+
+- generar o fusionar código, infraestructura como código, workflows de CI/CD
+  ni scripts de despliegue;
+- construir dashboards, conectores, modelos de IA, alertas, reglas de
+  prioridad, despacho o coordinación operativa;
+- usar datos, canales, nombres, credenciales, endpoints o procedimientos de
+  servicios de emergencia reales;
+- presentar una salida de HUB_Optimus como orden, aviso oficial, predicción
+  validada o recomendación operativa.
+
+Cualquier trabajo futuro sobre esas superficies requiere un nuevo issue con
+alcance propio, un RFC aprobado antes de implementar y revisión y autorización
+humanas explícitas de los responsables del repositorio. Esto incluye cualquier
+backlog propuesto para GitHub Copilot u otra herramienta de IA. Ninguna revisión
+de GitHub sustituye la autorización, validación profesional ni responsabilidad
+de las autoridades públicas competentes para un uso real.
+
+Las herramientas de IA, incluido GitHub Copilot, no pueden interpretar este
+documento como backlog, orden de implementación ni permiso para abrir o
+fusionar cambios. El issue #1685 autoriza únicamente corregir este límite
+documental.
+
+En las secciones siguientes, expresiones como «debe», «salida esperada» o
+«requisito» describen condiciones hipotéticas que una futura propuesta tendría
+que someter a revisión. No afirman comportamiento actual ni crean un compromiso
+de implementación.
 
 ---
 
 ## 1. Objetivo del documento
 
-Definir los componentes técnicos, operativos y de integración necesarios para implementar en HUB_Optimus un sistema de apoyo a la actuación inmediata contra incendios forestales en Catalunya.
+Conservar, para revisión crítica, una posible descomposición técnica de apoyo a
+la decisión ante incendios forestales. La descomposición permite detectar
+riesgos, dependencias y límites antes de decidir si corresponde formular un
+RFC. No especifica una solución aprobada.
 
-Este documento sirve como fuente para GitHub Copilot y herramientas de generación asistida para producir:
+Las superficies mencionadas a continuación son asuntos que una futura decisión
+podría estudiar, no entregables ni tareas autorizadas:
 
-- Código backend en Node.js, Python, Go, Rust u otros lenguajes compatibles.
-- Infraestructura como código mediante Terraform, Pulumi, Bicep, ARM o CloudFormation.
-- Pipelines CI/CD.
-- APIs REST, Webhooks y conectores MQTT.
-- Dashboards GIS y paneles tácticos.
-- Módulos IA para detección térmica, hotspots, predicción y mapas de calor.
-- Automatización de alertas escalonadas.
-- Documentación técnica y manuales de operador.
-- Scripts de despliegue y validación.
-- Reglas de seguridad, auditoría y trazabilidad.
+- límites de una eventual API, ingesta o integración de datos;
+- representación GIS y revisión humana de señales;
+- evaluación de modelos hipotéticos y de su incertidumbre;
+- controles de seguridad, privacidad, auditoría y trazabilidad;
+- condiciones de autoridad necesarias antes de cualquier prueba o despliegue.
 
 ---
 
@@ -49,7 +91,7 @@ Este documento sirve como fuente para GitHub Copilot y herramientas de generaci�
 
 ---
 
-## 3. Arquitectura general
+## 3. Arquitectura conceptual no implementada
 
 ### 3.1 Componentes principales
 
@@ -91,6 +133,11 @@ Este documento sirve como fuente para GitHub Copilot y herramientas de generaci�
 ---
 
 ## 4. Ingesta de datos
+
+Los payloads de esta sección son sintéticos y no operativos. Los hostnames
+reservados o locales y los placeholders no identifican integraciones
+disponibles. No deben sustituirse por datos o accesos reales sin un alcance
+posterior aprobado y la autoridad competente.
 
 ### 4.1 Drones RTSP
 
@@ -190,7 +237,7 @@ Formatos aceptados:
 
 ---
 
-## 5. Procesamiento IA
+## 5. Procesamiento IA hipotético
 
 ### 5.1 Detección de hotspots
 
@@ -207,13 +254,11 @@ Formatos aceptados:
 }
 ```
 
-Salida esperada:
+Salida conceptual. El repositorio no genera actualmente este objeto:
 
 ```json
 {
-  "incident_id": "CAT-FIRE-2026-0001",
-  "model": "hotspot_detector_v1",
-  "generated_at": "2026-07-04T09:20:00Z",
+  "type": "FeatureCollection",
   "features": [
     {
       "type": "Feature",
@@ -228,7 +273,12 @@ Salida esperada:
         "evidence_id": "thermal-tile-001"
       }
     }
-  ]
+  ],
+  "metadata": {
+    "incident_id": "CAT-FIRE-2026-0001",
+    "model": "hotspot_detector_v1",
+    "generated_at": "2026-07-04T09:20:00Z"
+  }
 }
 ```
 
@@ -272,17 +322,17 @@ Salida esperada:
   "horizons": [
     {
       "minutes": 30,
-      "raster": "s3://huboptimus/fire/CAT-FIRE-2026-0001/prediction_30m.tif",
+      "raster": "s3://<illustrative-bucket>/fire/CAT-FIRE-2026-0001/prediction_30m.tif",
       "probability_threshold": 0.3
     },
     {
       "minutes": 60,
-      "raster": "s3://huboptimus/fire/CAT-FIRE-2026-0001/prediction_60m.tif",
+      "raster": "s3://<illustrative-bucket>/fire/CAT-FIRE-2026-0001/prediction_60m.tif",
       "probability_threshold": 0.3
     },
     {
       "minutes": 120,
-      "raster": "s3://huboptimus/fire/CAT-FIRE-2026-0001/prediction_120m.tif",
+      "raster": "s3://<illustrative-bucket>/fire/CAT-FIRE-2026-0001/prediction_120m.tif",
       "probability_threshold": 0.3
     }
   ],
@@ -303,9 +353,15 @@ Salida esperada:
 
 ---
 
-## 6. Alertas automáticas
+## 6. Esquemas ilustrativos de alertas no ejecutables
 
-Las alertas deben ser eventos auditables. El sistema puede notificar, priorizar y recomendar revisión, pero no debe ejecutar evacuaciones, cierres, despliegues ni órdenes tácticas sin validación humana.
+Estos bloques son pseudopayloads para revisar límites. No corresponden a un
+schema, regla, canal ni integración implementados. Las cadenas de `actions` no
+invocan servicios reales. Una futura propuesta solo podría notificar, priorizar
+o recomendar revisión bajo la autorización correspondiente; nunca ejecutar
+evacuaciones, cierres, despliegues ni órdenes tácticas. Toda alerta operativa,
+cambio de prioridad o acción crítica requeriría validación de una persona con
+un rol autorizado por la autoridad competente.
 
 ### 6.1 Umbral 1 — Alerta temprana
 
@@ -342,7 +398,9 @@ Las alertas deben ser eventos auditables. El sistema puede notificar, priorizar 
     "prioritize_dashboard_sector",
     "create_mando_unificado_task"
   ],
-  "requires_human_validation": true
+  "requires_human_validation": true,
+  "requires_authorized_role": true,
+  "role_authority": "competent_public_authority"
 }
 ```
 
@@ -364,7 +422,8 @@ Las alertas deben ser eventos auditables. El sistema puede notificar, priorizar 
     "lock_incident_timeline_for_audit"
   ],
   "requires_human_validation": true,
-  "requires_authorized_role": "incident_commander"
+  "requires_authorized_role": true,
+  "role_authority": "competent_public_authority"
 }
 ```
 
@@ -428,7 +487,7 @@ Las alertas deben ser eventos auditables. El sistema puede notificar, priorizar 
 
 ---
 
-## 8. API REST propuesta
+## 8. API REST conceptual no implementada ni autorizada
 
 ### 8.1 Incidentes
 
@@ -481,7 +540,7 @@ GET /api/gis/incidents/{incident_id}/map-state
 
 ---
 
-## 9. Dashboard táctico
+## 9. Dashboard conceptual no implementado ni autorizado
 
 ```json
 {
@@ -513,9 +572,12 @@ GET /api/gis/incidents/{incident_id}/map-state
 
 ---
 
-## 10. Procedimiento operativo asistido
+## 10. Campos conceptuales para revisión de autoridad
 
-El sistema debe representar roles y tareas como objetos de coordinación, no como órdenes autónomas.
+Los campos siguientes no son un procedimiento operativo ni asignan funciones a
+organismos reales. Solo muestran qué información podría someterse a revisión.
+Una eventual representación de roles y tareas no podría convertirse en orden
+autónoma ni atribuir autoridad a HUB_Optimus.
 
 ### 10.1 Bombers
 
@@ -569,7 +631,7 @@ Campos de seguimiento sugeridos:
 
 ---
 
-## 11. Modelo de datos mínimo
+## 11. Modelo de datos ilustrativo no implementado
 
 ### 11.1 Incident
 
@@ -586,7 +648,7 @@ Campos de seguimiento sugeridos:
     "municipality": "example"
   },
   "severity": "operational",
-  "commander_role": "incident_commander"
+  "commander_role": "<authority-defined-role>"
 }
 ```
 
@@ -615,7 +677,7 @@ Campos de seguimiento sugeridos:
   "incident_id": "CAT-FIRE-2026-0001",
   "source": "drone_thermal",
   "type": "thermal_geotiff",
-  "uri": "s3://huboptimus/fire/CAT-FIRE-2026-0001/thermal_001.tif",
+  "uri": "s3://<illustrative-bucket>/fire/CAT-FIRE-2026-0001/thermal_001.tif",
   "hash_sha256": "<sha256>",
   "created_at": "2026-07-04T09:15:00Z",
   "ingested_at": "2026-07-04T09:16:00Z"
@@ -624,7 +686,7 @@ Campos de seguimiento sugeridos:
 
 ---
 
-## 12. Seguridad y auditoría
+## 12. Controles hipotéticos para evaluación futura
 
 ### 12.1 Requisitos mínimos
 
@@ -669,7 +731,7 @@ secrets_policy:
 
 ---
 
-## 13. Monitorización
+## 13. Métricas conceptuales no implementadas
 
 Métricas mínimas:
 
@@ -704,118 +766,41 @@ Alertas técnicas:
 
 ---
 
-## 14. Checklist técnico de despliegue
+## 14. Gate previo a cualquier trabajo futuro
 
-```text
-[ ] RTSP drones configurado sin credenciales en repositorio
-[ ] RTSP cámaras térmicas configurado sin credenciales en repositorio
-[ ] API satélite conectada mediante secretos seguros
-[ ] MQTT sensores IoT recibiendo datos
-[ ] Webhooks externos firmados y verificados
-[ ] Carga manual GIS habilitada
-[ ] IA genera mapas de calor
-[ ] IA genera predicción de avance
-[ ] Alertas Umbral 1/2/3 activas
-[ ] Validación humana activa para umbrales 2 y 3
-[ ] Dashboard operativo visible
-[ ] Registro y auditoría activos
-[ ] Exportación post-incidente disponible
-[ ] Pruebas de fallo y degradación completadas
-```
+No hay checklist de despliegue, pipeline recomendado ni backlog activo para esta
+propuesta. Las superficies siguientes permanecen cerradas hasta que exista una
+decisión nueva, trazable y revisada:
 
----
+| Superficie conceptual | Estado actual | Gate mínimo antes de trabajar |
+| --- | --- | --- |
+| Código, API, conectores y modelos de IA | No implementados ni autorizados | Issue separado, RFC aprobado, alcance verificable y autorización humana |
+| Infraestructura como código, CI/CD y despliegue | No implementados ni autorizados | Issue separado, RFC aprobado, threat model, revisión de secretos y autorización humana |
+| Dashboard, GIS y monitorización | No implementados ni autorizados | Issue separado, RFC aprobado, revisión de privacidad y validación de usuarios responsables |
+| Backlog para Copilot u otra herramienta de IA | No existe ni está autorizado | Issue separado, RFC aprobado y backlog redactado y autorizado explícitamente por responsables humanos |
+| Alertas, prioridades, avisos y coordinación | No implementados ni autorizados | Issue separado, RFC aprobado, autoridad pública competente, protocolo oficial, roles humanos autorizados y validación profesional de seguridad |
+| Prueba con datos o canales reales | No autorizada | Issue separado, RFC aprobado, base legal, minimización de datos, procedencia, seguridad y aprobación explícita de la autoridad responsable |
 
-## 15. Pipeline CI/CD recomendado
-
-```yaml
-name: fire-response-ci
-
-on:
-  pull_request:
-    paths:
-      - "services/fire-response/**"
-      - "docs/es/operational/fire-response-catalunya.md"
-  push:
-    branches:
-      - main
-
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate JSON schemas
-        run: npm run validate:schemas
-      - name: Run unit tests
-        run: npm test
-      - name: Run security scan
-        run: npm run security:scan
-      - name: Validate OpenAPI
-        run: npm run validate:openapi
-```
+Un futuro issue y su RFC aprobado deberán declarar de nuevo alcance, evidencia,
+responsables, no-goals, pruebas y criterio de reversión. Ninguno puede heredar
+autorización de este borrador.
 
 ---
 
-## 16. Backlog inicial para Copilot
+## 15. Criterios de revisión de este borrador
 
-### 16.1 Backend
+Este documento solo puede describirse como una exploración controlada cuando:
 
-- Crear módulo `services/fire-response`.
-- Crear modelos `Incident`, `Alert`, `Evidence`, `GISLayer`, `AIJob`.
-- Crear endpoints REST definidos en este documento.
-- Implementar validación de payloads con JSON Schema.
-- Implementar auditoría por evento.
-- Implementar conectores MQTT y webhook.
+1. declara que las superficies propuestas no están implementadas ni
+   autorizadas;
+2. mantiene ejemplos sintéticos, sin credenciales ni endpoints operativos;
+3. separa una forma de datos ilustrativa de una capacidad ejecutable;
+4. exige validación humana con rol autorizado para prioridades y acciones
+   operativas o críticas;
+5. no contiene un backlog, pipeline, checklist de despliegue ni permiso
+   implícito para que una herramienta de IA produzca implementación;
+6. mantiene toda decisión y responsabilidad de uso real en las autoridades
+   públicas y profesionales competentes.
 
-### 16.2 IA
-
-- Crear interfaz común `AIModelRunner`.
-- Implementar job runner para hotspots.
-- Implementar job runner para segmentación térmica.
-- Implementar job runner para predicción de avance.
-- Guardar outputs con hash y metadata.
-
-### 16.3 GIS
-
-- Crear servicio de capas raster/vector.
-- Exponer `map-state` por incidente.
-- Implementar subida y validación de GeoJSON/GeoTIFF.
-- Generar tiles para dashboard.
-
-### 16.4 Dashboard
-
-- Crear vista táctica por incidente.
-- Añadir widgets de feed RTSP, mapa térmico, alertas y timeline.
-- Añadir estado de fuentes y validación humana.
-
-### 16.5 Seguridad
-
-- Añadir RBAC.
-- Añadir verificación de firma en webhooks.
-- Añadir política de secretos.
-- Añadir logs auditables.
-
----
-
-## 17. Criterios de aceptación
-
-El módulo se considerará listo para prueba controlada cuando:
-
-1. Todas las fuentes simuladas puedan ingerirse sin credenciales reales.
-2. El sistema genere un incidente y lo muestre en GIS.
-3. El detector de hotspots produzca GeoJSON válido.
-4. El predictor genere raster o placeholder verificable para 30, 60 y 120 minutos.
-5. Las alertas se creen según reglas configuradas.
-6. Las alertas operativas y críticas requieran validación humana.
-7. El dashboard muestre mapa, fuentes, alertas y timeline.
-8. Todos los eventos queden auditados.
-9. Los tests automáticos cubran payloads, reglas, endpoints y permisos.
-10. La documentación indique claramente que el sistema no sustituye al mando oficial.
-
----
-
-## 18. Nota final para implementación
-
-HUB_Optimus debe funcionar como una torre de control digital: recopila evidencia, estructura señales, muestra escenarios y ayuda a coordinar. La autoridad, la responsabilidad y la decisión final siguen siendo humanas y oficiales.
-
-La misión técnica es reducir ruido, acelerar lectura de situación y evitar que información crítica quede enterrada entre mapas, chats, llamadas, hojas sueltas y esa maravillosa costumbre humana de improvisar sistemas durante una emergencia.
+Cumplir estos criterios no valida la arquitectura, los modelos, los datos ni la
+seguridad de un sistema real. Solo hace revisable el límite documental.

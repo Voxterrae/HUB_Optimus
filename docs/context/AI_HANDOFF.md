@@ -555,6 +555,33 @@ Operational boundary:
   in the versioned baseline and rejects restoring that checkpoint as a current
   source. It does not replace live GitHub inspection.
 
+## Catalunya Fire-Response Documentation Boundary
+
+Issue #1685 corrects the documentation boundary around the conceptual
+Catalunya fire-response draft:
+
+- The repository has no implemented or authorized fire-response module, API,
+  emergency-service connector, prediction model, operational alert, tactical
+  dashboard, deployment, or operator procedure.
+- Payloads, data shapes, roles, routes, storage locations, actions, and metrics
+  in the draft are illustrative review material, not executable configuration,
+  available endpoints, operational instructions, or evidence of readiness.
+- Code, infrastructure as code, CI/CD, deployment, dashboards, AI, alerts,
+  prioritization, and use of real data or channels require a separately scoped
+  issue, an approved RFC, and explicit human repository review before work
+  starts. This includes any proposed backlog for Copilot or another AI tool.
+- Any real-world use additionally requires authorization from the competent
+  public authority and relevant professional safety review. Repository review
+  cannot confer operational authority.
+- Hypothetical operational and critical priorities require validation by a
+  human holding an authorized role. AI tools cannot treat the document as a
+  backlog, implementation order, or permission to open or merge work.
+- The hotspot example is a valid top-level GeoJSON `FeatureCollection`; its
+  incident and model metadata are contained in the foreign `metadata` member.
+- The regression tests guard these documentation statements and example
+  shapes only. They do not attest to a system implementation, model validity,
+  deployment, integration, security, or operational safety.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
