@@ -112,6 +112,23 @@ in PR #1776 establishes:
 The runtime-only install path has been verified in a newly created virtual
 environment without development requirements.
 
+## Maintenance Drift Boundary
+
+Issue #1788 replaces branch-producing scheduled maintenance with a read-only
+drift check on trusted `main`.
+
+Operational boundary:
+
+- the scheduled workflow has only `contents: read` permission and persists no
+  checkout credentials;
+- it creates no GitHub App token, commit, branch, pull request, or remote ref;
+- the legacy maintenance helper runs only inside an isolated copy of committed
+  `HEAD`;
+- proposed changes fail the check and appear in the GitHub Actions step
+  summary; they are never applied to the source checkout;
+- retiring historical maintenance branches remains a separate audited action
+  and is not authorized or performed by the scheduled drift check.
+
 ## Simulator Isolation Boundary
 
 Issue #1755 records a verified mismatch between the runtime contract and the

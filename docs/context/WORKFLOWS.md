@@ -86,18 +86,21 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 ### repo_maintenance_bot.yml
 
 - Triggers:
-  - `workflow_dispatch` with `mode` and `allow_kernel_changes` inputs.
-  - weekly schedule: Monday 06:15 UTC.
-- Permissions:
-  - `contents: write`
-  - `pull-requests: write`
-  - `issues: write`
+  - weekly schedule only: Monday 06:15 UTC.
+- Permissions: `contents: read`.
 - Job:
-  - Skips cleanly when `GH_APP_ID` or `GH_APP_PRIVATE_KEY` are missing.
-  - Creates a maintenance branch, runs `tools/maintenance_bot.py`, runs `tools/kernel_guard.py`, commits changes, pushes the branch, opens a PR, then runs `tools/pr_pro.py`.
-- Writes to repo: yes, only through an explicit maintenance PR branch.
+  - Verifies that the credential-free checkout is clean and exactly matches
+    the scheduled `main` commit.
+  - Runs `tools/maintenance_bot.py` only inside an isolated copy of committed
+    `HEAD`, compares that candidate with an untouched baseline, and publishes
+    a GitHub Actions step summary.
+  - Exits non-zero with the proposed paths when drift exists or when the check
+    cannot complete safely.
+- Writes to repo: no. It creates no token, commit, branch, pull request, or
+  remote ref. Existing branch retirement is a separate, explicitly audited
+  operation under issue `#1788`.
 
-#### `tools/pr_pro.py` support boundary
+### `tools/pr_pro.py` support boundary
 
 - Status: supported as an optional helper for enriching an existing PR with
   governed labels and a changed-file summary. It does not create or merge PRs
@@ -112,8 +115,8 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   labels, and comment. It does not invoke `gh` and therefore performs no
   GitHub read or write.
 - The versioned workflow file remains authoritative for whether a workflow
-  invokes this optional helper. A draft PR or chat statement does not change
-  the active workflow.
+  invokes this optional helper. No current workflow invokes it. A draft PR or
+  chat statement does not change the active workflow.
 
 ### repo-health-summary.yml
 

@@ -1,11 +1,9 @@
 ---
-name: Repo maintenance bot
+name: Repository maintenance drift
 
 "on":
-  # Manual dispatch is intentionally disabled by issue #1740. Restore it only
-  # through a reviewed change that binds this job to a protected Environment
-  # with required reviewers and rejects every ref except the trusted default
-  # branch before Environment secrets are released.
+  # Schedule-only execution remains bound to the trusted default branch.
+  # Issue #1788 replaces branch-producing maintenance with observation.
   schedule:
     - cron: "15 6 * * 1"
 
@@ -13,75 +11,45 @@ permissions:
   contents: read
 
 jobs:
-  maintenance:
+  maintenance-drift:
     runs-on: ubuntu-latest
-    env:
-      MAINT_MODE: full
+    timeout-minutes: 10
 
     steps:
       - name: Checkout trusted default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
+
+      - name: Verify trusted main checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "::error::Maintenance drift checks run only from refs/heads/main."
+            exit 1
+          fi
+          checked_out="$(git rev-parse HEAD)"
+          remote_main="$(git rev-parse origin/main)"
+          if [ "${checked_out}" != "${GITHUB_SHA}" ] || [ "${checked_out}" != "${remote_main}" ]; then
+            echo "::error::Checkout does not match the trusted origin/main commit."
+            exit 1
+          fi
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            echo "::error::Tracked checkout changes exist before the drift check."
+            exit 1
+          fi
+          if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            echo "::error::Untracked checkout files exist before the drift check."
+            exit 1
+          fi
 
       - name: Setup Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
 
-      - name: Create working branch
-        id: vars
-        run: |
-          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
-            echo "::error::Checkout is not the trusted origin/main commit."
-            exit 1
-          fi
-          echo "BRANCH=chore/maintenance-${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
-          git config user.name "hub-optimus-maintainer[bot]"
-          git config user.email "hub-optimus-maintainer[bot]@users.noreply.github.com"
-          git checkout -b "chore/maintenance-${GITHUB_RUN_NUMBER}"
-
-      - name: Run maintenance bot
-        run: |
-          python tools/maintenance_bot.py "${MAINT_MODE}"
-
-      - name: Kernel guard (block protected changes unless allowed)
-        run: |
-          python tools/kernel_guard.py
-
-      - name: Commit changes if any
-        id: commit
-        run: |
-          git add -A
-          if git diff --cached --quiet; then
-            echo "NO_CHANGES=true" >> "$GITHUB_OUTPUT"
-            echo "No changes to commit."
-            exit 0
-          fi
-          git commit -m "chore: automated maintenance (${MAINT_MODE})"
-          echo "NO_CHANGES=false" >> "$GITHUB_OUTPUT"
-
-      - name: Create short-lived GitHub App token
-        id: app-token
-        if: steps.commit.outputs.NO_CHANGES == 'false'
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          app-id: ${{ secrets.GH_APP_ID }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          owner: Voxterrae
-          repositories: HUB_Optimus
-          permission-contents: write
-
-      - name: Push maintenance branch with ephemeral App token
-        if: steps.commit.outputs.NO_CHANGES == 'false'
-        env:
-          GH_APP_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          auth_header="$(printf 'x-access-token:%s' "${GH_APP_TOKEN}" | base64 | tr -d '\n')"
-          export GIT_CONFIG_COUNT=1
-          export GIT_CONFIG_KEY_0="http.https://github.com/.extraheader"
-          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic ${auth_header}"
-          git push origin "HEAD:refs/heads/${{ steps.vars.outputs.BRANCH }}"
-          unset GIT_CONFIG_VALUE_0 auth_header
+      - name: Check maintenance drift without writes
+        run: python tools/check_maintenance_drift.py --mode full
