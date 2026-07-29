@@ -149,6 +149,29 @@ in PR #1771 restores the following behavior:
 - the canonical generated seed-42 set remains 60/60 runtime-complete with
   55 agreements, 5 no-agreements, and average convergence round 1.8.
 
+## Semantic CaseInput Integrity Boundary
+
+- Issue #1756 defines the versioned `CaseInput v1` contract as the combination
+  of the structural JSON Schema in
+  `semantic_engine/contracts/case_input.schema.json` and the complete Python
+  validator `semantic_engine.contracts.case_input.validate_case_input`.
+- Schema-only validation is structural pre-validation, not complete contract
+  conformance: uniqueness and cross-record reference integrity are enforced by
+  the Python validator.
+- The Semantic Engine CLI rejects unknown fields, duplicate claim/evidence IDs,
+  and evidence references to undeclared claims with controlled JSON-path
+  errors.
+- `metadata` is the only open extension object, remains preserved in output,
+  and is opaque rather than executable or authoritative.
+- Input `decision_trace` and `audit_log` are forbidden; they remain output-only
+  engine records.
+- Operator `/analyze` handoff and the local API reach the same contract through
+  `hub-core analyze`; browser-local draft rendering remains a non-authoritative
+  preview.
+- Missing, unreadable, invalid UTF-8, invalid JSON, and contract-invalid inputs
+  fail through the CLI's controlled error channel without a traceback.
+- This change adds no evaluator, scoring, model judge, or autonomous conclusion.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
