@@ -88,7 +88,7 @@
             </div>
             <div>
               <dt data-i18n="truthPublic">Public layer</dt>
-              <dd data-i18n="truthPublicValue">Static Pages</dd>
+              <dd data-i18n="truthPublicValue">Static site</dd>
             </div>
             <div>
               <dt data-i18n="truthRuntime">Analysis runtime</dt>
@@ -142,7 +142,7 @@
     <section class="principle-band" aria-label="Operating principle" data-i18n-aria="principleAria">
       <p data-i18n="principle">Observe → detect → decide → act.</p>
       <span></span>
-      <p data-i18n="noBuild">No build without signal.</p>
+      <p data-i18n="noBuild">Every implementation starts from a documented signal.</p>
       <span></span>
       <p data-i18n="accountability">Human accountability remains mandatory.</p>
     </section>
@@ -192,7 +192,7 @@
         <h2 id="portfolio-title" data-i18n="portfolioTitle">What exists today.</h2>
         <p data-i18n="portfolioLead">
           Every surface carries a status and a direct evidence path. Implemented work is
-          kept separate from prototypes, controlled services, and RFC-only plans.
+          kept separate from prototypes, controlled local components, and RFC-only plans.
         </p>
       </div>
 
@@ -205,7 +205,7 @@
           <h3>HUB_Optimus Core</h3>
           <p data-i18n="coreCopy">
             Canonical v1 methodology, operational flow, scenarios, and meta-learning.
-            Spanish is authoritative for v1; English is the parity reference.
+            Spanish is authoritative for v1; English is the parity target.
           </p>
           <div class="card-links">
             <a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/v1_core/languages/es" data-i18n="viewCanonical">Canonical core</a>
@@ -259,7 +259,7 @@
           <p class="card-disclosure" data-i18n="operatorDisclosure">
             This locale pack translates the portfolio description, not the Operator
             interface. Operator performs deterministic browser-side triage and does not
-            execute the Semantic Engine. Unverified provenance remains unverified.
+            execute the Semantic Engine. Triage does not verify stated provenance.
           </p>
           <div class="card-links">
             <a href="./operator/" data-i18n="openOperator">Open Operator</a>
@@ -328,9 +328,10 @@
 
       <aside class="translation-note">
         <p data-i18n="translationReview">
-          Russian, Hebrew, and Simplified Chinese are machine-assisted drafts; qualified
-          human review by named reviewers is required. These interface translations are
-          non-authoritative: canonical v1 Spanish remains authoritative, and no
+          English, Spanish, and German received an AI-assisted terminology and register
+          audit; named qualified human review is still required. Russian, Hebrew, and
+          Simplified Chinese remain machine-assisted drafts. All interface translations
+          are non-authoritative: canonical v1 Spanish remains authoritative, and no
           constitutional translation is ratified.
         </p>
         <div>
@@ -382,10 +383,10 @@
     <section class="section section-light" id="boundaries" aria-labelledby="boundaries-title">
       <div class="section-heading">
         <p class="section-kicker" data-i18n="boundariesKicker">Architecture & authority</p>
-        <h2 id="boundaries-title" data-i18n="boundariesTitle">One truth, explicit execution boundaries.</h2>
+        <h2 id="boundaries-title" data-i18n="boundariesTitle">One source of truth, explicit execution boundaries.</h2>
         <p data-i18n="boundariesLead">
-          GitHub holds the authoritative project state. Public presentation, local tools,
-          and future private deployments may consume that truth but cannot redefine it.
+          GitHub records the authoritative project state. The public site, local tools,
+          and any future private deployments may use that state but cannot redefine it.
         </p>
       </div>
 
@@ -398,18 +399,18 @@
           </div>
           <div class="boundary-row" role="row">
             <strong role="cell" data-i18n="layerGithub">GitHub repository</strong>
-            <span role="cell" data-i18n="stateVersioned">Versioned / reviewed</span>
+            <span role="cell" data-i18n="stateVersioned">Versioned / traceable</span>
             <span role="cell" data-i18n="authorityCanonical">Project source of truth</span>
           </div>
           <div class="boundary-row" role="row">
             <strong role="cell" data-i18n="layerPages">Public portfolio</strong>
-            <span role="cell" data-i18n="stateStatic">Static GitHub Pages</span>
+            <span role="cell" data-i18n="stateStatic">Static site on GitHub Pages</span>
             <span role="cell" data-i18n="authorityNone">Presentation only</span>
           </div>
           <div class="boundary-row" role="row">
             <strong role="cell">Operator PWA</strong>
             <span role="cell" data-i18n="stateLocal">Browser-local / controlled handoff</span>
-            <span role="cell" data-i18n="authorityAdvisory">Advisory output</span>
+            <span role="cell" data-i18n="authorityAdvisory">Draft · no decision authority</span>
           </div>
           <div class="boundary-row" role="row">
             <strong role="cell" data-i18n="layerIntake">Controlled URL intake</strong>
@@ -418,8 +419,8 @@
           </div>
           <div class="boundary-row" role="row">
             <strong role="cell" data-i18n="layerEngine">Semantic Engine CLI</strong>
-            <span role="cell" data-i18n="statePrivate">Local minimal CLI</span>
-            <span role="cell" data-i18n="authorityContract">Contract-bound draft</span>
+            <span role="cell" data-i18n="statePrivate">Minimal local CLI</span>
+            <span role="cell" data-i18n="authorityContract">Draft constrained by technical contracts</span>
           </div>
           <div class="boundary-row" role="row">
             <strong role="cell" data-i18n="layerHuman">Human review</strong>
@@ -449,7 +450,7 @@
         <h2 id="future-title" data-i18n="futureTitle">Designed boundaries, not released capabilities.</h2>
         <p data-i18n="futureLead">
           These documents define constraints for possible future work. They do not prove
-          that a product, deployment, cryptographic control plane, or enterprise service exists.
+          that a product, deployment, post-quantum control plane, or enterprise service exists.
         </p>
       </div>
 
@@ -462,12 +463,12 @@
         <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/rfc/enterprise_boundary.md" data-status="rfc-not-implemented">
           <span data-i18n="futureEnterpriseLabel">RFC / OPERATING MODEL</span>
           <h3>Enterprise</h3>
-          <p data-i18n="enterpriseCopy">Private operating boundary. No public service is released.</p>
+          <p data-i18n="enterpriseCopy">Proposed private operating boundary. No enterprise product or public service exists.</p>
         </a>
         <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/rfc/post_quantum_control_plane.md" data-status="rfc-not-implemented">
           <span data-i18n="futurePostQuantumLabel">RFC / SECURITY</span>
           <h3 data-i18n="postQuantumTitle">Post-quantum control plane</h3>
-          <p data-i18n="postQuantumCopy">Standards-only planning. No cryptographic implementation.</p>
+          <p data-i18n="postQuantumCopy">RFC planning around standardized cryptographic primitives. No cryptographic implementation.</p>
         </a>
       </div>
     </section>

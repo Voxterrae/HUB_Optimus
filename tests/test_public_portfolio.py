@@ -409,10 +409,12 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     metadata = json.loads(LOCALE_METADATA.read_text(encoding="utf-8"))
     termbase = json.loads(TERMBASE.read_text(encoding="utf-8"))
     readme = I18N_README.read_text(encoding="utf-8")
+    normalized_readme = " ".join(readme.split())
     html = INDEX.read_text(encoding="utf-8")
 
-    assert metadata["manifest_version"] == "1.0.0"
+    assert metadata["manifest_version"] == "1.1.0"
     assert metadata["issue"] == 1750
+    assert metadata["latest_audit_issue"] == 1736
     assert metadata["canonical_v1_language"] == "es"
     assert metadata["constitutional_translation_status"] == "not ratified"
     assert metadata["operator_interface_localized"] is False
@@ -431,6 +433,27 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
             for field_status in metadata["field_status"].values()
         )
 
+    audited_status = (
+        "AI-assisted terminology and register audit; "
+        "named qualified human review required"
+    )
+    for locale in ("en", "es", "de"):
+        record = metadata["locales"][locale]
+        assert "AI-assisted terminology and register audit" in record[
+            "translation_method"
+        ]
+        assert record["review_status"] == "named qualified human review required"
+        assert record["named_reviewer"] is None
+        assert all(
+            field_status[locale] == audited_status
+            for field_status in metadata["field_status"].values()
+        )
+
+    assert all(
+        record["named_reviewer"] is None
+        for record in metadata["locales"].values()
+    )
+
     assert all(
         set(field_status) == PUBLIC_LOCALES
         for field_status in metadata["field_status"].values()
@@ -440,7 +463,8 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     for unsupported_claim in ("professional", "approved", "native-reviewed"):
         assert unsupported_claim not in metadata_text
 
-    assert termbase["termbase_version"] == "1.0.0"
+    assert termbase["termbase_version"] == "1.1.0"
+    assert termbase["latest_audit_issue"] == 1736
     assert termbase["canonical_v1_language"] == "es"
     assert termbase["terms"]
     for term in termbase["terms"]:
@@ -453,11 +477,153 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
         record["label"] for record in termbase["protected_interface_labels"]
     } == {"Labs", "Issues"}
     assert "Machine-assisted draft; qualified human review required" in readme
+    assert "AI-assisted terminology and register audit under #1736" in readme
+    assert "No named reviewer is recorded for any locale" in readme
+    assert (
+        "do not establish certified or professional human review"
+        in normalized_readme
+    )
     assert "No constitutional translation is ratified" in readme
     assert "does not execute the Semantic Engine" in readme
-    assert "Unverified provenance remains" in readme
+    assert "Triage does not verify stated" in readme
     assert './i18n/README.md' in html
     assert './i18n/termbase.v1.json' in html
+
+
+def test_en_es_de_capability_claims_preserve_maturity_and_clear_register():
+    dictionaries = extract_translation_dictionaries(APP.read_text(encoding="utf-8"))
+    termbase = json.loads(TERMBASE.read_text(encoding="utf-8"))
+    terms = {term["id"]: term for term in termbase["terms"]}
+
+    expected_statuses = {
+        "en": {
+            "statusActive": "Active methodology",
+            "statusSimulator": "Working deterministic prototype",
+            "statusSemantic": "Early implementation",
+            "statusBrowser": "Browser prototype",
+            "statusIntake": "Implementation present · deployment unverified",
+            "statusResearch": "Experimental tooling",
+            "statusGovernance": "Active · ratified protocol",
+        },
+        "es": {
+            "statusActive": "Metodología activa",
+            "statusSimulator": "Prototipo determinista funcional",
+            "statusSemantic": "Implementación inicial",
+            "statusBrowser": "Prototipo en navegador",
+            "statusIntake": "Implementación presente · despliegue sin verificar",
+            "statusResearch": "Herramientas experimentales",
+            "statusGovernance": "Activo · protocolo ratificado",
+        },
+        "de": {
+            "statusActive": "Aktive Methodik",
+            "statusSimulator": "Funktionsfähiger deterministischer Prototyp",
+            "statusSemantic": "Frühe Implementierung",
+            "statusBrowser": "Browser-Prototyp",
+            "statusIntake": "Implementierung vorhanden · Deployment ungeprüft",
+            "statusResearch": "Experimentelle Werkzeuge",
+            "statusGovernance": "Aktiv · ratifiziertes Protokoll",
+        },
+    }
+    for locale, statuses in expected_statuses.items():
+        assert {
+            key: dictionaries[locale][key]
+            for key in statuses
+        } == statuses
+
+    truth_markers = {
+        "en": {
+            "coreCopy": "English is the parity target.",
+            "semanticCopy": "It does not evaluate or score claims.",
+            "operatorDisclosure": "does not execute the Semantic Engine",
+            "intakeCopy": "Retrieved text is not verified evidence.",
+            "truthNote": "Retrieval is not verification.",
+            "labsTruth": "currently empty",
+            "boundariesLead": "cannot redefine it.",
+            "enterpriseCopy": "No enterprise product or public service exists.",
+            "postQuantumCopy": "No cryptographic implementation.",
+            "translationReview": "named qualified human review is still required",
+        },
+        "es": {
+            "coreCopy": "el inglés es el objetivo de paridad.",
+            "semanticCopy": "No evalúa ni puntúa afirmaciones.",
+            "operatorDisclosure": "no ejecuta el Semantic Engine",
+            "intakeCopy": "El texto recuperado no es evidencia verificada.",
+            "truthNote": "Recuperar una fuente no equivale a verificarla.",
+            "labsTruth": "actualmente está vacío",
+            "boundariesLead": "no redefinirlo.",
+            "enterpriseCopy": "No existe ningún producto empresarial ni servicio público.",
+            "postQuantumCopy": "Sin implementación criptográfica.",
+            "translationReview": "todavía requieren una revisión humana cualificada",
+        },
+        "de": {
+            "coreCopy": "Englisch ist das Paritätsziel.",
+            "semanticCopy": "Sie bewertet oder bepunktet keine Behauptungen.",
+            "operatorDisclosure": "die Semantic Engine wird dabei nicht ausgeführt",
+            "intakeCopy": "Abgerufener Text ist keine verifizierte Evidenz.",
+            "truthNote": "Abruf ist keine Verifizierung.",
+            "labsTruth": "derzeit leer",
+            "boundariesLead": "nicht neu definieren.",
+            "enterpriseCopy": "weder ein Unternehmensprodukt noch einen öffentlichen Dienst",
+            "postQuantumCopy": "Keine kryptografische Implementierung.",
+            "translationReview": "qualifizierte menschliche Prüfung",
+        },
+    }
+    for locale, markers in truth_markers.items():
+        for key, marker in markers.items():
+            assert marker in dictionaries[locale][key]
+
+    term_to_key = {
+        "source_of_truth": "truthSource",
+        "implementation_signal_gate": "noBuild",
+        "operator_draft_authority": "authorityAdvisory",
+        "post_quantum_control_plane": "postQuantumTitle",
+    }
+    for term_id, key in term_to_key.items():
+        for locale in ("en", "es", "de"):
+            interface_value = dictionaries[locale][key].rstrip(".").casefold()
+            assert interface_value == terms[term_id][locale].casefold()
+
+    provenance_term = terms["triage_does_not_verify_provenance"]
+    for locale in ("en", "es", "de"):
+        assert (
+            provenance_term[locale].casefold()
+            in dictionaries[locale]["operatorDisclosure"].casefold()
+        )
+
+    rejected_calques = {
+        "en": (
+            "No build without signal.",
+            "English is the parity reference.",
+            "Unverified provenance remains unverified.",
+            "Versioned / reviewed",
+            "Advisory output",
+            "Contract-bound draft",
+            "Standards-only planning.",
+        ),
+        "es": (
+            "No construir sin señal.",
+            "referencia de paridad",
+            "La procedencia no verificada sigue sin verificar.",
+            "Versionado / revisado",
+            "Salida consultiva",
+            "Borrador sujeto a contrato",
+            "Plano de control poscuántico",
+        ),
+        "de": (
+            "Quelle der Wahrheit",
+            "Quelle der Projektwahrheit",
+            "Paritätsreferenz",
+            "Ungeprüfte Herkunft bleibt ungeprüft.",
+            "Versioniert / geprüft",
+            "Beratende Ausgabe",
+            "Vertragsgebundener Entwurf",
+            "Postquanten-Kontrollplan",
+        ),
+    }
+    for locale, rejected in rejected_calques.items():
+        localized_text = "\n".join(dictionaries[locale].values())
+        for phrase in rejected:
+            assert phrase not in localized_text
 
 
 def test_small_screen_header_preserves_home_and_language_controls():

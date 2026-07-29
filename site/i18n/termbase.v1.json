@@ -1,5 +1,6 @@
 {
-  "termbase_version": "1.0.0",
+  "termbase_version": "1.1.0",
+  "latest_audit_issue": 1736,
   "canonical_v1_language": "es",
   "scope": "Static public portfolio interface",
   "terms": [
@@ -7,7 +8,7 @@
       "id": "source_of_truth",
       "es": "fuente de verdad",
       "en": "source of truth",
-      "de": "Quelle der Wahrheit",
+      "de": "maßgebliche Quelle",
       "ru": "источник истины",
       "he": "מקור האמת",
       "zh-Hans": "事实依据来源"
@@ -88,7 +89,7 @@
       "id": "unverified_provenance",
       "es": "procedencia no verificada",
       "en": "unverified provenance",
-      "de": "ungeprüfte Herkunft",
+      "de": "nicht verifizierte Herkunftsangabe",
       "ru": "непроверенное происхождение",
       "he": "מקור שלא אומת",
       "zh-Hans": "未经核实的来源信息"
@@ -101,6 +102,42 @@
       "ru": "черновик RFC",
       "he": "טיוטת RFC",
       "zh-Hans": "RFC 草案"
+    },
+    {
+      "id": "implementation_signal_gate",
+      "es": "toda implementación parte de una señal documentada",
+      "en": "every implementation starts from a documented signal",
+      "de": "jede Umsetzung beginnt mit einem dokumentierten Signal",
+      "ru": "каждая реализация начинается с документированного сигнала",
+      "he": "כל יישום מתחיל באות מתועד",
+      "zh-Hans": "每项实施都始于有记录的信号"
+    },
+    {
+      "id": "operator_draft_authority",
+      "es": "borrador · sin autoridad decisoria",
+      "en": "draft · no decision authority",
+      "de": "Entwurf · keine Entscheidungsbefugnis",
+      "ru": "черновик без полномочий принимать решения",
+      "he": "טיוטה ללא סמכות החלטה",
+      "zh-Hans": "无决策权的草稿"
+    },
+    {
+      "id": "triage_does_not_verify_provenance",
+      "es": "el triaje no verifica la procedencia declarada",
+      "en": "triage does not verify stated provenance",
+      "de": "die Triage verifiziert die angegebene Herkunft nicht",
+      "ru": "сортировка не проверяет заявленное происхождение",
+      "he": "המיון אינו מאמת את המקור המוצהר",
+      "zh-Hans": "分流不会核实所声明的来源信息"
+    },
+    {
+      "id": "post_quantum_control_plane",
+      "es": "capa de control criptográfico poscuántico",
+      "en": "post-quantum control plane",
+      "de": "Steuerungsebene für Post-Quanten-Kryptografie",
+      "ru": "постквантовая плоскость управления",
+      "he": "מישור בקרה פוסט-קוונטי",
+      "zh-Hans": "后量子控制平面"
     }
   ],
   "protected_product_names": [
