@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TOOL = REPO_ROOT / "tools" / "scenario_telemetry.py"
 
@@ -42,6 +44,27 @@ def _run_tool(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+@pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
+def test_non_standard_json_constants_are_parse_outcomes(
+    tmp_path: Path,
+    constant: str,
+) -> None:
+    telemetry = _load_tool()
+    path = tmp_path / "non-standard.json"
+    source = json.dumps(_valid_scenario()).replace(
+        '"offer": 5',
+        f'"offer": {constant}',
+    )
+    path.write_text(source, encoding="utf-8")
+
+    record = telemetry.collect_one(path, 42)
+
+    assert record["processing_outcome"] == "parse_error"
+    assert record["error_code"] == "invalid_json"
+    assert record["schema_valid"] is False
+    assert record["runtime_error"] is False
+
+
 def test_non_object_json_is_a_parse_outcome(tmp_path: Path) -> None:
     telemetry = _load_tool()
     path = tmp_path / "array.json"
@@ -63,6 +86,37 @@ def test_invalid_utf8_is_a_parse_outcome(tmp_path: Path) -> None:
 
     assert record["processing_outcome"] == "parse_error"
     assert record["error_code"] == "invalid_utf8"
+    assert record["runtime_error"] is False
+
+
+def test_duplicate_actor_names_are_a_schema_outcome(tmp_path: Path) -> None:
+    telemetry = _load_tool()
+    path = tmp_path / "duplicate-actors.json"
+    payload = _valid_scenario()
+    payload["roles"] = [
+        {"name": "Alpha", "role": "negotiator"},
+        {"name": "Alpha", "role": "mediator"},
+    ]
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    record = telemetry.collect_one(path, 42)
+
+    assert record["processing_outcome"] == "schema_error"
+    assert record["error_code"] == "schema_invalid"
+    assert record["schema_valid"] is False
+    assert record["runtime_error"] is False
+
+
+def test_missing_required_fields_are_a_schema_outcome(tmp_path: Path) -> None:
+    telemetry = _load_tool()
+    path = tmp_path / "missing-fields.json"
+    path.write_text('{"title": "Incomplete"}\n', encoding="utf-8")
+
+    record = telemetry.collect_one(path, 42)
+
+    assert record["processing_outcome"] == "schema_error"
+    assert record["error_code"] == "schema_invalid"
+    assert record["schema_valid"] is False
     assert record["runtime_error"] is False
 
 

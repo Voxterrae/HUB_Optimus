@@ -25,13 +25,16 @@ import copy
 import json
 import sys
 from pathlib import Path
-
-import jsonschema
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCHEMA_PATH = REPO_ROOT / "scenario.schema.json"
 GENERATED_DIR = REPO_ROOT / "scenarios" / "generated"
 OUTPUT_DIR = REPO_ROOT / "scenarios" / "mutations"
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+import run_scenario  # noqa: E402
 
 EXTRA_ACTORS = [
     {"name": "Faction_E", "role": "negotiator"},
@@ -45,7 +48,10 @@ EXTRA_ACTORS = [
 # ── Mutation functions ──────────────────────────────────────
 
 
-def mutate_threshold(base: dict, base_label: str) -> list[tuple[str, dict]]:
+def mutate_threshold(
+    base: dict[str, Any],
+    base_label: str,
+) -> list[tuple[str, dict[str, Any]]]:
     """Sweep success_criteria.offer from 1 to 5."""
     results = []
     for threshold in range(1, 6):
@@ -61,7 +67,10 @@ def mutate_threshold(base: dict, base_label: str) -> list[tuple[str, dict]]:
     return results
 
 
-def mutate_rounds(base: dict, base_label: str) -> list[tuple[str, dict]]:
+def mutate_rounds(
+    base: dict[str, Any],
+    base_label: str,
+) -> list[tuple[str, dict[str, Any]]]:
     """Sweep max_rounds from 1 to 10."""
     results = []
     for rounds in range(1, 11):
@@ -77,7 +86,10 @@ def mutate_rounds(base: dict, base_label: str) -> list[tuple[str, dict]]:
     return results
 
 
-def mutate_actors(base: dict, base_label: str) -> list[tuple[str, dict]]:
+def mutate_actors(
+    base: dict[str, Any],
+    base_label: str,
+) -> list[tuple[str, dict[str, Any]]]:
     """Sweep actor count from 1 to min(6, base+3) by adding/removing negotiators."""
     original_count = len(base["roles"])
     results = []
@@ -112,7 +124,22 @@ AXES = {
 # ── Core logic ──────────────────────────────────────────────
 
 
-def pick_base_scenarios(base_path: str | None) -> list[tuple[str, dict]]:
+def _scenario_payload(scenario: run_scenario.Scenario) -> dict[str, Any]:
+    """Return a mutation-safe payload from an authoritatively loaded scenario."""
+    return copy.deepcopy(
+        {
+            "title": scenario.title,
+            "description": scenario.description,
+            "roles": scenario.roles,
+            "success_criteria": scenario.success_criteria,
+            "max_rounds": scenario.max_rounds,
+        }
+    )
+
+
+def pick_base_scenarios(
+    base_path: str | None,
+) -> list[tuple[str, dict[str, Any]]]:
     """Select base scenario(s) for mutation.
 
     If base_path is given, use that single file.
@@ -120,8 +147,8 @@ def pick_base_scenarios(base_path: str | None) -> list[tuple[str, dict]]:
     """
     if base_path:
         p = Path(base_path)
-        payload = json.loads(p.read_text(encoding="utf-8"))
-        return [(p.stem, payload)]
+        scenario = run_scenario.load_validated_scenario(p)
+        return [(p.stem, _scenario_payload(scenario))]
 
     bases = []
     if not GENERATED_DIR.is_dir():
@@ -134,33 +161,37 @@ def pick_base_scenarios(base_path: str | None) -> list[tuple[str, dict]]:
         jsons = sorted(family_dir.glob("*.json"))
         if jsons:
             p = jsons[0]
-            payload = json.loads(p.read_text(encoding="utf-8"))
-            bases.append((p.stem, payload))
+            scenario = run_scenario.load_validated_scenario(p)
+            bases.append((p.stem, _scenario_payload(scenario)))
 
     return bases
 
 
 def generate_mutations(
-    bases: list[tuple[str, dict]],
+    bases: list[tuple[str, dict[str, Any]]],
     axes: list[str],
-) -> list[tuple[str, str, dict]]:
+) -> list[tuple[str, str, dict[str, Any]]]:
     """Generate all mutations for the given bases and axes.
 
     Returns list of (filename_stem, axis_name, scenario_dict).
     """
-    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
-    validator = jsonschema.Draft202012Validator(schema)
-
-    results: list[tuple[str, str, dict]] = []
+    results: list[tuple[str, str, dict[str, Any]]] = []
 
     for base_label, base_scenario in bases:
+        base_errors = run_scenario.validate_scenario_payload(base_scenario)
+        if base_errors:
+            print(
+                f"  SKIP  {base_label}: invalid base — {'; '.join(base_errors)}",
+                file=sys.stderr,
+            )
+            continue
         for axis_name in axes:
             mutator = AXES[axis_name]
             mutations = mutator(base_scenario, base_label)
             for stem, scenario in mutations:
-                errors = list(validator.iter_errors(scenario))
+                errors = run_scenario.validate_scenario_payload(scenario)
                 if errors:
-                    msgs = "; ".join(e.message for e in errors)
+                    msgs = "; ".join(errors)
                     print(f"  SKIP  {stem}: schema invalid — {msgs}", file=sys.stderr)
                     continue
                 results.append((stem, axis_name, scenario))
@@ -169,7 +200,7 @@ def generate_mutations(
 
 
 def write_mutations(
-    mutations: list[tuple[str, str, dict]],
+    mutations: list[tuple[str, str, dict[str, Any]]],
     output_dir: Path,
 ) -> int:
     """Write mutations organized by axis subdirectory."""
@@ -211,7 +242,20 @@ def main() -> int:
     out = Path(args.output_dir) if args.output_dir else OUTPUT_DIR
     axes = [args.axis] if args.axis else list(AXES.keys())
 
-    bases = pick_base_scenarios(args.base)
+    try:
+        bases = pick_base_scenarios(args.base)
+    except run_scenario.ScenarioInputError as exc:
+        print(
+            f"[base-input-error] {exc.error_code}: {exc}",
+            file=sys.stderr,
+        )
+        return 2
+    except run_scenario.ScenarioValidationError as exc:
+        print(
+            f"[base-{exc.category}-error] {exc.error_code}: {exc}",
+            file=sys.stderr,
+        )
+        return 2
     if not bases:
         print("No base scenarios found. Run the generator first:\n"
               "  python tools/scenario_generator/generate_scenarios.py",
