@@ -13,6 +13,7 @@ docs/governance/            @Voxterrae
 
 # CI and repo infrastructure
 .github/                    @Voxterrae
+tools/kernel_guard.py       @Voxterrae
 
 # Project root configs
 CONTRIBUTING.md             @Voxterrae

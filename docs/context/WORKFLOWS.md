@@ -97,6 +97,24 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   - Creates a maintenance branch, runs `tools/maintenance_bot.py`, runs `tools/kernel_guard.py`, commits changes, pushes the branch, opens a PR, then runs `tools/pr_pro.py`.
 - Writes to repo: yes, only through an explicit maintenance PR branch.
 
+#### `tools/pr_pro.py` support boundary
+
+- Status: supported as an optional helper for enriching an existing PR with
+  governed labels and a changed-file summary. It does not create or merge PRs
+  and is not an authentication or authorization boundary.
+- Write mode requires the GitHub CLI and uses only the authentication and
+  token scopes already supplied by the caller. The tool does not create,
+  exchange, persist, or expand tokens.
+- Every failed `gh` operation is terminal and returns a non-zero status. A
+  success message is emitted only after all required label, edit, and comment
+  operations succeed.
+- `--dry-run` performs the local Git diff and prints the planned target,
+  labels, and comment. It does not invoke `gh` and therefore performs no
+  GitHub read or write.
+- The versioned workflow file remains authoritative for whether a workflow
+  invokes this optional helper. A draft PR or chat statement does not change
+  the active workflow.
+
 ### repo-health-summary.yml
 
 - Triggers:
