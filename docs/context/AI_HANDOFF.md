@@ -325,6 +325,25 @@ Operational boundary:
 - this alignment does not change simulator behavior, frozen benchmark output,
   or previously published research evidence.
 
+## Scenario Behavior Report Boundary
+
+Issue #118 adds a read-only, standard-library report over the current
+`scenarios/telemetry.json` record contract.
+
+- `tools/scenario_report.py` groups records by their declared telemetry family
+  and renders either a fixed-width text table or a Markdown table.
+- Agreement rate is calculated only from runtime-complete `agreement` and
+  `no_agreement` outcomes. Parse, schema, and runtime errors remain visible in
+  a separate error count and are never reclassified as behavioral failures.
+- Average convergence round uses agreement records only.
+- Accepted records must be internally consistent with the current telemetry
+  status, round, schema, runtime-error, and error-code fields.
+- The report can atomically publish an explicit output file, rejects source
+  aliases, and does not mutate telemetry, generated scenarios, benchmarks,
+  runtime, schema, or CI.
+- The aggregates describe deterministic synthetic runs; they are not evidence
+  of real-world agreement rates, policy quality, or prediction.
+
 ## Scenario Generation Provenance Boundary
 
 Issue #1758 scopes the laboratory generator/telemetry correction for stale
