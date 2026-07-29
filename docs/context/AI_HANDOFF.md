@@ -444,6 +444,27 @@ boundary and the embedded API JSON body boundary.
 - Finite numeric metadata remains opaque and round-trippable. These checks add
   no scoring, truth evaluation, or public-service claim.
 
+## Public Site Link and Contrast Boundary
+
+Issue #1810 scopes repository-level checks for the three public HTML entry
+points: the portfolio, the branded 404 page, and Operator.
+
+- Same-origin links, assets, routes, and fragments are resolved against the
+  checked-out `site/` artifact; repository evidence links resolve against
+  local paths and are pinned to commit
+  `f99bfed196dbcb76c8a29a4bab31559fdb567ee5` rather than mutable `main`.
+- Live navigation to the repository, its issue tracker, and the separate Labs
+  repository is allowlisted structurally. Pytest performs no external network
+  request and therefore does not attest current remote availability.
+- The reported muted normal-text selectors share one versioned dark-surface
+  token. Its conservative contrast against `--graphite-3` is greater than
+  4.5:1; representative 404 and Operator muted-text pairs are checked
+  separately.
+- These checks do not constitute accessibility certification or qualified
+  human review. Keyboard/focus, reduced-motion behavior, Hebrew RTL, WebGL
+  fallback, and representative desktop/mobile layout still require
+  controlled-browser QA on the reviewed deployment.
+
 ## GitHub Actions supply-chain boundary
 
 The CI, link-check, Pages, PR-safety, and repository-health workflows pin
