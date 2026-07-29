@@ -184,6 +184,62 @@ def test_existing_default_file_is_restricted_to_private_mode(
     assert stat.S_IMODE(output.stat().st_mode) == 0o600
 
 
+def test_default_file_hardlink_fails_before_external_file_is_changed(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    if os.name != "posix":
+        pytest.skip("hardlink boundary assertions require a POSIX platform")
+    mobile_ingest = _load_tool()
+    repo_root = tmp_path / "repo"
+    output = repo_root / ".local" / "intake" / "mobile_ingest.jsonl"
+    outside = tmp_path / "outside.jsonl"
+    output.parent.mkdir(parents=True)
+    outside.write_text('{"external": true}\n', encoding="utf-8")
+    os.link(outside, output)
+    original_bytes = outside.read_bytes()
+    original_mode = stat.S_IMODE(outside.stat().st_mode)
+    monkeypatch.setattr(mobile_ingest, "REPO_ROOT", repo_root)
+
+    with pytest.raises(OSError, match="must not be hard-linked"):
+        mobile_ingest._append_record(
+            output,
+            mobile_ingest._build_record("synthetic hardlink claim", "argv"),
+            protect_default_directory=True,
+        )
+
+    assert outside.read_bytes() == original_bytes
+    assert stat.S_IMODE(outside.stat().st_mode) == original_mode
+    assert output.stat().st_nlink == 2
+
+
+def test_default_fifo_fails_without_echo_or_traceback(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    if os.name != "posix" or not hasattr(os, "mkfifo"):
+        pytest.skip("FIFO boundary assertions require POSIX mkfifo support")
+    mobile_ingest = _load_tool()
+    repo_root = tmp_path / "repo"
+    output = repo_root / ".local" / "intake" / "mobile_ingest.jsonl"
+    output.parent.mkdir(parents=True)
+    os.mkfifo(output)
+    monkeypatch.setattr(mobile_ingest, "REPO_ROOT", repo_root)
+    monkeypatch.setattr(mobile_ingest, "DEFAULT_OUTPUT_PATH", output)
+    claim = "synthetic fifo boundary claim"
+
+    result = mobile_ingest.main([claim])
+    captured = capsys.readouterr()
+
+    assert result == 1
+    assert "mobile intake output must be a regular file" in captured.err
+    assert claim not in captured.err
+    assert claim not in captured.out
+    assert "Traceback" not in captured.err
+    assert stat.S_ISFIFO(output.stat().st_mode)
+
+
 def test_append_restores_missing_lf_jsonl_boundary(tmp_path: Path) -> None:
     mobile_ingest = _load_tool()
     output = tmp_path / "intake.jsonl"

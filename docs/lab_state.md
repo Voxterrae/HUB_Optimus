@@ -67,6 +67,12 @@ preserves its operator-defined mode. Existing custom JSONL files must be
 readable as well as writable so the helper can restore a missing LF record
 boundary before appending.
 
+Every opened output must be a regular file. The protected default also requires
+the file to have exactly one link, so FIFOs, devices, sockets, and hard-linked
+default targets fail closed before permissions or content can change. An
+explicit custom path remains operator-managed but is still required to be a
+regular file.
+
 Claim text beginning with `-` is accepted without being treated as an unknown
 option or echoed by an argument-parser error. Use `--` before a claim that is
 exactly `--output`, `-h`, or `--help`.

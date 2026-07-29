@@ -158,6 +158,13 @@ def _open_output_descriptor(
         created = False
 
     try:
+        output_status = os.fstat(descriptor)
+        if not stat.S_ISREG(output_status.st_mode):
+            raise OSError("mobile intake output must be a regular file")
+        if force_private_permissions and output_status.st_nlink != 1:
+            raise OSError(
+                "default private intake file must not be hard-linked"
+            )
         if os.name == "posix" and (force_private_permissions or created):
             os.fchmod(descriptor, 0o600)
     except BaseException:

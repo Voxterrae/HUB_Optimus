@@ -163,6 +163,9 @@ PR #1777 restores the following boundary:
   check-to-open races;
 - platforms without those descriptor primitives fail closed for the protected
   default and require an explicit operator-managed `--output` path;
+- every opened output descriptor must reference a regular file; the protected
+  default additionally requires a single link, rejecting FIFOs, devices,
+  sockets, and hard-linked targets before permission or content changes;
 - the default directory/file and newly created custom files use private POSIX
   permissions where supported; an existing custom file retains its operator-set
   permissions;
