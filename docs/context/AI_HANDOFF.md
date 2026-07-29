@@ -95,6 +95,23 @@ Operational boundary:
 - The active workflow file, not this helper or chat context, determines
   whether scheduled maintenance invokes it.
 
+## Python Packaging Boundary
+
+Issue #1763 records drift between the documented Python minimum, executable
+syntax, bootstrap checks, and the dependency files. The scoped correction
+in PR #1776 establishes:
+
+- supported Python is 3.11 or newer;
+- `requirements.txt` is the runtime tier and contains `jsonschema`;
+- `requirements-dev.txt` includes the runtime tier and adds `pytest`;
+- `python scripts/bootstrap.py --runtime-only` installs/checks runtime
+  dependencies and executes the supported scenario CLI smoke test;
+- the default bootstrap remains the development path and fails when tests or
+  frozen benchmarks fail rather than printing an ambiguous ready state.
+
+The runtime-only install path has been verified in a newly created virtual
+environment without development requirements.
+
 ## Simulator Isolation Boundary
 
 Issue #1755 records a verified mismatch between the runtime contract and the

@@ -1,2 +1,2 @@
+-r requirements.txt
 pytest>=9.1.1,<10
-jsonschema>=4.26.0,<5
