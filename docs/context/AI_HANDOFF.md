@@ -167,9 +167,11 @@ PR #1770 restores the documented boundary:
 - returned history is a snapshot rather than live simulator state;
 - changed seed-42 benchmark bytes are reviewed and frozen explicitly.
 
-Laboratory observations derived from the previous random stream require
-separate regeneration under issue #1775; they are not silently rewritten by
-the runtime correction.
+Issue #1775 regenerates the laboratory observations derived from the previous
+random stream on commit
+`af89e420efb7b60eb95867b840ebeaf23dd989b6`. The regenerated evidence,
+commands, and hashes are recorded separately from the runtime correction in
+`docs/lab_regeneration_1775.md`.
 
 ## Narrative-risk Contract Coverage Boundary
 
@@ -216,9 +218,9 @@ ordinary failures. The scoped correction establishes:
 - verification re-enumerates each complete axis, including reported `None`
   extrema, rather than checking only an adjacent value.
 
-The boundary section of `docs/lab_state.md` is regenerated from the isolated
-simulator. Other mutation, gradient, and frontier observations remain
-historical until issue #1775 regenerates them.
+The boundary section was regenerated from the isolated simulator in #1774.
+Issue #1775 subsequently regenerates base telemetry, mutation, gradient,
+frontier, and policy-comparison observations on the merged corrections.
 
 ## Scenario Input Integrity Boundary
 
@@ -259,8 +261,9 @@ in PR #1771 restores the following behavior:
 - exit `0` means complete collection, exit `2` means outputs were written
   with one or more partial data errors, and exit `1` means fatal setup or
   output failure;
-- the canonical generated seed-42 set remains 60/60 runtime-complete with
-  55 agreements, 5 no-agreements, and average convergence round 1.8.
+- the canonical generated seed-42 set is 60/60 runtime-complete with
+  39 agreements, 21 no-agreements, and average convergence round 2.26 after
+  the issue-#1775 regeneration on commit `af89e420`.
 
 ## Scenario Generation Provenance Boundary
 
@@ -292,6 +295,37 @@ Operational boundary:
   telemetry and benchmark scans exclude only the root
   `generation_manifest.json`; a nested valid scenario with that basename is
   still processed.
+
+## Laboratory Evidence Regeneration Boundary
+
+Issue #1775 separates evidence interpretation from the runtime and laboratory
+tool corrections in #1770, #1774, and #1779.
+
+Operational boundary:
+
+- The evidence base is commit
+  `af89e420efb7b60eb95867b840ebeaf23dd989b6`, generator seed 42, and
+  generation run
+  `sha256:cab1baacc6cd3494487a59dd3f75ca9584dc872e8b3b3ec65dbd822f9bf0de92`.
+- `docs/lab_regeneration_1775.md` records the exact command sequence, tool
+  hashes, raw-artifact hashes, and comparison with the previously published
+  values. Ignored bulk outputs are not silently promoted into Git.
+- The regenerated base telemetry changes the published laboratory posture from
+  55/60 to 39/60 agreements and from average convergence round 1.8 to 2.26.
+- The 62-mutation total remains 57 agreements and 5 no-agreements, but the
+  no-agreement outcomes move between axes; previous common-minimum and
+  threshold-always-converges interpretations are retracted.
+- All 27 boundary extrema for seeds 1, 42, and 123 pass fresh exhaustive
+  verification.
+- Explicit uniform and biased frontier runs contain zero probe errors, and
+  recomparison of their preserved raw matrices reproduces all six comparison
+  objects exactly.
+- Results, inferences, hypotheses, and uncertainties are labeled separately.
+  All observations remain synthetic simulator evidence, not external facts,
+  causal proof, policy quality, or prediction.
+- This regeneration changes documentation and handoff posture only. It does
+  not change runtime, schema, benchmarks, CI, governance, or policy
+  implementations.
 
 ## Mobile Intake Storage Boundary
 
