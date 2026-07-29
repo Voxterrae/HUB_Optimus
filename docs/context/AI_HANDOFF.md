@@ -283,6 +283,33 @@ Operational boundary:
 These checks validate executable input integrity. They do not verify evidence,
 real-world claims, policy quality, or predictions.
 
+## Human and Executable Scenario Contract Boundary
+
+Issue #1659 records that HUB_Optimus intentionally has two different scenario
+contracts.
+
+- `v1_core/workflow/04_scenario_template.md` is a rich human authoring and
+  review workflow.
+- `scenario.schema.json` plus the authoritative loader in `run_scenario.py`
+  define the separate executable JSON input.
+- Moving from the human workflow to executable JSON is a manual, lossy
+  modelling decision. The repository provides no automatic converter.
+- Only `title`, `description`, `roles`, `success_criteria`, and `max_rounds`
+  exist in the executable document. Human metadata, timelines, interests,
+  constraints, proposals, verification, risks, round agendas, post-mortem
+  evaluation, and meta-learning have no current executable field.
+- Mechanical JSON success uses any-actor/any-criterion matching. It is not the
+  human definition of a verified, durable, stable, legitimate, or advisable
+  outcome.
+- `docs/governance/SCENARIO_SCHEMA.md` is the canonical field mapping for this
+  governance surface. Its German, Spanish, Catalan, French, and Russian
+  mirrors remain `review-needed`; Hebrew and Simplified Chinese remain `stub`.
+  No mirror gains professional-review or parity status from this documentation
+  update.
+
+This clarification changes no runtime, schema, simulator, benchmark, or CI
+behavior.
+
 ## Telemetry Input Boundary
 
 Issue #1757 records that malformed scenario files could crash telemetry or
