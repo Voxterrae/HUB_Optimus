@@ -15,6 +15,8 @@ The canonical governance set lives in:
 - `docs/governance/`
 
 All other languages (e.g. `docs/de/governance/`) are mirrors of the canonical set.
+This surface-specific English governance source does not change the separate
+v1 methodology rule: `v1_core/languages/es/` remains canonical for v1.
 
 ## Non-Drift Rule (Binding)
 Translations MUST preserve:
@@ -40,6 +42,30 @@ Example:
 - `docs/governance/KERNEL.md`
 - `docs/de/governance/KERNEL.md`
 
+Structural presence is not evidence of translation or linguistic parity. Current
+file-level maturity is declared in:
+
+- `docs/i18n/maturity.v1.json`
+
+The manifest distinguishes:
+
+- `missing`,
+- `stub`,
+- `draft-machine`,
+- `review-needed`,
+- `reviewed`,
+- `canonical`,
+- `parity`.
+
+A green automated audit means that the declaration matches repository evidence
+and tier-required files exist. It does not certify a translation. `reviewed`,
+and translated `parity`, require a structured record containing the human
+reviewer identity, a GitHub-visible evidence reference, and SHA-256 digests of
+the exact source and target bytes reviewed. Any later edit invalidates that
+record until the changed bytes are reviewed again. A byte-identical copy of the
+English docs baseline MUST be declared `stub`, unless it is that baseline
+itself.
+
 ## Change Workflow
 1) Edit canonical (`docs/governance/...`) first.
 2) Commit canonical changes.
@@ -47,7 +73,11 @@ Example:
 4) Run placeholder check (see below) before merging.
 
 ## Placeholder Prohibition
-Placeholders are forbidden in any published documentation.
+Undeclared placeholders are forbidden in any published documentation.
+
+An explicit navigation or translation-pending stub is allowed only when the
+versioned maturity manifest declares that file as `stub`. Such a file MUST NOT
+be described as translated, reviewed, canonical, or at parity.
 
 Forbidden patterns include (non-exhaustive):
 - `PEGA AQUI`

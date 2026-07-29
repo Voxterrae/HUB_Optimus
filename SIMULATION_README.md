@@ -12,7 +12,7 @@ Este documento explica cómo utilizar el núcleo de simulación prototípico que
 | `run_scenario.py`           | Cargador canónico y script de línea de comandos que validan un escenario JSON estricto antes de invocar el simulador. |
 | `scenario.schema.json`      | Contrato estructural JSON Schema para los archivos de escenario ejecutables. |
 | `example_scenario.json`     | Escenario de ejemplo donde dos facciones negocian un alto el fuego parcial.                                        |
-| `i18n_sync.py`              | Utilidad para comprobar la coherencia de traducciones en la documentación (ver sección 5).                        |
+| `i18n_sync.py`              | Auditor de cobertura y madurez declarada para onboarding y gobernanza (ver sección 5).                            |
 
 ## 1. Preparación
 
@@ -168,13 +168,20 @@ La memoria científica del laboratorio se mantiene en `docs/lab_state.md`.
 
 ## 5. Sincronización de traducciones (opcional)
 
-El script `i18n_sync.py` ayuda a mantener sincronizada la documentación multilingüe.  Comprueba que todos los archivos en `docs/` que están en inglés tienen traducciones correspondientes en los subdirectorios de idiomas (`es`, `de`, `fr`, `ca`, `ru`).  Para ejecutarlo, coloca el script en la raíz del proyecto (o especifica la ruta `--docs_dir`) y ejecuta:
+El script `i18n_sync.py` contrasta las superficies de onboarding y gobernanza
+versionadas en `docs/i18n/maturity.v1.json`. Aplica el tier declarado para cada
+locale BCP-47 (`en`, `es`, `de`, `ca`, `fr`, `ru`, `he`, `zh-Hans`) y distingue
+archivos ausentes, stubs, borradores, revisión pendiente, revisión acreditada,
+fuente canónica y paridad. Para ejecutarlo desde la raíz:
 
 ```bash
-python i18n_sync.py --docs_dir docs
+python i18n_sync.py --docs-dir docs
 ```
 
-El script imprimirá una lista de ficheros que faltan en cada idioma y devolverá un código de salida diferente de cero si encuentra diferencias.  Esto facilita la detección temprana de desalineaciones entre versiones.
+El script devuelve cero cuando las declaraciones coinciden con los archivos y
+existen todas las superficies exigidas por cada tier. Un resultado verde no
+certifica calidad lingüística ni traducción completa; esas afirmaciones requieren
+el estado y la evidencia de revisión definidos en el manifiesto.
 
 ---
 
