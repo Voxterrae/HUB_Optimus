@@ -2,9 +2,20 @@
 
 This folder contains onboarding guides and multilingual entry points.
 
+## Project truth
+
+- [What HUB_Optimus is, what is built, and what is not](context/PROJECT_OVERVIEW.md)
+- [Evidence-backed capability ledger](architecture/capability_status.md)
+- [RFC lifecycle guide](rfc/README.md)
+- [Versioned RFC registry](rfc/registry.v1.json)
+- [Canonical language and source-of-truth status](context/STATUS.md)
+
 ## Multilingual entry points
 
 Canonical language policy is defined in [context/STATUS.md](context/STATUS.md). This table only summarizes onboarding and translation coverage; it does not change governance.
+
+Core language review:
+- [Canonical Spanish ↔ English core parity matrix](i18n/core_es_en_parity_matrix.md) — evidence and unresolved dispositions for issue #1749; it does not establish parity.
 
 | Language | Entry point | Status | Governance status |
 | --- | --- | --- | --- |

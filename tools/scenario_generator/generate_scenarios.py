@@ -15,14 +15,21 @@ Usage:
   python tools/scenario_generator/generate_scenarios.py             # 60 scenarios, seed 42
   python tools/scenario_generator/generate_scenarios.py --count 20  # 20 scenarios
   python tools/scenario_generator/generate_scenarios.py --seed 99   # different seed
+  python tools/scenario_generator/generate_scenarios.py --count 20 --clean
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import random
+import re
+import shutil
 import sys
+import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 import jsonschema
@@ -30,6 +37,9 @@ import jsonschema
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SCHEMA_PATH = REPO_ROOT / "scenario.schema.json"
 OUTPUT_DIR = REPO_ROOT / "scenarios" / "generated"
+MANIFEST_NAME = "generation_manifest.json"
+MANIFEST_VERSION = 1
+GENERATOR_ID = "tools/scenario_generator/generate_scenarios.py"
 
 # ── Actor and role pools ────────────────────────────────────
 
@@ -124,6 +134,7 @@ FAMILIES = [
     ("resource_scarcity", _resource_scarcity),
     ("incentive_misalignment", _incentive_misalignment),
 ]
+FAMILY_NAMES = frozenset(name for name, _factory in FAMILIES)
 
 # ── Core generation logic ───────────────────────────────────
 
@@ -164,23 +175,307 @@ def generate(count: int, seed: int) -> list[tuple[str, str, dict]]:
     return results
 
 
-def write_scenarios(scenarios: list[tuple[str, str, dict]], output_dir: Path) -> int:
-    """Write scenarios to JSON files organised by family subdirectory.
+class UnsafeOutputError(ValueError):
+    """Raised when an output path escapes the declared generation root."""
 
-    Returns the number of files written.
-    """
-    output_dir.mkdir(parents=True, exist_ok=True)
-    written = 0
-    for stem, family, scenario in scenarios:
-        family_dir = output_dir / family
-        family_dir.mkdir(parents=True, exist_ok=True)
-        path = family_dir / f"{stem}.json"
-        path.write_text(
-            json.dumps(scenario, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-            encoding="utf-8",
+
+@dataclass(frozen=True)
+class GenerationReport:
+    """Summary of one content-addressed generation run."""
+
+    run_id: str
+    manifest_path: Path
+    produced: tuple[str, ...]
+    replaced: tuple[str, ...]
+    stale: tuple[str, ...]
+    removed: tuple[str, ...]
+
+    @property
+    def written(self) -> int:
+        return len(self.produced) + len(self.replaced)
+
+
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return False
+    return True
+
+
+def _resolved_output_root(output_dir: Path) -> Path:
+    """Create and resolve the exact root owned by this invocation."""
+    if output_dir.is_symlink():
+        raise UnsafeOutputError(
+            f"refusing symlink output directory: {output_dir}"
         )
-        written += 1
-    return written
+    output_dir.mkdir(parents=True, exist_ok=True)
+    root = output_dir.resolve()
+    if root == Path(root.anchor):
+        raise UnsafeOutputError("refusing to use a filesystem root as output directory")
+    return root
+
+
+def _assert_safe_target(root: Path, target: Path) -> None:
+    """Reject symlinks and any target resolving outside *root*."""
+    if target.is_symlink():
+        raise UnsafeOutputError(f"refusing symlink output target: {target}")
+    resolved = target.resolve(strict=False)
+    if not _is_relative_to(resolved, root):
+        raise UnsafeOutputError(f"output target escapes declared directory: {target}")
+
+
+def _generator_owned_files(root: Path) -> dict[str, Path]:
+    """Return files in the generator's exact, documented namespace.
+
+    Only immediate ``<family>/<family>_<digits>.json`` paths are owned.
+    Other JSON files and nested content are user data and are never removed.
+    """
+    owned: dict[str, Path] = {}
+    for family in sorted(FAMILY_NAMES):
+        family_dir = root / family
+        if not family_dir.exists():
+            continue
+        _assert_safe_target(root, family_dir)
+        if not family_dir.is_dir():
+            raise UnsafeOutputError(f"generator family path is not a directory: {family_dir}")
+
+        pattern = re.compile(rf"{re.escape(family)}_\d+\.json")
+        for path in family_dir.iterdir():
+            if not pattern.fullmatch(path.name):
+                continue
+            _assert_safe_target(root, path)
+            if path.is_file():
+                relative = path.relative_to(root).as_posix()
+                owned[relative] = path
+    return owned
+
+
+def _serialized_scenario(scenario: dict) -> bytes:
+    return (
+        json.dumps(scenario, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    ).encode("utf-8")
+
+
+def _write_staged_file(path: Path, content: bytes) -> None:
+    """Write and flush one file inside a private transaction workspace."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("xb") as handle:
+        handle.write(content)
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _publish_staged_file(staged: Path, target: Path) -> None:
+    """Atomically publish one already-staged file."""
+    os.replace(staged, target)
+
+
+def _publish_transaction(
+    root: Path,
+    target_payloads: dict[str, bytes],
+    manifest_content: bytes,
+    *,
+    stale_names: list[str],
+    clean: bool,
+) -> None:
+    """Publish a complete generated set or restore the prior filesystem state."""
+    workspace = Path(
+        tempfile.mkdtemp(
+            dir=root.parent,
+            prefix=f".{root.name}.generation-",
+        )
+    )
+    staged_root = workspace / "staged"
+    backup_root = workspace / "backup"
+    created_directories: list[Path] = []
+    backups: list[tuple[Path, Path]] = []
+    published: list[Path] = []
+
+    try:
+        for relative, content in sorted(target_payloads.items()):
+            _write_staged_file(staged_root / relative, content)
+        _write_staged_file(staged_root / MANIFEST_NAME, manifest_content)
+
+        for family in sorted({relative.split("/", 1)[0] for relative in target_payloads}):
+            family_dir = root / family
+            _assert_safe_target(root, family_dir)
+            if family_dir.exists():
+                if not family_dir.is_dir():
+                    raise UnsafeOutputError(
+                        f"generator family path is not a directory: {family_dir}"
+                    )
+            else:
+                family_dir.mkdir()
+                created_directories.append(family_dir)
+
+        backup_names = {
+            relative
+            for relative in target_payloads
+            if (root / relative).exists()
+        }
+        if clean:
+            backup_names.update(stale_names)
+        manifest_path = root / MANIFEST_NAME
+        if manifest_path.exists():
+            backup_names.add(MANIFEST_NAME)
+
+        for relative in sorted(backup_names):
+            target = root / relative
+            _assert_safe_target(root, target)
+            if not target.is_file():
+                raise UnsafeOutputError(
+                    f"generator output target is not a regular file: {target}"
+                )
+            backup = backup_root / relative
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(target, backup)
+            backups.append((target, backup))
+
+        for relative in sorted(target_payloads):
+            target = root / relative
+            _assert_safe_target(root, target)
+            _publish_staged_file(staged_root / relative, target)
+            published.append(target)
+
+        _assert_safe_target(root, manifest_path)
+        _publish_staged_file(staged_root / MANIFEST_NAME, manifest_path)
+        published.append(manifest_path)
+    except BaseException as exc:
+        rollback_errors: list[OSError] = []
+        for target in reversed(published):
+            try:
+                target.unlink(missing_ok=True)
+            except OSError as rollback_error:
+                rollback_errors.append(rollback_error)
+        for target, backup in reversed(backups):
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(backup, target)
+            except OSError as rollback_error:
+                rollback_errors.append(rollback_error)
+        for directory in reversed(created_directories):
+            try:
+                directory.rmdir()
+            except OSError:
+                pass
+        if rollback_errors:
+            raise OSError(
+                "generation transaction failed and rollback was incomplete"
+            ) from exc
+        raise
+    finally:
+        shutil.rmtree(workspace, ignore_errors=True)
+
+
+def _manifest_payload(
+    *,
+    seed: int | None,
+    requested_count: int,
+    files: list[dict[str, str]],
+) -> dict:
+    descriptor = {
+        "format_version": MANIFEST_VERSION,
+        "generator": GENERATOR_ID,
+        "seed": seed,
+        "requested_count": requested_count,
+        "produced_count": len(files),
+        "files": files,
+    }
+    digest_input = json.dumps(
+        descriptor, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+    return {
+        **descriptor,
+        "run_id": f"sha256:{hashlib.sha256(digest_input).hexdigest()}",
+    }
+
+
+def write_generation(
+    scenarios: list[tuple[str, str, dict]],
+    output_dir: Path,
+    *,
+    seed: int | None,
+    requested_count: int,
+    clean: bool = False,
+) -> GenerationReport:
+    """Write a manifested scenario set under an explicit output root.
+
+    Generator ownership is limited to the exact family/filename namespace
+    returned by :func:`_generator_owned_files`.  ``--clean`` removes only
+    stale files in that namespace and never removes other content.
+    """
+    root = _resolved_output_root(output_dir)
+    existing = _generator_owned_files(root)
+    target_payloads: dict[str, bytes] = {}
+
+    for stem, family, scenario in scenarios:
+        if family not in FAMILY_NAMES:
+            raise UnsafeOutputError(f"unknown generator family: {family}")
+        if not re.fullmatch(rf"{re.escape(family)}_\d+", stem):
+            raise UnsafeOutputError(f"invalid generator-owned scenario stem: {stem}")
+        relative = (Path(family) / f"{stem}.json").as_posix()
+        target_payloads[relative] = _serialized_scenario(scenario)
+
+    target_names = set(target_payloads)
+    stale_names = sorted(set(existing) - target_names)
+    produced = tuple(sorted(target_names - set(existing)))
+    replaced = tuple(sorted(target_names & set(existing)))
+
+    manifest_files: list[dict[str, str]] = []
+    for relative in sorted(target_payloads):
+        content = target_payloads[relative]
+        manifest_files.append(
+            {
+                "path": relative,
+                "sha256": hashlib.sha256(content).hexdigest(),
+            }
+        )
+
+    manifest = _manifest_payload(
+        seed=seed,
+        requested_count=requested_count,
+        files=manifest_files,
+    )
+    manifest_content = (
+        json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    ).encode("utf-8")
+    _publish_transaction(
+        root,
+        target_payloads,
+        manifest_content,
+        stale_names=stale_names,
+        clean=clean,
+    )
+
+    manifest_path = root / MANIFEST_NAME
+    _assert_safe_target(root, manifest_path)
+
+    return GenerationReport(
+        run_id=manifest["run_id"],
+        manifest_path=manifest_path,
+        produced=produced,
+        replaced=replaced,
+        stale=tuple(stale_names),
+        removed=tuple(stale_names if clean else ()),
+    )
+
+
+def write_scenarios(scenarios: list[tuple[str, str, dict]], output_dir: Path) -> int:
+    """Compatibility wrapper that now also writes a current-set manifest."""
+    report = write_generation(
+        scenarios,
+        output_dir,
+        seed=None,
+        requested_count=len(scenarios),
+    )
+    return report.written
+
+
+def _print_paths(label: str, paths: tuple[str, ...]) -> None:
+    print(f"{label} ({len(paths)}):")
+    for path in paths:
+        print(f"  {path}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -199,6 +494,14 @@ def parse_args() -> argparse.Namespace:
         "--output-dir", type=str, default=None,
         help=f"Output directory (default: {OUTPUT_DIR}).",
     )
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help=(
+            "Remove stale files only from the generator-owned family/filename "
+            "namespace inside the resolved output directory."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -206,10 +509,32 @@ def main() -> int:
     args = parse_args()
     out = Path(args.output_dir) if args.output_dir else OUTPUT_DIR
 
-    scenarios = generate(args.count, args.seed)
-    written = write_scenarios(scenarios, out)
+    if args.count <= 0:
+        print("[generator-error] --count must be greater than zero", file=sys.stderr)
+        return 2
 
-    print(f"Generated {written} scenarios in {out}")
+    scenarios = generate(args.count, args.seed)
+    try:
+        report = write_generation(
+            scenarios,
+            out,
+            seed=args.seed,
+            requested_count=args.count,
+            clean=args.clean,
+        )
+    except (OSError, UnsafeOutputError) as exc:
+        print(f"[generator-error] {exc}", file=sys.stderr)
+        return 1
+
+    print(f"Generation run: {report.run_id}")
+    print(f"Generated {report.written} scenarios in {out}")
+    _print_paths("Produced", report.produced)
+    _print_paths("Replaced", report.replaced)
+    if args.clean:
+        _print_paths("Stale removed", report.removed)
+    else:
+        _print_paths("Stale retained (not current in manifest)", report.stale)
+    print(f"Manifest: {report.manifest_path}")
     return 0
 
 

@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huboptimus.dev/schemas/semantic-engine/case-input-v1.schema.json",
+  "title": "HUB_Optimus Semantic Engine CaseInput v1",
+  "description": "Versioned input contract for draft Semantic Engine analysis.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "core_version_ref",
+    "input_summary"
+  ],
+  "properties": {
+    "case_id": {
+      "$ref": "#/$defs/non_empty_string"
+    },
+    "core_version_ref": {
+      "$ref": "#/$defs/non_empty_string"
+    },
+    "input_summary": {
+      "$ref": "#/$defs/non_empty_string"
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "inferences": {
+      "$ref": "#/$defs/string_list"
+    },
+    "uncertainties": {
+      "$ref": "#/$defs/string_list"
+    },
+    "narrative_amplification": {
+      "$ref": "#/$defs/string_list"
+    },
+    "operational_signal": {
+      "$ref": "#/$defs/non_empty_string"
+    },
+    "status": {
+      "$ref": "#/$defs/non_empty_string"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    }
+  },
+  "$defs": {
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*"
+    },
+    "string_list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/non_empty_string"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Opaque extension data preserved verbatim. Metadata keys do not become executable fields, evidence, verification, scoring, decision traces, audit events, or governance authority.",
+      "additionalProperties": true
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "text",
+        "source_ref"
+      ],
+      "properties": {
+        "claim_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "text": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "source_ref": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "claim_type": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "requires_evidence": {
+          "type": "boolean"
+        },
+        "status": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "metadata": {
+          "$ref": "#/$defs/metadata"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "text",
+        "source_ref"
+      ],
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "text": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "source_ref": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "source_type": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "supports_claim_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/non_empty_string"
+          }
+        },
+        "contradicts_claim_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/non_empty_string"
+          }
+        },
+        "limitations": {
+          "$ref": "#/$defs/string_list"
+        },
+        "metadata": {
+          "$ref": "#/$defs/metadata"
+        }
+      }
+    }
+  }
+}

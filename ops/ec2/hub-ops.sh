@@ -10,13 +10,13 @@ HUB_Optimus EC2 ops
 Usage:
   hub-ops status
   hub-ops validate
-  hub-ops deploy
+  hub-ops deploy <commit-sha-or-tag>
   hub-ops rollback
 
 Commands:
   status    Show current release, previous release, state, commit, git status, releases and disk usage.
   validate  Run pytest on current release and show commit/status.
-  deploy    Run deploy-current.
+  deploy    Deploy one explicit reviewed full commit SHA or tag.
   rollback  Run rollback-current.
 USAGE
 }
@@ -108,7 +108,8 @@ case "${1:-}" in
     validate_current
     ;;
   deploy)
-    exec "$APP_ROOT/shared/bin/deploy-current"
+    shift
+    exec "$APP_ROOT/shared/bin/deploy-current" "$@"
     ;;
   rollback)
     exec "$APP_ROOT/shared/bin/rollback-current"

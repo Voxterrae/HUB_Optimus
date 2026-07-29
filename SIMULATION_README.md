@@ -8,26 +8,59 @@ Este documento explica cómo utilizar el núcleo de simulación prototípico que
 
 | Archivo                      | Descripción                                                                                                      |
 |-----------------------------|------------------------------------------------------------------------------------------------------------------|
-| `hub_optimus_simulator.py`  | Módulo que define las clases `Scenario`, `Actor` y `Simulator`, así como políticas sencillas de ejemplo.  Ejecuta rondas de negociación sobre escenarios ya validados. |
-| `run_scenario.py`           | Script de línea de comandos que valida un escenario JSON estricto e invoca el simulador para devolver un informe JSON.   |
-| `scenario.schema.json`      | Contrato JSON Schema canónico para los archivos de escenario ejecutables.                                         |
+| `hub_optimus_simulator.py`  | Módulo que define las clases `Scenario`, `Actor` y `Simulator`, así como políticas sencillas de ejemplo. Ejecuta rondas de negociación sobre escenarios ya validados. |
+| `run_scenario.py`           | Cargador canónico y script de línea de comandos que validan un escenario JSON estricto antes de invocar el simulador. |
+| `scenario.schema.json`      | Contrato estructural JSON Schema para los archivos de escenario ejecutables. |
 | `example_scenario.json`     | Escenario de ejemplo donde dos facciones negocian un alto el fuego parcial.                                        |
 | `i18n_sync.py`              | Utilidad para comprobar la coherencia de traducciones en la documentación (ver sección 5).                        |
 
 ## 1. Preparación
 
-1. Asegúrate de disponer de Python 3.7 o superior.
-2. Copia los archivos anteriores en un directorio de trabajo.  Si vas a trabajar en un repositorio clonado, colócalos en la raíz del proyecto o en una carpeta `tools/` según tus preferencias.
-3. Opcionalmente, crea un entorno virtual para aislar dependencias:
+1. Asegúrate de disponer de Python 3.11 o superior. El repositorio y el
+   bootstrap usan sintaxis de Python 3.11; versiones anteriores no forman parte
+   del contrato soportado.
+2. Copia o clona el repositorio completo en un directorio de trabajo.
+3. Crea un entorno virtual para aislar dependencias:
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
+4. Instala las dependencias del runtime:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+`requirements.txt` contiene únicamente dependencias necesarias para ejecutar
+los comandos soportados. Para desarrollar y ejecutar la suite instala
+`requirements-dev.txt`; este incluye el fichero de runtime y añade `pytest`:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
+Como alternativa reproducible, el bootstrap distingue ambos modos:
+
+```bash
+python scripts/bootstrap.py --runtime-only
+python scripts/bootstrap.py
+python scripts/bootstrap.py --runtime-only --check
+```
+
 ## 2. Estructura de un escenario
 
-Los escenarios ejecutables se describen mediante un archivo JSON que debe validar contra `scenario.schema.json`. El contrato actual es estricto: no se aceptan campos extra en la raíz del documento ni dentro de `roles[]`.
+Los escenarios ejecutables se describen mediante un archivo JSON que debe
+validar contra `scenario.schema.json`. El contrato actual es estricto: no se
+aceptan campos extra en la raíz del documento ni dentro de `roles[]`, y el
+decodificador rechaza las constantes no estándar `NaN`, `Infinity` y
+`-Infinity`. Solo se admite JSON; el runtime no implementa carga YAML.
+
+El JSON Schema valida la estructura de cada registro. El cargador canónico
+`run_scenario.load_validated_scenario()` aplica además la invariancia entre
+registros que exige nombres de actor únicos. `Scenario.from_json()` delega en
+ese mismo cargador y no introduce valores predeterminados permisivos.
 
 ```json
 {
@@ -43,7 +76,7 @@ Los escenarios ejecutables se describen mediante un archivo JSON que debe valida
 ```
 
 * `title` y `description` proporcionan contexto humano mínimo para el runtime.
-* `roles` define los actores que participarán en la negociación.  Cada elemento debe contener solo `name` y `role`.
+* `roles` define los actores que participarán en la negociación. Cada elemento debe contener solo `name` y `role`, y cada `name` debe ser único dentro del escenario.
 * `success_criteria` es un mapa de clave/valor.  La simulación se detiene cuando cualquier actor emite una acción que coincida con una clave y valor del criterio (por ejemplo, `{"offer": 5}`).
 * `max_rounds` limita el número máximo de rondas para evitar bucles infinitos.
 
@@ -106,8 +139,30 @@ efímeros (gitignored) y se regeneran localmente.
 | Generador | `python tools/scenario_generator/generate_scenarios.py` | Genera escenarios sintéticos por familia |
 | Telemetría | `python tools/scenario_telemetry.py` | Métricas agregadas de convergencia |
 | Mutador | `python tools/scenario_mutator.py` | Barrido de estabilidad variando un eje |
-| Búsqueda de frontera | `python tools/scenario_boundary_search.py` | Frontera de estabilidad por eje (búsqueda binaria) |
+| Búsqueda de frontera | `python tools/scenario_boundary_search.py` | Frontera por eje: búsqueda binaria para rondas y enumeración exhaustiva para actores y umbral |
 | Frontera 2D | `python tools/scenario_frontier.py` | Mapas de estabilidad en planos de dos ejes |
+
+Cada ejecución del generador escribe `generation_manifest.json`. Ese manifiesto
+identifica el conjunto actual mediante un `run_id` reproducible y hashes SHA-256;
+la telemetría lo detecta y verifica automáticamente, por lo que no mezcla archivos
+sobrantes de ejecuciones anteriores. Los bytes verificados se conservan en memoria
+y se ejecutan desde una copia temporal aislada; la telemetría no vuelve a abrir la
+ruta mutable después de verificar su hash.
+
+El conjunto completo y el manifiesto se preparan antes de publicar. Si falla una
+escritura, backup o publicación, el generador restaura el conjunto y manifiesto
+anteriores. `--count` debe ser mayor que cero. El espacio que el generador
+considera propio se limita a rutas inmediatas con la forma
+`<familia>/<familia>_<número>.json`. Para eliminar archivos obsoletos solo dentro
+de ese espacio explícito:
+
+```bash
+python tools/scenario_generator/generate_scenarios.py --count 20 --clean
+```
+
+Sin `--clean`, los archivos obsoletos se conservan y se notifican, pero quedan
+fuera del manifiesto actual. Otros JSON, subdirectorios y notas dentro del
+directorio de salida nunca se eliminan.
 
 La memoria científica del laboratorio se mantiene en `docs/lab_state.md`.
 

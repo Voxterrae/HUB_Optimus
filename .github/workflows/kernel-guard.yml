@@ -17,9 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Detect override label
         id: labels
@@ -33,15 +34,24 @@ jobs:
           fi
 
       - name: Run kernel guard (diff-based)
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_SHA: ${{ github.sha }}
+          ALLOW_KERNEL_CHANGES: ${{ steps.labels.outputs.allow }}
         run: |
-          git fetch --no-tags --prune --depth=1 origin "${{ github.base_ref }}"
-          if [[ "${{ steps.labels.outputs.allow }}" == "true" ]]; then
-            python tools/kernel_guard.py \
-              --base-ref "origin/${{ github.base_ref }}" \
-              --head-ref "${{ github.sha }}" \
+          set -euo pipefail
+          git fetch --no-tags --prune --depth=1 origin \
+            "refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+          git show "origin/${BASE_REF}:tools/kernel_guard.py" \
+            > "${RUNNER_TEMP}/kernel_guard.py"
+
+          if [[ "${ALLOW_KERNEL_CHANGES}" == "true" ]]; then
+            python "${RUNNER_TEMP}/kernel_guard.py" \
+              --base-ref "origin/${BASE_REF}" \
+              --head-ref "${HEAD_SHA}" \
               --allow-kernel-changes
           else
-            python tools/kernel_guard.py \
-              --base-ref "origin/${{ github.base_ref }}" \
-              --head-ref "${{ github.sha }}"
+            python "${RUNNER_TEMP}/kernel_guard.py" \
+              --base-ref "origin/${BASE_REF}" \
+              --head-ref "${HEAD_SHA}"
           fi

@@ -1,3 +1,4 @@
+import io
 import socket
 import sys
 import threading
@@ -11,6 +12,17 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 API_SCRIPT = ROOT / "ops" / "ec2" / "hub-api.sh"
+
+
+def make_body_reader(namespace: dict, content_length: str | None, body: bytes):
+    handler = object.__new__(namespace["Handler"])
+    handler.headers = {}
+    if content_length is not None:
+        handler.headers["Content-Length"] = content_length
+    handler.rfile = io.BytesIO(body)
+    responses = []
+    handler.send_json = lambda status, payload: responses.append((status, payload))
+    return handler, responses
 
 
 @pytest.fixture()
@@ -49,9 +61,70 @@ def test_hub_api_controlled_url_intake_endpoint_present():
     assert "def fetch_url_text" in text
     assert "controlled_url_intake" in text
     assert "MAX_URL_BYTES = 1_000_000" in text
+    assert "MAX_URL_BODY_LENGTH = 4096" in text
+    assert "MAX_ANALYZE_BODY_LENGTH = 64_000" in text
     assert "MAX_REDIRECTS = 3" in text
     assert "URL_TIMEOUT_SECONDS = 8" in text
     assert "HUB_Optimus-Operator-URL-Intake/0.1" in text
+
+
+def test_url_and_analyze_handlers_use_separate_bounded_body_limits():
+    text = API_SCRIPT.read_text(encoding="utf-8")
+
+    assert "self.read_json_body(MAX_URL_BODY_LENGTH)" in text
+    assert "self.read_json_body(MAX_ANALYZE_BODY_LENGTH)" in text
+
+
+def test_analysis_limit_accepts_representative_operator_payload(hub_api):
+    namespace = hub_api.__dict__
+    body = ('{"case_id":"operator-case","raw_text":"' + ("evidence " * 700) + '"}').encode()
+    assert len(body) > namespace["MAX_URL_BODY_LENGTH"]
+    assert len(body) < namespace["MAX_ANALYZE_BODY_LENGTH"]
+
+    handler, responses = make_body_reader(namespace, str(len(body)), body)
+
+    payload = handler.read_json_body(namespace["MAX_ANALYZE_BODY_LENGTH"])
+
+    assert payload is not None
+    assert payload["case_id"] == "operator-case"
+    assert responses == []
+
+
+def test_url_limit_rejects_same_representative_operator_payload(hub_api):
+    namespace = hub_api.__dict__
+    body = ('{"raw_text":"' + ("evidence " * 700) + '"}').encode()
+    handler, responses = make_body_reader(namespace, str(len(body)), body)
+
+    payload = handler.read_json_body(namespace["MAX_URL_BODY_LENGTH"])
+
+    assert payload is None
+    assert responses == [
+        (
+            413,
+            {
+                "error": "request body too large",
+                "limit_bytes": namespace["MAX_URL_BODY_LENGTH"],
+            },
+        )
+    ]
+
+
+def test_json_body_reader_rejects_missing_invalid_and_negative_lengths(hub_api):
+    namespace = hub_api.__dict__
+
+    for content_length, expected_status in ((None, 411), ("invalid", 400), ("-1", 400)):
+        handler, responses = make_body_reader(namespace, content_length, b"{}")
+
+        assert handler.read_json_body(namespace["MAX_URL_BODY_LENGTH"]) is None
+        assert responses[0][0] == expected_status
+
+
+def test_json_body_reader_rejects_invalid_utf8_without_traceback(hub_api):
+    namespace = hub_api.__dict__
+    handler, responses = make_body_reader(namespace, "2", b"\xff\xfe")
+
+    assert handler.read_json_body(namespace["MAX_URL_BODY_LENGTH"]) is None
+    assert responses == [(400, {"error": "request body must be valid UTF-8"})]
 
 
 def test_hub_api_controlled_url_intake_security_boundary_present():
@@ -607,7 +680,7 @@ def test_handler_preserves_unreviewed_provenance_for_malformed_http(
     class RecordingHandler:
         response = None
 
-        def read_json_body(self):
+        def read_json_body(self, max_body_length):
             return {"url": url}
 
         def send_json(self, status, payload):
@@ -823,7 +896,7 @@ def test_pinned_ip_fallbacks_share_one_total_deadline(
 
         def connect(self, address):
             attempts.append((address, self.timeout, None))
-            clock[0] += 3
+            clock[0] += self.timeout
             raise TimeoutError("simulated connection timeout")
 
         def close(self):
@@ -846,7 +919,62 @@ def test_pinned_ip_fallbacks_share_one_total_deadline(
         ("9.9.9.9", 443),
         ("1.1.1.1", 443),
     ]
-    assert [attempt[1] for attempt in attempts] == [8, 5, 2]
+    assert [attempt[1] for attempt in attempts] == pytest.approx(
+        [8 / 3, 8 / 3, 8 / 3]
+    )
+
+
+def test_stalled_first_ip_preserves_time_for_working_later_ip(
+    hub_api,
+    monkeypatch,
+):
+    clock = [100.0]
+    attempts = []
+
+    monkeypatch.setattr(hub_api.time, "monotonic", lambda: clock[0])
+
+    class FirstAddressStalls:
+        def __init__(self, family, socket_type, protocol):
+            self.family = family
+            self.timeout = None
+            self.peer = None
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def bind(self, source_address):
+            raise AssertionError(f"unexpected source bind: {source_address}")
+
+        def connect(self, address):
+            attempts.append((address, self.timeout))
+            if self.family == socket.AF_INET:
+                clock[0] += self.timeout
+                raise TimeoutError("simulated IPv4 black hole")
+            self.peer = address
+
+        def getpeername(self):
+            return self.peer
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(hub_api.socket, "socket", FirstAddressStalls)
+
+    deadline = hub_api.FetchDeadline.start(8)
+    connection = hub_api.create_pinned_connection(
+        ("public.example", 443),
+        8,
+        None,
+        ("8.8.8.8", "2001:4860:4860::8888"),
+        deadline,
+    )
+
+    assert isinstance(connection, FirstAddressStalls)
+    assert [attempt[0] for attempt in attempts] == [
+        ("8.8.8.8", 443),
+        ("2001:4860:4860::8888", 443, 0, 0),
+    ]
+    assert [attempt[1] for attempt in attempts] == pytest.approx([4, 4])
 
 
 def test_redirect_hops_share_one_total_deadline(

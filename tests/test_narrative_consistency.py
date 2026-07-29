@@ -7,11 +7,15 @@ import sys
 from copy import deepcopy
 from pathlib import Path
 
+import pytest
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CHECKER = REPO_ROOT / "tools" / "check_narrative_consistency.py"
 SEED_PATH = REPO_ROOT / "datasets" / "ai_risk_narratives" / "seed_claims.json"
-TAXONOMY_PATH = REPO_ROOT / "datasets" / "ai_risk_narratives" / "taxonomy.json"
+CLAIM_SCHEMA_PATH = (
+    REPO_ROOT / "datasets" / "ai_risk_narratives" / "claim_record.schema.json"
+)
 
 
 def _load_json(path: Path) -> object:
@@ -28,8 +32,8 @@ def _run_checker(input_path: Path, report_path: Path, summary_path: Path | None 
         str(CHECKER),
         "--input",
         str(input_path),
-        "--taxonomy",
-        str(TAXONOMY_PATH),
+        "--schema",
+        str(CLAIM_SCHEMA_PATH),
         "--report",
         str(report_path),
     ]
@@ -123,6 +127,36 @@ def test_missing_required_field_emits_error(tmp_path: Path) -> None:
     report = _load_json(report_path)
     assert report["summary"]["errors"] >= 1
     assert any(issue["type"] == "missing_required_field" for issue in report["issues"])
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid_value", "issue_type"),
+    (
+        ("risk_domain", "free_text_domain", "invalid_risk_domain"),
+        ("verification_status", "unreviewed", "invalid_verification_status"),
+        ("evidence_tier", "social_post", "invalid_evidence_tier"),
+    ),
+)
+def test_invalid_closed_vocabulary_value_emits_error(
+    tmp_path: Path,
+    field: str,
+    invalid_value: str,
+    issue_type: str,
+) -> None:
+    record = _sample_record()
+    record["claim_id"] = "NR-106"
+    record[field] = invalid_value
+
+    input_path = tmp_path / "dataset.json"
+    report_path = tmp_path / "report.json"
+    _write_json(input_path, [record])
+
+    proc = _run_checker(input_path, report_path)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    report = _load_json(report_path)
+    assert report["summary"]["errors"] >= 1
+    assert any(issue["type"] == issue_type for issue in report["issues"])
 
 
 def test_duplicate_claim_text_emits_info(tmp_path: Path) -> None:

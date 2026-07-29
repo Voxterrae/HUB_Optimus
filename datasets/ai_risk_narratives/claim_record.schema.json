@@ -3,6 +3,42 @@
   "title": "claim_record",
   "type": "object",
   "additionalProperties": false,
+  "$defs": {
+    "risk_domain": {
+      "type": "string",
+      "enum": [
+        "privacy",
+        "biometrics",
+        "surveillance",
+        "browser_security",
+        "copyright",
+        "defense",
+        "labor",
+        "environment",
+        "hardware",
+        "local_vs_cloud"
+      ]
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "verified",
+        "mixed",
+        "misleading",
+        "unsupported"
+      ]
+    },
+    "evidence_tier": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "official_secondary",
+        "reputable_press",
+        "advocacy",
+        "unknown"
+      ]
+    }
+  },
   "required": [
     "claim_id",
     "claim_text",
@@ -44,38 +80,13 @@
       "pattern": ".*\\S.*"
     },
     "risk_domain": {
-      "type": "string",
-      "enum": [
-        "privacy",
-        "biometrics",
-        "surveillance",
-        "browser_security",
-        "copyright",
-        "defense",
-        "labor",
-        "environment",
-        "hardware",
-        "local_vs_cloud"
-      ]
+      "$ref": "#/$defs/risk_domain"
     },
     "verification_status": {
-      "type": "string",
-      "enum": [
-        "verified",
-        "mixed",
-        "misleading",
-        "unsupported"
-      ]
+      "$ref": "#/$defs/verification_status"
     },
     "evidence_tier": {
-      "type": "string",
-      "enum": [
-        "primary",
-        "official_secondary",
-        "reputable_press",
-        "advocacy",
-        "unknown"
-      ]
+      "$ref": "#/$defs/evidence_tier"
     },
     "jurisdiction": {
       "type": "string",

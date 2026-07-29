@@ -1,0 +1,145 @@
+{
+  "manifest_version": "1.1.0",
+  "issue": 1750,
+  "latest_audit_issue": 1736,
+  "scope": "Static public portfolio and 404 interface only",
+  "canonical_v1_language": "es",
+  "interface_baseline": "en",
+  "constitutional_translation_status": "not ratified",
+  "operator_interface_localized": false,
+  "portfolio_translation_key_count": 155,
+  "field_status": {
+    "document_title_and_description": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "navigation_and_language_controls": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "globe_and_motion_controls": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "method_and_operating_principles": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "portfolio_capabilities_and_statuses": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "boundaries_and_limitations": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "operator_description_and_disclosure": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "labs_and_future_rfc_boundaries": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "evidence_and_footer_links": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "accessibility_labels": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "not_found_page": {
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    }
+  },
+  "locales": {
+    "en": {
+      "direction": "ltr",
+      "scope": "existing portfolio interface baseline",
+      "translation_method": "existing baseline; AI-assisted terminology and register audit",
+      "review_status": "named qualified human review required",
+      "named_reviewer": null
+    },
+    "es": {
+      "direction": "ltr",
+      "scope": "existing portfolio interface translation",
+      "translation_method": "existing translation; AI-assisted terminology and register audit",
+      "review_status": "named qualified human review required",
+      "named_reviewer": null
+    },
+    "de": {
+      "direction": "ltr",
+      "scope": "existing portfolio interface translation",
+      "translation_method": "existing translation; AI-assisted terminology and register audit",
+      "review_status": "named qualified human review required",
+      "named_reviewer": null
+    },
+    "ru": {
+      "direction": "ltr",
+      "scope": "portfolio and 404 interface",
+      "translation_method": "machine-assisted draft",
+      "review_status": "qualified human review required",
+      "named_reviewer": null
+    },
+    "he": {
+      "direction": "rtl",
+      "scope": "portfolio and 404 interface",
+      "translation_method": "machine-assisted draft",
+      "review_status": "qualified human review required",
+      "named_reviewer": null
+    },
+    "zh-Hans": {
+      "direction": "ltr",
+      "scope": "portfolio and 404 interface; Simplified Chinese only",
+      "translation_method": "machine-assisted draft",
+      "review_status": "qualified human review required",
+      "named_reviewer": null
+    }
+  }
+}
