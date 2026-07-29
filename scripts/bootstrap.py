@@ -14,14 +14,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
+import tempfile
+from importlib import metadata
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RUNTIME_REQUIREMENTS = REPO_ROOT / "requirements.txt"
 DEVELOPMENT_REQUIREMENTS = REPO_ROOT / "requirements-dev.txt"
 MIN_PYTHON = (3, 11)
+SUPPORTED_PACKAGE_RANGES = {
+    "jsonschema": ((4, 26, 0), (5, 0, 0)),
+    "pytest": ((9, 1, 1), (10, 0, 0)),
+}
 
 # ── Checks ──────────────────────────────────────────────────
 
@@ -37,18 +44,51 @@ def check_python() -> bool:
 def check_package(name: str) -> bool:
     try:
         __import__(name)
-        print(f"  [OK]   {name}")
-        return True
     except ImportError:
         print(f"  [MISS] {name}")
         return False
 
+    try:
+        installed = metadata.version(name)
+    except metadata.PackageNotFoundError:
+        print(f"  [MISS] {name}")
+        return False
+
+    bounds = SUPPORTED_PACKAGE_RANGES.get(name)
+    if bounds is None:
+        print(f"  [OK]   {name} {installed}")
+        return True
+
+    match = re.match(r"^(\d+)\.(\d+)(?:\.(\d+))?(.*)$", installed)
+    if match is None:
+        print(f"  [MISS] {name} {installed} (unparseable version)")
+        return False
+    release = tuple(int(part or 0) for part in match.groups()[:3])
+    suffix = match.group(4).lower()
+    is_prerelease = bool(re.search(r"(?:a|b|rc|dev)\d", suffix))
+    minimum, maximum = bounds
+    ok = minimum <= release < maximum and not is_prerelease
+    if ok:
+        print(f"  [OK]   {name} {installed}")
+        return True
+    print(
+        f"  [MISS] {name} {installed} "
+        f"(need >= {'.'.join(map(str, minimum))}, < {maximum[0]})"
+    )
+    return False
+
 
 def check_tool(name: str) -> bool:
-    proc = subprocess.run(
-        [name, "--version"],
-        capture_output=True, text=True, check=False,
-    )
+    try:
+        proc = subprocess.run(
+            [name, "--version"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        print(f"  [MISS] {name}")
+        return False
     if proc.returncode == 0:
         version = proc.stdout.strip().split("\n")[0]
         print(f"  [OK]   {name}  ({version})")
@@ -94,21 +134,25 @@ def run_benchmarks() -> bool:
 def run_runtime_smoke() -> bool:
     """Run the documented scenario CLI without development-only packages."""
     print("\nRunning runtime smoke test ...")
-    proc = subprocess.run(
-        [
-            sys.executable,
-            str(REPO_ROOT / "run_scenario.py"),
-            str(REPO_ROOT / "example_scenario.json"),
-            "--seed",
-            "42",
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
+    with tempfile.TemporaryDirectory(prefix="hub-optimus-smoke-") as temp_dir:
+        output_path = Path(temp_dir) / "example_scenario.result.json"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "run_scenario.py"),
+                str(REPO_ROOT / "example_scenario.json"),
+                "--output",
+                str(output_path),
+                "--seed",
+                "42",
+            ],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
     if proc.returncode != 0:
         diagnostic = proc.stderr.strip() or proc.stdout.strip() or "no diagnostic"
         print(f"  [FAIL] runtime smoke: {diagnostic}")
@@ -178,7 +222,11 @@ def main(argv: list[str] | None = None) -> int:
 
     # 3. Git
     print("\n3. Tools")
-    check_tool("git")
+    if args.runtime_only:
+        print("  [SKIP] git (not required by the runtime tier)")
+    elif not check_tool("git"):
+        print("\n   Git is required for the development tier.")
+        return 1
 
     # 4. Install if needed
     if missing and not check_only:

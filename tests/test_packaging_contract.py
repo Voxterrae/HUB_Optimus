@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BOOTSTRAP = REPO_ROOT / "scripts" / "bootstrap.py"
@@ -63,10 +64,63 @@ def test_runtime_only_check_does_not_require_pytest() -> None:
     assert "pytest" not in proc.stdout.lower()
 
 
+def test_package_check_rejects_an_installed_version_outside_the_contract(
+    monkeypatch: Any,
+) -> None:
+    bootstrap = _load_bootstrap()
+    monkeypatch.setattr(bootstrap.metadata, "version", lambda _name: "3.2.0")
+
+    assert not bootstrap.check_package("jsonschema")
+
+
+def test_missing_tool_is_reported_without_a_traceback(monkeypatch: Any) -> None:
+    bootstrap = _load_bootstrap()
+
+    def missing_tool(*_args: Any, **_kwargs: Any) -> None:
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr(bootstrap.subprocess, "run", missing_tool)
+
+    assert not bootstrap.check_tool("git")
+
+
+def test_runtime_tier_does_not_probe_for_git(monkeypatch: Any) -> None:
+    bootstrap = _load_bootstrap()
+    monkeypatch.setattr(bootstrap, "check_python", lambda: True)
+    monkeypatch.setattr(bootstrap, "check_package", lambda _name: True)
+
+    def unexpected_tool_probe(_name: str) -> bool:
+        raise AssertionError("runtime-only mode must not require Git")
+
+    monkeypatch.setattr(bootstrap, "check_tool", unexpected_tool_probe)
+
+    assert bootstrap.main(["--runtime-only", "--check"]) == 0
+
+
 def test_runtime_smoke_uses_only_the_supported_cli_contract() -> None:
     bootstrap = _load_bootstrap()
 
     assert bootstrap.run_runtime_smoke()
+
+
+def test_runtime_smoke_writes_only_to_a_temporary_path(monkeypatch: Any) -> None:
+    bootstrap = _load_bootstrap()
+    observed: dict[str, Path] = {}
+
+    def fake_run(command: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+        output_index = command.index("--output") + 1
+        observed["output"] = Path(command[output_index])
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout='{"status":"success","rounds":1,"history":[]}',
+            stderr="",
+        )
+
+    monkeypatch.setattr(bootstrap.subprocess, "run", fake_run)
+
+    assert bootstrap.run_runtime_smoke()
+    assert not observed["output"].is_relative_to(REPO_ROOT)
 
 
 def test_readmes_document_the_same_minimum_and_install_paths() -> None:
