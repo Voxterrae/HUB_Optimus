@@ -140,4 +140,6 @@ def test_plain_overview_and_capability_ledger_keep_claim_classes_separate() -> N
         "| Public remote Semantic Engine or autonomous analysis | Not implemented |"
         in capabilities
     )
-    assert "GitHub reported the official public repository at size 0" in capabilities
+    assert "| `Voxterrae/HUB-Optimus-labs` artifacts | External / unresolved |" in (
+        capabilities
+    )

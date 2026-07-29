@@ -20,7 +20,8 @@
 >
 > **Translation status:** DE governance path translated · CA / FR / RU = progressive translation · HE / ZH = onboarding stubs, full translation pending
 >
-> Source of truth: [docs/context/STATUS.md](docs/context/STATUS.md)
+> Translation-policy authority:
+> [docs/context/STATUS.md](docs/context/STATUS.md)
 
 **Quick paths:**
 - 90 seconds: [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md)
@@ -105,7 +106,11 @@ HUB_Optimus exists to **break that cycle** by evaluating scenarios **before** de
 - `docs/architecture/platform_compatibility.md` → platform-neutral access and execution policy
 - `legacy/` → historical/exploratory materials (v0), preserved for transparency
 
-> Source-of-truth policy is defined in `docs/context/STATUS.md`: `v1_core/languages/es/` is canonical and `v1_core/languages/en/` is parity reference.
+> Project-wide precedence is defined in
+> [`docs/context/SOURCE_OF_TRUTH.md`](docs/context/SOURCE_OF_TRUTH.md).
+> Language policy remains in `docs/context/STATUS.md`:
+> `v1_core/languages/es/` is canonical and `v1_core/languages/en/` is the
+> parity reference.
 
 ---
 

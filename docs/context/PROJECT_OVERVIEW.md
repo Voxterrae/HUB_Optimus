@@ -1,7 +1,7 @@
 # HUB_Optimus — project overview
 
 Verified against repository commit
-`3ef199305c2d2d114f88aceb97b65a08b9f91b4a` on 2026-07-28.
+`df0ef345e5ac627f3e2735573c802fe2f60821f4` on 2026-07-29.
 
 ## In one paragraph
 
@@ -48,9 +48,9 @@ tests, limitations, and known open defects.
 - professional Russian, Hebrew, or Simplified Chinese parity;
 - private GitHub settings such as required reviews, Secret Scanning, Push
   Protection, rulesets, or a live deployment unless separately attested;
-- released artifacts from
-  [HUB-Optimus-labs](https://github.com/Voxterrae/HUB-Optimus-labs), which
-  GitHub reported as an empty official incubation repository on 2026-07-28.
+- current contents or released artifacts from
+  [HUB-Optimus-labs](https://github.com/Voxterrae/HUB-Optimus-labs); another
+  repository is external to this baseline and remains unresolved here.
 
 ## Kernel, consensus, runtime, and RFC are different things
 
@@ -66,8 +66,9 @@ tests, limitations, and known open defects.
 The current Consensus Process requires human proposal, review, objection
 handling, ratification, and a record. It does not yet make every roster,
 quorum, threshold, window, emergency, or rollback rule mechanically decidable.
-Issue #1751 and draft PR #1773 propose precise vocabulary and amendment
-mechanics; they are not current governance.
+Proposed changes associated with issue #1751 and PR #1773 are absent from this
+baseline and are not current governance. The Pull Request's current lifecycle
+is mutable GitHub state and remains external to this snapshot.
 
 The versioned RFC registry is
 [`../rfc/registry.v1.json`](../rfc/registry.v1.json), with a readable guide in
@@ -97,8 +98,11 @@ translated or at parity.
 
 ## Operating discipline
 
-- GitHub issues, PRs, commits, files, and CI are the project source of truth.
-- `docs/context/STATUS.md` resolves current language/canonical-source conflicts.
+- The ordered project hierarchy is
+  [`SOURCE_OF_TRUTH.md`](SOURCE_OF_TRUTH.md); GitHub `main` and each live
+  GitHub object's own state come first for their applicable question.
+- `docs/context/STATUS.md` resolves language and canonical-source conflicts
+  only within that domain.
 - Changes should remain one issue, one bounded branch, and one reviewable PR.
 - AI can prepare evidence and proposals; it cannot supply human ratification,
   legal advice, professional translation review, or self-approval.
