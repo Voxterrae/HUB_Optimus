@@ -33,7 +33,8 @@ previously observed pattern changes after a code modification.
 
 ### Mobile Ingest (Termux)
 
-Capture a claim from a mobile terminal and append it to the dataset:
+Capture an unverified raw claim from a mobile terminal into the private local
+intake area:
 
 ```bash
 python tools/mobile_ingest.py "AI regulation in Europe is accelerating"
@@ -44,6 +45,54 @@ Or via stdin:
 ```bash
 echo "AI regulation in Europe is accelerating" | python tools/mobile_ingest.py
 ```
+
+The default file is `.local/intake/mobile_ingest.jsonl`. The directory is
+git-ignored and created with private permissions where the platform supports
+them. A different operator-managed path may be selected explicitly:
+
+```bash
+python tools/mobile_ingest.py --output /private/path/mobile.jsonl "raw claim"
+```
+
+On POSIX systems with no-follow directory-descriptor support, the default path
+is traversed and opened relative to verified directory descriptors. This keeps
+parent-component replacement from redirecting a write outside the repository.
+The protected default fails closed on platforms without those primitives,
+including standard Windows Python builds; use an explicit operator-managed
+`--output` path there.
+
+New files use mode `0600` and the protected default intake directory uses
+`0700` where POSIX modes are supported. Appending to an existing custom file
+preserves its operator-defined mode. Existing custom JSONL files must be
+readable as well as writable so the helper can restore a missing LF record
+boundary before appending.
+
+Every opened output must be a regular file. The protected default also requires
+the file to have exactly one link, so FIFOs, devices, sockets, and hard-linked
+default targets fail closed before permissions or content can change. An
+explicit custom path remains operator-managed but is still required to be a
+regular file.
+
+Claim text beginning with `-` is accepted without being treated as an unknown
+option or echoed by an argument-parser error. Use `--` before a claim that is
+exactly `--output`, `-h`, or `--help`.
+
+Every record is classified `private_raw_intake`, remains `unverified`, and has
+`local_only` publication status. Intake is not evidence validation, analysis,
+or project truth, and the tool never publishes or promotes records
+automatically.
+
+The operator is responsible for data classification, access, retention, secure
+backup, and deletion. Do not enter credentials or secrets. Regulated,
+client-confidential, or otherwise sensitive content requires an approved
+private process. Existing root-level `mobile_ingest.jsonl` files are not moved
+or deleted automatically; review and dispose of any such legacy local file
+manually.
+
+The helper does not provide encryption, managed confidential storage,
+multi-process locking, retention automation, or backup. Operators must
+serialize concurrent writers and remain responsible for access, retention,
+backup, and deletion.
 
 ## Observed patterns
 
