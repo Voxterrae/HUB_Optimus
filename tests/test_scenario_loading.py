@@ -194,3 +194,21 @@ def test_valid_loaders_return_equivalent_canonical_scenarios() -> None:
     compatibility = Scenario.from_json(str(scenario_path))
 
     assert vars(compatibility) == vars(authoritative)
+
+
+def test_authoritative_loader_exposes_controlled_error_codes(
+    tmp_path: Path,
+) -> None:
+    invalid_root = tmp_path / "array.json"
+    invalid_root.write_text("[]\n", encoding="utf-8")
+    invalid_utf8 = tmp_path / "invalid-utf8.json"
+    invalid_utf8.write_bytes(b"\xff\xfe")
+
+    with pytest.raises(run_scenario.ScenarioValidationError) as root_error:
+        run_scenario.load_validated_scenario(invalid_root)
+    assert root_error.value.category == "parse"
+    assert root_error.value.error_code == "json_root_not_object"
+
+    with pytest.raises(run_scenario.ScenarioInputError) as utf8_error:
+        run_scenario.load_validated_scenario(invalid_utf8)
+    assert utf8_error.value.error_code == "invalid_utf8"

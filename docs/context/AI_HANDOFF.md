@@ -271,6 +271,29 @@ in PR #1771 restores the following behavior:
   39 agreements, 21 no-agreements, and average convergence round 2.26 after
   the issue-#1775 regeneration on commit `af89e420`.
 
+## Canonical Scenario Tool Boundary
+
+Issue #1804 removes independent permissive scenario parsing from telemetry and
+mutation input selection.
+
+Operational boundary:
+
+- `run_scenario.load_validated_scenario` remains the one external-file boundary
+  for standard JSON parsing, structural schema validation, and actor-identity
+  validation;
+- controlled loader errors expose stable categories and codes without changing
+  the supported CLI's exit status or message prefixes;
+- telemetry classifies non-standard JSON constants and non-object roots as
+  parse errors, invalid UTF-8 as an input parse failure, and structural or
+  actor-identity failures as schema errors;
+- manifested telemetry validates and executes the same temporary snapshot made
+  from the exact bytes retained after SHA-256 verification;
+- the mutator validates every selected base through the authoritative loader
+  before creating output and applies the same structural and actor-identity
+  checks to generated mutations;
+- this alignment does not change simulator behavior, frozen benchmark output,
+  or previously published research evidence.
+
 ## Scenario Generation Provenance Boundary
 
 Issue #1758 scopes the laboratory generator/telemetry correction for stale

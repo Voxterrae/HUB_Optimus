@@ -22,6 +22,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from contextlib import ExitStack
 import hashlib
 import json
 import os
@@ -34,7 +35,6 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RUNNER = REPO_ROOT / "run_scenario.py"
-SCHEMA_PATH = REPO_ROOT / "scenario.schema.json"
 DEFAULT_SCENARIO_DIR = REPO_ROOT / "scenarios" / "generated"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "scenarios"
 SEED = "42"
@@ -52,6 +52,11 @@ GENERATOR_ID = "tools/scenario_generator/generate_scenarios.py"
 GENERATOR_FAMILIES = frozenset(
     {"info_asymmetry", "resource_scarcity", "incentive_misalignment"}
 )
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+import run_scenario  # noqa: E402
 
 
 class ManifestError(ValueError):
@@ -208,15 +213,6 @@ def _infer_mutation_axis(path: Path) -> str | None:
     return None
 
 
-def _validate_schema(payload: Any) -> bool:
-    """Check if the scenario payload passes schema validation."""
-    import jsonschema
-
-    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
-    validator = jsonschema.Draft202012Validator(schema)
-    return not list(validator.iter_errors(payload))
-
-
 def collect_one(
     scenario_path: Path,
     seed: int,
@@ -251,117 +247,106 @@ def collect_one(
         "error_code": None,
     }
 
-    # Load and validate schema
-    try:
-        scenario_bytes = (
-            verified_scenario_bytes
-            if verified_scenario_bytes is not None
-            else scenario_path.read_bytes()
-        )
-    except OSError:
-        record["error_code"] = "read_error"
-        return record
-
-    try:
-        payload = json.loads(scenario_bytes.decode("utf-8"))
-    except UnicodeDecodeError:
-        record["error_code"] = "invalid_utf8"
-        return record
-    except json.JSONDecodeError:
-        record["error_code"] = "invalid_json"
-        return record
-
-    if not isinstance(payload, dict):
-        record["error_code"] = "json_root_not_object"
-        return record
-
-    record["schema_valid"] = _validate_schema(payload)
-    if not record["schema_valid"]:
-        record["processing_outcome"] = "schema_error"
-        record["error_code"] = "schema_invalid"
-        return record
-
-    record["actors"] = len(payload["roles"])
-    record["max_rounds"] = payload["max_rounds"]
-
-    # Run through the simulator
-    record["processing_outcome"] = "runtime_error"
-    record["runtime_error"] = True
-    snapshot_directory: tempfile.TemporaryDirectory[str] | None = None
-    runner_scenario_path = scenario_path
-    actual: Path | None = None
-    try:
+    with ExitStack() as stack:
+        runner_scenario_path = scenario_path
         if verified_scenario_bytes is not None:
-            snapshot_directory = tempfile.TemporaryDirectory(
-                prefix="hub-optimus-telemetry-"
+            snapshot_directory = Path(
+                stack.enter_context(
+                    tempfile.TemporaryDirectory(
+                        prefix="hub-optimus-telemetry-"
+                    )
+                )
             )
             runner_scenario_path = (
-                Path(snapshot_directory.name) / scenario_path.name
+                snapshot_directory / scenario_path.name
             )
-            runner_scenario_path.write_bytes(verified_scenario_bytes)
+            try:
+                runner_scenario_path.write_bytes(verified_scenario_bytes)
+            except OSError:
+                record["processing_outcome"] = "runtime_error"
+                record["runtime_error"] = True
+                record["error_code"] = "verified_snapshot_error"
+                return record
+
+        try:
+            scenario = run_scenario.load_validated_scenario(runner_scenario_path)
+        except run_scenario.ScenarioInputError as exc:
+            record["error_code"] = exc.error_code
+            return record
+        except run_scenario.ScenarioValidationError as exc:
+            record["processing_outcome"] = f"{exc.category}_error"
+            record["error_code"] = exc.error_code
+            return record
+
+        record["schema_valid"] = True
+        record["actors"] = len(scenario.roles)
+        record["max_rounds"] = scenario.max_rounds
+
+        # Run through the simulator only after the authoritative loader accepts
+        # the exact path validated above. Manifested runs use the retained
+        # verified-byte snapshot for both validation and execution.
+        record["processing_outcome"] = "runtime_error"
+        record["runtime_error"] = True
         actual = runner_scenario_path.with_suffix(".telemetry_tmp.json")
+        try:
+            env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "utf-8"
+            proc = subprocess.run(
+                [
+                    sys.executable, str(RUNNER),
+                    str(runner_scenario_path),
+                    "--output", str(actual),
+                    "--seed", str(seed),
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+                env=env, check=False,
+            )
 
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
-        proc = subprocess.run(
-            [
-                sys.executable, str(RUNNER),
-                str(runner_scenario_path),
-                "--output", str(actual),
-                "--seed", str(seed),
-            ],
-            cwd=REPO_ROOT,
-            capture_output=True, text=True,
-            encoding="utf-8", errors="replace",
-            env=env, check=False,
-        )
+            if proc.returncode != 0:
+                record["error_code"] = "runner_exit"
+                return record
 
-        if proc.returncode != 0:
-            record["error_code"] = "runner_exit"
-            return record
+            result = json.loads(actual.read_text(encoding="utf-8"))
+            if not isinstance(result, dict):
+                record["error_code"] = "runner_output_not_object"
+                return record
 
-        result = json.loads(actual.read_text(encoding="utf-8"))
-        if not isinstance(result, dict):
-            record["error_code"] = "runner_output_not_object"
-            return record
+            result_status = result.get("status")
+            rounds_used = result.get("rounds")
+            if result_status not in {"success", "failure"}:
+                record["error_code"] = "runner_status_invalid"
+                return record
+            if (
+                not isinstance(rounds_used, int)
+                or isinstance(rounds_used, bool)
+                or rounds_used < 0
+            ):
+                record["error_code"] = "runner_rounds_invalid"
+                return record
 
-        result_status = result.get("status")
-        rounds_used = result.get("rounds")
-        if result_status not in {"success", "failure"}:
-            record["error_code"] = "runner_status_invalid"
-            return record
-        if (
-            not isinstance(rounds_used, int)
-            or isinstance(rounds_used, bool)
-            or rounds_used < 0
-        ):
-            record["error_code"] = "runner_rounds_invalid"
-            return record
+            record["runtime_error"] = False
+            record["result_status"] = result_status
+            record["rounds_used"] = rounds_used
+            record["processing_outcome"] = (
+                "agreement" if result_status == "success" else "no_agreement"
+            )
+            record["error_code"] = None
 
-        record["runtime_error"] = False
-        record["result_status"] = result_status
-        record["rounds_used"] = rounds_used
-        record["processing_outcome"] = (
-            "agreement" if result_status == "success" else "no_agreement"
-        )
-        record["error_code"] = None
-
-        if result_status == "success":
-            record["convergence_round"] = rounds_used
-    except UnicodeDecodeError:
-        record["error_code"] = "runner_output_invalid_utf8"
-    except json.JSONDecodeError:
-        record["error_code"] = "runner_output_invalid_json"
-    except OSError:
-        record["error_code"] = "runner_output_error"
-    finally:
-        if actual is not None:
+            if result_status == "success":
+                record["convergence_round"] = rounds_used
+        except UnicodeDecodeError:
+            record["error_code"] = "runner_output_invalid_utf8"
+        except json.JSONDecodeError:
+            record["error_code"] = "runner_output_invalid_json"
+        except OSError:
+            record["error_code"] = "runner_output_error"
+        finally:
             try:
                 actual.unlink(missing_ok=True)
             except OSError:
                 pass
-        if snapshot_directory is not None:
-            snapshot_directory.cleanup()
 
     return record
 

@@ -8,7 +8,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, Literal, NoReturn
 
 import jsonschema
 
@@ -21,6 +21,25 @@ INPUT_ERROR_EXIT_CODE = 2
 
 class ScenarioInputError(Exception):
     """A controlled failure while reading the user-supplied scenario file."""
+
+    def __init__(self, message: str, *, error_code: str = "read_error") -> None:
+        super().__init__(message)
+        self.error_code = error_code
+
+
+class ScenarioValidationError(ValueError):
+    """A classified parse or validation failure for a scenario document."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        category: Literal["parse", "schema"],
+        error_code: str,
+    ) -> None:
+        super().__init__(message)
+        self.category = category
+        self.error_code = error_code
 
 
 def _load_schema() -> dict[str, Any]:
@@ -73,8 +92,16 @@ def validate_scenario_payload(payload: object) -> list[str]:
 def load_validated_scenario(scenario_path: Path) -> Scenario:
     try:
         source = scenario_path.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as exc:
-        raise ScenarioInputError(f"cannot read scenario file: {exc}") from exc
+    except UnicodeError as exc:
+        raise ScenarioInputError(
+            f"cannot read scenario file: {exc}",
+            error_code="invalid_utf8",
+        ) from exc
+    except OSError as exc:
+        raise ScenarioInputError(
+            f"cannot read scenario file: {exc}",
+            error_code="read_error",
+        ) from exc
 
     try:
         payload: Any = json.loads(
@@ -82,15 +109,29 @@ def load_validated_scenario(scenario_path: Path) -> Scenario:
             parse_constant=_reject_non_standard_json_constant,
         )
     except json.JSONDecodeError as exc:
-        raise ValueError(
-            f"Invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
+        raise ScenarioValidationError(
+            f"Invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}",
+            category="parse",
+            error_code="invalid_json",
         ) from exc
     except ValueError as exc:
-        raise ValueError(f"Invalid JSON: {exc}") from exc
+        raise ScenarioValidationError(
+            f"Invalid JSON: {exc}",
+            category="parse",
+            error_code="invalid_json",
+        ) from exc
 
     errors = validate_scenario_payload(payload)
     if errors:
-        raise ValueError("\n".join(errors))
+        raise ScenarioValidationError(
+            "\n".join(errors),
+            category="parse" if not isinstance(payload, dict) else "schema",
+            error_code=(
+                "json_root_not_object"
+                if not isinstance(payload, dict)
+                else "schema_invalid"
+            ),
+        )
 
     assert isinstance(payload, dict)
     assert isinstance(payload["title"], str)
