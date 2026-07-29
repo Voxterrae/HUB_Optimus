@@ -33,6 +33,14 @@ SCHEMA_PATH = REPO_ROOT / "scenario.schema.json"
 DEFAULT_SCENARIO_DIR = REPO_ROOT / "scenarios" / "generated"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "scenarios"
 SEED = "42"
+PROCESSING_OUTCOMES = (
+    "agreement",
+    "no_agreement",
+    "parse_error",
+    "schema_error",
+    "runtime_error",
+)
+PARTIAL_ERROR_OUTCOMES = {"parse_error", "schema_error", "runtime_error"}
 
 
 # ── Telemetry collection ───────────────────────────────────
@@ -65,7 +73,7 @@ def _validate_schema(payload: Any) -> bool:
     return not list(validator.iter_errors(payload))
 
 
-def collect_one(scenario_path: Path, seed: str) -> dict[str, Any]:
+def collect_one(scenario_path: Path, seed: int) -> dict[str, Any]:
     """Run one scenario and return a telemetry record."""
     scenario_id = scenario_path.stem
     family = _infer_family(scenario_path)
@@ -74,30 +82,47 @@ def collect_one(scenario_path: Path, seed: str) -> dict[str, Any]:
         "scenario_id": scenario_id,
         "family": family,
         "mutation_axis": _infer_mutation_axis(scenario_path),
-        "seed": int(seed),
+        "seed": seed,
         "actors": 0,
         "max_rounds": 0,
         "result_status": "error",
         "rounds_used": 0,
         "convergence_round": None,
         "schema_valid": False,
-        "runtime_error": True,
+        "runtime_error": False,
+        "processing_outcome": "parse_error",
+        "error_code": None,
     }
 
     # Load and validate schema
     try:
         payload = json.loads(scenario_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+    except UnicodeDecodeError:
+        record["error_code"] = "invalid_utf8"
+        return record
+    except json.JSONDecodeError:
+        record["error_code"] = "invalid_json"
+        return record
+    except OSError:
+        record["error_code"] = "read_error"
+        return record
+
+    if not isinstance(payload, dict):
+        record["error_code"] = "json_root_not_object"
         return record
 
     record["schema_valid"] = _validate_schema(payload)
-    record["actors"] = len(payload.get("roles", []))
-    record["max_rounds"] = payload.get("max_rounds", 0)
-
     if not record["schema_valid"]:
+        record["processing_outcome"] = "schema_error"
+        record["error_code"] = "schema_invalid"
         return record
 
+    record["actors"] = len(payload["roles"])
+    record["max_rounds"] = payload["max_rounds"]
+
     # Run through the simulator
+    record["processing_outcome"] = "runtime_error"
+    record["runtime_error"] = True
     actual = scenario_path.with_suffix(".telemetry_tmp.json")
     try:
         env = os.environ.copy()
@@ -107,7 +132,7 @@ def collect_one(scenario_path: Path, seed: str) -> dict[str, Any]:
                 sys.executable, str(RUNNER),
                 str(scenario_path),
                 "--output", str(actual),
-                "--seed", seed,
+                "--seed", str(seed),
             ],
             cwd=REPO_ROOT,
             capture_output=True, text=True,
@@ -116,25 +141,49 @@ def collect_one(scenario_path: Path, seed: str) -> dict[str, Any]:
         )
 
         if proc.returncode != 0:
+            record["error_code"] = "runner_exit"
+            return record
+
+        result = json.loads(actual.read_text(encoding="utf-8"))
+        if not isinstance(result, dict):
+            record["error_code"] = "runner_output_not_object"
+            return record
+
+        result_status = result.get("status")
+        rounds_used = result.get("rounds")
+        if result_status not in {"success", "failure"}:
+            record["error_code"] = "runner_status_invalid"
+            return record
+        if not isinstance(rounds_used, int) or isinstance(rounds_used, bool) or rounds_used < 0:
+            record["error_code"] = "runner_rounds_invalid"
             return record
 
         record["runtime_error"] = False
-        result = json.loads(actual.read_text(encoding="utf-8"))
-        record["result_status"] = result.get("status", "unknown")
-        record["rounds_used"] = result.get("rounds", 0)
+        record["result_status"] = result_status
+        record["rounds_used"] = rounds_used
+        record["processing_outcome"] = (
+            "agreement" if result_status == "success" else "no_agreement"
+        )
+        record["error_code"] = None
 
-        if result.get("status") == "success":
-            record["convergence_round"] = result.get("rounds")
-    except (json.JSONDecodeError, OSError):
-        pass
+        if result_status == "success":
+            record["convergence_round"] = rounds_used
+    except UnicodeDecodeError:
+        record["error_code"] = "runner_output_invalid_utf8"
+    except json.JSONDecodeError:
+        record["error_code"] = "runner_output_invalid_json"
+    except OSError:
+        record["error_code"] = "runner_output_error"
     finally:
-        if actual.exists():
-            actual.unlink()
+        try:
+            actual.unlink(missing_ok=True)
+        except OSError:
+            pass
 
     return record
 
 
-def collect_all(scenario_dir: Path, seed: str) -> list[dict[str, Any]]:
+def collect_all(scenario_dir: Path, seed: int) -> list[dict[str, Any]]:
     """Collect telemetry for all scenarios in a directory (recursive)."""
     skip = {"telemetry.json", "index.json"}
     scenarios = sorted(
@@ -146,10 +195,15 @@ def collect_all(scenario_dir: Path, seed: str) -> list[dict[str, Any]]:
     for path in scenarios:
         record = collect_one(path, seed)
         status_icon = {
-            "success": "\u2705", "failure": "\u274c", "error": "\U0001f6a8",
-        }.get(record["result_status"], "\u2753")
+            "agreement": "\u2705",
+            "no_agreement": "\u274c",
+            "parse_error": "\U0001f6a8",
+            "schema_error": "\U0001f6a8",
+            "runtime_error": "\U0001f6a8",
+        }[record["processing_outcome"]]
         print(f"  {status_icon}  {record['scenario_id']}  "
               f"[{record['family']}] "
+              f"outcome={record['processing_outcome']} "
               f"rounds={record['rounds_used']}/{record['max_rounds']}")
         records.append(record)
 
@@ -162,15 +216,22 @@ def collect_all(scenario_dir: Path, seed: str) -> list[dict[str, Any]]:
 def build_index(records: list[dict[str, Any]]) -> dict[str, Any]:
     """Build aggregate statistics from telemetry records."""
     total = len(records)
-    schema_invalid = sum(1 for r in records if not r["schema_valid"])
-    runtime_failures = sum(1 for r in records if r["runtime_error"])
-    passed = total - schema_invalid - runtime_failures
-
-    agreements = sum(1 for r in records if r["result_status"] == "success")
-    no_agreements = sum(1 for r in records if r["result_status"] == "failure")
+    outcome_counts = {
+        outcome: sum(1 for record in records if record["processing_outcome"] == outcome)
+        for outcome in PROCESSING_OUTCOMES
+    }
+    agreements = outcome_counts["agreement"]
+    no_agreements = outcome_counts["no_agreement"]
+    passed = agreements + no_agreements
+    parse_failures = outcome_counts["parse_error"]
+    schema_invalid = outcome_counts["schema_error"]
+    runtime_failures = outcome_counts["runtime_error"]
 
     convergence_rounds = [
-        r["convergence_round"] for r in records if r["convergence_round"] is not None
+        r["convergence_round"]
+        for r in records
+        if r["processing_outcome"] == "agreement"
+        and r["convergence_round"] is not None
     ]
     avg_convergence = (
         round(sum(convergence_rounds) / len(convergence_rounds), 2)
@@ -184,21 +245,23 @@ def build_index(records: list[dict[str, Any]]) -> dict[str, Any]:
         if fam not in families:
             families[fam] = {"total": 0, "agreements": 0, "failures": 0, "errors": 0}
         families[fam]["total"] += 1
-        if r["result_status"] == "success":
+        if r["processing_outcome"] == "agreement":
             families[fam]["agreements"] += 1
-        elif r["result_status"] == "failure":
+        elif r["processing_outcome"] == "no_agreement":
             families[fam]["failures"] += 1
-        if r["runtime_error"]:
+        if r["processing_outcome"] in PARTIAL_ERROR_OUTCOMES:
             families[fam]["errors"] += 1
 
     return {
         "total": total,
         "passed_runtime": passed,
+        "parse_failures": parse_failures,
         "schema_invalid": schema_invalid,
         "runtime_failures": runtime_failures,
         "agreements": agreements,
         "no_agreements": no_agreements,
         "avg_convergence_round": avg_convergence,
+        "processing_outcomes": outcome_counts,
         "by_family": families,
     }
 
@@ -233,6 +296,7 @@ def print_summary(index: dict[str, Any]) -> None:
     print(f"{'=' * 50}")
     print(f"  Total scenarios:       {index['total']}")
     print(f"  Passed runtime:        {index['passed_runtime']}")
+    print(f"  Parse failures:        {index['parse_failures']}")
     print(f"  Schema invalid:        {index['schema_invalid']}")
     print(f"  Runtime failures:      {index['runtime_failures']}")
     print(f"  Agreements reached:    {index['agreements']}")
@@ -268,7 +332,7 @@ def main() -> int:
         help=f"Where to write telemetry.json and index.json (default: {DEFAULT_OUTPUT_DIR}).",
     )
     parser.add_argument(
-        "--seed", type=str, default=SEED,
+        "--seed", type=int, default=int(SEED),
         help=f"Seed for reproducible runs (default: {SEED}).",
     )
     args = parser.parse_args()
@@ -284,21 +348,29 @@ def main() -> int:
         return 1
 
     print(f"Collecting telemetry from {scenario_dir} ...\n")
-    records = collect_all(scenario_dir, args.seed)
+    try:
+        records = collect_all(scenario_dir, args.seed)
+    except OSError as exc:
+        print(f"Unable to scan scenario directory: {exc}", file=sys.stderr)
+        return 1
 
     if not records:
         print("No scenarios found.", file=sys.stderr)
         return 1
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    tel_path = write_telemetry(records, output_dir)
     index = build_index(records)
-    idx_path = write_index(index, output_dir)
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        tel_path = write_telemetry(records, output_dir)
+        idx_path = write_index(index, output_dir)
+    except OSError as exc:
+        print(f"Unable to write telemetry output: {exc}", file=sys.stderr)
+        return 1
 
     print_summary(index)
     print(f"\n  telemetry → {tel_path}")
     print(f"  index     → {idx_path}")
-    return 0
+    return 2 if any(index["processing_outcomes"][name] for name in PARTIAL_ERROR_OUTCOMES) else 0
 
 
 if __name__ == "__main__":

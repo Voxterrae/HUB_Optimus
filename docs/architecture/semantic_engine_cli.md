@@ -41,10 +41,23 @@ exit 1 = expected input/output error
 
 ## Current input contract
 
-The source of truth is the versioned JSON Schema:
-[`semantic_engine/contracts/case_input.schema.json`](../../semantic_engine/contracts/case_input.schema.json).
-The CLI validates every case against `CaseInput v1` before constructing an
-`AnalysisResult`.
+The authoritative `CaseInput v1` contract has two coordinated parts:
+
+- the versioned
+  [`case_input.schema.json`](../../semantic_engine/contracts/case_input.schema.json)
+  defines structural validation, including required and unknown fields, field
+  types, and per-record shapes;
+- the complete Python
+  [`validate_case_input`](../../semantic_engine/contracts/case_input.py)
+  validator applies that schema and then enforces cross-record integrity,
+  including unique claim/evidence identifiers and valid evidence-to-claim
+  references.
+
+Schema-only validation is therefore structural pre-validation, not complete
+`CaseInput v1` conformance. Integrations must invoke the complete Python
+validator, or reproduce both its structural and cross-record checks, to
+implement the authoritative contract. The CLI invokes the complete validator
+before constructing an `AnalysisResult`.
 
 The minimal case JSON must be an object with non-empty string fields:
 

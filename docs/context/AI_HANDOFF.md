@@ -95,10 +95,69 @@ Operational boundary:
 - The active workflow file, not this helper or chat context, determines
   whether scheduled maintenance invokes it.
 
+## Python Packaging Boundary
+
+Issue #1763 records drift between the documented Python minimum, executable
+syntax, bootstrap checks, and the dependency files. The scoped correction
+in PR #1776 establishes:
+
+- supported Python is 3.11 or newer;
+- `requirements.txt` is the runtime tier and contains `jsonschema`;
+- `requirements-dev.txt` includes the runtime tier and adds `pytest`;
+- `python scripts/bootstrap.py --runtime-only` installs/checks runtime
+  dependencies and executes the supported scenario CLI smoke test;
+- the default bootstrap remains the development path and fails when tests or
+  frozen benchmarks fail rather than printing an ambiguous ready state.
+
+The runtime-only install path has been verified in a newly created virtual
+environment without development requirements.
+
+## Simulator Isolation Boundary
+
+Issue #1755 records a verified mismatch between the runtime contract and the
+simulation kernel: seeded runs used module-global random state, repeated runs
+accumulated history, and previously returned results exposed the simulator's
+mutable history.
+
+PR #1770 restores the documented boundary:
+
+- one run-local `random.Random` instance drives all built-in actor policies;
+- seeded execution does not mutate caller-global random state;
+- each `run()` starts with empty run history;
+- returned history is a snapshot rather than live simulator state;
+- changed seed-42 benchmark bytes are reviewed and frozen explicitly.
+
+Laboratory observations derived from the previous random stream require
+separate regeneration under issue #1775; they are not silently rewritten by
+the runtime correction.
+
+## Telemetry Input Boundary
+
+Issue #1757 records that malformed scenario files could crash telemetry or
+be subtracted from multiple aggregate categories. The scoped correction
+in PR #1771 restores the following behavior:
+
+- every discovered input receives exactly one processing outcome:
+  `agreement`, `no_agreement`, `parse_error`, `schema_error`, or
+  `runtime_error`;
+- malformed JSON roots, invalid UTF-8, schema errors, and runner-output
+  errors are recorded per file without stopping safe collection;
+- aggregate counts remain non-negative and sum to the discovered total;
+- exit `0` means complete collection, exit `2` means outputs were written
+  with one or more partial data errors, and exit `1` means fatal setup or
+  output failure;
+- the canonical generated seed-42 set remains 60/60 runtime-complete with
+  55 agreements, 5 no-agreements, and average convergence round 1.8.
+
 ## Semantic CaseInput Integrity Boundary
 
-- Issue #1756 defines `semantic_engine/contracts/case_input.schema.json` as the
-  versioned `CaseInput v1` source of truth.
+- Issue #1756 defines the versioned `CaseInput v1` contract as the combination
+  of the structural JSON Schema in
+  `semantic_engine/contracts/case_input.schema.json` and the complete Python
+  validator `semantic_engine.contracts.case_input.validate_case_input`.
+- Schema-only validation is structural pre-validation, not complete contract
+  conformance: uniqueness and cross-record reference integrity are enforced by
+  the Python validator.
 - The Semantic Engine CLI rejects unknown fields, duplicate claim/evidence IDs,
   and evidence references to undeclared claims with controlled JSON-path
   errors.

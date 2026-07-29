@@ -16,6 +16,7 @@ from semantic_engine.contracts.case_input import (
 
 ROOT = Path(__file__).resolve().parents[2]
 EXAMPLE_PATH = ROOT / "examples" / "semantic_engine" / "case_with_claims.json"
+CLI_DOC_PATH = ROOT / "docs" / "architecture" / "semantic_engine_cli.md"
 
 
 def example_case():
@@ -59,6 +60,15 @@ def test_case_input_schema_is_versioned_and_accepts_repository_examples():
             ).read_text(encoding="utf-8")
         )
     )
+
+
+def test_cli_documentation_identifies_the_complete_authoritative_validator():
+    documentation = CLI_DOC_PATH.read_text(encoding="utf-8")
+
+    assert "authoritative `CaseInput v1` contract has two coordinated parts" in documentation
+    assert "Schema-only validation is therefore structural pre-validation" in documentation
+    assert "[`validate_case_input`](../../semantic_engine/contracts/case_input.py)" in documentation
+    assert "not complete\n`CaseInput v1` conformance" in documentation
 
 
 @pytest.mark.parametrize(
