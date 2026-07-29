@@ -1,0 +1,268 @@
+{
+  "format_version": 1,
+  "authority": "Lifecycle metadata only. This registry does not ratify an RFC, change governance, or authorize implementation.",
+  "baseline": {
+    "repository": "Voxterrae/HUB_Optimus",
+    "verified_at": "2026-07-28",
+    "verified_commit": "3ef199305c2d2d114f88aceb97b65a08b9f91b4a"
+  },
+  "lifecycle_states": [
+    "Proposed",
+    "Draft",
+    "Accepted",
+    "Partially Implemented",
+    "Implemented",
+    "Superseded",
+    "Rejected"
+  ],
+  "rfcs": [
+    {
+      "id": "ai-llm-provider-independence",
+      "path": "docs/rfc/ai_llm_provider_independence.md",
+      "title": "AI / LLM Provider Independence",
+      "lifecycle": "Draft",
+      "proposal_issue": 1634,
+      "record_pr": 1636,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/ai_llm_provider_independence.md"
+      ],
+      "note": "The proposal text is merged, but no acceptance or implementation record is declared."
+    },
+    {
+      "id": "constitutional-governance-ai-regulatory-boundary",
+      "path": "docs/rfc/constitutional_governance_ai_regulatory_boundary.md",
+      "title": "Constitutional Governance and AI Regulatory Boundary",
+      "lifecycle": "Draft",
+      "proposal_issue": 1627,
+      "record_pr": 1628,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/constitutional_governance_ai_regulatory_boundary.md"
+      ],
+      "note": "Documentation proposal only; it is not the active governance protocol."
+    },
+    {
+      "id": "enterprise-boundary",
+      "path": "docs/rfc/enterprise_boundary.md",
+      "title": "Enterprise Boundary",
+      "lifecycle": "Draft",
+      "proposal_issue": 1634,
+      "record_pr": 1635,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/enterprise_boundary.md"
+      ],
+      "note": "The repository contains a proposal boundary only; no enterprise product or launch is authorized."
+    },
+    {
+      "id": "epistemic-analysis-modes",
+      "path": "docs/rfc/epistemic_analysis_modes.md",
+      "title": "Epistemic Analysis Modes",
+      "lifecycle": "Draft",
+      "proposal_issue": 1630,
+      "record_pr": 1631,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/epistemic_analysis_modes.md"
+      ],
+      "note": "Conceptual taxonomy only; no mode router or evaluator is implemented."
+    },
+    {
+      "id": "github-platform-strategy",
+      "path": "docs/rfc/github_platform_strategy.md",
+      "title": "GitHub Platform Strategy for HUB_Optimus Evolution",
+      "lifecycle": "Draft",
+      "proposal_issue": 1690,
+      "record_pr": 1691,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/github_platform_strategy.md"
+      ],
+      "note": "Planning record only; repository settings and platform adoption require separate evidence."
+    },
+    {
+      "id": "hermes-pwa-gate-issue-pack",
+      "path": "docs/rfc/hermes_pwa_gate_issue_pack.md",
+      "title": "HERMES PWA Gate Issue Pack",
+      "lifecycle": "Draft",
+      "proposal_issue": null,
+      "record_pr": 1671,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/hermes_pwa_gate_issue_pack.md",
+        "docs/rfc/hermes_pwa_interface_boundary.md"
+      ],
+      "note": "Implementation-planning pack; it opens no gate by itself."
+    },
+    {
+      "id": "hermes-pwa-interface-boundary",
+      "path": "docs/rfc/hermes_pwa_interface_boundary.md",
+      "title": "HERMES PWA Interface Boundary",
+      "lifecycle": "Draft",
+      "proposal_issue": 1634,
+      "record_pr": 1639,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/hermes_pwa_interface_boundary.md",
+        "docs/rfc/hermes_pwa_gate_issue_pack.md"
+      ],
+      "note": "No HERMES application, public API, authentication, billing, or dashboard is authorized."
+    },
+    {
+      "id": "ingestion-evidence-intake-boundary",
+      "path": "docs/rfc/ingestion_evidence_intake_boundary.md",
+      "title": "Ingestion and Evidence Intake Boundary",
+      "lifecycle": "Draft",
+      "proposal_issue": 1634,
+      "record_pr": 1638,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/ingestion_evidence_intake_boundary.md"
+      ],
+      "note": "The broad boundary is unratified; individual local intake prototypes are tracked as separate capabilities."
+    },
+    {
+      "id": "intelligent-ecosystem-guardian",
+      "path": "docs/rfc/intelligent_ecosystem_guardian.md",
+      "title": "IEG — Intelligent Ecosystem Guardian",
+      "lifecycle": "Draft",
+      "proposal_issue": 1696,
+      "record_pr": 1697,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/intelligent_ecosystem_guardian.md"
+      ],
+      "note": "Design hypothesis only; no conservation data source, model, pilot, or operational module is implemented."
+    },
+    {
+      "id": "ip-confidential-disclosure-boundary",
+      "path": "docs/rfc/ip_confidential_disclosure_boundary.md",
+      "title": "IP / Patent / Confidential Disclosure Boundary",
+      "lifecycle": "Draft",
+      "proposal_issue": 1634,
+      "record_pr": 1637,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/ip_confidential_disclosure_boundary.md"
+      ],
+      "note": "Proposal only; it is not legal advice and does not establish confidential storage or a patent process."
+    },
+    {
+      "id": "judicial-transparency-audit-framework",
+      "path": "docs/rfc/judicial_transparency_audit_framework.md",
+      "title": "Judicial Transparency Audit Framework",
+      "lifecycle": "Draft",
+      "proposal_issue": 1641,
+      "record_pr": 1642,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/judicial_transparency_audit_framework.md"
+      ],
+      "note": "Forensic-audit proposal only; no crawler, scoring system, legal conclusion, or implementation is authorized."
+    },
+    {
+      "id": "operator-controlled-url-intake",
+      "path": "docs/rfc/operator_controlled_url_intake.md",
+      "title": "Operator Controlled URL Intake",
+      "lifecycle": "Partially Implemented",
+      "proposal_issue": null,
+      "record_pr": null,
+      "decision_pr": null,
+      "implementation_prs": [
+        1717,
+        1720
+      ],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/operator_controlled_url_intake.md",
+        "ops/ec2/hub-api.sh",
+        "site/operator/index.html",
+        "tests/test_hub_api_controlled_url_intake.py"
+      ],
+      "note": "A local/private, single-URL prototype and browser fallback exist. This does not ratify the RFC or prove a public deployment."
+    },
+    {
+      "id": "post-quantum-control-plane",
+      "path": "docs/rfc/post_quantum_control_plane.md",
+      "title": "Post-Quantum Control Plane",
+      "lifecycle": "Draft",
+      "proposal_issue": null,
+      "record_pr": 1611,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/post_quantum_control_plane.md"
+      ],
+      "note": "No post-quantum runtime, key management, signing, sealed exchange, or production security claim exists."
+    },
+    {
+      "id": "proposal-scenario-analysis-mode",
+      "path": "docs/rfc/proposal_scenario_analysis_mode.md",
+      "title": "Proposal and Scenario Analysis Mode",
+      "lifecycle": "Draft",
+      "proposal_issue": 1625,
+      "record_pr": 1626,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/proposal_scenario_analysis_mode.md"
+      ],
+      "note": "Analysis-mode proposal only; it does not change the simulator or endorse submitted proposals."
+    },
+    {
+      "id": "whatsapp-claim-intake-adapter-boundary",
+      "path": "docs/rfc/whatsapp_claim_intake_adapter_boundary.md",
+      "title": "WhatsApp Claim Intake Adapter Boundary",
+      "lifecycle": "Draft",
+      "proposal_issue": 1650,
+      "record_pr": 1651,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/whatsapp_claim_intake_adapter_boundary.md"
+      ],
+      "note": "No bot, webhook, connector, automated messaging intake, or provider integration is implemented."
+    }
+  ]
+}

@@ -6,6 +6,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+import run_scenario
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RUN_SCENARIO = REPO_ROOT / "run_scenario.py"
@@ -119,6 +123,46 @@ def test_invalid_json_returns_schema_error(tmp_path: Path) -> None:
     assert proc.returncode == 2
     assert "[schema-error]" in proc.stderr
     assert "Invalid JSON" in proc.stderr
+
+
+def test_invalid_utf8_returns_input_error(tmp_path: Path) -> None:
+    invalid_utf8 = tmp_path / "invalid_utf8.json"
+    invalid_utf8.write_bytes(b"\xff\xfe\x00")
+
+    proc = _run_cli("--scenario", str(invalid_utf8))
+
+    assert proc.returncode == 2
+    assert "[input-error]" in proc.stderr
+    assert "cannot read scenario file" in proc.stderr
+    assert "Traceback" not in proc.stderr
+
+
+def test_permission_error_uses_controlled_input_contract(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    scenario_path = tmp_path / "blocked.json"
+    scenario_path.write_text("{}", encoding="utf-8")
+
+    def deny_read(_scenario_path: Path) -> run_scenario.Scenario:
+        raise run_scenario.ScenarioInputError(
+            "cannot read scenario file: permission denied"
+        )
+
+    monkeypatch.setattr(run_scenario, "load_validated_scenario", deny_read)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["run_scenario.py", "--scenario", str(scenario_path)],
+    )
+
+    assert run_scenario.main() == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.startswith("[input-error]")
+    assert "permission denied" in captured.err
+    assert "Traceback" not in captured.err
 
 
 def test_schema_file_defines_required_contract() -> None:

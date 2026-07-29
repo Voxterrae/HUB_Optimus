@@ -78,6 +78,9 @@ File: `hub_optimus_simulator.py`
 ### Determinism
 - `Simulator.run(seed=N)` creates `random.Random(seed)` — isolated from global state
 - Each actor receives the same `Random` instance per round
+- Custom policies may accept `(state, rng)`; legacy one-argument policies run
+  against the same isolated stream without changing the caller's global RNG
+  state
 - The number of actors directly affects the RNG sequence (adding/removing an actor changes all subsequent random values)
 
 ### Success condition
@@ -101,8 +104,8 @@ File: `hub_optimus_simulator.py`
 
 | Scenario | Design | Expected outcome |
 |---|---|---|
-| `ceasefire_basic` | 2 negotiators, offer:5, 5 rounds | Success (round 2) |
-| `ceasefire_fragile` | 2 negotiators + mediator, offer:5, 3 rounds | Success (round 2) |
+| `ceasefire_basic` | 2 negotiators, offer:5, 5 rounds | Success (round 4) |
+| `ceasefire_fragile` | 2 negotiators + mediator, offer:5, 3 rounds | Success (round 3) |
 | `ceasefire_failure` | 2 hardliners, offer:99 (unreachable), 3 rounds | Failure (3/3) |
 
 All benchmarks use **seed 42** and compare byte-for-byte against frozen expected outputs in `benchmarks/expected/`.
@@ -114,6 +117,7 @@ All benchmarks use **seed 42** and compare byte-for-byte against frozen expected
 | Job | Purpose | Blocking? |
 |---|---|---|
 | **pytest** | Run all tests + mojibake guard | Yes |
+| **PowerShell tooling** | Require PowerShell 7 and run mutation-tool behavior tests | Yes |
 | **Benchmarks** | Run benchmark pack, publish summary | No (`continue-on-error: true`) |
 | **Kernel Guard** | Protect kernel file integrity | Yes |
 | **Link Check** | Validate documentation links (Lychee) | Yes |

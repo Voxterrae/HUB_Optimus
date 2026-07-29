@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from semantic_engine.contracts import AnalysisResult, ClaimRecord, EvidenceRecord
+from semantic_engine.contracts.case_input import (
+    CaseInputValidationError,
+    validate_case_input,
+)
 
 REQUIRED_CASE_FIELDS = ("case_id", "core_version_ref", "input_summary")
 
@@ -24,6 +28,10 @@ def load_case(path: Path) -> dict[str, Any]:
         raw = path.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
         raise ControlledCliError(f"input file not found: {path}") from exc
+    except UnicodeError as exc:
+        raise ControlledCliError(
+            f"input file is not valid UTF-8: {path}"
+        ) from exc
     except OSError as exc:
         raise ControlledCliError(f"cannot read input file {path}: {exc}") from exc
 
@@ -186,6 +194,11 @@ def build_draft_result(payload: dict[str, Any]) -> AnalysisResult:
     signal fields without adding scoring, model-judge behavior, or autonomous
     conclusions.
     """
+
+    try:
+        validate_case_input(payload)
+    except CaseInputValidationError as exc:
+        raise ControlledCliError(str(exc)) from exc
 
     return AnalysisResult(
         case_id=require_string_field(payload, "case_id"),

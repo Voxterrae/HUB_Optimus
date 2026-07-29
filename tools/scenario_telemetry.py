@@ -28,6 +28,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -83,8 +84,8 @@ def _manifest_run_id(payload: dict[str, Any]) -> str:
 def load_manifest(
     scenario_dir: Path,
     manifest_path: Path,
-) -> tuple[list[tuple[Path, str]], dict[str, Any]]:
-    """Load a generator manifest and verify every selected file by hash."""
+) -> tuple[list[tuple[Path, str, bytes]], dict[str, Any]]:
+    """Load a manifest and retain the exact bytes verified for each scenario."""
     root = scenario_dir.resolve()
     resolved_manifest = manifest_path.resolve()
     if resolved_manifest.parent != root:
@@ -135,7 +136,7 @@ def load_manifest(
     if payload.get("run_id") != _manifest_run_id(payload):
         raise ManifestError("manifest run_id does not match its content")
 
-    selected: list[tuple[Path, str]] = []
+    selected: list[tuple[Path, str, bytes]] = []
     seen: set[str] = set()
     for entry in files:
         if not isinstance(entry, dict):
@@ -175,12 +176,13 @@ def load_manifest(
         if not path.is_file():
             raise ManifestError(f"manifest file not found: {relative!r}")
         try:
-            actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+            scenario_bytes = path.read_bytes()
         except OSError as exc:
             raise ManifestError(f"cannot read manifest file {relative!r}: {exc}") from exc
+        actual_hash = hashlib.sha256(scenario_bytes).hexdigest()
         if actual_hash != expected_hash:
             raise ManifestError(f"manifest hash mismatch: {relative!r}")
-        selected.append((path, actual_hash))
+        selected.append((path, actual_hash, scenario_bytes))
 
     return selected, payload
 
@@ -223,6 +225,7 @@ def collect_one(
     generation_seed: int | None = None,
     scenario_sha256: str | None = None,
     manifest_verified: bool = False,
+    verified_scenario_bytes: bytes | None = None,
 ) -> dict[str, Any]:
     """Run one scenario and return a telemetry record."""
     scenario_id = scenario_path.stem
@@ -250,15 +253,22 @@ def collect_one(
 
     # Load and validate schema
     try:
-        payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+        scenario_bytes = (
+            verified_scenario_bytes
+            if verified_scenario_bytes is not None
+            else scenario_path.read_bytes()
+        )
+    except OSError:
+        record["error_code"] = "read_error"
+        return record
+
+    try:
+        payload = json.loads(scenario_bytes.decode("utf-8"))
     except UnicodeDecodeError:
         record["error_code"] = "invalid_utf8"
         return record
     except json.JSONDecodeError:
         record["error_code"] = "invalid_json"
-        return record
-    except OSError:
-        record["error_code"] = "read_error"
         return record
 
     if not isinstance(payload, dict):
@@ -277,14 +287,26 @@ def collect_one(
     # Run through the simulator
     record["processing_outcome"] = "runtime_error"
     record["runtime_error"] = True
-    actual = scenario_path.with_suffix(".telemetry_tmp.json")
+    snapshot_directory: tempfile.TemporaryDirectory[str] | None = None
+    runner_scenario_path = scenario_path
+    actual: Path | None = None
     try:
+        if verified_scenario_bytes is not None:
+            snapshot_directory = tempfile.TemporaryDirectory(
+                prefix="hub-optimus-telemetry-"
+            )
+            runner_scenario_path = (
+                Path(snapshot_directory.name) / scenario_path.name
+            )
+            runner_scenario_path.write_bytes(verified_scenario_bytes)
+        actual = runner_scenario_path.with_suffix(".telemetry_tmp.json")
+
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
         proc = subprocess.run(
             [
                 sys.executable, str(RUNNER),
-                str(scenario_path),
+                str(runner_scenario_path),
                 "--output", str(actual),
                 "--seed", str(seed),
             ],
@@ -333,10 +355,13 @@ def collect_one(
     except OSError:
         record["error_code"] = "runner_output_error"
     finally:
-        try:
-            actual.unlink(missing_ok=True)
-        except OSError:
-            pass
+        if actual is not None:
+            try:
+                actual.unlink(missing_ok=True)
+            except OSError:
+                pass
+        if snapshot_directory is not None:
+            snapshot_directory.cleanup()
 
     return record
 
@@ -353,24 +378,35 @@ def collect_all(
             (
                 path,
                 file_hash,
+                scenario_bytes,
                 manifest["run_id"],
                 manifest.get("seed"),
                 True,
             )
-            for path, file_hash in selected
+            for path, file_hash, scenario_bytes in selected
         ]
     else:
-        skip = {"telemetry.json", "index.json", MANIFEST_NAME}
+        skip = {"telemetry.json", "index.json"}
+        root_manifest = scenario_dir / MANIFEST_NAME
         scenarios = [
-            (path, None, None, None, False)
+            (path, None, None, None, None, False)
             for path in sorted(
                 p for p in scenario_dir.rglob("*.json")
-                if p.name not in skip and ".telemetry_tmp" not in p.name
+                if p.name not in skip
+                and p != root_manifest
+                and ".telemetry_tmp" not in p.name
             )
         ]
     records: list[dict[str, Any]] = []
 
-    for path, file_hash, run_id, generation_seed, verified in scenarios:
+    for (
+        path,
+        file_hash,
+        scenario_bytes,
+        run_id,
+        generation_seed,
+        verified,
+    ) in scenarios:
         record = collect_one(
             path,
             seed,
@@ -378,6 +414,7 @@ def collect_all(
             generation_seed=generation_seed,
             scenario_sha256=file_hash,
             manifest_verified=verified,
+            verified_scenario_bytes=scenario_bytes,
         )
         status_icon = {
             "agreement": "\u2705",

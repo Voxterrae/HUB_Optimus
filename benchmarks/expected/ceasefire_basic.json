@@ -1,9 +1,17 @@
 {
-  "detail": "Success criteria met at round 2",
+  "detail": "Success criteria met at round 4",
   "history": [
     {
       "Faction_A": {
         "offer": 1
+      },
+      "Faction_B": {
+        "offer": 1
+      }
+    },
+    {
+      "Faction_A": {
+        "offer": 3
       },
       "Faction_B": {
         "offer": 2
@@ -11,13 +19,21 @@
     },
     {
       "Faction_A": {
-        "offer": 4
+        "offer": 2
+      },
+      "Faction_B": {
+        "offer": 2
+      }
+    },
+    {
+      "Faction_A": {
+        "offer": 1
       },
       "Faction_B": {
         "offer": 5
       }
     }
   ],
-  "rounds": 2,
+  "rounds": 4,
   "status": "success"
 }

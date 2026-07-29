@@ -26,6 +26,7 @@ import json
 import os
 import random
 import re
+import shutil
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -256,23 +257,115 @@ def _serialized_scenario(scenario: dict) -> bytes:
     ).encode("utf-8")
 
 
-def _atomic_write(path: Path, content: bytes) -> None:
-    """Replace one generated file atomically within its existing directory."""
-    descriptor, temporary_name = tempfile.mkstemp(
-        dir=path.parent,
-        prefix=f".{path.name}.",
-        suffix=".tmp",
+def _write_staged_file(path: Path, content: bytes) -> None:
+    """Write and flush one file inside a private transaction workspace."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("xb") as handle:
+        handle.write(content)
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _publish_staged_file(staged: Path, target: Path) -> None:
+    """Atomically publish one already-staged file."""
+    os.replace(staged, target)
+
+
+def _publish_transaction(
+    root: Path,
+    target_payloads: dict[str, bytes],
+    manifest_content: bytes,
+    *,
+    stale_names: list[str],
+    clean: bool,
+) -> None:
+    """Publish a complete generated set or restore the prior filesystem state."""
+    workspace = Path(
+        tempfile.mkdtemp(
+            dir=root.parent,
+            prefix=f".{root.name}.generation-",
+        )
     )
-    temporary = Path(temporary_name)
+    staged_root = workspace / "staged"
+    backup_root = workspace / "backup"
+    created_directories: list[Path] = []
+    backups: list[tuple[Path, Path]] = []
+    published: list[Path] = []
+
     try:
-        with os.fdopen(descriptor, "wb") as handle:
-            handle.write(content)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        for relative, content in sorted(target_payloads.items()):
+            _write_staged_file(staged_root / relative, content)
+        _write_staged_file(staged_root / MANIFEST_NAME, manifest_content)
+
+        for family in sorted({relative.split("/", 1)[0] for relative in target_payloads}):
+            family_dir = root / family
+            _assert_safe_target(root, family_dir)
+            if family_dir.exists():
+                if not family_dir.is_dir():
+                    raise UnsafeOutputError(
+                        f"generator family path is not a directory: {family_dir}"
+                    )
+            else:
+                family_dir.mkdir()
+                created_directories.append(family_dir)
+
+        backup_names = {
+            relative
+            for relative in target_payloads
+            if (root / relative).exists()
+        }
+        if clean:
+            backup_names.update(stale_names)
+        manifest_path = root / MANIFEST_NAME
+        if manifest_path.exists():
+            backup_names.add(MANIFEST_NAME)
+
+        for relative in sorted(backup_names):
+            target = root / relative
+            _assert_safe_target(root, target)
+            if not target.is_file():
+                raise UnsafeOutputError(
+                    f"generator output target is not a regular file: {target}"
+                )
+            backup = backup_root / relative
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(target, backup)
+            backups.append((target, backup))
+
+        for relative in sorted(target_payloads):
+            target = root / relative
+            _assert_safe_target(root, target)
+            _publish_staged_file(staged_root / relative, target)
+            published.append(target)
+
+        _assert_safe_target(root, manifest_path)
+        _publish_staged_file(staged_root / MANIFEST_NAME, manifest_path)
+        published.append(manifest_path)
+    except BaseException as exc:
+        rollback_errors: list[OSError] = []
+        for target in reversed(published):
+            try:
+                target.unlink(missing_ok=True)
+            except OSError as rollback_error:
+                rollback_errors.append(rollback_error)
+        for target, backup in reversed(backups):
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(backup, target)
+            except OSError as rollback_error:
+                rollback_errors.append(rollback_error)
+        for directory in reversed(created_directories):
+            try:
+                directory.rmdir()
+            except OSError:
+                pass
+        if rollback_errors:
+            raise OSError(
+                "generation transaction failed and rollback was incomplete"
+            ) from exc
+        raise
     finally:
-        if temporary.exists():
-            temporary.unlink()
+        shutil.rmtree(workspace, ignore_errors=True)
 
 
 def _manifest_payload(
@@ -328,25 +421,10 @@ def write_generation(
     stale_names = sorted(set(existing) - target_names)
     produced = tuple(sorted(target_names - set(existing)))
     replaced = tuple(sorted(target_names & set(existing)))
-    removed: list[str] = []
-
-    if clean:
-        for relative in stale_names:
-            path = existing[relative]
-            _assert_safe_target(root, path)
-            path.unlink()
-            removed.append(relative)
 
     manifest_files: list[dict[str, str]] = []
     for relative in sorted(target_payloads):
-        family, filename = relative.split("/", 1)
-        family_dir = output_dir / family
-        family_dir.mkdir(parents=True, exist_ok=True)
-        _assert_safe_target(root, family_dir)
-        path = family_dir / filename
-        _assert_safe_target(root, path)
         content = target_payloads[relative]
-        _atomic_write(path, content)
         manifest_files.append(
             {
                 "path": relative,
@@ -359,14 +437,19 @@ def write_generation(
         requested_count=requested_count,
         files=manifest_files,
     )
-    manifest_path = output_dir / MANIFEST_NAME
-    _assert_safe_target(root, manifest_path)
-    _atomic_write(
-        manifest_path,
-        (
-            json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
-        ).encode("utf-8"),
+    manifest_content = (
+        json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    ).encode("utf-8")
+    _publish_transaction(
+        root,
+        target_payloads,
+        manifest_content,
+        stale_names=stale_names,
+        clean=clean,
     )
+
+    manifest_path = root / MANIFEST_NAME
+    _assert_safe_target(root, manifest_path)
 
     return GenerationReport(
         run_id=manifest["run_id"],
@@ -374,7 +457,7 @@ def write_generation(
         produced=produced,
         replaced=replaced,
         stale=tuple(stale_names),
-        removed=tuple(removed),
+        removed=tuple(stale_names if clean else ()),
     )
 
 
@@ -426,8 +509,8 @@ def main() -> int:
     args = parse_args()
     out = Path(args.output_dir) if args.output_dir else OUTPUT_DIR
 
-    if args.count < 0:
-        print("[generator-error] --count must be zero or greater", file=sys.stderr)
+    if args.count <= 0:
+        print("[generator-error] --count must be greater than zero", file=sys.stderr)
         return 2
 
     scenarios = generate(args.count, args.seed)

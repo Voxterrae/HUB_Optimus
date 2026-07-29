@@ -48,6 +48,23 @@ def _load_manifest(output_dir: Path) -> dict:
     return json.loads((output_dir / MANIFEST_NAME).read_text(encoding="utf-8"))
 
 
+def _load_module(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _tree_snapshot(root: Path) -> dict[str, bytes]:
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
+
+
 def _owned_paths(output_dir: Path) -> set[str]:
     paths: set[str] = set()
     for family in FAMILIES:
@@ -167,13 +184,16 @@ def test_generated_benchmark_scan_excludes_manifest(
     scenario_dir = tmp_path / "generated"
     generated = _run_generator(scenario_dir, 1)
     assert generated.returncode == 0, generated.stderr
+    nested_manifest_scenario = (
+        scenario_dir / "operator_cases" / MANIFEST_NAME
+    )
+    nested_manifest_scenario.parent.mkdir()
+    nested_manifest_scenario.write_bytes(
+        (REPO_ROOT / "example_scenario.json").read_bytes()
+    )
 
     benchmark_path = REPO_ROOT / "benchmarks" / "run_benchmarks.py"
-    spec = importlib.util.spec_from_file_location("manifest_benchmark_test", benchmark_path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
+    module = _load_module(benchmark_path, "manifest_benchmark_test")
 
     empty_static = tmp_path / "static"
     empty_expected = tmp_path / "expected"
@@ -186,8 +206,8 @@ def test_generated_benchmark_scan_excludes_manifest(
 
     assert module.main() == 0
     captured = capsys.readouterr()
-    assert "1 passed, 0 failed, 1 total" in captured.out
-    assert "generation_manifest" not in captured.out
+    assert "2 passed, 0 failed, 2 total" in captured.out
+    assert captured.out.count("generation_manifest") == 1
 
 
 def test_telemetry_fails_closed_when_manifested_file_changes(tmp_path: Path) -> None:
@@ -218,6 +238,129 @@ def test_telemetry_fails_closed_when_manifested_file_changes(tmp_path: Path) -> 
     assert telemetry.returncode == 1
     assert "[manifest-error] manifest hash mismatch:" in telemetry.stderr
     assert not telemetry_dir.exists()
+
+
+def test_manifested_telemetry_executes_the_exact_verified_bytes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scenario_dir = tmp_path / "generated"
+    generated = _run_generator(scenario_dir, 1)
+    assert generated.returncode == 0, generated.stderr
+
+    telemetry = _load_module(TELEMETRY, "immutable_manifest_telemetry_test")
+    real_load_manifest = telemetry.load_manifest
+    changed_paths: list[Path] = []
+
+    def load_then_replace_source(*args, **kwargs):
+        selected, manifest = real_load_manifest(*args, **kwargs)
+        for path, _file_hash, _verified_bytes in selected:
+            path.write_bytes(b"{post-verification replacement")
+            changed_paths.append(path)
+        return selected, manifest
+
+    monkeypatch.setattr(telemetry, "load_manifest", load_then_replace_source)
+
+    records = telemetry.collect_all(
+        scenario_dir,
+        42,
+        scenario_dir / MANIFEST_NAME,
+    )
+
+    assert changed_paths
+    assert all(path.read_bytes() == b"{post-verification replacement" for path in changed_paths)
+    assert len(records) == 1
+    assert records[0]["processing_outcome"] in {"agreement", "no_agreement"}
+    assert records[0]["manifest_verified"] is True
+    assert records[0]["scenario_sha256"] == _load_manifest(
+        scenario_dir
+    )["files"][0]["sha256"]
+
+
+def test_legacy_telemetry_skips_only_the_root_manifest(tmp_path: Path) -> None:
+    scenario_dir = tmp_path / "generated"
+    scenario_dir.mkdir()
+    (scenario_dir / MANIFEST_NAME).write_text("{}\n", encoding="utf-8")
+    nested_scenario = scenario_dir / "operator_cases" / MANIFEST_NAME
+    nested_scenario.parent.mkdir()
+    nested_scenario.write_bytes(
+        (REPO_ROOT / "example_scenario.json").read_bytes()
+    )
+    telemetry = _load_module(TELEMETRY, "nested_manifest_telemetry_test")
+
+    records = telemetry.collect_all(scenario_dir, 42)
+
+    assert len(records) == 1
+    assert records[0]["scenario_id"] == "generation_manifest"
+    assert records[0]["manifest_verified"] is False
+    assert records[0]["processing_outcome"] in {"agreement", "no_agreement"}
+
+
+@pytest.mark.parametrize(
+    ("helper_name", "failure_call"),
+    (
+        ("_write_staged_file", 2),
+        ("_publish_staged_file", 2),
+    ),
+)
+def test_generation_failure_restores_previous_set_and_manifest(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    helper_name: str,
+    failure_call: int,
+) -> None:
+    scenario_dir = tmp_path / "generated"
+    generated = _run_generator(scenario_dir, 6)
+    assert generated.returncode == 0, generated.stderr
+    unrelated = scenario_dir / "operator_notes.json"
+    unrelated.write_text('{"preserve": true}\n', encoding="utf-8")
+    before = _tree_snapshot(scenario_dir)
+
+    generator = _load_module(
+        GENERATOR,
+        f"transactional_generator_test_{helper_name}",
+    )
+    real_helper = getattr(generator, helper_name)
+    calls = 0
+
+    def fail_during_transaction(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == failure_call:
+            raise OSError(f"injected {helper_name} failure")
+        return real_helper(*args, **kwargs)
+
+    monkeypatch.setattr(generator, helper_name, fail_during_transaction)
+
+    with pytest.raises(OSError, match=f"injected {helper_name} failure"):
+        generator.write_generation(
+            generator.generate(3, 99),
+            scenario_dir,
+            seed=99,
+            requested_count=3,
+            clean=True,
+        )
+
+    assert calls >= failure_call
+    assert _tree_snapshot(scenario_dir) == before
+    assert not list(tmp_path.glob(".generated.generation-*"))
+
+
+@pytest.mark.parametrize("count", (0, -1))
+def test_non_positive_count_preserves_existing_output(
+    tmp_path: Path,
+    count: int,
+) -> None:
+    scenario_dir = tmp_path / "generated"
+    generated = _run_generator(scenario_dir, 3)
+    assert generated.returncode == 0, generated.stderr
+    before = _tree_snapshot(scenario_dir)
+
+    rejected = _run_generator(scenario_dir, count, "--clean")
+
+    assert rejected.returncode == 2
+    assert "[generator-error] --count must be greater than zero" in rejected.stderr
+    assert _tree_snapshot(scenario_dir) == before
 
 
 @pytest.mark.skipif(not hasattr(os, "symlink"), reason="symlinks unavailable")

@@ -126,6 +126,18 @@ HUB_Optimus exists to **break that cycle** by evaluating scenarios **before** de
 
 It **does not predict outcomes**. The current runtime evaluates whether a simple configurable condition is met. The broader **structural evaluation** capabilities are part of the project vision described in the governance and methodology documents.
 
+Runtime requirement: Python 3.11 or newer. Install only the runtime dependency
+tier and run the deterministic example with:
+
+```bash
+python -m pip install -r requirements.txt
+python run_scenario.py example_scenario.json --seed 42
+```
+
+Development and test tooling is separate in `requirements-dev.txt`. See
+[SIMULATION_README.md](SIMULATION_README.md) for the complete bootstrap
+contract.
+
 Start here:
 - [v1_core/workflow/README.md](v1_core/workflow/README.md)
 
