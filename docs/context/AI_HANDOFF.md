@@ -588,6 +588,28 @@ Operational boundary:
   in the versioned baseline and rejects restoring that checkpoint as a current
   source. It does not replace live GitHub inspection.
 
+## Local Control-Plane Prototype Boundary
+
+The adopted resolution for issue #1766 classifies
+`hub_optimus/hub_optimus_control.py` as a local educational prototype rather
+than an operational control plane.
+
+- It implements only an in-memory actor-to-tool allowlist, `sum` and `echo`
+  stubs, and a process-local inspection log.
+- Time records are timezone-aware UTC values. The log accepts only a restricted
+  built-in snapshot domain and copies it without invoking object-defined copy
+  hooks, so caller mutation cannot rewrite an accepted record. Unsupported
+  values fail as controlled errors for allowed calls and cannot suppress a
+  denied-attempt record.
+- The actor string is not authenticated identity and the allowlist is not a
+  production authorization service.
+- The module is not integrated with the supported scenario runtime, Semantic
+  Engine, Operator, EC2 scripts, or any deployment.
+- It provides no durable or compliance audit, OPA, OpenTelemetry,
+  SPIFFE/SPIRE, cryptography, or post-quantum capability.
+- Log order is process-local append order. No concurrency or durable-ordering
+  guarantee is provided.
+
 ## System Architecture Map Boundary
 
 Issue #1586 establishes
