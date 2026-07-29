@@ -213,6 +213,37 @@ in PR #1771 restores the following behavior:
 - the canonical generated seed-42 set remains 60/60 runtime-complete with
   55 agreements, 5 no-agreements, and average convergence round 1.8.
 
+## Scenario Generation Provenance Boundary
+
+Issue #1758 scopes the laboratory generator/telemetry correction for stale
+generated scenarios.
+
+Operational boundary:
+
+- Each generator run writes a content-addressed
+  `generation_manifest.json` containing the exact current scenario set and
+  SHA-256 hashes.
+- Manifest verification retains the exact verified scenario bytes; telemetry
+  validates and executes an isolated snapshot of those same bytes rather than
+  reopening a mutable source path.
+- Telemetry auto-detects and verifies the manifest, excludes retained stale
+  files, and records the generation run identifier in records and the index.
+- Generation stages the complete new set and publishes scenarios plus manifest
+  as one rollback-protected transaction. A staging, write, backup, or publish
+  failure restores the previous generated set and previous manifest.
+- Default generation reports but retains stale generator-owned files.
+  `--clean` removes only immediate
+  `<family>/<family>_<number>.json` paths inside the resolved output
+  directory; unrelated files and nested user content remain outside cleanup
+  ownership.
+- `--count` must be greater than zero and invalid counts do not create or
+  modify output.
+- A missing manifest remains a supported legacy telemetry scan, explicitly
+  marked as unverified and without generation-run provenance. Legacy recursive
+  telemetry and benchmark scans exclude only the root
+  `generation_manifest.json`; a nested valid scenario with that basename is
+  still processed.
+
 ## Mobile Intake Storage Boundary
 
 Issue #1759 records that the mobile helper wrote raw claims to a non-ignored

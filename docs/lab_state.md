@@ -630,7 +630,22 @@ that improves one plane can worsen another.
 ## Methodology notes
 
 - All generated scenarios use seed-controlled randomness (default: 42).
+- Each generation writes `scenarios/generated/generation_manifest.json`
+  with a content-addressed run identifier, the exact current file set, and
+  SHA-256 hashes. By default stale generator-owned files are reported and
+  retained; `--clean` removes only immediate
+  `<family>/<family>_<number>.json` paths outside the new manifest.
+- Scenario files and the manifest are staged before publication. A reported
+  staging, backup, write, or publish failure restores the prior generated set
+  and manifest. CLI generation requires `--count` greater than zero.
 - Telemetry is collected via `python tools/scenario_telemetry.py`.
+- Telemetry auto-detects and verifies the generation manifest, selects only
+  its declared files, executes isolated snapshots of the exact bytes whose
+  hashes were verified, and records the generation run identifier. Use
+  `--manifest FILE` to select an explicit generated run; directories without
+  a manifest remain supported as legacy scans without generation provenance.
+  Recursive legacy scans exclude only the root `generation_manifest.json`;
+  nested valid scenarios with that filename remain inputs.
 - Mutation sweeps via `python tools/scenario_mutator.py`.
 - Results are written to `scenarios/telemetry.json` (per-scenario)
   and `scenarios/index.json` (aggregate).
