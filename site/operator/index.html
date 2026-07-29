@@ -1693,6 +1693,12 @@
       }
     }
 
+    function redirectCount(redirects) {
+      if (Array.isArray(redirects)) return redirects.length;
+      if (Number.isInteger(redirects) && redirects >= 0) return redirects;
+      return 0;
+    }
+
     function buildIntakeRecord(raw, sourceUrl, intakePayload = null) {
       if (intakePayload) {
         return {
@@ -1852,7 +1858,7 @@
           <p><b>Original URL:</b> ${escapeHtml(intakeRecord.original_url || "not provided")}</p>
           <p><b>Final URL:</b> ${escapeHtml(intakeRecord.final_url || "not retrieved")}</p>
           <p><b>Domain / title:</b> ${escapeHtml(intakeRecord.source_domain || "not established")} · ${escapeHtml(intakeRecord.title || "not provided")}</p>
-          <p><b>Retrieved:</b> ${escapeHtml(intakeRecord.retrieved_at || "not retrieved")} · redirects=${escapeHtml(intakeRecord.redirects ?? 0)}</p>
+          <p><b>Retrieved:</b> ${escapeHtml(intakeRecord.retrieved_at || "not retrieved")} · redirects=${escapeHtml(redirectCount(intakeRecord.redirects))}</p>
           <p><b>Content:</b> ${escapeHtml(intakeRecord.content_type || "unknown")} · truncated=${escapeHtml(Boolean(intakeRecord.truncated))}</p>
           <p><b>Status:</b> ${escapeHtml(intakeRecord.status || "unknown")} · verification=${escapeHtml(intakeRecord.verification_status || "unreviewed")}</p>
           ${attributionNotice}
@@ -2239,6 +2245,46 @@
       return `${window.location.origin}${window.location.pathname}`;
     }
 
+    // OPERATOR_SHARE_PROVENANCE_START
+    function shareProvenanceLines(record) {
+      const intakeRecord = record?.intake_record;
+      const sourceUrl = (
+        intakeRecord?.final_url ||
+        intakeRecord?.original_url ||
+        record?.source_url ||
+        null
+      );
+
+      if (intakeRecord?.mode === "controlled-url") {
+        return [
+          "Provenance: retrieved through controlled URL intake; retrieval metadata is recorded, while source truth remains unverified.",
+          sourceUrl ? `Retrieved URL: ${compactText(sourceUrl, 240)}` : ""
+        ];
+      }
+
+      if (
+        intakeRecord?.mode === "operator-pasted-text-with-url" ||
+        intakeRecord?.attribution === "operator-provided-url-not-fetched"
+      ) {
+        return [
+          "Provenance: operator supplied the text and URL together; Operator did not fetch the URL, so URL-to-text attribution remains unverified.",
+          sourceUrl ? `Supplied URL (not fetched): ${compactText(sourceUrl, 240)}` : ""
+        ];
+      }
+
+      if (sourceUrl) {
+        return [
+          "Provenance: retrieval mode is unavailable; URL-to-text attribution remains unverified.",
+          `Recorded URL (attribution unverified): ${compactText(sourceUrl, 240)}`
+        ];
+      }
+
+      return [
+        "Provenance: operator-supplied text; no URL retrieval is claimed."
+      ];
+    }
+    // OPERATOR_SHARE_PROVENANCE_END
+
     function buildHumanShareText(record) {
       const lines = [
         "HUB_Optimus Operator snapshot",
@@ -2256,7 +2302,7 @@
         "",
         "Boundary: unverified local draft; not a truth verdict or engine result.",
         "Memory: this summary travels in the message. The link opens a clean Operator and does not restore this draft.",
-        record.source_url ? `Source reference: ${compactText(record.source_url, 240)}` : "",
+        ...shareProvenanceLines(record),
         `Open clean Operator: ${buildCleanOperatorUrl()}`
       ];
 

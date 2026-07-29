@@ -1,4 +1,4 @@
-const CACHE_NAME = "hub-optimus-operator-v0-19";
+const CACHE_NAME = "hub-optimus-operator-v0-20";
 const OFFLINE_FALLBACK = "./index.html";
 const STATIC_ASSETS = [
   "./",
@@ -8,6 +8,9 @@ const STATIC_ASSETS = [
   "./og.svg",
   "../assets/brand/hub-optimus-logo-lockup.png"
 ];
+const STATIC_ASSET_URLS = new Set(
+  STATIC_ASSETS.map((asset) => new URL(asset, self.location.href).href)
+);
 
 async function cacheStaticAssets() {
   const cache = await caches.open(CACHE_NAME);
@@ -86,7 +89,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.includes("/operator/")) {
+  if (
+    url.pathname.includes("/operator/") ||
+    STATIC_ASSET_URLS.has(url.href)
+  ) {
     event.respondWith(cacheFirst(event.request));
   }
 });

@@ -1056,8 +1056,20 @@
   const motionButton = document.getElementById("globe-motion");
   if (!canvas || !motionButton) return;
 
+  function disableGlobeInteraction() {
+    canvas.classList.remove("is-ready");
+    canvas.setAttribute("aria-hidden", "true");
+    canvas.removeAttribute("tabindex");
+    canvas.hidden = true;
+    if (document.activeElement === canvas) canvas.blur();
+    motionButton.hidden = true;
+  }
+
   const context = canvas.getContext("2d", { alpha: true });
-  if (!context) return;
+  if (!context) {
+    disableGlobeInteraction();
+    return;
+  }
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   globePaused = reduceMotion.matches;
@@ -1414,8 +1426,7 @@
 
   const geographicSource = canvas.dataset.geoSource;
   if (!geographicSource) {
-    canvas.setAttribute("aria-hidden", "true");
-    motionButton.hidden = true;
+    disableGlobeInteraction();
     return;
   }
 
@@ -1435,7 +1446,6 @@
       drawGlobe();
     })
     .catch(() => {
-      canvas.setAttribute("aria-hidden", "true");
-      motionButton.hidden = true;
+      disableGlobeInteraction();
     });
 })();
