@@ -1,0 +1,22 @@
+{
+  "title": "Comparación explícita de políticas con mediación",
+  "description": "Escenario sintético de sensibilidad del rango de ofertas con dos partes negociadoras y una mediación externa; no representa calidad de mediación, favoritismo ni consenso real.",
+  "roles": [
+    {
+      "name": "Parte negociadora A",
+      "role": "negotiator"
+    },
+    {
+      "name": "Parte negociadora B",
+      "role": "negotiator"
+    },
+    {
+      "name": "Mediación externa",
+      "role": "mediator"
+    }
+  ],
+  "success_criteria": {
+    "offer": 5
+  },
+  "max_rounds": 5
+}

@@ -344,6 +344,25 @@ Issue #118 adds a read-only, standard-library report over the current
 - The aggregates describe deterministic synthetic runs; they are not evidence
   of real-world agreement rates, policy quality, or prediction.
 
+## Mediator Policy Comparison Candidate Boundary
+
+Issue #1531 adds one experimental, Spanish-language scenario input at
+`scenarios/candidates/mediator_policy_comparison_es.json` and a reproducibility
+note at `docs/scenarios/mediator_policy_comparison_candidate.md`.
+
+- The input contains two negotiators and one mediator. It does not select a
+  policy; runs must choose `uniform` or `biased` explicitly.
+- The documented seed enumeration covers 0 through 999 and includes a derived,
+  non-persisted in-memory mediator-removal control with the same target and
+  round budget.
+- Under `biased`, the mediator's offer range is 2-4 while negotiators retain
+  1-5. This is a role-aware range restriction, not party favoritism.
+- Runtime success still means that any actor emits the exact target offer. It
+  is not consensus, ratification, durable agreement, or mediation quality.
+- The recorded observations are synthetic candidate evidence. They are not
+  frozen benchmark outputs, and any later promotion remains a separate
+  protected-zone decision under issue #1536.
+
 ## Scenario Generation Provenance Boundary
 
 Issue #1758 scopes the laboratory generator/telemetry correction for stale

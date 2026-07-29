@@ -18,6 +18,7 @@ Scope notes:
 | [`ceasefire_basic`](../../benchmarks/scenarios/ceasefire_basic.json) | Ceasefire Negotiation | benchmark | Simple bilateral ceasefire negotiation with compatible objectives |
 | [`ceasefire_fragile`](../../benchmarks/scenarios/ceasefire_fragile.json) | Ceasefire Negotiation | benchmark | Ceasefire with external mediation and limited rounds, used as a fragile convergence case |
 | [`ceasefire_failure`](../../benchmarks/scenarios/ceasefire_failure.json) | Ceasefire Negotiation | benchmark | Hardline negotiation breakdown with no feasible settlement space |
+| [`mediator_policy_comparison_es`](../../scenarios/candidates/mediator_policy_comparison_es.json) | Mediated Negotiation | experimental | Spanish-language synthetic input for explicit uniform, biased, and mediator-removal controls |
 | [`scenario_001_partial_ceasefire`](../../v1_core/workflow/scenario_001_partial_ceasefire.md) | Ceasefire Negotiation | workflow reference | Narrative reference scenario showing an unverifiable ceasefire as destabilizing |
 | [`scenario_002_verified_ceasefire`](../../v1_core/workflow/scenario_002_verified_ceasefire.md) | Ceasefire Negotiation | workflow reference | Narrative reference scenario showing a verified ceasefire as stabilizing |
 | [`scenario_003_coalition_fracture`](../../v1_core/workflow/scenario_003_coalition_fracture.md) | Coalition Stability | experimental | External negotiation constrained by an internal coalition veto player |
