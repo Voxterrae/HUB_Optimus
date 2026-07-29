@@ -1056,35 +1056,15 @@
   const motionButton = document.getElementById("globe-motion");
   if (!canvas || !motionButton) return;
 
-  function disableGlobeInteraction() {
-    canvas.classList.remove("is-ready");
-    canvas.setAttribute("aria-hidden", "true");
-    canvas.removeAttribute("tabindex");
-    canvas.hidden = true;
-    if (document.activeElement === canvas) canvas.blur();
-    motionButton.hidden = true;
-  }
-
-  const context = canvas.getContext("2d", { alpha: true });
-  if (!context) {
-    disableGlobeInteraction();
-    return;
-  }
-
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   globePaused = reduceMotion.matches;
   updateMotionButton();
 
-  const DEG = Math.PI / 180;
+  const fallback = canvas.parentElement.querySelector(".globe-fallback");
+  let renderer = null;
   const state = {
-    rings: [],
     rotation: -8,
     tilt: -11,
-    width: 0,
-    height: 0,
-    radius: 0,
-    centerX: 0,
-    centerY: 0,
     dragging: false,
     pointerId: null,
     lastX: 0,
@@ -1093,254 +1073,32 @@
     ready: false
   };
 
-  const illustrativePoints = [
-    [2.8457, 41.6999],
-    [4.3517, 50.8503],
-    [13.405, 52.52],
-    [6.1432, 46.2044]
-  ];
-
-  const routePairs = [
-    [illustrativePoints[0], illustrativePoints[1]],
-    [illustrativePoints[0], illustrativePoints[2]],
-    [illustrativePoints[1], illustrativePoints[3]]
-  ];
-
-  function resizeCanvas() {
-    const rect = canvas.getBoundingClientRect();
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    state.width = Math.max(1, rect.width);
-    state.height = Math.max(1, rect.height);
-    state.radius = Math.min(state.width, state.height) * 0.38;
-    state.centerX = state.width * 0.5;
-    state.centerY = state.height * 0.51;
-    canvas.width = Math.round(state.width * ratio);
-    canvas.height = Math.round(state.height * ratio);
-    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  function showStaticFallback() {
+    state.ready = false;
+    canvas.classList.remove("is-ready");
+    canvas.dataset.renderer = "static-fallback";
+    canvas.setAttribute("aria-hidden", "true");
+    canvas.removeAttribute("tabindex");
+    canvas.hidden = true;
+    if (document.activeElement === canvas) canvas.blur();
+    motionButton.hidden = true;
+    if (fallback) fallback.removeAttribute("aria-hidden");
   }
 
-  function spherePoint(longitude, latitude) {
-    const lambda = (longitude + state.rotation) * DEG;
-    const phi = latitude * DEG;
-    const tilt = state.tilt * DEG;
-    const cosPhi = Math.cos(phi);
-    const x = cosPhi * Math.sin(lambda);
-    const y = Math.sin(phi);
-    const z = cosPhi * Math.cos(lambda);
-    const tiltedY = y * Math.cos(tilt) - z * Math.sin(tilt);
-    const tiltedZ = y * Math.sin(tilt) + z * Math.cos(tilt);
-
-    return {
-      x: state.centerX + state.radius * x,
-      y: state.centerY - state.radius * tiltedY,
-      z: tiltedZ
-    };
-  }
-
-  function horizonPoint(a, b) {
-    const denominator = a.z - b.z;
-    const amount = Math.abs(denominator) < 1e-9 ? 0.5 : a.z / denominator;
-    return {
-      x: a.x + (b.x - a.x) * amount,
-      y: a.y + (b.y - a.y) * amount,
-      z: 0
-    };
-  }
-
-  function strokeClippedLine(coordinates, closePath = false) {
-    if (!coordinates || coordinates.length < 2) return;
-    const points = coordinates.map(([longitude, latitude]) => spherePoint(longitude, latitude));
-    if (closePath) points.push(points[0]);
-    let drawing = false;
-
-    for (let index = 1; index < points.length; index += 1) {
-      const previous = points[index - 1];
-      const current = points[index];
-      const previousVisible = previous.z >= 0;
-      const currentVisible = current.z >= 0;
-
-      if (previousVisible && currentVisible) {
-        if (!drawing) context.moveTo(previous.x, previous.y);
-        context.lineTo(current.x, current.y);
-        drawing = true;
-      } else if (previousVisible && !currentVisible) {
-        const horizon = horizonPoint(previous, current);
-        if (!drawing) context.moveTo(previous.x, previous.y);
-        context.lineTo(horizon.x, horizon.y);
-        drawing = false;
-      } else if (!previousVisible && currentVisible) {
-        const horizon = horizonPoint(previous, current);
-        context.moveTo(horizon.x, horizon.y);
-        context.lineTo(current.x, current.y);
-        drawing = true;
-      } else {
-        drawing = false;
-      }
-    }
-  }
-
-  function drawGraticule() {
-    context.save();
-    context.beginPath();
-    context.strokeStyle = "rgba(131, 186, 242, 0.15)";
-    context.lineWidth = 0.7;
-
-    for (let latitude = -60; latitude <= 60; latitude += 30) {
-      const line = [];
-      for (let longitude = -180; longitude <= 180; longitude += 3) {
-        line.push([longitude, latitude]);
-      }
-      strokeClippedLine(line);
-    }
-
-    for (let longitude = -150; longitude <= 180; longitude += 30) {
-      const line = [];
-      for (let latitude = -90; latitude <= 90; latitude += 3) {
-        line.push([longitude, latitude]);
-      }
-      strokeClippedLine(line);
-    }
-
-    context.stroke();
-    context.restore();
-  }
-
-  function drawLand() {
-    context.save();
-    context.beginPath();
-    context.strokeStyle = "rgba(234, 231, 220, 0.68)";
-    context.lineWidth = Math.max(0.75, state.radius / 360);
-    state.rings.forEach((ring) => strokeClippedLine(ring, true));
-    context.stroke();
-    context.restore();
-  }
-
-  function vectorFromCoordinates([longitude, latitude]) {
-    const lambda = longitude * DEG;
-    const phi = latitude * DEG;
-    const cosPhi = Math.cos(phi);
-    return [cosPhi * Math.cos(lambda), cosPhi * Math.sin(lambda), Math.sin(phi)];
-  }
-
-  function coordinatesFromVector([x, y, z]) {
-    return [Math.atan2(y, x) / DEG, Math.atan2(z, Math.hypot(x, y)) / DEG];
-  }
-
-  function greatCircle(start, end, segments = 72) {
-    const a = vectorFromCoordinates(start);
-    const b = vectorFromCoordinates(end);
-    const dot = Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]));
-    const omega = Math.acos(dot);
-    const sinOmega = Math.sin(omega);
-    const points = [];
-
-    for (let index = 0; index <= segments; index += 1) {
-      const amount = index / segments;
-      if (Math.abs(sinOmega) < 1e-8) {
-        points.push([
-          start[0] + (end[0] - start[0]) * amount,
-          start[1] + (end[1] - start[1]) * amount
-        ]);
-        continue;
-      }
-
-      const fromWeight = Math.sin((1 - amount) * omega) / sinOmega;
-      const toWeight = Math.sin(amount * omega) / sinOmega;
-      points.push(coordinatesFromVector([
-        a[0] * fromWeight + b[0] * toWeight,
-        a[1] * fromWeight + b[1] * toWeight,
-        a[2] * fromWeight + b[2] * toWeight
-      ]));
-    }
-
-    return points;
-  }
-
-  function drawRoutes() {
-    context.save();
-    context.beginPath();
-    context.strokeStyle = "rgba(214, 164, 79, 0.7)";
-    context.lineWidth = Math.max(1, state.radius / 230);
-    context.setLineDash([5, 7]);
-    routePairs.forEach(([start, end]) => {
-      strokeClippedLine(greatCircle(start, end));
-    });
-    context.stroke();
-    context.setLineDash([]);
-
-    illustrativePoints.forEach(([longitude, latitude]) => {
-      const projected = spherePoint(longitude, latitude);
-      if (projected.z < 0) return;
-      const alpha = 0.45 + projected.z * 0.55;
-      context.beginPath();
-      context.arc(projected.x, projected.y, 3.2, 0, Math.PI * 2);
-      context.fillStyle = `rgba(214, 164, 79, ${alpha})`;
-      context.fill();
-      context.beginPath();
-      context.arc(projected.x, projected.y, 8.5, 0, Math.PI * 2);
-      context.strokeStyle = `rgba(214, 164, 79, ${alpha * 0.48})`;
-      context.lineWidth = 1;
-      context.stroke();
-    });
-
-    context.restore();
+  function showInteractiveGlobe() {
+    state.ready = true;
+    canvas.dataset.renderer = "webgl";
+    canvas.hidden = false;
+    canvas.removeAttribute("aria-hidden");
+    canvas.setAttribute("tabindex", "0");
+    canvas.classList.add("is-ready");
+    motionButton.hidden = false;
+    if (fallback) fallback.setAttribute("aria-hidden", "true");
   }
 
   function drawGlobe() {
-    context.clearRect(0, 0, state.width, state.height);
-    const gradient = context.createRadialGradient(
-      state.centerX - state.radius * 0.25,
-      state.centerY - state.radius * 0.3,
-      state.radius * 0.08,
-      state.centerX,
-      state.centerY,
-      state.radius
-    );
-    gradient.addColorStop(0, "rgba(23, 104, 196, 0.26)");
-    gradient.addColorStop(0.52, "rgba(11, 61, 145, 0.12)");
-    gradient.addColorStop(1, "rgba(3, 10, 18, 0.82)");
-
-    context.save();
-    context.beginPath();
-    context.arc(state.centerX, state.centerY, state.radius, 0, Math.PI * 2);
-    context.fillStyle = gradient;
-    context.fill();
-    context.clip();
-    drawGraticule();
-    drawLand();
-    drawRoutes();
-    context.restore();
-
-    context.beginPath();
-    context.arc(state.centerX, state.centerY, state.radius, 0, Math.PI * 2);
-    context.strokeStyle = "rgba(214, 164, 79, 0.44)";
-    context.lineWidth = 1.25;
-    context.stroke();
-
-    const atmosphere = context.createRadialGradient(
-      state.centerX,
-      state.centerY,
-      state.radius * 0.92,
-      state.centerX,
-      state.centerY,
-      state.radius * 1.08
-    );
-    atmosphere.addColorStop(0, "rgba(23, 104, 196, 0)");
-    atmosphere.addColorStop(1, "rgba(23, 104, 196, 0.16)");
-    context.beginPath();
-    context.arc(state.centerX, state.centerY, state.radius * 1.08, 0, Math.PI * 2);
-    context.fillStyle = atmosphere;
-    context.fill();
-  }
-
-  function collectRings(geometry) {
-    if (!geometry) return [];
-    if (geometry.type === "Polygon") return geometry.coordinates;
-    if (geometry.type === "MultiPolygon") return geometry.coordinates.flat();
-    if (geometry.type === "GeometryCollection") {
-      return geometry.geometries.flatMap(collectRings);
-    }
-    return [];
+    if (!state.ready || !renderer) return;
+    renderer.draw({ rotation: state.rotation, tilt: state.tilt });
   }
 
   function animate(timestamp) {
@@ -1375,6 +1133,7 @@
   }
 
   canvas.addEventListener("pointerdown", (event) => {
+    if (!state.ready) return;
     state.dragging = true;
     state.pointerId = event.pointerId;
     state.lastX = event.clientX;
@@ -1404,6 +1163,7 @@
   canvas.addEventListener("pointercancel", stopDragging);
 
   canvas.addEventListener("keydown", (event) => {
+    if (!state.ready) return;
     const actions = {
       ArrowLeft: () => { state.rotation -= 5; },
       ArrowRight: () => { state.rotation += 5; },
@@ -1417,35 +1177,57 @@
   });
 
   window.addEventListener("resize", () => {
-    resizeCanvas();
+    if (renderer) renderer.resize();
     if (state.ready) drawGlobe();
   });
 
-  resizeCanvas();
-  window.requestAnimationFrame(animate);
-
   const geographicSource = canvas.dataset.geoSource;
-  if (!geographicSource) {
-    disableGlobeInteraction();
-    return;
+
+  function initializeGlobe() {
+    showStaticFallback();
+    if (
+      !geographicSource
+      || !window.HubOptimusGlobe
+      || typeof window.HubOptimusGlobe.create !== "function"
+    ) return;
+
+    let candidate;
+    try {
+      candidate = window.HubOptimusGlobe.create(canvas);
+    } catch {
+      candidate = null;
+    }
+    if (!candidate) return;
+
+    renderer = candidate;
+    renderer.resize();
+    fetch(geographicSource, { credentials: "same-origin" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Geographic data returned HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((data) => {
+        if (renderer !== candidate) return;
+        candidate.loadGeography(data);
+        showInteractiveGlobe();
+        drawGlobe();
+      })
+      .catch(() => {
+        if (renderer !== candidate) return;
+        candidate.destroy();
+        renderer = null;
+        showStaticFallback();
+      });
   }
 
-  fetch(geographicSource, { credentials: "same-origin" })
-    .then((response) => {
-      if (!response.ok) throw new Error(`Geographic data returned HTTP ${response.status}`);
-      return response.json();
-    })
-    .then((data) => {
-      const geometries = data.type === "FeatureCollection"
-        ? data.features.map((feature) => feature.geometry)
-        : [data.geometry || data];
-      state.rings = geometries.flatMap(collectRings);
-      if (!state.rings.length) throw new Error("Geographic data contains no polygon rings");
-      state.ready = true;
-      canvas.classList.add("is-ready");
-      drawGlobe();
-    })
-    .catch(() => {
-      disableGlobeInteraction();
-    });
+  canvas.addEventListener("webglcontextlost", (event) => {
+    event.preventDefault();
+    renderer = null;
+    showStaticFallback();
+  });
+
+  canvas.addEventListener("webglcontextrestored", initializeGlobe);
+
+  initializeGlobe();
+  window.requestAnimationFrame(animate);
 })();
