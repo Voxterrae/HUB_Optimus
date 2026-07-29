@@ -126,11 +126,17 @@ in PR #1776 establishes:
 
 - supported Python is 3.11 or newer;
 - `requirements.txt` is the runtime tier and contains `jsonschema`;
-- `requirements-dev.txt` includes the runtime tier and adds `pytest`;
+- `requirements-dev.txt` includes the runtime tier and adds `pytest` and
+  `PyYAML`;
 - `python scripts/bootstrap.py --runtime-only` installs/checks runtime
   dependencies and executes the supported scenario CLI smoke test;
 - the default bootstrap remains the development path and fails when tests or
   frozen benchmarks fail rather than printing an ambiguous ready state.
+
+The dependency check enumerates all three direct packages in the development
+tier. `PyYAML` is verified by distribution name and by its importable `yaml`
+module, so `--check` cannot report a ready development environment while that
+declared dependency is absent.
 
 The runtime-only install path has been verified in a newly created virtual
 environment without development requirements.

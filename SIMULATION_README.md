@@ -35,7 +35,8 @@ python -m pip install -r requirements.txt
 
 `requirements.txt` contiene únicamente dependencias necesarias para ejecutar
 los comandos soportados. Para desarrollar y ejecutar la suite instala
-`requirements-dev.txt`; este incluye el fichero de runtime y añade `pytest`:
+`requirements-dev.txt`; este incluye el fichero de runtime y añade `pytest` y
+`PyYAML`:
 
 ```bash
 python -m pip install -r requirements-dev.txt
@@ -48,6 +49,10 @@ python scripts/bootstrap.py --runtime-only
 python scripts/bootstrap.py
 python scripts/bootstrap.py --runtime-only --check
 ```
+
+El modo `--check` verifica cada dependencia directa declarada para el nivel
+seleccionado, incluido el paquete `PyYAML` mediante su módulo importable
+`yaml`; no instala paquetes ni ejecuta la suite.
 
 ## 2. Estructura de un escenario
 

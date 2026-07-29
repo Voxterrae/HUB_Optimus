@@ -13,6 +13,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import re
 import subprocess
@@ -28,7 +29,15 @@ MIN_PYTHON = (3, 11)
 SUPPORTED_PACKAGE_RANGES = {
     "jsonschema": ((4, 26, 0), (5, 0, 0)),
     "pytest": ((9, 1, 1), (10, 0, 0)),
+    "PyYAML": ((6, 0, 3), (7, 0, 0)),
 }
+PACKAGE_IMPORT_NAMES = {
+    "jsonschema": "jsonschema",
+    "pytest": "pytest",
+    "PyYAML": "yaml",
+}
+RUNTIME_PACKAGES = ("jsonschema",)
+DEVELOPMENT_PACKAGES = (*RUNTIME_PACKAGES, "pytest", "PyYAML")
 
 # ── Checks ──────────────────────────────────────────────────
 
@@ -42,16 +51,17 @@ def check_python() -> bool:
 
 
 def check_package(name: str) -> bool:
+    import_name = PACKAGE_IMPORT_NAMES[name]
     try:
-        __import__(name)
+        importlib.import_module(import_name)
     except ImportError:
-        print(f"  [MISS] {name}")
+        print(f"  [MISS] {name} (import {import_name})")
         return False
 
     try:
         installed = metadata.version(name)
     except metadata.PackageNotFoundError:
-        print(f"  [MISS] {name}")
+        print(f"  [MISS] {name} (distribution metadata)")
         return False
 
     bounds = SUPPORTED_PACKAGE_RANGES.get(name)
@@ -217,7 +227,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # 2. Key packages
     print("\n2. Packages")
-    packages = ["jsonschema"] if args.runtime_only else ["jsonschema", "pytest"]
+    packages = RUNTIME_PACKAGES if args.runtime_only else DEVELOPMENT_PACKAGES
     missing = [p for p in packages if not check_package(p)]
 
     # 3. Git
