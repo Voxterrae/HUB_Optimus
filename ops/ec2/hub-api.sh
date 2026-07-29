@@ -73,6 +73,29 @@ class IntakeError(Exception):
         self.message = message
 
 
+def reject_non_standard_json_constant(value: str) -> None:
+    """Reject Python's non-standard JSON numeric constants."""
+
+    raise ValueError(f"non-standard numeric constant {value} is not valid JSON")
+
+
+def load_strict_json(raw: str):
+    return json.loads(
+        raw,
+        parse_constant=reject_non_standard_json_constant,
+    )
+
+
+def dump_strict_json(payload) -> str:
+    return json.dumps(
+        payload,
+        allow_nan=False,
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    ) + "\n"
+
+
 class FetchDeadlineExceeded(IntakeError):
     def __init__(self) -> None:
         super().__init__(
@@ -806,7 +829,13 @@ class Handler(BaseHTTPRequestHandler):
     server_version = "HUBOptimusAPI/0.1"
 
     def send_json(self, status: int, payload: dict) -> None:
-        body = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+        try:
+            body = dump_strict_json(payload)
+        except (TypeError, ValueError):
+            status = 500
+            body = dump_strict_json(
+                {"error": "response payload is not valid strict JSON"}
+            )
         encoded = body.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -848,9 +877,12 @@ class Handler(BaseHTTPRequestHandler):
             return None
 
         try:
-            payload = json.loads(raw)
+            payload = load_strict_json(raw)
         except json.JSONDecodeError as exc:
             self.send_json(400, {"error": f"invalid JSON: {exc.msg}"})
+            return None
+        except ValueError as exc:
+            self.send_json(400, {"error": f"invalid JSON: {exc}"})
             return None
 
         if not isinstance(payload, dict):
@@ -888,6 +920,15 @@ class Handler(BaseHTTPRequestHandler):
         if payload is None:
             return
 
+        try:
+            serialized_payload = dump_strict_json(payload)
+        except (TypeError, ValueError):
+            self.send_json(
+                500,
+                {"error": "cannot serialize case input as strict JSON"},
+            )
+            return
+
         case_dir = SHARED / "api" / "cases"
         case_path: Path | None = None
         try:
@@ -905,15 +946,7 @@ class Handler(BaseHTTPRequestHandler):
                 encoding="utf-8",
                 newline="\n",
             ) as case_file:
-                case_file.write(
-                    json.dumps(
-                        payload,
-                        indent=2,
-                        sort_keys=True,
-                        ensure_ascii=False,
-                    )
-                    + "\n"
-                )
+                case_file.write(serialized_payload)
         except OSError as exc:
             if case_path is not None:
                 try:
@@ -974,12 +1007,17 @@ class Handler(BaseHTTPRequestHandler):
         result_path = run_path / "analysis_result.json"
 
         try:
-            analysis_result = json.loads(result_path.read_text(encoding="utf-8"))
+            analysis_result = load_strict_json(
+                result_path.read_text(encoding="utf-8")
+            )
         except OSError as exc:
             self.send_json(500, {"error": f"cannot read analysis result: {exc}"})
             return
         except json.JSONDecodeError as exc:
             self.send_json(500, {"error": f"analysis result is invalid JSON: {exc.msg}"})
+            return
+        except ValueError as exc:
+            self.send_json(500, {"error": f"analysis result is invalid JSON: {exc}"})
             return
 
         self.send_json(

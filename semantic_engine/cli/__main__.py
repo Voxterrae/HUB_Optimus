@@ -21,6 +21,12 @@ class ControlledCliError(Exception):
     """Expected CLI error that should be printed without a traceback."""
 
 
+def reject_non_standard_json_constant(value: str) -> None:
+    """Reject Python's non-standard JSON numeric constants."""
+
+    raise ValueError(f"non-standard numeric constant {value} is not valid JSON")
+
+
 def load_case(path: Path) -> dict[str, Any]:
     """Load a case JSON file and return its object payload."""
 
@@ -36,9 +42,14 @@ def load_case(path: Path) -> dict[str, Any]:
         raise ControlledCliError(f"cannot read input file {path}: {exc}") from exc
 
     try:
-        payload = json.loads(raw)
+        payload = json.loads(
+            raw,
+            parse_constant=reject_non_standard_json_constant,
+        )
     except json.JSONDecodeError as exc:
         raise ControlledCliError(f"invalid JSON in {path}: {exc.msg}") from exc
+    except ValueError as exc:
+        raise ControlledCliError(f"invalid JSON in {path}: {exc}") from exc
 
     if not isinstance(payload, dict):
         raise ControlledCliError("input JSON must be an object")
@@ -231,7 +242,17 @@ def analyze_case(input_path: Path) -> dict[str, Any]:
 def serialize_payload(payload: dict[str, Any]) -> str:
     """Return stable JSON for CLI stdout or file output."""
 
-    return json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    try:
+        return json.dumps(
+            payload,
+            allow_nan=False,
+            indent=2,
+            sort_keys=True,
+        ) + "\n"
+    except (TypeError, ValueError) as exc:
+        raise ControlledCliError(
+            "cannot serialize output as strict JSON"
+        ) from exc
 
 
 def write_output(path: Path, content: str) -> None:
@@ -273,11 +294,10 @@ def main(argv: list[str] | None = None) -> int:
             payload = analyze_case(Path(args.input))
         else:  # pragma: no cover - argparse prevents this path.
             parser.error(f"unknown command: {args.command}")
+        content = serialize_payload(payload)
     except ControlledCliError as exc:
         print(f"semantic_engine.cli: error: {exc}", file=sys.stderr)
         return 1
-
-    content = serialize_payload(payload)
 
     if args.output:
         try:

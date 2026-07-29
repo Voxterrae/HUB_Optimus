@@ -256,6 +256,175 @@ def test_json_body_reader_rejects_invalid_utf8_without_traceback(hub_api):
     assert responses == [(400, {"error": "request body must be valid UTF-8"})]
 
 
+@pytest.mark.parametrize(
+    "limit_name",
+    ["MAX_URL_BODY_LENGTH", "MAX_ANALYZE_BODY_LENGTH"],
+    ids=["url-intake", "analyze"],
+)
+@pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
+def test_json_body_reader_rejects_non_standard_numeric_constants(
+    hub_api,
+    limit_name,
+    constant,
+):
+    namespace = hub_api.__dict__
+    body = (
+        '{"metadata":{"nested":{"value":' + constant + "}}}"
+    ).encode("utf-8")
+    handler, responses = make_body_reader(
+        namespace,
+        str(len(body)),
+        body,
+    )
+
+    payload = handler.read_json_body(namespace[limit_name])
+
+    assert payload is None
+    assert responses == [
+        (
+            400,
+            {
+                "error": (
+                    "invalid JSON: non-standard numeric constant "
+                    f"{constant} is not valid JSON"
+                )
+            },
+        )
+    ]
+
+
+def test_json_body_reader_preserves_finite_nested_numeric_metadata(hub_api):
+    namespace = hub_api.__dict__
+    body = (
+        b'{"metadata":{"nested":{"negative":-12.5,"zero":0,'
+        b'"positive":6.25e18}}}'
+    )
+    handler, responses = make_body_reader(
+        namespace,
+        str(len(body)),
+        body,
+    )
+
+    payload = handler.read_json_body(namespace["MAX_ANALYZE_BODY_LENGTH"])
+
+    assert payload == {
+        "metadata": {
+            "nested": {
+                "negative": -12.5,
+                "zero": 0,
+                "positive": 6.25e18,
+            }
+        }
+    }
+    assert responses == []
+
+
+def test_response_serializer_fails_closed_before_writing_non_finite_json(
+    hub_api,
+):
+    handler = object.__new__(hub_api.Handler)
+    statuses = []
+    headers = []
+    handler.send_response = statuses.append
+    handler.send_header = lambda name, value: headers.append((name, value))
+    handler.end_headers = lambda: None
+    handler.wfile = io.BytesIO()
+
+    handler.send_json(
+        200,
+        {"metadata": {"nested": {"value": float("nan")}}},
+    )
+
+    body = handler.wfile.getvalue().decode("utf-8")
+    assert statuses == [500]
+    assert json.loads(body) == {
+        "error": "response payload is not valid strict JSON"
+    }
+    assert "NaN" not in body
+    assert headers[0] == (
+        "Content-Type",
+        "application/json; charset=utf-8",
+    )
+
+
+def test_analyze_serializer_fails_closed_before_creating_case_file(
+    hub_api,
+    tmp_path,
+):
+    hub_api.SHARED = tmp_path / "shared"
+    handler = object.__new__(hub_api.Handler)
+    handler.read_json_body = lambda limit: {
+        "metadata": {"nested": {"value": float("inf")}}
+    }
+    responses = []
+    handler.send_json = lambda status, payload: responses.append(
+        (status, payload)
+    )
+    hub_api.run_command = lambda *args, **kwargs: pytest.fail(
+        "invalid payload must not reach hub-core"
+    )
+
+    handler.handle_analyze()
+
+    assert responses == [
+        (
+            500,
+            {"error": "cannot serialize case input as strict JSON"},
+        )
+    ]
+    assert not (hub_api.SHARED / "api" / "cases").exists()
+
+
+def test_analyze_rejects_non_standard_numeric_constant_in_result_file(
+    hub_api,
+    tmp_path,
+):
+    hub_api.SHARED = tmp_path / "shared"
+    run_id = "20260729T120000Z.Ab12Cd"
+
+    def fake_run_command(args, input_text=None):
+        assert input_text is None
+        result_path = (
+            hub_api.SHARED
+            / "runs"
+            / "analyze"
+            / run_id
+            / "analysis_result.json"
+        )
+        result_path.parent.mkdir(parents=True)
+        result_path.write_text(
+            '{"metadata":{"nested":{"value":NaN}}}\n',
+            encoding="utf-8",
+        )
+        return 0, f"[hub-core:run-id] {run_id}\n", ""
+
+    hub_api.run_command = fake_run_command
+    handler = object.__new__(hub_api.Handler)
+    handler.read_json_body = lambda limit: {
+        "case_id": "strict-result",
+        "core_version_ref": "main",
+        "input_summary": "Strict result regression fixture.",
+    }
+    responses = []
+    handler.send_json = lambda status, payload: responses.append(
+        (status, payload)
+    )
+
+    handler.handle_analyze()
+
+    assert responses == [
+        (
+            500,
+            {
+                "error": (
+                    "analysis result is invalid JSON: non-standard numeric "
+                    "constant NaN is not valid JSON"
+                )
+            },
+        )
+    ]
+
+
 def test_hub_api_controlled_url_intake_security_boundary_present():
     text = API_SCRIPT.read_text(encoding="utf-8")
 
