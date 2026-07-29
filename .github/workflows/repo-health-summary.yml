@@ -32,29 +32,86 @@ jobs:
 
           echo "Event: ${GITHUB_EVENT_NAME} | Actor: ${GITHUB_ACTOR}"
 
+          # GitHub CLI list commands default to 30 results. Fetch one item beyond
+          # the documented ceiling so a repository that exceeds the audit
+          # boundary fails closed instead of publishing a partial count.
+          GH_LIST_COUNT_CEILING=10000
+          GH_LIST_FETCH_LIMIT=$((GH_LIST_COUNT_CEILING + 1))
+
+          fetch_gh_list() {
+            local resource="$1"
+            local fields="$2"
+            shift 2
+            local output
+            local count
+
+            if ! output=$(gh "$resource" list \
+              --limit "$GH_LIST_FETCH_LIMIT" \
+              --json "$fields" \
+              "$@"); then
+              echo "::error::Failed to fetch GitHub ${resource} list; no health summary was published." >&2
+              return 1
+            fi
+
+            if ! count=$(jq -er \
+              'if type == "array" then length else error("expected an array") end' \
+              <<<"$output"); then
+              echo "::error::GitHub ${resource} list returned invalid JSON; no health summary was published." >&2
+              return 1
+            fi
+
+            if [ "$count" -gt "$GH_LIST_COUNT_CEILING" ]; then
+              echo "::error::GitHub ${resource} list exceeds the ${GH_LIST_COUNT_CEILING}-item audit ceiling; no partial summary was published." >&2
+              return 1
+            fi
+
+            printf '%s\n' "$output"
+          }
+
           # --- Core metrics ---
-          PRS=$(gh pr list --state open --json number --jq 'length')
-          ISSUES=$(gh issue list --state open --json number --jq 'length')
+          OPEN_PRS_JSON=$(fetch_gh_list pr number,author --state open)
+          OPEN_ISSUES_JSON=$(fetch_gh_list issue number --state open)
+          PRS=$(jq -r 'length' <<<"$OPEN_PRS_JSON")
+          ISSUES=$(jq -r 'length' <<<"$OPEN_ISSUES_JSON")
           LAST5=$(gh run list --limit 5 --json conclusion --jq '.[].conclusion' | tr '\n' ' ')
           FAILURES=$(gh run list --limit 10 --json conclusion --jq '[.[] | select(.conclusion=="failure")] | length')
           LAST_COMMIT=$(git log -1 --pretty=format:"%h %s")
           DATE=$(date -u +"%Y-%m-%d %H:%M UTC")
 
           # --- Extended metrics ---
-          BRANCHES=$(git ls-remote --heads origin | wc -l | tr -d ' ')
-          BOT_BRANCHES=$(git ls-remote --heads origin | grep -c "chore/maintenance-" || true)
+          if ! REMOTE_HEADS=$(git ls-remote --heads origin); then
+            echo "::error::Failed to fetch remote branch refs; no health summary was published." >&2
+            exit 1
+          fi
+          BRANCHES=$(awk 'NF { count += 1 } END { print count + 0 }' <<<"$REMOTE_HEADS")
+          BOT_BRANCHES=$(awk \
+            '$2 ~ /^refs\/heads\/chore\/maintenance-/ { count += 1 } END { print count + 0 }' \
+            <<<"$REMOTE_HEADS")
           WEEK_AGO=$(date -u -d '7 days ago' +"%Y-%m-%dT%H:%M:%SZ")
-          PRS_CLOSED_WEEK=$(gh pr list --state closed --json closedAt \
-            --jq "[.[] | select(.closedAt >= \"$WEEK_AGO\")] | length")
-          PRS_OPENED_WEEK=$(gh pr list --state all --json createdAt \
-            --jq "[.[] | select(.createdAt >= \"$WEEK_AGO\")] | length")
-          ISSUES_OPENED_WEEK=$(gh issue list --state all --json createdAt \
-            --jq "[.[] | select(.createdAt >= \"$WEEK_AGO\")] | length")
+          CLOSED_PRS_JSON=$(fetch_gh_list pr closedAt --state closed)
+          ALL_PRS_JSON=$(fetch_gh_list pr createdAt,author --state all)
+          ALL_ISSUES_JSON=$(fetch_gh_list issue createdAt --state all)
+          PRS_CLOSED_WEEK=$(jq -r \
+            --arg week_ago "$WEEK_AGO" \
+            '[.[] | select(.closedAt >= $week_ago)] | length' \
+            <<<"$CLOSED_PRS_JSON")
+          PRS_OPENED_WEEK=$(jq -r \
+            --arg week_ago "$WEEK_AGO" \
+            '[.[] | select(.createdAt >= $week_ago)] | length' \
+            <<<"$ALL_PRS_JSON")
+          ISSUES_OPENED_WEEK=$(jq -r \
+            --arg week_ago "$WEEK_AGO" \
+            '[.[] | select(.createdAt >= $week_ago)] | length' \
+            <<<"$ALL_ISSUES_JSON")
 
           # --- Automation actor analysis ---
-          TOP_PR_AUTHOR=$(gh pr list --limit 100 --state all --json author \
-            --jq '[.[].author.login] | group_by(.) | map({author: .[0], count: length}) | sort_by(-.count) | .[0] | "\(.author) (\(.count))"')
-          DEPENDABOT_PRS=$(gh pr list --state open --search "author:app/dependabot" --json number --jq 'length')
+          # This is an explicitly labelled 100-PR sample, not a repository count.
+          TOP_PR_AUTHOR=$(jq -r \
+            '.[0:100] | [.[].author.login] | group_by(.) | map({author: .[0], count: length}) | sort_by(-.count) | .[0] | "\(.author) (\(.count))"' \
+            <<<"$ALL_PRS_JSON")
+          DEPENDABOT_PRS=$(jq -r \
+            '[.[] | select(.author.login == "dependabot[bot]")] | length' \
+            <<<"$OPEN_PRS_JSON")
 
           # --- Anomaly detection ---
           ALERTS=""

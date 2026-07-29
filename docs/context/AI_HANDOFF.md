@@ -158,6 +158,23 @@ Operational boundary:
 - retiring historical maintenance branches remains a separate audited action
   and is not authorized or performed by the scheduled drift check.
 
+## Repository Health Count Boundary
+
+Issue #1806 keeps the weekly repository-health summary exhaustive within an
+explicit, fail-closed audit boundary.
+
+Operational boundary:
+
+- every PR or issue total used as a repository metric requests up to 10,001
+  records, making counts through the documented 10,000-item ceiling exhaustive;
+- a result beyond that ceiling, invalid JSON, or any failed GitHub CLI/API call
+  stops the run before it can publish a partial or plausible-zero snapshot;
+- remote branch refs are fetched once and a failed fetch is terminal;
+- the established anomaly thresholds and `contents: read` / `issues: write`
+  permissions remain unchanged;
+- the top-author field remains an explicitly labelled last-100-PR sample and is
+  not represented as an exhaustive repository count.
+
 ## Simulator Isolation Boundary
 
 Issue #1755 records a verified mismatch between the runtime contract and the
