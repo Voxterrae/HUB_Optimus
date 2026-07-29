@@ -171,6 +171,30 @@ The boundary section of `docs/lab_state.md` is regenerated from the isolated
 simulator. Other mutation, gradient, and frontier observations remain
 historical until issue #1775 regenerates them.
 
+## Scenario Input Integrity Boundary
+
+Issue #1790 defines one authoritative external scenario-loading path:
+`run_scenario.load_validated_scenario`.
+
+Operational boundary:
+
+- the decoder accepts standard JSON and rejects the non-standard constants
+  `NaN`, `Infinity`, and `-Infinity`;
+- `scenario.schema.json` remains the structural field contract;
+- the authoritative loader additionally enforces unique actor names before
+  runtime construction, preventing dictionary-key collapse in simulation
+  history;
+- the supported CLI and the retained `Scenario.from_json()` convenience
+  method use that same loader and required-field behavior;
+- `Scenario.from_json()` supplies no permissive defaults and claims no YAML
+  support;
+- direct construction of `Scenario` remains an internal data-container path
+  for already validated or test-controlled values, not an external file
+  loader.
+
+These checks validate executable input integrity. They do not verify evidence,
+real-world claims, policy quality, or predictions.
+
 ## Telemetry Input Boundary
 
 Issue #1757 records that malformed scenario files could crash telemetry or
