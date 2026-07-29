@@ -19,6 +19,22 @@ GitHub remains the source of truth; chat summaries are advisory unless reflected
 - Small PRs only.
 - Keep source-of-truth conflicts resolved by `docs/context/STATUS.md`.
 
+## PowerShell Tooling Boundary
+
+- Mutation-capable PowerShell utilities are preview-only unless the operator
+  supplies `-Apply`.
+- They are limited to Git-tracked, non-link paths inside the detected repository.
+- Their current support status is provisional/manual and requires PowerShell 7
+  plus Git.
+- The dedicated `PowerShell tooling` CI job must fail when `pwsh` 7 is missing
+  and must execute the temporary-repository behavior tests. Local or generic
+  pytest runs without `pwsh` report those tests as skipped; a skip is not
+  certification.
+- Do not describe PowerShell behavior as CI-verified from repository code or a
+  local result alone. Only a green dedicated job on the reviewed PR is evidence
+  for the behavior covered on its Ubuntu runner; Windows and macOS remain
+  unverified by that job.
+
 ## Human Stewardship and Technical Review Boundary
 
 - Benjamin Gerrit Hoff is the creator, project owner, primary human steward, and final human-accountability layer of HUB_Optimus.
@@ -62,12 +78,29 @@ If this file is not updated, say why in the PR body.
 
 Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
 
-## Mobile Intake Storage Follow-up
+## PR Enrichment Helper Boundary
+
+Issue #1762 keeps `tools/pr_pro.py` as a supported, optional helper for an
+existing PR. It is not a PR creator, merge authority, or authentication
+provider.
+
+Operational boundary:
+
+- Write mode requires an existing PR target and the GitHub CLI.
+- The helper uses the caller's existing authentication and scopes; it does
+  not create, persist, exchange, or expand tokens.
+- Failed GitHub or required local diff commands return non-zero and cannot
+  emit the success status.
+- `--dry-run` invokes no GitHub commands and performs no GitHub mutation.
+- The active workflow file, not this helper or chat context, determines
+  whether scheduled maintenance invokes it.
+
+## Mobile Intake Storage Boundary
 
 Issue #1759 records that the mobile helper wrote raw claims to a non-ignored
 repository-root file without stable classification or retention guidance.
 
-Its intended post-merge state is:
+PR #1777 restores the following boundary:
 
 - default raw mobile intake is stored under the git-ignored
   `.local/intake/` directory;
@@ -81,9 +114,7 @@ Its intended post-merge state is:
 - the operator remains responsible for classification, access, retention,
   backup, and deletion.
 
-No encryption, managed confidential storage, or evidence verification is
-claimed. Until the corresponding PR is reviewed and merged, `main` remains the
-authoritative mobile-intake behavior.
+No encryption, managed confidential storage, or evidence verification is claimed.
 
 ## Meta-learning Follow-up
 

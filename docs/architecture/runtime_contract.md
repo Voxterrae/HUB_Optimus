@@ -114,6 +114,7 @@ All benchmarks use **seed 42** and compare byte-for-byte against frozen expected
 | Job | Purpose | Blocking? |
 |---|---|---|
 | **pytest** | Run all tests + mojibake guard | Yes |
+| **PowerShell tooling** | Require PowerShell 7 and run mutation-tool behavior tests | Yes |
 | **Benchmarks** | Run benchmark pack, publish summary | No (`continue-on-error: true`) |
 | **Kernel Guard** | Protect kernel file integrity | Yes |
 | **Link Check** | Validate documentation links (Lychee) | Yes |
