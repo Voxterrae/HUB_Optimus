@@ -29,6 +29,17 @@ def _intake_record_helpers(html: str) -> str:
     return match.group(1)
 
 
+def _share_provenance_helpers(html: str) -> str:
+    match = re.search(
+        r"// OPERATOR_SHARE_PROVENANCE_START\n(.*?)\n"
+        r"    // OPERATOR_SHARE_PROVENANCE_END",
+        html,
+        re.DOTALL,
+    )
+    assert match is not None
+    return match.group(1)
+
+
 def test_operator_product_buttons_keep_existing_handlers():
     html = _read(INDEX)
 
@@ -79,7 +90,7 @@ def test_operator_progress_is_immediate_and_has_no_fake_delay_plan():
     assert "runSignalLoaderPlan" not in html
     assert "runMelonLoaderPlan" not in html
     assert "await wait(" not in html
-    assert "hub-optimus-operator-v0-19" in sw
+    assert "hub-optimus-operator-v0-20" in sw
 
 
 def test_operator_triage_is_generic_and_conservative():
@@ -144,7 +155,10 @@ const fetched = buildIntakeRecord("", "https://origin.example/report", {
   source_domain: "final.example",
   title: "Report",
   retrieved_at_utc: "2026-07-28T10:00:00+00:00",
-  redirects: 2,
+  redirects: [
+    {from: "https://origin.example/report", to: "https://middle.example/report", status: 302},
+    {from: "https://middle.example/report", to: "https://final.example/report", status: 301}
+  ],
   content_type: "text/html",
   truncated: true,
   verification_status: "unreviewed",
@@ -154,7 +168,8 @@ if (fetched.original_url !== "https://origin.example/report") throw new Error("o
 if (fetched.final_url !== "https://final.example/report") throw new Error("final URL lost");
 if (fetched.source_domain !== "final.example") throw new Error("source domain lost");
 if (fetched.retrieved_at !== "2026-07-28T10:00:00+00:00") throw new Error("retrieval time lost");
-if (fetched.redirects !== 2 || fetched.truncated !== true) throw new Error("fetch metadata lost");
+if (!Array.isArray(fetched.redirects) || fetched.redirects.length !== 2) throw new Error("redirect chain lost");
+if (redirectCount(fetched.redirects) !== 2 || fetched.truncated !== true) throw new Error("fetch metadata lost");
 if (fetched.status !== "ok" || fetched.verification_status !== "unreviewed") throw new Error("status lost");
 if (sourceReferenceForIntake(fetched) !== "https://final.example/report") throw new Error("final source ref not used");
 
@@ -175,6 +190,13 @@ if (sourceReferenceForIntake(pasted) !== "operator-pasted-text-with-unverified-u
         check=False,
     )
     assert completed.returncode == 0, completed.stderr
+
+
+def test_operator_renders_redirect_chain_as_a_count():
+    html = _read(INDEX)
+
+    assert "redirects=${escapeHtml(redirectCount(intakeRecord.redirects))}" in html
+    assert "redirects=${escapeHtml(intakeRecord.redirects" not in html
 
 
 def test_operator_does_not_auto_save_or_duplicate_current_draft():
@@ -210,6 +232,62 @@ def test_operator_memory_and_sharing_controls_remain_compatible():
     assert "`Open clean Operator: ${buildCleanOperatorUrl()}`" in html
 
 
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_share_text_preserves_pasted_text_and_url_provenance():
+    helpers = _share_provenance_helpers(_read(INDEX))
+    smoke = (
+        """
+function compactText(value, maxLength) {
+  const normalized = String(value || "").trim();
+  return normalized.length <= maxLength
+    ? normalized
+    : `${normalized.slice(0, maxLength - 1)}…`;
+}
+"""
+        + helpers
+        + """
+const pasted = shareProvenanceLines({
+  source_url: "https://example.com/source",
+  intake_record: {
+    mode: "operator-pasted-text-with-url",
+    original_url: "https://example.com/source",
+    final_url: null,
+    attribution: "operator-provided-url-not-fetched"
+  }
+});
+if (!pasted[0].includes("Operator did not fetch the URL")) {
+  throw new Error("pasted text and URL boundary lost");
+}
+if (pasted[1] !== "Supplied URL (not fetched): https://example.com/source") {
+  throw new Error("unfetched URL label lost");
+}
+
+const fetched = shareProvenanceLines({
+  source_url: "https://final.example/report",
+  intake_record: {
+    mode: "controlled-url",
+    original_url: "https://origin.example/report",
+    final_url: "https://final.example/report"
+  }
+});
+if (!fetched[0].includes("controlled URL intake")) {
+  throw new Error("controlled intake provenance lost");
+}
+if (fetched[1] !== "Retrieved URL: https://final.example/report") {
+  throw new Error("retrieved URL label lost");
+}
+"""
+    )
+    completed = subprocess.run(
+        [NODE, "-"],
+        input=smoke,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
 def test_operator_url_fallback_remains_actionable():
     html = _read(INDEX)
 
@@ -222,7 +300,7 @@ def test_operator_url_fallback_remains_actionable():
     assert "Ready to read URL from controlled intake" in html
 
 
-def test_operator_install_assets_use_institutional_mark_and_cache_v019():
+def test_operator_install_assets_use_institutional_mark_and_cache_v020():
     icon = _read(ICON)
     sw = _read(SW)
 
@@ -232,10 +310,85 @@ def test_operator_install_assets_use_institutional_mark_and_cache_v019():
         icon,
         re.IGNORECASE,
     ) is None
-    assert "hub-optimus-operator-v0-19" in sw
+    assert "hub-optimus-operator-v0-20" in sw
     assert "./index.html" in sw
     assert "../assets/brand/hub-optimus-logo-lockup.png" in sw
     assert "./og.svg" in sw
+    assert "STATIC_ASSET_URLS.has(url.href)" in sw
+    assert "event.respondWith(cacheFirst(event.request))" in sw
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_operator_service_worker_serves_precached_brand_asset_offline():
+    smoke = (
+        """
+const handlers = {};
+globalThis.self = {
+  location: {
+    origin: "https://huboptimus.dev",
+    href: "https://huboptimus.dev/operator/sw.js"
+  },
+  addEventListener(name, handler) {
+    handlers[name] = handler;
+  },
+  skipWaiting() {},
+  clients: {claim() {}}
+};
+globalThis.caches = {
+  async match(request) {
+    if (request.url === "https://huboptimus.dev/assets/brand/hub-optimus-logo-lockup.png") {
+      return {source: "precache"};
+    }
+    return null;
+  },
+  async open() {
+    return {
+      async addAll() {},
+      async put() {}
+    };
+  },
+  async keys() {
+    return [];
+  },
+  async delete() {
+    return true;
+  }
+};
+globalThis.fetch = async () => {
+  throw new Error("offline");
+};
+"""
+        + _read(SW)
+        + """
+(async () => {
+  let responsePromise = null;
+  handlers.fetch({
+    request: {
+      method: "GET",
+      mode: "no-cors",
+      url: "https://huboptimus.dev/assets/brand/hub-optimus-logo-lockup.png"
+    },
+    respondWith(value) {
+      responsePromise = value;
+    }
+  });
+  if (!responsePromise) throw new Error("brand request bypassed service worker");
+  const response = await responsePromise;
+  if (response?.source !== "precache") throw new Error("precache response not used");
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+"""
+    )
+    completed = subprocess.run(
+        [NODE, "-"],
+        input=smoke,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def test_operator_result_copy_matches_local_draft_semantics():
