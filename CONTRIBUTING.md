@@ -68,7 +68,7 @@ The active Kernel and simulator.
 2. Comment on the issue to signal intent.
 3. Wait for informal assignment (to avoid duplicate work).
 4. Create a branch: `feat/<short-name>` or `chore/<short-name>`.
-5. Open a focused PR linked to the issue (`Fixes #N`).
+5. Open a focused PR linked to the issue (`Related to #N`).
 
 ---
 
