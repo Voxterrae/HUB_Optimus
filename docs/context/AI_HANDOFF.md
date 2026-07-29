@@ -156,7 +156,21 @@ Operational boundary:
 - proposed changes fail the check and appear in the GitHub Actions step
   summary; they are never applied to the source checkout;
 - retiring historical maintenance branches remains a separate audited action
-  and is not authorized or performed by the scheduled drift check.
+  and is not authorized or performed by the scheduled drift check;
+- the 881 numbered candidates and six semantic exclusions are fixed in
+  `docs/maintenance/issue-1788/maintenance-branches.manifest.v1.json`;
+- their standalone, complete-history recovery bundle is versioned beside the
+  manifest and is verified by SHA-256, empty-repository restore, exact refs,
+  commit metadata, cutoff, and strict `git fsck`;
+- `.github/workflows/retire-maintenance-branches.yml` is manual-only and
+  defaults to a `contents: read` dry-run; merge or schedule cannot activate it;
+- execution requires an exact current `main` SHA and confirmation sentence,
+  refreshes GitHub REST, open-PR, protection, and Git ref state, and permits
+  only one atomic deletion push with an exact lease for every candidate;
+- there is no batch or non-atomic fallback, and postflight records counts only
+  after all candidates are absent and pre-existing non-candidates are intact;
+- merging the retirement package does not execute or authorize the destructive
+  mode. A maintainer must review a fresh dry-run and explicitly dispatch it.
 
 ## Repository Health Count Boundary
 
