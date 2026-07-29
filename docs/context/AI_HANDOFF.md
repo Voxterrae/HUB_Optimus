@@ -95,6 +95,29 @@ Operational boundary:
 - The active workflow file, not this helper or chat context, determines
   whether scheduled maintenance invokes it.
 
+## EC2 Run Identity and Deployment Provenance Boundary
+
+Issue #1764 scopes the manually installed `ops/ec2` layer:
+
+- each `hub-core` operation creates its run directory exclusively, using a UTC
+  timestamp plus a random suffix, and emits that exact run ID;
+- the local `/analyze` API uses a per-request mode-`0600` temporary input,
+  removes it after execution, and binds its response to the run ID returned by
+  its own `hub-core` process rather than a shared "latest" lookup;
+- `deploy-current` requires one explicit full commit SHA or exact tag, resolves
+  it to a full commit SHA, and never deploys implicit branch HEAD;
+- deployment state records the actual validation command, exit code, result
+  line, and log instead of a hard-coded test count;
+- rollback verifies the target release against its recorded commit, restores
+  that release's deployment state and launcher, and writes an explicit
+  transition record;
+- deploy and rollback share one fail-fast host lock; neither operation
+  implicitly restarts the API service.
+
+These scripts remain a manually installed EC2 backend layer. Repository tests
+exercise their isolated contracts; only a reviewed deployment and runtime
+inspection can attest the state of a real EC2 host.
+
 ## Python Packaging Boundary
 
 Issue #1763 records drift between the documented Python minimum, executable
