@@ -8,9 +8,9 @@ Este documento explica cómo utilizar el núcleo de simulación prototípico que
 
 | Archivo                      | Descripción                                                                                                      |
 |-----------------------------|------------------------------------------------------------------------------------------------------------------|
-| `hub_optimus_simulator.py`  | Módulo que define las clases `Scenario`, `Actor` y `Simulator`, así como políticas sencillas de ejemplo.  Ejecuta rondas de negociación sobre escenarios ya validados. |
-| `run_scenario.py`           | Script de línea de comandos que valida un escenario JSON estricto e invoca el simulador para devolver un informe JSON.   |
-| `scenario.schema.json`      | Contrato JSON Schema canónico para los archivos de escenario ejecutables.                                         |
+| `hub_optimus_simulator.py`  | Módulo que define las clases `Scenario`, `Actor` y `Simulator`, así como políticas sencillas de ejemplo. Ejecuta rondas de negociación sobre escenarios ya validados. |
+| `run_scenario.py`           | Cargador canónico y script de línea de comandos que validan un escenario JSON estricto antes de invocar el simulador. |
+| `scenario.schema.json`      | Contrato estructural JSON Schema para los archivos de escenario ejecutables. |
 | `example_scenario.json`     | Escenario de ejemplo donde dos facciones negocian un alto el fuego parcial.                                        |
 | `i18n_sync.py`              | Utilidad para comprobar la coherencia de traducciones en la documentación (ver sección 5).                        |
 
@@ -51,7 +51,16 @@ python scripts/bootstrap.py --runtime-only --check
 
 ## 2. Estructura de un escenario
 
-Los escenarios ejecutables se describen mediante un archivo JSON que debe validar contra `scenario.schema.json`. El contrato actual es estricto: no se aceptan campos extra en la raíz del documento ni dentro de `roles[]`.
+Los escenarios ejecutables se describen mediante un archivo JSON que debe
+validar contra `scenario.schema.json`. El contrato actual es estricto: no se
+aceptan campos extra en la raíz del documento ni dentro de `roles[]`, y el
+decodificador rechaza las constantes no estándar `NaN`, `Infinity` y
+`-Infinity`. Solo se admite JSON; el runtime no implementa carga YAML.
+
+El JSON Schema valida la estructura de cada registro. El cargador canónico
+`run_scenario.load_validated_scenario()` aplica además la invariancia entre
+registros que exige nombres de actor únicos. `Scenario.from_json()` delega en
+ese mismo cargador y no introduce valores predeterminados permisivos.
 
 ```json
 {
@@ -67,7 +76,7 @@ Los escenarios ejecutables se describen mediante un archivo JSON que debe valida
 ```
 
 * `title` y `description` proporcionan contexto humano mínimo para el runtime.
-* `roles` define los actores que participarán en la negociación.  Cada elemento debe contener solo `name` y `role`.
+* `roles` define los actores que participarán en la negociación. Cada elemento debe contener solo `name` y `role`, y cada `name` debe ser único dentro del escenario.
 * `success_criteria` es un mapa de clave/valor.  La simulación se detiene cuando cualquier actor emite una acción que coincida con una clave y valor del criterio (por ejemplo, `{"offer": 5}`).
 * `max_rounds` limita el número máximo de rondas para evitar bucles infinitos.
 

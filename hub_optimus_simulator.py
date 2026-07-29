@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import copy
 import inspect
-import json
 import random
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 
@@ -72,8 +72,9 @@ def get_policy(name: str) -> NegotiationPolicy:
 class Scenario:
     """Data container for a negotiation scenario.
 
-    A scenario describes the context, participating actors and the success criteria for a negotiation.
-    It can be loaded from a JSON or YAML file (YAML support requires pyyaml).
+    A scenario describes the context, participating actors and the success
+    criteria for a negotiation. External JSON files must pass the authoritative
+    validation path exposed by ``run_scenario.load_validated_scenario``.
     """
 
     def __init__(
@@ -92,22 +93,22 @@ class Scenario:
 
     @classmethod
     def from_json(cls, filepath: str) -> "Scenario":
-        """Load a scenario from a JSON file.
+        """Load a strictly validated scenario from a JSON file.
 
-        Args:
-            filepath: Path to the scenario JSON file.
-
-        Returns:
-            A Scenario instance populated from the JSON data.
+        This compatibility method delegates to the same loader used by the
+        supported CLI. It does not supply defaults or support YAML.
         """
-        with open(filepath, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        from run_scenario import load_validated_scenario
+
+        scenario = load_validated_scenario(Path(filepath))
+        if cls is Scenario:
+            return scenario
         return cls(
-            title=data.get("title", "Unnamed scenario"),
-            description=data.get("description", ""),
-            roles=data.get("roles", []),
-            success_criteria=data.get("success_criteria", {}),
-            max_rounds=data.get("max_rounds", 5),
+            title=scenario.title,
+            description=scenario.description,
+            roles=scenario.roles,
+            success_criteria=scenario.success_criteria,
+            max_rounds=scenario.max_rounds,
         )
 
 

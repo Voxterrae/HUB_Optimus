@@ -13,12 +13,12 @@ This document describes the technical architecture of the HUB_Optimus simulation
                  │ validates against
 ┌────────────────▼────────────────────────────┐
 │  scenario.schema.json   (contract)          │
-│  JSON Schema Draft 2020-12, strict          │
+│  JSON Schema Draft 2020-12, structural      │
 └────────────────┬────────────────────────────┘
                  │ accepted by
 ┌────────────────▼────────────────────────────┐
 │  run_scenario.py        (CLI runner)        │
-│  fail-fast validation, deterministic output │
+│  strict JSON + identity invariants           │
 └────────────────┬────────────────────────────┘
                  │ delegates to
 ┌────────────────▼────────────────────────────┐
@@ -44,7 +44,11 @@ File: `scenario.schema.json`
 - **Minimums:** `minLength: 1` on strings, `minItems: 1` on roles, `minimum: 1` on `max_rounds`
 - **Required fields:** `title`, `description`, `roles`, `success_criteria`, `max_rounds`
 
-The schema is the single source of input truth. No validation logic lives outside it.
+The schema is the source of truth for document and field structure. The
+authoritative loader in `run_scenario.py` applies cross-record invariants that
+JSON Schema does not express here: actor names must be unique within one
+scenario. The schema and loader together define executable scenario input
+validity; neither layer verifies real-world truth.
 
 ---
 
@@ -53,9 +57,13 @@ The schema is the single source of input truth. No validation logic lives outsid
 File: `run_scenario.py`
 
 ### Input handling
-- Reads scenario JSON → validates against schema → rejects with `[schema-error]` prefix
+- Decodes standard JSON and rejects `NaN`, `Infinity`, and `-Infinity`
+- Validates document structure against `scenario.schema.json`
+- Rejects duplicate actor names before constructing the runtime scenario
+- `Scenario.from_json()` delegates to this same authoritative loader
 - File/path errors → rejects with `[input-error]` prefix
-- All rejections use **exit code 2** (constant `INPUT_ERROR_EXIT_CODE`)
+- JSON, schema, identity, and file/path rejections use **exit code 2**
+  (constant `INPUT_ERROR_EXIT_CODE`)
 - Write failures (permissions, bad path, disk full) → caught as `OSError`, reported cleanly
 
 ### Output guarantees
@@ -71,7 +79,8 @@ File: `run_scenario.py`
 File: `hub_optimus_simulator.py`
 
 ### Components
-- **`Scenario`** — data container loaded from validated JSON
+- **`Scenario`** — data container for validated values; its compatibility
+  `from_json()` method delegates to the authoritative loader
 - **`Actor`** — wraps a role with a policy function; default policy: `{"offer": random.randint(1, 5)}`
 - **`Simulator`** — executes rounds, passes per-round `Random` instance to each actor, checks `success_criteria`
 
@@ -97,6 +106,7 @@ File: `hub_optimus_simulator.py`
 |---|---|
 | `tests/test_smoke.py` | Basic happy path |
 | `tests/test_run_scenario_cli.py` | CLI contract: happy path, determinism, error modes, schema guard |
+| `tests/test_scenario_loading.py` | Strict JSON, actor identity, and loader-entry-point parity |
 | `tests/test_regression_runner.py` | Whitespace rejection, additional properties, write errors, output format |
 | `tests/test_check_mojibake.py` | Mojibake detection: clean files, known patterns, directory recursion |
 
