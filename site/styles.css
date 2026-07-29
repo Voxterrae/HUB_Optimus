@@ -10,6 +10,7 @@
   --paper: #f5f2e9;
   --paper-2: #ece7dc;
   --signal-amber: #d6a44f;
+  --text-muted-dark: #959793;
   --ink: #16202a;
   --ink-muted: #5f6870;
   --line-dark: rgba(234, 231, 220, 0.16);
@@ -432,7 +433,7 @@ canvas {
 
 .truth-strip dt {
   overflow: hidden;
-  color: rgba(234, 231, 220, 0.48);
+  color: var(--text-muted-dark);
   font-family: var(--font-mono);
   font-size: 0.55rem;
   letter-spacing: 0.08em;
@@ -502,7 +503,7 @@ canvas {
 .globe-toolbar small {
   display: block;
   margin-top: 0.2rem;
-  color: rgba(234, 231, 220, 0.42);
+  color: var(--text-muted-dark);
   font-size: 0.52rem;
   letter-spacing: 0.05em;
 }
@@ -609,7 +610,7 @@ canvas {
 .globe-card figcaption {
   border-top: 1px solid var(--line-dark);
   border-bottom: 0;
-  color: rgba(234, 231, 220, 0.42);
+  color: var(--text-muted-dark);
   font-size: 0.52rem;
 }
 
@@ -792,7 +793,7 @@ canvas {
 }
 
 .card-topline > span {
-  color: rgba(234, 231, 220, 0.38);
+  color: var(--text-muted-dark);
   font-family: var(--font-mono);
   font-size: 0.57rem;
   font-weight: 760;
@@ -1223,7 +1224,7 @@ canvas {
 
 .site-footer p {
   margin: 0;
-  color: rgba(234, 231, 220, 0.45);
+  color: var(--text-muted-dark);
   font-size: 0.72rem;
   text-align: center;
 }

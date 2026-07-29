@@ -786,9 +786,9 @@ def test_public_internal_anchors_and_local_assets_resolve():
 
 def test_repository_evidence_links_point_to_existing_paths():
     parser = parse_public_page()
-    repository_prefixes = (
-        "/Voxterrae/HUB_Optimus/blob/main/",
-        "/Voxterrae/HUB_Optimus/tree/main/",
+    evidence_pattern = re.compile(
+        r"^/Voxterrae/HUB_Optimus/(?:blob|tree)/"
+        r"(?P<ref>[0-9a-f]{40})/(?P<path>.+)$"
     )
 
     checked = []
@@ -796,13 +796,10 @@ def test_repository_evidence_links_point_to_existing_paths():
         parts = urlsplit(reference)
         if parts.netloc != "github.com":
             continue
-        prefix = next(
-            (candidate for candidate in repository_prefixes if parts.path.startswith(candidate)),
-            None,
-        )
-        if not prefix:
+        match = evidence_pattern.match(parts.path)
+        if not match:
             continue
-        repository_path = unquote(parts.path.removeprefix(prefix))
+        repository_path = unquote(match.group("path"))
         checked.append(repository_path)
         assert (ROOT / repository_path).exists(), reference
 
