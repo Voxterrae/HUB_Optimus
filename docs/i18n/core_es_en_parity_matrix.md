@@ -6,8 +6,9 @@ This is an evidence artifact for [issue #1749](https://github.com/Voxterrae/HUB_
 
 | Field | Value |
 | --- | --- |
-| Artifact version | 1 |
-| Comparison date | 2026-07-28 |
+| Artifact version | 2 |
+| Baseline comparison date | 2026-07-28 |
+| Corrective review date | 2026-07-30 |
 | Git baseline | `3ef199305c2d2d114f88aceb97b65a08b9f91b4a` |
 | Canonical source | Spanish, per [`docs/context/STATUS.md`](../context/STATUS.md) |
 | Parity target | English, unresolved |
@@ -23,16 +24,17 @@ Compared pairs:
 
 1. Extract every ATX Markdown heading matching `^#{1,6} ` from the six baseline files, preserving file order and exact heading text.
 2. Pair files by their shared repository filename.
-3. Compare the content governed by each heading. Map headings only when they address the same apparent subject; a matrix item may cite several headings when one language splits a subject that the other keeps together.
-4. Require every source heading to occur exactly once in the matrix. Do not infer equivalence from numbering or order alone.
-5. Assign one evidence classification:
+3. Compare the content governed by each heading. Map headings only when they address the same apparent subject; a matrix item may own several headings when one language splits a subject that the other keeps together.
+4. Require every source heading to have exactly one ownership citation in the `es` or `en` fields. When content under an already-owned heading contributes to another comparison, cite it through `cross_references` with its owner entry and a narrow scope. Cross-references do not transfer ownership, add matrix items, or affect summary counts.
+5. Validate every cross-reference against the exact owned path and heading. Do not infer equivalence from numbering or order alone, and do not count a cross-referenced heading a second time.
+6. Assign one evidence classification:
    - `translation equivalent`: the scoped propositions appear equivalent; human confirmation is still required.
    - `ES-only`: no scoped English section carries the Spanish section's subject.
    - `EN-only`: no scoped Spanish section carries the English section's subject.
    - `semantic conflict`: scopes, definitions, requirements, or normative status differ materially. This label does not decide which text should prevail.
    - `editorial/order difference`: the apparent proposition is substantially shared but split, expanded, or ordered differently, without an identified direct contradiction.
    - `unknown`: the repository evidence is insufficient to classify more precisely without human interpretation.
-6. Leave every human disposition `UNRESOLVED`. The only permitted future disposition values are `Spanish canonical wins`, `separate governance RFC`, and `English explanatory non-canonical`; this artifact chooses none.
+7. Leave every human disposition `UNRESOLVED`. The only permitted future disposition values are `Spanish canonical wins`, `separate governance RFC`, and `English explanatory non-canonical`; this artifact chooses none.
 
 Reproduce the structural audit with:
 
@@ -46,15 +48,15 @@ git diff --check
 
 | Pair | Matrix items | Translation equivalent | ES-only | EN-only | Semantic conflict | Editorial/order difference | Unknown |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Declaration | 16 | 1 | 4 | 6 | 5 | 0 | 0 |
-| Architecture | 16 | 1 | 3 | 2 | 6 | 3 | 1 |
-| Operational flow | 19 | 0 | 5 | 7 | 5 | 2 | 0 |
-| **Total** | **51** | **2** | **12** | **15** | **16** | **5** | **1** |
+| Declaration | 16 | 0 | 4 | 6 | 6 | 0 | 0 |
+| Architecture | 16 | 1 | 2 | 2 | 9 | 1 | 1 |
+| Operational flow | 19 | 0 | 5 | 6 | 7 | 1 | 0 |
+| **Total** | **51** | **1** | **11** | **14** | **22** | **2** | **1** |
 
 The largest unresolved differences are:
 
 - the English declaration assigns immutability and change-policy status that the Spanish declaration does not state in corresponding sections;
-- the architecture pair gives materially different definitions to Layers 0, 2, and 5 and supplies different I/O, constraints, and repository mappings;
+- the architecture pair gives materially different definitions to Layers 0, 2, 3, and 5 and supplies different I/O, constraints, and repository mappings;
 - the Spanish operational file describes scenario preparation and a three-round exercise, while the English file defines an eight-step signal-processing protocol;
 - English-only language about Kernel integrity, active memory, and protocol invariants cannot be imported into canonical Spanish by this audit;
 - Spanish-only priority, outcome-taxonomy, red-flag, preparation, and round-execution sections cannot be dropped merely to make the file shapes match.
@@ -67,9 +69,10 @@ The JSON block below is the authoritative data within this artifact. Tests bind 
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "baseline_commit": "3ef199305c2d2d114f88aceb97b65a08b9f91b4a",
   "baseline_date": "2026-07-28",
+  "review_correction_date": "2026-07-30",
   "canonical_language": "es",
   "parity_target": "en",
   "source_files": [
@@ -191,10 +194,10 @@ The JSON block below is the authoritative data within this artifact. Tests bind 
     {
       "id": "declaration-06",
       "pair_id": "declaration",
-      "classification": "translation equivalent",
+      "classification": "semantic conflict",
       "es": [{"path": "v1_core/languages/es/01_base_declaracion.md", "heading": "## 4) Criterio supremo"}],
       "en": [{"path": "v1_core/languages/en/01_base_declaracion.md", "heading": "### 4.2 Supreme criterion"}],
-      "evidence": "Both make medium/long-term stability and reduced future risk the supreme criterion and reject apparent success that increases later instability.",
+      "evidence": "Both make medium/long-term stability and reduced future risk the supreme criterion and reject apparent success that increases later instability. Spanish additionally requires that stability not sacrifice basic verification and coherence; English section 4.2 has no corresponding constraint.",
       "human_disposition": {
         "status": "UNRESOLVED",
         "allowed_options": ["Spanish canonical wins", "separate governance RFC", "English explanatory non-canonical"]
@@ -323,10 +326,10 @@ The JSON block below is the authoritative data within this artifact. Tests bind 
     {
       "id": "architecture-01",
       "pair_id": "architecture",
-      "classification": "editorial/order difference",
+      "classification": "semantic conflict",
       "es": [{"path": "v1_core/languages/es/02_arquitectura_base.md", "heading": "# Arquitectura base (ES)"}],
       "en": [{"path": "v1_core/languages/en/02_arquitectura_base.md", "heading": "# 02 — Architecture Baseline (Layers 0–5)"}],
-      "evidence": "Both title an architecture baseline; English adds the layer range and file number.",
+      "evidence": "Both title an architecture baseline, and English adds the layer range and file number. The Spanish H1 also governs a root preamble stating that the architecture structures and evaluates scenarios and transforms results into system improvements; no corresponding proposition appears under the English H1.",
       "human_disposition": {
         "status": "UNRESOLVED",
         "allowed_options": ["Spanish canonical wins", "separate governance RFC", "English explanatory non-canonical"]
@@ -395,10 +398,10 @@ The JSON block below is the authoritative data within this artifact. Tests bind 
     {
       "id": "architecture-07",
       "pair_id": "architecture",
-      "classification": "editorial/order difference",
+      "classification": "semantic conflict",
       "es": [{"path": "v1_core/languages/es/02_arquitectura_base.md", "heading": "### Capa 3 — Evaluación sistémica"}],
       "en": [{"path": "v1_core/languages/en/02_arquitectura_base.md", "heading": "### Layer 3 — Systemic Evaluation (Operational Core)"}],
-      "evidence": "Both evaluate medium/long-term stability and output risk classification plus a correction or intervention signal; English expands the questions and names this the operational core.",
+      "evidence": "Both evaluate medium/long-term stability, but Spanish asks one stability-impact question and emits risk, stability impact, and a correction window. English requires four fixed questions, adds an intervention-needed decision and preventive posture, and declares Layer 3 the main decision engine; these are material scope and normative-status differences.",
       "human_disposition": {
         "status": "UNRESOLVED",
         "allowed_options": ["Spanish canonical wins", "separate governance RFC", "English explanatory non-canonical"]
@@ -431,14 +434,22 @@ The JSON block below is the authoritative data within this artifact. Tests bind 
     {
       "id": "architecture-10",
       "pair_id": "architecture",
-      "classification": "ES-only",
+      "classification": "semantic conflict",
       "es": [
         {"path": "v1_core/languages/es/02_arquitectura_base.md", "heading": "## 3) Entradas y salidas del sistema (I/O)"},
         {"path": "v1_core/languages/es/02_arquitectura_base.md", "heading": "### Entrada típica (input)"},
         {"path": "v1_core/languages/es/02_arquitectura_base.md", "heading": "### Salida típica (output)"}
       ],
       "en": [],
-      "evidence": "English distributes some per-layer inputs and outputs but has no corresponding system-level scenario input and output contract with the Spanish lists.",
+      "cross_references": [
+        {"owner_entry_id": "architecture-04", "language": "en", "path": "v1_core/languages/en/02_arquitectura_base.md", "heading": "### Layer 0 — Immutable Ethical–Rational Kernel (INMUTABLE)", "scope": "Layer 0 Inputs and Outputs only"},
+        {"owner_entry_id": "architecture-05", "language": "en", "path": "v1_core/languages/en/02_arquitectura_base.md", "heading": "### Layer 1 — Human Model (Interpretative)", "scope": "Layer 1 Inputs and Outputs only"},
+        {"owner_entry_id": "architecture-06", "language": "en", "path": "v1_core/languages/en/02_arquitectura_base.md", "heading": "### Layer 2 — Observation & Detection (Optimus)", "scope": "Layer 2 Inputs and Outputs only"},
+        {"owner_entry_id": "architecture-07", "language": "en", "path": "v1_core/languages/en/02_arquitectura_base.md", "heading": "### Layer 3 — Systemic Evaluation (Operational Core)", "scope": "Layer 3 Outputs only; this section has no explicit Inputs label"},
+        {"owner_entry_id": "architecture-08", "language": "en", "path": "v1_core/languages/en/02_arquitectura_base.md", "heading": "### Layer 4 — Preventive Mediation (Discrete Intervention)", "scope": "Layer 4 Inputs and Outputs only"},
+        {"owner_entry_id": "architecture-09", "language": "en", "path": "v1_core/languages/en/02_arquitectura_base.md", "heading": "### Layer 5 — Active Memory (Anti-cycle)", "scope": "Layer 5 Inputs and Outputs only"}
+      ],
+      "evidence": "Spanish consolidates a system-level scenario input and output contract, while English distributes per-layer I/O material across Layers 0–5: Layers 0, 1, 2, 4, and 5 label both Inputs and Outputs, while Layer 3 labels Outputs only. The subjects overlap through trigger/context, incentive maps, risk signals, evaluation, mediation options, and historical patterns, but the field sets and granularity differ: Spanish includes actors, objectives, proposals, verification/compliance, and prioritized meta-learning, while English adds governance edits, Kernel decisions, interface phrasing, activation state, and memory outputs.",
       "human_disposition": {
         "status": "UNRESOLVED",
         "allowed_options": ["Spanish canonical wins", "separate governance RFC", "English explanatory non-canonical"]
@@ -652,7 +663,7 @@ The JSON block below is the authoritative data within this artifact. Tests bind 
         {"path": "v1_core/languages/en/03_flujo_operativo.md", "heading": "### Step 5 — Historical contrast"},
         {"path": "v1_core/languages/en/03_flujo_operativo.md", "heading": "### Step 6 — Kernel coherence check"}
       ],
-      "evidence": "Both invoke Layers 2, 1, 5, and 0 for incentives, human calibration, history, and Kernel coherence, but Spanish presents checkpoints and also includes Layers 3 and 4 while English splits the operations into ordered protocol steps.",
+      "evidence": "Both invoke Layers 2, 1, 5, and 0 for incentives, human calibration, history, and Kernel coherence, but Spanish presents checkpoints while English splits the operations into ordered protocol steps. The Layer 3 comparison is owned by operational-flow-10; the Layer 4 sub-scope is cross-referenced by operational-flow-13.",
       "human_disposition": {
         "status": "UNRESOLVED",
         "allowed_options": ["Spanish canonical wins", "separate governance RFC", "English explanatory non-canonical"]
@@ -661,10 +672,10 @@ The JSON block below is the authoritative data within this artifact. Tests bind 
     {
       "id": "operational-flow-12",
       "pair_id": "operational_flow",
-      "classification": "editorial/order difference",
+      "classification": "semantic conflict",
       "es": [{"path": "v1_core/languages/es/03_flujo_operativo.md", "heading": "## 6) Meta-learning (iteración)"}],
       "en": [{"path": "v1_core/languages/en/03_flujo_operativo.md", "heading": "### Step 8 — Feedback and memory update"}],
-      "evidence": "Both feed outcomes into future learning; Spanish specifies minimal patches and reruns, while English specifies recording and Active Memory reinforcement.",
+      "evidence": "Both concern learning after outcomes, but they require different operations: Spanish identifies and applies prioritized minimal patches to the scenario or template and reruns or varies it; English records outcomes and strengthens or updates Active Memory. Neither section contains the other's required target and action.",
       "human_disposition": {
         "status": "UNRESOLVED",
         "allowed_options": ["Spanish canonical wins", "separate governance RFC", "English explanatory non-canonical"]
@@ -673,10 +684,13 @@ The JSON block below is the authoritative data within this artifact. Tests bind 
     {
       "id": "operational-flow-13",
       "pair_id": "operational_flow",
-      "classification": "EN-only",
+      "classification": "semantic conflict",
       "es": [],
       "en": [{"path": "v1_core/languages/en/03_flujo_operativo.md", "heading": "### Step 7 — Preventive mediation activation (conditional)"}],
-      "evidence": "Spanish applies a preventive-layer checkpoint but has no corresponding conditional activation step, three-condition gate, action set, and mediation package output.",
+      "cross_references": [
+        {"owner_entry_id": "operational-flow-11", "language": "es", "path": "v1_core/languages/es/03_flujo_operativo.md", "heading": "## 5) Aplicación de capas (cómo usar la arquitectura en la práctica)", "scope": "Layer 4 checkpoint asking which minimal intervention avoids the failure mode"}
+      ],
+      "evidence": "Spanish carries the shared preventive-mediation checkpoint by asking which minimal intervention avoids the failure mode. English Step 7 additionally requires a three-condition activation gate, enumerates an action set, and emits a discreet mediation package; those added requirements and output are the unresolved divergence.",
       "human_disposition": {
         "status": "UNRESOLVED",
         "allowed_options": ["Spanish canonical wins", "separate governance RFC", "English explanatory non-canonical"]
