@@ -95,6 +95,25 @@ Operational boundary:
 - The active workflow file, not this helper or chat context, determines
   whether scheduled maintenance invokes it.
 
+## Simulator Isolation Boundary
+
+Issue #1755 records a verified mismatch between the runtime contract and the
+simulation kernel: seeded runs used module-global random state, repeated runs
+accumulated history, and previously returned results exposed the simulator's
+mutable history.
+
+PR #1770 restores the documented boundary:
+
+- one run-local `random.Random` instance drives all built-in actor policies;
+- seeded execution does not mutate caller-global random state;
+- each `run()` starts with empty run history;
+- returned history is a snapshot rather than live simulator state;
+- changed seed-42 benchmark bytes are reviewed and frozen explicitly.
+
+Laboratory observations derived from the previous random stream require
+separate regeneration under issue #1775; they are not silently rewritten by
+the runtime correction.
+
 ## Telemetry Input Boundary
 
 Issue #1757 records that malformed scenario files could crash telemetry or
