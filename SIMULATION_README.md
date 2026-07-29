@@ -130,7 +130,7 @@ efímeros (gitignored) y se regeneran localmente.
 | Generador | `python tools/scenario_generator/generate_scenarios.py` | Genera escenarios sintéticos por familia |
 | Telemetría | `python tools/scenario_telemetry.py` | Métricas agregadas de convergencia |
 | Mutador | `python tools/scenario_mutator.py` | Barrido de estabilidad variando un eje |
-| Búsqueda de frontera | `python tools/scenario_boundary_search.py` | Frontera de estabilidad por eje (búsqueda binaria) |
+| Búsqueda de frontera | `python tools/scenario_boundary_search.py` | Frontera por eje: búsqueda binaria para rondas y enumeración exhaustiva para actores y umbral |
 | Frontera 2D | `python tools/scenario_frontier.py` | Mapas de estabilidad en planos de dos ejes |
 
 La memoria científica del laboratorio se mantiene en `docs/lab_state.md`.

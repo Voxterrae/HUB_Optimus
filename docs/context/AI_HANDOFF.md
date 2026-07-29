@@ -148,6 +148,29 @@ Laboratory observations derived from the previous random stream require
 separate regeneration under issue #1775; they are not silently rewritten by
 the runtime correction.
 
+## Boundary Search Integrity Boundary
+
+Issue #1754 and PR #1774 record that the laboratory boundary tool treated
+non-monotonic observations as monotonic and could collapse runner errors into
+ordinary failures. The scoped correction establishes:
+
+- `rounds_min` retains binary search because a larger round budget preserves
+  the deterministic execution prefix;
+- `actors_min` enumerates actor counts 1–6 because actor count changes the
+  random stream and role-sensitive policies can lose success at a larger
+  count;
+- `threshold_max` enumerates thresholds 1–5 because success checks exact
+  equality and can fail between successful values;
+- actor and threshold state maps are retained with seed, policy, and method
+  provenance;
+- runner or result errors are explicit probe errors, not failed simulations;
+- verification re-enumerates each complete axis, including reported `None`
+  extrema, rather than checking only an adjacent value.
+
+The boundary section of `docs/lab_state.md` is regenerated from the isolated
+simulator. Other mutation, gradient, and frontier observations remain
+historical until issue #1775 regenerates them.
+
 ## Telemetry Input Boundary
 
 Issue #1757 records that malformed scenario files could crash telemetry or
