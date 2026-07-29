@@ -40,6 +40,17 @@ def _share_provenance_helpers(html: str) -> str:
     return match.group(1)
 
 
+def _canonical_intake_helpers(html: str) -> str:
+    match = re.search(
+        r"// OPERATOR_CANONICAL_INTAKE_START\n(.*?)\n"
+        r"    // OPERATOR_CANONICAL_INTAKE_END",
+        html,
+        re.DOTALL,
+    )
+    assert match is not None
+    return match.group(1)
+
+
 def test_operator_product_buttons_keep_existing_handlers():
     html = _read(INDEX)
 
@@ -48,6 +59,134 @@ def test_operator_product_buttons_keep_existing_handlers():
     assert '$("product_analyze").addEventListener("click", runProductAnalyze);' in html
     assert '$("product_load_news_demo").addEventListener("click", loadProductNewsDemo);' in html
     assert '$("product_show_advanced").addEventListener("click", openAdvancedConsole);' in html
+
+
+def test_operator_has_one_editable_canonical_intake_surface():
+    html = _read(INDEX)
+    primary, advanced = html.split(
+        '<details class="advanced-shell" id="advanced_operator_console">',
+        maxsplit=1,
+    )
+
+    assert primary.count('id="product_source_url"') == 1
+    assert primary.count('id="product_source_text"') == 1
+    assert primary.count('id="signal_source_type"') == 1
+    assert 'id="source_url"' not in advanced
+    assert 'id="source_text"' not in advanced
+    assert 'id="signal_source_type"' not in advanced
+    assert 'id="audit_source_url"' in advanced
+    assert 'id="audit_source_text"' in advanced
+    assert 'id="audit_source_type"' in advanced
+    assert re.search(
+        r"<(?:input|textarea|select)[^>]+id=\"audit_source_",
+        advanced,
+    ) is None
+    assert 'value("source_url")' not in html
+    assert 'value("source_text")' not in html
+    assert '$("source_url")' not in html
+    assert '$("source_text")' not in html
+    assert "setCanonicalIntake(" in html
+    for helper_name in ("loadNewsDemo", "loadGithubDemo"):
+        helper = re.search(
+            rf"function {helper_name}\(\) \{{(.*?)\n    \}}",
+            html,
+            re.DOTALL,
+        )
+        assert helper is not None
+        assert "setCanonicalIntake(" in helper.group(1)
+    assert '$("signal_source_type").addEventListener("change"' in html
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_canonical_intake_syncs_audit_and_invalidates_stale_drafts():
+    helpers = _canonical_intake_helpers(_read(INDEX))
+    smoke = (
+        """
+const fields = {
+  product_source_url: {value: "https://github.com/Voxterrae/HUB_Optimus/issues/1736"},
+  product_source_text: {value: "Synthetic issue report for canonical intake testing."},
+  signal_source_type: {value: "automatic"},
+  audit_source_type: {textContent: ""},
+  audit_source_url: {textContent: ""},
+  audit_source_text: {textContent: ""},
+  product_analyze: {disabled: true},
+  product_wait_status: {textContent: ""}
+};
+const $ = (id) => fields[id];
+function value(id) {
+  return $(id).value.trim();
+}
+let currentIntakeRecord = {mode: "operator-pasted-text"};
+let currentMemoryRecord = {stale: true};
+let memoryActionsEnabled = true;
+function setMemoryActionsEnabled(enabled) {
+  memoryActionsEnabled = enabled;
+}
+"""
+        + helpers
+        + """
+syncProductInputState();
+if (fields.signal_source_type.value !== "automatic") {
+  throw new Error("automatic source-type mode was not preserved");
+}
+if (
+  fields.audit_source_type.textContent !== "github-issue" ||
+  fields.audit_source_url.textContent !== fields.product_source_url.value ||
+  fields.audit_source_text.textContent !== `${fields.product_source_text.value.length} characters supplied in primary intake`
+) {
+  throw new Error("advanced audit projection diverged from canonical intake");
+}
+if (currentIntakeRecord !== null || currentMemoryRecord !== null) {
+  throw new Error("changed canonical input retained stale prepared state");
+}
+if (memoryActionsEnabled || fields.product_analyze.disabled) {
+  throw new Error("changed canonical input did not reset actions correctly");
+}
+
+currentIntakeRecord = {mode: "controlled-url", original_url: fields.product_source_url.value};
+currentMemoryRecord = {stale: true};
+memoryActionsEnabled = true;
+fields.signal_source_type.value = "documentation-drift";
+syncProductInputState({resetIntakeRecord: false});
+if (fields.audit_source_type.textContent !== "documentation-drift") {
+  throw new Error("operator source-type correction was not projected to audit");
+}
+if (currentIntakeRecord?.mode !== "controlled-url") {
+  throw new Error("source-type correction discarded valid retrieval provenance");
+}
+if (currentMemoryRecord !== null || memoryActionsEnabled) {
+  throw new Error("source-type correction retained stale shareable output");
+}
+
+setCanonicalIntake(
+  "https://example.com/report",
+  "Synthetic advanced demo source text.",
+  "news-article"
+);
+if (
+  fields.product_source_url.value !== "https://example.com/report" ||
+  fields.product_source_text.value !== "Synthetic advanced demo source text." ||
+  fields.signal_source_type.value !== "news-article"
+) {
+  throw new Error("advanced action did not update the canonical public intake");
+}
+if (
+  fields.audit_source_url.textContent !== "https://example.com/report" ||
+  fields.audit_source_text.textContent !== "36 characters supplied in primary intake" ||
+  fields.audit_source_type.textContent !== "news-article"
+) {
+  throw new Error("advanced action left a stale audit projection");
+}
+"""
+    )
+    completed = subprocess.run(
+        [NODE, "-"],
+        input=smoke,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def test_operator_uses_only_controlled_url_intake_fetch():
