@@ -28,6 +28,10 @@ def load_case(path: Path) -> dict[str, Any]:
         raw = path.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
         raise ControlledCliError(f"input file not found: {path}") from exc
+    except UnicodeError as exc:
+        raise ControlledCliError(
+            f"input file is not valid UTF-8: {path}"
+        ) from exc
     except OSError as exc:
         raise ControlledCliError(f"cannot read input file {path}: {exc}") from exc
 

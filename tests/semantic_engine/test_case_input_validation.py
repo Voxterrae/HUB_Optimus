@@ -172,6 +172,20 @@ def test_cli_reports_controlled_json_path_without_traceback(tmp_path):
     assert "Traceback" not in result.stderr
 
 
+def test_cli_rejects_invalid_utf8_without_traceback(tmp_path):
+    case_path = tmp_path / "invalid-utf8.json"
+    case_path.write_bytes(
+        b'{"case_id":"broken","input_summary":"' + b"\xff" + b'"}'
+    )
+
+    result = run_cli(case_path)
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "input file is not valid UTF-8" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
 def test_operator_and_api_handoff_reach_the_same_cli_contract():
     operator = (ROOT / "site" / "operator" / "index.html").read_text(
         encoding="utf-8"
