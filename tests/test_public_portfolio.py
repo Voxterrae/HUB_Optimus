@@ -686,6 +686,10 @@ def test_globe_uses_real_geojson_with_attribution_and_accessible_controls():
     assert "@media (prefers-reduced-motion: reduce)" in css
     assert "touch-action: none" in css
     assert ".no-js #world-globe" in css
+    assert "function disableGlobeInteraction()" in app
+    assert 'canvas.removeAttribute("tabindex")' in app
+    assert "canvas.hidden = true" in app
+    assert app.count("disableGlobeInteraction();") == 3
 
 
 def test_public_files_exclude_rejected_branding_and_aggressive_language():
