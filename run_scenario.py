@@ -19,6 +19,10 @@ SCHEMA_PATH = Path(__file__).parent / "scenario.schema.json"
 INPUT_ERROR_EXIT_CODE = 2
 
 
+class ScenarioInputError(Exception):
+    """A controlled failure while reading the user-supplied scenario file."""
+
+
 def _load_schema() -> dict[str, Any]:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
@@ -35,7 +39,12 @@ def validate_scenario_payload(payload: object) -> list[str]:
 
 def load_validated_scenario(scenario_path: Path) -> Scenario:
     try:
-        payload: Any = json.loads(scenario_path.read_text(encoding="utf-8"))
+        source = scenario_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise ScenarioInputError(f"cannot read scenario file: {exc}") from exc
+
+    try:
+        payload: Any = json.loads(source)
     except json.JSONDecodeError as exc:
         raise ValueError(
             f"Invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
@@ -113,6 +122,9 @@ def main() -> int:
 
     try:
         scenario = load_validated_scenario(scenario_path)
+    except ScenarioInputError as exc:
+        print(f"[input-error] {exc}", file=sys.stderr)
+        return INPUT_ERROR_EXIT_CODE
     except ValueError as exc:
         print(f"[schema-error] {exc}", file=sys.stderr)
         return INPUT_ERROR_EXIT_CODE

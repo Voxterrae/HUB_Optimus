@@ -1,9 +1,12 @@
-const CACHE_NAME = "hub-optimus-operator-v0-17";
+const CACHE_NAME = "hub-optimus-operator-v0-19";
 const OFFLINE_FALLBACK = "./index.html";
 const STATIC_ASSETS = [
+  "./",
+  "./index.html",
   "./manifest.webmanifest",
   "./icon.svg",
-  "./og.svg"
+  "./og.svg",
+  "../assets/brand/hub-optimus-logo-lockup.png"
 ];
 
 async function cacheStaticAssets() {
@@ -55,7 +58,9 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
       keys
-        .filter((key) => key !== CACHE_NAME)
+        .filter((
+          key
+        ) => key.startsWith("hub-optimus-operator-") && key !== CACHE_NAME)
         .map((key) => caches.delete(key))
     ))
   );
