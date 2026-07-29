@@ -6,20 +6,20 @@
         "offer": 1
       },
       "Faction_B": {
-        "offer": 2
-      }
-    },
-    {
-      "Faction_A": {
-        "offer": 4
-      },
-      "Faction_B": {
-        "offer": 5
+        "offer": 1
       }
     },
     {
       "Faction_A": {
         "offer": 3
+      },
+      "Faction_B": {
+        "offer": 2
+      }
+    },
+    {
+      "Faction_A": {
+        "offer": 2
       },
       "Faction_B": {
         "offer": 2

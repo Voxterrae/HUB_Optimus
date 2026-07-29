@@ -1,3 +1,6 @@
+# Private local intake (raw, unverified, never publish automatically)
+/.local/intake/
+
 # Local link-check reports
 lychee_*.txt
 md_files.txt

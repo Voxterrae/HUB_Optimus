@@ -1,5 +1,5 @@
 """
-Command-line utility to run negotiation scenarios with fail-fast input validation.
+Authoritative scenario loader and CLI with fail-fast input validation.
 """
 
 from __future__ import annotations
@@ -8,7 +8,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 import jsonschema
 
@@ -19,27 +19,74 @@ SCHEMA_PATH = Path(__file__).parent / "scenario.schema.json"
 INPUT_ERROR_EXIT_CODE = 2
 
 
+class ScenarioInputError(Exception):
+    """A controlled failure while reading the user-supplied scenario file."""
+
+
 def _load_schema() -> dict[str, Any]:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
+def _reject_non_standard_json_constant(value: str) -> NoReturn:
+    raise ValueError(f"non-standard JSON constant {value!r} is not permitted")
+
+
+def _actor_identity_errors(payload: object) -> list[str]:
+    """Return cross-record actor identity errors after structural validation."""
+    if not isinstance(payload, dict):
+        return []
+    roles = payload.get("roles")
+    if not isinstance(roles, list):
+        return []
+
+    errors: list[str] = []
+    first_index_by_name: dict[str, int] = {}
+    for index, role in enumerate(roles):
+        if not isinstance(role, dict):
+            continue
+        name = role.get("name")
+        if not isinstance(name, str):
+            continue
+        if name in first_index_by_name:
+            errors.append(
+                f"roles.{index}.name: duplicate actor name {name!r}; "
+                f"first declared at roles.{first_index_by_name[name]}.name"
+            )
+        else:
+            first_index_by_name[name] = index
+    return errors
+
+
 def validate_scenario_payload(payload: object) -> list[str]:
+    """Return structural schema and cross-record identity errors."""
     schema = _load_schema()
     validator = jsonschema.Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(payload), key=lambda e: list(e.path))
-    return [
+    messages = [
         f"{'.'.join(str(p) for p in e.path)}: {e.message}" if e.path else e.message
         for e in errors
     ]
+    messages.extend(_actor_identity_errors(payload))
+    return messages
 
 
 def load_validated_scenario(scenario_path: Path) -> Scenario:
     try:
-        payload: Any = json.loads(scenario_path.read_text(encoding="utf-8"))
+        source = scenario_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise ScenarioInputError(f"cannot read scenario file: {exc}") from exc
+
+    try:
+        payload: Any = json.loads(
+            source,
+            parse_constant=_reject_non_standard_json_constant,
+        )
     except json.JSONDecodeError as exc:
         raise ValueError(
             f"Invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
         ) from exc
+    except ValueError as exc:
+        raise ValueError(f"Invalid JSON: {exc}") from exc
 
     errors = validate_scenario_payload(payload)
     if errors:
@@ -113,6 +160,9 @@ def main() -> int:
 
     try:
         scenario = load_validated_scenario(scenario_path)
+    except ScenarioInputError as exc:
+        print(f"[input-error] {exc}", file=sys.stderr)
+        return INPUT_ERROR_EXIT_CODE
     except ValueError as exc:
         print(f"[schema-error] {exc}", file=sys.stderr)
         return INPUT_ERROR_EXIT_CODE
@@ -121,10 +171,11 @@ def main() -> int:
     result = simulator.run(seed=args.seed)
     output_path = Path(args.output) if args.output else scenario_path.with_suffix(".result.json")
     try:
-        output_path.write_text(
-            json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
+        with output_path.open("w", encoding="utf-8", newline="\n") as output_file:
+            output_file.write(
+                json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False)
+                + "\n"
+            )
     except OSError as exc:
         print(f"[input-error] cannot write output file: {exc}", file=sys.stderr)
         return INPUT_ERROR_EXIT_CODE

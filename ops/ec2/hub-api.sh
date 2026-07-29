@@ -15,9 +15,11 @@ import datetime as dt
 import html
 import ipaddress
 import json
+import os
 import re
 import socket
 import subprocess
+import tempfile
 from html.parser import HTMLParser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -31,11 +33,14 @@ SHARED = APP_ROOT / "shared"
 
 MAX_URL_LENGTH = 2048
 MAX_URL_BODY_LENGTH = 4096
+MAX_ANALYZE_BODY_LENGTH = 64_000
 MAX_URL_BYTES = 1_000_000
 MAX_EXTRACTED_TEXT_CHARS = 24_000
 MAX_REDIRECTS = 3
 URL_TIMEOUT_SECONDS = 8
 USER_AGENT = "HUB_Optimus-Operator-URL-Intake/0.1 (+https://huboptimus.dev/operator/)"
+CORE_RUN_ID_PREFIX = "[hub-core:run-id] "
+CORE_RUN_ID_PATTERN = re.compile(r"\A\d{8}T\d{6}Z\.[A-Za-z0-9]{6}\Z")
 
 
 class IntakeError(Exception):
@@ -156,12 +161,16 @@ def product_status() -> dict:
     }
 
 
-def latest_run_id(command: str) -> str | None:
-    command_dir = SHARED / "runs" / command
-    if not command_dir.is_dir():
+def core_run_id(stdout: str) -> str | None:
+    candidates = [
+        line.removeprefix(CORE_RUN_ID_PREFIX)
+        for line in stdout.splitlines()
+        if line.startswith(CORE_RUN_ID_PREFIX)
+    ]
+    if len(candidates) != 1:
         return None
-    runs = sorted(p.name for p in command_dir.iterdir() if p.is_dir())
-    return runs[-1] if runs else None
+    run_id = candidates[0]
+    return run_id if CORE_RUN_ID_PATTERN.fullmatch(run_id) else None
 
 
 def blocked_ip_reason(ip_text: str) -> str | None:
@@ -394,14 +403,38 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
-    def read_json_body(self) -> dict | None:
-        length = int(self.headers.get("Content-Length", "0"))
+    def read_json_body(self, max_body_length: int) -> dict | None:
+        content_length = self.headers.get("Content-Length")
 
-        if length > MAX_URL_BODY_LENGTH:
-            self.send_json(413, {"error": "request body too large"})
+        if content_length is None:
+            self.send_json(411, {"error": "Content-Length header is required"})
             return None
 
-        raw = self.rfile.read(length).decode("utf-8")
+        try:
+            length = int(content_length)
+        except ValueError:
+            self.send_json(400, {"error": "Content-Length header must be an integer"})
+            return None
+
+        if length < 0:
+            self.send_json(400, {"error": "Content-Length header must not be negative"})
+            return None
+
+        if length > max_body_length:
+            self.send_json(
+                413,
+                {
+                    "error": "request body too large",
+                    "limit_bytes": max_body_length,
+                },
+            )
+            return None
+
+        try:
+            raw = self.rfile.read(length).decode("utf-8")
+        except UnicodeDecodeError:
+            self.send_json(400, {"error": "request body must be valid UTF-8"})
+            return None
 
         try:
             payload = json.loads(raw)
@@ -416,7 +449,7 @@ class Handler(BaseHTTPRequestHandler):
         return payload
 
     def handle_url_intake(self) -> None:
-        payload = self.read_json_body()
+        payload = self.read_json_body(MAX_URL_BODY_LENGTH)
         if payload is None:
             return
 
@@ -440,50 +473,93 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json(200, result)
 
     def handle_analyze(self) -> None:
-        payload = self.read_json_body()
+        payload = self.read_json_body(MAX_ANALYZE_BODY_LENGTH)
         if payload is None:
             return
 
         case_dir = SHARED / "api" / "cases"
-        case_dir.mkdir(parents=True, exist_ok=True)
-        case_path = case_dir / "api-case.json"
-        case_path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
+        case_path: Path | None = None
+        try:
+            case_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+            case_dir.chmod(0o700)
+            descriptor, raw_case_path = tempfile.mkstemp(
+                prefix="case-",
+                suffix=".json",
+                dir=case_dir,
+            )
+            case_path = Path(raw_case_path)
+            with os.fdopen(
+                descriptor,
+                "w",
+                encoding="utf-8",
+                newline="\n",
+            ) as case_file:
+                case_file.write(
+                    json.dumps(
+                        payload,
+                        indent=2,
+                        sort_keys=True,
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+        except OSError as exc:
+            if case_path is not None:
+                try:
+                    case_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+            self.send_json(500, {"error": f"cannot create temporary case input: {exc}"})
+            return
 
-        before_latest = latest_run_id("analyze")
+        cleanup_error: OSError | None = None
+        try:
+            code, stdout, stderr = run_command([
+                "/opt/hub-optimus/shared/bin/hub-core",
+                "analyze",
+                str(case_path),
+            ])
+        except OSError as exc:
+            code, stdout, stderr = 1, "", str(exc)
+        finally:
+            try:
+                case_path.unlink()
+            except OSError as exc:
+                cleanup_error = exc
 
-        code, stdout, stderr = run_command([
-            "/opt/hub-optimus/shared/bin/hub-core",
-            "analyze",
-            str(case_path),
-        ])
+        if cleanup_error is not None:
+            self.send_json(500, {"error": "cannot remove temporary case input"})
+            return
 
-        after_latest = latest_run_id("analyze")
-
+        run_id = core_run_id(stdout)
         if code != 0:
+            failure = {
+                "error": "analysis failed",
+                "stderr": stderr,
+                "stdout": stdout,
+            }
+            if run_id is not None:
+                failure["run_id"] = run_id
+                failure["run_path"] = str(
+                    SHARED / "runs" / "analyze" / run_id
+                )
+            self.send_json(
+                500,
+                failure,
+            )
+            return
+
+        if run_id is None:
             self.send_json(
                 500,
                 {
-                    "error": "analysis failed",
-                    "stderr": stderr,
+                    "error": "analysis completed without one valid run identity",
                     "stdout": stdout,
                 },
             )
             return
 
-        if not after_latest or after_latest == before_latest:
-            self.send_json(
-                500,
-                {
-                    "error": "analysis completed but run output was not detected",
-                    "stdout": stdout,
-                },
-            )
-            return
-
-        run_path = SHARED / "runs" / "analyze" / after_latest
+        run_path = SHARED / "runs" / "analyze" / run_id
         result_path = run_path / "analysis_result.json"
 
         try:
@@ -499,7 +575,7 @@ class Handler(BaseHTTPRequestHandler):
             200,
             {
                 "status": "ok",
-                "run_id": after_latest,
+                "run_id": run_id,
                 "run_path": str(run_path),
                 "analysis_result": analysis_result,
             },

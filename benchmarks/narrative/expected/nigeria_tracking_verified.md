@@ -1,0 +1,17 @@
+# Narrative Risk Report
+
+Claim ID: `NR-013`
+
+## Claim
+A screenshot claims Nigeria launched an AI-driven system to identify irregular migrants and visa overstays.
+
+## Evidence
+- The visible source is identified as The Sun, a press report rather than an official system record.
+- The headline shown supports the existence of an announcement about AI-assisted border control and overstays.
+
+## Inference
+The cited report supports the narrow announcement claim. It does not verify every overlay detail, including decade-long traveler monitoring.
+
+## Mitigation
+- Record the narrow announcement as press-supported without promoting every overlay detail.
+- Seek an official ministry notice before asserting system scope, retention, or historical coverage.

@@ -5,14 +5,6 @@ import re
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 
-PINNED_WORKFLOWS = {
-    "ci.yml",
-    "link-check.yml",
-    "pages.yml",
-    "pr-safety-check.yml",
-    "repo-health-summary.yml",
-}
-
 EXPECTED_ACTION_PINS = {
     "actions/checkout": (
         "3d3c42e5aac5ba805825da76410c181273ba90b1",
@@ -47,27 +39,27 @@ USES_PATTERN = re.compile(
 COMMIT_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 
 
-def test_non_overlapping_workflows_pin_actions_to_reviewed_commits() -> None:
+def test_every_workflow_pins_actions_to_reviewed_commits() -> None:
     observed_actions: set[str] = set()
 
-    for workflow_name in PINNED_WORKFLOWS:
-        source = (WORKFLOW_DIR / workflow_name).read_text(encoding="utf-8")
+    for workflow_path in sorted(WORKFLOW_DIR.glob("*.yml")):
+        source = workflow_path.read_text(encoding="utf-8")
         references = USES_PATTERN.findall(source)
-        assert references, f"{workflow_name} must contain at least one action"
 
         for action, ref, version in references:
             assert action in EXPECTED_ACTION_PINS, (
-                f"{workflow_name} introduces unreviewed action {action}"
+                f"{workflow_path.name} introduces unreviewed action {action}"
             )
             assert COMMIT_SHA_PATTERN.fullmatch(ref), (
-                f"{workflow_name} uses mutable action ref {action}@{ref}"
+                f"{workflow_path.name} uses mutable action ref {action}@{ref}"
             )
             expected_ref, expected_version = EXPECTED_ACTION_PINS[action]
             assert ref == expected_ref, (
-                f"{workflow_name} changed the reviewed commit for {action}"
+                f"{workflow_path.name} changed the reviewed commit for {action}"
             )
             assert version == expected_version, (
-                f"{workflow_name} must identify {action}@{ref} as {expected_version}"
+                f"{workflow_path.name} must identify "
+                f"{action}@{ref} as {expected_version}"
             )
             observed_actions.add(action)
 

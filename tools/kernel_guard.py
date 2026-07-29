@@ -9,38 +9,53 @@ from typing import Iterable
 
 DEFAULT_PROTECTED_PREFIXES = (
     "docs/governance/",
+    "tools/kernel_guard.py",
     "v1_core/languages/es/",
 )
 
 
-def _run_git(cmd: list[str]) -> str:
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+def _run_git_bytes(cmd: list[str]) -> bytes:
+    proc = subprocess.run(cmd, capture_output=True, check=False)
     if proc.returncode != 0:
-        stderr = proc.stderr.strip()
+        stderr = proc.stderr.decode("utf-8", errors="replace").strip()
         raise RuntimeError(f"git command failed: {' '.join(cmd)}\n{stderr}")
     return proc.stdout
 
 
+def _decode_path(path: bytes) -> str:
+    return path.decode("utf-8", errors="surrogateescape")
+
+
 def changed_files(base_ref: str | None, head_ref: str) -> list[str]:
     if base_ref:
-        output = _run_git(
+        output = _run_git_bytes(
             [
                 "git",
                 "diff",
                 "--name-only",
-                "--diff-filter=MCR",
+                "-z",
+                "--no-renames",
+                "--diff-filter=ACDMRTUXB",
                 f"{base_ref}..{head_ref}",
             ]
         )
-        return [line.strip() for line in output.splitlines() if line.strip()]
+        return [_decode_path(path) for path in output.split(b"\0") if path]
 
     # Backward-compatible local mode: inspect working tree changes.
-    output = _run_git(["git", "status", "--porcelain"])
+    output = _run_git_bytes(["git", "status", "--porcelain=v1", "-z"])
     files: list[str] = []
-    for line in output.splitlines():
-        if not line.strip():
+    entries = iter(output.split(b"\0"))
+    for entry in entries:
+        if not entry:
             continue
-        files.append(line[3:].strip())
+        status = entry[:2]
+        path = entry[3:]
+        if path:
+            files.append(_decode_path(path))
+        if b"R" in status or b"C" in status:
+            original_path = next(entries, b"")
+            if original_path:
+                files.append(_decode_path(original_path))
     return files
 
 
@@ -50,7 +65,7 @@ def protected_changes(paths: Iterable[str], prefixes: tuple[str, ...]) -> list[s
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Block modifications to existing protected kernel/governance paths unless override is enabled. New file additions to protected paths are allowed."
+        description="Block changes to protected kernel/governance paths unless override is enabled."
     )
     parser.add_argument(
         "--base-ref",

@@ -1,52 +1,151 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0f14">
   <title>Page not found — HUB_Optimus</title>
+  <script src="/404.js" defer></script>
   <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b0f14;
+      color: #eae7dc;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
       display: grid;
       place-items: center;
-      padding: 1rem;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
-      background: #0d1117;
-      color: #f0f6fc;
+      padding: 1.25rem;
+      background:
+        radial-gradient(circle at 16% 18%, rgb(11 61 145 / 24%), transparent 34rem),
+        linear-gradient(145deg, #111923, #0b0f14 58%);
     }
 
     main {
-      max-width: 42rem;
-      padding: 2rem;
-      border: 1px solid #30363d;
-      border-radius: 1rem;
-      background: #161b22;
+      width: min(100%, 48rem);
+      padding: clamp(1.5rem, 4vw, 3.5rem);
+      border: 1px solid #263645;
+      border-radius: 1.25rem;
+      background: rgb(17 25 35 / 92%);
+      box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 32%);
     }
 
+    .eyebrow {
+      margin: 0 0 1rem;
+      color: #d6a44f;
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.4rem, 8vw, 5rem);
+      line-height: .95;
+    }
+
+    p {
+      max-width: 62ch;
+      margin: 1.25rem 0 0;
+      color: #c8d0d8;
+      line-height: 1.7;
+    }
+
+    nav,
+    .languages {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .7rem;
+      margin-top: 2rem;
+    }
+
+    button,
     a {
-      color: #58a6ff;
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.8rem;
+      padding: .65rem 1rem;
+      border: 1px solid #3b4d5d;
+      border-radius: 999px;
+      background: transparent;
+      color: #eae7dc;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    button {
+      min-height: 2.35rem;
+      padding: .42rem .7rem;
+      cursor: pointer;
+      direction: ltr;
+      font-size: .78rem;
+      unicode-bidi: isolate;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: #eae7dc;
+      background: #eae7dc;
+      color: #0b0f14;
+    }
+
+    nav a:first-child {
+      border-color: #d6a44f;
+      background: #d6a44f;
+      color: #0b0f14;
+    }
+
+    a:focus-visible,
+    a:hover,
+    button:focus-visible,
+    button:hover {
+      outline: 2px solid #d6a44f;
+      outline-offset: 3px;
+    }
+
+    .review-note {
+      color: #8ca0b3;
+      font-size: .82rem;
+    }
+
+    [dir="rtl"] [data-i18n] {
+      unicode-bidi: isolate;
+    }
+
+    [dir="rtl"] .eyebrow {
+      direction: ltr;
+      unicode-bidi: isolate;
     }
   </style>
 </head>
 <body>
   <main>
-    <h1>Page not found</h1>
-    <p>huboptimus.dev serves the public HUB_Optimus landing page only.</p>
-    <p>Repository files and versioned documentation live on GitHub. Paths such as <code>/HUB_Optimus/...</code> are not valid on this custom domain.</p>
-    <p>
-      <a href="/">Return to HUB_Optimus</a> |
-      <a href="https://github.com/Voxterrae/HUB_Optimus">Repository</a> |
-      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/README.md">README</a> |
-      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/IP_NOTICE.md">IP Notice</a>
-    </p>
-    <p>
-      Onboarding:
-      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/00_start_here.md">EN</a> |
-      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/es/00_start_here.md">ES</a> |
-      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/de/00_start_here.md">DE</a>
-    </p>
+    <p class="eyebrow">HUB_Optimus · 404</p>
+    <h1 data-i18n="heading">Page not found</h1>
+    <p data-i18n="copy">This address is not part of the versioned public site. Return to the portfolio or inspect the repository, which remains the project source of truth.</p>
+    <div class="languages" role="group" aria-label="Language" data-i18n-aria="languageAria">
+      <button type="button" data-language="es" lang="es">ES</button>
+      <button type="button" data-language="en" lang="en">EN</button>
+      <button type="button" data-language="de" lang="de">DE</button>
+      <button type="button" data-language="ru" lang="ru" aria-label="Русский">RU</button>
+      <button type="button" data-language="he" lang="he" aria-label="עברית">HE</button>
+      <button type="button" data-language="zh-Hans" lang="zh-Hans" aria-label="简体中文">简中</button>
+    </div>
+    <nav aria-label="Available routes" data-i18n-aria="routesAria">
+      <a href="/" data-i18n="portfolio">Return to portfolio</a>
+      <a href="/operator/" data-i18n="operator">Open Operator</a>
+      <a href="https://github.com/Voxterrae/HUB_Optimus" data-i18n="github">View GitHub</a>
+    </nav>
+    <p class="review-note" data-i18n="review">English, Spanish, and German received an AI-assisted terminology and register audit; named qualified human review is still required. Russian, Hebrew, and Simplified Chinese remain machine-assisted drafts.</p>
   </main>
 </body>
 </html>
