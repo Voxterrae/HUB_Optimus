@@ -8,6 +8,12 @@ synthetic scenarios — not code changes, but **behavioural observations**.
 Update this file when telemetry reveals a new pattern or when a
 previously observed pattern changes after a code modification.
 
+The boundary-search section was regenerated after simulator isolation
+(PR #1770), from `origin/main` at `f1fb2e1` plus the scoped boundary-search
+correction. Mutation, gradient, and frontier observations not explicitly
+marked as regenerated remain historical evidence from the earlier random
+stream and require separate regeneration under issue #1775.
+
 ---
 
 ## Current state
@@ -188,69 +194,76 @@ Tool: `python tools/scenario_mutator.py` (3 axes, 62 mutations from
 
 ## Boundary search (automatic instability discovery)
 
-Binary search finds the exact stability boundary for each axis on
-each family with O(log N) probes instead of exhaustive sweeps.
+`rounds_min` uses binary search because increasing `max_rounds` preserves
+the deterministic execution prefix. `actors_min` enumerates 1–6 because
+changing actor count changes subsequent random values, and
+`threshold_max` enumerates 1–5 because success uses exact equality.
+
+For actor count and threshold, “minimum” and “maximum” mean the extrema of
+the successful values actually enumerated. They do not imply that every
+larger or smaller value also succeeds.
 
 Tool: `python tools/scenario_boundary_search.py --seeds 42,99,7,123,256`
+
+Provenance: generated bases use generator seed 42; probes use the listed
+seeds and the simulator-default policy. The scenarios are synthetic
+runtime observations, not real-world predictions.
 
 ### Single-seed boundaries (seed 42)
 
 | Family | rounds_min | actors_min | threshold_max |
 |---|---|---|---|
-| incentive_misalignment | 2 | 1 | 5 |
-| info_asymmetry | 3 | 2 | 5 |
-| resource_scarcity | 1 | 2 | 5 |
+| incentive_misalignment | 1 | 1 | 5 |
+| info_asymmetry | 2 | 1 | 5 |
+| resource_scarcity | 2 | 3 | 5 |
 
 ### Multi-seed consensus (worst-case across 5 seeds)
 
 | Family | rounds_min | actors_min | threshold_max |
 |---|---|---|---|
-| incentive_misalignment | **3** | **2** | 5 |
-| info_asymmetry | **4** | **2** | **4** |
+| incentive_misalignment | **4** | **2** | 5 |
+| info_asymmetry | **5** | **3** | **4** |
 | resource_scarcity | **3** | **4** | 5 |
 
 ### Key findings from multi-seed analysis
 
-1. **Single-seed results are optimistic.** Seed 42 showed
-   resource_scarcity stable at actors=2; but seed 99 requires actors=4.
-   Single-seed boundaries are necessary but not sufficient.
+1. **Single-seed results are insufficient.** Seed 42 records
+   `info_asymmetry` at `rounds_min=2`, while seed 99 records 5.
 
-2. **info_asymmetry is confirmed most fragile.** Needs 4 rounds AND
-   2+ actors AND threshold ≤ 4. It is the only family where threshold
-   constrains stability.
+2. **`info_asymmetry` has the largest sampled round minimum.** Across
+   these five seeds its consensus is 5 rounds and 3 actors, and it is
+   the only family whose sampled `threshold_max` falls below 5.
 
-3. **resource_scarcity shifts from most resilient to most demanding
-   in actor count.** Seed 99 pushes actors_min to 4 — the highest of
-   any family. The previous observation (resilient at rounds=1) was
-   seed-dependent.
+3. **`resource_scarcity` has the largest sampled actor minimum.**
+   Seed 256 records `actors_min=4`.
 
-4. **Threshold is nearly always unconstrained.** Only info_asymmetry
-   at seed 99 shows threshold_max < 5. The random policy's uniform
-   distribution over [1, 5] makes threshold failures rare except under
-   tight round budgets.
+4. **Actor and threshold extrema are not monotonic guarantees.** Every
+   value is retained in `actors_probe_states` or
+   `threshold_probe_states`; the extrema are summaries of that evidence.
 
-5. **Seed 99 is the most adversarial seed tested.** It shifts
-   boundaries for all three families, revealing that seed 42 was a
-   particularly lenient RNG path.
+5. **These findings are seed- and policy-specific simulator results.**
+   They do not establish external stability, causality, or prediction.
 
 ### Per-seed detail
 
 | Family | Seed 42 | Seed 99 | Seed 7 | Seed 123 | Seed 256 |
 |---|---|---|---|---|---|
-| info_asymmetry rounds | 3 | 1 | 3 | **4** | 3 |
-| info_asymmetry actors | 2 | 1 | 2 | 2 | 2 |
-| info_asymmetry threshold | 5 | **4** | 5 | 5 | 5 |
-| resource_scarcity rounds | 1 | **3** | 1 | 1 | 1 |
-| resource_scarcity actors | 2 | **4** | 2 | 1 | 1 |
-| incentive_misalignment rounds | 2 | 1 | 2 | **3** | 2 |
-| incentive_misalignment actors | 1 | 1 | 2 | 2 | 2 |
+| info_asymmetry rounds | 2 | **5** | 1 | 1 | 1 |
+| info_asymmetry actors | 1 | **3** | 1 | 1 | 1 |
+| info_asymmetry threshold | 5 | 5 | 5 | **4** | **4** |
+| resource_scarcity rounds | 2 | 1 | 2 | **3** | **3** |
+| resource_scarcity actors | 3 | 2 | 2 | 3 | **4** |
+| incentive_misalignment rounds | 1 | **4** | 1 | 1 | 1 |
+| incentive_misalignment actors | 1 | **2** | 1 | 1 | 1 |
 
 ---
 
 ## Boundary verification
 
-After finding boundaries, automated verification confirms consistency:
-boundary converges, boundary-1 fails (or boundary+1 fails for max).
+After finding boundaries, automated verification re-enumerates every
+value in each axis. It compares the reported minimum or maximum with the
+extremum recomputed from the full state map, including valid `None`
+results when every probe fails.
 
 Tool: `python tools/scenario_boundary_search.py --seeds 1,42,123 --verify`
 
@@ -258,32 +271,35 @@ Tool: `python tools/scenario_boundary_search.py --seeds 1,42,123 --verify`
 
 | Family | Seed 1 | Seed 42 | Seed 123 | Consensus |
 |---|---|---|---|---|
-| incentive_misalignment rounds | 3 | 2 | 3 | **3** |
-| incentive_misalignment actors | 2 | 1 | 2 | **2** |
+| incentive_misalignment rounds | 2 | 1 | 1 | **2** |
+| incentive_misalignment actors | 1 | 1 | 1 | 1 |
 | incentive_misalignment threshold | 5 | 5 | 5 | 5 |
-| info_asymmetry rounds | 4 | 3 | 4 | **4** |
-| info_asymmetry actors | 2 | 2 | 2 | 2 |
-| info_asymmetry threshold | None | 5 | 5 | 5 |
-| resource_scarcity rounds | 1 | 1 | 1 | 1 |
-| resource_scarcity actors | 1 | 2 | 1 | **2** |
-| resource_scarcity threshold | None | 5 | 5 | 5 |
+| info_asymmetry rounds | 2 | 2 | 1 | **2** |
+| info_asymmetry actors | 1 | 1 | 1 | 1 |
+| info_asymmetry threshold | 5 | 5 | 4 | **4** |
+| resource_scarcity rounds | 1 | 2 | 3 | **3** |
+| resource_scarcity actors | 1 | 3 | 3 | **3** |
+| resource_scarcity threshold | 5 | 5 | 5 | 5 |
 
 ### Verification result: ALL PASSED
 
-All per-seed boundaries verified: each seed's own boundaries are
-consistent (boundary passes, boundary−1 fails).
+All per-seed extrema verified against fresh exhaustive state maps.
 
-### Discovery: axis coupling
+### Discovery: non-monotonic axes
 
-Seed 1 produces `threshold=None` for info_asymmetry and
-resource_scarcity. This does NOT mean threshold is unconstrained —
-it means the base scenario's `max_rounds` is insufficient for seed 1's
-RNG path, so threshold testing inherits the round failure. The axes
-are coupled: threshold stability depends on the base scenario's round
-budget.
+With seed 2 and the simulator-default policy, both
+`info_asymmetry_001` and `resource_scarcity_021` record threshold states:
 
-This is a structural property of single-axis boundary search. A full
-bifurcation frontier (multi-axis) would decouple this.
+`success, success, success, failure, success`
+
+With seed 11 and the biased policy, `incentive_misalignment_041` records
+actor states:
+
+`failure, failure, success, success, success, failure`
+
+The first sequence has `threshold_max=5`; the second has
+`actors_min=3`. Binary search cannot recover either extremum reliably,
+which is why those axes are enumerated.
 
 ---
 
@@ -580,13 +596,13 @@ that improves one plane can worsen another.
   base telemetry.
 - Does adding a mediator role measurably change convergence speed?
 - ~~At what `max_rounds` threshold does resource scarcity stop being
-  failure-dominant?~~ Answered: resource_scarcity converges even at
-  rounds=1 (threshold=4 with seed 42). It's fragile only at actors=1.
+  failure-dominant?~~ For the current `resource_scarcity_021` base,
+  seed 42 records `rounds_min=2`; sampled seeds reach 3.
 - Do any scenarios produce the same negotiation history despite
   different initial configurations? (structural equivalence)
 - ~~Does the mutation stability map change under different seeds?~~
-  Answered: yes, significantly. Seed 99 is adversarial; seed 42 is
-  lenient. Multi-seed consensus required for reliable boundaries.
+  Answered: yes. No single sampled seed is worst on every family and
+  axis; per-seed state maps must remain available with the consensus.
 - ~~What is the full bifurcation frontier: the set of (actors, rounds,
   threshold) triples that separate agreement from failure?~~
   Partially answered: 2D slices (actors×rounds, threshold×rounds)
@@ -594,23 +610,22 @@ that improves one plane can worsen another.
   is RNG-path-dominated. Full 3D surface not yet computed.
 - Can adversarial seed search find the single worst-case seed
   automatically?
-- ~~Do boundaries survive verification (boundary−1 fails)?~~ Answered:
-  all per-seed boundaries verified consistent with seeds 1, 42, 123.
+- ~~Do boundary extrema survive verification?~~ Answered: all per-seed
+  extrema for seeds 1, 42, and 123 matched fresh exhaustive state maps.
 - ~~Does convergence accelerate with more rounds?~~ Answered: no.
   Convergence round is fixed once past the boundary. Extra rounds are
   unused.
-- Does the "more actors hurts convergence" phenomenon emerge under
-  adversarial seeds or different scenario families?
+- ~~Can adding actors remove a previous success?~~ Answered for the
+  biased policy: seed 11 succeeds at actors 3–5 and fails at actor 6
+  for `incentive_misalignment_041`.
 - ~~**How does the stability frontier change under a different
   negotiation policy?**~~ Answered: biased policy expands
   actors×rounds frontier (avg Δ=+5.7 cells) but shows mixed results
   on threshold×rounds (avg Δ=+2.0, with regressions under some
   seeds). Effect is role-mediated — only incentive_misalignment
   family is affected. See "Policy comparative frontier" section.
-- ~~Can multi-axis boundary search (varying 2+ parameters simultaneously)
-  decouple the axis coupling observed with seed 1?~~ Answered: yes.
-  2D actors×rounds maps show the coupling was threshold-mediated.
-  On the actors×rounds plane, all seeds produce valid boundaries.
+- Multi-axis frontier claims from the pre-isolation random stream require
+  regeneration under issue #1775 before comparison with these extrema.
 
 ## Methodology notes
 
@@ -620,8 +635,9 @@ that improves one plane can worsen another.
 - Results are written to `scenarios/telemetry.json` (per-scenario)
   and `scenarios/index.json` (aggregate).
 - Mutation results go to `scenarios/mutations/` with per-axis subdirs.
-- Boundary search via `python tools/scenario_boundary_search.py`.
-- Boundary verification via `--verify` flag (confirms boundary−1 fails).
+- Boundary search uses binary search only for rounds and exhaustive
+  enumeration for actors and threshold.
+- Boundary verification via `--verify` re-enumerates each complete axis.
 - Convergence gradient via `--gradient` flag (measures convergence
   round at each parameter value).
 - Boundary results go to `scenarios/boundaries.json`.
