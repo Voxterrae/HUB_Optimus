@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -49,6 +50,45 @@ def test_bootstrap_uses_python_311_and_explicit_dependency_tiers() -> None:
     assert bootstrap.MIN_PYTHON == (3, 11)
     assert bootstrap.RUNTIME_REQUIREMENTS == RUNTIME_REQUIREMENTS
     assert bootstrap.DEVELOPMENT_REQUIREMENTS == DEVELOPMENT_REQUIREMENTS
+    assert bootstrap.RUNTIME_PACKAGES == ("jsonschema",)
+    assert bootstrap.DEVELOPMENT_PACKAGES == ("jsonschema", "pytest", "PyYAML")
+
+
+def test_bootstrap_package_inventory_matches_declared_requirement_ranges() -> None:
+    bootstrap = _load_bootstrap()
+    requirements = [
+        *_requirement_lines(RUNTIME_REQUIREMENTS),
+        *[
+            requirement
+            for requirement in _requirement_lines(DEVELOPMENT_REQUIREMENTS)
+            if not requirement.startswith("-r ")
+        ],
+    ]
+    parsed = {}
+    for requirement in requirements:
+        match = re.fullmatch(
+            r"(?P<name>[A-Za-z0-9_.-]+)>="
+            r"(?P<minimum>\d+(?:\.\d+){0,2}),"
+            r"<(?P<maximum>\d+(?:\.\d+){0,2})",
+            requirement,
+        )
+        assert match is not None, requirement
+        minimum = tuple(
+            int(part)
+            for part in match.group("minimum").split(".")
+        )
+        maximum = tuple(
+            int(part)
+            for part in match.group("maximum").split(".")
+        )
+        parsed[match.group("name")] = (
+            minimum + (0,) * (3 - len(minimum)),
+            maximum + (0,) * (3 - len(maximum)),
+        )
+
+    assert bootstrap.SUPPORTED_PACKAGE_RANGES == parsed
+    assert set(bootstrap.PACKAGE_IMPORT_NAMES) == set(parsed)
+    assert set(bootstrap.DEVELOPMENT_PACKAGES) == set(parsed)
 
 
 def test_runtime_only_check_does_not_require_pytest() -> None:
@@ -66,6 +106,47 @@ def test_runtime_only_check_does_not_require_pytest() -> None:
     assert "Mode: runtime (requirements.txt)" in proc.stdout
     assert "[OK]   jsonschema" in proc.stdout
     assert "pytest" not in proc.stdout.lower()
+    assert "pyyaml" not in proc.stdout.lower()
+    assert "import yaml" not in proc.stdout.lower()
+
+
+def test_development_check_probes_every_declared_package(
+    monkeypatch: Any,
+) -> None:
+    bootstrap = _load_bootstrap()
+    checked = []
+    monkeypatch.setattr(bootstrap, "check_python", lambda: True)
+    monkeypatch.setattr(
+        bootstrap,
+        "check_package",
+        lambda name: checked.append(name) or True,
+    )
+    monkeypatch.setattr(bootstrap, "check_tool", lambda _name: True)
+
+    assert bootstrap.main(["--check"]) == 0
+    assert checked == ["jsonschema", "pytest", "PyYAML"]
+
+
+def test_pyyaml_uses_yaml_import_and_pyyaml_distribution_metadata(
+    monkeypatch: Any,
+) -> None:
+    bootstrap = _load_bootstrap()
+    imported = []
+    distributions = []
+    monkeypatch.setattr(
+        bootstrap.importlib,
+        "import_module",
+        lambda name: imported.append(name),
+    )
+    monkeypatch.setattr(
+        bootstrap.metadata,
+        "version",
+        lambda name: distributions.append(name) or "6.0.3",
+    )
+
+    assert bootstrap.check_package("PyYAML")
+    assert imported == ["yaml"]
+    assert distributions == ["PyYAML"]
 
 
 def test_package_check_rejects_an_installed_version_outside_the_contract(
@@ -138,3 +219,6 @@ def test_readmes_document_the_same_minimum_and_install_paths() -> None:
     assert "pip install -r requirements.txt" in readme
     assert "pip install -r requirements.txt" in simulation_readme
     assert "pip install -r requirements-dev.txt" in simulation_readme
+    assert "`pytest` and `PyYAML`" in readme
+    assert "`pytest` y" in simulation_readme
+    assert "`PyYAML`" in simulation_readme

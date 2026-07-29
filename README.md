@@ -134,7 +134,8 @@ python -m pip install -r requirements.txt
 python run_scenario.py example_scenario.json --seed 42
 ```
 
-Development and test tooling is separate in `requirements-dev.txt`. See
+Development and test tooling is separate in `requirements-dev.txt`; it adds
+`pytest` and `PyYAML` to the runtime tier. See
 [SIMULATION_README.md](SIMULATION_README.md) for the complete bootstrap
 contract.
 
