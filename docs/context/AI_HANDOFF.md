@@ -149,6 +149,39 @@ in PR #1771 restores the following behavior:
 - the canonical generated seed-42 set remains 60/60 runtime-complete with
   55 agreements, 5 no-agreements, and average convergence round 1.8.
 
+## Mobile Intake Storage Boundary
+
+Issue #1759 records that the mobile helper wrote raw claims to a non-ignored
+repository-root file without stable classification or retention guidance.
+
+PR #1777 restores the following boundary:
+
+- default raw mobile intake is stored under the git-ignored
+  `.local/intake/` directory;
+- on supported POSIX systems, the protected default path is traversed and
+  opened through no-follow directory descriptors, eliminating parent-path
+  check-to-open races;
+- platforms without those descriptor primitives fail closed for the protected
+  default and require an explicit operator-managed `--output` path;
+- every opened output descriptor must reference a regular file; the protected
+  default additionally requires a single link, rejecting FIFOs, devices,
+  sockets, and hard-linked targets before permission or content changes;
+- the default directory/file and newly created custom files use private POSIX
+  permissions where supported; an existing custom file retains its operator-set
+  permissions;
+- appends restore a missing LF boundary before writing the next JSONL record;
+- option-like argv claims are accepted without being echoed by parser errors;
+- each record carries schema version, intake ID, capture time, source,
+  classification, verification status, and publication status;
+- raw intake remains unverified, local-only material and is never promoted or
+  published automatically;
+- `--output` permits an explicit operator-managed path with a warning;
+- the operator remains responsible for classification, access, retention,
+  backup, and deletion.
+
+No encryption, managed confidential storage, evidence verification, or
+multi-writer locking is claimed.
+
 ## Semantic CaseInput Integrity Boundary
 
 - Issue #1756 defines the versioned `CaseInput v1` contract as the combination
