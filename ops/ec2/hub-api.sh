@@ -15,15 +15,35 @@ import datetime as dt
 import html
 import ipaddress
 import json
+import os
 import re
+import signal
 import socket
 import subprocess
+import tempfile
+import threading
+import time
+from contextlib import contextmanager
 from html.parser import HTMLParser
+from http.client import (
+    HTTPConnection,
+    HTTPException,
+    HTTPSConnection,
+    InvalidURL,
+)
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from typing import NamedTuple
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import (
+    HTTPHandler,
+    HTTPRedirectHandler,
+    HTTPSHandler,
+    ProxyHandler,
+    Request,
+    build_opener,
+)
 
 APP_ROOT = Path("/opt/hub-optimus")
 CURRENT = APP_ROOT / "current"
@@ -31,11 +51,18 @@ SHARED = APP_ROOT / "shared"
 
 MAX_URL_LENGTH = 2048
 MAX_URL_BODY_LENGTH = 4096
+MAX_ANALYZE_BODY_LENGTH = 64_000
 MAX_URL_BYTES = 1_000_000
 MAX_EXTRACTED_TEXT_CHARS = 24_000
 MAX_REDIRECTS = 3
 URL_TIMEOUT_SECONDS = 8
 USER_AGENT = "HUB_Optimus-Operator-URL-Intake/0.1 (+https://huboptimus.dev/operator/)"
+CORE_RUN_ID_PREFIX = "[hub-core:run-id] "
+CORE_RUN_ID_PATTERN = re.compile(r"\A\d{8}T\d{6}Z\.[A-Za-z0-9]{6}\Z")
+
+IPV4_COMPATIBLE_NETWORK = ipaddress.IPv6Network("::/96")
+IPV4_TRANSLATED_NETWORK = ipaddress.IPv6Network("0:0:0:0:ffff:0::/96")
+NAT64_WELL_KNOWN_NETWORK = ipaddress.IPv6Network("64:ff9b::/96")
 
 
 class IntakeError(Exception):
@@ -46,9 +73,233 @@ class IntakeError(Exception):
         self.message = message
 
 
+class FetchDeadlineExceeded(IntakeError):
+    def __init__(self) -> None:
+        super().__init__(
+            504,
+            "url_fetch_timeout",
+            "URL fetch exceeded the total time limit.",
+        )
+
+
+class FetchDeadline(NamedTuple):
+    expires_at: float
+
+    @classmethod
+    def start(cls, timeout_seconds: float) -> "FetchDeadline":
+        return cls(time.monotonic() + timeout_seconds)
+
+    def remaining_seconds(self) -> float:
+        remaining = self.expires_at - time.monotonic()
+        if remaining <= 0:
+            raise FetchDeadlineExceeded()
+        return remaining
+
+
+@contextmanager
+def enforce_fetch_deadline(deadline: FetchDeadline):
+    """Enforce the synchronous Linux intake budget from the main thread."""
+
+    if threading.current_thread() is not threading.main_thread():
+        raise IntakeError(
+            503,
+            "url_fetch_unavailable",
+            "URL fetch deadline enforcement requires the API main thread.",
+        )
+
+    timeout_seconds = deadline.remaining_seconds()
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_timer = signal.getitimer(signal.ITIMER_REAL)
+    started_at = time.monotonic()
+
+    def deadline_handler(signum, frame):
+        raise FetchDeadlineExceeded()
+
+    signal.signal(signal.SIGALRM, deadline_handler)
+    signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous_handler)
+
+        previous_delay, previous_interval = previous_timer
+        if previous_delay > 0:
+            elapsed = time.monotonic() - started_at
+            signal.setitimer(
+                signal.ITIMER_REAL,
+                max(previous_delay - elapsed, 1e-6),
+                previous_interval,
+            )
+
+
+class ValidatedIntakeUrl(NamedTuple):
+    url: str
+    hostname: str
+    port: int
+    resolved_ips: tuple[str, ...]
+
+
 class NoRedirectHandler(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
+
+
+def connect_validated_ip(
+    ip_text,
+    port,
+    timeout,
+    source_address,
+):
+    """Open a numeric socket and verify the peer remains the validated IP."""
+
+    ip = ipaddress.ip_address(ip_text)
+    family = socket.AF_INET if ip.version == 4 else socket.AF_INET6
+    socket_address = (
+        (str(ip), port)
+        if ip.version == 4
+        else (str(ip), port, 0, 0)
+    )
+    connection = socket.socket(family, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+
+    try:
+        connection.settimeout(timeout)
+        if source_address:
+            connection.bind(source_address)
+        connection.connect(socket_address)
+
+        try:
+            peer_ip = ipaddress.ip_address(connection.getpeername()[0])
+        except ValueError as exc:
+            raise OSError(
+                "Connected peer did not return a numeric IP address."
+            ) from exc
+
+        if peer_ip != ip:
+            raise OSError(
+                "Connected peer does not match the validated IP address."
+            )
+
+        return connection
+    except BaseException:
+        connection.close()
+        raise
+
+
+def create_pinned_connection(
+    address,
+    timeout,
+    source_address,
+    pinned_ips,
+    deadline,
+):
+    """Connect only to numeric IPs validated for the current URL hop."""
+
+    _, port = address
+    last_error = None
+    candidate_ips = tuple(pinned_ips)
+
+    for index, ip_text in enumerate(candidate_ips):
+        try:
+            ipaddress.ip_address(ip_text)
+            remaining = deadline.remaining_seconds()
+            candidates_left = len(candidate_ips) - index
+            candidate_budget = remaining / candidates_left
+            attempt_timeout = (
+                min(float(timeout), candidate_budget)
+                if isinstance(timeout, (int, float))
+                else candidate_budget
+            )
+            return connect_validated_ip(
+                ip_text,
+                port,
+                attempt_timeout,
+                source_address,
+            )
+        except OSError as exc:
+            last_error = exc
+            deadline.remaining_seconds()
+
+    if last_error is not None:
+        raise last_error
+    raise OSError("No validated public IP address is available for connection.")
+
+
+class PinnedHTTPConnection(HTTPConnection):
+    def __init__(self, host, *, pinned_ips, deadline, **kwargs):
+        super().__init__(host, **kwargs)
+        self._pinned_ips = tuple(pinned_ips)
+        self._deadline = deadline
+        self._create_connection = self._create_pinned_connection
+
+    def _create_pinned_connection(self, address, timeout, source_address):
+        return create_pinned_connection(
+            address,
+            timeout,
+            source_address,
+            self._pinned_ips,
+            self._deadline,
+        )
+
+
+class PinnedHTTPSConnection(HTTPSConnection):
+    def __init__(self, host, *, pinned_ips, deadline, **kwargs):
+        super().__init__(host, **kwargs)
+        self._pinned_ips = tuple(pinned_ips)
+        self._deadline = deadline
+        self._create_connection = self._create_pinned_connection
+
+    def _create_pinned_connection(self, address, timeout, source_address):
+        return create_pinned_connection(
+            address,
+            timeout,
+            source_address,
+            self._pinned_ips,
+            self._deadline,
+        )
+
+
+class PinnedHTTPHandler(HTTPHandler):
+    def __init__(self, pinned_ips, deadline):
+        super().__init__()
+        self._pinned_ips = tuple(pinned_ips)
+        self._deadline = deadline
+
+    def http_open(self, req):
+        return self.do_open(
+            PinnedHTTPConnection,
+            req,
+            pinned_ips=self._pinned_ips,
+            deadline=self._deadline,
+        )
+
+
+class PinnedHTTPSHandler(HTTPSHandler):
+    def __init__(self, pinned_ips, deadline):
+        super().__init__()
+        self._pinned_ips = tuple(pinned_ips)
+        self._deadline = deadline
+
+    def https_open(self, req):
+        return self.do_open(
+            PinnedHTTPSConnection,
+            req,
+            context=self._context,
+            pinned_ips=self._pinned_ips,
+            deadline=self._deadline,
+        )
+
+
+def build_pinned_opener(pinned_ips, deadline):
+    """Build an opener with redirects and environment proxies disabled."""
+
+    return build_opener(
+        ProxyHandler({}),
+        NoRedirectHandler(),
+        PinnedHTTPHandler(pinned_ips, deadline),
+        PinnedHTTPSHandler(pinned_ips, deadline),
+    )
 
 
 class TextExtractor(HTMLParser):
@@ -156,12 +407,47 @@ def product_status() -> dict:
     }
 
 
-def latest_run_id(command: str) -> str | None:
-    command_dir = SHARED / "runs" / command
-    if not command_dir.is_dir():
+def core_run_id(stdout: str) -> str | None:
+    candidates = [
+        line.removeprefix(CORE_RUN_ID_PREFIX)
+        for line in stdout.splitlines()
+        if line.startswith(CORE_RUN_ID_PREFIX)
+    ]
+    if len(candidates) != 1:
         return None
-    runs = sorted(p.name for p in command_dir.iterdir() if p.is_dir())
-    return runs[-1] if runs else None
+    run_id = candidates[0]
+    return run_id if CORE_RUN_ID_PATTERN.fullmatch(run_id) else None
+
+
+def embedded_ipv4_addresses(
+    ip: ipaddress.IPv4Address | ipaddress.IPv6Address,
+) -> tuple[ipaddress.IPv4Address, ...]:
+    if not isinstance(ip, ipaddress.IPv6Address):
+        return ()
+
+    embedded = []
+
+    if ip.ipv4_mapped is not None:
+        embedded.append(ip.ipv4_mapped)
+
+    if (
+        ip in IPV4_COMPATIBLE_NETWORK
+        or ip in IPV4_TRANSLATED_NETWORK
+        or ip in NAT64_WELL_KNOWN_NETWORK
+    ):
+        embedded.append(ipaddress.IPv4Address(ip.packed[-4:]))
+
+    if ip.sixtofour is not None:
+        embedded.append(ip.sixtofour)
+
+    if ip.teredo is not None:
+        embedded.extend(ip.teredo)
+
+    interface_prefix = ip.packed[8:12]
+    if interface_prefix in {b"\x00\x00\x5e\xfe", b"\x02\x00\x5e\xfe"}:
+        embedded.append(ipaddress.IPv4Address(ip.packed[-4:]))
+
+    return tuple(dict.fromkeys(embedded))
 
 
 def blocked_ip_reason(ip_text: str) -> str | None:
@@ -170,13 +456,28 @@ def blocked_ip_reason(ip_text: str) -> str | None:
     except ValueError:
         return "invalid_ip"
 
-    if ip.is_global:
-        return None
+    if (
+        not ip.is_global
+        or ip.is_multicast
+        or (
+            isinstance(ip, ipaddress.IPv6Address)
+            and ip.is_site_local
+        )
+    ):
+        return "non_global_ip"
 
-    return "non_global_ip"
+    for embedded_ip in embedded_ipv4_addresses(ip):
+        if not embedded_ip.is_global or embedded_ip.is_multicast:
+            return "embedded_non_global_ip"
+
+    return None
 
 
-def validate_host(hostname: str) -> None:
+def validate_host(
+    hostname: str,
+    port: int,
+    deadline: FetchDeadline | None = None,
+) -> tuple[str, ...]:
     host = hostname.strip("[]").rstrip(".").lower()
 
     if not host:
@@ -187,17 +488,29 @@ def validate_host(hostname: str) -> None:
 
     direct_reason = blocked_ip_reason(host)
     if direct_reason is None:
-        return
+        return (str(ipaddress.ip_address(host)),)
 
     if direct_reason != "invalid_ip":
         raise IntakeError(400, "blocked_url_host", "URL resolves to a non-public IP address.")
 
     try:
-        infos = socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
-    except socket.gaierror as exc:
+        infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    except (socket.gaierror, UnicodeError) as exc:
         raise IntakeError(400, "unresolvable_url_host", f"Could not resolve URL host: {exc}") from exc
 
-    resolved_ips = sorted({item[4][0] for item in infos})
+    if deadline is not None:
+        deadline.remaining_seconds()
+
+    resolved_ips = set()
+    try:
+        for item in infos:
+            resolved_ips.add(str(ipaddress.ip_address(item[4][0])))
+    except ValueError as exc:
+        raise IntakeError(
+            400,
+            "unresolvable_url_host",
+            "URL host resolution returned an invalid address.",
+        ) from exc
     if not resolved_ips:
         raise IntakeError(400, "unresolvable_url_host", "URL host did not resolve to any address.")
 
@@ -210,35 +523,93 @@ def validate_host(hostname: str) -> None:
                 "URL host resolves to a non-public IP address.",
             )
 
+    return tuple(
+        str(ip)
+        for ip in sorted(
+            (ipaddress.ip_address(ip_text) for ip_text in resolved_ips),
+            key=lambda ip: (ip.version, int(ip)),
+        )
+    )
 
-def validate_intake_url(raw_url: str) -> str:
+
+def validate_intake_url(
+    raw_url: str,
+    deadline: FetchDeadline | None = None,
+) -> ValidatedIntakeUrl:
     if not isinstance(raw_url, str):
         raise IntakeError(400, "invalid_url", "URL must be a string.")
 
-    url = raw_url.strip()
+    url = raw_url
     if not url:
         raise IntakeError(400, "invalid_url", "URL is required.")
 
     if len(url) > MAX_URL_LENGTH:
         raise IntakeError(414, "url_too_long", "URL exceeds maximum allowed length.")
 
-    parsed = urlparse(url)
+    if any(ord(character) <= 0x20 or ord(character) == 0x7F for character in url):
+        raise IntakeError(
+            400,
+            "invalid_url",
+            "URL must not contain raw spaces or control characters.",
+        )
+
+    try:
+        url.encode("ascii")
+    except UnicodeEncodeError as exc:
+        raise IntakeError(
+            400,
+            "unsupported_url_iri",
+            "Unicode IRIs are not supported; use an IDNA A-label hostname and "
+            "percent-encode non-ASCII path or query text.",
+        ) from exc
+
+    try:
+        parsed = urlparse(url)
+    except ValueError as exc:
+        raise IntakeError(400, "invalid_url", "URL could not be parsed.") from exc
 
     if parsed.scheme not in {"http", "https"}:
         raise IntakeError(400, "unsupported_url_scheme", "Only http and https URLs are allowed.")
 
-    if parsed.username or parsed.password:
+    if parsed.username is not None or parsed.password is not None:
         raise IntakeError(400, "unsupported_url_credentials", "URLs with credentials are not allowed.")
 
-    if not parsed.hostname:
+    try:
+        hostname = parsed.hostname
+    except ValueError as exc:
+        raise IntakeError(400, "invalid_url_host", "URL host is malformed.") from exc
+
+    if not hostname:
         raise IntakeError(400, "invalid_url_host", "URL host is required.")
 
-    if parsed.port not in {None, 80, 443}:
+    if "%" in hostname:
+        raise IntakeError(
+            400,
+            "invalid_url_host",
+            "Percent-encoded hostnames are not supported; use an IDNA A-label.",
+        )
+
+    try:
+        explicit_port = parsed.port
+    except ValueError as exc:
+        raise IntakeError(
+            400,
+            "invalid_url_port",
+            "URL port is malformed or out of range.",
+        ) from exc
+
+    default_port = 80 if parsed.scheme == "http" else 443
+    if explicit_port not in {None, default_port}:
         raise IntakeError(400, "unsupported_url_port", "Only default HTTP/HTTPS ports are allowed.")
 
-    validate_host(parsed.hostname)
+    resolved_ips = validate_host(hostname, default_port, deadline)
 
-    return url
+    return ValidatedIntakeUrl(
+        url=url,
+        hostname=hostname,
+        port=default_port,
+        resolved_ips=resolved_ips,
+    )
 
 
 def response_charset(content_type: str) -> str:
@@ -298,23 +669,35 @@ def extract_text_document(body: bytes, content_type: str) -> tuple[str, str | No
     return text, title or None
 
 
-def fetch_url_text(raw_url: str) -> dict:
-    current_url = validate_intake_url(raw_url)
+def fetch_url_text_with_deadline(raw_url: str, deadline: FetchDeadline) -> dict:
+    current = validate_intake_url(raw_url, deadline)
     redirects = []
-    opener = build_opener(NoRedirectHandler)
 
     for _ in range(MAX_REDIRECTS + 1):
-        request = Request(
-            current_url,
-            headers={
-                "User-Agent": USER_AGENT,
-                "Accept": "text/html, text/plain, application/xhtml+xml;q=0.9, */*;q=0.4",
-            },
-            method="GET",
-        )
+        deadline.remaining_seconds()
+        opener = build_pinned_opener(current.resolved_ips, deadline)
 
         try:
-            with opener.open(request, timeout=URL_TIMEOUT_SECONDS) as response:
+            request = Request(
+                current.url,
+                headers={
+                    "User-Agent": USER_AGENT,
+                    "Accept": "text/html, text/plain, application/xhtml+xml;q=0.9, */*;q=0.4",
+                },
+                method="GET",
+            )
+        except (UnicodeError, ValueError) as exc:
+            raise IntakeError(
+                400,
+                "invalid_url",
+                "URL could not be encoded as an HTTP request.",
+            ) from exc
+
+        try:
+            with opener.open(
+                request,
+                timeout=deadline.remaining_seconds(),
+            ) as response:
                 content_type = response.headers.get("Content-Type", "")
                 if not (
                     "text/html" in content_type.lower()
@@ -367,19 +750,56 @@ def fetch_url_text(raw_url: str) -> dict:
                 if not location:
                     raise IntakeError(502, "redirect_without_location", "URL redirect did not include a Location header.")
 
-                next_url = urljoin(current_url, location)
-                validate_intake_url(next_url)
-                redirects.append({"from": current_url, "to": next_url, "status": exc.code})
-                current_url = next_url
+                try:
+                    next_url = urljoin(current.url, location)
+                except (UnicodeError, ValueError) as redirect_error:
+                    raise IntakeError(
+                        400,
+                        "invalid_url",
+                        "Redirect URL could not be parsed.",
+                    ) from redirect_error
+                next_hop = validate_intake_url(next_url, deadline)
+                redirects.append({"from": current.url, "to": next_hop.url, "status": exc.code})
+                current = next_hop
                 continue
 
             raise IntakeError(502, "url_fetch_failed", f"URL fetch failed with HTTP {exc.code}.") from exc
+        except (InvalidURL, UnicodeError) as exc:
+            raise IntakeError(
+                400,
+                "invalid_url",
+                "URL could not be encoded as an HTTP request.",
+            ) from exc
         except URLError as exc:
+            if isinstance(exc.reason, TimeoutError):
+                raise IntakeError(
+                    504,
+                    "url_fetch_timeout",
+                    "URL fetch timed out.",
+                ) from exc
             raise IntakeError(502, "url_fetch_failed", f"URL fetch failed: {exc.reason}") from exc
         except TimeoutError as exc:
             raise IntakeError(504, "url_fetch_timeout", "URL fetch timed out.") from exc
+        except HTTPException as exc:
+            raise IntakeError(
+                502,
+                "url_fetch_failed",
+                "URL fetch failed because the HTTP response was malformed.",
+            ) from exc
+        except OSError as exc:
+            raise IntakeError(
+                502,
+                "url_fetch_failed",
+                "URL fetch failed while reading the remote response.",
+            ) from exc
 
     raise IntakeError(508, "too_many_redirects", "URL exceeded maximum redirect limit.")
+
+
+def fetch_url_text(raw_url: str) -> dict:
+    deadline = FetchDeadline.start(URL_TIMEOUT_SECONDS)
+    with enforce_fetch_deadline(deadline):
+        return fetch_url_text_with_deadline(raw_url, deadline)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -394,14 +814,38 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
-    def read_json_body(self) -> dict | None:
-        length = int(self.headers.get("Content-Length", "0"))
+    def read_json_body(self, max_body_length: int) -> dict | None:
+        content_length = self.headers.get("Content-Length")
 
-        if length > MAX_URL_BODY_LENGTH:
-            self.send_json(413, {"error": "request body too large"})
+        if content_length is None:
+            self.send_json(411, {"error": "Content-Length header is required"})
             return None
 
-        raw = self.rfile.read(length).decode("utf-8")
+        try:
+            length = int(content_length)
+        except ValueError:
+            self.send_json(400, {"error": "Content-Length header must be an integer"})
+            return None
+
+        if length < 0:
+            self.send_json(400, {"error": "Content-Length header must not be negative"})
+            return None
+
+        if length > max_body_length:
+            self.send_json(
+                413,
+                {
+                    "error": "request body too large",
+                    "limit_bytes": max_body_length,
+                },
+            )
+            return None
+
+        try:
+            raw = self.rfile.read(length).decode("utf-8")
+        except UnicodeDecodeError:
+            self.send_json(400, {"error": "request body must be valid UTF-8"})
+            return None
 
         try:
             payload = json.loads(raw)
@@ -416,7 +860,7 @@ class Handler(BaseHTTPRequestHandler):
         return payload
 
     def handle_url_intake(self) -> None:
-        payload = self.read_json_body()
+        payload = self.read_json_body(MAX_URL_BODY_LENGTH)
         if payload is None:
             return
 
@@ -440,50 +884,93 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json(200, result)
 
     def handle_analyze(self) -> None:
-        payload = self.read_json_body()
+        payload = self.read_json_body(MAX_ANALYZE_BODY_LENGTH)
         if payload is None:
             return
 
         case_dir = SHARED / "api" / "cases"
-        case_dir.mkdir(parents=True, exist_ok=True)
-        case_path = case_dir / "api-case.json"
-        case_path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
+        case_path: Path | None = None
+        try:
+            case_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+            case_dir.chmod(0o700)
+            descriptor, raw_case_path = tempfile.mkstemp(
+                prefix="case-",
+                suffix=".json",
+                dir=case_dir,
+            )
+            case_path = Path(raw_case_path)
+            with os.fdopen(
+                descriptor,
+                "w",
+                encoding="utf-8",
+                newline="\n",
+            ) as case_file:
+                case_file.write(
+                    json.dumps(
+                        payload,
+                        indent=2,
+                        sort_keys=True,
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+        except OSError as exc:
+            if case_path is not None:
+                try:
+                    case_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+            self.send_json(500, {"error": f"cannot create temporary case input: {exc}"})
+            return
 
-        before_latest = latest_run_id("analyze")
+        cleanup_error: OSError | None = None
+        try:
+            code, stdout, stderr = run_command([
+                "/opt/hub-optimus/shared/bin/hub-core",
+                "analyze",
+                str(case_path),
+            ])
+        except OSError as exc:
+            code, stdout, stderr = 1, "", str(exc)
+        finally:
+            try:
+                case_path.unlink()
+            except OSError as exc:
+                cleanup_error = exc
 
-        code, stdout, stderr = run_command([
-            "/opt/hub-optimus/shared/bin/hub-core",
-            "analyze",
-            str(case_path),
-        ])
+        if cleanup_error is not None:
+            self.send_json(500, {"error": "cannot remove temporary case input"})
+            return
 
-        after_latest = latest_run_id("analyze")
-
+        run_id = core_run_id(stdout)
         if code != 0:
+            failure = {
+                "error": "analysis failed",
+                "stderr": stderr,
+                "stdout": stdout,
+            }
+            if run_id is not None:
+                failure["run_id"] = run_id
+                failure["run_path"] = str(
+                    SHARED / "runs" / "analyze" / run_id
+                )
+            self.send_json(
+                500,
+                failure,
+            )
+            return
+
+        if run_id is None:
             self.send_json(
                 500,
                 {
-                    "error": "analysis failed",
-                    "stderr": stderr,
+                    "error": "analysis completed without one valid run identity",
                     "stdout": stdout,
                 },
             )
             return
 
-        if not after_latest or after_latest == before_latest:
-            self.send_json(
-                500,
-                {
-                    "error": "analysis completed but run output was not detected",
-                    "stdout": stdout,
-                },
-            )
-            return
-
-        run_path = SHARED / "runs" / "analyze" / after_latest
+        run_path = SHARED / "runs" / "analyze" / run_id
         result_path = run_path / "analysis_result.json"
 
         try:
@@ -499,7 +986,7 @@ class Handler(BaseHTTPRequestHandler):
             200,
             {
                 "status": "ok",
-                "run_id": after_latest,
+                "run_id": run_id,
                 "run_path": str(run_path),
                 "analysis_result": analysis_result,
             },

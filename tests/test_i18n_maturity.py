@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -23,7 +24,7 @@ MANIFEST = REPO_ROOT / "docs" / "i18n" / "maturity.v1.json"
 
 
 def _fixture_manifest(
-    target_declaration: str | dict[str, str],
+    target_declaration: str | dict[str, Any],
     *,
     required: str | list[str] = "all",
 ) -> dict[str, Any]:
@@ -46,6 +47,7 @@ def _fixture_manifest(
         "surfaces": {
             "onboarding": {
                 "source_locale": "en",
+                "source_state": "parity",
                 "subdir": ".",
                 "inventory": "selected",
                 "files": ["start.md"],
@@ -62,7 +64,7 @@ def _write_fixture(
     tmp_path: Path,
     *,
     target_text: str | None,
-    target_declaration: str | dict[str, str],
+    target_declaration: str | dict[str, Any],
     required: str | list[str] = "all",
 ) -> tuple[Path, Path]:
     docs = tmp_path / "docs"
@@ -83,6 +85,22 @@ def _write_fixture(
     return docs, manifest_path
 
 
+def _digest(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _reviewed_declaration(source_text: str, target_text: str) -> dict[str, Any]:
+    return {
+        "state": "reviewed",
+        "review": {
+            "reviewer": "qualified-reviewer",
+            "evidence": "https://github.com/example/repo/pull/1",
+            "source_sha256": _digest(source_text),
+            "target_sha256": _digest(target_text),
+        },
+    }
+
+
 def test_repository_manifest_is_honest_and_explicit() -> None:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
 
@@ -92,6 +110,12 @@ def test_repository_manifest_is_honest_and_explicit() -> None:
     assert manifest["policy"]["chinese_scope"]["not_in_scope"] == ["zh-Hant"]
     assert manifest["locales"]["he"]["direction"] == "rtl"
     assert manifest["locales"]["zh-Hans"]["path"] == "zh"
+    assert manifest["surfaces"]["onboarding"]["source_state"] == "parity"
+    assert manifest["surfaces"]["governance"]["source_state"] == "canonical"
+    assert (
+        manifest["surfaces"]["governance"]["maturity"]["en"]["default"]
+        == "canonical"
+    )
     assert REQUIRED_STATES <= set(manifest["states"])
 
     result = audit_repository(REPO_ROOT)
@@ -143,14 +167,14 @@ def test_explicit_stub_declaration_allows_identical_copy(tmp_path: Path) -> None
     assert result.ok, "\n".join(result.errors)
 
 
-def test_reviewed_requires_versioned_reviewer_evidence(tmp_path: Path) -> None:
+def test_reviewed_requires_content_bound_reviewer_evidence(tmp_path: Path) -> None:
     docs, manifest_path = _write_fixture(
         tmp_path,
         target_text="# Deutsche Fassung\n",
         target_declaration="reviewed",
     )
 
-    with pytest.raises(ManifestError, match="without reviewer and evidence"):
+    with pytest.raises(ManifestError, match="structured review record"):
         audit_repository(
             tmp_path,
             docs_dir=docs,
@@ -159,14 +183,12 @@ def test_reviewed_requires_versioned_reviewer_evidence(tmp_path: Path) -> None:
 
 
 def test_reviewed_with_evidence_can_pass(tmp_path: Path) -> None:
+    source_text = "# English source\n"
+    target_text = "# Deutsche Fassung\n"
     docs, manifest_path = _write_fixture(
         tmp_path,
-        target_text="# Deutsche Fassung\n",
-        target_declaration={
-            "state": "reviewed",
-            "reviewer": "qualified-reviewer",
-            "evidence": "https://github.com/example/repo/pull/1",
-        },
+        target_text=target_text,
+        target_declaration=_reviewed_declaration(source_text, target_text),
     )
 
     result = audit_repository(
@@ -176,6 +198,70 @@ def test_reviewed_with_evidence_can_pass(tmp_path: Path) -> None:
     )
 
     assert result.ok, "\n".join(result.errors)
+
+
+@pytest.mark.parametrize("changed_file", ["source", "target"])
+def test_review_evidence_expires_when_reviewed_bytes_change(
+    tmp_path: Path,
+    changed_file: str,
+) -> None:
+    source_text = "# English source\n"
+    target_text = "# Deutsche Fassung\n"
+    docs, manifest_path = _write_fixture(
+        tmp_path,
+        target_text=target_text,
+        target_declaration=_reviewed_declaration(source_text, target_text),
+    )
+
+    if changed_file == "source":
+        (docs / "start.md").write_text("# Updated English source\n", encoding="utf-8")
+    else:
+        (docs / "de" / "start.md").write_text(
+            "# Aktualisierte deutsche Fassung\n",
+            encoding="utf-8",
+        )
+
+    result = audit_repository(
+        tmp_path,
+        docs_dir=docs,
+        manifest_path=manifest_path,
+    )
+
+    assert not result.ok
+    assert f"review {changed_file}_sha256" in "\n".join(result.errors)
+
+
+def test_canonicality_is_surface_specific(tmp_path: Path) -> None:
+    docs, manifest_path = _write_fixture(
+        tmp_path,
+        target_text="# Deutsche Fassung\n",
+        target_declaration="review-needed",
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    surface = manifest["surfaces"]["onboarding"]
+    surface["source_state"] = "canonical"
+    surface["maturity"]["en"]["default"] = "canonical"
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+    source_result = audit_repository(
+        tmp_path,
+        docs_dir=docs,
+        manifest_path=manifest_path,
+    )
+    assert source_result.ok, "\n".join(source_result.errors)
+
+    manifest["surfaces"]["onboarding"]["maturity"]["de"]["default"] = "canonical"
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    target_result = audit_repository(
+        tmp_path,
+        docs_dir=docs,
+        manifest_path=manifest_path,
+    )
+
+    assert not target_result.ok
+    assert "reserved for the onboarding source locale" in "\n".join(
+        target_result.errors
+    )
 
 
 def test_missing_is_green_only_when_tier_does_not_require_file(tmp_path: Path) -> None:

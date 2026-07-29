@@ -41,6 +41,24 @@ exit 1 = expected input/output error
 
 ## Current input contract
 
+The authoritative `CaseInput v1` contract has two coordinated parts:
+
+- the versioned
+  [`case_input.schema.json`](../../semantic_engine/contracts/case_input.schema.json)
+  defines structural validation, including required and unknown fields, field
+  types, and per-record shapes;
+- the complete Python
+  [`validate_case_input`](../../semantic_engine/contracts/case_input.py)
+  validator applies that schema and then enforces cross-record integrity,
+  including unique claim/evidence identifiers and valid evidence-to-claim
+  references.
+
+Schema-only validation is therefore structural pre-validation, not complete
+`CaseInput v1` conformance. Integrations must invoke the complete Python
+validator, or reproduce both its structural and cross-record checks, to
+implement the authoritative contract. The CLI invokes the complete validator
+before constructing an `AnalysisResult`.
+
 The minimal case JSON must be an object with non-empty string fields:
 
 ```json
@@ -51,9 +69,29 @@ The minimal case JSON must be an object with non-empty string fields:
 }
 ```
 
+Contract rules:
+
+- unknown fields are rejected at the root and inside claim/evidence records;
+- arbitrary JSON is allowed only inside an explicit `metadata` object, which is
+  preserved in the output but remains opaque and non-authoritative; metadata
+  keys do not become executable fields, evidence, verification, scoring,
+  decision traces, audit events, or governance authority;
+- `claim_id` and `evidence_id` values must be unique within their collections;
+- every `supports_claim_ids` and `contradicts_claim_ids` entry must identify a
+  submitted claim;
+- input `decision_trace` and `audit_log` fields are forbidden because those are
+  output-only engine records;
+- errors identify the rejected JSON path, for example
+  `$.claims[1].claim_id`.
+
+The Operator handoff posts this CaseInput shape to the local `/analyze`
+endpoint. The API delegates analysis to `hub-core analyze`, which invokes this
+same CLI validator. Browser-local draft rendering remains a preview, not a
+backend analysis or a substitute contract.
+
 ## Out of scope
 
-- API
+- New public API surface
 - HERMES PWA
 - AWS runtime
 - S3 persistence

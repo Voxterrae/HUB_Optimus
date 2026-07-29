@@ -15,6 +15,8 @@ The canonical governance set lives in:
 - `docs/governance/`
 
 All other languages (e.g. `docs/de/governance/`) are mirrors of the canonical set.
+This surface-specific English governance source does not change the separate
+v1 methodology rule: `v1_core/languages/es/` remains canonical for v1.
 
 ## Non-Drift Rule (Binding)
 Translations MUST preserve:
@@ -56,9 +58,12 @@ The manifest distinguishes:
 - `parity`.
 
 A green automated audit means that the declaration matches repository evidence
-and tier-required files exist. It does not certify a translation. `reviewed`
-requires versioned reviewer identity and review evidence. A byte-identical copy
-of the English docs baseline MUST be declared `stub`, unless it is that baseline
+and tier-required files exist. It does not certify a translation. `reviewed`,
+and translated `parity`, require a structured record containing the human
+reviewer identity, a GitHub-visible evidence reference, and SHA-256 digests of
+the exact source and target bytes reviewed. Any later edit invalidates that
+record until the changed bytes are reviewed again. A byte-identical copy of the
+English docs baseline MUST be declared `stub`, unless it is that baseline
 itself.
 
 ## Change Workflow

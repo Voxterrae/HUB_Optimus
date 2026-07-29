@@ -86,16 +86,37 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 ### repo_maintenance_bot.yml
 
 - Triggers:
-  - `workflow_dispatch` with `mode` and `allow_kernel_changes` inputs.
-  - weekly schedule: Monday 06:15 UTC.
-- Permissions:
-  - `contents: write`
-  - `pull-requests: write`
-  - `issues: write`
+  - weekly schedule only: Monday 06:15 UTC.
+- Permissions: `contents: read`.
 - Job:
-  - Skips cleanly when `GH_APP_ID` or `GH_APP_PRIVATE_KEY` are missing.
-  - Creates a maintenance branch, runs `tools/maintenance_bot.py`, runs `tools/kernel_guard.py`, commits changes, pushes the branch, opens a PR, then runs `tools/pr_pro.py`.
-- Writes to repo: yes, only through an explicit maintenance PR branch.
+  - Verifies that the credential-free checkout is clean and exactly matches
+    the scheduled `main` commit.
+  - Runs `tools/maintenance_bot.py` only inside an isolated copy of committed
+    `HEAD`, compares that candidate with an untouched baseline, and publishes
+    a GitHub Actions step summary.
+  - Exits non-zero with the proposed paths when drift exists or when the check
+    cannot complete safely.
+- Writes to repo: no. It creates no token, commit, branch, pull request, or
+  remote ref. Existing branch retirement is a separate, explicitly audited
+  operation under issue `#1788`.
+
+### `tools/pr_pro.py` support boundary
+
+- Status: supported as an optional helper for enriching an existing PR with
+  governed labels and a changed-file summary. It does not create or merge PRs
+  and is not an authentication or authorization boundary.
+- Write mode requires the GitHub CLI and uses only the authentication and
+  token scopes already supplied by the caller. The tool does not create,
+  exchange, persist, or expand tokens.
+- Every failed `gh` operation is terminal and returns a non-zero status. A
+  success message is emitted only after all required label, edit, and comment
+  operations succeed.
+- `--dry-run` performs the local Git diff and prints the planned target,
+  labels, and comment. It does not invoke `gh` and therefore performs no
+  GitHub read or write.
+- The versioned workflow file remains authoritative for whether a workflow
+  invokes this optional helper. No current workflow invokes it. A draft PR or
+  chat statement does not change the active workflow.
 
 ### repo-health-summary.yml
 
@@ -127,3 +148,28 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 
 Any change under `.github/workflows/` must update this document in the same PR,
 or the PR body must explicitly explain why no documentation update is needed.
+
+## External Action update review
+
+Every external `uses:` reference must use a reviewed, full 40-character commit
+SHA followed by the corresponding upstream release as an inline comment:
+
+```yaml
+uses: owner/action@0123456789abcdef0123456789abcdef01234567 # v1.2.3
+```
+
+Dependabot proposes GitHub Actions updates weekly. It must not auto-merge them.
+For each proposed update, a human reviewer must:
+
+1. confirm the exact release tag and commit in the upstream Action repository;
+2. review the upstream release notes and the diff from the currently approved
+   version, including `action.yml`, runtime changes, inputs, and permissions;
+3. confirm that the workflow keeps its existing permissions and intended
+   inputs, then update both the SHA and inline version comment;
+4. update the reviewed allowlist in `tests/test_workflow_action_pins.py`;
+5. run the complete test suite and let the affected workflows execute in the
+   pull request before approval.
+
+An unknown Action, mutable tag, unreviewed SHA, missing version comment, or
+permission expansion requires explicit review and must not be merged solely
+because Dependabot proposed it.

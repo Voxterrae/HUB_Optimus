@@ -19,6 +19,10 @@ versioned, machine-verifiable maturity record for onboarding and governance is
 Chinese scope is Simplified Chinese (`zh-Hans`); Traditional Chinese
 (`zh-Hant`) is not yet in scope.
 
+Canonicality is surface-specific: `docs/governance/` is the English canonical
+governance source under `docs/governance/TRANSLATION_POLICY.md`, while the
+canonical v1 methodology remains Spanish under `v1_core/languages/es/`.
+
 **Source-of-truth rule:**
 - If repository docs conflict, **this file (`docs/context/STATUS.md`) wins**.
 - For HUB_Optimus v1, the canonical source-of-truth is `v1_core/languages/es/`.

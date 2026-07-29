@@ -9,6 +9,7 @@ quality.
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -26,6 +27,7 @@ REQUIRED_STATES = {
     "parity",
 }
 REVIEW_EVIDENCE_STATES = {"reviewed"}
+SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 BCP47_PATTERN = re.compile(
     r"^[A-Za-z]{2,3}(?:-[A-Za-z]{4})?(?:-(?:[A-Za-z]{2}|\d{3}))?"
     r"(?:-[A-Za-z0-9]{5,8})*$"
@@ -48,8 +50,7 @@ class MaturityDeclaration:
     """Declared maturity and any human review evidence."""
 
     state: str
-    reviewer: str | None = None
-    evidence: str | None = None
+    review: dict[str, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -130,8 +131,7 @@ def _parse_declaration(value: Any, context: str) -> MaturityDeclaration:
     elif isinstance(value, dict):
         declaration = MaturityDeclaration(
             state=value.get("state"),
-            reviewer=value.get("reviewer"),
-            evidence=value.get("evidence"),
+            review=value.get("review"),
         )
     else:
         raise ManifestError(f"{context} must be a state string or object")
@@ -140,17 +140,56 @@ def _parse_declaration(value: Any, context: str) -> MaturityDeclaration:
         raise ManifestError(f"{context} has unknown state {declaration.state!r}")
 
     if declaration.state in REVIEW_EVIDENCE_STATES:
-        if (
-            not isinstance(declaration.reviewer, str)
-            or not declaration.reviewer.strip()
-            or not isinstance(declaration.evidence, str)
-            or not declaration.evidence.strip()
-        ):
-            raise ManifestError(
-                f"{context} declares '{declaration.state}' without reviewer and evidence"
-            )
+        _validate_review_record(declaration.review, context)
 
     return declaration
+
+
+def _validate_review_record(review: Any, context: str) -> dict[str, str]:
+    """Validate the shape of a human review record.
+
+    Source and target SHA-256 values bind the declaration to the exact bytes
+    that the named reviewer examined.  The audit compares those values with the
+    current files later, once both paths are known.
+    """
+
+    if not isinstance(review, dict):
+        raise ManifestError(
+            f"{context} requires a structured review record tied to source and target bytes"
+        )
+
+    required = {
+        "reviewer",
+        "evidence",
+        "source_sha256",
+        "target_sha256",
+    }
+    unknown = set(review) - required
+    missing = required - set(review)
+    if missing or unknown:
+        detail = []
+        if missing:
+            detail.append("missing " + ", ".join(sorted(missing)))
+        if unknown:
+            detail.append("unknown " + ", ".join(sorted(unknown)))
+        raise ManifestError(f"{context} has invalid review record: {'; '.join(detail)}")
+
+    for key in ("reviewer", "evidence"):
+        if not isinstance(review[key], str) or not review[key].strip():
+            raise ManifestError(f"{context} review.{key} must be a non-empty string")
+
+    for key in ("source_sha256", "target_sha256"):
+        value = review[key]
+        if not isinstance(value, str) or not SHA256_PATTERN.fullmatch(value):
+            raise ManifestError(
+                f"{context} review.{key} must be a lowercase SHA-256 digest"
+            )
+
+    return review
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _declaration_for(
@@ -301,6 +340,11 @@ def audit_repository(
         maturity = surface.get("maturity")
         if not isinstance(maturity, dict):
             raise ManifestError(f"Surface '{surface_name}' maturity must be an object")
+        source_state = surface.get("source_state")
+        if source_state not in {"canonical", "parity"}:
+            raise ManifestError(
+                f"Surface '{surface_name}' source_state must be 'canonical' or 'parity'"
+            )
 
         source_config = manifest["locales"][source_locale]
         source_base = docs_dir / _safe_relative_path(
@@ -393,29 +437,41 @@ def audit_repository(
                 if (
                     declaration.state == "parity"
                     and locale != source_locale
-                    and (
-                        not isinstance(declaration.reviewer, str)
-                        or not declaration.reviewer.strip()
-                        or not isinstance(declaration.evidence, str)
-                        or not declaration.evidence.strip()
-                    )
                 ):
+                    try:
+                        _validate_review_record(declaration.review, label)
+                    except ManifestError as exc:
+                        errors.append(str(exc))
+                if declaration.state == "canonical" and locale != source_locale:
                     errors.append(
-                        f"{label}: translated parity requires reviewer and evidence"
+                        f"{label}: canonical state is reserved for the "
+                        f"{surface_name} source locale {source_locale!r}"
                     )
-                if (
-                    declaration.state == "canonical"
-                    and locale != manifest["policy"].get("canonical_v1")
-                ):
+                if locale == source_locale and declaration.state != source_state:
                     errors.append(
-                        f"{label}: canonical state conflicts with canonical_v1="
-                        f"{manifest['policy'].get('canonical_v1')!r}"
+                        f"{label}: source locale must be declared '{source_state}' "
+                        f"for the {surface_name} surface"
                     )
                 if not exists:
                     errors.append(
                         f"{label}: declared '{declaration.state}' but file is missing"
                     )
                     continue
+                if (
+                    locale != source_locale
+                    and declaration.state in REVIEW_EVIDENCE_STATES | {"parity"}
+                    and declaration.review is not None
+                ):
+                    source_digest = _sha256(source_path)
+                    target_digest = _sha256(target_path)
+                    if declaration.review["source_sha256"] != source_digest:
+                        errors.append(
+                            f"{label}: review source_sha256 does not match current source bytes"
+                        )
+                    if declaration.review["target_sha256"] != target_digest:
+                        errors.append(
+                            f"{label}: review target_sha256 does not match current target bytes"
+                        )
                 if identical and declaration.state != "stub":
                     errors.append(
                         f"{label}: byte-identical to the {source_locale} source; "

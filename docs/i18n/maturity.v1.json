@@ -119,6 +119,7 @@
   "surfaces": {
     "onboarding": {
       "source_locale": "en",
+      "source_state": "parity",
       "subdir": ".",
       "inventory": "selected",
       "files": [
@@ -161,6 +162,7 @@
     },
     "governance": {
       "source_locale": "en",
+      "source_state": "canonical",
       "subdir": "governance",
       "inventory": "complete",
       "files": [
@@ -184,7 +186,7 @@
       ],
       "maturity": {
         "en": {
-          "default": "parity"
+          "default": "canonical"
         },
         "es": {
           "default": "review-needed",

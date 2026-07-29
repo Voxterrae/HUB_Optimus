@@ -1,68 +1,45 @@
-# Security Policy — HUB_Optimus
+# Security reporting — HUB_Optimus
 
-## Supported versions
+Use this process for suspected vulnerabilities, exposed credentials, sensitive
+data, or security-relevant misuse connected to this repository.
 
-| Version | Supported |
-|---|---|
-| `main` (latest) | ✅ |
-| Tagged releases (`v2.3.4`, etc.) | ✅ |
-| Legacy (`legacy/`) | ❌ (historical only) |
+## Do not publish sensitive material
 
-## Reporting a vulnerability
+Do not place any of the following in a public issue, pull request, commit,
+discussion, screenshot, log, or test fixture:
 
-If you discover a security vulnerability in HUB_Optimus, please report it
-responsibly. **Do not open a public issue.**
+- passwords, API keys, tokens, private keys, or connection strings;
+- personal, banking, health, identity, or contact data;
+- private agreements, internal URLs, infrastructure details, or operational
+  secrets;
+- complete exploit instructions for a vulnerability that is not yet fixed.
 
-### How to report
+If a credential may have been exposed, revoke or rotate it through the owning
+service first. Removing a value from the latest commit does not remove it from
+Git history.
 
-1. **Email:** Send a description to **operator@huboptimus.dev** with the
-   subject line `SECURITY: <brief description>`.
-2. **GitHub private vulnerability reporting:** If enabled for this repository,
-   use GitHub's [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability)
-   feature under the **Security** tab.
+## How to report
 
-### What to include
+1. If **Private vulnerability reporting** is available under this repository's
+   **Security** tab, use it and include the sensitive details there.
+2. Otherwise, use a private channel you already have with a repository
+   maintainer.
+3. If no private channel is available, open a minimal public issue asking for a
+   private security contact. Include no secret, personal data, exploit detail,
+   or sensitive attachment in that issue.
 
-- A clear description of the vulnerability.
-- Steps to reproduce (if applicable).
-- Affected files, endpoints, or components.
-- Severity assessment (your best estimate).
-- Whether you believe the issue is actively exploitable.
+In the private report, include the affected component or commit, the observed
+behavior, the smallest safe reproduction, and any immediate containment already
+performed. Share only the data needed to investigate.
 
-### What to expect
+## Maintenance boundary
 
-- **Acknowledgement** within 72 hours of receipt.
-- **Triage and initial assessment** within 7 days.
-- **Resolution timeline** communicated after triage; critical issues are
-  prioritized.
-- **Credit** offered to the reporter (unless anonymity is preferred).
+The actively maintained source is the current `main` branch. Files explicitly
+labelled as legacy, historical, draft, RFC, prototype, or unavailable do not
+become supported operational controls merely because they are present in the
+repository.
 
-### Scope
-
-The following are in scope:
-
-- Repository code and configuration (CI, workflows, scripts).
-- Deployed static site (`huboptimus.dev`).
-- Operator PWA (`huboptimus.dev/operator/`).
-- EC2 backend API endpoints (if publicly exposed).
-- Credential or secret leaks in repository history.
-
-The following are **out of scope**:
-
-- Legacy documents under `legacy/` (historical, not maintained).
-- Theoretical vulnerabilities in planned/RFC features not yet implemented.
-- Social engineering attacks against maintainers.
-
-## Security practices
-
-- No analytics, cookies, forms, or external JavaScript on the public site.
-- CORS-locked API proxy (origin-restricted to `huboptimus.dev`).
-- Rate limiting on public endpoints.
-- No secrets committed to the repository.
-- CI includes mojibake guard and encoding validation.
-
-## Disclosure policy
-
-HUB_Optimus follows coordinated disclosure. We will work with reporters to
-agree on a disclosure timeline. We aim to resolve confirmed vulnerabilities
-before public disclosure.
+This file records a cautious reporting route. It does not promise a response
+time, remediation deadline, bounty, disclosure agreement, or independently
+verified security programme. Repository code and documentation also do not, by
+themselves, attest the configuration or security of any external deployment.
