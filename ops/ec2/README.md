@@ -97,6 +97,54 @@ Neither operation silently restarts the running API service. After a deploy or
 rollback, an operator must review the recorded state and explicitly restart the
 service when the process should load the restored launcher.
 
+## Controlled URL intake network boundary
+
+The repository launcher source also defines `POST /intake/url`. This records the
+reviewed code boundary; it is not evidence that any particular host or public
+endpoint is currently deployed.
+
+For each supplied URL and each permitted redirect hop, the launcher:
+
+- accepts only an absolute ASCII HTTP/HTTPS URI with the matching default port;
+- rejects raw spaces, control characters, and Unicode IRIs before DNS; callers
+  must use an IDNA A-label (punycode) hostname and submit international
+  path/query text as a correctly percent-encoded URI;
+- resolves the hostname once and rejects the whole hop if any returned IPv4 or
+  IPv6 address is non-global or multicast;
+- rejects known IPv6 transition forms when their embedded IPv4 destination is
+  non-global, including IPv4-compatible, mapped/translated, 6to4, ISATAP, and
+  the `64:ff9b::/96` NAT64 well-known prefix;
+- disables environment proxies, opens a family-specific numeric socket without
+  a second hostname resolution, and verifies that the connected peer matches
+  the validated IP;
+- retains the original hostname for the HTTP `Host` header and for HTTPS SNI
+  and certificate verification;
+- validates every redirect before making the next connection and caps the
+  chain at three redirects;
+- uses one eight-second monotonic budget across candidate IP connections,
+  redirect hops, TLS, headers, and body reading instead of restarting the
+  timeout for each operation; the remaining connection budget is divided
+  across remaining candidate IPs so one stalled address cannot consume it all;
+- fetches no links, embedded resources, or related pages from the returned
+  document;
+- sends no cookies, credentials, authorization headers, or browser state.
+
+The current launcher is a synchronous Linux `HTTPServer`. From its main thread,
+`SIGALRM` enforces the application budget for Python-visible and socket
+operations. The budget is checked immediately after the system resolver
+returns, but interruption of a blocking libc `getaddrinfo()` call is
+best-effort and is not a portable DNS cancellation guarantee. Calling intake
+deadline enforcement from another thread returns a controlled service error.
+
+This closes the application-level DNS validation/connection TOCTOU boundary.
+It does not make fetched text trustworthy. The initial system resolver remains
+a dependency, a globally routed server can still return misleading material,
+and infrastructure-specific NAT64 or 6rd prefixes, external routing, NAT,
+firewall, resolver, and host configuration remain outside this repository's
+proof boundary. Successful output therefore retains the submitted URL,
+redirect chain, retrieval metadata, and `verification_status=unreviewed`;
+controlled failures retain the submitted URL and the same unreviewed status.
+
 ## Installation note
 
 These scripts are documented from a validated EC2 instance. They are not automatically installed by this repository.
