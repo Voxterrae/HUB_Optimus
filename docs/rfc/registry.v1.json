@@ -211,10 +211,11 @@
       "evidence_paths": [
         "docs/rfc/operator_controlled_url_intake.md",
         "ops/ec2/hub-api.sh",
+        "ops/ec2/controlled_url_intake.v1.schema.json",
         "site/operator/index.html",
         "tests/test_hub_api_controlled_url_intake.py"
       ],
-      "note": "A local/private, single-URL prototype and browser fallback exist. This does not ratify the RFC or prove a public deployment."
+      "note": "A local/private, single-URL prototype, browser fallback, and versioned application payload schema exist. This does not ratify the RFC, verify retrieved content, or prove a public deployment."
     },
     {
       "id": "post-quantum-control-plane",

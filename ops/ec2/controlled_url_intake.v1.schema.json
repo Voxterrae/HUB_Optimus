@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huboptimus.dev/schemas/controlled-url-intake-v1.schema.json",
+  "title": "HUB_Optimus controlled URL intake v1",
+  "description": "Canonical application payload contract for POST /intake/url. HTTP framing and malformed-body errors occur before this application contract.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/request"
+    },
+    {
+      "$ref": "#/$defs/success_response"
+    },
+    {
+      "$ref": "#/$defs/error_response"
+    }
+  ],
+  "x-hub-optimus-runtime-limits": {
+    "endpoint": "/intake/url",
+    "request_body_bytes": 4096,
+    "url_characters": 2048,
+    "raw_response_bytes": 1000000,
+    "extracted_text_characters": 24000,
+    "maximum_returned_text_characters": 24001,
+    "redirects": 3,
+    "timeout_seconds": 8,
+    "remote_request_method": "GET",
+    "accepted_schemes": [
+      "http",
+      "https"
+    ],
+    "user_agent": "HUB_Optimus-Operator-URL-Intake/0.1 (+https://huboptimus.dev/operator/)"
+  },
+  "x-hub-optimus-error-http-status": {
+    "blocked_url_host": 400,
+    "empty_extraction": 422,
+    "invalid_url": 400,
+    "invalid_url_host": 400,
+    "invalid_url_port": 400,
+    "redirect_without_location": 502,
+    "too_many_redirects": 508,
+    "unresolvable_url_host": 400,
+    "unsupported_content_type": 415,
+    "unsupported_url_credentials": 400,
+    "unsupported_url_iri": 400,
+    "unsupported_url_port": 400,
+    "unsupported_url_scheme": 400,
+    "url_fetch_failed": 502,
+    "url_fetch_timeout": 504,
+    "url_fetch_unavailable": 503,
+    "url_too_long": 414
+  },
+  "$defs": {
+    "request": {
+      "title": "Controlled URL intake request",
+      "description": "Only url has application meaning. The v1 handler ignores additional object properties; they do not become source hints, context, evidence, or analysis input.",
+      "type": "object",
+      "required": [
+        "url"
+      ],
+      "not": {
+        "required": [
+          "status"
+        ]
+      },
+      "properties": {
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "description": "Submitted absolute ASCII HTTP/HTTPS URI. The backend applies the authoritative URI, port, DNS, address, and redirect checks."
+        }
+      },
+      "additionalProperties": true,
+      "examples": [
+        {
+          "url": "https://example.com/article"
+        }
+      ]
+    },
+    "success_response": {
+      "title": "Controlled URL intake success response",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "intake_type",
+        "url",
+        "final_url",
+        "source_domain",
+        "retrieved_at_utc",
+        "title",
+        "text",
+        "content_type",
+        "bytes_read",
+        "truncated",
+        "redirects",
+        "verification_status",
+        "learning_status",
+        "extraction_notes"
+      ],
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "intake_type": {
+          "const": "controlled_url"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "final_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_domain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retrieved_at_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24001,
+          "description": "The extractor keeps at most 24,000 source characters and may append one ellipsis marker when truncated."
+        },
+        "content_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bytes_read": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "redirects": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/redirect"
+          }
+        },
+        "verification_status": {
+          "const": "unreviewed"
+        },
+        "learning_status": {
+          "const": "candidate-source-not-verified"
+        },
+        "extraction_notes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "examples": [
+        {
+          "status": "ok",
+          "intake_type": "controlled_url",
+          "url": "https://example.com/article",
+          "final_url": "https://example.com/article",
+          "source_domain": "example.com",
+          "retrieved_at_utc": "2026-07-20T00:00:00+00:00",
+          "title": "Public source article title.",
+          "text": "Plain extracted article text.",
+          "content_type": "text/html; charset=utf-8",
+          "bytes_read": 4096,
+          "truncated": false,
+          "redirects": [],
+          "verification_status": "unreviewed",
+          "learning_status": "candidate-source-not-verified",
+          "extraction_notes": [
+            "Fetched by local backend controlled URL intake.",
+            "No cookies, authentication, browser automation, or paywall bypass were used.",
+            "Text extraction is source-bound and does not verify truth."
+          ]
+        }
+      ]
+    },
+    "error_response": {
+      "title": "Controlled URL intake application error response",
+      "description": "Returned after a JSON object reaches the application handler and URL intake rejects or cannot fetch it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "error",
+        "message",
+        "url",
+        "verification_status"
+      ],
+      "properties": {
+        "status": {
+          "const": "error"
+        },
+        "error": {
+          "type": "string",
+          "enum": [
+            "blocked_url_host",
+            "empty_extraction",
+            "invalid_url",
+            "invalid_url_host",
+            "invalid_url_port",
+            "redirect_without_location",
+            "too_many_redirects",
+            "unresolvable_url_host",
+            "unsupported_content_type",
+            "unsupported_url_credentials",
+            "unsupported_url_iri",
+            "unsupported_url_port",
+            "unsupported_url_scheme",
+            "url_fetch_failed",
+            "url_fetch_timeout",
+            "url_fetch_unavailable",
+            "url_too_long"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "description": "Submitted url value echoed for provenance. Invalid non-string input remains possible on this error-only path."
+        },
+        "verification_status": {
+          "const": "unreviewed"
+        }
+      },
+      "examples": [
+        {
+          "status": "error",
+          "error": "url_fetch_failed",
+          "message": "URL fetch failed with HTTP 403.",
+          "url": "https://example.com/article",
+          "verification_status": "unreviewed"
+        }
+      ]
+    },
+    "redirect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "status"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "integer",
+          "enum": [
+            301,
+            302,
+            303,
+            307,
+            308
+          ]
+        }
+      }
+    }
+  }
+}
