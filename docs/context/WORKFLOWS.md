@@ -128,6 +128,12 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   - `issues: write`
 - Job:
   - Collects repository health metrics with `gh`.
+  - PR and issue counts request up to 10,001 records so counts through the
+    explicit 10,000-item audit ceiling are exhaustive. A failed CLI/API call,
+    invalid JSON response, or result above that ceiling stops the run without
+    publishing a partial or plausible-zero snapshot.
+  - Remote branch refs are collected once and a failed `git ls-remote` also
+    stops the run instead of being represented as zero maintenance branches.
   - Posts a summary comment to issue `#93`.
 - Writes to repo: no; writes issue comments.
 
