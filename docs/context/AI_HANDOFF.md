@@ -114,6 +114,24 @@ Laboratory observations derived from the previous random stream require
 separate regeneration under issue #1775; they are not silently rewritten by
 the runtime correction.
 
+## Telemetry Input Boundary
+
+Issue #1757 records that malformed scenario files could crash telemetry or
+be subtracted from multiple aggregate categories. The scoped correction
+in PR #1771 restores the following behavior:
+
+- every discovered input receives exactly one processing outcome:
+  `agreement`, `no_agreement`, `parse_error`, `schema_error`, or
+  `runtime_error`;
+- malformed JSON roots, invalid UTF-8, schema errors, and runner-output
+  errors are recorded per file without stopping safe collection;
+- aggregate counts remain non-negative and sum to the discovered total;
+- exit `0` means complete collection, exit `2` means outputs were written
+  with one or more partial data errors, and exit `1` means fatal setup or
+  output failure;
+- the canonical generated seed-42 set remains 60/60 runtime-complete with
+  55 agreements, 5 no-agreements, and average convergence round 1.8.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
