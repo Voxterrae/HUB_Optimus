@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_ROOT="/opt/hub-optimus"
+APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 RUN_ROOT="$APP_ROOT/shared/runs"
+RUN_ID_PREFIX="[hub-core:run-id]"
+ACTIVE_RELEASE_PATH=""
+ACTIVE_RELEASE=""
+ACTIVE_COMMIT=""
+
+umask 077
 
 usage() {
   cat <<USAGE
@@ -28,63 +34,76 @@ Commands:
 USAGE
 }
 
-require_current() {
+pin_current_release() {
   if [ ! -L "$APP_ROOT/current" ]; then
     echo "[hub-core:error] current symlink does not exist."
     exit 1
   fi
-  cd "$APP_ROOT/current"
+
+  ACTIVE_RELEASE_PATH="$(readlink -f "$APP_ROOT/current")"
+  if [ ! -d "$ACTIVE_RELEASE_PATH" ]; then
+    echo "[hub-core:error] current release target does not exist."
+    exit 1
+  fi
+
+  ACTIVE_RELEASE="$(basename "$ACTIVE_RELEASE_PATH")"
+  ACTIVE_COMMIT="$(git -C "$ACTIVE_RELEASE_PATH" rev-parse HEAD)"
+  cd "$ACTIVE_RELEASE_PATH"
 }
 
 activate_current() {
-  require_current
-  if [ ! -d ".venv" ]; then
+  pin_current_release
+  if [ ! -d "$ACTIVE_RELEASE_PATH/.venv" ]; then
     echo "[hub-core:error] .venv does not exist in current release."
     exit 1
   fi
-  source .venv/bin/activate
+  source "$ACTIVE_RELEASE_PATH/.venv/bin/activate"
 }
 
 new_run_dir() {
   local name="$1"
   local ts
   ts="$(date -u +%Y%m%dT%H%M%SZ)"
-  local dir="$RUN_ROOT/$name/$ts"
-  mkdir -p "$dir"
-  echo "$dir"
+  local command_root="$RUN_ROOT/$name"
+
+  mkdir -p "$command_root"
+  chmod 0700 "$command_root"
+  mktemp -d "$command_root/$ts.XXXXXX"
+}
+
+announce_run() {
+  local dir="$1"
+  printf '%s %s\n' "$RUN_ID_PREFIX" "$(basename "$dir")"
 }
 
 write_run_meta() {
   local dir="$1"
   local command_name="$2"
   local input_path="${3:-}"
-  local commit
-  local release
-  local current_path
-
-  require_current
-  commit="$(git rev-parse --short HEAD)"
-  current_path="$(readlink -f "$APP_ROOT/current")"
-  release="$(basename "$current_path")"
+  if [ -z "$ACTIVE_RELEASE_PATH" ] || [ -z "$ACTIVE_COMMIT" ]; then
+    echo "[hub-core:error] active release was not pinned." >&2
+    exit 1
+  fi
 
   cat > "$dir/RUN_STATE" <<STATE
+run_id=$(basename "$dir")
 command=$command_name
-release=$release
-commit=$commit
-path=$current_path
+release=$ACTIVE_RELEASE
+commit=$ACTIVE_COMMIT
+path=$ACTIVE_RELEASE_PATH
 input=$input_path
 ran_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 STATE
 }
 
 status_core() {
-  require_current
+  pin_current_release
 
   echo "[hub-core] HUB_Optimus core"
   echo
 
   echo "[hub-core] current:"
-  readlink -f "$APP_ROOT/current"
+  echo "$ACTIVE_RELEASE_PATH"
   echo
 
   echo "[hub-core] release_state:"
@@ -92,7 +111,7 @@ status_core() {
   echo
 
   echo "[hub-core] commit:"
-  git rev-parse --short HEAD
+  echo "$ACTIVE_COMMIT"
   echo
 
   echo "[hub-core] available commands:"
@@ -105,6 +124,7 @@ run_tests() {
   local dir
   dir="$(new_run_dir test)"
   write_run_meta "$dir" "test"
+  announce_run "$dir"
 
   echo "[hub-core:test] Output dir: $dir"
   python -m pytest -q | tee "$dir/pytest.log"
@@ -119,6 +139,7 @@ run_benchmark() {
   local dir
   dir="$(new_run_dir benchmark)"
   write_run_meta "$dir" "benchmark"
+  announce_run "$dir"
 
   echo "[hub-core:benchmark] Output dir: $dir"
   python benchmarks/run_benchmarks.py --summary-file "$dir/benchmark_summary.md" | tee "$dir/benchmark.log"
@@ -133,6 +154,7 @@ run_narrative_benchmark() {
   local dir
   dir="$(new_run_dir narrative-benchmark)"
   write_run_meta "$dir" "narrative-benchmark"
+  announce_run "$dir"
 
   echo "[hub-core:narrative-benchmark] Output dir: $dir"
   python benchmarks/run_narrative_benchmarks.py | tee "$dir/narrative_benchmark.log"
@@ -147,6 +169,7 @@ run_semantic_smoke() {
   local dir
   dir="$(new_run_dir semantic-smoke)"
   write_run_meta "$dir" "semantic-smoke"
+  announce_run "$dir"
 
   echo "[hub-core:semantic-smoke] Output dir: $dir"
   python -m semantic_engine.cli analyze \
@@ -166,6 +189,7 @@ run_scenario_smoke() {
   local dir
   dir="$(new_run_dir scenario-smoke)"
   write_run_meta "$dir" "scenario-smoke"
+  announce_run "$dir"
 
   echo "[hub-core:scenario-smoke] Output dir: $dir"
   python run_scenario.py \
@@ -194,15 +218,16 @@ run_analyze() {
     exit 1
   fi
 
+  input="$(readlink -f "$input")"
   activate_current
 
   local dir
   dir="$(new_run_dir analyze)"
-  write_run_meta "$dir" "analyze" "$input"
+  cp "$input" "$dir/input_case.json"
+  write_run_meta "$dir" "analyze" "$dir/input_case.json"
+  announce_run "$dir"
 
   echo "[hub-core:analyze] Output dir: $dir"
-
-  cp "$input" "$dir/input_case.json"
 
   python -m semantic_engine.cli analyze \
     "$dir/input_case.json" \
