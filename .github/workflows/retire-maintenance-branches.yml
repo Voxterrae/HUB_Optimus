@@ -1,0 +1,183 @@
+---
+name: Retire audited maintenance branches
+
+"on":
+  # Manual only. Merging this workflow cannot activate branch deletion.
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Read-only audit or explicitly confirmed atomic retirement
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - execute
+      expected_main_sha:
+        description: Exact current main SHA approved for this run
+        required: true
+        type: string
+      confirmation:
+        description: Exact sentence emitted by a successful dry-run
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: maintenance-branch-retirement
+  cancel-in-progress: false
+
+jobs:
+  dry-run:
+    if: inputs.mode == 'dry-run'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify dispatch and checkout
+        shell: bash
+        env:
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${EXPECTED_MAIN_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_main_sha must be a full lowercase SHA-1."
+            exit 1
+          fi
+          if [ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ] || \
+             [ "${GITHUB_REF}" != "refs/heads/main" ] || \
+             [ "${GITHUB_REPOSITORY}" != "Voxterrae/HUB_Optimus" ]; then
+            echo "::error::Retirement must be dispatched manually from main."
+            exit 1
+          fi
+          checked_out="$(git rev-parse HEAD)"
+          remote_main="$(git rev-parse refs/remotes/origin/main)"
+          if [ "${checked_out}" != "${EXPECTED_MAIN_SHA}" ] || \
+             [ "${checked_out}" != "${GITHUB_SHA}" ] || \
+             [ "${checked_out}" != "${remote_main}" ]; then
+            echo "::error::Checkout, dispatch, input, and origin/main differ."
+            exit 1
+          fi
+          if ! git diff --quiet || ! git diff --cached --quiet || \
+             [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            echo "::error::Trusted checkout is not clean."
+            exit 1
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Audit retirement without receive-pack
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
+          REPORT_JSON: ${{ runner.temp }}/maintenance-retirement.json
+          REPORT_MARKDOWN: ${{ runner.temp }}/maintenance-retirement.md
+        run: |
+          python tools/retire_maintenance_branches.py \
+            --mode dry-run \
+            --expected-main-sha "${EXPECTED_MAIN_SHA}" \
+            --report-json "${REPORT_JSON}" \
+            --report-markdown "${REPORT_MARKDOWN}"
+
+  execute:
+    if: inputs.mode == 'execute'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read
+
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify dispatch and checkout
+        shell: bash
+        env:
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${EXPECTED_MAIN_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_main_sha must be a full lowercase SHA-1."
+            exit 1
+          fi
+          if [ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ] || \
+             [ "${GITHUB_REF}" != "refs/heads/main" ] || \
+             [ "${GITHUB_REPOSITORY}" != "Voxterrae/HUB_Optimus" ]; then
+            echo "::error::Retirement must be dispatched manually from main."
+            exit 1
+          fi
+          checked_out="$(git rev-parse HEAD)"
+          remote_main="$(git rev-parse refs/remotes/origin/main)"
+          if [ "${checked_out}" != "${EXPECTED_MAIN_SHA}" ] || \
+             [ "${checked_out}" != "${GITHUB_SHA}" ] || \
+             [ "${checked_out}" != "${remote_main}" ]; then
+            echo "::error::Checkout, dispatch, input, and origin/main differ."
+            exit 1
+          fi
+          if ! git diff --quiet || ! git diff --cached --quiet || \
+             [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            echo "::error::Trusted checkout is not clean."
+            exit 1
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Configure ephemeral GitHub credential
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh auth setup-git
+
+      - name: Retire exact audited refs atomically
+        id: retirement
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
+          RETIREMENT_CONFIRMATION: ${{ inputs.confirmation }}
+          REPORT_JSON: ${{ runner.temp }}/maintenance-retirement.json
+          REPORT_MARKDOWN: ${{ runner.temp }}/maintenance-retirement.md
+        run: |
+          python tools/retire_maintenance_branches.py \
+            --mode execute \
+            --expected-main-sha "${EXPECTED_MAIN_SHA}" \
+            --confirmation "${RETIREMENT_CONFIRMATION}" \
+            --report-json "${REPORT_JSON}" \
+            --report-markdown "${REPORT_MARKDOWN}"
+
+      - name: Record retirement outcome
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT_MARKDOWN: ${{ runner.temp }}/maintenance-retirement.md
+        run: |
+          if [ -s "${REPORT_MARKDOWN}" ]; then
+            gh issue comment 1788 \
+              --repo Voxterrae/HUB_Optimus \
+              --body-file "${REPORT_MARKDOWN}"
+          else
+            echo "::warning::No structured retirement report was produced."
+          fi

@@ -100,6 +100,34 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   remote ref. Existing branch retirement is a separate, explicitly audited
   operation under issue `#1788`.
 
+### retire-maintenance-branches.yml
+
+- Trigger: `workflow_dispatch` only. Merge, push, pull request, and schedule
+  events cannot activate it.
+- Inputs:
+  - `mode`, defaulting to `dry-run`;
+  - the exact approved live `main` SHA;
+  - the manifest-derived confirmation sentence, required by the tool only for
+    `execute`.
+- Dry-run permissions: `contents: read` and `pull-requests: read`.
+- Execute permissions, scoped only to the execute job:
+  - `contents: write` for the single atomic ref deletion;
+  - `issues: write` to record verified post-cleanup counts in issue `#1788`.
+  - `pull-requests: read` for both preflight and postflight head checks.
+- Both paths verify a clean checkout whose dispatch SHA, input SHA, checked-out
+  SHA, `origin/main`, and live `main` agree. They restore and verify the
+  versioned standalone bundle, compare complete REST and Git branch
+  inventories, and reject moved, protected, PR-backed, missing, or newly added
+  maintenance refs.
+- Execute additionally requires the exact confirmation emitted by dry-run,
+  performs an atomic Git push dry-run, refreshes every live guard, and then
+  submits one `git push --atomic` with 881 exact leases and deletion refspecs.
+  There is no batching or non-atomic fallback.
+- Writes to repo content: no. The execute path can delete only the exact 881
+  remote refs in the issue #1788 manifest and comments its structured outcome;
+  successful outcomes include verified post-counts. Merging the workflow does
+  not run it.
+
 ### `tools/pr_pro.py` support boundary
 
 - Status: supported as an optional helper for enriching an existing PR with
