@@ -148,6 +148,32 @@ Laboratory observations derived from the previous random stream require
 separate regeneration under issue #1775; they are not silently rewritten by
 the runtime correction.
 
+## Narrative-risk Contract Coverage Boundary
+
+Issues #1546–#1549 and merged PRs #1550/#1555 define a narrative-risk lane
+that remains separate from the scenario runtime.
+
+Current evidence boundary:
+
+- the claim schema owns the only stored closed risk-domain,
+  verification-status, and evidence-tier vocabularies under `$defs`; direct
+  Draft 2020-12 validation and the consistency checker reuse those exact
+  definitions and reject unknown domains or missing required fields;
+- the report renderer rejects missing `evidence` or `mitigation` before
+  writing output;
+- five byte-frozen narrative benchmarks include explicit `verified`, `mixed`,
+  and `unsupported` handling;
+- the 16-row screenshot-derived seed remains provisional because the source
+  images are not stored in the repository;
+- screenshot text remains dirty input requiring human review and is never
+  promoted to repository truth by the dataset, renderer, or benchmarks;
+- no narrative component imports or changes `run_scenario.py`,
+  `hub_optimus_simulator.py`, or the scenario schema.
+
+This evidence does not close the GitHub issues or provide human verification
+of the source-image transcriptions. Issue state and any closure decision remain
+explicit GitHub actions.
+
 ## Boundary Search Integrity Boundary
 
 Issue #1754 and PR #1774 record that the laboratory boundary tool treated

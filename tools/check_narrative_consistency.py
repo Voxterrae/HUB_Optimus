@@ -37,12 +37,17 @@ DOMAIN_KEYWORDS: dict[str, tuple[str, ...]] = {
 }
 
 SEVERITY_ORDER = {"error": 0, "warning": 1, "info": 2}
+CLOSED_VOCABULARIES = ("risk_domain", "verification_status", "evidence_tier")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Check internal consistency of the narrative-risk seed corpus.")
     parser.add_argument("--input", required=True, help="Path to seed_claims.json")
-    parser.add_argument("--taxonomy", required=True, help="Path to taxonomy.json")
+    parser.add_argument(
+        "--schema",
+        required=True,
+        help="Path to claim_record.schema.json, the canonical closed vocabulary source",
+    )
     parser.add_argument("--report", required=True, help="Path to JSON report output")
     parser.add_argument("--summary-file", help="Optional Markdown summary output for GITHUB_STEP_SUMMARY")
     return parser.parse_args()
@@ -74,14 +79,48 @@ def _matched_domains(text: str) -> set[str]:
     }
 
 
-def build_report(records: Any, taxonomy: Any) -> dict[str, Any]:
+def _closed_vocabularies(schema: Any) -> dict[str, set[str]] | None:
+    if not isinstance(schema, dict) or not isinstance(schema.get("$defs"), dict):
+        return None
+
+    vocabularies: dict[str, set[str]] = {}
+    for name in CLOSED_VOCABULARIES:
+        definition = schema["$defs"].get(name)
+        if not isinstance(definition, dict) or not isinstance(
+            definition.get("enum"),
+            list,
+        ):
+            return None
+        values = definition["enum"]
+        if (
+            not values
+            or not all(_is_non_empty_string(value) for value in values)
+            or len(values) != len(set(values))
+        ):
+            return None
+        vocabularies[name] = set(values)
+    return vocabularies
+
+
+def build_report(records: Any, schema: Any) -> dict[str, Any]:
     issues: list[dict[str, str]] = []
-    if not isinstance(taxonomy, dict) or not isinstance(taxonomy.get("risk_domains"), list):
-        return _finalize_report(0, [_issue("<dataset>", "invalid_taxonomy", "error", "taxonomy.json must contain a risk_domains list")])
+    vocabularies = _closed_vocabularies(schema)
+    if vocabularies is None:
+        return _finalize_report(
+            0,
+            [
+                _issue(
+                    "<dataset>",
+                    "invalid_claim_schema",
+                    "error",
+                    "claim_record.schema.json must define each closed vocabulary once under $defs",
+                )
+            ],
+        )
     if not isinstance(records, list):
         return _finalize_report(0, [_issue("<dataset>", "invalid_dataset", "error", "input dataset must be a JSON array of claim records")])
 
-    valid_domains = {str(domain) for domain in taxonomy["risk_domains"]}
+    valid_domains = vocabularies["risk_domain"]
     duplicates: dict[str, list[str]] = defaultdict(list)
 
     for index, record in enumerate(records):
@@ -100,16 +139,41 @@ def build_report(records: Any, taxonomy: Any) -> dict[str, Any]:
 
         risk_domain = record.get("risk_domain")
         if _is_non_empty_string(risk_domain) and risk_domain not in valid_domains:
-            issues.append(_issue(claim_id, "invalid_risk_domain", "error", f"risk_domain '{risk_domain}' is not defined in taxonomy.json"))
+            issues.append(_issue(claim_id, "invalid_risk_domain", "error", f"risk_domain '{risk_domain}' is not defined in claim_record.schema.json"))
 
         source_type = record.get("source_type")
         evidence_tier = record.get("evidence_tier")
+        verification_status = record.get("verification_status")
+        if (
+            _is_non_empty_string(verification_status)
+            and verification_status not in vocabularies["verification_status"]
+        ):
+            issues.append(
+                _issue(
+                    claim_id,
+                    "invalid_verification_status",
+                    "error",
+                    f"verification_status '{verification_status}' is not defined in claim_record.schema.json",
+                )
+            )
+        if (
+            _is_non_empty_string(evidence_tier)
+            and evidence_tier not in vocabularies["evidence_tier"]
+        ):
+            issues.append(
+                _issue(
+                    claim_id,
+                    "invalid_evidence_tier",
+                    "error",
+                    f"evidence_tier '{evidence_tier}' is not defined in claim_record.schema.json",
+                )
+            )
         allowed_evidence = SOURCE_EVIDENCE_RULES.get(str(source_type))
         if _is_non_empty_string(source_type) and _is_non_empty_string(evidence_tier) and allowed_evidence and evidence_tier not in allowed_evidence:
             allowed_text = ", ".join(sorted(allowed_evidence))
             issues.append(_issue(claim_id, "source_evidence_mismatch", "warning", f"source_type '{source_type}' should use evidence_tier in {{{allowed_text}}}, got '{evidence_tier}'"))
 
-        if record.get("verification_status") == "verified" and evidence_tier in {"unknown", "advocacy"}:
+        if verification_status == "verified" and evidence_tier in {"unknown", "advocacy"}:
             issues.append(_issue(claim_id, "invalid_promotion", "warning", "verification_status cannot be 'verified' with unknown or advocacy evidence_tier"))
 
         if _is_non_empty_string(claim_text) and _is_non_empty_string(risk_domain):
@@ -164,7 +228,7 @@ def main() -> int:
     args = parse_args()
     try:
         records = _load_json(Path(args.input))
-        taxonomy = _load_json(Path(args.taxonomy))
+        schema = _load_json(Path(args.schema))
     except FileNotFoundError as exc:
         print(f"Missing file: {exc.filename}", file=sys.stderr)
         return 1
@@ -172,7 +236,7 @@ def main() -> int:
         print(f"Invalid JSON: {exc}", file=sys.stderr)
         return 1
 
-    report = build_report(records, taxonomy)
+    report = build_report(records, schema)
     report_path = Path(args.report)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
