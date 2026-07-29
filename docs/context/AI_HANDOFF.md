@@ -493,10 +493,16 @@ points: the portfolio, the branded 404 page, and Operator.
   token. Its conservative contrast against `--graphite-3` is greater than
   4.5:1; representative 404 and Operator muted-text pairs are checked
   separately.
+- Deterministic Node/DOM probes execute the globe keyboard path, initial and
+  changed reduced-motion preference, WebGL-unavailable fallback, and
+  context-loss focus removal. Static CSS contracts also cover the declared
+  homepage and Operator breakpoints, focus indicators, and Hebrew logical
+  layout primitives.
 - These checks do not constitute accessibility certification or qualified
-  human review. Keyboard/focus, reduced-motion behavior, Hebrew RTL, WebGL
-  fallback, and representative desktop/mobile layout still require
-  controlled-browser QA on the reviewed deployment.
+  human review. The probes do not compute a browser layout or replace
+  controlled-browser QA; Hebrew RTL rendering, visual focus, WebGL rendering,
+  and representative desktop/mobile layouts still require that QA on the
+  reviewed deployment.
 
 ## GitHub Actions supply-chain boundary
 
