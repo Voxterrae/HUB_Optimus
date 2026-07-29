@@ -49,3 +49,32 @@ def test_returned_history_cannot_mutate_simulator_state() -> None:
     result["history"][0]["Alpha"]["offer"] = 999
 
     assert simulator.history == internal_snapshot
+
+
+def test_seeded_legacy_custom_policy_is_repeatable_without_global_rng_drift() -> None:
+    simulator = Simulator(_scenario())
+    simulator.assign_policy(
+        "Alpha",
+        lambda _state: {"offer": random.randint(1, 5)},
+    )
+    random.seed(123456)
+    state_before = random.getstate()
+
+    first = simulator.run(seed=42)
+    second = simulator.run(seed=42)
+
+    assert second == first
+    assert random.getstate() == state_before
+
+
+def test_custom_policy_can_use_the_run_local_rng() -> None:
+    simulator = Simulator(_scenario())
+    simulator.assign_policy(
+        "Alpha",
+        lambda _state, rng: {"offer": rng.randint(1, 5)},
+    )
+
+    first = simulator.run(seed=42)
+    second = simulator.run(seed=42)
+
+    assert second == first

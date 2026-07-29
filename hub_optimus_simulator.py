@@ -11,6 +11,7 @@ definitions.
 from __future__ import annotations
 
 import copy
+import inspect
 import json
 import random
 from typing import Any, Callable, Dict, List, Optional
@@ -121,7 +122,7 @@ class Actor:
         self,
         name: str,
         role_type: str,
-        policy: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
+        policy: Optional[Callable[..., Dict[str, Any]]] = None,
     ) -> None:
         self.name = name
         self.role_type = role_type
@@ -151,7 +152,21 @@ class Actor:
         if self._negotiation_policy is not None:
             return self._negotiation_policy.propose(self.role_type, state, source)
         if self.policy is not None:
-            return self.policy(state)
+            try:
+                inspect.signature(self.policy).bind(state, source)
+            except (TypeError, ValueError):
+                # Legacy one-argument policies may use the module-level random
+                # API.  Run them against the isolated stream, then restore the
+                # caller's global state exactly.
+                global_state = random.getstate()
+                random.setstate(source.getstate())
+                try:
+                    action = self.policy(state)
+                    source.setstate(random.getstate())
+                    return action
+                finally:
+                    random.setstate(global_state)
+            return self.policy(state, source)
         return self.default_policy(state, source)
 
 
@@ -174,9 +189,9 @@ class Simulator:
                 actor._negotiation_policy = neg_policy
 
     def assign_policy(
-        self, actor_name: str, policy: Callable[[Dict[str, Any]], Dict[str, Any]]
+        self, actor_name: str, policy: Callable[..., Dict[str, Any]]
     ) -> None:
-        """Assign a custom policy to an actor by name."""
+        """Assign a custom ``policy(state)`` or ``policy(state, rng)`` by name."""
         for actor in self.actors:
             if actor.name == actor_name:
                 actor.policy = policy
