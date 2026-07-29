@@ -24,11 +24,19 @@ governance source under `docs/governance/TRANSLATION_POLICY.md`, while the
 canonical v1 methodology remains Spanish under `v1_core/languages/es/`.
 
 **Source-of-truth rule:**
-- If repository docs conflict, **this file (`docs/context/STATUS.md`) wins**.
-- For HUB_Optimus v1, the canonical source-of-truth is `v1_core/languages/es/`.
-- English and other languages are reference or parity translations unless explicitly stated otherwise.
-- Local labels such as "English source" or EN/ES cross-links are navigation/parity aids only;
-  they do not redefine canonical authority for `v1_core`.
+- The project-wide precedence order is defined once in
+  [`SOURCE_OF_TRUTH.md`](SOURCE_OF_TRUTH.md).
+- This file is authoritative for canonical-language, locale, and parity
+  conflicts. It does not override GitHub `main`, live GitHub object state,
+  governance sources, runtime contracts, source code, or executable evidence
+  in their own domains.
+- For HUB_Optimus v1, the canonical methodology source is
+  `v1_core/languages/es/`.
+- English and other languages are reference or parity translations unless
+  explicitly stated otherwise.
+- Local labels such as "English source" or EN/ES cross-links are
+  navigation/parity aids only; they do not redefine canonical authority for
+  `v1_core`.
 
 **Planned switch (later, not now):**
 - Once en reaches stable parity, we may declare **en as canonical** for a future version (v1.1 or v2).

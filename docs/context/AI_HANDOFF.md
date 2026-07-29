@@ -505,6 +505,35 @@ because their changes also affect execution or credential behavior.
 - Repository tests and launcher source do not assert that this change is
   deployed on any host.
 
+## Capability Truth Snapshot Boundary
+
+Issue #1807 establishes one precedence map in
+`docs/context/SOURCE_OF_TRUTH.md` and refreshes the derived capability ledger
+against repository-tree baseline
+`df0ef345e5ac627f3e2735573c802fe2f60821f4`.
+
+Operational boundary:
+
+- GitHub `main` and each live GitHub object's own state remain authoritative
+  for the repository and mutable object state that they respectively contain.
+- `STATUS.md` resolves language/canonical policy; applicable governance,
+  runtime contracts, schemas, source, and executable tests govern their
+  narrower domains.
+- `AI_HANDOFF.md` summarizes operational boundaries and cannot override those
+  sources.
+- `docs/architecture/capability_status.md` is a derived view. Its versioned
+  offline evidence snapshot is
+  `docs/architecture/capability_evidence.v1.json`.
+- Deployment, GitHub settings, Releases, another repository, current PR
+  lifecycle, and qualified professional review remain external unless
+  directly inspected at a stated time.
+- `docs/context/hub_optimus_checkpoint.md` is an archived, non-authoritative
+  historical snapshot; its release, phase, CI, and task values are not current
+  claims.
+- The offline regression rejects draft wording for PRs recorded as terminal
+  in the versioned baseline and rejects restoring that checkpoint as a current
+  source. It does not replace live GitHub inspection.
+
 ## Meta-learning Follow-up
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.

@@ -1,0 +1,217 @@
+{
+  "format_version": 1,
+  "authority": "Offline evidence snapshot for the capability ledger. It records repository evidence at one commit and does not attest mutable GitHub, deployment, release, professional-review, or repository-settings state.",
+  "baseline": {
+    "repository": "Voxterrae/HUB_Optimus",
+    "commit": "df0ef345e5ac627f3e2735573c802fe2f60821f4",
+    "verified_at": "2026-07-29",
+    "kind": "repository-tree"
+  },
+  "current_truth_documents": [
+    "README.md",
+    "docs/architecture/capability_status.md",
+    "docs/context/PROJECT_OVERVIEW.md",
+    "docs/context/SOURCE_OF_TRUTH.md",
+    "docs/context/STATUS.md"
+  ],
+  "terminal_pull_requests": [
+    {
+      "number": 1737,
+      "state": "merged",
+      "commit": "581aab7f858ff109b06d2b7737084cb660637c7a"
+    },
+    {
+      "number": 1744,
+      "state": "merged",
+      "commit": "4c959847a5fa2dcca3e9a322a7bb9f09f6e27173"
+    },
+    {
+      "number": 1745,
+      "state": "merged",
+      "commit": "dcdc37857d6649f7b720bb1285b33b5432a58e83"
+    },
+    {
+      "number": 1746,
+      "state": "merged",
+      "commit": "6ce8488ba4616ac6bd3c083d1d6f3c166bb11c8d"
+    },
+    {
+      "number": 1770,
+      "state": "merged",
+      "commit": "e60af8b2ee311e7bd451ccd4215dc46c0051c2ea"
+    },
+    {
+      "number": 1771,
+      "state": "merged",
+      "commit": "3672310ac013012bc8f8da9dad1b4daa2ad8262f"
+    },
+    {
+      "number": 1772,
+      "state": "merged",
+      "commit": "dd94b898356de7e4be04eeeb7e0c286f4adc8023"
+    },
+    {
+      "number": 1774,
+      "state": "merged",
+      "commit": "eaa7f2ecc006c59c4faf1812e43feef35c01058f"
+    },
+    {
+      "number": 1777,
+      "state": "merged",
+      "commit": "46e890e2328ffaed2f1a1f384ed21b31a112feaa"
+    },
+    {
+      "number": 1778,
+      "state": "merged",
+      "commit": "aceb366e0657a5ccba2cca270dec103859eaa272"
+    },
+    {
+      "number": 1779,
+      "state": "merged",
+      "commit": "af89e420efb7b60eb95867b840ebeaf23dd989b6"
+    },
+    {
+      "number": 1783,
+      "state": "merged",
+      "commit": "1355b9410921db415754a57c7251d1f72df2bea5"
+    },
+    {
+      "number": 1791,
+      "state": "merged",
+      "commit": "01bd9530d8c62301723ff8caf9f24744987795a2"
+    },
+    {
+      "number": 1792,
+      "state": "merged",
+      "commit": "f502fc82b35a9ec07c22d9f1300ea791ef69d6b4"
+    },
+    {
+      "number": 1793,
+      "state": "merged",
+      "commit": "f1fb2e14f8cf1da577bfc07145e0b22f4a59b49e"
+    },
+    {
+      "number": 1794,
+      "state": "merged",
+      "commit": "5b5ab543491ccce175c328ad4dfa493a5820ed25"
+    },
+    {
+      "number": 1795,
+      "state": "merged",
+      "commit": "e14b2a49186870fc61f11c64e8b461be13817efb"
+    },
+    {
+      "number": 1796,
+      "state": "merged",
+      "commit": "6a4de9a390a11ae2e304c7abf39b119e7fe82ce5"
+    },
+    {
+      "number": 1797,
+      "state": "merged",
+      "commit": "8701b083d24fbea52d9faa0207ab51010ba61273"
+    },
+    {
+      "number": 1799,
+      "state": "merged",
+      "commit": "13327d734b4437104c2778d59326d697e8739417"
+    },
+    {
+      "number": 1802,
+      "state": "merged",
+      "commit": "3843025037536dcc890bde183b1ad36d44883f5e"
+    },
+    {
+      "number": 1808,
+      "state": "merged",
+      "commit": "3b7b6ac018f139c1e01aed65261f0155a0653957"
+    },
+    {
+      "number": 1811,
+      "state": "merged",
+      "commit": "01b6ba232607d7d65675d4b35406f81555b23226"
+    },
+    {
+      "number": 1812,
+      "state": "merged",
+      "commit": "824d5602e11f3e0eea84baed1cc085c613dc7e59"
+    },
+    {
+      "number": 1813,
+      "state": "merged",
+      "commit": "5f18f3e902a9be24525705c811a7e633c3e70bff"
+    },
+    {
+      "number": 1814,
+      "state": "merged",
+      "commit": "df0ef345e5ac627f3e2735573c802fe2f60821f4"
+    }
+  ],
+  "external_unresolved": [
+    {
+      "id": "pull-request-1773-lifecycle",
+      "subject": "Current review and lifecycle state of PR #1773",
+      "reason": "Mutable Pull Request state is not contained in the baseline tree."
+    },
+    {
+      "id": "public-deployment",
+      "subject": "Current public deployment content, availability, and runtime configuration",
+      "reason": "Repository files and workflow source do not attest a live deployment."
+    },
+    {
+      "id": "repository-settings",
+      "subject": "Branch protection, required reviews, rulesets, Secret Scanning, Push Protection, and Pages settings",
+      "reason": "GitHub repository settings are outside the commit tree."
+    },
+    {
+      "id": "repository-health-hosted-run",
+      "subject": "Execution result and published summary of the updated repository-health workflow",
+      "reason": "Workflow source and isolated tests do not prove that GitHub Actions has run the reviewed revision."
+    },
+    {
+      "id": "release-state",
+      "subject": "Current GitHub Release designation and published release assets",
+      "reason": "Tags in a checkout do not attest the current GitHub Releases object."
+    },
+    {
+      "id": "labs-repository",
+      "subject": "Current contents and releases of Voxterrae/HUB-Optimus-labs",
+      "reason": "A different repository is outside this baseline."
+    },
+    {
+      "id": "professional-translation-review",
+      "subject": "Qualified human review of non-canonical translations",
+      "reason": "The baseline contains no named qualified reviewer record that certifies professional parity."
+    }
+  ],
+  "archived_documents": [
+    {
+      "path": "docs/context/hub_optimus_checkpoint.md",
+      "status": "historical",
+      "current": false,
+      "superseded_by": [
+        "docs/context/SOURCE_OF_TRUTH.md",
+        "docs/context/STATUS.md",
+        "docs/context/AI_HANDOFF.md",
+        "docs/architecture/capability_status.md"
+      ]
+    }
+  ],
+  "verification_commands": [
+    {
+      "purpose": "Full Python suite",
+      "command": "python -m pytest -q"
+    },
+    {
+      "purpose": "Scenario benchmark bytes",
+      "command": "python benchmarks/run_benchmarks.py"
+    },
+    {
+      "purpose": "Narrative benchmark bytes",
+      "command": "python benchmarks/run_narrative_benchmarks.py"
+    },
+    {
+      "purpose": "Documentation encoding",
+      "command": "python tools/check_mojibake.py ."
+    }
+  ]
+}

@@ -6,6 +6,8 @@ This folder contains onboarding guides and multilingual entry points.
 
 - [What HUB_Optimus is, what is built, and what is not](context/PROJECT_OVERVIEW.md)
 - [Evidence-backed capability ledger](architecture/capability_status.md)
+- [Machine-readable capability evidence snapshot](architecture/capability_evidence.v1.json)
+- [Source-of-truth hierarchy](context/SOURCE_OF_TRUTH.md)
 - [RFC lifecycle guide](rfc/README.md)
 - [Versioned RFC registry](rfc/registry.v1.json)
 - [Canonical language and source-of-truth status](context/STATUS.md)
