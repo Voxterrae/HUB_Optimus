@@ -5,6 +5,7 @@ This folder contains onboarding guides and multilingual entry points.
 ## Project truth
 
 - [What HUB_Optimus is, what is built, and what is not](context/PROJECT_OVERVIEW.md)
+- [Current system architecture map](architecture/system_architecture_map.md)
 - [Evidence-backed capability ledger](architecture/capability_status.md)
 - [Machine-readable capability evidence snapshot](architecture/capability_evidence.v1.json)
 - [Source-of-truth hierarchy](context/SOURCE_OF_TRUTH.md)
