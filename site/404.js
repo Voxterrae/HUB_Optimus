@@ -5,35 +5,35 @@
     en: {
       title: "Page not found — HUB_Optimus",
       heading: "Page not found",
-      copy: "This address is not part of the versioned public surface. Return to the portfolio or inspect the repository, which remains the project source of truth.",
+      copy: "This address is not part of the versioned public site. Return to the portfolio or inspect the repository, which remains the project source of truth.",
       languageAria: "Language",
       routesAria: "Available routes",
       portfolio: "Return to portfolio",
       operator: "Open Operator",
       github: "View GitHub",
-      review: "Russian, Hebrew, and Simplified Chinese are machine-assisted drafts. Qualified human review is required."
+      review: "English, Spanish, and German received an AI-assisted terminology and register audit; named qualified human review is still required. Russian, Hebrew, and Simplified Chinese remain machine-assisted drafts."
     },
     es: {
       title: "Página no encontrada — HUB_Optimus",
       heading: "Página no encontrada",
-      copy: "Esta dirección no forma parte de la superficie pública versionada. Vuelve al portfolio o consulta el repositorio, que sigue siendo la fuente de verdad del proyecto.",
+      copy: "Esta dirección no forma parte de la web pública versionada. Vuelve al portfolio o consulta el repositorio, que sigue siendo la fuente de verdad del proyecto.",
       languageAria: "Idioma",
       routesAria: "Rutas disponibles",
       portfolio: "Volver al portfolio",
       operator: "Abrir Operator",
       github: "Ver GitHub",
-      review: "El ruso, el hebreo y el chino simplificado son borradores asistidos por máquina. Requieren revisión humana cualificada."
+      review: "El inglés, el español y el alemán han pasado una auditoría terminológica y de registro asistida por IA; todavía requieren una revisión humana cualificada con revisor identificado. El ruso, el hebreo y el chino simplificado siguen siendo borradores asistidos por máquina."
     },
     de: {
       title: "Seite nicht gefunden — HUB_Optimus",
       heading: "Seite nicht gefunden",
-      copy: "Diese Adresse gehört nicht zur versionierten öffentlichen Oberfläche. Kehren Sie zum Portfolio zurück oder prüfen Sie das Repository, das die Quelle der Projektwahrheit bleibt.",
+      copy: "Diese Adresse gehört nicht zur versionierten öffentlichen Website. Kehren Sie zum Portfolio zurück oder prüfen Sie das Repository, das die maßgebliche Projektquelle bleibt.",
       languageAria: "Sprache",
-      routesAria: "Verfügbare Wege",
+      routesAria: "Verfügbare Ziele",
       portfolio: "Zum Portfolio",
       operator: "Operator öffnen",
-      github: "GitHub ansehen",
-      review: "Russisch, Hebräisch und vereinfachtes Chinesisch sind maschinell unterstützte Entwürfe. Eine qualifizierte menschliche Prüfung ist erforderlich."
+      github: "GitHub öffnen",
+      review: "Englisch, Spanisch und Deutsch wurden einer KI-gestützten Terminologie- und Registerprüfung unterzogen; eine qualifizierte menschliche Prüfung durch namentlich benannte Prüfende steht weiterhin aus. Russisch, Hebräisch und vereinfachtes Chinesisch bleiben maschinell unterstützte Entwürfe."
     },
     ru: {
       title: "Страница не найдена — HUB_Optimus",

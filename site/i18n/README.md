@@ -7,8 +7,8 @@ not translate the repository, the constitutional kernel, or the Operator interfa
 
 - Canonical HUB_Optimus v1 remains Spanish under
   [`docs/context/STATUS.md`](https://github.com/Voxterrae/HUB_Optimus/blob/main/docs/context/STATUS.md).
-- The English, German, Russian, Hebrew, and Simplified Chinese interface dictionaries are
-  presentation layers. They do not supersede canonical Spanish.
+- All six interface dictionaries, including Spanish, are presentation layers. They do
+  not supersede the canonical Spanish v1 methodology.
 - No constitutional translation is ratified by this locale pack.
 - A translation cannot change an implemented capability into a released service, or an
   RFC into an implemented capability.
@@ -17,24 +17,26 @@ not translate the repository, the constitutional kernel, or the Operator interfa
 
 | Locale | Direction | Scope | Status |
 |---|---:|---|---|
-| `en` | LTR | Existing portfolio interface baseline | Linguistic quality not assessed by issue #1750 |
-| `es` | LTR | Existing portfolio interface translation | Linguistic quality not assessed by issue #1750 |
-| `de` | LTR | Existing portfolio interface translation | Linguistic quality not assessed by issue #1750 |
+| `en` | LTR | Existing portfolio interface baseline | AI-assisted terminology and register audit under #1736; named qualified human review required |
+| `es` | LTR | Existing portfolio interface translation | AI-assisted terminology and register audit under #1736; named qualified human review required |
+| `de` | LTR | Existing portfolio interface translation | AI-assisted terminology and register audit under #1736; named qualified human review required |
 | `ru` | LTR | Portfolio and 404 interface | Machine-assisted draft; qualified human review required |
 | `he` | RTL | Portfolio and 404 interface | Machine-assisted draft; qualified human review required |
 | `zh-Hans` | LTR | Portfolio and 404 interface, Simplified Chinese only | Machine-assisted draft; qualified human review required |
 
-No reviewer is recorded yet for `ru`, `he`, or `zh-Hans`. A named qualified human
-reviewer must be recorded in
-[`locale-metadata.v1.json`](locale-metadata.v1.json) before a language-quality claim can
-be made.
+No named reviewer is recorded for any locale. A named qualified human reviewer must be
+recorded in
+[`locale-metadata.v1.json`](locale-metadata.v1.json) before a locale can be described as
+human-reviewed or professionally translated. The automated and AI-assisted checks in
+#1736 establish terminology, register, claim parity, and structural coverage; they do
+not establish certified or professional human review.
 
 ## Operator boundary
 
 The portfolio description and limitation notice are translated. The Operator application
 itself remains in its existing language. Operator performs deterministic browser-side
-triage; it does not execute the Semantic Engine. Unverified provenance remains
-unverified after intake or triage.
+triage; it does not execute the Semantic Engine. Triage does not verify stated
+provenance.
 
 ## Versioned records
 

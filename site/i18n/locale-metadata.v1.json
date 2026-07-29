@@ -1,6 +1,7 @@
 {
-  "manifest_version": "1.0.0",
+  "manifest_version": "1.1.0",
   "issue": 1750,
+  "latest_audit_issue": 1736,
   "scope": "Static public portfolio and 404 interface only",
   "canonical_v1_language": "es",
   "interface_baseline": "en",
@@ -9,89 +10,89 @@
   "portfolio_translation_key_count": 155,
   "field_status": {
     "document_title_and_description": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
     "navigation_and_language_controls": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
     "globe_and_motion_controls": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
     "method_and_operating_principles": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
     "portfolio_capabilities_and_statuses": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
     "boundaries_and_limitations": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
     "operator_description_and_disclosure": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
     "labs_and_future_rfc_boundaries": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
     "evidence_and_footer_links": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
     "accessibility_labels": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
     "not_found_page": {
-      "en": "existing baseline",
-      "es": "existing translation",
-      "de": "existing translation",
+      "en": "AI-assisted terminology and register audit; named qualified human review required",
+      "es": "AI-assisted terminology and register audit; named qualified human review required",
+      "de": "AI-assisted terminology and register audit; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
@@ -101,22 +102,22 @@
     "en": {
       "direction": "ltr",
       "scope": "existing portfolio interface baseline",
-      "translation_method": "existing baseline",
-      "review_status": "linguistic quality not assessed by issue #1750",
+      "translation_method": "existing baseline; AI-assisted terminology and register audit",
+      "review_status": "named qualified human review required",
       "named_reviewer": null
     },
     "es": {
       "direction": "ltr",
       "scope": "existing portfolio interface translation",
-      "translation_method": "existing translation",
-      "review_status": "linguistic quality not assessed by issue #1750",
+      "translation_method": "existing translation; AI-assisted terminology and register audit",
+      "review_status": "named qualified human review required",
       "named_reviewer": null
     },
     "de": {
       "direction": "ltr",
       "scope": "existing portfolio interface translation",
-      "translation_method": "existing translation",
-      "review_status": "linguistic quality not assessed by issue #1750",
+      "translation_method": "existing translation; AI-assisted terminology and register audit",
+      "review_status": "named qualified human review required",
       "named_reviewer": null
     },
     "ru": {
