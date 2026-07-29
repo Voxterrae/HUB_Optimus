@@ -884,6 +884,22 @@
           <input id="product_source_url" placeholder="https://example.com/news-or-github-source">
           <p class="field-hint">Used for controlled URL intake. If the source blocks access, paste the article text below.</p>
         </div>
+        <div class="field">
+          <label for="signal_source_type">Source type</label>
+          <select id="signal_source_type">
+            <option value="automatic">automatic from URL/text</option>
+            <option value="external-source">external source</option>
+            <option value="news-article">news article</option>
+            <option value="github-issue">GitHub issue</option>
+            <option value="github-pr">GitHub PR</option>
+            <option value="ci-failure">CI/runtime signal</option>
+            <option value="review-friction">review friction</option>
+            <option value="documentation-drift">documentation drift</option>
+            <option value="human-situation">human situation</option>
+            <option value="public-service-friction">public-service friction</option>
+          </select>
+          <p class="field-hint">Automatic classification is conservative. Select an explicit type here when the operator has a more accurate classification.</p>
+        </div>
       </div>
 
       <div class="field">
@@ -950,32 +966,21 @@
     <div class="grid">
       <section class="panel full" id="source_normalizer">
         <h2>Source-aware normalizer</h2>
-        <p>Paste a news URL, GitHub signal, copied article text, or human situation. HUB_Optimus will convert it into a structured, editable case without deciding whether the source is true.</p>
+        <p>This technical view uses the primary intake above. Its source projection is read-only here so URL, text, and source type cannot diverge from the material used to prepare the draft.</p>
 
-        <div class="row">
-          <div class="field">
-            <label for="signal_source_type">Source type</label>
-            <select id="signal_source_type">
-              <option value="external-source">external source</option>
-              <option value="news-article">news article</option>
-              <option value="github-issue">GitHub issue</option>
-              <option value="github-pr">GitHub PR</option>
-              <option value="ci-failure">CI/runtime signal</option>
-              <option value="review-friction">review friction</option>
-              <option value="documentation-drift">documentation drift</option>
-              <option value="human-situation">human situation</option>
-              <option value="public-service-friction">public-service friction</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="source_url">Source URL, optional</label>
-            <input id="source_url" placeholder="https://example.com/article-or-github-link">
-          </div>
+        <div class="row" aria-label="Canonical intake audit projection">
+          <article class="mini-card">
+            <h3>Source type</h3>
+            <p id="audit_source_type">external-source</p>
+          </article>
+          <article class="mini-card">
+            <h3>Source URL</h3>
+            <p id="audit_source_url">not provided</p>
+          </article>
         </div>
-
-        <div class="field">
-          <label for="source_text">Source text / copied article / situation</label>
-          <textarea id="source_text" placeholder="Paste the article text, GitHub issue body, PR description, CI failure excerpt, or human situation here."></textarea>
+        <div class="mini-card">
+          <h3>Source text</h3>
+          <pre id="audit_source_text">not provided</pre>
         </div>
 
         <div class="actions">
@@ -1755,9 +1760,11 @@
     // OPERATOR_INTAKE_RECORD_END
 
     function buildNormalizedPayload() {
-      const raw = value("source_text");
-      const sourceType = value("signal_source_type") || "human-situation";
-      const sourceUrl = value("source_url");
+      const {
+        sourceText: raw,
+        sourceType,
+        sourceUrl
+      } = canonicalIntakeState();
       const claimType = sourceTypeToClaimType(sourceType);
       const signal = sourceTypeToSignal(sourceType);
 
@@ -1970,6 +1977,7 @@
       setProductLoader(0, "idle");
     }
 
+    // OPERATOR_CANONICAL_INTAKE_START
     function inferProductSourceType(sourceUrl, raw) {
       if (!sourceUrl) return raw ? "human-situation" : "external-source";
 
@@ -1987,6 +1995,69 @@
 
       return "external-source";
     }
+
+    function canonicalIntakeState() {
+      const sourceUrl = value("product_source_url");
+      const sourceText = value("product_source_text");
+      const selectedSourceType = value("signal_source_type");
+
+      return {
+        sourceUrl,
+        sourceText,
+        sourceType: (
+          selectedSourceType && selectedSourceType !== "automatic"
+            ? selectedSourceType
+            : inferProductSourceType(sourceUrl, sourceText)
+        )
+      };
+    }
+
+    function syncAuditIntakeView(intakeState = canonicalIntakeState()) {
+      $("audit_source_type").textContent = intakeState.sourceType;
+      $("audit_source_url").textContent = intakeState.sourceUrl || "not provided";
+      $("audit_source_text").textContent = intakeState.sourceText
+        ? `${intakeState.sourceText.length} characters supplied in primary intake`
+        : "not provided";
+    }
+
+    function syncProductInputState({
+      resetIntakeRecord = true
+    } = {}) {
+      const analyzeButton = $("product_analyze");
+      const intakeState = canonicalIntakeState();
+
+      if (resetIntakeRecord) currentIntakeRecord = null;
+      currentMemoryRecord = null;
+      setMemoryActionsEnabled(false);
+      syncAuditIntakeView(intakeState);
+
+      if (!analyzeButton) return;
+
+      if (intakeState.sourceText) {
+        analyzeButton.disabled = false;
+        $("product_wait_status").textContent = intakeState.sourceUrl
+          ? "Ready to prepare a draft. Text-to-URL attribution will be marked as operator-provided and unverified."
+          : "Ready to prepare a local draft from operator-provided text.";
+        return;
+      }
+
+      if (intakeState.sourceUrl) {
+        analyzeButton.disabled = false;
+        $("product_wait_status").textContent = "Ready to read URL from controlled intake. If the source blocks access, paste the article text.";
+        return;
+      }
+
+      analyzeButton.disabled = true;
+      $("product_wait_status").textContent = "Paste a URL, paste text, or load the example to begin.";
+    }
+
+    function setCanonicalIntake(sourceUrl, sourceText, sourceType = null) {
+      $("product_source_url").value = sourceUrl;
+      $("product_source_text").value = sourceText;
+      $("signal_source_type").value = sourceType || "automatic";
+      syncProductInputState();
+    }
+    // OPERATOR_CANONICAL_INTAKE_END
 
     function reviewChecklistCard() {
       return `
@@ -2016,8 +2087,13 @@
     function renderProductOutput() {
       const output = $("product_output");
       const resultView = $("result_view");
+      const intakeState = canonicalIntakeState();
 
-      const profile = buildSourceProfile(value("source_text"), value("signal_source_type") || "human-situation", value("source_url"));
+      const profile = buildSourceProfile(
+        intakeState.sourceText,
+        intakeState.sourceType,
+        intakeState.sourceUrl
+      );
 
       output.innerHTML = `
         ${resultView.innerHTML}
@@ -2052,7 +2128,12 @@
 
     function buildMemoryRecord() {
       const payload = buildPayload();
-      const profile = buildSourceProfile(value("source_text"), value("signal_source_type") || "human-situation", value("source_url"));
+      const intakeState = canonicalIntakeState();
+      const profile = buildSourceProfile(
+        intakeState.sourceText,
+        intakeState.sourceType,
+        intakeState.sourceUrl
+      );
       const claim = payload.claims?.[0]?.text || "No claim generated.";
       const evidenceText = payload.evidence?.[0]?.text || "No evidence generated.";
 
@@ -2062,7 +2143,7 @@
         saved_at_utc: null,
         source_url: currentIntakeRecord?.final_url || currentIntakeRecord?.original_url || null,
         intake_record: currentIntakeRecord,
-        source_type: value("signal_source_type") || "human-situation",
+        source_type: intakeState.sourceType,
         signal_domain: profile.domain.id,
         signal_domain_label: profile.domain.label,
         actors: profile.actors,
@@ -2097,34 +2178,6 @@
     }
 
     const CONTROLLED_URL_INTAKE_ENDPOINT = "https://api.huboptimus.dev/intake/url";
-
-    function syncProductInputState() {
-      const raw = value("product_source_text");
-      const sourceUrl = value("product_source_url");
-      const analyzeButton = $("product_analyze");
-
-      if (!analyzeButton) return;
-      currentIntakeRecord = null;
-      currentMemoryRecord = null;
-      setMemoryActionsEnabled(false);
-
-      if (raw) {
-        analyzeButton.disabled = false;
-        $("product_wait_status").textContent = sourceUrl
-          ? "Ready to prepare a draft. Text-to-URL attribution will be marked as operator-provided and unverified."
-          : "Ready to prepare a local draft from operator-provided text.";
-        return;
-      }
-
-      if (sourceUrl) {
-        analyzeButton.disabled = false;
-        $("product_wait_status").textContent = "Ready to read URL from controlled intake. If the source blocks access, paste the article text.";
-        return;
-      }
-
-      analyzeButton.disabled = true;
-      $("product_wait_status").textContent = "Paste a URL, paste text, or load the example to begin.";
-    }
 
     function renderUrlIntakeFallback(sourceUrl, detail = "") {
       const detailLine = detail ? `<p class="meta">${escapeHtml(detail)}</p>` : "";
@@ -2368,8 +2421,9 @@
     }
 
     async function runProductAnalyze() {
-      let raw = value("product_source_text");
-      const sourceUrl = value("product_source_url");
+      const initialIntakeState = canonicalIntakeState();
+      let raw = initialIntakeState.sourceText;
+      const sourceUrl = initialIntakeState.sourceUrl;
       const analyzeButton = $("product_analyze");
 
       if (!raw && !sourceUrl) {
@@ -2400,6 +2454,7 @@
           raw = intake.text;
           currentIntakeRecord = buildIntakeRecord(raw, sourceUrl, intake);
           $("product_source_text").value = raw;
+          syncAuditIntakeView();
           $("product_wait_status").textContent = "URL retrieved. Preparing a provenance-aware draft…";
         } catch (error) {
           productStep("product_step_capture", "done");
@@ -2414,9 +2469,7 @@
         currentIntakeRecord = buildIntakeRecord(raw, sourceUrl);
       }
 
-      $("source_url").value = sourceUrl;
-      $("source_text").value = raw;
-      $("signal_source_type").value = inferProductSourceType(sourceUrl, raw);
+      syncAuditIntakeView();
 
       productStep("product_step_capture", "running");
       $("product_wait_status").textContent = "1/4 Capturing signal…";
@@ -2449,28 +2502,34 @@
     }
 
     function loadProductNewsDemo() {
-      $("product_source_url").value = "https://example.com/news-report";
-      $("product_source_text").value = "A news report says a public institution has introduced an automated decision system. The article says affected users may not receive clear explanations when decisions are made. The report cites complaints from several users but does not include the full administrative record or official technical documentation.";
-      syncProductInputState();
+      setCanonicalIntake(
+        "https://example.com/news-report",
+        "A news report says a public institution has introduced an automated decision system. The article says affected users may not receive clear explanations when decisions are made. The report cites complaints from several users but does not include the full administrative record or official technical documentation."
+      );
     }
 
     function openAdvancedConsole() {
       const advanced = $("advanced_operator_console");
       if (!advanced) return;
+      syncAuditIntakeView();
       advanced.open = true;
       advanced.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function loadNewsDemo() {
-      $("signal_source_type").value = "news-article";
-      $("source_url").value = "https://example.com/news-report";
-      $("source_text").value = "A news report says a public institution has introduced an automated decision system. The article says affected users may not receive clear explanations when decisions are made. The report cites complaints from several users but does not include the full administrative record or official technical documentation.";
+      setCanonicalIntake(
+        "https://example.com/news-report",
+        "A news report says a public institution has introduced an automated decision system. The article says affected users may not receive clear explanations when decisions are made. The report cites complaints from several users but does not include the full administrative record or official technical documentation.",
+        "news-article"
+      );
     }
 
     function loadGithubDemo() {
-      $("signal_source_type").value = "github-issue";
-      $("source_url").value = "https://github.com/Voxterrae/HUB_Optimus/issues/example";
-      $("source_text").value = "A contributor reports that the current workflow is unclear because the documentation says to use Related to #N while the PR template still suggests an auto-closing keyword. This may create contributor friction and accidental issue closure risk.";
+      setCanonicalIntake(
+        "https://github.com/Voxterrae/HUB_Optimus/issues/example",
+        "A contributor reports that the current workflow is unclear because the documentation says to use Related to #N while the PR template still suggests an auto-closing keyword. This may create contributor friction and accidental issue closure risk.",
+        "github-issue"
+      );
     }
 
     function loadDemo() {
@@ -2519,6 +2578,7 @@
       $("claim_requires").checked = true;
       $("case_id").value = "operator-case-001";
       $("core_version_ref").value = "main";
+      $("signal_source_type").value = "automatic";
       $("operational_signal").value = "none";
       $("intake_channel").value = "operator-pwa";
       claims = [];
@@ -2532,6 +2592,7 @@
       $("result_view").innerHTML = "";
       setMemoryActionsEnabled(false);
       resetProductProgress();
+      syncProductInputState();
       updateJson();
     }
 
@@ -2673,6 +2734,11 @@
 
     ["product_source_url", "product_source_text"].forEach((id) => {
       $(id).addEventListener("input", syncProductInputState);
+    });
+    $("signal_source_type").addEventListener("change", () => {
+      syncProductInputState({
+        resetIntakeRecord: false
+      });
     });
     $("save_memory_result").addEventListener("click", saveCurrentMemoryResult);
     $("share_memory_link").addEventListener("click", shareMemoryLink);
