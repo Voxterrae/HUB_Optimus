@@ -350,6 +350,71 @@ def test_locale_controls_statuses_limitations_and_operator_disclosure_are_transl
     assert 'data-i18n="translationReview"' in html
 
 
+def test_public_observability_copy_bounds_client_instrumentation_and_host_logs():
+    app = APP.read_text(encoding="utf-8")
+    dictionaries = extract_translation_dictionaries(app)
+    expected_footer_copy = {
+        "en": (
+            "No embedded client-side analytics or advertising tracking. "
+            "No hidden scoring. Hosting providers may retain operational logs. "
+            "GitHub remains authoritative."
+        ),
+        "es": (
+            "Este sitio no integra analítica en el navegador ni seguimiento "
+            "publicitario. No hay puntuación oculta. Los proveedores de "
+            "alojamiento pueden conservar registros operativos. GitHub sigue "
+            "siendo la fuente autoritativa."
+        ),
+        "de": (
+            "Diese Website bindet weder clientseitige Analysedienste noch "
+            "Werbetracking ein. Es findet keine verborgene Bewertung statt. "
+            "Hosting-Anbieter können Betriebsprotokolle aufbewahren. GitHub "
+            "bleibt maßgeblich."
+        ),
+        "ru": (
+            "На сайте нет встроенной клиентской аналитики и рекламного "
+            "отслеживания. Скрытое оценивание не применяется. "
+            "Хостинг-провайдеры могут сохранять служебные журналы. GitHub "
+            "остаётся авторитетным источником."
+        ),
+        "he": (
+            "האתר אינו כולל כלי ניתוח בצד הלקוח או מעקב לצורכי פרסום. אין "
+            "ניקוד נסתר. ספקי האירוח עשויים לשמור יומנים תפעוליים. GitHub "
+            "נשאר מקור הסמכות."
+        ),
+        "zh-Hans": (
+            "本站未嵌入客户端分析工具或广告跟踪功能，也不进行隐藏评分。"
+            "托管服务商可能保留运维日志。GitHub 仍是权威依据。"
+        ),
+    }
+    assert {
+        locale: dictionaries[locale]["footerBoundary"]
+        for locale in PUBLIC_LOCALES
+    } == expected_footer_copy
+
+    index = INDEX.read_text(encoding="utf-8")
+    assert expected_footer_copy["en"] in index
+
+    operator = (SITE / "operator" / "index.html").read_text(encoding="utf-8")
+    assert (
+        "This page embeds no client-side analytics or advertising tracking, "
+        "performs no hidden scoring, and loads no third-party JavaScript. "
+        "Hosting providers may retain operational logs."
+    ) in operator
+
+    unqualified_claims = (
+        "No analytics.",
+        "Sin analítica.",
+        "Keine Analytik.",
+        "Без аналитики.",
+        "ללא ניתוח התנהגות.",
+        "无分析跟踪。",
+    )
+    canonical_copy = "\n".join((app, index, operator))
+    for claim in unqualified_claims:
+        assert claim not in canonical_copy
+
+
 def test_hebrew_uses_document_rtl_and_logical_layout_properties_only_for_hebrew():
     html = INDEX.read_text(encoding="utf-8")
     app = APP.read_text(encoding="utf-8")
