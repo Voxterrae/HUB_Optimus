@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -13,12 +14,14 @@ SITE = ROOT / "site"
 INDEX = SITE / "index.html"
 STYLES = SITE / "styles.css"
 APP = SITE / "app.js"
+GLOBE = SITE / "globe.js"
 NOT_FOUND = SITE / "404.html"
 NOT_FOUND_APP = SITE / "404.js"
 LOCALE_METADATA = SITE / "i18n" / "locale-metadata.v1.json"
 TERMBASE = SITE / "i18n" / "termbase.v1.json"
 I18N_README = SITE / "i18n" / "README.md"
 GEOJSON = SITE / "assets" / "geo" / "land-110m.geojson"
+GEOJSON_CHECKSUM = SITE / "assets" / "geo" / "land-110m.geojson.sha256"
 GEO_ATTRIBUTION = SITE / "assets" / "geo" / "README.md"
 PUBLIC_LOCALES = {"en", "es", "de", "ru", "he", "zh-Hans"}
 
@@ -207,7 +210,7 @@ def iter_positions(value):
 def test_public_javascript_syntax_and_translation_key_parity():
     node = shutil.which("node")
     assert node, "Node.js is required to validate the public JavaScript syntax"
-    for script in (APP, NOT_FOUND_APP):
+    for script in (APP, GLOBE, NOT_FOUND_APP):
         result = subprocess.run(
             [node, "--check", str(script)],
             check=False,
@@ -641,6 +644,10 @@ def test_repository_evidence_links_point_to_existing_paths():
 
 
 def test_globe_uses_real_geojson_with_attribution_and_accessible_controls():
+    expected_digest = GEOJSON_CHECKSUM.read_text(encoding="utf-8").split()[0]
+    actual_digest = hashlib.sha256(GEOJSON.read_bytes()).hexdigest()
+    assert actual_digest == expected_digest
+
     data = json.loads(GEOJSON.read_text(encoding="utf-8"))
     assert data["type"] == "FeatureCollection"
     assert data["features"]
@@ -664,32 +671,206 @@ def test_globe_uses_real_geojson_with_attribution_and_accessible_controls():
     assert "world-atlas" in attribution
     assert "public domain" in attribution
     assert "do not represent live telemetry" in attribution
+    assert "native webgl" in attribution
+    assert "not used as a geographic texture" in attribution
 
     html = INDEX.read_text(encoding="utf-8")
     app = APP.read_text(encoding="utf-8")
+    globe = GLOBE.read_text(encoding="utf-8")
     css = STYLES.read_text(encoding="utf-8")
     assert 'data-geo-source="./assets/geo/land-110m.geojson"' in html
     assert 'href="./assets/geo/README.md"' in html
+    assert '<script src="./globe.js" defer></script>' in html
     assert 'id="world-globe"' in html
     assert 'id="globe-motion"' in html
-    assert 'tabindex="0"' in html
+    assert 'aria-hidden="true"' in html
     assert '<body class="no-js">' in html
     assert 'document.body.classList.remove("no-js")' in app
     assert "fetch(geographicSource" in app
-    assert "spherePoint" in app
-    assert "horizonPoint" in app
-    assert "greatCircle" in app
+    assert 'canvas.setAttribute("tabindex", "0")' in app
+    assert 'canvas.removeAttribute("tabindex")' in app
+    assert 'fallback.setAttribute("aria-hidden", "true")' in app
+    assert "showStaticFallback" in app
+    assert "webglcontextlost" in app
+    assert "webglcontextrestored" in app
     assert '"pointerdown"' in app
     assert '"pointermove"' in app
     assert '"keydown"' in app
     assert "prefers-reduced-motion: reduce" in app
+    assert 'getContext("webgl"' in globe
+    assert "gl.enable(gl.DEPTH_TEST)" in globe
+    assert "perspectiveMatrix" in globe
+    assert "gl.drawElements(gl.TRIANGLES" in globe
+    assert "spherePoint" in globe
+    assert "greatCircle" in globe
+    assert "buildGraticule" in globe
+    assert "lineSegmentsFromRings" in globe
+    assert "world-atlas" not in globe
+    assert "three.js" not in globe.lower()
+    assert "https://" not in globe
     assert "@media (prefers-reduced-motion: reduce)" in css
     assert "touch-action: none" in css
     assert ".no-js #world-globe" in css
-    assert "function disableGlobeInteraction()" in app
+    assert "function showStaticFallback()" in app
     assert 'canvas.removeAttribute("tabindex")' in app
     assert "canvas.hidden = true" in app
-    assert app.count("disableGlobeInteraction();") == 3
+    assert "canvas.hidden = false" in app
+    assert "canvas.blur()" in app
+    assert app.count("showStaticFallback();") == 3
+
+
+def test_webgl_globe_geometry_is_spherical_depth_ready_and_reproducible():
+    node = shutil.which("node")
+    assert node, "Node.js is required to validate the WebGL geometry"
+    harness = r"""
+const assert = require("assert");
+const fs = require("fs");
+const globe = require(process.env.GLOBE_PATH);
+const geometry = globe.geometry;
+
+assert.deepStrictEqual(geometry.spherePoint(0, 0), [0, 0, 1]);
+assert(Math.abs(geometry.vectorLength(geometry.spherePoint(90, 0)) - 1) < 1e-9);
+assert(Math.abs(geometry.vectorLength(geometry.spherePoint(0, 90)) - 1) < 1e-9);
+
+const sphere = geometry.buildSphere(24, 36);
+assert.strictEqual(sphere.positions.length, sphere.normals.length);
+assert.strictEqual(sphere.indices.length, 24 * 36 * 6);
+assert(Math.max(...sphere.indices) < sphere.positions.length / 3);
+for (let index = 0; index < sphere.positions.length; index += 3) {
+  const point = sphere.positions.slice(index, index + 3);
+  assert(Math.abs(geometry.vectorLength(point) - 1) < 1e-5);
+}
+
+const route = geometry.greatCircle([0, 0], [90, 0], 8, 0.1);
+assert.strictEqual(route.length, 9);
+assert(Math.abs(geometry.vectorLength(route[0]) - 1) < 1e-9);
+assert(geometry.vectorLength(route[4]) > 1.09);
+assert(Math.abs(geometry.vectorLength(route[8]) - 1) < 1e-9);
+
+const geographicData = JSON.parse(fs.readFileSync(process.env.GEOJSON_PATH, "utf8"));
+const rings = geometry.extractRings(geographicData);
+const coast = geometry.lineSegmentsFromRings(rings);
+assert(rings.length > 100);
+assert(coast.length / 3 > 9000);
+assert.strictEqual((coast.length / 3) % 2, 0);
+
+const graticule = geometry.buildGraticule();
+assert(graticule.length / 3 > 2000);
+assert.strictEqual((graticule.length / 3) % 2, 0);
+
+const perspective = geometry.perspectiveMatrix(Math.PI / 4, 1.5, 0.1, 10);
+assert(perspective[0] > 0);
+assert(perspective[5] > perspective[0]);
+assert.strictEqual(perspective[11], -1);
+
+assert.strictEqual(globe.create({getContext() { return null; }}), null);
+
+const enabled = new Set();
+const drawElementModes = [];
+const drawArrayModes = [];
+const gl = {
+  VERTEX_SHADER: 1,
+  FRAGMENT_SHADER: 2,
+  COMPILE_STATUS: 3,
+  LINK_STATUS: 4,
+  ARRAY_BUFFER: 5,
+  ELEMENT_ARRAY_BUFFER: 6,
+  STATIC_DRAW: 7,
+  DEPTH_TEST: 8,
+  LEQUAL: 9,
+  CULL_FACE: 10,
+  BACK: 11,
+  SRC_ALPHA: 12,
+  ONE_MINUS_SRC_ALPHA: 13,
+  FLOAT: 14,
+  TRIANGLES: 15,
+  UNSIGNED_SHORT: 16,
+  BLEND: 17,
+  LINES: 18,
+  POINTS: 19,
+  COLOR_BUFFER_BIT: 0x4000,
+  DEPTH_BUFFER_BIT: 0x0100,
+  createShader() { return {}; },
+  shaderSource() {},
+  compileShader() {},
+  getShaderParameter() { return true; },
+  getShaderInfoLog() { return ""; },
+  deleteShader() {},
+  createProgram() { return {}; },
+  attachShader() {},
+  linkProgram() {},
+  getProgramParameter() { return true; },
+  getProgramInfoLog() { return ""; },
+  deleteProgram() {},
+  createBuffer() { return {}; },
+  bindBuffer() {},
+  bufferData() {},
+  deleteBuffer() {},
+  getAttribLocation(program, name) { return name === "a_normal" ? 1 : 0; },
+  getUniformLocation() { return {}; },
+  enable(value) { enabled.add(value); },
+  disable() {},
+  depthFunc() {},
+  clearDepth() {},
+  cullFace() {},
+  blendFunc() {},
+  viewport() {},
+  useProgram() {},
+  uniformMatrix4fv() {},
+  uniform4fv() {},
+  uniform1f() {},
+  uniform1i() {},
+  enableVertexAttribArray() {},
+  vertexAttribPointer() {},
+  drawElements(mode) { drawElementModes.push(mode); },
+  drawArrays(mode) { drawArrayModes.push(mode); },
+  clearColor() {},
+  clear() {}
+};
+const canvas = {
+  width: 0,
+  height: 0,
+  getContext(name, options) {
+    assert.strictEqual(name, "webgl");
+    assert.strictEqual(options.depth, true);
+    return gl;
+  },
+  getBoundingClientRect() { return {width: 400, height: 300}; }
+};
+const renderer = globe.create(canvas);
+assert(renderer);
+renderer.loadGeography({
+  type: "FeatureCollection",
+  features: [{
+    type: "Feature",
+    properties: {},
+    geometry: {
+      type: "Polygon",
+      coordinates: [[[-10, -10], [10, -10], [10, 10], [-10, 10], [-10, -10]]]
+    }
+  }]
+});
+renderer.draw({rotation: 12, tilt: -7});
+assert(enabled.has(gl.DEPTH_TEST));
+assert(drawElementModes.includes(gl.TRIANGLES));
+assert(drawArrayModes.filter((mode) => mode === gl.LINES).length >= 3);
+assert(drawArrayModes.includes(gl.POINTS));
+assert.strictEqual(canvas.width, 400);
+assert.strictEqual(canvas.height, 300);
+renderer.destroy();
+"""
+    result = subprocess.run(
+        [node, "-e", harness],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={
+            **os.environ,
+            "GLOBE_PATH": str(GLOBE),
+            "GEOJSON_PATH": str(GEOJSON),
+        },
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_public_files_exclude_rejected_branding_and_aggressive_language():

@@ -16,6 +16,7 @@
   <link rel="canonical" href="https://huboptimus.dev/">
   <link rel="preload" href="./assets/brand/hub-optimus-hero.jpg" as="image">
   <link rel="stylesheet" href="./styles.css">
+  <script src="./globe.js" defer></script>
   <script src="./app.js" defer></script>
 </head>
 <body class="no-js">
@@ -102,7 +103,7 @@
               <span data-i18n="globeLabel">Geographic orientation</span>
               <small data-i18n="globeNotice">Illustrative coordinates · no live telemetry</small>
             </div>
-            <button type="button" id="globe-motion" data-i18n="pauseGlobe">Pause</button>
+            <button type="button" id="globe-motion" data-i18n="pauseGlobe" hidden>Pause</button>
           </div>
           <div class="globe-stage">
             <img
@@ -114,8 +115,8 @@
             <canvas
               id="world-globe"
               data-geo-source="./assets/geo/land-110m.geojson"
-              tabindex="0"
               role="img"
+              aria-hidden="true"
               aria-label="Interactive globe projected from real coastline coordinates. Routes are illustrative and are not live telemetry."
               data-i18n-aria="globeAria"
             ></canvas>
