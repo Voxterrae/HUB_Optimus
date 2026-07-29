@@ -148,3 +148,28 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 
 Any change under `.github/workflows/` must update this document in the same PR,
 or the PR body must explicitly explain why no documentation update is needed.
+
+## External Action update review
+
+Every external `uses:` reference must use a reviewed, full 40-character commit
+SHA followed by the corresponding upstream release as an inline comment:
+
+```yaml
+uses: owner/action@0123456789abcdef0123456789abcdef01234567 # v1.2.3
+```
+
+Dependabot proposes GitHub Actions updates weekly. It must not auto-merge them.
+For each proposed update, a human reviewer must:
+
+1. confirm the exact release tag and commit in the upstream Action repository;
+2. review the upstream release notes and the diff from the currently approved
+   version, including `action.yml`, runtime changes, inputs, and permissions;
+3. confirm that the workflow keeps its existing permissions and intended
+   inputs, then update both the SHA and inline version comment;
+4. update the reviewed allowlist in `tests/test_workflow_action_pins.py`;
+5. run the complete test suite and let the affected workflows execute in the
+   pull request before approval.
+
+An unknown Action, mutable tag, unreviewed SHA, missing version comment, or
+permission expansion requires explicit review and must not be merged solely
+because Dependabot proposed it.

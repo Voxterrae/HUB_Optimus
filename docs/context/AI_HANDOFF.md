@@ -348,6 +348,20 @@ multi-writer locking is claimed.
 - Missing, unreadable, invalid UTF-8, invalid JSON, and contract-invalid inputs
   fail through the CLI's controlled error channel without a traceback.
 - This change adds no evaluator, scoring, model judge, or autonomous conclusion.
+## GitHub Actions supply-chain boundary
+
+The CI, link-check, Pages, PR-safety, and repository-health workflows pin
+external Actions to reviewed full commit SHAs. The corresponding release
+version remains beside each SHA as an inline comment, and
+`tests/test_workflow_action_pins.py` is the reviewed allowlist for those
+workflows.
+
+Dependabot may propose Action updates, but it must not auto-merge them. Review
+the upstream tag, commit, release notes, `action.yml`, runtime, inputs, and
+permission impact before updating the SHA, version comment, and allowlist
+together. The complete procedure is versioned in `docs/context/WORKFLOWS.md`.
+Kernel Guard and the maintenance workflow remain separate security scopes
+because their changes also affect execution or credential behavior.
 
 ## Meta-learning Follow-up
 
