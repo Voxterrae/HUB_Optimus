@@ -19,6 +19,22 @@ GitHub remains the source of truth; chat summaries are advisory unless reflected
 - Small PRs only.
 - Keep source-of-truth conflicts resolved by `docs/context/STATUS.md`.
 
+## PowerShell Tooling Boundary
+
+- Mutation-capable PowerShell utilities are preview-only unless the operator
+  supplies `-Apply`.
+- They are limited to Git-tracked, non-link paths inside the detected repository.
+- Their current support status is provisional/manual and requires PowerShell 7
+  plus Git.
+- The dedicated `PowerShell tooling` CI job must fail when `pwsh` 7 is missing
+  and must execute the temporary-repository behavior tests. Local or generic
+  pytest runs without `pwsh` report those tests as skipped; a skip is not
+  certification.
+- Do not describe PowerShell behavior as CI-verified from repository code or a
+  local result alone. Only a green dedicated job on the reviewed PR is evidence
+  for the behavior covered on its Ubuntu runner; Windows and macOS remain
+  unverified by that job.
+
 ## Human Stewardship and Technical Review Boundary
 
 - Benjamin Gerrit Hoff is the creator, project owner, primary human steward, and final human-accountability layer of HUB_Optimus.
@@ -61,6 +77,173 @@ If this file is not updated, say why in the PR body.
 ## Current Recommended Action
 
 Return to controlled observation. Act only when a new regression, architecture ambiguity, contributor friction, documentation drift, CI/runtime signal, governance risk, or explicit user request is recorded in GitHub.
+
+## PR Enrichment Helper Boundary
+
+Issue #1762 keeps `tools/pr_pro.py` as a supported, optional helper for an
+existing PR. It is not a PR creator, merge authority, or authentication
+provider.
+
+Operational boundary:
+
+- Write mode requires an existing PR target and the GitHub CLI.
+- The helper uses the caller's existing authentication and scopes; it does
+  not create, persist, exchange, or expand tokens.
+- Failed GitHub or required local diff commands return non-zero and cannot
+  emit the success status.
+- `--dry-run` invokes no GitHub commands and performs no GitHub mutation.
+- The active workflow file, not this helper or chat context, determines
+  whether scheduled maintenance invokes it.
+
+## Python Packaging Boundary
+
+Issue #1763 records drift between the documented Python minimum, executable
+syntax, bootstrap checks, and the dependency files. The scoped correction
+in PR #1776 establishes:
+
+- supported Python is 3.11 or newer;
+- `requirements.txt` is the runtime tier and contains `jsonschema`;
+- `requirements-dev.txt` includes the runtime tier and adds `pytest`;
+- `python scripts/bootstrap.py --runtime-only` installs/checks runtime
+  dependencies and executes the supported scenario CLI smoke test;
+- the default bootstrap remains the development path and fails when tests or
+  frozen benchmarks fail rather than printing an ambiguous ready state.
+
+The runtime-only install path has been verified in a newly created virtual
+environment without development requirements.
+
+## Maintenance Drift Boundary
+
+Issue #1788 replaces branch-producing scheduled maintenance with a read-only
+drift check on trusted `main`.
+
+Operational boundary:
+
+- the scheduled workflow has only `contents: read` permission and persists no
+  checkout credentials;
+- it creates no GitHub App token, commit, branch, pull request, or remote ref;
+- the legacy maintenance helper runs only inside an isolated copy of committed
+  `HEAD`;
+- proposed changes fail the check and appear in the GitHub Actions step
+  summary; they are never applied to the source checkout;
+- retiring historical maintenance branches remains a separate audited action
+  and is not authorized or performed by the scheduled drift check.
+
+## Simulator Isolation Boundary
+
+Issue #1755 records a verified mismatch between the runtime contract and the
+simulation kernel: seeded runs used module-global random state, repeated runs
+accumulated history, and previously returned results exposed the simulator's
+mutable history.
+
+PR #1770 restores the documented boundary:
+
+- one run-local `random.Random` instance drives all built-in actor policies;
+- seeded execution does not mutate caller-global random state;
+- each `run()` starts with empty run history;
+- returned history is a snapshot rather than live simulator state;
+- changed seed-42 benchmark bytes are reviewed and frozen explicitly.
+
+Laboratory observations derived from the previous random stream require
+separate regeneration under issue #1775; they are not silently rewritten by
+the runtime correction.
+
+## Boundary Search Integrity Boundary
+
+Issue #1754 and PR #1774 record that the laboratory boundary tool treated
+non-monotonic observations as monotonic and could collapse runner errors into
+ordinary failures. The scoped correction establishes:
+
+- `rounds_min` retains binary search because a larger round budget preserves
+  the deterministic execution prefix;
+- `actors_min` enumerates actor counts 1–6 because actor count changes the
+  random stream and role-sensitive policies can lose success at a larger
+  count;
+- `threshold_max` enumerates thresholds 1–5 because success checks exact
+  equality and can fail between successful values;
+- actor and threshold state maps are retained with seed, policy, and method
+  provenance;
+- runner or result errors are explicit probe errors, not failed simulations;
+- verification re-enumerates each complete axis, including reported `None`
+  extrema, rather than checking only an adjacent value.
+
+The boundary section of `docs/lab_state.md` is regenerated from the isolated
+simulator. Other mutation, gradient, and frontier observations remain
+historical until issue #1775 regenerates them.
+
+## Telemetry Input Boundary
+
+Issue #1757 records that malformed scenario files could crash telemetry or
+be subtracted from multiple aggregate categories. The scoped correction
+in PR #1771 restores the following behavior:
+
+- every discovered input receives exactly one processing outcome:
+  `agreement`, `no_agreement`, `parse_error`, `schema_error`, or
+  `runtime_error`;
+- malformed JSON roots, invalid UTF-8, schema errors, and runner-output
+  errors are recorded per file without stopping safe collection;
+- aggregate counts remain non-negative and sum to the discovered total;
+- exit `0` means complete collection, exit `2` means outputs were written
+  with one or more partial data errors, and exit `1` means fatal setup or
+  output failure;
+- the canonical generated seed-42 set remains 60/60 runtime-complete with
+  55 agreements, 5 no-agreements, and average convergence round 1.8.
+
+## Mobile Intake Storage Boundary
+
+Issue #1759 records that the mobile helper wrote raw claims to a non-ignored
+repository-root file without stable classification or retention guidance.
+
+PR #1777 restores the following boundary:
+
+- default raw mobile intake is stored under the git-ignored
+  `.local/intake/` directory;
+- on supported POSIX systems, the protected default path is traversed and
+  opened through no-follow directory descriptors, eliminating parent-path
+  check-to-open races;
+- platforms without those descriptor primitives fail closed for the protected
+  default and require an explicit operator-managed `--output` path;
+- every opened output descriptor must reference a regular file; the protected
+  default additionally requires a single link, rejecting FIFOs, devices,
+  sockets, and hard-linked targets before permission or content changes;
+- the default directory/file and newly created custom files use private POSIX
+  permissions where supported; an existing custom file retains its operator-set
+  permissions;
+- appends restore a missing LF boundary before writing the next JSONL record;
+- option-like argv claims are accepted without being echoed by parser errors;
+- each record carries schema version, intake ID, capture time, source,
+  classification, verification status, and publication status;
+- raw intake remains unverified, local-only material and is never promoted or
+  published automatically;
+- `--output` permits an explicit operator-managed path with a warning;
+- the operator remains responsible for classification, access, retention,
+  backup, and deletion.
+
+No encryption, managed confidential storage, evidence verification, or
+multi-writer locking is claimed.
+
+## Semantic CaseInput Integrity Boundary
+
+- Issue #1756 defines the versioned `CaseInput v1` contract as the combination
+  of the structural JSON Schema in
+  `semantic_engine/contracts/case_input.schema.json` and the complete Python
+  validator `semantic_engine.contracts.case_input.validate_case_input`.
+- Schema-only validation is structural pre-validation, not complete contract
+  conformance: uniqueness and cross-record reference integrity are enforced by
+  the Python validator.
+- The Semantic Engine CLI rejects unknown fields, duplicate claim/evidence IDs,
+  and evidence references to undeclared claims with controlled JSON-path
+  errors.
+- `metadata` is the only open extension object, remains preserved in output,
+  and is opaque rather than executable or authoritative.
+- Input `decision_trace` and `audit_log` are forbidden; they remain output-only
+  engine records.
+- Operator `/analyze` handoff and the local API reach the same contract through
+  `hub-core analyze`; browser-local draft rendering remains a non-authoritative
+  preview.
+- Missing, unreadable, invalid UTF-8, invalid JSON, and contract-invalid inputs
+  fail through the CLI's controlled error channel without a traceback.
+- This change adds no evaluator, scoring, model judge, or autonomous conclusion.
 
 ## Meta-learning Follow-up
 

@@ -4,45 +4,45 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HUB_Optimus Operator</title>
-  <meta name="description" content="Installable HUB_Optimus operator console for composing structured cases and reviewing analysis outputs.">
-  <meta name="theme-color" content="#020403">
+  <meta name="description" content="Local-first HUB_Optimus browser prototype for preparing structured drafts for human review.">
+  <meta name="theme-color" content="#0b0f14">
   <link rel="manifest" href="./manifest.webmanifest">
   <meta property="og:title" content="HUB_Optimus Operator">
-  <meta property="og:description" content="Signal intake, claim/evidence separation, uncertainty mapping, and safe operational scenarios.">
+  <meta property="og:description" content="Local-first structured drafting with source provenance, uncertainty and human review boundaries.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://huboptimus.dev/operator/og.svg">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#b8ff5c">
 
   <style>
     :root {
       color-scheme: dark;
-      --melon-nuke-rgb: 184, 255, 92;
-      --melon-nuke: rgb(var(--melon-nuke-rgb));
-      --melon-nuke-bg: #020403;
-      --melon-nuke-bg-2: #031008;
-      --melon-nuke-panel: #06120d;
-      --melon-nuke-panel-2: #091a12;
-      --melon-nuke-text: #f3ffe8;
-      --melon-nuke-muted: #ccefb5;
-      --melon-nuke-dim: #89aa71;
-      --melon-nuke-border: rgba(var(--melon-nuke-rgb), 0.36);
-      --melon-nuke-strong: rgba(var(--melon-nuke-rgb), 0.72);
-      --melon-nuke-shadow: rgba(var(--melon-nuke-rgb), 0.16);
-      --melon-nuke-soft: rgba(var(--melon-nuke-rgb), 0.12);
-      --melon-nuke-faint: rgba(var(--melon-nuke-rgb), 0.08);
-      --melon-nuke-glow: rgba(var(--melon-nuke-rgb), 0.22);
+      --brand-signal-rgb: 214, 164, 79;
+      --brand-signal: rgb(var(--brand-signal-rgb));
+      --brand-signal-bg: #0b0f14;
+      --brand-signal-bg-2: #101720;
+      --brand-signal-panel: #111923;
+      --brand-signal-panel-2: #16202a;
+      --brand-signal-text: #eae7dc;
+      --brand-signal-muted: #c8d0d8;
+      --brand-signal-dim: #8ca0b3;
+      --brand-signal-border: rgba(var(--brand-signal-rgb), 0.36);
+      --brand-signal-strong: rgba(var(--brand-signal-rgb), 0.72);
+      --brand-signal-shadow: rgba(var(--brand-signal-rgb), 0.16);
+      --brand-signal-soft: rgba(var(--brand-signal-rgb), 0.12);
+      --brand-signal-faint: rgba(var(--brand-signal-rgb), 0.08);
+      --brand-signal-glow: rgba(var(--brand-signal-rgb), 0.22);
+      --signal-amber: #d6a44f;
 
-      --bg: var(--melon-nuke-bg);
-      --panel: var(--melon-nuke-panel);
-      --panel-2: var(--melon-nuke-panel-2);
-      --text: var(--melon-nuke-text);
-      --muted: var(--melon-nuke-muted);
-      --dim: var(--melon-nuke-dim);
-      --border: var(--melon-nuke-border);
-      --strong: var(--melon-nuke-strong);
-      --shadow: var(--melon-nuke-shadow);
-      --glass: rgba(6, 18, 13, 0.76);
+      --bg: var(--brand-signal-bg);
+      --panel: var(--brand-signal-panel);
+      --panel-2: var(--brand-signal-panel-2);
+      --text: var(--brand-signal-text);
+      --muted: var(--brand-signal-muted);
+      --dim: var(--brand-signal-dim);
+      --border: var(--brand-signal-border);
+      --strong: var(--brand-signal-strong);
+      --shadow: var(--brand-signal-shadow);
+      --glass: rgba(6, 24, 40, 0.76);
       --max: 86rem;
     }
 
@@ -58,14 +58,14 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at 50% -10%, rgba(var(--melon-nuke-rgb), 0.18), transparent 30rem),
-        radial-gradient(circle at 12% 8%, rgba(var(--melon-nuke-rgb), 0.12), transparent 24rem),
-        radial-gradient(circle at 92% 10%, rgba(var(--melon-nuke-rgb), 0.10), transparent 24rem),
-        radial-gradient(circle at 50% 110%, rgba(var(--melon-nuke-rgb), 0.09), transparent 34rem),
-        linear-gradient(180deg, #020403 0%, #031008 48%, #020403 100%);
+        radial-gradient(circle at 50% -10%, rgba(var(--brand-signal-rgb), 0.18), transparent 30rem),
+        radial-gradient(circle at 12% 8%, rgba(var(--brand-signal-rgb), 0.12), transparent 24rem),
+        radial-gradient(circle at 92% 10%, rgba(var(--brand-signal-rgb), 0.10), transparent 24rem),
+        radial-gradient(circle at 50% 110%, rgba(var(--brand-signal-rgb), 0.09), transparent 34rem),
+        linear-gradient(180deg, #0b0f14 0%, #101720 48%, #0b0f14 100%);
       line-height: 1.55;
     }
 
@@ -75,35 +75,34 @@
       inset: 0;
       pointer-events: none;
       background:
-        linear-gradient(rgba(var(--melon-nuke-rgb), 0.028) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(var(--melon-nuke-rgb), 0.02) 1px, transparent 1px);
+        linear-gradient(rgba(var(--brand-signal-rgb), 0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(var(--brand-signal-rgb), 0.02) 1px, transparent 1px);
       background-size: 2.6rem 2.6rem;
       mask-image: radial-gradient(circle at center, black 0%, transparent 84%);
     }
 
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background: repeating-linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.03) 0,
-        rgba(255, 255, 255, 0.03) 1px,
-        transparent 1px,
-        transparent 4px
-      );
-      opacity: 0.18;
-      mix-blend-mode: screen;
-    }
-
     a {
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       text-decoration: none;
     }
 
     a:hover {
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
+    }
+
+    .skip-link {
+      position: fixed;
+      top: 0.75rem;
+      left: 0.75rem;
+      z-index: 100;
+      padding: 0.65rem 0.8rem;
+      border: 1px solid var(--brand-signal);
+      background: var(--bg);
+      transform: translateY(-160%);
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
     }
 
     button,
@@ -118,7 +117,7 @@
     textarea:focus-visible,
     select:focus-visible,
     a:focus-visible {
-      outline: 3px solid var(--melon-nuke);
+      outline: 3px solid var(--brand-signal);
       outline-offset: 3px;
     }
 
@@ -136,7 +135,7 @@
       gap: 0.75rem;
       flex-wrap: wrap;
       padding: 0.75rem 0 1rem;
-      border-bottom: 1px solid rgba(var(--melon-nuke-rgb), 0.18);
+      border-bottom: 1px solid rgba(var(--brand-signal-rgb), 0.18);
       color: var(--dim);
       font-size: 0.72rem;
       letter-spacing: 0.12em;
@@ -149,12 +148,12 @@
       border: 1px solid var(--strong);
       border-radius: 1rem;
       background:
-        linear-gradient(135deg, rgba(var(--melon-nuke-rgb), 0.12), transparent 28%),
-        linear-gradient(180deg, rgba(9, 26, 18, 0.96), rgba(3, 12, 8, 0.98));
+        linear-gradient(135deg, rgba(var(--brand-signal-rgb), 0.12), transparent 28%),
+        linear-gradient(180deg, rgba(8, 33, 55, 0.96), rgba(0, 14, 30, 0.98));
       box-shadow: 0 0 3rem var(--shadow);
     }
 
-    .reactor-hero {
+    .system-hero {
       display: grid;
       grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
       align-items: center;
@@ -164,112 +163,87 @@
       isolation: isolate;
     }
 
-    .reactor-hero::before {
+    .system-hero::before {
       content: "";
       position: absolute;
       inset: -35%;
       z-index: -1;
       background:
-        repeating-conic-gradient(
-          from 0deg,
-          rgba(var(--melon-nuke-rgb), 0.10) 0deg 8deg,
-          transparent 8deg 18deg
-        );
-      opacity: 0.18;
+        linear-gradient(118deg, transparent 18%, rgba(var(--brand-signal-rgb), 0.10) 18.2%, transparent 18.8%),
+        linear-gradient(154deg, transparent 64%, rgba(11, 61, 145, 0.18) 64.2%, transparent 64.8%);
+      opacity: 0.46;
       filter: blur(0.4px);
-      transform: rotate(8deg);
     }
 
-    .reactor-hero::after {
+    .system-hero::after {
       content: "";
       position: absolute;
       inset: 0;
       pointer-events: none;
       border-radius: inherit;
       box-shadow:
-        inset 0 0 2.2rem rgba(var(--melon-nuke-rgb), 0.10),
-        inset 0 0 0 1px rgba(var(--melon-nuke-rgb), 0.08);
+        inset 0 0 2.2rem rgba(var(--brand-signal-rgb), 0.10),
+        inset 0 0 0 1px rgba(var(--brand-signal-rgb), 0.08);
     }
 
-    .reactor-core {
+    .system-core {
       display: grid;
       place-items: center;
       min-height: 16rem;
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.32);
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.32);
       border-radius: 1rem;
       background:
-        radial-gradient(circle at 50% 50%, rgba(var(--melon-nuke-rgb), 0.30), transparent 0 22%),
-        radial-gradient(circle at 50% 50%, rgba(var(--melon-nuke-rgb), 0.12), transparent 0 42%),
-        linear-gradient(180deg, rgba(2, 8, 5, 0.72), rgba(2, 8, 5, 0.92));
+        radial-gradient(circle at 50% 50%, rgba(var(--brand-signal-rgb), 0.30), transparent 0 22%),
+        radial-gradient(circle at 50% 50%, rgba(var(--brand-signal-rgb), 0.12), transparent 0 42%),
+        linear-gradient(180deg, rgba(0, 8, 22, 0.72), rgba(0, 8, 22, 0.92));
       box-shadow:
-        inset 0 0 2rem rgba(var(--melon-nuke-rgb), 0.16),
-        0 0 2rem rgba(var(--melon-nuke-rgb), 0.10);
+        inset 0 0 2rem rgba(var(--brand-signal-rgb), 0.16),
+        0 0 2rem rgba(var(--brand-signal-rgb), 0.10);
     }
 
-    .core-glyph {
-      width: min(12rem, 72vw);
-      aspect-ratio: 1;
-      display: grid;
-      place-items: center;
-      border-radius: 999px;
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.44);
-      background:
-        repeating-conic-gradient(
-          rgba(var(--melon-nuke-rgb), 0.22) 0deg 16deg,
-          transparent 16deg 32deg
-        ),
-        radial-gradient(circle, rgba(var(--melon-nuke-rgb), 0.36), rgba(var(--melon-nuke-rgb), 0.08) 42%, transparent 43%);
-      box-shadow: 0 0 2.4rem rgba(var(--melon-nuke-rgb), 0.18);
+    .brand-lockup {
+      display: block;
+      width: min(100%, 28rem);
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 1rem 2rem rgba(0, 0, 0, 0.35));
     }
 
-    .core-glyph b {
-      display: grid;
-      place-items: center;
-      width: 48%;
-      aspect-ratio: 1;
-      border-radius: 999px;
-      color: #031008;
-      background: var(--melon-nuke);
-      font-size: 1.35rem;
-      letter-spacing: -0.08em;
-      box-shadow: 0 0 1.4rem rgba(var(--melon-nuke-rgb), 0.32);
-    }
-
-    .reactor-band {
+    .system-band {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0.65rem;
       margin-top: 1rem;
       padding: 0.75rem;
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.28);
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.28);
       border-radius: 1rem;
       background:
-        linear-gradient(90deg, rgba(var(--melon-nuke-rgb), 0.10), transparent 32%),
-        linear-gradient(180deg, rgba(6, 18, 13, 0.78), rgba(2, 8, 5, 0.84));
+        linear-gradient(90deg, rgba(var(--brand-signal-rgb), 0.10), transparent 32%),
+        linear-gradient(180deg, rgba(6, 24, 40, 0.78), rgba(0, 8, 22, 0.84));
     }
 
-    .reactor-cell {
+    .system-cell {
       min-height: 5rem;
       padding: 0.75rem;
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.22);
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.22);
       border-radius: 0.85rem;
       background:
-        linear-gradient(180deg, rgba(var(--melon-nuke-rgb), 0.06), transparent),
-        rgba(2, 8, 5, 0.68);
+        linear-gradient(180deg, rgba(var(--brand-signal-rgb), 0.06), transparent),
+        rgba(0, 8, 22, 0.68);
     }
 
-    .reactor-cell b {
+    .system-cell b {
       display: block;
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       font-size: 0.68rem;
       letter-spacing: 0.14em;
       text-transform: uppercase;
     }
 
-    .reactor-cell span {
+    .system-cell span {
       display: block;
       margin-top: 0.35rem;
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       font-weight: 900;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -281,10 +255,10 @@
       gap: 0.45rem;
       margin-top: 1rem;
       padding: 0.55rem 0.75rem;
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.44);
+      border: 1px solid rgba(231, 170, 74, 0.5);
       border-radius: 999px;
-      color: var(--melon-nuke);
-      background: rgba(var(--melon-nuke-rgb), 0.08);
+      color: var(--signal-amber);
+      background: rgba(231, 170, 74, 0.07);
       font-size: 0.72rem;
       font-weight: 900;
       letter-spacing: 0.12em;
@@ -293,13 +267,13 @@
 
     .warning-tag::before {
       content: "△";
-      color: var(--melon-nuke);
+      color: var(--signal-amber);
     }
 
 
     .kicker {
       margin: 0 0 0.8rem;
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       font-size: 0.78rem;
       font-weight: 800;
       letter-spacing: 0.16em;
@@ -308,11 +282,11 @@
 
     h1 {
       margin: 0;
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       font-size: clamp(2rem, 9vw, 5rem);
       line-height: 0.92;
       letter-spacing: -0.08em;
-      text-shadow: 0 0 1.5rem rgba(var(--melon-nuke-rgb), 0.34);
+      text-shadow: 0 0 1.5rem rgba(var(--brand-signal-rgb), 0.34);
     }
 
     .lead {
@@ -333,10 +307,10 @@
     .panel,
     .mini-card {
       border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(9, 26, 18, 0.92), rgba(3, 10, 7, 0.94));
+      background: linear-gradient(180deg, rgba(17, 25, 35, 0.96), rgba(11, 15, 20, 0.96));
       box-shadow:
-        0 0 1.2rem rgba(var(--melon-nuke-rgb), 0.07),
-        inset 0 0 0 1px rgba(var(--melon-nuke-rgb), 0.035);
+        0 0 1.2rem rgba(var(--brand-signal-rgb), 0.07),
+        inset 0 0 0 1px rgba(var(--brand-signal-rgb), 0.035);
     }
 
     .chip {
@@ -355,7 +329,7 @@
     .chip span {
       display: block;
       margin-top: 0.2rem;
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       font-weight: 800;
     }
 
@@ -365,20 +339,20 @@
       gap: 0.75rem;
       margin-top: 1rem;
       padding: 0.8rem;
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.24);
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.24);
       border-radius: 1rem;
       background:
-        linear-gradient(135deg, rgba(var(--melon-nuke-rgb), 0.08), transparent 32%),
-        rgba(2, 8, 5, 0.68);
+        linear-gradient(135deg, rgba(var(--brand-signal-rgb), 0.08), transparent 32%),
+        rgba(0, 8, 22, 0.68);
     }
 
     .flow-step {
       position: relative;
       min-height: 7rem;
       padding: 0.85rem;
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.22);
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.22);
       border-radius: 0.9rem;
-      background: rgba(6, 18, 13, 0.72);
+      background: rgba(6, 24, 40, 0.72);
       overflow: hidden;
     }
 
@@ -387,16 +361,16 @@
       position: absolute;
       inset: auto 0 0;
       height: 0.22rem;
-      background: rgba(var(--melon-nuke-rgb), 0.18);
+      background: rgba(var(--brand-signal-rgb), 0.18);
     }
 
     .flow-step.is-active {
-      border-color: rgba(var(--melon-nuke-rgb), 0.72);
-      box-shadow: 0 0 1.35rem rgba(var(--melon-nuke-rgb), 0.13);
+      border-color: rgba(var(--brand-signal-rgb), 0.72);
+      box-shadow: 0 0 1.35rem rgba(var(--brand-signal-rgb), 0.13);
     }
 
     .flow-step.is-active::after {
-      background: linear-gradient(90deg, var(--melon-nuke), var(--melon-nuke));
+      background: linear-gradient(90deg, var(--brand-signal), var(--brand-signal));
     }
 
     .flow-step span {
@@ -405,8 +379,8 @@
       width: 2rem;
       height: 2rem;
       border-radius: 999px;
-      color: #031008;
-      background: var(--melon-nuke);
+      color: #000816;
+      background: var(--brand-signal);
       font-weight: 900;
     }
 
@@ -427,14 +401,14 @@
     .operator-note {
       margin-top: 1rem;
       padding: 0.9rem;
-      border: 1px dashed rgba(var(--melon-nuke-rgb), 0.34);
+      border: 1px dashed rgba(var(--brand-signal-rgb), 0.34);
       border-radius: 0.85rem;
       color: var(--muted);
-      background: rgba(2, 8, 5, 0.55);
+      background: rgba(0, 8, 22, 0.55);
     }
 
     .operator-note b {
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
     }
 
     .grid {
@@ -460,7 +434,7 @@
 
     h2 {
       margin: 0 0 0.7rem;
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       font-size: 0.92rem;
       letter-spacing: 0.13em;
       text-transform: uppercase;
@@ -468,7 +442,7 @@
 
     h3 {
       margin: 0 0 0.45rem;
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       font-size: 0.82rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
@@ -498,11 +472,11 @@
     textarea,
     select {
       width: 100%;
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.30);
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.30);
       border-radius: 0.65rem;
       background:
-        linear-gradient(180deg, rgba(var(--melon-nuke-rgb), 0.035), transparent),
-        rgba(2, 8, 5, 0.82);
+        linear-gradient(180deg, rgba(var(--brand-signal-rgb), 0.035), transparent),
+        rgba(0, 8, 22, 0.82);
       color: var(--text);
       padding: 0.75rem;
     }
@@ -526,11 +500,11 @@
     }
 
     button {
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.48);
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.48);
       border-radius: 999px;
       background:
-        linear-gradient(180deg, rgba(var(--melon-nuke-rgb), 0.07), transparent),
-        rgba(2, 8, 5, 0.9);
+        linear-gradient(180deg, rgba(var(--brand-signal-rgb), 0.07), transparent),
+        rgba(0, 8, 22, 0.9);
       color: var(--text);
       cursor: pointer;
       font-weight: 800;
@@ -538,25 +512,25 @@
     }
 
     button.primary {
-      color: #031008;
-      background: var(--melon-nuke);
-      border-color: var(--melon-nuke);
+      color: #000816;
+      background: var(--brand-signal);
+      border-color: var(--brand-signal);
     }
 
     button.warn {
-      color: var(--melon-nuke);
+      color: var(--signal-amber);
       border-color: rgba(255, 209, 102, 0.55);
     }
 
     button:hover {
-      border-color: var(--melon-nuke);
-      color: var(--melon-nuke);
-      box-shadow: 0 0 1rem rgba(77, 238, 255, 0.12);
+      border-color: var(--brand-signal);
+      color: var(--brand-signal);
+      box-shadow: 0 0 1rem rgba(var(--brand-signal-rgb), 0.12);
     }
 
     button.primary:hover {
-      color: #031008;
-      box-shadow: 0 0 1.2rem rgba(var(--melon-nuke-rgb), 0.28);
+      color: #000816;
+      box-shadow: 0 0 1.2rem rgba(var(--brand-signal-rgb), 0.28);
     }
 
     .list {
@@ -582,7 +556,7 @@
     .mini-card .remove {
       margin-top: 0.55rem;
       padding: 0.45rem 0.7rem;
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       border-color: rgba(255, 95, 122, 0.5);
     }
 
@@ -591,8 +565,8 @@
       white-space: pre-wrap;
       word-break: break-word;
       color: var(--text);
-      background: rgba(2, 8, 5, 0.86);
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.26);
+      background: rgba(0, 8, 22, 0.86);
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.26);
       border-radius: 0.8rem;
       padding: 0.9rem;
       max-height: 28rem;
@@ -612,10 +586,10 @@
     }
 
     .output-card {
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.26);
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.26);
       border-radius: 0.85rem;
       padding: 0.8rem;
-      background: rgba(2, 8, 5, 0.68);
+      background: rgba(0, 8, 22, 0.68);
     }
 
     .output-card.full {
@@ -629,7 +603,7 @@
       flex-wrap: wrap;
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: 1px solid rgba(var(--melon-nuke-rgb), 0.18);
+      border-top: 1px solid rgba(var(--brand-signal-rgb), 0.18);
       color: var(--dim);
       font-size: 0.72rem;
       letter-spacing: 0.1em;
@@ -637,27 +611,27 @@
     }
 
     .ok {
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
     }
 
     .hold {
-      color: var(--melon-nuke);
+      color: var(--signal-amber);
     }
 
     @media (max-width: 980px) {
       .status-strip,
-      .reactor-band,
+      .system-band,
       .flow-rail,
       .row,
       .output-grid {
         grid-template-columns: 1fr;
       }
 
-      .reactor-hero {
+      .system-hero {
         grid-template-columns: 1fr;
       }
 
-      .reactor-core {
+      .system-core {
         min-height: 12rem;
       }
 
@@ -683,7 +657,7 @@
 
     .product-progress-status {
       margin: 1rem 0 0;
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       font-weight: 900;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -702,7 +676,7 @@
       padding: 1rem;
       border: 1px solid var(--border);
       border-radius: 1rem;
-      background: linear-gradient(180deg, rgba(var(--melon-nuke-rgb), 0.07), transparent), var(--panel);
+      background: linear-gradient(180deg, rgba(var(--brand-signal-rgb), 0.07), transparent), var(--panel);
       color: var(--text);
     }
 
@@ -717,7 +691,7 @@
     }
 
 
-    .melon-loader {
+    .signal-loader {
       display: grid;
       grid-template-columns: repeat(18, minmax(0, 1fr));
       gap: 0.35rem;
@@ -726,34 +700,34 @@
       border: 1px solid var(--border);
       border-radius: 1rem;
       background:
-        linear-gradient(180deg, rgba(var(--melon-nuke-rgb), 0.06), transparent),
-        rgba(2, 8, 5, 0.72);
+        linear-gradient(180deg, rgba(var(--brand-signal-rgb), 0.06), transparent),
+        rgba(0, 8, 22, 0.72);
     }
 
-    .melon-loader-cell {
+    .signal-loader-cell {
       min-height: 1.05rem;
-      border: 1px solid rgba(var(--melon-nuke-rgb), 0.24);
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.24);
       border-radius: 0.35rem;
-      background: rgba(var(--melon-nuke-rgb), 0.035);
-      box-shadow: inset 0 0 0 1px rgba(var(--melon-nuke-rgb), 0.02);
+      background: rgba(var(--brand-signal-rgb), 0.035);
+      box-shadow: inset 0 0 0 1px rgba(var(--brand-signal-rgb), 0.02);
     }
 
-    .melon-loader-cell.is-lit {
-      border-color: rgba(var(--melon-nuke-rgb), 0.84);
-      background: var(--melon-nuke);
+    .signal-loader-cell.is-lit {
+      border-color: rgba(var(--brand-signal-rgb), 0.84);
+      background: var(--brand-signal);
       box-shadow:
-        0 0 0.8rem rgba(var(--melon-nuke-rgb), 0.36),
-        inset 0 0 0 1px rgba(2, 8, 5, 0.22);
+        0 0 0.8rem rgba(var(--brand-signal-rgb), 0.36),
+        inset 0 0 0 1px rgba(0, 8, 22, 0.22);
     }
 
-    .melon-loader-cell.is-current {
+    .signal-loader-cell.is-current {
       transform: translateY(-1px);
       box-shadow:
-        0 0 1.25rem rgba(var(--melon-nuke-rgb), 0.52),
-        inset 0 0 0 1px rgba(2, 8, 5, 0.28);
+        0 0 1.25rem rgba(var(--brand-signal-rgb), 0.52),
+        inset 0 0 0 1px rgba(0, 8, 22, 0.28);
     }
 
-    .melon-loader-meta {
+    .signal-loader-meta {
       display: flex;
       justify-content: space-between;
       gap: 1rem;
@@ -762,8 +736,8 @@
       font-size: 0.82rem;
     }
 
-    .melon-loader-meta b {
-      color: var(--melon-nuke);
+    .signal-loader-meta b {
+      color: var(--brand-signal);
     }
 
 
@@ -777,19 +751,19 @@
     }
 
     .memory-status.ok {
-      color: var(--melon-nuke);
+      color: var(--brand-signal);
       font-weight: 900;
     }
 
 
     .product-lede {
-      color: var(--melon-nuke-muted);
+      color: var(--brand-signal-muted);
       font-size: 1.02rem;
       max-width: 78ch;
     }
 
     .field-hint {
-      color: var(--melon-nuke-dim);
+      color: var(--brand-signal-dim);
       font-size: 0.86rem;
       margin: 0.45rem 0 0;
     }
@@ -800,7 +774,7 @@
       filter: grayscale(0.35);
     }
 
-    .reactor-band,
+    .system-band,
     .status-strip,
     main > .flow-rail,
     .operator-note {
@@ -815,43 +789,42 @@
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#product_intake">Skip to draft preparation</a>
   <main class="app">
     <div class="topline">
-      <span>HUB_OPTIMUS // REACTOR_CONSOLE</span>
-      <span>CONTAINMENT: STATIC_ONLY</span>
+      <span>HUB_OPTIMUS // OPERATOR</span>
+      <span>LOCAL-FIRST BROWSER PROTOTYPE</span>
       <span><a href="../">PUBLIC LANDING</a></span>
     </div>
 
-    <header class="hero reactor-hero">
+    <header class="hero system-hero">
       <div>
-        <p class="kicker">Input → normalize → analyze → output</p>
-        <h1>Operator Console</h1>
-        <p class="lead">A sealed reactor-console interface for transforming raw situations into structured claims, evidence, uncertainty, and operational signal.</p>
-        <span class="warning-tag">Critical system shell · backend sealed</span>
+        <p class="kicker">Capture → structure → review → hand off</p>
+        <h1>Operator</h1>
+        <p class="lead">A local browser prototype for turning operator-provided material into a reviewable structured draft. It does not run the Python CLI or a Semantic Engine.</p>
+        <span class="warning-tag">Local draft · human review required</span>
       </div>
-      <div class="reactor-core" aria-label="HUB_Optimus reactor core visual">
-        <div class="core-glyph" aria-hidden="true">
-          <b>HO</b>
-        </div>
+      <div class="system-core">
+        <img class="brand-lockup" src="../assets/brand/hub-optimus-logo-lockup.png" alt="HUB_Optimus">
       </div>
     </header>
 
-    <section class="reactor-band" aria-label="Reactor containment state">
-      <div class="reactor-cell">
-        <b>Core state</b>
-        <span>controlled</span>
+    <section class="system-band" aria-label="Operator prototype state">
+      <div class="system-cell">
+        <b>Prototype</b>
+        <span>browser-local</span>
       </div>
-      <div class="reactor-cell">
-        <b>Signal intake</b>
-        <span>manual</span>
+      <div class="system-cell">
+        <b>Source intake</b>
+        <span>manual / URL</span>
       </div>
-      <div class="reactor-cell">
-        <b>Runtime exposure</b>
-        <span>sealed</span>
+      <div class="system-cell">
+        <b>Engine status</b>
+        <span>not executed</span>
       </div>
-      <div class="reactor-cell">
-        <b>Operator mode</b>
-        <span>mobile</span>
+      <div class="system-cell">
+        <b>Storage</b>
+        <span>local device</span>
       </div>
     </section>
 
@@ -862,14 +835,14 @@
       </div>
       <div class="chip">
         <b>Network</b>
-        <span class="hold">static only</span>
+        <span class="hold">optional URL intake</span>
       </div>
       <div class="chip">
-        <b>Backend API</b>
-        <span class="hold">not public</span>
+        <b>Analysis runtime</b>
+        <span class="hold">not run here</span>
       </div>
       <div class="chip">
-        <b>Data</b>
+        <b>Draft storage</b>
         <span class="ok">local device</span>
       </div>
     </section>
@@ -887,8 +860,8 @@
       </div>
       <div class="flow-step" id="flow_analyze">
         <span>03</span>
-        <b>Analyze</b>
-        <small id="metric_analyze">backend not public</small>
+        <b>Review</b>
+        <small id="metric_analyze">local draft only</small>
       </div>
       <div class="flow-step" id="flow_output">
         <span>04</span>
@@ -898,12 +871,12 @@
     </section>
 
     <p class="operator-note">
-      <b>Containment flow:</b> compose a structured case, normalize claims and evidence into HUB_Optimus format, run analysis only inside the secured environment, then paste/render the returned output.
+      <b>Scope:</b> organize submitted material into an editable draft, preserve source provenance and uncertainty, then hand the draft to a separately controlled runtime only when an operator chooses to do so.
     </p>
 
     <section class="panel full product-intake" id="product_intake">
-      <h2>Analyze with HUB_Optimus</h2>
-      <p class="product-lede">Paste a URL or article text. HUB_Optimus will try controlled URL intake first, then separate claim, evidence, inference, uncertainty, narrative amplification, and safe next action. If a source blocks controlled intake, paste the article text below.</p>
+      <h2>Prepare a review draft</h2>
+      <p class="product-lede">Paste a URL or source text. Operator records provenance, keeps submitted claims separate from corroboration, and prepares an editable local draft. It does not verify truth, infer motives, score risk, or execute the Semantic Engine.</p>
 
       <div class="row">
         <div class="field">
@@ -914,18 +887,18 @@
       </div>
 
       <div class="field">
-        <label for="product_source_text">Article text or situation to analyze</label>
+        <label for="product_source_text">Source text or operator account</label>
         <textarea id="product_source_text" placeholder="Paste the article text, copied post, GitHub issue body, CI failure excerpt, or describe the situation here."></textarea>
-        <p class="field-hint">Optional when a URL is available. Required only if the URL cannot be read from controlled intake.</p>
+        <p class="field-hint">When text and a URL are both supplied, the URL attribution is recorded as operator-provided and unverified; the URL is not fetched automatically.</p>
       </div>
 
       <div class="actions">
-        <button class="primary" id="product_analyze" type="button">Analyze</button>
+        <button class="primary" id="product_analyze" type="button">Prepare draft</button>
         <button id="product_load_news_demo" type="button">Example</button>
         <button id="product_show_advanced" type="button">Advanced</button>
       </div>
 
-      <section class="flow-rail" aria-label="Product analysis progress">
+      <section class="flow-rail" aria-label="Draft preparation progress">
         <div class="flow-step" id="product_step_capture">
           <span>01</span>
           <b>Capture</b>
@@ -948,18 +921,18 @@
         </div>
       </section>
 
-      <p class="product-progress-status" id="product_wait_status">Waiting for input.</p>
+      <p class="product-progress-status" id="product_wait_status" role="status" aria-live="polite">Waiting for input.</p>
 
-      <div class="melon-loader" id="product_loader" aria-label="HUB_Optimus analysis load progress"></div>
-      <div class="melon-loader-meta">
+      <div class="signal-loader" id="product_loader" aria-label="HUB_Optimus draft preparation progress"></div>
+      <div class="signal-loader-meta">
         <span id="product_loader_phase">idle</span>
         <b id="product_loader_percent">0%</b>
       </div>
 
-      <div id="product_output" class="output-grid">
+      <div id="product_output" class="output-grid" aria-live="polite">
         <section class="output-card full">
-          <h3>Result</h3>
-          <p class="empty">Paste text and run analysis. The result will separate claim, evidence, uncertainty, and safe next action.</p>
+          <h3>Draft</h3>
+          <p class="empty">Provide source material to prepare a structured draft for human review.</p>
         </section>
       </div>
 
@@ -968,7 +941,7 @@
         <button id="share_memory_link" type="button" disabled>Copy share summary</button>
         <button id="share_memory_whatsapp" type="button" disabled>WhatsApp</button>
       </div>
-      <p class="memory-status" id="memory_status">Run an analysis to unlock memory and sharing.</p>
+      <p class="memory-status" id="memory_status" role="status" aria-live="polite">Prepare a draft to unlock memory and sharing.</p>
     </section>
 
     <details class="advanced-shell" id="advanced_operator_console">
@@ -983,6 +956,7 @@
           <div class="field">
             <label for="signal_source_type">Source type</label>
             <select id="signal_source_type">
+              <option value="external-source">external source</option>
               <option value="news-article">news article</option>
               <option value="github-issue">GitHub issue</option>
               <option value="github-pr">GitHub PR</option>
@@ -991,7 +965,6 @@
               <option value="documentation-drift">documentation drift</option>
               <option value="human-situation">human situation</option>
               <option value="public-service-friction">public-service friction</option>
-              <option value="conflict-situation">conflict situation</option>
             </select>
           </div>
           <div class="field">
@@ -1123,17 +1096,17 @@
 
       <section class="panel third">
         <h2>Inferences</h2>
-        <textarea id="inferences" placeholder="The case may require structured triage before any conclusion is drawn."></textarea>
+        <textarea id="inferences" aria-label="Inferences" placeholder="The case may require structured triage before any conclusion is drawn."></textarea>
       </section>
 
       <section class="panel third">
         <h2>Uncertainties</h2>
-        <textarea id="uncertainties" placeholder="The cause and responsibility are not established from the submitted account alone."></textarea>
+        <textarea id="uncertainties" aria-label="Uncertainties" placeholder="The cause and responsibility are not established from the submitted account alone."></textarea>
       </section>
 
       <section class="panel third">
         <h2>Narrative amplification</h2>
-        <textarea id="narrative_amplification" placeholder="Avoid generalizing from one situation to a systemic accusation without broader evidence."></textarea>
+        <textarea id="narrative_amplification" aria-label="Narrative amplification" placeholder="Avoid generalizing from one situation to a systemic accusation without broader evidence."></textarea>
       </section>
 
       <section class="panel full">
@@ -1152,8 +1125,8 @@
       </section>
 
       <section class="panel full">
-        <h2>Local analyze handoff</h2>
-        <p>Generate a copy/paste command for the secured EC2/local backend. The command validates the case JSON, checks local API health, saves the backend response, validates that analysis_result exists, and prints JSON ready for the output viewer. This PWA does not call the backend directly and does not expose the API publicly.</p>
+        <h2>Controlled runtime handoff</h2>
+        <p>Generate a copy/paste command for a separately controlled local runtime. The command validates the case JSON, checks local API health, saves the response, validates that analysis_result exists, and prints JSON ready for the output viewer. Operator does not call `/analyze` or claim that an engine run occurred.</p>
         <div class="actions">
           <button class="primary" id="build_analyze_command" type="button">Build local analyze command</button>
           <button id="copy_analyze_command" type="button">Copy command</button>
@@ -1177,9 +1150,9 @@
     </details>
 
     <footer class="footer">
-      <span>No analytics. No cookies. No external JavaScript.</span>
-      <span>Public API: not exposed.</span>
-      <span>Data stays on this device unless you copy/export it.</span>
+      <span>No analytics. No advertising cookies. No external JavaScript.</span>
+      <span>Public analysis API: not exposed. Controlled URL intake: bounded.</span>
+      <span>Pasted text stays on-device. A URL is sent to controlled intake only when no text is supplied.</span>
     </footer>
   </main>
 
@@ -1188,6 +1161,7 @@
     const storageKey = "hub_optimus_operator_case_v1";
     const memoryKey = "hub_optimus_operator_memory_v1";
     let currentMemoryRecord = null;
+    let currentIntakeRecord = null;
 
     let claims = [];
     let evidence = [];
@@ -1287,8 +1261,13 @@
       const signal = value("operational_signal");
       if (signal) payload.operational_signal = signal;
 
+      const metadata = {
+        operator_mode: "browser-local-draft"
+      };
       const intake = value("intake_channel");
-      if (intake) payload.metadata = { intake_channel: intake };
+      if (intake) metadata.intake_channel = intake;
+      if (currentIntakeRecord) metadata.intake_record = currentIntakeRecord;
+      payload.metadata = metadata;
 
       return payload;
     }
@@ -1307,7 +1286,7 @@
 
       $("metric_input").textContent = hasCase ? "case draft ready" : "case needs summary";
       $("metric_normalize").textContent = `${claims.length} claims · ${evidence.length} evidence`;
-      $("metric_analyze").textContent = hasClaims || hasEvidence || hasProcessNotes ? "ready for secured backend" : "waiting for normalized input";
+      $("metric_analyze").textContent = hasClaims || hasEvidence || hasProcessNotes ? "ready for explicit handoff" : "waiting for normalized input";
       $("metric_output").textContent = resultRendered ? "result rendered" : "no rendered result";
 
       setActive("flow_input", hasCase);
@@ -1499,6 +1478,7 @@
       $("input_summary").value = payload.input_summary || "";
       $("operational_signal").value = payload.operational_signal || "none";
       $("intake_channel").value = payload.metadata?.intake_channel || "operator-pwa";
+      currentIntakeRecord = payload.metadata?.intake_record || null;
 
       claims = Array.isArray(payload.claims) ? payload.claims : [];
       evidence = Array.isArray(payload.evidence) ? payload.evidence : [];
@@ -1525,23 +1505,12 @@
     }
 
     function sourceTypeToSignal(sourceType) {
-      const map = {
-        "news-article": "monitor",
-        "github-issue": "triage",
-        "github-pr": "triage",
-        "ci-failure": "triage",
-        "review-friction": "triage",
-        "documentation-drift": "monitor",
-        "human-situation": "triage",
-        "public-service-friction": "triage",
-        "conflict-situation": "triage"
-      };
-
-      return map[sourceType] || "triage";
+      return "triage";
     }
 
     function sourceTypeToClaimType(sourceType) {
       const map = {
+        "external-source": "external-source-signal",
         "news-article": "external-report",
         "github-issue": "github-issue-signal",
         "github-pr": "github-pr-signal",
@@ -1549,8 +1518,7 @@
         "review-friction": "contributor-friction",
         "documentation-drift": "documentation-drift",
         "human-situation": "operator-submission",
-        "public-service-friction": "public-service-friction",
-        "conflict-situation": "conflict-signal"
+        "public-service-friction": "public-service-friction"
       };
 
       return map[sourceType] || "operator-submission";
@@ -1560,6 +1528,7 @@
       if (sourceType.startsWith("github")) return "github-text";
       if (sourceType === "ci-failure") return "ci-log-excerpt";
       if (sourceType === "news-article") return "article-text";
+      if (sourceType === "external-source") return "external-source-text";
       return "statement";
     }
 
@@ -1605,310 +1574,81 @@
 
 
     function detectSignalDomain(raw, sourceType) {
-      const combined = `${sourceType || ""} ${raw || ""}`.toLowerCase();
+      const categories = {
+        "github-issue": { id: "github-record", label: "GitHub record" },
+        "github-pr": { id: "github-record", label: "GitHub record" },
+        "ci-failure": { id: "runtime-record", label: "runtime record" },
+        "documentation-drift": { id: "documentation-record", label: "documentation record" },
+        "news-article": { id: "external-source", label: "external source" },
+        "external-source": { id: "external-source", label: "external source" }
+      };
 
-      const domains = [
-        {
-          id: "housing-finance",
-          label: "vivienda / financiación doméstica",
-          keywords: [
-            "hipoteca", "prestamo", "préstamo", "banco", "bancos", "cuota", "euribor",
-            "interes", "interés", "vivienda", "casa barata", "casas baratas", "comprar una casa",
-            "inmueble", "cajas rurales", "broker", "bróker", "tasacion", "tasación",
-            "alquiler", "100.000 euros", "financiacion", "financiación"
-          ]
-        },
-        {
-          id: "security-conflict",
-          label: "geopolítica / conflicto internacional",
-          keywords: [
-            "guerra", "bombardeo", "bombardea", "ataque", "ataques", "militar",
-            "ejercito", "ejército", "iran", "irán", "teherán", "teheran",
-            "ee.uu", "ee. uu", "estados unidos", "washington", "centcom",
-            "base militar", "soldado", "armas", "nuclear", "frontera",
-            "otan", "nato", "ucrania", "rusia", "israel", "gaza", "china",
-            "taiwan", "taiwán", "sahel", "golfo", "ormuz", "estrecho",
-            "sanciones", "diplomacia", "alto el fuego", "represalia",
-            "escalada", "desescalada", "rutas comerciales", "energia", "energía",
-            "actor estatal", "aliado", "milicia", "proxy", "maritimo", "marítimo"
-          ]
-        },
-        {
-          id: "public-service-friction",
-          label: "servicio público / fricción administrativa",
-          keywords: [
-            "consulado", "pasaporte", "ayuntamiento", "administracion", "administración",
-            "licencia", "expediente", "cita", "ciudadano", "estado del tramite",
-            "estado del trámite", "reclamacion", "reclamación", "registro oficial"
-          ]
-        },
-        {
-          id: "repo-governance",
-          label: "gobernanza de repositorio / flujo de contribución",
-          keywords: [
-            "github", "pull request", "issue", "ci", "pytest", "workflow", "branch",
-            "readme", "commit", "merge", "deploy", "runtime", "documentation drift"
-          ]
-        },
-        {
-          id: "ai-governance",
-          label: "gobernanza de IA / decisión automatizada",
-          keywords: [
-            "inteligencia artificial", "ia", "ai", "algorithm", "algoritmo",
-            "automated decision", "decision automatizada", "decisión automatizada",
-            "modelo", "explicabilidad", "dataset", "sesgo"
-          ]
-        },
-        {
-          id: "health-social-risk",
-          label: "salud / riesgo social",
-          keywords: [
-            "hospital", "medico", "médico", "salud", "paciente", "tratamiento",
-            "medicamento", "riesgo sanitario", "emergencia", "enfermedad"
-          ]
-        },
-        {
-          id: "information-integrity",
-          label: "integridad informativa / señal narrativa",
-          keywords: [
-            "rumor", "viral", "fuente", "reporte", "informe", "noticia",
-            "desinformacion", "desinformación", "narrativa", "amplificacion", "amplificación"
-          ]
-        }
-      ];
-
-      const scored = domains.map((domain) => ({
-        ...domain,
-        score: domain.keywords.reduce((total, keyword) => total + (combined.includes(keyword) ? 1 : 0), 0)
-      })).sort((a, b) => b.score - a.score);
-
-      return scored[0].score > 0 ? scored[0] : {
-        id: "general-operational-signal",
-        label: "señal operativa general",
-        keywords: [],
-        score: 0
+      return categories[sourceType] || {
+        id: "operator-submission",
+        label: "operator submission"
       };
     }
 
-    function extractActors(raw) {
-      const matches = String(raw || "").match(/[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ0-9_.-]+(?:\s+(?:de|del|la|el|los|las|y|and|of|the|for|[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ0-9_.-]+)){0,5}/g) || [];
-      const stop = new Set(["A", "The", "This", "That", "If", "No", "El", "La", "Los", "Las", "Una", "Un", "HUB_Optimus"]);
-
-      return uniqueList(matches
-        .map((item) => item.replace(/\s+/g, " ").trim())
-        .filter((item) => item.length >= 4)
-        .filter((item) => !stop.has(item))
-        .filter((item) => !/^(A news|The article|The report|This source)$/i.test(item)), 5);
-    }
-
-    function scoreEvidenceSentence(sentence, domain, sourceType) {
-      const lower = sentence.toLowerCase();
-      let score = 0;
-
-      ["says", "states", "reports", "cites", "according", "claims", "complaints", "record", "documentation", "evidence", "official"].forEach((keyword) => {
-        if (lower.includes(keyword)) score += 2;
-      });
-
-      domain.keywords.forEach((keyword) => {
-        if (lower.includes(keyword)) score += 1;
-      });
-
-      if (sourceType.startsWith("github") && /issue|pull request|workflow|documentation|ci|pytest/i.test(sentence)) score += 2;
-      if (sourceType === "ci-failure" && /failed|traceback|error|pytest|exit code/i.test(sentence)) score += 3;
-
-      return score;
+    function extractActors() {
+      // Actor extraction is intentionally disabled: capitalization is not
+      // sufficient evidence that a phrase identifies a person or institution.
+      return [];
     }
 
     function buildSourceProfile(raw, sourceType, sourceUrl) {
-      const sentences = sourceSentences(raw);
-      const domain = detectSignalDomain(raw, sourceType);
-      const actors = extractActors(raw);
-      const ranked = sentences
-        .map((sentence, index) => ({
-          sentence,
-          index,
-          score: scoreEvidenceSentence(sentence, domain, sourceType)
-        }))
-        .sort((a, b) => b.score - a.score || a.index - b.index);
-
-      const keySentences = uniqueList(ranked.map((item) => item.sentence), 3);
-      const primarySentence = keySentences[0] || firstReadableSentence(raw);
-      const sourceLabel = sourceType.replaceAll("-", " ");
+      const keySentences = uniqueList(
+        sourceSentences(raw).map((sentence) => compactText(sentence, 320)),
+        3
+      );
+      const primarySentence = compactText(
+        keySentences[0] || firstReadableSentence(raw),
+        360
+      );
+      const sourceLabel = String(sourceType || "operator-submission").replaceAll("-", " ");
 
       return {
         sourceType,
         sourceUrl,
         sourceLabel,
-        domain,
-        actors,
+        domain: detectSignalDomain(raw, sourceType),
+        actors: extractActors(raw),
         keySentences,
         primarySentence,
-        summary: `${sourceLabel} signal in ${domain.label}${actors.length ? ` involving ${actors.join(", ")}` : ""}.`
+        summary: `Local draft from ${sourceLabel}. Submitted statements remain unverified until a human reviews primary records and independent corroboration.`
       };
     }
 
     function buildSpecificClaim(profile) {
-      const actorText = profile.actors.length ? `${profile.actors.join(", ")}: ` : "";
-      return `${actorText}${profile.primarySentence}`;
+      return compactText(`Submitted source states: ${profile.primarySentence}`, 420);
     }
 
+    function buildConservativeTriage(profile) {
+      const sourceLabel = profile.sourceLabel || "submitted material";
 
-    function buildThematicAnalysis(profile) {
-      const sourceLabel = profile.sourceLabel || "material";
-      const actorText = profile.actors.length ? profile.actors.join(", ") : "las partes mencionadas";
-
-      const fallback = {
-        domain_id: "general-operational-signal",
-        domain_label: "señal operativa general",
-        summary: `Análisis temático preliminar: el material enviado debe tratarse como una señal operativa de baja confianza hasta entender contexto, fuente, actores, incentivos y evidencias independientes. No es un veredicto de verdad.`,
-        problem: "El problema real aún no está suficientemente identificado: el texto describe una situación, pero hace falta separar hecho, afirmación, contexto y consecuencia.",
-        incentives: "Todavía no hay base suficiente para describir incentivos concretos sin añadir interpretación externa.",
-        affected: `Potencialmente afecta a ${actorText}, pero la afectación debe confirmarse con fuentes adicionales.`,
+      return {
+        domain_id: profile.domain.id,
+        domain_label: profile.domain.label,
+        summary: `Local draft from ${sourceLabel}. Operator organizes the submitted text but does not verify it, infer intent, score risk, or execute the Semantic Engine.`,
+        problem: "No underlying problem is established automatically. The draft preserves the submitted statement for human review.",
+        incentives: "No motives or incentives are inferred from the submitted text.",
+        affected: "No affected parties are identified automatically.",
         evidence_to_check: [
-          "Fuente primaria o documento original.",
-          "Datos que confirmen magnitud, fecha, lugar y actores.",
-          "Fuentes independientes que apoyen o contradigan la afirmación."
+          "The primary source or original record.",
+          "Independent material that supports or contradicts the submitted statement.",
+          "Dates, scope, authorship and context needed to assess the statement."
         ],
-        safe_action: "Mantener el caso como señal de monitorización, pedir más evidencia y evitar conclusiones públicas.",
+        safe_action: "Review the source record, preserve provenance, document contradictions and keep the draft non-canonical until a human approves it.",
         inferences: [
-          "El material describe una señal que requiere clasificación antes de convertirse en conclusión operativa.",
-          "La relevancia depende de corroboración independiente, contexto completo y contradicciones disponibles."
+          "No substantive inference is generated by this browser prototype."
         ],
         uncertainties: [
-          "No se sabe si la fuente representa el fenómeno completo o solo un caso aislado.",
-          "Faltan documentos primarios, contradicciones y contexto temporal suficiente."
+          "The submitted material has not been independently corroborated.",
+          "Context, completeness, authorship and relevance require human review."
         ],
         narrative_amplification: [
-          "Riesgo: convertir una señal aislada en conclusión general.",
-          "Separar afirmación, evidencia, inferencia e incertidumbre antes de actuar."
+          "Do not present the submitted statement or this draft as a verified conclusion."
         ]
       };
-
-      const playbooks = {
-        "housing-finance": {
-          domain_id: "housing-finance",
-          domain_label: "vivienda / financiación doméstica",
-          summary: "Análisis temático preliminar: el texto describe una fricción de acceso a vivienda barata causada por el encaje entre precio bajo, producto financiero disponible, plazo, cuota mensual y apetito del banco. No es un veredicto de verdad.",
-          problem: "El problema real no es solo que una vivienda sea barata o cara; es que una compra pequeña puede quedar fuera del producto hipotecario habitual y acabar desplazada hacia préstamos personales más caros o de menor plazo.",
-          incentives: "El banco puede preferir operaciones hipotecarias más grandes, con más garantías y más margen; el comprador de bajo presupuesto queda atrapado entre una casa asequible en precio total y una cuota mensual inviable.",
-          affected: "Afecta sobre todo a compradores con poco capital, ingresos ajustados o necesidad de financiación pequeña, especialmente en zonas donde hay vivienda barata pero el crédito no encaja.",
-          evidence_to_check: [
-            "TAE, plazo, cuota y comisiones comparadas entre préstamo personal e hipoteca.",
-            "Condiciones reales ofrecidas por varios bancos para importes inferiores a 100.000 euros.",
-            "Tasación, estado legal del inmueble, ingresos del comprador y ratio deuda/ingresos.",
-            "Si el obstáculo es política bancaria, riesgo del inmueble, coste operativo o perfil del comprador."
-          ],
-          safe_action: "Transformar el artículo en una hipótesis verificable: recopilar ofertas bancarias reales, calcular cuotas comparables y separar problema financiero de problema inmobiliario.",
-          inferences: [
-            "El cuello de botella descrito parece estar en el diseño e incentivo del producto financiero, no solo en el precio de la vivienda.",
-            "La operación puede ser barata en precio total pero cara en liquidez mensual si se financia con préstamo personal a corto plazo.",
-            "La relevancia social depende de si este patrón se repite en varios bancos, compradores y territorios."
-          ],
-          uncertainties: [
-            "No se puede saber solo con el artículo si el rechazo bancario se debe al importe, al riesgo del inmueble, al perfil del comprador o a políticas comerciales.",
-            "Faltan simulaciones reales de TAE, plazo, cuota, comisiones y condiciones de aprobación.",
-            "Falta comparar el caso con bancos, cooperativas, intermediarios y alternativas públicas o locales."
-          ],
-          narrative_amplification: [
-            "Riesgo: convertir un caso de financiación difícil en la conclusión general de que todas las casas baratas son inaccesibles.",
-            "Riesgo inverso: reducirlo a una anécdota y ocultar una posible fricción sistémica entre vivienda barata y crédito disponible."
-          ]
-        },
-        "security-conflict": {
-          domain_id: "security-conflict",
-          domain_label: "geopolítica / conflicto internacional",
-          summary: "Análisis temático preliminar: el texto describe una señal de conflicto internacional donde deben separarse hechos militares, narrativa política, intereses estratégicos, riesgo de escalada, impacto civil y vías diplomáticas. No verifica los hechos ni sustituye fuentes primarias.",
-          problem: "El problema real no es solo que haya un ataque o una declaración; es entender qué actor afirma qué, qué objetivo estratégico persigue, qué capacidad militar se atribuye, qué coste humano existe, qué respuesta puede activar y qué parte pertenece a propaganda, disuasión o negociación.",
-          incentives: "Los actores estatales y aliados pueden buscar disuasión, castigo, control de rutas comerciales, presión energética, cohesión doméstica, ventaja negociadora o legitimación internacional. Los actores no estatales pueden buscar visibilidad, desgaste, represalia o arrastrar a terceros al conflicto.",
-          affected: "Afecta a población civil, militares, comercio marítimo, energía, aliados regionales, instituciones diplomáticas, mercados, diásporas y credibilidad de los actores implicados.",
-          evidence_to_check: [
-            "Comunicados oficiales originales de cada parte y hora exacta de publicación.",
-            "Confirmación independiente de objetivos, daños, víctimas y localización.",
-            "Evidencia geoespacial, imágenes verificables, reportes locales y fuentes humanitarias.",
-            "Respuesta del actor atacado, aliados, organismos internacionales y mediadores.",
-            "Impacto sobre rutas comerciales, energía, sanciones, evacuaciones o escalada regional.",
-            "Diferencia entre declaración política, propaganda, hecho militar y análisis externo."
-          ],
-          actor_matrix: [
-            "Actor iniciador: qué afirma, qué objetivo declara y qué capacidad demuestra.",
-            "Actor objetivo: qué niega, confirma o promete responder.",
-            "Aliados y socios: qué apoyo ofrecen y qué límites intentan imponer.",
-            "Población civil: qué daños, desplazamientos o riesgos quedan documentados.",
-            "Mediadores e instituciones: qué canales diplomáticos siguen abiertos."
-          ],
-          geopolitical_questions: [
-            "¿El hecho descrito cambia equilibrio militar o solo comunica voluntad política?",
-            "¿La acción busca destruir capacidad, enviar señal, forzar negociación o responder a presión doméstica?",
-            "¿Qué rutas, recursos, bases, fronteras o alianzas vuelven estratégico el evento?",
-            "¿Qué contradicciones aparecen entre versiones oficiales, prensa local y fuentes independientes?",
-            "¿Qué indicador separaría una escalada puntual de una campaña sostenida?"
-          ],
-          escalation_scenarios: [
-            "Escenario A // contención: el ataque queda limitado, se preservan canales diplomáticos y ambas partes controlan narrativa interna.",
-            "Escenario B // escalada regional: represalias, ataques a bases, rutas marítimas o aliados amplían el coste y elevan presión internacional.",
-            "Escenario C // guerra informativa: cifras, imágenes y declaraciones se usan para justificar nuevas acciones antes de verificación independiente.",
-            "Escenario D // negociación bajo fuego: las partes mantienen intercambio diplomático mientras usan presión militar para mejorar posición."
-          ],
-          contradiction_checks: [
-            "Comparar cifras de bajas con fuentes hospitalarias, militares, humanitarias y prensa local.",
-            "Ver si la hora/lugar del ataque coincide entre comunicados, imágenes y reportes independientes.",
-            "Separar bajas confirmadas de desaparecidos, heridos o cifras atribuidas.",
-            "Contrastar si el objetivo descrito era militar, logístico, civil o simbólico.",
-            "Revisar si el lenguaje de defensa, represalia u honor está apoyado por hechos verificables."
-          ],
-          safe_action: "Mantener el caso como señal geopolítica de seguimiento: construir línea temporal, separar hechos de declaraciones, bloquear conclusiones hasta corroboración independiente y vigilar indicadores de escalada, desescalada y guerra informativa.",
-          inferences: [
-            "La señal puede indicar escalada, coerción o negociación bajo presión, pero el texto por sí solo no confirma magnitud, proporcionalidad ni legalidad.",
-            "La narrativa política alrededor del ataque puede ser tan relevante como el hecho militar porque condiciona represalias, alianzas y opinión pública.",
-            "La relevancia operativa depende de si aparecen indicadores de continuidad: nuevos ataques, movilización aliada, cierre de rutas, sanciones, evacuaciones o ruptura diplomática."
-          ],
-          uncertainties: [
-            "Faltan confirmaciones independientes sobre daños, víctimas, objetivos y localización.",
-            "No se sabe si las cifras citadas proceden de fuente primaria, parte interesada, agregación periodística o propaganda.",
-            "No está claro si el evento es un episodio aislado, una campaña sostenida o una señal negociadora.",
-            "La situación humanitaria y el impacto regional requieren fuentes separadas de las declaraciones militares."
-          ],
-          narrative_amplification: [
-            "Riesgo: convertir declaraciones de actores armados en hechos confirmados.",
-            "Riesgo: amplificar lenguaje de guerra sin separar evidencia, propaganda, disuasión e incertidumbre.",
-            "Riesgo inverso: tratar una escalada real como ruido informativo si solo se mira una fuente o un comunicado."
-          ]
-        },
-        "repo-governance": {
-          domain_id: "repo-governance",
-          domain_label: "gobernanza de repositorio / flujo de contribución",
-          summary: "Análisis temático preliminar: el material describe una señal de flujo técnico, revisión o coordinación de repositorio. No equivale a fallo confirmado hasta revisar PRs, issues, commits y CI.",
-          problem: "El problema real es preservar trazabilidad: qué cambió, quién lo propuso, qué validó CI y qué riesgo operativo queda.",
-          incentives: "Los colaboradores necesitan cambios pequeños y revisables; el proyecto necesita evitar mezclar arquitectura, feature, refactor y documentación sin señal.",
-          affected: "Afecta a revisores, operadores, colaboradores externos y estabilidad del sistema desplegado.",
-          evidence_to_check: [
-            "Diff exacto del PR o commit.",
-            "Checks CI y logs relevantes.",
-            "Archivos de gobernanza o contratos tocados.",
-            "Riesgo de despliegue, rollback y compatibilidad."
-          ],
-          safe_action: "Crear una tarea pequeña, un PR por problema, validar tests y mantener rollback claro.",
-          inferences: [
-            "La señal puede indicar fricción de contribución o deriva operativa si no se mantiene alcance pequeño.",
-            "La relevancia depende de evidencia versionada en GitHub, no de chat ni capturas aisladas."
-          ],
-          uncertainties: [
-            "Sin revisar diff, checks y comentarios, no se puede saber si hay regresión real.",
-            "La intención del colaborador no debe inferirse solo por el resultado técnico."
-          ],
-          narrative_amplification: [
-            "Riesgo: convertir una fricción de workflow en acusación personal.",
-            "Riesgo: convertir una mejora estética o de proceso en cambio de arquitectura no revisado."
-          ]
-        }
-      };
-
-      const selected = playbooks[profile.domain.id] || fallback;
-      return Object.assign({}, selected, {
-        source_label: sourceLabel,
-        actors: profile.actors,
-        primary_sentence: profile.primarySentence
-      });
     }
 
     function themeList(items) {
@@ -1917,50 +1657,107 @@
         .join("");
     }
 
-    function optionalThemeSection(title, items) {
-      if (!Array.isArray(items) || !items.length) return "";
-
-      return `
-        <p><b>${escapeHtml(title)}:</b></p>
-        <ul>${themeList(items)}</ul>
-      `;
-    }
-
-    function thematicAnalysisCard(profile) {
-      const analysis = buildThematicAnalysis(profile);
+    function conservativeTriageCard(profile) {
+      const analysis = buildConservativeTriage(profile);
 
       return `
         <section class="output-card full">
-          <h3>Lectura temática</h3>
-          <p><b>Problema real:</b> ${escapeHtml(analysis.problem)}</p>
-          <p><b>Dinámica / incentivos:</b> ${escapeHtml(analysis.incentives)}</p>
-          <p><b>A quién afecta:</b> ${escapeHtml(analysis.affected)}</p>
-          <p><b>Evidencia que falta comprobar:</b></p>
+          <h3>Conservative triage</h3>
+          <p><b>What this draft establishes:</b> ${escapeHtml(analysis.problem)}</p>
+          <p><b>Motives and incentives:</b> ${escapeHtml(analysis.incentives)}</p>
+          <p><b>Affected parties:</b> ${escapeHtml(analysis.affected)}</p>
+          <p><b>Material to review:</b></p>
           <ul>${themeList(analysis.evidence_to_check)}</ul>
-          ${optionalThemeSection("Matriz de actores / intereses", analysis.actor_matrix)}
-          ${optionalThemeSection("Preguntas geopolíticas", analysis.geopolitical_questions)}
-          ${optionalThemeSection("Escenarios operativos", analysis.escalation_scenarios)}
-          ${optionalThemeSection("Contradicciones a buscar", analysis.contradiction_checks)}
-          <p><b>Siguiente acción útil:</b> ${escapeHtml(analysis.safe_action)}</p>
-          <p class="meta">topic_analysis=${escapeHtml(analysis.domain_id)} · no truth verdict · no legal/financial advice</p>
+          <p><b>Next review step:</b> ${escapeHtml(analysis.safe_action)}</p>
+          <p class="meta">triage_profile=generic-conservative-v1 · browser-local draft · human review required</p>
         </section>
       `;
     }
     function buildProtocolNotes(profile) {
-      const thematic = buildThematicAnalysis(profile);
+      const triage = buildConservativeTriage(profile);
 
       return {
-        inferences: thematic.inferences,
-        uncertainties: thematic.uncertainties,
-        narrative_amplification: thematic.narrative_amplification
+        inferences: triage.inferences,
+        uncertainties: triage.uncertainties,
+        narrative_amplification: triage.narrative_amplification
       };
     }
+
+    // OPERATOR_INTAKE_RECORD_START
+    function sourceDomain(sourceUrl) {
+      if (!sourceUrl) return null;
+      try {
+        return new URL(sourceUrl).hostname || null;
+      } catch {
+        return null;
+      }
+    }
+
+    function redirectCount(redirects) {
+      if (Array.isArray(redirects)) return redirects.length;
+      if (Number.isInteger(redirects) && redirects >= 0) return redirects;
+      return 0;
+    }
+
+    function buildIntakeRecord(raw, sourceUrl, intakePayload = null) {
+      if (intakePayload) {
+        return {
+          version: "operator-intake-record-v1",
+          mode: "controlled-url",
+          original_url: intakePayload.url || sourceUrl || null,
+          final_url: intakePayload.final_url || intakePayload.url || sourceUrl || null,
+          source_domain: intakePayload.source_domain || sourceDomain(intakePayload.final_url || sourceUrl),
+          title: intakePayload.title || null,
+          retrieved_at: intakePayload.retrieved_at_utc || intakePayload.retrieved_at || null,
+          redirects: intakePayload.redirects ?? 0,
+          content_type: intakePayload.content_type || null,
+          truncated: Boolean(intakePayload.truncated),
+          status: intakePayload.status || "unknown",
+          verification_status: intakePayload.verification_status || "unreviewed",
+          attribution: "controlled-url-intake",
+          bytes_read: intakePayload.bytes_read ?? null
+        };
+      }
+
+      const hasText = Boolean(String(raw || "").trim());
+      const hasUrl = Boolean(String(sourceUrl || "").trim());
+      const unverifiedUrlAttribution = hasText && hasUrl;
+
+      return {
+        version: "operator-intake-record-v1",
+        mode: unverifiedUrlAttribution ? "operator-pasted-text-with-url" : "operator-pasted-text",
+        original_url: hasUrl ? sourceUrl : null,
+        final_url: null,
+        source_domain: hasUrl ? sourceDomain(sourceUrl) : null,
+        title: null,
+        retrieved_at: null,
+        redirects: 0,
+        content_type: "text/plain; operator-provided",
+        truncated: false,
+        status: unverifiedUrlAttribution ? "operator-attribution-unverified" : "operator-provided",
+        verification_status: "unreviewed",
+        attribution: unverifiedUrlAttribution
+          ? "operator-provided-url-not-fetched"
+          : "operator-provided-text",
+        bytes_read: null
+      };
+    }
+
+    function sourceReferenceForIntake(intakeRecord) {
+      if (intakeRecord?.mode === "controlled-url") {
+        return intakeRecord.final_url || intakeRecord.original_url || "controlled-url-intake";
+      }
+      if (intakeRecord?.original_url) {
+        return "operator-pasted-text-with-unverified-url-attribution";
+      }
+      return "operator-pasted-text";
+    }
+    // OPERATOR_INTAKE_RECORD_END
 
     function buildNormalizedPayload() {
       const raw = value("source_text");
       const sourceType = value("signal_source_type") || "human-situation";
       const sourceUrl = value("source_url");
-      const sourceRef = sourceUrl || "operator-pasted-text";
       const claimType = sourceTypeToClaimType(sourceType);
       const signal = sourceTypeToSignal(sourceType);
 
@@ -1969,18 +1766,27 @@
         return null;
       }
 
+      const canReuseControlledIntake = (
+        currentIntakeRecord?.mode === "controlled-url" &&
+        currentIntakeRecord.original_url === sourceUrl
+      );
+      const intakeRecord = canReuseControlledIntake
+        ? currentIntakeRecord
+        : buildIntakeRecord(raw, sourceUrl);
+      currentIntakeRecord = intakeRecord;
+      const sourceRef = sourceReferenceForIntake(intakeRecord);
       const profile = buildSourceProfile(raw, sourceType, sourceUrl);
-      const thematic = buildThematicAnalysis(profile);
+      const triage = buildConservativeTriage(profile);
       const protocol = buildProtocolNotes(profile);
       const claimText = buildSpecificClaim(profile);
       const evidenceText = profile.keySentences.length
-        ? profile.keySentences.join(" ")
-        : compactText(raw);
+        ? compactText(profile.keySentences.join(" "), 640)
+        : compactText(raw, 640);
 
       const payload = {
         case_id: `operator-signal-${Date.now()}`,
         core_version_ref: value("core_version_ref") || "main",
-        input_summary: thematic.summary,
+        input_summary: triage.summary,
         claims: [
           {
             claim_id: "claim-001",
@@ -1991,10 +1797,8 @@
             status: "pending",
             metadata: {
               source_type: sourceType,
-              source_url: sourceUrl || null,
-              signal_domain: profile.domain.id,
-              actors: profile.actors,
-              normalized_by: "operator-source-intelligence-v0.2"
+              intake_record_ref: "metadata.intake_record",
+              normalized_by: "operator-generic-triage-v1"
             }
           }
         ],
@@ -2013,10 +1817,8 @@
             ],
             metadata: {
               source_type: sourceType,
-              source_url: sourceUrl || null,
-              signal_domain: profile.domain.id,
-              key_sentences: profile.keySentences,
-              normalized_by: "operator-source-intelligence-v0.2"
+              intake_record_ref: "metadata.intake_record",
+              normalized_by: "operator-generic-triage-v1"
             }
           }
         ],
@@ -2027,43 +1829,68 @@
         metadata: {
           intake_channel: "operator-pwa-source-normalizer",
           source_type: sourceType,
-          source_url: sourceUrl || null,
+          source_url: intakeRecord.mode === "controlled-url" ? intakeRecord.final_url : null,
+          intake_record: intakeRecord,
           signal_domain: profile.domain.id,
           signal_domain_label: profile.domain.label,
-          actors: profile.actors,
-          key_sentences: profile.keySentences,
-          thematic_analysis: thematic,
-          normalizer_version: "operator-source-intelligence-v0.2",
-          topic_analysis_version: "operator-topic-analysis-v0.1"
+          review_guidance: {
+            safe_next_action: triage.safe_action
+          },
+          normalizer_version: "operator-generic-triage-v1",
+          operator_mode: "browser-local-draft"
         }
       };
 
       return payload;
     }
 
+    function intakeRecordCard(intakeRecord) {
+      if (!intakeRecord) return "";
+
+      const attributionNotice = intakeRecord.status === "operator-attribution-unverified"
+        ? "<p><b>Attribution boundary:</b> The operator supplied this text and URL together. Operator did not fetch the URL, so the URL-to-text attribution is unverified.</p>"
+        : "<p><b>Attribution boundary:</b> Retrieval provenance is recorded, but source truth and completeness remain unverified.</p>";
+
+      return `
+        <section class="output-card full">
+          <h3>Intake provenance</h3>
+          <p><b>Mode:</b> ${escapeHtml(intakeRecord.mode)}</p>
+          <p><b>Original URL:</b> ${escapeHtml(intakeRecord.original_url || "not provided")}</p>
+          <p><b>Final URL:</b> ${escapeHtml(intakeRecord.final_url || "not retrieved")}</p>
+          <p><b>Domain / title:</b> ${escapeHtml(intakeRecord.source_domain || "not established")} · ${escapeHtml(intakeRecord.title || "not provided")}</p>
+          <p><b>Retrieved:</b> ${escapeHtml(intakeRecord.retrieved_at || "not retrieved")} · redirects=${escapeHtml(redirectCount(intakeRecord.redirects))}</p>
+          <p><b>Content:</b> ${escapeHtml(intakeRecord.content_type || "unknown")} · truncated=${escapeHtml(Boolean(intakeRecord.truncated))}</p>
+          <p><b>Status:</b> ${escapeHtml(intakeRecord.status || "unknown")} · verification=${escapeHtml(intakeRecord.verification_status || "unreviewed")}</p>
+          ${attributionNotice}
+        </section>
+      `;
+    }
+
     function renderNormalizerReadout(payload) {
+      const intakeRecord = payload.metadata?.intake_record;
       $("normalizer_readout").innerHTML = `
         <section class="output-card">
           <h3>Readout</h3>
           <p><b>Signal:</b> ${escapeHtml(payload.operational_signal)}</p>
           <p><b>Source:</b> ${escapeHtml(payload.metadata.source_type)}</p>
-          <p><b>Domain:</b> ${escapeHtml(payload.metadata.signal_domain_label || payload.metadata.signal_domain || "not detected")}</p>
-          <p><b>Actors:</b> ${escapeHtml((payload.metadata.actors || []).join(", ") || "not detected")}</p>
-          <p><b>URL:</b> ${escapeHtml(payload.metadata.source_url || "not provided")}</p>
+          <p><b>Record class:</b> ${escapeHtml(payload.metadata.signal_domain_label || payload.metadata.signal_domain || "operator submission")}</p>
+          <p><b>URL attribution:</b> ${escapeHtml(intakeRecord?.attribution || "not provided")}</p>
         </section>
 
         <section class="output-card">
-          <h3>Safe next action</h3>
-          <p>Review the generated claim and evidence before analysis. Keep uncertainty visible. Do not treat the source as verified fact without corroboration.</p>
+          <h3>Review boundary</h3>
+          <p>Review the generated claim and source excerpt. Keep uncertainty visible. Do not treat the source or draft as verified fact without corroboration.</p>
         </section>
 
+        ${intakeRecordCard(intakeRecord)}
+
         <section class="output-card full">
-          <h3>Claim detected</h3>
+          <h3>Submitted claim draft</h3>
           <p>${escapeHtml(payload.claims[0].text)}</p>
         </section>
 
         <section class="output-card full">
-          <h3>Evidence captured</h3>
+          <h3>Source-bound excerpt</h3>
           <p>${escapeHtml(payload.evidence[0].text)}</p>
           <p class="meta">source_ref=${escapeHtml(payload.evidence[0].source_ref)}</p>
         </section>
@@ -2094,10 +1921,6 @@
       renderCaseOutput();
     }
 
-    function wait(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
     const productLoaderCellCount = 18;
 
     function buildProductLoader() {
@@ -2105,7 +1928,7 @@
       if (!loader) return;
 
       loader.innerHTML = Array.from({ length: productLoaderCellCount }, (_, index) => (
-        `<span class="melon-loader-cell" data-loader-cell="${index}" aria-hidden="true"></span>`
+        `<span class="signal-loader-cell" data-loader-cell="${index}" aria-hidden="true"></span>`
       )).join("");
     }
 
@@ -2123,20 +1946,8 @@
       $("product_loader_phase").textContent = phase || "idle";
     }
 
-    async function runMelonLoaderPlan() {
-      const plan = [
-        { cells: 3, wait: 1050, phase: "capturing source signal" },
-        { cells: 6, wait: 1350, phase: "normalizing claim and evidence" },
-        { cells: 9, wait: 1350, phase: "mapping inference boundaries" },
-        { cells: 12, wait: 1450, phase: "checking uncertainty and amplification" },
-        { cells: 15, wait: 1450, phase: "assembling possible scenarios" },
-        { cells: 18, wait: 1250, phase: "rendering final output" }
-      ];
-
-      for (const step of plan) {
-        setProductLoader(step.cells, step.phase);
-        await wait(step.wait);
-      }
+    function completeProductProgress(phase) {
+      setProductLoader(productLoaderCellCount, phase || "draft ready");
     }
 
     function productStep(id, label, active = true) {
@@ -2160,48 +1971,44 @@
     }
 
     function inferProductSourceType(sourceUrl, raw) {
-      const combined = `${sourceUrl || ""} ${raw || ""}`.toLowerCase();
+      if (!sourceUrl) return raw ? "human-situation" : "external-source";
 
-      if (combined.includes("github.com") && combined.includes("/pull")) return "github-pr";
-      if (combined.includes("github.com")) return "github-issue";
-      if (
-        combined.includes("pytest") ||
-        combined.includes("traceback") ||
-        combined.includes("failed") ||
-        combined.includes("ci ")
-      ) return "ci-failure";
-      if (combined.includes("documentation") || combined.includes("readme")) return "documentation-drift";
-      if (sourceUrl || combined.includes("article") || combined.includes("news") || combined.includes("report")) return "news-article";
+      try {
+        const parsed = new URL(sourceUrl);
+        if (parsed.hostname.toLowerCase() === "github.com" && /\/pull\/\d+(?:\/|$)/.test(parsed.pathname)) {
+          return "github-pr";
+        }
+        if (parsed.hostname.toLowerCase() === "github.com" && /\/issues\/\d+(?:\/|$)/.test(parsed.pathname)) {
+          return "github-issue";
+        }
+      } catch {
+        return "external-source";
+      }
 
-      return "human-situation";
+      return "external-source";
     }
 
-    function scenarioCards(signal, profile) {
-      const normalizedSignal = signal || "triage";
-      const safeProfile = profile || buildSourceProfile(value("source_text"), value("signal_source_type") || "human-situation", value("source_url"));
-      const actorText = safeProfile.actors.length ? safeProfile.actors.join(", ") : "the mentioned actor(s)";
-      const domainText = safeProfile.domain.label;
-
+    function reviewChecklistCard() {
       return `
         <section class="output-card full">
-          <h3>Possible scenarios</h3>
+          <h3>Human review checklist</h3>
           <article class="mini-card">
-            <h3>Scenario A // intake remains low-confidence</h3>
-            <p>The submitted ${escapeHtml(safeProfile.sourceLabel)} remains a single source-bound signal. Keep it as monitor/triage until primary records or corroborating sources are available.</p>
+            <h3>1 // Provenance</h3>
+            <p>Confirm authorship, original location, retrieval path, date, redirects and whether the text is complete.</p>
           </article>
           <article class="mini-card">
-            <h3>Scenario B // corroborated operational friction</h3>
-            <p>If independent evidence confirms the same ${escapeHtml(domainText)} pattern involving ${escapeHtml(actorText)}, escalate to structured review with evidence lock, contradiction check, and documented uncertainty.</p>
+            <h3>2 // Claim boundary</h3>
+            <p>Separate what the source states from what independent records establish. Do not promote a source excerpt into corroborating evidence.</p>
           </article>
           <article class="mini-card">
-            <h3>Scenario C // narrative amplification risk</h3>
-            <p>If the claim spreads faster than the evidence, treat it as amplification risk. Separate what is asserted from what is proven before any public conclusion.</p>
+            <h3>3 // Contradictions and uncertainty</h3>
+            <p>Record missing context, conflicting material and unresolved questions before selecting any operational response.</p>
           </article>
           <article class="mini-card">
-            <h3>HUB_Optimus procedure</h3>
-            <p>1. Preserve source reference → 2. Extract claim → 3. Bind evidence → 4. Mark inference → 5. Mark uncertainty → 6. Check amplification → 7. Choose safe next action.</p>
+            <h3>4 // Explicit handoff</h3>
+            <p>Only a human-approved draft should be handed to a separately controlled runtime. This browser step is not an engine run.</p>
           </article>
-          <p class="meta">scenario_basis=normalized draft · domain=${escapeHtml(safeProfile.domain.id)} · operational_signal=${escapeHtml(normalizedSignal)} · no truth verdict</p>
+          <p class="meta">review_profile=generic-conservative-v1 · local draft · no truth verdict</p>
         </section>
       `;
     }
@@ -2214,14 +2021,16 @@
 
       output.innerHTML = `
         ${resultView.innerHTML}
-        ${thematicAnalysisCard(profile)}
-        ${scenarioCards(value("operational_signal"), profile)}
+        ${intakeRecordCard(currentIntakeRecord)}
+        ${conservativeTriageCard(profile)}
+        ${reviewChecklistCard()}
       `;
     }
 
     function loadMemoryRecords() {
       try {
-        return JSON.parse(localStorage.getItem(memoryKey) || "[]");
+        const records = JSON.parse(localStorage.getItem(memoryKey) || "[]");
+        return Array.isArray(records) ? records : [];
       } catch {
         return [];
       }
@@ -2249,8 +2058,10 @@
 
       return {
         version: "operator-memory-v0.1",
-        saved_at_utc: new Date().toISOString(),
-        source_url: value("product_source_url") || value("source_url") || null,
+        drafted_at_utc: new Date().toISOString(),
+        saved_at_utc: null,
+        source_url: currentIntakeRecord?.final_url || currentIntakeRecord?.original_url || null,
+        intake_record: currentIntakeRecord,
         source_type: value("signal_source_type") || "human-situation",
         signal_domain: profile.domain.id,
         signal_domain_label: profile.domain.label,
@@ -2261,7 +2072,7 @@
         evidence: compactText(evidenceText, 520),
         uncertainty: compactText((payload.uncertainties || []).join(" "), 360),
         amplification: compactText((payload.narrative_amplification || []).join(" "), 360),
-        safe_next_action: payload.metadata?.thematic_analysis?.safe_action || "Revisar fuentes primarias, preservar incertidumbre y convertir esto en una señal versionada solo tras revisión humana.",
+        safe_next_action: payload.metadata?.review_guidance?.safe_next_action || "Review primary records, preserve uncertainty and keep this draft non-canonical until a human approves it.",
         learning_status: "candidate-signal-not-canonical",
         backend_run: false
       };
@@ -2293,10 +2104,15 @@
       const analyzeButton = $("product_analyze");
 
       if (!analyzeButton) return;
+      currentIntakeRecord = null;
+      currentMemoryRecord = null;
+      setMemoryActionsEnabled(false);
 
       if (raw) {
         analyzeButton.disabled = false;
-        $("product_wait_status").textContent = "Ready to analyze.";
+        $("product_wait_status").textContent = sourceUrl
+          ? "Ready to prepare a draft. Text-to-URL attribution will be marked as operator-provided and unverified."
+          : "Ready to prepare a local draft from operator-provided text.";
         return;
       }
 
@@ -2315,7 +2131,7 @@
       $("product_output").innerHTML = `
         <section class="output-card full">
           <h3>URL not accessible from controlled intake</h3>
-          <p>The URL could not be read from the controlled HUB_Optimus origin. Paste the article text or relevant excerpt below and run Analyze again.</p>
+          <p>The URL could not be read from the controlled HUB_Optimus origin. Paste the source text or relevant excerpt below and prepare the draft again.</p>
           <p>This does not mean the source is false or invalid. Some sources block automated access, DNS may not be ready, or the origin may reject cross-origin requests.</p>
           ${detailLine}
           <p class="meta">No browser scraping · no paywall bypass · source remains unreviewed</p>
@@ -2356,11 +2172,18 @@
 
     function saveCurrentMemoryResult() {
       if (!hasShareableResult()) {
-        renderMemoryStatus("No result to save yet. Run Analyze with HUB_Optimus first.", false);
+        renderMemoryStatus("No draft to save yet. Prepare a review draft first.", false);
         return null;
       }
 
-      const record = buildMemoryRecord();
+      if (currentMemoryRecord?.saved_at_utc) {
+        renderMemoryStatus(`Memory already saved: ${currentMemoryRecord.saved_at_utc}`, true);
+        return currentMemoryRecord;
+      }
+
+      const record = Object.assign({}, currentMemoryRecord || buildMemoryRecord(), {
+        saved_at_utc: new Date().toISOString()
+      });
       const records = loadMemoryRecords();
       records.unshift(record);
       saveMemoryRecords(records);
@@ -2411,32 +2234,76 @@
     }
 
     function currentShareableMemory() {
-      return currentMemoryRecord || saveCurrentMemoryResult();
+      if (!currentMemoryRecord) {
+        renderMemoryStatus("No draft is available to share yet.", false);
+        return null;
+      }
+      return currentMemoryRecord;
     }
 
     function buildCleanOperatorUrl() {
       return `${window.location.origin}${window.location.pathname}`;
     }
 
+    // OPERATOR_SHARE_PROVENANCE_START
+    function shareProvenanceLines(record) {
+      const intakeRecord = record?.intake_record;
+      const sourceUrl = (
+        intakeRecord?.final_url ||
+        intakeRecord?.original_url ||
+        record?.source_url ||
+        null
+      );
+
+      if (intakeRecord?.mode === "controlled-url") {
+        return [
+          "Provenance: retrieved through controlled URL intake; retrieval metadata is recorded, while source truth remains unverified.",
+          sourceUrl ? `Retrieved URL: ${compactText(sourceUrl, 240)}` : ""
+        ];
+      }
+
+      if (
+        intakeRecord?.mode === "operator-pasted-text-with-url" ||
+        intakeRecord?.attribution === "operator-provided-url-not-fetched"
+      ) {
+        return [
+          "Provenance: operator supplied the text and URL together; Operator did not fetch the URL, so URL-to-text attribution remains unverified.",
+          sourceUrl ? `Supplied URL (not fetched): ${compactText(sourceUrl, 240)}` : ""
+        ];
+      }
+
+      if (sourceUrl) {
+        return [
+          "Provenance: retrieval mode is unavailable; URL-to-text attribution remains unverified.",
+          `Recorded URL (attribution unverified): ${compactText(sourceUrl, 240)}`
+        ];
+      }
+
+      return [
+        "Provenance: operator-supplied text; no URL retrieval is claimed."
+      ];
+    }
+    // OPERATOR_SHARE_PROVENANCE_END
+
     function buildHumanShareText(record) {
       const lines = [
         "HUB_Optimus Operator snapshot",
         "",
-        `Dominio: ${record.signal_domain_label || "not detected"}`,
-        `Señal: ${record.operational_signal || "triage"}`,
+        `Record class: ${record.signal_domain_label || "operator submission"}`,
+        `Triage state: ${record.operational_signal || "triage"}`,
         "",
-        `Resumen: ${compactText(record.summary, 280)}`,
+        `Summary: ${compactText(record.summary, 280)}`,
         "",
-        `Afirmación: ${compactText(record.claim, 320)}`,
+        `Submitted claim: ${compactText(record.claim, 320)}`,
         "",
-        `Incertidumbre: ${compactText(record.uncertainty, 260)}`,
+        `Uncertainty: ${compactText(record.uncertainty, 260)}`,
         "",
-        `Siguiente acción: ${compactText(record.safe_next_action, 220)}`,
+        `Review step: ${compactText(record.safe_next_action, 220)}`,
         "",
-        "Límite: señal no verificada; no es veredicto de verdad.",
-        "Memoria: este resumen viaja en el mensaje. El enlace abre una consola limpia; no restaura este análisis.",
-        record.source_url ? `Fuente: ${compactText(record.source_url, 240)}` : "",
-        `Abrir Operator limpio: ${buildCleanOperatorUrl()}`
+        "Boundary: unverified local draft; not a truth verdict or engine result.",
+        "Memory: this summary travels in the message. The link opens a clean Operator and does not restore this draft.",
+        ...shareProvenanceLines(record),
+        `Open clean Operator: ${buildCleanOperatorUrl()}`
       ];
 
       return lines.filter(Boolean).join("\n");
@@ -2450,9 +2317,9 @@
 
       try {
         await navigator.clipboard.writeText(shareText);
-        renderMemoryStatus("Resumen legible copiado. La memoria va en el texto, no en la URL.", true);
+        renderMemoryStatus("Readable summary copied. Draft data is in the text, not the URL.", true);
       } catch {
-        renderMemoryStatus("No se pudo copiar el resumen. Use WhatsApp o seleccione el resultado manualmente.", false);
+        renderMemoryStatus("Could not copy the summary. Use WhatsApp or select the output manually.", false);
       }
     }
 
@@ -2463,7 +2330,7 @@
       const shareText = buildHumanShareText(record);
 
       window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer");
-      renderMemoryStatus("WhatsApp abierto con resumen legible. La memoria va en el mensaje, no en la URL.", true);
+      renderMemoryStatus("WhatsApp opened with a readable summary. Draft data is in the message, not the URL.", true);
     }
 
     function renderSharedMemorySnapshot(snapshot) {
@@ -2503,6 +2370,7 @@
     async function runProductAnalyze() {
       let raw = value("product_source_text");
       const sourceUrl = value("product_source_url");
+      const analyzeButton = $("product_analyze");
 
       if (!raw && !sourceUrl) {
         $("product_output").innerHTML = `
@@ -2512,7 +2380,7 @@
             <p class="meta">No browser scraping · no paywall bypass · no truth verdict</p>
           </section>
         `;
-        $("product_wait_status").textContent = "Paste a URL or text to enable analysis.";
+        $("product_wait_status").textContent = "Paste a URL or text to prepare a draft.";
         setMemoryActionsEnabled(false);
         return;
       }
@@ -2520,6 +2388,7 @@
       resetProductProgress();
       setMemoryActionsEnabled(false);
       currentMemoryRecord = null;
+      if (analyzeButton) analyzeButton.disabled = true;
 
       if (!raw && sourceUrl) {
         productStep("product_step_capture", "running");
@@ -2529,13 +2398,20 @@
         try {
           const intake = await readControlledUrlText(sourceUrl);
           raw = intake.text;
+          currentIntakeRecord = buildIntakeRecord(raw, sourceUrl, intake);
           $("product_source_text").value = raw;
-          $("product_wait_status").textContent = "URL read successfully. Preparing analysis…";
+          $("product_wait_status").textContent = "URL retrieved. Preparing a provenance-aware draft…";
         } catch (error) {
           productStep("product_step_capture", "done");
           renderUrlIntakeFallback(sourceUrl, error.message);
+          if (analyzeButton) analyzeButton.disabled = false;
           return;
         }
+      } else if (
+        currentIntakeRecord?.mode !== "controlled-url" ||
+        currentIntakeRecord.original_url !== sourceUrl
+      ) {
+        currentIntakeRecord = buildIntakeRecord(raw, sourceUrl);
       }
 
       $("source_url").value = sourceUrl;
@@ -2546,31 +2422,29 @@
       $("product_wait_status").textContent = "1/4 Capturing signal…";
       setProductLoader(1, "capturing source signal");
 
-      const loaderTask = runMelonLoaderPlan();
-
-      await wait(1050);
       productStep("product_step_capture", "done");
       productStep("product_step_normalize", "running");
       $("product_wait_status").textContent = "2/4 Normalizing claim, evidence and source boundary…";
-
-      await wait(2700);
+      setProductLoader(6, "structuring submitted material");
       normalizeSignal();
 
       productStep("product_step_normalize", "done");
       productStep("product_step_boundary", "running");
       $("product_wait_status").textContent = "3/4 Checking inference, uncertainty and amplification boundaries…";
-
-      await wait(2900);
+      setProductLoader(12, "recording review boundaries");
       productStep("product_step_boundary", "done");
       productStep("product_step_output", "running");
-      $("product_wait_status").textContent = "4/4 Rendering final output and possible scenarios…";
+      $("product_wait_status").textContent = "4/4 Rendering the local review draft…";
 
-      await loaderTask;
       renderProductOutput();
-      currentMemoryRecord = saveCurrentMemoryResult();
+      currentMemoryRecord = buildMemoryRecord();
+      setMemoryActionsEnabled(true);
+      renderMemoryStatus("Draft ready. Save it locally only if you choose to.", true);
+      completeProductProgress("draft ready");
 
       productStep("product_step_output", "done");
-      $("product_wait_status").textContent = "Result ready. Memory and sharing are available.";
+      $("product_wait_status").textContent = "Draft ready. Human review is required; no Semantic Engine run occurred.";
+      if (analyzeButton) analyzeButton.disabled = false;
       window.location.hash = "product_output";
     }
 
@@ -2649,11 +2523,15 @@
       $("intake_channel").value = "operator-pwa";
       claims = [];
       evidence = [];
+      currentIntakeRecord = null;
+      currentMemoryRecord = null;
       recordSequences = { claim: 0, evidence: 0 };
       renderClaims();
       renderEvidence();
       $("result_input").value = "";
       $("result_view").innerHTML = "";
+      setMemoryActionsEnabled(false);
+      resetProductProgress();
       updateJson();
     }
 
@@ -2699,8 +2577,8 @@
         "No narrative amplification note was returned."
       );
       const safeNextAction = signal === "none"
-        ? "Mantener esto como borrador hasta que exista una señal operativa concreta."
-        : "Revisar fuentes primarias, preservar incertidumbre y evitar convertir esto en una conclusión sin corroboración.";
+        ? "Keep this as a draft until a human selects a concrete review state."
+        : "Review primary records, preserve uncertainty and do not turn this draft into a conclusion without corroboration.";
 
       refreshFlow(true);
 

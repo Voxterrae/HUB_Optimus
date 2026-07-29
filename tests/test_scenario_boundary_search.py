@@ -1,4 +1,4 @@
-"""Regression tests for tri-state exhaustive threshold boundary search."""
+"""Regression tests for tri-state, axis-aware boundary search."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def _default_base_scenarios() -> dict[str, dict]:
 
 
 @pytest.mark.parametrize("family", ["info_asymmetry", "resource_scarcity"])
-def test_seed_1_threshold_boundary_matches_exhaustive_states(family: str) -> None:
+def test_seed_2_threshold_boundary_matches_exhaustive_states(family: str) -> None:
     scenario = _default_base_scenarios()[family]
 
     boundary, states = boundary_search.find_max_stable_with_states(
@@ -33,21 +33,89 @@ def test_seed_1_threshold_boundary_matches_exhaustive_states(family: str) -> Non
         boundary_search.set_threshold,
         1,
         5,
-        "1",
+        "2",
         axis="threshold",
     )
 
     assert states == {
-        "1": "failure",
+        "1": "success",
         "2": "success",
         "3": "success",
-        "4": "success",
+        "4": "failure",
         "5": "success",
     }
     successful_values = [
         int(value) for value, state in states.items() if state == "success"
     ]
     assert boundary == max(successful_values) == 5
+
+
+def test_biased_actor_boundary_is_exhaustive_and_non_monotonic(
+    monkeypatch,
+) -> None:
+    scenario = _default_base_scenarios()["incentive_misalignment"]
+    monkeypatch.setattr(boundary_search, "ACTIVE_POLICY", "biased")
+
+    boundary, states = boundary_search.find_min_stable_with_states(
+        scenario,
+        boundary_search.set_actors,
+        1,
+        6,
+        "11",
+        axis="actors",
+    )
+
+    assert states == {
+        "1": "failure",
+        "2": "failure",
+        "3": "success",
+        "4": "success",
+        "5": "success",
+        "6": "failure",
+    }
+    assert boundary == 3
+
+    verification = boundary_search.verify_boundary_min(
+        scenario,
+        boundary_search.set_actors,
+        None,
+        1,
+        6,
+        "11",
+        axis="actors",
+    )
+    assert verification["exhaustive_boundary"] == 3
+    assert verification["valid"] is False
+
+
+def test_minimum_verification_checks_every_lower_value(monkeypatch) -> None:
+    states = {
+        1: "failure",
+        2: "success",
+        3: "failure",
+        4: "success",
+        5: "success",
+        6: "success",
+    }
+    monkeypatch.setattr(
+        boundary_search,
+        "_probe_state",
+        lambda _scenario, _seed, *, axis, value: states[value],
+    )
+
+    verification = boundary_search.verify_boundary_min(
+        {},
+        lambda _base, value: value,
+        4,
+        1,
+        6,
+        "7",
+        axis="actors",
+    )
+
+    assert verification["exhaustive_boundary"] == 2
+    assert verification["below_fails"] is False
+    assert verification["valid"] is False
 
 
 def test_probe_error_cannot_become_failure_observation(monkeypatch) -> None:
@@ -119,8 +187,11 @@ def test_boundary_results_include_method_and_policy_provenance(
     assert entry["policy"] == "simulator_default"
     assert entry["methods"] == {
         "rounds_min": "binary_search",
-        "actors_min": "binary_search",
+        "actors_min": "exhaustive_enumeration",
         "threshold_max": "exhaustive_enumeration",
+    }
+    assert entry["actors_probe_states"] == {
+        str(value): "success" for value in range(1, 7)
     }
     assert entry["threshold_probe_states"] == {
         str(value): "success" for value in range(1, 6)

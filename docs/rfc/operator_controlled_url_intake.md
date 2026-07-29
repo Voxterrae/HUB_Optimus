@@ -2,7 +2,15 @@
 
 ## Status
 
-Draft / RFC-only / not implemented.
+Lifecycle: **Partially Implemented**.
+
+The decision remains Draft and unratified. A local/private single-URL endpoint
+and a browser fallback exist in the repository (implementation PRs #1717 and
+#1720), with contract tests in
+`tests/test_hub_api_controlled_url_intake.py`. This is not evidence of a public
+deployment, complete RFC implementation, source verification, crawling, or
+truth adjudication. Issue #1753 tracks detailed RFC/implementation
+reconciliation.
 
 ## Decision
 
@@ -10,7 +18,11 @@ HUB_Optimus Operator should support URL-only analysis only through a controlled 
 
 A submitted URL is a source reference until the backend explicitly retrieves, bounds, extracts, and records source text. Intake does not verify truth, does not bypass access controls, and does not convert a URL into a conclusion.
 
-This RFC authorizes design discussion only. It does not authorize implementation, public API exposure, scraping infrastructure, crawler behavior, browser-side fetching, authentication changes, storage changes, or analysis contract changes.
+The RFC text itself authorizes no additional implementation, public API
+exposure, scraping infrastructure, crawler behavior, browser-side third-party
+fetching, authentication changes, storage changes, or analysis contract
+changes. Existing code must be evaluated against its own reviewed issues,
+tests, and deployment evidence.
 
 ## Parent boundary
 

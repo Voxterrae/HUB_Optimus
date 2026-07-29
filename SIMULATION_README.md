@@ -16,13 +16,37 @@ Este documento explica cómo utilizar el núcleo de simulación prototípico que
 
 ## 1. Preparación
 
-1. Asegúrate de disponer de Python 3.7 o superior.
-2. Copia los archivos anteriores en un directorio de trabajo.  Si vas a trabajar en un repositorio clonado, colócalos en la raíz del proyecto o en una carpeta `tools/` según tus preferencias.
-3. Opcionalmente, crea un entorno virtual para aislar dependencias:
+1. Asegúrate de disponer de Python 3.11 o superior. El repositorio y el
+   bootstrap usan sintaxis de Python 3.11; versiones anteriores no forman parte
+   del contrato soportado.
+2. Copia o clona el repositorio completo en un directorio de trabajo.
+3. Crea un entorno virtual para aislar dependencias:
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
+```
+
+4. Instala las dependencias del runtime:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+`requirements.txt` contiene únicamente dependencias necesarias para ejecutar
+los comandos soportados. Para desarrollar y ejecutar la suite instala
+`requirements-dev.txt`; este incluye el fichero de runtime y añade `pytest`:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
+Como alternativa reproducible, el bootstrap distingue ambos modos:
+
+```bash
+python scripts/bootstrap.py --runtime-only
+python scripts/bootstrap.py
+python scripts/bootstrap.py --runtime-only --check
 ```
 
 ## 2. Estructura de un escenario
@@ -106,7 +130,7 @@ efímeros (gitignored) y se regeneran localmente.
 | Generador | `python tools/scenario_generator/generate_scenarios.py` | Genera escenarios sintéticos por familia |
 | Telemetría | `python tools/scenario_telemetry.py` | Métricas agregadas de convergencia |
 | Mutador | `python tools/scenario_mutator.py` | Barrido de estabilidad variando un eje |
-| Búsqueda de frontera | `python tools/scenario_boundary_search.py` | Frontera de estabilidad por eje (búsqueda binaria) |
+| Búsqueda de frontera | `python tools/scenario_boundary_search.py` | Frontera por eje: búsqueda binaria para rondas y enumeración exhaustiva para actores y umbral |
 | Frontera 2D | `python tools/scenario_frontier.py` | Mapas de estabilidad en planos de dos ejes |
 
 La memoria científica del laboratorio se mantiene en `docs/lab_state.md`.

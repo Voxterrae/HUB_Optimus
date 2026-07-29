@@ -1,9 +1,10 @@
 """
 Boundary search for HUB_Optimus scenarios.
 
-Uses binary search for the rounds and actors axes, whose historical
-behaviour is retained, and exhaustive enumeration for the threshold
-axis, whose exact-equality success condition is not monotonic.
+Uses binary search only for the rounds axis, where increasing the round
+budget preserves the execution prefix. Actor count and exact-equality
+thresholds are exhaustively enumerated because neither axis is guaranteed
+to be monotonic.
 
 Axes searched
 -------------
@@ -62,7 +63,7 @@ ProbeState = Literal["success", "failure", "error"]
 
 BOUNDARY_METHODS = {
     "rounds_min": "binary_search",
-    "actors_min": "binary_search",
+    "actors_min": "exhaustive_enumeration",
     "threshold_max": "exhaustive_enumeration",
 }
 
@@ -236,9 +237,10 @@ def find_min_stable(
     *,
     axis: str = "parameter",
 ) -> int | None:
-    """Find minimum value in [lo, hi] where the scenario converges.
+    """Binary-search a monotonic axis for its minimum successful value.
 
-    Returns the boundary value, or None if no stable point exists.
+    This is valid only when success at one value guarantees success at every
+    larger value. The boundary tool uses it only for ``max_rounds``.
     """
     # First check: does the highest value work?
     if _probe_state(
@@ -271,6 +273,44 @@ def find_min_stable(
     return succeed
 
 
+def _enumerate_probe_states(
+    base: dict,
+    mutate_fn,
+    lo: int,
+    hi: int,
+    seed: str,
+    *,
+    axis: str = "parameter",
+) -> dict[str, ProbeState]:
+    """Return one explicit probe state for every value in [lo, hi]."""
+    states: dict[str, ProbeState] = {}
+    for value in range(lo, hi + 1):
+        states[str(value)] = _probe_state(
+            mutate_fn(base, value), seed, axis=axis, value=value
+        )
+    return states
+
+
+def find_min_stable_with_states(
+    base: dict,
+    mutate_fn,
+    lo: int,
+    hi: int,
+    seed: str,
+    *,
+    axis: str = "parameter",
+) -> tuple[int | None, dict[str, ProbeState]]:
+    """Enumerate [lo, hi] and return its minimum success plus every state."""
+    states = _enumerate_probe_states(
+        base, mutate_fn, lo, hi, seed, axis=axis
+    )
+    successes = [
+        int(value) for value, state in states.items() if state == "success"
+    ]
+
+    return (min(successes) if successes else None), states
+
+
 def find_max_stable_with_states(
     base: dict,
     mutate_fn,
@@ -285,15 +325,12 @@ def find_max_stable_with_states(
     Exhaustive enumeration is required because exact-equality success is not
     monotonic across threshold values.
     """
-    states: dict[str, ProbeState] = {}
-    successes: list[int] = []
-    for value in range(lo, hi + 1):
-        state = _probe_state(
-            mutate_fn(base, value), seed, axis=axis, value=value
-        )
-        states[str(value)] = state
-        if state == "success":
-            successes.append(value)
+    states = _enumerate_probe_states(
+        base, mutate_fn, lo, hi, seed, axis=axis
+    )
+    successes = [
+        int(value) for value, state in states.items() if state == "success"
+    ]
 
     return (max(successes) if successes else None), states
 
@@ -320,43 +357,39 @@ def find_max_stable(
 def verify_boundary_min(
     base: dict,
     mutate_fn,
-    boundary: int,
+    boundary: int | None,
     lo: int,
+    hi: int,
     seed: str,
     *,
     axis: str = "parameter",
 ) -> dict:
-    """Verify a minimum boundary: boundary-1 should fail, boundary should succeed."""
+    """Verify a reported minimum against a fresh exhaustive enumeration."""
+    exhaustive_boundary, states = find_min_stable_with_states(
+        base, mutate_fn, lo, hi, seed, axis=axis
+    )
     at_boundary = (
-        _probe_state(
-            mutate_fn(base, boundary), seed, axis=axis, value=boundary
-        )
-        == "success"
+        boundary is not None and states.get(str(boundary)) == "success"
     )
-    below = boundary > lo and (
-        _probe_state(
-            mutate_fn(base, boundary - 1),
-            seed,
-            axis=axis,
-            value=boundary - 1,
-        )
-        == "failure"
+    below = (
+        all(states[str(value)] == "failure" for value in range(lo, boundary))
+        if boundary is not None
+        else all(state == "failure" for state in states.values())
     )
-    # If boundary == lo, there's nothing below to test
-    if boundary <= lo:
-        below = True  # trivially valid — no lower value to test
     return {
         "boundary": boundary,
         "at_boundary": at_boundary,
         "below_fails": below,
-        "valid": at_boundary and below,
+        "exhaustive_boundary": exhaustive_boundary,
+        "probe_states": states,
+        "valid": boundary == exhaustive_boundary,
     }
 
 
 def verify_boundary_max(
     base: dict,
     mutate_fn,
-    boundary: int,
+    boundary: int | None,
     hi: int,
     seed: str,
     *,
@@ -366,10 +399,16 @@ def verify_boundary_max(
     exhaustive_boundary, states = find_max_stable_with_states(
         base, mutate_fn, 1, hi, seed, axis=axis
     )
-    at_boundary = states.get(str(boundary)) == "success"
-    above = all(
-        states[str(value)] == "failure"
-        for value in range(boundary + 1, hi + 1)
+    at_boundary = (
+        boundary is not None and states.get(str(boundary)) == "success"
+    )
+    above = (
+        all(
+            states[str(value)] == "failure"
+            for value in range(boundary + 1, hi + 1)
+        )
+        if boundary is not None
+        else all(state == "failure" for state in states.values())
     )
     return {
         "boundary": boundary,
@@ -394,26 +433,26 @@ def verify_boundaries(
         entry = boundaries[family]
         v: dict = {}
 
-        rounds_min = entry.get("rounds_min")
-        if rounds_min is not None:
+        if "rounds_min" in entry:
+            rounds_min = entry.get("rounds_min")
             print(f"    {family} rounds_min={rounds_min} ...", end=" ", flush=True)
             r = verify_boundary_min(
-                scenario, set_rounds, rounds_min, 1, seed, axis="rounds"
+                scenario, set_rounds, rounds_min, 1, 10, seed, axis="rounds"
             )
             v["rounds_min"] = r
             print("ok" if r["valid"] else "FAIL")
 
-        actors_min = entry.get("actors_min")
-        if actors_min is not None:
+        if "actors_min" in entry:
+            actors_min = entry.get("actors_min")
             print(f"    {family} actors_min={actors_min} ...", end=" ", flush=True)
             r = verify_boundary_min(
-                scenario, set_actors, actors_min, 1, seed, axis="actors"
+                scenario, set_actors, actors_min, 1, 6, seed, axis="actors"
             )
             v["actors_min"] = r
             print("ok" if r["valid"] else "FAIL")
 
-        threshold_max = entry.get("threshold_max")
-        if threshold_max is not None:
+        if "threshold_max" in entry:
+            threshold_max = entry.get("threshold_max")
             print(f"    {family} threshold_max={threshold_max} ...", end=" ", flush=True)
             r = verify_boundary_max(
                 scenario,
@@ -531,12 +570,13 @@ def search_boundaries(
         entry["rounds_min"] = rounds_min
         print(rounds_min)
 
-        # actors: find minimum stable (range 1–6)
+        # actors: exhaustively find minimum stable (range 1–6)
         print("    actors ...", end=" ", flush=True)
-        actors_min = find_min_stable(
+        actors_min, actors_states = find_min_stable_with_states(
             scenario, set_actors, 1, 6, seed, axis="actors"
         )
         entry["actors_min"] = actors_min
+        entry["actors_probe_states"] = actors_states
         print(actors_min)
 
         # threshold: find maximum viable (range 1–5)
@@ -655,8 +695,8 @@ def print_summary(boundaries: dict) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Find stability boundaries via binary search for rounds/actors "
-            "and exhaustive threshold enumeration."
+            "Find stability boundaries via binary search for rounds and "
+            "exhaustive actor/threshold enumeration."
         )
     )
     parser.add_argument(
