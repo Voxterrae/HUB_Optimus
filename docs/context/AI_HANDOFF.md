@@ -588,6 +588,30 @@ Operational boundary:
   in the versioned baseline and rejects restoring that checkpoint as a current
   source. It does not replace live GitHub inspection.
 
+## System Architecture Map Boundary
+
+Issue #1586 establishes
+`docs/architecture/system_architecture_map.md` as the current repository-level
+navigation map.
+
+Operational boundary:
+
+- “system” names the governed repository project and its source-of-truth
+  relationships; it is not a synonym for one executable program;
+- the scenario runtime remains defined by its applicable schema, source,
+  tests, and `docs/architecture/runtime_contract.md`;
+- the Semantic Engine CLI, Operator, local operations scripts, and laboratory
+  tools remain separate executable surfaces; their narrower boundaries are
+  recorded by the applicable source, documents, and tests;
+- the framework/methodology is human-readable and broader than those programs;
+  `docs/context/STATUS.md` keeps `v1_core/languages/es/` canonical for the v1
+  methodology;
+- documentation, RFCs, datasets, fixtures, provisional claims, and synthetic
+  observations retain their own evidence status and are not promoted into
+  runtime capabilities or verified real-world facts by the map; and
+- the map adds no runtime, schema, simulator, CI, deployment, roadmap,
+  governance authority, or professional-review claim.
+
 ## Catalunya Fire-Response Documentation Boundary
 
 Issue #1685 corrects the documentation boundary around the conceptual
