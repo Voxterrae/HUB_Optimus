@@ -84,7 +84,14 @@ def main() -> int:
 
     scenarios = sorted(SCENARIOS_DIR.glob("*.json"))
     if include_generated and GENERATED_DIR.is_dir():
-        scenarios.extend(sorted(GENERATED_DIR.rglob("*.json")))
+        root_manifest = GENERATED_DIR / "generation_manifest.json"
+        scenarios.extend(
+            sorted(
+                path
+                for path in GENERATED_DIR.rglob("*.json")
+                if path != root_manifest
+            )
+        )
     if name_filter:
         scenarios = [s for s in scenarios if name_filter in s.stem]
 
