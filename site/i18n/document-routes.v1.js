@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const EVIDENCE_SHA = "f99bfed196dbcb76c8a29a4bab31559fdb567ee5";
+  const EVIDENCE_SHA = "8426b08e5f88b650c4d79e41d3ce3afd7d42746b";
   const repository = "https://github.com/Voxterrae/HUB_Optimus";
   const blob = (path) => `${repository}/blob/${EVIDENCE_SHA}/${path}`;
   const tree = (path) => `${repository}/tree/${EVIDENCE_SHA}/${path}`;

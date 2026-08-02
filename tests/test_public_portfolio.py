@@ -1417,7 +1417,7 @@ def test_document_route_resolver_has_complete_explicit_locale_matrix():
     }
     assert set(probe["routeIds"]) == expected_route_ids
     assert probe["unknown"] is None
-    assert probe["evidenceSha"] == "f99bfed196dbcb76c8a29a4bab31559fdb567ee5"
+    assert probe["evidenceSha"] == "8426b08e5f88b650c4d79e41d3ce3afd7d42746b"
 
     resolved = probe["resolved"]
     assert all(
