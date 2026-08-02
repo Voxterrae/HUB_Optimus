@@ -147,6 +147,9 @@ canvas.parentElement = {
 };
 const motionButton = new Element({"data-i18n": "pauseGlobe"});
 motionButton.hidden = true;
+const interactiveNote = new Element({"data-i18n": "globeControls"});
+interactiveNote.hidden = true;
+const fallbackNote = new Element({"data-i18n": "globeFallbackNotice"});
 
 const document = {
   activeElement: null,
@@ -154,10 +157,14 @@ const document = {
   documentElement: {lang: "en", dir: "ltr"},
   hidden: false,
   title: "",
-  querySelector() { return null; },
+  querySelector(selector) {
+    if (selector === "[data-globe-interactive-note]") return interactiveNote;
+    if (selector === "[data-globe-fallback-note]") return fallbackNote;
+    return null;
+  },
   querySelectorAll(selector) {
     if (selector === "[data-language]") return [];
-    if (selector === "[data-i18n]") return [motionButton];
+    if (selector === "[data-i18n]") return [motionButton, interactiveNote, fallbackNote];
     if (selector === "[data-i18n-aria]") return [];
     if (selector === "[data-i18n-alt]") return [];
     return [];
@@ -225,6 +232,16 @@ function snapshot() {
       ariaPressed: motionButton.getAttribute("aria-pressed"),
       hidden: motionButton.hidden,
       text: motionButton.textContent
+    },
+    notes: {
+      fallback: {
+        hidden: fallbackNote.hidden,
+        text: fallbackNote.textContent
+      },
+      interactive: {
+        hidden: interactiveNote.hidden,
+        text: interactiveNote.textContent
+      }
     }
   };
 }
@@ -258,6 +275,30 @@ function keyEvent(key) {
 
   const initial = snapshot();
   const initialDrawCount = drawCalls.length;
+  let pointer = null;
+  if (!canvas.hidden) {
+    const pointerDown = {
+      pointerId: 7,
+      clientX: 20,
+      clientY: 20,
+      prevented: false,
+      preventDefault() { this.prevented = true; }
+    };
+    dispatch(canvas, "pointerdown", pointerDown);
+    const captureAfterDown = canvas.hasPointerCapture(7);
+    const pointerCancel = {
+      pointerId: 7,
+      prevented: false,
+      preventDefault() { this.prevented = true; }
+    };
+    dispatch(canvas, "pointercancel", pointerCancel);
+    pointer = {
+      cancelPrevented: pointerCancel.prevented,
+      captureAfterCancel: canvas.hasPointerCapture(7),
+      captureAfterDown,
+      downPrevented: pointerDown.prevented
+    };
+  }
   frames.shift()(1000);
   frames.shift()(1040);
   const reducedMotionDrawCount = drawCalls.length;
@@ -306,6 +347,7 @@ function keyEvent(key) {
     keyboardDrawCount,
     loadCount,
     manualToggleDrawCount,
+    pointer,
     reducedMotionDrawCount,
     resizeCount
   }));
@@ -350,6 +392,22 @@ def test_globe_keyboard_reduced_motion_and_focus_fallback_execute_deterministica
             "hidden": False,
             "text": "Resume",
         },
+        "notes": {
+            "fallback": {
+                "hidden": True,
+                "text": "Static illustration · interactive controls unavailable",
+            },
+            "interactive": {
+                "hidden": False,
+                "text": "Drag, swipe, or use the arrow keys to rotate.",
+            },
+        },
+    }
+    assert probe["pointer"] == {
+        "cancelPrevented": False,
+        "captureAfterCancel": False,
+        "captureAfterDown": True,
+        "downPrevented": False,
     }
     assert probe["loadCount"] == 1
     assert probe["resizeCount"] == 1
@@ -385,6 +443,16 @@ def test_globe_keyboard_reduced_motion_and_focus_fallback_execute_deterministica
             "hidden": True,
             "text": "Pause",
         },
+        "notes": {
+            "fallback": {
+                "hidden": False,
+                "text": "Static illustration · interactive controls unavailable",
+            },
+            "interactive": {
+                "hidden": True,
+                "text": "Drag, swipe, or use the arrow keys to rotate.",
+            },
+        },
         "activeElementCleared": True,
         "blurCount": 1,
         "prevented": True,
@@ -414,6 +482,12 @@ def test_globe_reacts_to_a_new_reduced_motion_preference():
         "text": "Pause",
     }
     assert probe["manualToggleDrawCount"] == probe["keyboardDrawCount"] + 1
+    assert probe["pointer"] == {
+        "cancelPrevented": False,
+        "captureAfterCancel": False,
+        "captureAfterDown": True,
+        "downPrevented": False,
+    }
 
 
 def test_globe_without_a_renderer_stays_static_and_out_of_the_tab_order():
@@ -435,7 +509,18 @@ def test_globe_without_a_renderer_stays_static_and_out_of_the_tab_order():
             "hidden": True,
             "text": "Pause",
         },
+        "notes": {
+            "fallback": {
+                "hidden": False,
+                "text": "Static illustration · interactive controls unavailable",
+            },
+            "interactive": {
+                "hidden": True,
+                "text": "Drag, swipe, or use the arrow keys to rotate.",
+            },
+        },
     }
+    assert probe["pointer"] is None
     assert probe["loadCount"] == 0
     assert probe["resizeCount"] == 0
     assert probe["initialDrawCount"] == 0
@@ -479,10 +564,25 @@ def test_focus_motion_rtl_and_responsive_css_contracts_remain_versioned():
     )
     assert ".boundary-row { grid-template-columns: 1fr;" in mobile
     assert ".site-footer { justify-items: start;" in mobile
+    assert ".hero h1 { font-size: clamp(1.75rem, 18vw, 5.8rem);" in mobile
 
     narrow = compact_css(css_block(portfolio, "@media (max-width: 540px)"))
-    assert ".site-header { grid-template-columns: 1fr;" in narrow
-    assert ".language-switcher button { min-height: 2.25rem;" in narrow
+    assert ".site-header { position: static; grid-template-columns: 1fr;" in narrow
+    assert ".language-switcher { flex-wrap: wrap;" in narrow
+    assert ".language-switcher button { min-height: 2.75rem; min-width: 2.75rem;" in narrow
+    zoom_reflow = compact_css(css_block(portfolio, "@media (max-width: 360px)"))
+    assert ".truth-strip { grid-template-columns: 1fr;" in zoom_reflow
+    assert ".globe-toolbar { align-items: stretch; flex-direction: column;" in zoom_reflow
+    assert ".globe-stage { min-height: clamp(14rem, 100vw, 18rem);" in zoom_reflow
+    assert ".site-footer nav { align-items: flex-start; flex-direction: column;" in zoom_reflow
+    assert "overflow-wrap: anywhere" in css_block(portfolio, "body")
+    language_target = css_block(portfolio, ".language-switcher button")
+    assert "min-height: 2.75rem" in language_target
+    assert "min-width: 2.75rem" in language_target
+    assert "min-height: 2.75rem" in css_block(portfolio, ".globe-toolbar button")
+    assert "outline-offset: -4px" in css_block(portfolio, "#world-globe:focus-visible")
+    globe_blocks = re.findall(r"#world-globe\s*\{(?P<body>.*?)\}", portfolio, re.DOTALL)
+    assert any("touch-action: pan-y pinch-zoom" in block for block in globe_blocks)
     assert "inset-inline-start" in portfolio
     assert "inset-inline-end" in portfolio
     assert "padding-inline" in portfolio

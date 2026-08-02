@@ -7,7 +7,7 @@
   const translations = {
     en: {
       title: "HUB_Optimus — Versioned public portfolio",
-      description: "The evidence-backed public portfolio of HUB_Optimus: Core, deterministic simulator, Semantic Engine contracts and CLI, Operator, research, governance, and Labs.",
+      description: "Turn a URL or source text into a structured, source-bound draft for human review, then inspect the versioned evidence, method, governance, and limits behind HUB_Optimus.",
       skip: "Skip to portfolio",
       homeAria: "HUB_Optimus home",
       brandDescriptor: "Versioned public portfolio",
@@ -18,12 +18,14 @@
       navBoundaries: "Boundaries",
       languageAria: "Language",
       openGithub: "Open GitHub",
-      heroEyebrow: "Public, versioned, evidence-backed",
+      heroEyebrow: "From source to reviewable draft",
       sequence: "Reality → Evidence → Inference → Narrative → Operational Signal",
-      heroLead: "An integrity-first diplomatic simulation workflow for structured evaluation, preventive mediation, and systemic learning.",
+      heroLead: "Turn a URL or source text into a structured, source-bound draft for human review—without presenting it as verified truth.",
       heroBoundary: "It supports better judgment. It is not an authority, a prediction engine, or a replacement for diplomacy.",
       explorePortfolio: "Explore the portfolio",
       openOperator: "Open Operator",
+      tryOperator: "Try Operator",
+      howItWorks: "How it works",
       truthSource: "Source of truth",
       truthCore: "Canonical v1 language",
       truthCoreValue: "Spanish",
@@ -38,6 +40,7 @@
       globeFallbackAlt: "HUB_Optimus approved geographic brand artwork",
       globeAria: "Interactive globe projected from real coastline coordinates. Routes are illustrative and are not live telemetry.",
       globeControls: "Drag, swipe, or use the arrow keys to rotate.",
+      globeFallbackNotice: "Static illustration · interactive controls unavailable",
       globeData: "Geographic data",
       principleAria: "Operating principle",
       principle: "Observe → detect → decide → act.",
@@ -171,7 +174,7 @@
     },
     es: {
       title: "HUB_Optimus — Portfolio público versionado",
-      description: "El portfolio público de HUB_Optimus respaldado por evidencia: Core, simulador determinista, contratos y CLI del Semantic Engine, Operator, investigación, gobernanza y Labs.",
+      description: "Convierte una URL o texto fuente en un borrador estructurado y vinculado a la fuente para revisión humana; después consulta la evidencia versionada, el método, la gobernanza y los límites de HUB_Optimus.",
       skip: "Ir al portfolio",
       homeAria: "Inicio de HUB_Optimus",
       brandDescriptor: "Portfolio público versionado",
@@ -182,12 +185,14 @@
       navBoundaries: "Límites",
       languageAria: "Idioma",
       openGithub: "Abrir GitHub",
-      heroEyebrow: "Público, versionado y respaldado por evidencia",
+      heroEyebrow: "De la fuente al borrador revisable",
       sequence: "Realidad → Evidencia → Inferencia → Narrativa → Señal operativa",
-      heroLead: "Un flujo de simulación diplomática que prioriza la integridad para la evaluación estructurada, la mediación preventiva y el aprendizaje sistémico.",
+      heroLead: "Convierte una URL o un texto fuente en un borrador estructurado y vinculado a la fuente para revisión humana, sin presentarlo como verdad verificada.",
       heroBoundary: "Ayuda a mejorar el criterio. No es una autoridad, un motor de predicción ni un sustituto de la diplomacia.",
       explorePortfolio: "Explorar el portfolio",
       openOperator: "Abrir Operator",
+      tryOperator: "Probar Operator",
+      howItWorks: "Cómo funciona",
       truthSource: "Fuente de verdad",
       truthCore: "Idioma canónico de v1",
       truthCoreValue: "Español",
@@ -202,6 +207,7 @@
       globeFallbackAlt: "Gráfico geográfico aprobado de la marca HUB_Optimus",
       globeAria: "Globo interactivo proyectado a partir de coordenadas costeras reales. Las rutas son ilustrativas y no representan telemetría en directo.",
       globeControls: "Arrastra, desliza o utiliza las flechas del teclado para girar.",
+      globeFallbackNotice: "Ilustración estática · controles interactivos no disponibles",
       globeData: "Datos geográficos",
       principleAria: "Principio operativo",
       principle: "Observar → detectar → decidir → actuar.",
@@ -335,7 +341,7 @@
     },
     de: {
       title: "HUB_Optimus — Versioniertes öffentliches Portfolio",
-      description: "Das evidenzgestützte öffentliche Portfolio von HUB_Optimus: Core, deterministischer Simulator, Verträge und CLI der Semantic Engine, Operator, Forschung, Governance und Labs.",
+      description: "Verwandle eine URL oder einen Quelltext in einen strukturierten, quellengebundenen Entwurf zur menschlichen Prüfung und prüfe anschließend die versionierten Nachweise, Methoden, Governance und Grenzen von HUB_Optimus.",
       skip: "Zum Portfolio springen",
       homeAria: "HUB_Optimus Startseite",
       brandDescriptor: "Versioniertes öffentliches Portfolio",
@@ -346,12 +352,14 @@
       navBoundaries: "Grenzen",
       languageAria: "Sprache",
       openGithub: "GitHub öffnen",
-      heroEyebrow: "Öffentlich, versioniert und evidenzgestützt",
+      heroEyebrow: "Von der Quelle zum prüfbaren Entwurf",
       sequence: "Realität → Evidenz → Schlussfolgerung → Narrativ → Operatives Signal",
-      heroLead: "Ein integritätsorientierter Workflow für diplomatische Simulation, strukturierte Bewertung, präventive Vermittlung und systemisches Lernen.",
+      heroLead: "Verwandle eine URL oder einen Quelltext in einen strukturierten, quellengebundenen Entwurf zur menschlichen Prüfung – ohne ihn als verifizierte Wahrheit darzustellen.",
       heroBoundary: "Das System unterstützt bessere Urteile. Es ist weder Autorität noch Prognosemaschine noch Ersatz für Diplomatie.",
       explorePortfolio: "Portfolio erkunden",
       openOperator: "Operator öffnen",
+      tryOperator: "Operator testen",
+      howItWorks: "So funktioniert es",
       truthSource: "Maßgebliche Quelle",
       truthCore: "Kanonische Sprache von v1",
       truthCoreValue: "Spanisch",
@@ -366,6 +374,7 @@
       globeFallbackAlt: "Freigegebene geografische Markengrafik von HUB_Optimus",
       globeAria: "Interaktiver Globus, projiziert aus realen Küstenkoordinaten. Die Routen sind illustrativ und stellen keine Live-Telemetrie dar.",
       globeControls: "Mit Ziehen, Wischen oder den Pfeiltasten drehen.",
+      globeFallbackNotice: "Statische Illustration · interaktive Steuerung nicht verfügbar",
       globeData: "Geografische Daten",
       principleAria: "Arbeitsprinzip",
       principle: "Beobachten → erkennen → entscheiden → handeln.",
@@ -499,7 +508,7 @@
     },
     ru: {
       title: "HUB_Optimus — Версионируемый публичный портфель",
-      description: "Публичный портфель HUB_Optimus, подкреплённый доказательствами: Core, детерминированный симулятор, контракты и CLI Semantic Engine, Operator, исследования, управление и Labs.",
+      description: "Преобразуйте URL или исходный текст в структурированный, привязанный к источнику черновик для проверки человеком, а затем изучите версионируемые доказательства, метод, управление и ограничения HUB_Optimus.",
       skip: "Перейти к портфелю",
       homeAria: "Главная страница HUB_Optimus",
       brandDescriptor: "Версионируемый публичный портфель",
@@ -510,12 +519,14 @@
       navBoundaries: "Границы",
       languageAria: "Язык",
       openGithub: "Открыть GitHub",
-      heroEyebrow: "Публично, версионируемо, с опорой на доказательства",
+      heroEyebrow: "От источника к проверяемому черновику",
       sequence: "Реальность → Доказательства → Вывод → Нарратив → Операционный сигнал",
-      heroLead: "Рабочий процесс дипломатического моделирования с приоритетом целостности для структурированной оценки, превентивного посредничества и системного обучения.",
+      heroLead: "Преобразуйте URL или исходный текст в структурированный черновик, привязанный к источнику, для проверки человеком — без представления его как подтверждённой истины.",
       heroBoundary: "Он помогает улучшить суждение. Это не орган власти, не механизм прогнозирования и не замена дипломатии.",
       explorePortfolio: "Изучить портфель",
       openOperator: "Открыть Operator",
+      tryOperator: "Попробовать Operator",
+      howItWorks: "Как это работает",
       truthSource: "Источник истины",
       truthCore: "Канонический язык v1",
       truthCoreValue: "Испанский",
@@ -530,6 +541,7 @@
       globeFallbackAlt: "Утверждённое географическое изображение бренда HUB_Optimus",
       globeAria: "Интерактивный глобус, построенный по реальным координатам береговой линии. Маршруты носят иллюстративный характер и не являются телеметрией в реальном времени.",
       globeControls: "Перетаскивайте, проводите пальцем или используйте клавиши со стрелками для вращения.",
+      globeFallbackNotice: "Статическая иллюстрация · интерактивное управление недоступно",
       globeData: "Географические данные",
       principleAria: "Операционный принцип",
       principle: "Наблюдать → обнаруживать → решать → действовать.",
@@ -663,7 +675,7 @@
     },
     he: {
       title: "HUB_Optimus — פורטפוליו ציבורי מנוהל בגרסאות",
-      description: "הפורטפוליו הציבורי של HUB_Optimus, המבוסס על ראיות: Core, סימולטור דטרמיניסטי, החוזים וממשק שורת הפקודה של Semantic Engine, ‏Operator, מחקר, ממשל ו-Labs.",
+      description: "הפכו כתובת URL או טקסט מקור לטיוטה מובנית המקושרת למקור לצורך בדיקה אנושית, ולאחר מכן עיינו בראיות, בשיטה, בממשל ובמגבלות של HUB_Optimus המתועדים בגרסאות.",
       skip: "דילוג לפורטפוליו",
       homeAria: "דף הבית של HUB_Optimus",
       brandDescriptor: "פורטפוליו ציבורי מנוהל בגרסאות",
@@ -674,12 +686,14 @@
       navBoundaries: "גבולות",
       languageAria: "שפה",
       openGithub: "פתיחת GitHub",
-      heroEyebrow: "ציבורי, מנוהל בגרסאות ומבוסס על ראיות",
+      heroEyebrow: "מהמקור לטיוטה הניתנת לבדיקה",
       sequence: "מציאות ← ראיות ← הסקה ← נרטיב ← אות תפעולי",
-      heroLead: "תהליך עבודה לסימולציה דיפלומטית, המעמיד יושרה בראש סדר העדיפויות, לצורך הערכה מובנית, תיווך מונע ולמידה מערכתית.",
+      heroLead: "הפכו כתובת URL או טקסט מקור לטיוטה מובנית המקושרת למקור לצורך בדיקה אנושית — בלי להציג אותה כאמת מאומתת.",
       heroBoundary: "הוא מסייע לשיקול דעת טוב יותר. הוא אינו סמכות, מנוע חיזוי או תחליף לדיפלומטיה.",
       explorePortfolio: "עיון בפורטפוליו",
       openOperator: "פתיחת Operator",
+      tryOperator: "ניסיון ב-Operator",
+      howItWorks: "איך זה עובד",
       truthSource: "מקור האמת",
       truthCore: "השפה הקנונית של v1",
       truthCoreValue: "ספרדית",
@@ -694,6 +708,7 @@
       globeFallbackAlt: "יצירת המותג הגאוגרפית המאושרת של HUB_Optimus",
       globeAria: "גלובוס אינטראקטיבי המוקרן מקואורדינטות אמיתיות של קווי חוף. המסלולים מיועדים להמחשה ואינם טלמטריה בזמן אמת.",
       globeControls: "גררו, החליקו או השתמשו במקשי החצים כדי לסובב.",
+      globeFallbackNotice: "איור סטטי · הפקדים האינטראקטיביים אינם זמינים",
       globeData: "נתונים גאוגרפיים",
       principleAria: "עיקרון תפעולי",
       principle: "להתבונן ← לזהות ← להחליט ← לפעול.",
@@ -827,7 +842,7 @@
     },
     "zh-Hans": {
       title: "HUB_Optimus — 版本化公开项目组合",
-      description: "以证据为依据的 HUB_Optimus 公开项目组合：Core、确定性模拟器、Semantic Engine 合约与 CLI、Operator、研究、治理和 Labs。",
+      description: "将 URL 或来源文本转换为结构化、与来源绑定的草稿，供人工审阅；随后查看 HUB_Optimus 的版本化证据、方法、治理与边界。",
       skip: "跳至项目组合",
       homeAria: "HUB_Optimus 首页",
       brandDescriptor: "版本化公开项目组合",
@@ -838,12 +853,14 @@
       navBoundaries: "边界",
       languageAria: "语言",
       openGithub: "打开 GitHub",
-      heroEyebrow: "公开、版本化、以证据为依据",
+      heroEyebrow: "从来源到可审阅草稿",
       sequence: "现实 → 证据 → 推断 → 叙事 → 运营信号",
-      heroLead: "以完整性为先的外交模拟工作流，用于结构化评估、预防性调解和系统性学习。",
+      heroLead: "将 URL 或来源文本转换为结构化、与来源绑定的草稿，供人工审阅，而不把它当作已核实的事实。",
       heroBoundary: "它帮助改善判断。它不是权威机构、预测引擎，也不能替代外交。",
       explorePortfolio: "浏览项目组合",
       openOperator: "打开 Operator",
+      tryOperator: "试用 Operator",
+      howItWorks: "工作原理",
       truthSource: "事实依据来源",
       truthCore: "v1 规范语言",
       truthCoreValue: "西班牙语",
@@ -858,6 +875,7 @@
       globeFallbackAlt: "经仓库认可的 HUB_Optimus 地理品牌图像",
       globeAria: "依据真实海岸线坐标投影的交互式地球仪。路线仅作说明，并非实时遥测。",
       globeControls: "拖动、滑动或使用方向键旋转。",
+      globeFallbackNotice: "静态插图 · 交互控件不可用",
       globeData: "地理数据",
       principleAria: "运营原则",
       principle: "观察 → 发现 → 决策 → 行动。",
@@ -1203,6 +1221,8 @@
   updateMotionButton();
 
   const fallback = canvas.parentElement.querySelector(".globe-fallback");
+  const interactiveNote = document.querySelector("[data-globe-interactive-note]");
+  const fallbackNote = document.querySelector("[data-globe-fallback-note]");
   let renderer = null;
   const state = {
     rotation: -8,
@@ -1225,6 +1245,8 @@
     if (document.activeElement === canvas) canvas.blur();
     motionButton.hidden = true;
     if (fallback) fallback.removeAttribute("aria-hidden");
+    if (interactiveNote) interactiveNote.hidden = true;
+    if (fallbackNote) fallbackNote.hidden = false;
   }
 
   function showInteractiveGlobe() {
@@ -1236,6 +1258,8 @@
     canvas.classList.add("is-ready");
     motionButton.hidden = false;
     if (fallback) fallback.setAttribute("aria-hidden", "true");
+    if (interactiveNote) interactiveNote.hidden = false;
+    if (fallbackNote) fallbackNote.hidden = true;
   }
 
   function drawGlobe() {
