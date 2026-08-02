@@ -593,7 +593,7 @@ def test_public_javascript_syntax_and_translation_key_parity():
     source = APP.read_text(encoding="utf-8")
     dictionaries = extract_translation_dictionaries(source)
     assert set(dictionaries) == PUBLIC_LOCALES
-    assert len(dictionaries["en"]) == 162
+    assert len(dictionaries["en"]) == 165
     assert all(set(dictionary) == set(dictionaries["en"]) for dictionary in dictionaries.values())
     assert all(
         value.strip()
@@ -989,7 +989,7 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     assert set(operator_localization["advanced_audit_console_locales"]) == PUBLIC_LOCALES
     assert set(operator_localization["supported_locales"]) == PUBLIC_LOCALES
     assert "human" in operator_localization["review_status"]
-    assert metadata["portfolio_translation_key_count"] == 162
+    assert metadata["portfolio_translation_key_count"] == 165
     assert set(metadata["locales"]) == PUBLIC_LOCALES
     assert len(metadata["field_status"]) >= 10
     for record in metadata["locales"].values():
@@ -1215,7 +1215,7 @@ def test_small_screen_header_preserves_home_and_language_controls():
     assert ".language-switcher button" in mobile_section
     assert ".site-header > .brand" not in mobile_section
     assert "display: none" not in mobile_section
-    assert "min-height: 2.25rem" in mobile_section
+    assert "min-height: 2.75rem" in mobile_section
 
 
 def test_not_found_page_has_six_locales_and_resolving_routes():
@@ -1250,7 +1250,7 @@ def test_public_identity_uses_approved_repository_brand():
     )
 
     assert re.search(
-        r'<h1 id="hero-title">\s*HUB<span>_</span>Optimus\s*</h1>',
+        r'<h1 id="hero-title">\s*HUB<span>_</span><wbr>Optimus\s*</h1>',
         html,
     )
     assert "Reality → Evidence → Inference → Narrative → Operational Signal" in html
@@ -1752,6 +1752,10 @@ def test_globe_uses_real_geojson_with_attribution_and_accessible_controls():
     assert 'canvas.setAttribute("tabindex", "0")' in app
     assert 'canvas.removeAttribute("tabindex")' in app
     assert 'fallback.setAttribute("aria-hidden", "true")' in app
+    assert 'interactiveNote.hidden = true' in app
+    assert 'fallbackNote.hidden = false' in app
+    assert 'data-globe-interactive-note data-i18n="globeControls" hidden' in html
+    assert 'data-globe-fallback-note data-i18n="globeFallbackNotice">' in html
     assert "showStaticFallback" in app
     assert "webglcontextlost" in app
     assert "webglcontextrestored" in app
@@ -1771,7 +1775,12 @@ def test_globe_uses_real_geojson_with_attribution_and_accessible_controls():
     assert "three.js" not in globe.lower()
     assert "https://" not in globe
     assert "@media (prefers-reduced-motion: reduce)" in css
-    assert "touch-action: none" in css
+    assert "touch-action: pan-y pinch-zoom" in css
+    globe_core_rule = re.search(r"\.globe-core\s*\{(?P<body>.*?)\}", css, re.DOTALL)
+    assert globe_core_rule
+    assert "left: 50%" in globe_core_rule.group("body")
+    assert "inset-inline-start" not in globe_core_rule.group("body")
+    assert "touch-action: none" not in css
     assert ".no-js #world-globe" in css
     assert "function showStaticFallback()" in app
     assert 'canvas.removeAttribute("tabindex")' in app
@@ -1779,6 +1788,41 @@ def test_globe_uses_real_geojson_with_attribution_and_accessible_controls():
     assert "canvas.hidden = false" in app
     assert "canvas.blur()" in app
     assert app.count("showStaticFallback();") == 3
+
+
+def test_mobile_hero_keeps_brand_visible_and_prioritizes_operator():
+    html = INDEX.read_text(encoding="utf-8")
+    css = STYLES.read_text(encoding="utf-8")
+
+    operator_cta = (
+        '<a class="button button-primary" href="./operator/?lang=en#product_intake" hreflang="en" '
+        'data-operator-route data-i18n="tryOperator">Try Operator</a>'
+    )
+    method_cta = (
+        '<a class="button button-secondary" href="#method" '
+        'data-i18n="howItWorks">How it works</a>'
+    )
+
+    assert operator_cta in html
+    assert method_cta in html
+    assert html.index(operator_cta) < html.index(method_cta)
+    assert re.search(r"\.hero-copy\s*\{[^}]*min-width:\s*0;", css, re.DOTALL)
+    assert re.search(r"\.hero h1\s*\{[^}]*max-width:\s*100%;", css, re.DOTALL)
+    assert re.search(r"body\s*\{[^}]*overflow-wrap:\s*anywhere;", css, re.DOTALL)
+    mobile_rule = css.split("@media (max-width: 760px)", 1)[1]
+    assert "font-size: clamp(1.75rem, 18vw, 5.8rem);" in mobile_rule
+    compact_rule = css.split("@media (max-width: 540px)", 1)[1]
+    assert re.search(r"\.site-header\s*\{[^}]*position:\s*static;", compact_rule, re.DOTALL)
+    assert re.search(r"\.language-switcher\s*\{[^}]*flex-wrap:\s*wrap;", compact_rule, re.DOTALL)
+    assert re.search(r"\.language-switcher button\s*\{[^}]*min-height:\s*2\.75rem;", compact_rule, re.DOTALL)
+    assert re.search(r"\.language-switcher button\s*\{[^}]*min-width:\s*2\.75rem;", compact_rule, re.DOTALL)
+    assert re.search(r"\.hero-actions\s*\{[^}]*flex-direction:\s*column;", compact_rule, re.DOTALL)
+    assert re.search(r"\.hero-actions \.button\s*\{[^}]*width:\s*100%;", compact_rule, re.DOTALL)
+    assert "min-height: clamp(18rem, 80vw, 23rem);" in css
+    zoom_reflow_rule = css.split("@media (max-width: 360px)", 1)[1]
+    assert re.search(r"\.truth-strip\s*\{[^}]*grid-template-columns:\s*1fr;", zoom_reflow_rule, re.DOTALL)
+    assert re.search(r"\.globe-toolbar\s*\{[^}]*flex-direction:\s*column;", zoom_reflow_rule, re.DOTALL)
+    assert "min-height: clamp(14rem, 100vw, 18rem);" in zoom_reflow_rule
 
 
 def test_webgl_globe_geometry_is_spherical_depth_ready_and_reproducible():

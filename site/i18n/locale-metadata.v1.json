@@ -13,7 +13,7 @@
     "supported_locales": ["en", "es", "de", "ru", "he", "zh-Hans"],
     "review_status": "AI/machine-assisted; qualified human linguistic review required"
   },
-  "portfolio_translation_key_count": 162,
+  "portfolio_translation_key_count": 165,
   "field_status": {
     "document_title_and_description": {
       "en": "AI-assisted terminology and register audit; named qualified human review required",
