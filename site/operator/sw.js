@@ -1,4 +1,4 @@
-const CACHE_NAME = "hub-optimus-operator-v0-20";
+const CACHE_NAME = "hub-optimus-operator-v0-21";
 const OFFLINE_FALLBACK = "./index.html";
 const STATIC_ASSETS = [
   "./",

@@ -77,6 +77,8 @@ def test_operator_record_ids_and_claim_references_remain_consistent():
         """
 function renderClaims() {}
 function renderEvidence() {}
+function setMemoryActionsEnabled() {}
+function renderMemoryStatus() {}
 
 let claims = [
   {claim_id: "claim-001"},
@@ -94,6 +96,8 @@ let evidence = [
     contradicts_claim_ids: []
   }
 ];
+let currentCaseMetadata = {};
+let currentMemoryRecord = null;
 """
         + helpers
         + """
@@ -109,7 +113,7 @@ removeClaimAt(0);
 if (claims.length !== 1 || claims[0].claim_id !== "claim-002") {
   throw new Error("claim removal did not preserve the remaining claim");
 }
-if (evidence[0].supports_claim_ids.join(",") !== "claim-002,claim-999") {
+if (evidence[0].supports_claim_ids.join(",") !== "claim-002") {
   throw new Error("stale support reference survived claim removal");
 }
 if (evidence[0].contradicts_claim_ids.join(",") !== "claim-002") {
