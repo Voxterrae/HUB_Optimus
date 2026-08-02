@@ -27,14 +27,22 @@ def test_reviewed_wiki_source_has_the_required_navigation_pages():
 def test_wiki_declares_its_audited_boundary_and_live_state_authorities():
     home = (WIKI / "Home.md").read_text(encoding="utf-8")
     roadmap = (WIKI / "Roadmap-and-Live-Status.md").read_text(encoding="utf-8")
+    operator = (WIKI / "Operator-User-Guide.md").read_text(encoding="utf-8")
+    troubleshooting = (WIKI / "Operator-Troubleshooting.md").read_text(
+        encoding="utf-8"
+    )
     publishing = (WIKI / "README.md").read_text(encoding="utf-8")
 
-    assert "4400b0d778dc64779f9db9bd4cdb398a7d46a69b" in home
+    assert "c399c94e098058a723482001811c7d8491ebbd5e" in home
     assert "main" in publishing
     assert "independent source of truth" in publishing
     assert "https://github.com/Voxterrae/HUB_Optimus/issues" in roadmap
     assert "https://github.com/Voxterrae/HUB_Optimus/pulls" in roadmap
     assert "https://github.com/Voxterrae/HUB_Optimus/actions" in roadmap
+    assert "una URL sin texto no inicia ninguna petición" in operator
+    assert "una URL con texto conserva la URL exacta" in operator
+    assert "worker antiguo `v0-26`" in troubleshooting
+    assert "Operator público `v0-27`" in troubleshooting
 
 
 def test_wiki_publication_is_restricted_one_way_and_verified_for_drift():

@@ -2,7 +2,7 @@
 
 > **Estado:** mapa orientativo; no acredita un despliegue.
 > **Última revisión:** 2026-08-02.
-> **Base auditada:** [`4400b0d`](https://github.com/Voxterrae/HUB_Optimus/commit/4400b0d778dc64779f9db9bd4cdb398a7d46a69b).
+> **Base auditada:** [`c399c94`](https://github.com/Voxterrae/HUB_Optimus/commit/c399c94e098058a723482001811c7d8491ebbd5e).
 
 ## Superficies principales
 
@@ -19,8 +19,9 @@
 
 `GitHub main → Pages workflow → huboptimus.dev → Operator manual/local`
 
-El navegador puede preparar borradores con texto pegado. No existe una API
-pública de análisis certificada.
+El navegador puede preparar borradores con el texto completo pegado. Una URL
+opcional permanece como atribución local no verificada y no provoca una
+petición de red. No existe una API pública de análisis certificada.
 
 ## Topología privada propuesta
 
@@ -40,6 +41,6 @@ y todavía no está acreditada como live.
 
 ## Fuentes
 
-- [Mapa completo de arquitectura](https://github.com/Voxterrae/HUB_Optimus/blob/4400b0d778dc64779f9db9bd4cdb398a7d46a69b/docs/architecture/system_architecture_map.md)
-- [Contrato de runtime](https://github.com/Voxterrae/HUB_Optimus/blob/4400b0d778dc64779f9db9bd4cdb398a7d46a69b/docs/architecture/runtime_contract.md)
-- [Jerarquía de fuentes](https://github.com/Voxterrae/HUB_Optimus/blob/4400b0d778dc64779f9db9bd4cdb398a7d46a69b/docs/context/SOURCE_OF_TRUTH.md)
+- [Mapa completo de arquitectura](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/docs/architecture/system_architecture_map.md)
+- [Contrato de runtime](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/docs/architecture/runtime_contract.md)
+- [Jerarquía de fuentes](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/docs/context/SOURCE_OF_TRUTH.md)

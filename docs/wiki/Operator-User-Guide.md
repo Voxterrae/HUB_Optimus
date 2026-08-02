@@ -2,14 +2,15 @@
 
 > **Estado:** prototipo público con revisión humana obligatoria.
 > **Última revisión:** 2026-08-02.
-> **Base auditada:** [`4400b0d`](https://github.com/Voxterrae/HUB_Optimus/commit/4400b0d778dc64779f9db9bd4cdb398a7d46a69b).
+> **Base auditada:** [`c399c94`](https://github.com/Voxterrae/HUB_Optimus/commit/c399c94e098058a723482001811c7d8491ebbd5e).
 
 [Abre Operator en español](https://huboptimus.dev/operator/?lang=es#product_intake).
 
 ## Flujo que funciona actualmente
 
-1. Deja completamente vacío el campo de URL.
-2. Pega el texto de la fuente.
+1. Pega el texto completo de la fuente.
+2. Si quieres conservar la procedencia, añade su URL pública; es opcional y no
+   se recuperará ni verificará automáticamente.
 3. Pulsa **Preparar borrador**.
 4. Revisa los pasajes exactos propuestos.
 5. Confirma que has revisado la selección.
@@ -22,12 +23,15 @@ fuente.
 
 ## Importación mediante URL
 
-La importación automática de URLs no está operativa en el Operator público.
-Hasta que exista la frontera privada autenticada:
+La importación automática de URLs no está operativa en el Operator público. El
+comportamiento desplegado es deliberadamente inmediato y local:
 
-- borra la URL;
-- pega el texto completo;
-- conserva externamente la URL como referencia;
+- una URL sin texto no inicia ninguna petición y muestra el acceso previsto al
+  Operator privado;
+- una URL con texto conserva la URL exacta como atribución local no verificada;
+- no introduzcas enlaces privados o firmados, tokens, contraseñas de un solo
+  uso ni datos personales, porque una acción explícita de compartir puede
+  incluir la URL;
 - no presentes el contenido como verificado automáticamente.
 
 ## Qué produce
@@ -40,6 +44,6 @@ noticia y no convierte una fuente en evidencia confirmada.
 
 ## Fuentes
 
-- [Código del Operator](https://github.com/Voxterrae/HUB_Optimus/blob/4400b0d778dc64779f9db9bd4cdb398a7d46a69b/site/operator/index.html)
-- [Límite de idiomas e interfaz](https://github.com/Voxterrae/HUB_Optimus/blob/4400b0d778dc64779f9db9bd4cdb398a7d46a69b/site/i18n/README.md)
-- [RFC de intake controlado](https://github.com/Voxterrae/HUB_Optimus/blob/4400b0d778dc64779f9db9bd4cdb398a7d46a69b/docs/rfc/operator_controlled_url_intake.md)
+- [Código del Operator](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/site/operator/index.html)
+- [Límite de idiomas e interfaz](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/site/i18n/README.md)
+- [RFC de intake controlado](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/docs/rfc/operator_controlled_url_intake.md)

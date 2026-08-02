@@ -2,11 +2,11 @@
 
 > **Estado:** GitHub Pages público; backend privado pendiente.
 > **Última revisión:** 2026-08-02.
-> **Base auditada:** [`4400b0d`](https://github.com/Voxterrae/HUB_Optimus/commit/4400b0d778dc64779f9db9bd4cdb398a7d46a69b).
+> **Base auditada:** [`c399c94`](https://github.com/Voxterrae/HUB_Optimus/commit/c399c94e098058a723482001811c7d8491ebbd5e).
 
 | Superficie | Alojamiento | Estado |
 | --- | --- | --- |
-| Web y Operator público | GitHub Pages | Disponible; Operator es un prototipo. |
+| Web y Operator público | GitHub Pages | Disponible; intake manual/local desplegado en `c399c94`. |
 | Preview de revisión | ChatGPT Sites, cuando se utilice | No es fuente de verdad ni producción canónica. |
 | `hub-api` | EC2, `127.0.0.1:8080` | Última auditoría conocida, 2026-07-29: host existente y servicio local, pero despliegue obsoleto; estado actual no reatestado. |
 | Operator privado | `api.huboptimus.dev` | No operativo; candidato en PR #1844. |
@@ -16,8 +16,8 @@
 El workflow publica `site/` cuando los cambios correspondientes llegan a
 `main`.
 
-- [Workflow Pages](https://github.com/Voxterrae/HUB_Optimus/blob/4400b0d778dc64779f9db9bd4cdb398a7d46a69b/.github/workflows/pages.yml)
-- [Última ejecución auditada](https://github.com/Voxterrae/HUB_Optimus/actions/runs/30755670306)
+- [Workflow Pages](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/.github/workflows/pages.yml)
+- [Última ejecución auditada](https://github.com/Voxterrae/HUB_Optimus/actions/runs/30765273410)
 - [Web pública](https://huboptimus.dev/)
 
 No hace falta modificar el DNS de `huboptimus.dev` para trabajar con GitHub
@@ -51,5 +51,5 @@ del host.
 Esta Wiki no debe contener secretos, direcciones internas sensibles, cookies,
 tokens, tenant secrets, credenciales ni valores reales de configuración.
 
-- [Guía AWS de desarrollo](https://github.com/Voxterrae/HUB_Optimus/blob/4400b0d778dc64779f9db9bd4cdb398a7d46a69b/docs/architecture/aws_dev_runtime.md)
-- [Operaciones EC2](https://github.com/Voxterrae/HUB_Optimus/blob/4400b0d778dc64779f9db9bd4cdb398a7d46a69b/ops/ec2/README.md)
+- [Guía AWS de desarrollo](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/docs/architecture/aws_dev_runtime.md)
+- [Operaciones EC2](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/ops/ec2/README.md)

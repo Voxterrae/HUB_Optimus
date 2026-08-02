@@ -1,15 +1,15 @@
 # Roadmap y estado live
 
 > **Corte de estado:** 2026-08-02.
-> **Base auditada:** [`4400b0d`](https://github.com/Voxterrae/HUB_Optimus/commit/4400b0d778dc64779f9db9bd4cdb398a7d46a69b).
+> **Base auditada:** [`c399c94`](https://github.com/Voxterrae/HUB_Optimus/commit/c399c94e098058a723482001811c7d8491ebbd5e).
 > Los Issues, PRs, Checks y Actions vivos prevalecen sobre esta página.
 
 | Área | Estado observado | Siguiente decisión |
 | --- | --- | --- |
 | Web pública | Desplegada en GitHub Pages. | Mantener sincronización desde `main`. |
-| Operator con texto | Utilizable como prototipo revisable. | Mejorar mensajes y QA. |
+| Operator con texto | `c399c94` desplegado: texto completo local y URL opcional no verificada. | Completar QA real de caché y dispositivos. |
 | Importación automática de URL | No operativa públicamente. | Completar backend privado autenticado. |
-| Backend EC2 local | Código y scripts versionados. | Acreditar host y SHA mediante #1831/#1832. |
+| Backend EC2 local | Última auditoría: host local-only pero obsoleto; estado actual no reatestado. | Adoptar el estado legado con #1832 y después acreditar SHA mediante #1831. |
 | OIDC propietario/equipo | PR #1844 en borrador. | Configurar Entra, Redis, TLS y pruebas E2E. |
 | QA iOS/Safari | Gate pendiente para el Operator privado. | Probar 320–1363 px, 200 %, RTL, movimiento reducido y WebGL. |
 | Historial persistente | No verificado como implementado. | Diseñar después del Operator privado. |
@@ -31,4 +31,4 @@
 - [Issues](https://github.com/Voxterrae/HUB_Optimus/issues)
 - [Pull requests](https://github.com/Voxterrae/HUB_Optimus/pulls)
 - [Actions](https://github.com/Voxterrae/HUB_Optimus/actions)
-- [Estado de capacidades versionado](https://github.com/Voxterrae/HUB_Optimus/blob/4400b0d778dc64779f9db9bd4cdb398a7d46a69b/docs/architecture/capability_status.md)
+- [Estado de capacidades versionado](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/docs/architecture/capability_status.md)
