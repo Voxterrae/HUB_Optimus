@@ -1818,6 +1818,8 @@ def test_mobile_hero_keeps_brand_visible_and_prioritizes_operator():
     assert re.search(r"\.language-switcher button\s*\{[^}]*min-width:\s*2\.75rem;", compact_rule, re.DOTALL)
     assert re.search(r"\.hero-actions\s*\{[^}]*flex-direction:\s*column;", compact_rule, re.DOTALL)
     assert re.search(r"\.hero-actions \.button\s*\{[^}]*width:\s*100%;", compact_rule, re.DOTALL)
+    assert re.search(r"\.globe-stage\s*\{[^}]*width:\s*100%;", mobile_rule, re.DOTALL)
+    assert re.search(r"\.globe-stage\s*\{[^}]*aspect-ratio:\s*auto;", mobile_rule, re.DOTALL)
     assert "min-height: clamp(18rem, 80vw, 23rem);" in css
     zoom_reflow_rule = css.split("@media (max-width: 360px)", 1)[1]
     assert re.search(r"\.truth-strip\s*\{[^}]*grid-template-columns:\s*1fr;", zoom_reflow_rule, re.DOTALL)
