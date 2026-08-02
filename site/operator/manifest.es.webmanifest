@@ -1,0 +1,14 @@
+{
+  "id": "./",
+  "lang": "es",
+  "dir": "ltr",
+  "name": "HUB_Optimus Operator",
+  "short_name": "HUB Operator",
+  "description": "Prototipo local de HUB_Optimus en el navegador para preparar borradores estructurados destinados a revisión humana.",
+  "start_url": "./?lang=es",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

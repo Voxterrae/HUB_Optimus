@@ -77,6 +77,7 @@
     if (supportedLanguages.includes(value)) return value;
 
     const normalized = value.toLowerCase().replace(/_/g, "-");
+    if (normalized === "iw" || normalized.startsWith("iw-")) return "he";
     if (
       normalized === "zh-hans"
       || normalized.startsWith("zh-hans-")
@@ -94,6 +95,15 @@
   }
 
   function chooseInitialLanguage() {
+    try {
+      if (typeof URLSearchParams === "function") {
+        const requested = new URLSearchParams(window.location?.search || "").get("lang");
+        if (requested !== null) return normalizeLanguage(requested);
+      }
+    } catch {
+      // Continue with the stored/browser preference when the URL is unavailable.
+    }
+
     let saved = "";
     try {
       saved = window.localStorage.getItem("hub_optimus_language") || "";
@@ -101,8 +111,32 @@
       saved = "";
     }
 
-    if (supportedLanguages.includes(saved)) return saved;
+    if (saved) return normalizeLanguage(saved);
     return normalizeLanguage(window.navigator.language || "en");
+  }
+
+  function applyRouteLanguage(locale) {
+    const portfolio = document.getElementById("not_found_portfolio_link");
+    const operator = document.getElementById("not_found_operator_link");
+    if (portfolio) {
+      portfolio.setAttribute("href", `/?lang=${encodeURIComponent(locale)}`);
+      portfolio.setAttribute("hreflang", locale);
+    }
+    if (operator) {
+      operator.setAttribute("href", `/operator/?lang=${encodeURIComponent(locale)}#product_intake`);
+      operator.setAttribute("hreflang", locale);
+    }
+  }
+
+  function persistLanguageInUrl(locale) {
+    try {
+      if (typeof URL !== "function" || !window.location?.href || !window.history?.replaceState) return;
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.set("lang", locale);
+      window.history.replaceState(null, "", `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+    } catch {
+      // URL persistence is progressive; the selected language still applies locally.
+    }
   }
 
   function applyLanguage(language) {
@@ -131,6 +165,9 @@
       const selected = button.getAttribute("data-language") === nextLanguage;
       button.setAttribute("aria-pressed", String(selected));
     });
+
+    applyRouteLanguage(nextLanguage);
+    persistLanguageInUrl(nextLanguage);
 
     try {
       window.localStorage.setItem("hub_optimus_language", nextLanguage);

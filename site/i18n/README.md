@@ -1,7 +1,11 @@
 # Public portfolio translation status
 
-This directory records the translation boundary for the static public portfolio. It does
-not translate the repository, the constitutional kernel, or the Operator interface.
+Operator interface catalog version: `1.3.1`.
+
+This directory records the translation boundary for the static public portfolio and
+the complete Operator interface. It does not translate the repository or the
+constitutional kernel. Technical JSON keys, code, IDs, enums, hashes, timestamps,
+URLs, and commands remain language-neutral and direction-isolated.
 
 ## Authority
 
@@ -17,12 +21,12 @@ not translate the repository, the constitutional kernel, or the Operator interfa
 
 | Locale | Direction | Scope | Status |
 |---|---:|---|---|
-| `en` | LTR | Existing portfolio interface baseline | AI-assisted terminology and register audit under #1736; named qualified human review required |
-| `es` | LTR | Existing portfolio interface translation | AI-assisted terminology and register audit under #1736; named qualified human review required |
-| `de` | LTR | Existing portfolio interface translation | AI-assisted terminology and register audit under #1736; named qualified human review required |
-| `ru` | LTR | Portfolio and 404 interface | Machine-assisted draft; qualified human review required |
-| `he` | RTL | Portfolio and 404 interface | Machine-assisted draft; qualified human review required |
-| `zh-Hans` | LTR | Portfolio and 404 interface, Simplified Chinese only | Machine-assisted draft; qualified human review required |
+| `en` | LTR | Portfolio, 404, and complete Operator interface | Existing portfolio/primary terminology audit under #1736; Advanced is an AI-assisted draft; named qualified human review required |
+| `es` | LTR | Portfolio, 404, and complete Operator interface | Existing portfolio/primary terminology audit under #1736; Advanced is an AI-assisted draft; named qualified human review required |
+| `de` | LTR | Portfolio, 404, and complete Operator interface | Existing portfolio/primary terminology audit under #1736; Advanced is an AI-assisted draft; named qualified human review required |
+| `ru` | LTR | Portfolio, 404, and complete Operator interface | Machine-assisted draft; qualified human review required |
+| `he` | RTL | Portfolio, 404, and complete Operator interface | Machine-assisted draft; qualified human review required |
+| `zh-Hans` | LTR | Portfolio, 404, and complete Operator interface, Simplified Chinese only | Machine-assisted draft; qualified human review required |
 
 No named reviewer is recorded for any locale. A named qualified human reviewer must be
 recorded in
@@ -33,10 +37,50 @@ not establish certified or professional human review.
 
 ## Operator boundary
 
-The portfolio description and limitation notice are translated. The Operator application
-itself remains in its existing language. Operator performs deterministic browser-side
-triage; it does not execute the Semantic Engine. Triage does not verify stated
-provenance.
+The primary Operator flow and the Advanced / Audit JSON workflow are available in all
+six interface locales. Labels, validation states, URL-intake status, source-bound draft
+summary, local learning controls, Advanced editing/persistence/handoff controls, result
+readouts, errors, confirmations, and next actions are localized. Raw JSON, code,
+commands, URLs, identifiers, hashes, timestamps, and enum values are never translated.
+These translations are machine/AI-assisted and still require a named, qualified human
+language review.
+
+Operator extracts a bounded visible-text snapshot and creates a local, source-bound
+review draft; it does not execute the Semantic Engine, establish truth, or verify
+provenance. A localized interface therefore does not promote the browser prototype
+into a released analysis service. Triage does not verify stated provenance.
+
+## Document-link language resolution
+
+Changing the interface language does not imply that every repository document has a
+reviewed translation. The portfolio resolves each document link through
+[`document-routes.v1.js`](document-routes.v1.js) and shows separate language-relation
+and maturity labels next to the link.
+
+Language relation:
+
+- `source` identifies a document written in the selected interface language.
+- `fallback` makes the absence of a document in the selected language explicit and
+  links to the declared source language instead.
+- `data` identifies a structured artifact whose records are multilingual or are not
+  routed as a single prose language.
+
+Maturity is a separate optional field and uses repository vocabulary:
+
+- `canonical` identifies an authoritative source designated by repository policy.
+- `review-needed` identifies an available non-authoritative translation whose accuracy
+  and freshness are not evidenced, currently the German Governance Intelligence file.
+
+A route without a maturity label makes no maturity claim. In particular, the Spanish
+meta-learning workflow is linked as an available source without promoting its current
+repository classification. `fallback` describes language availability only and never
+reduces or changes a document's authority on its own surface.
+
+Repository document routes use a fixed commit so that the visible language badge and
+the linked content cannot drift independently. Same-site translation metadata,
+geographic attribution, and termbase records ship atomically with the static artifact.
+Code, tests, commands, identifiers, hashes, timestamps, and other language-neutral
+implementation links are not routed as translated prose.
 
 ## Versioned records
 

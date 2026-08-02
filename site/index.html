@@ -17,6 +17,7 @@
   <link rel="preload" href="./assets/brand/hub-optimus-hero.jpg" as="image">
   <link rel="stylesheet" href="./styles.css">
   <script src="./globe.js" defer></script>
+  <script src="./i18n/document-routes.v1.js" defer></script>
   <script src="./app.js" defer></script>
 </head>
 <body class="no-js">
@@ -74,7 +75,7 @@
 
           <div class="hero-actions">
             <a class="button button-primary" href="#portfolio" data-i18n="explorePortfolio">Explore the portfolio</a>
-            <a class="button button-secondary" href="./operator/" data-i18n="openOperator">Open Operator</a>
+            <a class="button button-secondary" href="./operator/?lang=en#product_intake" hreflang="en" data-operator-route data-i18n="openOperator">Open Operator</a>
           </div>
 
           <dl class="truth-strip">
@@ -127,7 +128,7 @@
           </div>
           <figcaption>
             <span data-i18n="globeControls">Drag, swipe, or use the arrow keys to rotate.</span>
-            <a href="./assets/geo/README.md" data-i18n="globeData">Geographic data</a>
+            <a href="./assets/geo/README.md" data-document-route="geo.data" hreflang="en"><span data-i18n="globeData">Geographic data</span><small class="document-language-badge">EN · source</small></a>
           </figcaption>
           <noscript>
             <p class="globe-noscript">
@@ -208,8 +209,9 @@
             Spanish is authoritative for v1; English is the parity target.
           </p>
           <div class="card-links">
-            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/v1_core/languages/es" data-i18n="viewCanonical">Canonical core</a>
-            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/context/STATUS.md" data-i18n="viewStatus">Status policy</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/v1_core/languages/es" data-document-route="core.canonical" hreflang="es"><span data-i18n="viewCanonical">Canonical core</span><small class="document-language-badge">ES · fallback · canonical</small></a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/v1_core/workflow/05_meta_learning.md" data-document-route="core.meta-learning" hreflang="es"><span data-i18n="metaLearningGuide">Meta-learning workflow</span><small class="document-language-badge">ES · fallback</small></a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/context/STATUS.md" data-document-route="status.policy" hreflang="en"><span data-i18n="viewStatus">Status policy</span><small class="document-language-badge">EN · source</small></a>
           </div>
         </article>
 
@@ -224,8 +226,8 @@
             output, frozen benchmarks, and structural drift diagnostics.
           </p>
           <div class="card-links">
-            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/SIMULATION_README.md" data-i18n="runScenario">Run a scenario</a>
-            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/architecture/runtime_contract.md" data-i18n="runtimeContract">Runtime contract</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/SIMULATION_README.md" data-document-route="simulator.guide" hreflang="es"><span data-i18n="runScenario">Run a scenario</span><small class="document-language-badge">ES · fallback</small></a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/architecture/runtime_contract.md" data-document-route="runtime.contract" hreflang="en"><span data-i18n="runtimeContract">Runtime contract</span><small class="document-language-badge">EN · source</small></a>
           </div>
         </article>
 
@@ -242,7 +244,7 @@
           </p>
           <div class="card-links">
             <a href="https://github.com/Voxterrae/HUB_Optimus/tree/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/semantic_engine" data-i18n="inspectEngine">Inspect the engine</a>
-            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/architecture/semantic_engine_cli.md" data-i18n="cliContract">CLI contract</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/architecture/semantic_engine_cli.md" data-document-route="semantic.cli" hreflang="en"><span data-i18n="cliContract">CLI contract</span><small class="document-language-badge">EN · source</small></a>
           </div>
         </article>
 
@@ -254,15 +256,18 @@
           <h3>HUB_Optimus Operator</h3>
           <p data-i18n="operatorCopy">
             A local-first PWA for structured intake, editable case records, deterministic
-            browser triage, local memory, readable sharing, JSON, and result rendering.
+            browser triage, human-controlled local learning candidates, readable sharing,
+            JSON, and result rendering.
           </p>
           <p class="card-disclosure" data-i18n="operatorDisclosure">
-            This locale pack translates the portfolio description, not the Operator
-            interface. Operator performs deterministic browser-side triage and does not
-            execute the Semantic Engine. Triage does not verify stated provenance.
+            Operator's primary and Advanced / Audit JSON workflows are available in this language.
+            Technical JSON keys, code, IDs and commands remain language-neutral and LTR. All
+            interface translations still require qualified human linguistic review. Operator
+            prepares a local, source-bound draft; it does not execute the Semantic Engine or verify
+            source truth. Triage does not verify stated provenance.
           </p>
           <div class="card-links">
-            <a href="./operator/" data-i18n="openOperator">Open Operator</a>
+            <a href="./operator/?lang=en#product_intake" hreflang="en" data-operator-route data-i18n="openOperator">Open Operator</a>
             <a href="https://github.com/Voxterrae/HUB_Optimus/tree/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/site/operator" data-i18n="inspectSource">Inspect source</a>
           </div>
         </article>
@@ -279,6 +284,7 @@
             not verified evidence.
           </p>
           <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/rfc/operator_controlled_url_intake.md" data-document-route="operator.intake.rfc" hreflang="en"><span data-i18n="intakeContract">How URL intake works</span><small class="document-language-badge">EN · source</small></a>
             <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/ops/ec2/hub-api.sh" data-i18n="inspectIntake">Inspect intake source</a>
             <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/tests/test_hub_api_controlled_url_intake.py" data-i18n="intakeTests">Inspect tests</a>
           </div>
@@ -291,11 +297,11 @@
           </div>
           <h3 data-i18n="researchTitle">Scenario & Narrative Research</h3>
           <p data-i18n="researchCopy">
-            Scenario generation, mutation sweeps, boundary search, scenario telemetry,
+            Experimental scenario generation, mutation sweeps, boundary search, scenario telemetry,
             narrative consistency checks, and source-labelled research datasets.
           </p>
           <div class="card-links">
-            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/lab_state.md" data-i18n="labState">Lab state</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/lab_state.md" data-document-route="lab.state" hreflang="en"><span data-i18n="labState">Lab state</span><small class="document-language-badge">EN · source</small></a>
             <a href="https://github.com/Voxterrae/HUB_Optimus/tree/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/tools" data-i18n="researchTools">Research tools</a>
           </div>
         </article>
@@ -311,8 +317,8 @@
             narrative amplification, and operational relevance under human accountability.
           </p>
           <div class="card-links">
-            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/governance/GOVERNANCE_INTELLIGENCE.md" data-i18n="readProtocol">Read protocol</a>
-            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/governance/SYSTEM_PROTECTION_MATRIX.md" data-i18n="protectionMatrix">Protection matrix</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/governance/GOVERNANCE_INTELLIGENCE.md" data-document-route="governance.protocol" hreflang="en"><span data-i18n="readProtocol">Read protocol</span><small class="document-language-badge">EN · source · canonical</small></a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/governance/SYSTEM_PROTECTION_MATRIX.md" data-document-route="governance.protection" hreflang="en"><span data-i18n="protectionMatrix">Protection matrix</span><small class="document-language-badge">EN · source · canonical</small></a>
           </div>
         </article>
       </div>
@@ -328,15 +334,16 @@
 
       <aside class="translation-note">
         <p data-i18n="translationReview">
-          English, Spanish, and German received an AI-assisted terminology and register
-          audit; named qualified human review is still required. Russian, Hebrew, and
-          Simplified Chinese remain machine-assisted drafts. All interface translations
-          are non-authoritative: canonical v1 Spanish remains authoritative, and no
-          constitutional translation is ratified.
+          Existing portfolio and primary Operator text in English, Spanish, and German
+          received an AI-assisted terminology and register audit; named qualified human
+          review is still required. The new Advanced translations, plus Russian, Hebrew,
+          and Simplified Chinese, remain AI/machine-assisted drafts. All interface
+          translations are non-authoritative: canonical v1 Spanish remains authoritative,
+          and no constitutional translation is ratified.
         </p>
         <div>
-          <a href="./i18n/README.md" data-i18n="translationStatus">Translation status</a>
-          <a href="./i18n/termbase.v1.json" data-i18n="termbase">Versioned termbase</a>
+          <a href="./i18n/README.md" data-document-route="translation.status" hreflang="en"><span data-i18n="translationStatus">Translation status</span><small class="document-language-badge">EN · source</small></a>
+          <a href="./i18n/termbase.v1.json" data-document-route="translation.termbase"><span data-i18n="termbase">Versioned termbase</span><small class="document-language-badge">DATA</small></a>
         </div>
       </aside>
     </section>
@@ -437,9 +444,7 @@
             execution remains local or controlled and provider-independent. A hosting or
             model provider does not gain project or semantic authority.
           </p>
-          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/architecture/platform_compatibility.md" data-i18n="platformPolicy">
-            Platform compatibility policy
-          </a>
+          <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/architecture/platform_compatibility.md" data-document-route="platform.policy" hreflang="en"><span data-i18n="platformPolicy">Platform compatibility policy</span><small class="document-language-badge">EN · source</small></a>
         </aside>
       </div>
     </section>
@@ -455,20 +460,23 @@
       </div>
 
       <div class="future-grid">
-        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/rfc/hermes_pwa_interface_boundary.md" data-status="rfc-not-implemented">
+        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/rfc/hermes_pwa_interface_boundary.md" data-status="rfc-not-implemented" data-document-route="future.hermes" hreflang="en">
           <span data-i18n="futureHermesLabel">RFC / UI</span>
           <h3>HERMES</h3>
           <p data-i18n="hermesCopy">Future PWA interface boundary. Not implemented.</p>
+          <small class="document-language-badge">EN · source</small>
         </a>
-        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/rfc/enterprise_boundary.md" data-status="rfc-not-implemented">
+        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/rfc/enterprise_boundary.md" data-status="rfc-not-implemented" data-document-route="future.enterprise" hreflang="en">
           <span data-i18n="futureEnterpriseLabel">RFC / OPERATING MODEL</span>
           <h3>Enterprise</h3>
           <p data-i18n="enterpriseCopy">Proposed private operating boundary. No enterprise product or public service exists.</p>
+          <small class="document-language-badge">EN · source</small>
         </a>
-        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/rfc/post_quantum_control_plane.md" data-status="rfc-not-implemented">
+        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/rfc/post_quantum_control_plane.md" data-status="rfc-not-implemented" data-document-route="future.postquantum" hreflang="en">
           <span data-i18n="futurePostQuantumLabel">RFC / SECURITY</span>
           <h3 data-i18n="postQuantumTitle">Post-quantum control plane</h3>
           <p data-i18n="postQuantumCopy">RFC planning around standardized cryptographic primitives. No cryptographic implementation.</p>
+          <small class="document-language-badge">EN · source</small>
         </a>
       </div>
     </section>
@@ -489,7 +497,7 @@
       </div>
       <div class="evidence-links">
         <a class="button button-primary" href="https://github.com/Voxterrae/HUB_Optimus" data-i18n="openRepository">Open repository</a>
-        <a class="button button-secondary" href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/architecture/capability_status.md" data-i18n="capabilityStatus">Capability status</a>
+        <a class="button button-secondary" href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/docs/architecture/capability_status.md" data-document-route="capability.status" hreflang="en"><span data-i18n="capabilityStatus">Capability status</span><small class="document-language-badge">EN · source</small></a>
       </div>
     </section>
   </main>
@@ -503,8 +511,8 @@
       No embedded client-side analytics or advertising tracking. No hidden scoring. Hosting providers may retain operational logs. GitHub remains authoritative.
     </p>
     <nav aria-label="Legal and project links" data-i18n-aria="footerNavAria">
-      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/IP_NOTICE.md">IP</a>
-      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/SECURITY.md" data-i18n="security">Security</a>
+      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/IP_NOTICE.md" data-document-route="legal.ip" hreflang="en"><span>IP</span><small class="document-language-badge">EN · source</small></a>
+      <a href="https://github.com/Voxterrae/HUB_Optimus/blob/f99bfed196dbcb76c8a29a4bab31559fdb567ee5/SECURITY.md" data-document-route="security.policy" hreflang="en"><span data-i18n="security">Security</span><small class="document-language-badge">EN · source</small></a>
       <a href="https://github.com/Voxterrae/HUB_Optimus/issues" data-i18n="issues">Issues</a>
     </nav>
   </footer>

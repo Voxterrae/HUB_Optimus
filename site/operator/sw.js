@@ -1,9 +1,19 @@
-const CACHE_NAME = "hub-optimus-operator-v0-21";
+const CACHE_NAME = "hub-optimus-operator-v0-26";
 const OFFLINE_FALLBACK = "./index.html";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
+  "./i18n.v1.js",
+  "./learning-candidate.v1.js",
+  "./learning-store.v1.js",
+  "./schemas/operator_learning_candidate.v1.schema.json",
   "./manifest.webmanifest",
+  "./manifest.en.webmanifest",
+  "./manifest.es.webmanifest",
+  "./manifest.de.webmanifest",
+  "./manifest.ru.webmanifest",
+  "./manifest.he.webmanifest",
+  "./manifest.zh-Hans.webmanifest",
   "./icon.svg",
   "./og.svg",
   "../assets/brand/hub-optimus-logo-lockup.png"

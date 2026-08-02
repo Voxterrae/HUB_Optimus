@@ -876,15 +876,16 @@ def test_learning_model_has_no_network_dom_or_automatic_training_path():
     assert "Only a current candidate can be accepted locally" in source
 
 
-def test_learning_rfc_marks_model_only_status_and_future_indexeddb_gate():
+def test_learning_rfc_marks_local_ui_status_and_indexeddb_boundary():
     text = RFC.read_text(encoding="utf-8")
     prose = " ".join(text.split())
 
-    assert "Model-only prototype contract; not integrated into Operator" in prose
-    assert "current Operator UI does not load this module" in prose
-    assert "does not persist candidates" in prose
+    assert "Local Operator prototype; draft RFC, not ratified" in prose
+    assert "Operator now loads the versioned model and IndexedDB adapter" in prose
+    assert "survive an ordinary page reload in the same browser profile" in prose
+    assert "There is no `localStorage` fallback" in prose
+    assert "Each `candidate_id` is append-only after creation" in prose
+    assert "requires a new candidate ID" in prose
     assert "model-layer adapter uses IndexedDB database" in prose
     assert "additional hard ceiling of 16 MiB" in prose
     assert "Stored bytes are treated as untrusted" in prose
-    assert "append-only per candidate ID" in prose
-    assert "does not yet expose an edit-in-place API" in prose

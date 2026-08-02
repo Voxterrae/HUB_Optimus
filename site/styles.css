@@ -883,6 +883,35 @@ canvas {
   color: var(--off-white);
 }
 
+.document-language-badge {
+  display: inline-block;
+  max-width: calc(100% - 0.7rem);
+  margin: 0 0.35rem;
+  padding: 0.1rem 0.32rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  text-align: center;
+  direction: ltr;
+  unicode-bidi: isolate;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.future-grid .document-language-badge {
+  margin-top: 1rem;
+}
+
+.button[data-document-route] {
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
 .truth-note {
   display: grid;
   grid-template-columns: auto 1fr;

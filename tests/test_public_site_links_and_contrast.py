@@ -108,7 +108,8 @@ def relative_luminance(value):
             return channel / 12.92
         return ((channel + 0.055) / 1.055) ** 2.4
 
-    red, green, blue = (linearize(channel) for channel in rgb_from_hex(value))
+    channels = rgb_from_hex(value) if isinstance(value, str) else value
+    red, green, blue = (linearize(channel) for channel in channels)
     return 0.2126 * red + 0.7152 * green + 0.0722 * blue
 
 
@@ -118,6 +119,13 @@ def contrast_ratio(foreground, background):
         reverse=True,
     )
     return (lighter + 0.05) / (darker + 0.05)
+
+
+def blend(foreground, background, alpha):
+    return tuple(
+        alpha * foreground_channel + (1 - alpha) * background_channel
+        for foreground_channel, background_channel in zip(foreground, background)
+    )
 
 
 def test_every_public_html_reference_and_fragment_resolves_in_the_artifact():
@@ -145,18 +153,12 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
         r"(?P<kind>blob|tree)/(?P<ref>[0-9a-f]{40})/(?P<path>.+)$"
     )
     checked = []
-    live_repository_documents = {
-        "https://github.com/Voxterrae/HUB_Optimus/blob/main/IP_NOTICE.md",
-        "https://github.com/Voxterrae/HUB_Optimus/blob/main/SECURITY.md",
-    }
-
     for path in PUBLIC_ROUTES.values():
         for tag, attribute, reference in parse_document(path).references:
             if tag != "a" or attribute != "href":
                 continue
-            if "/blob/main/" in reference or "/tree/main/" in reference:
-                assert reference in live_repository_documents
-                continue
+            assert "/blob/main/" not in reference
+            assert "/tree/main/" not in reference
             match = evidence_pattern.match(reference)
             if not match:
                 continue
@@ -169,14 +171,12 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
                 assert repository_path.is_dir(), reference
             checked.append(reference)
 
-    assert len(checked) == 18
+    assert len(checked) == 22
 
 
 def test_live_external_navigation_targets_are_explicit_and_network_free_in_pytest():
     expected_navigation = {
         "https://github.com/Voxterrae/HUB_Optimus",
-        "https://github.com/Voxterrae/HUB_Optimus/blob/main/IP_NOTICE.md",
-        "https://github.com/Voxterrae/HUB_Optimus/blob/main/SECURITY.md",
         "https://github.com/Voxterrae/HUB_Optimus/issues",
         "https://github.com/Voxterrae/HUB-Optimus-labs",
     }
@@ -237,3 +237,33 @@ def test_404_and_operator_muted_text_pairs_remain_above_normal_text_minimum():
         )
         >= 4.5
     )
+
+
+def test_document_language_badges_remain_legible_on_every_surface():
+    css = (SITE / "styles.css").read_text(encoding="utf-8")
+    properties = custom_properties(css)
+    badge = re.search(
+        r"\.document-language-badge\s*\{(?P<body>[^{}]*)\}",
+        css,
+        re.DOTALL,
+    )
+    assert badge
+    assert "opacity:" not in badge.group("body")
+    assert css_rule_property(css, ".document-language-badge", "font-size") == "0.68rem"
+    assert css_rule_property(css, ".document-language-badge", "max-width") == "calc(100% - 0.7rem)"
+    assert css_rule_property(css, ".document-language-badge", "white-space") == "normal"
+    assert css_rule_property(css, ".document-language-badge", "overflow-wrap") == "anywhere"
+
+    graphite_2 = rgb_from_hex(properties["graphite-2"])
+    off_white = rgb_from_hex(properties["off-white"])
+    footer_background = rgb_from_hex("#080b0f")
+    footer_foreground = blend(off_white, footer_background, 0.58)
+
+    pairs = (
+        (rgb_from_hex(properties["signal-amber"]), graphite_2),
+        (rgb_from_hex(properties["copper-light"]), graphite_2),
+        (off_white, graphite_2),
+        (rgb_from_hex(properties["ink"]), rgb_from_hex(properties["paper"])),
+        (footer_foreground, footer_background),
+    )
+    assert all(contrast_ratio(foreground, background) >= 4.5 for foreground, background in pairs)

@@ -1,0 +1,14 @@
+{
+  "id": "./",
+  "lang": "de",
+  "dir": "ltr",
+  "name": "HUB_Optimus Operator",
+  "short_name": "HUB Operator",
+  "description": "Lokaler HUB_Optimus-Browserprototyp zur Vorbereitung strukturierter Entwürfe für die menschliche Prüfung.",
+  "start_url": "./?lang=de",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
