@@ -7,7 +7,8 @@ import sys
 import threading
 import time
 import types
-from http.client import BadStatusLine, IncompleteRead, LineTooLong
+from email.message import Message
+from http.client import BadStatusLine, HTTPResponse, IncompleteRead, LineTooLong
 from pathlib import Path
 from urllib.error import URLError
 
@@ -82,11 +83,18 @@ def static_intake_error_statuses() -> dict[str, int]:
     return statuses
 
 
-def make_body_reader(namespace: dict, content_length: str | None, body: bytes):
+def make_body_reader(
+    namespace: dict,
+    content_length: str | None,
+    body: bytes,
+    extra_headers: tuple[tuple[str, str], ...] = (),
+):
     handler = object.__new__(namespace["Handler"])
-    handler.headers = {}
+    handler.headers = Message()
     if content_length is not None:
-        handler.headers["Content-Length"] = content_length
+        handler.headers.add_header("Content-Length", content_length)
+    for name, value in extra_headers:
+        handler.headers.add_header(name, value)
     handler.rfile = io.BytesIO(body)
     responses = []
     handler.send_json = lambda status, payload: responses.append((status, payload))
@@ -167,6 +175,8 @@ def test_runtime_limits_user_agent_and_error_codes_match_schema(hub_api):
         limits["maximum_returned_text_characters"]
         == hub_api.MAX_EXTRACTED_TEXT_CHARS + 1
     )
+    assert limits["html_element_depth"] == hub_api.MAX_HTML_DEPTH
+    assert limits["html_primary_regions"] == hub_api.MAX_PRIMARY_REGIONS
     assert limits["redirects"] == hub_api.MAX_REDIRECTS
     assert limits["timeout_seconds"] == hub_api.URL_TIMEOUT_SECONDS
     assert limits["user_agent"] == hub_api.USER_AGENT
@@ -248,12 +258,88 @@ def test_json_body_reader_rejects_missing_invalid_and_negative_lengths(hub_api):
         assert responses[0][0] == expected_status
 
 
+@pytest.mark.parametrize(
+    ("content_length", "body", "extra_headers", "expected_error"),
+    [
+        (
+            "100",
+            b"{}",
+            (),
+            "request body ended before its declared Content-Length",
+        ),
+        (
+            "2",
+            b"{}",
+            (("Content-Length", "100"),),
+            "exactly one Content-Length header is required",
+        ),
+        (
+            "2",
+            b"{}",
+            (("Transfer-Encoding", "chunked"),),
+            "Transfer-Encoding request bodies are not supported",
+        ),
+    ],
+    ids=["short-body", "duplicate-content-length", "content-length-plus-chunked"],
+)
+def test_json_body_reader_rejects_ambiguous_or_incomplete_framing(
+    hub_api,
+    content_length,
+    body,
+    extra_headers,
+    expected_error,
+):
+    namespace = hub_api.__dict__
+    handler, responses = make_body_reader(
+        namespace,
+        content_length,
+        body,
+        extra_headers,
+    )
+
+    assert handler.read_json_body(namespace["MAX_URL_BODY_LENGTH"]) is None
+    assert responses == [(400, {"error": expected_error})]
+
+
 def test_json_body_reader_rejects_invalid_utf8_without_traceback(hub_api):
     namespace = hub_api.__dict__
     handler, responses = make_body_reader(namespace, "2", b"\xff\xfe")
 
     assert handler.read_json_body(namespace["MAX_URL_BODY_LENGTH"]) is None
     assert responses == [(400, {"error": "request body must be valid UTF-8"})]
+
+
+def test_json_body_reader_rejects_escaped_non_scalar_unicode_without_echoing_it(
+    hub_api,
+):
+    namespace = hub_api.__dict__
+    body = b'{"url":"\\ud800"}'
+    handler, responses = make_body_reader(namespace, str(len(body)), body)
+
+    assert handler.read_json_body(namespace["MAX_URL_BODY_LENGTH"]) is None
+    assert responses == [
+        (400, {"error": "invalid JSON: $.<value> contains non-scalar Unicode"})
+    ]
+
+
+def test_json_body_reader_rejects_deep_nesting_without_recursion_failure(hub_api):
+    namespace = hub_api.__dict__
+    raw = (
+        '{"url":"https://example.com","x":'
+        + ("[" * 1000)
+        + "0"
+        + ("]" * 1000)
+        + "}"
+    )
+    body = raw.encode("utf-8")
+    assert len(body) < namespace["MAX_URL_BODY_LENGTH"]
+    handler, responses = make_body_reader(namespace, str(len(body)), body)
+
+    assert handler.read_json_body(namespace["MAX_URL_BODY_LENGTH"]) is None
+    assert responses[0][0] == 400
+    assert responses[0][1]["error"].startswith(
+        "invalid JSON: JSON structure exceeds"
+    )
 
 
 @pytest.mark.parametrize(
@@ -345,6 +431,48 @@ def test_response_serializer_fails_closed_before_writing_non_finite_json(
         "Content-Type",
         "application/json; charset=utf-8",
     )
+
+
+def test_response_serializer_fails_closed_before_utf8_encoding_a_surrogate(
+    hub_api,
+):
+    handler = object.__new__(hub_api.Handler)
+    statuses = []
+    handler.send_response = statuses.append
+    handler.send_header = lambda name, value: None
+    handler.end_headers = lambda: None
+    handler.wfile = io.BytesIO()
+
+    handler.send_json(200, {"url": "\ud800"})
+
+    body = handler.wfile.getvalue().decode("utf-8")
+    assert statuses == [500]
+    assert json.loads(body) == {
+        "error": "response payload is not valid strict JSON"
+    }
+
+
+def test_response_serializer_fails_closed_on_deep_or_circular_structure(hub_api):
+    deeply_nested = 0
+    for _ in range(80):
+        deeply_nested = [deeply_nested]
+    circular = {}
+    circular["self"] = circular
+
+    for payload in ({"nested": deeply_nested}, circular):
+        handler = object.__new__(hub_api.Handler)
+        statuses = []
+        handler.send_response = statuses.append
+        handler.send_header = lambda name, value: None
+        handler.end_headers = lambda: None
+        handler.wfile = io.BytesIO()
+
+        handler.send_json(200, payload)
+
+        assert statuses == [500]
+        assert json.loads(handler.wfile.getvalue().decode("utf-8")) == {
+            "error": "response payload is not valid strict JSON"
+        }
 
 
 def test_analyze_serializer_fails_closed_before_creating_case_file(
@@ -796,6 +924,42 @@ def test_redirects_to_local_or_private_destinations_are_rejected(
     assert 0 < requests[0][1] <= hub_api.URL_TIMEOUT_SECONDS
 
 
+def test_redirect_with_duplicate_location_headers_is_rejected(
+    hub_api,
+    monkeypatch,
+):
+    headers = Message()
+    headers.add_header("Location", "https://first.example/article")
+    headers.add_header("Location", "http://127.0.0.1/private")
+
+    def fake_getaddrinfo(host, port, type):
+        assert host == "public.example"
+        return [address_info("8.8.8.8", port)]
+
+    class RedirectOpener:
+        def open(self, request, timeout):
+            raise hub_api.HTTPError(
+                request.full_url,
+                302,
+                "Found",
+                headers,
+                None,
+            )
+
+    monkeypatch.setattr(hub_api.socket, "getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr(
+        hub_api,
+        "build_pinned_opener",
+        lambda pinned_ips, deadline: RedirectOpener(),
+    )
+
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.fetch_url_text("https://public.example/article")
+
+    assert caught.value.status == 502
+    assert caught.value.code == "redirect_without_location"
+
+
 def test_success_fetches_one_url_without_crawling_and_marks_provenance(
     hub_api,
     monkeypatch,
@@ -817,7 +981,13 @@ def test_success_fetches_one_url_without_crawling_and_marks_provenance(
 
     class FakeResponse:
         def __init__(self):
-            self.headers = {"Content-Type": "text/html; charset=utf-8"}
+            self.headers = {
+                "Content-Type": "text/html; charset=utf-8",
+                "Content-Length": str(len(body)),
+            }
+
+        def getcode(self):
+            return 200
 
         def __enter__(self):
             return self
@@ -834,7 +1004,11 @@ def test_success_fetches_one_url_without_crawling_and_marks_provenance(
 
     class FakeOpener:
         def open(self, request, timeout):
-            requests.append((request.full_url, timeout))
+            requests.append((
+                request.full_url,
+                timeout,
+                {key.lower(): value for key, value in request.header_items()},
+            ))
             return FakeResponse()
 
     monkeypatch.setattr(hub_api.socket, "getaddrinfo", fake_getaddrinfo)
@@ -850,12 +1024,974 @@ def test_success_fetches_one_url_without_crawling_and_marks_provenance(
     assert len(requests) == 1
     assert requests[0][0] == "https://public.example/article"
     assert 0 < requests[0][1] <= hub_api.URL_TIMEOUT_SECONDS
+    assert requests[0][2]["accept-encoding"] == "identity"
     assert result["url"] == "https://public.example/article"
     assert result["final_url"] == "https://public.example/article"
     assert result["redirects"] == []
     assert result["verification_status"] == "unreviewed"
     assert result["learning_status"] == "candidate-source-not-verified"
     assert "linked.example" not in result["text"]
+
+
+@pytest.mark.parametrize(
+    ("status_code", "extra_headers", "expected_status", "expected_code"),
+    [
+        (206, {"Content-Range": "bytes 0-31/10000"}, 502, "url_fetch_failed"),
+        (200, {"Content-Range": "bytes 0-31/10000"}, 502, "url_fetch_failed"),
+        (200, {"Content-Encoding": "gzip"}, 415, "unsupported_content_encoding"),
+    ],
+    ids=["partial-206", "content-range-on-200", "encoded-gzip"],
+)
+def test_partial_or_encoded_success_is_never_presented_as_complete_source_text(
+    hub_api,
+    monkeypatch,
+    status_code,
+    extra_headers,
+    expected_status,
+    expected_code,
+):
+    request_headers = {}
+    read_called = False
+
+    def fake_getaddrinfo(host, port, type):
+        assert host == "public.example"
+        return [address_info("8.8.8.8", port)]
+
+    class PartialOrEncodedResponse:
+        headers = {"Content-Type": "text/plain", **extra_headers}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+        def getcode(self):
+            return status_code
+
+        def read(self, limit):
+            nonlocal read_called
+            read_called = True
+            return b"partial or compressed bytes"
+
+        def geturl(self):
+            return "https://public.example/article"
+
+    class PartialOrEncodedOpener:
+        def open(self, request, timeout):
+            request_headers.update(
+                {key.lower(): value for key, value in request.header_items()}
+            )
+            return PartialOrEncodedResponse()
+
+    monkeypatch.setattr(hub_api.socket, "getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr(
+        hub_api,
+        "build_pinned_opener",
+        lambda pinned_ips, deadline: PartialOrEncodedOpener(),
+    )
+
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.fetch_url_text("https://public.example/article")
+
+    assert caught.value.status == expected_status
+    assert caught.value.code == expected_code
+    assert request_headers["accept-encoding"] == "identity"
+    assert read_called is False
+
+
+@pytest.mark.parametrize(
+    ("header_pairs", "expected_status", "expected_code"),
+    [
+        (
+            [
+                ("Content-Type", "text/plain"),
+                ("Content-Encoding", "identity"),
+                ("Content-Encoding", "gzip"),
+            ],
+            415,
+            "unsupported_content_encoding",
+        ),
+        (
+            [
+                ("Content-Type", "text/plain"),
+                ("Content-Range", ""),
+                ("Content-Range", "bytes 0-31/10000"),
+            ],
+            502,
+            "url_fetch_failed",
+        ),
+        (
+            [
+                ("Content-Type", "text/plain"),
+                ("Content-Type", "text/html"),
+            ],
+            415,
+            "unsupported_content_type",
+        ),
+    ],
+    ids=["duplicate-encoding", "duplicate-content-range", "duplicate-content-type"],
+)
+def test_repeated_representation_headers_cannot_hide_an_unsupported_value(
+    hub_api,
+    monkeypatch,
+    header_pairs,
+    expected_status,
+    expected_code,
+):
+    read_called = False
+    headers = hub_api.Message()
+    for name, value in header_pairs:
+        headers[name] = value
+
+    def fake_getaddrinfo(host, port, type):
+        return [address_info("8.8.8.8", port)]
+
+    class RepeatedHeaderResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+        def getcode(self):
+            return 200
+
+        def read(self, limit):
+            nonlocal read_called
+            read_called = True
+            return b"must not be read"
+
+    response = RepeatedHeaderResponse()
+    response.headers = headers
+
+    class RepeatedHeaderOpener:
+        def open(self, request, timeout):
+            return response
+
+    monkeypatch.setattr(hub_api.socket, "getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr(
+        hub_api,
+        "build_pinned_opener",
+        lambda pinned_ips, deadline: RepeatedHeaderOpener(),
+    )
+
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.fetch_url_text("https://public.example/article")
+
+    assert caught.value.status == expected_status
+    assert caught.value.code == expected_code
+    assert read_called is False
+
+
+@pytest.mark.parametrize(
+    ("header_pairs", "body", "expect_read"),
+    [
+        (
+            [("Content-Type", "text/plain"), ("Content-Length", "100")],
+            b"only ten!",
+            True,
+        ),
+        (
+            [
+                ("Content-Type", "text/plain"),
+                ("Content-Length", "10"),
+                ("Content-Length", "100"),
+            ],
+            b"0123456789",
+            False,
+        ),
+        (
+            [("Content-Type", "text/plain"), ("Content-Length", "10, 100")],
+            b"0123456789",
+            False,
+        ),
+        (
+            [("Content-Type", "text/plain"), ("Content-Length", "9" * 5000)],
+            b"0123456789",
+            False,
+        ),
+        (
+            [
+                ("Content-Type", "text/plain"),
+                ("Content-Length", "10"),
+                ("Transfer-Encoding", "chunked"),
+            ],
+            b"0123456789",
+            False,
+        ),
+        (
+            [("Content-Type", "text/plain"), ("Transfer-Encoding", "gzip")],
+            b"encoded",
+            False,
+        ),
+    ],
+    ids=["short-eof", "duplicate-content-length", "combined-content-length", "oversized-content-length", "cl-and-te", "unsupported-te"],
+)
+def test_response_framing_ambiguity_or_early_eof_fails_closed(
+    hub_api,
+    monkeypatch,
+    header_pairs,
+    body,
+    expect_read,
+):
+    read_called = False
+    headers = hub_api.Message()
+    for name, value in header_pairs:
+        headers[name] = value
+
+    def fake_getaddrinfo(host, port, type):
+        return [address_info("8.8.8.8", port)]
+
+    class FramingResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+        def getcode(self):
+            return 200
+
+        def read(self, limit):
+            nonlocal read_called
+            read_called = True
+            return body
+
+    response = FramingResponse()
+    response.headers = headers
+
+    class FramingOpener:
+        def open(self, request, timeout):
+            return response
+
+    monkeypatch.setattr(hub_api.socket, "getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr(
+        hub_api,
+        "build_pinned_opener",
+        lambda pinned_ips, deadline: FramingOpener(),
+    )
+
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.fetch_url_text("https://public.example/article")
+
+    assert caught.value.status == 502
+    assert caught.value.code == "url_fetch_failed"
+    assert read_called is expect_read
+
+
+@pytest.mark.parametrize(
+    "raw_response",
+    [
+        (
+            b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
+            b"Content-Length: 100\r\n\r\nonly ten!"
+        ),
+        (
+            b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
+            b"Transfer-Encoding: chunked\r\n\r\nA\r\nshort"
+        ),
+    ],
+    ids=["real-short-content-length", "real-incomplete-chunk"],
+)
+def test_real_http_response_incomplete_framing_is_rejected(
+    hub_api,
+    monkeypatch,
+    raw_response,
+):
+    class FakeSocket:
+        def makefile(self, mode):
+            return io.BytesIO(raw_response)
+
+    response = HTTPResponse(FakeSocket())
+    response.begin()
+
+    def fake_getaddrinfo(host, port, type):
+        return [address_info("8.8.8.8", port)]
+
+    class RealResponseOpener:
+        def open(self, request, timeout):
+            return response
+
+    monkeypatch.setattr(hub_api.socket, "getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr(
+        hub_api,
+        "build_pinned_opener",
+        lambda pinned_ips, deadline: RealResponseOpener(),
+    )
+
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.fetch_url_text("https://public.example/article")
+
+    assert caught.value.status == 502
+    assert caught.value.code == "url_fetch_failed"
+
+
+def test_html_extraction_preserves_inline_text_and_short_title(hub_api):
+    body = b"""
+        <html>
+          <head><title>Short headline</title></head>
+          <body>
+            <main>
+              <p>Important policy <strong>changed</strong> on Friday after the public review.</p>
+            </main>
+          </body>
+        </html>
+    """
+
+    text, title, truncated = hub_api.extract_text_document(
+        body,
+        "text/html; charset=utf-8",
+    )
+
+    assert title == "Short headline"
+    assert text == "Important policy changed on Friday after the public review."
+    assert truncated is False
+
+
+def test_html_extraction_preserves_exact_inline_boundaries(hub_api):
+    body = b"""
+        <main><p>state-<em>owned</em> can'<em>t</em> cost
+        $<b>10</b>/<span>month</span> (<b>A</b>) in
+        2<strong>0</strong>26.</p></main>
+    """
+
+    text, _, truncated = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "state-owned can't cost $10/month (A) in 2026."
+    assert truncated is False
+
+
+def test_html_extraction_prefers_primary_content_and_drops_boilerplate(hub_api):
+    body = b"""
+        <html>
+          <body>
+            <nav>Navigation links should never become extracted source material.</nav>
+            <div class="cookie-consent">Cookie controls should never become extracted source material.</div>
+            <main>
+              <article>
+                <h1>Institutional update</h1>
+                <p>The institution published a revised procedure after the documented review.</p>
+                <p>The notice says the new procedure enters into force next month.</p>
+              </article>
+              <aside class="related-stories">Related stories should not displace the primary article.</aside>
+            </main>
+            <footer>Footer terms should never become extracted source material.</footer>
+          </body>
+        </html>
+    """
+
+    text, _, truncated = hub_api.extract_text_document(
+        body,
+        "text/html; charset=utf-8",
+    )
+
+    assert text == (
+        "Institutional update\n"
+        "The institution published a revised procedure after the documented review.\n"
+        "The notice says the new procedure enters into force next month."
+    )
+    assert truncated is False
+
+
+def test_nested_boilerplate_container_cannot_leak_after_inner_close(hub_api):
+    body = b"""
+      <main>
+        <div class="cookieConsent">
+          <div>Cookie preferences</div>
+          <p>ACCEPT ALL COOKIES NOW</p>
+        </div>
+        <p>Real source statement.</p>
+      </main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "Real source statement."
+
+
+def test_unrelated_article_card_does_not_replace_longer_document_content(hub_api):
+    body = b"""
+      <article>Unrelated promotional article teaser containing more than forty characters.</article>
+      <div>The actual source report contains a substantially longer account of the
+      documented event, including the affected programme, the published date, the
+      responsible institution, the cited notice, and the next review step.</div>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == (
+        "The actual source report contains a substantially longer account of the "
+        "documented event, including the affected programme, the published date, the "
+        "responsible institution, the cited notice, and the next review step."
+    )
+
+
+def test_main_region_is_not_discarded_by_long_outside_comments(hub_api):
+    body = b"""
+      <div>Reader comments contain a much longer discussion that repeats unrelated
+      opinions, navigation prompts, reaction counts, and subscription requests. This
+      material is outside the source document and must not replace its main region.</div>
+      <main><h1>Binding decision</h1><p>The operative measure takes effect today.</p></main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "Binding decision\nThe operative measure takes effect today."
+
+
+def test_article_card_near_outside_length_cannot_hijack_fallback(hub_api):
+    body = b"""
+      <article>An unrelated card contains enough characters to look substantial but
+      does not contain the submitted source document.</article>
+      <div>The actual outside source is similar in length and records the operative
+      decision, its publication date, and the responsible body.</div>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert "An unrelated card" in text
+    assert "The actual outside source" in text
+
+
+def test_implied_paragraph_close_ends_skipped_container(hub_api):
+    body = b"""
+      <main><p class="promo">Subscribe now
+      <p>The legitimate source statement remains readable after the implied close.</main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == (
+        "The legitimate source statement remains readable after the implied close."
+    )
+
+
+def test_implied_paragraph_close_pops_nested_inline_markup(hub_api):
+    body = b"""
+      <main><p class="promo"><strong>Subscribe now
+      <p>The legitimate statement remains readable after nested malformed markup.</main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == (
+        "The legitimate statement remains readable after nested malformed markup."
+    )
+
+
+def test_entities_are_decoded_exactly_once_and_plain_text_stays_literal(hub_api):
+    html_text, _, _ = hub_api.extract_text_document(
+        b"<main><p>A &amp;amp; B / &amp;lt;draft&amp;gt;</p></main>",
+        "text/html",
+    )
+    plain_text, _, _ = hub_api.extract_text_document(
+        b"A &amp; B / &lt;draft&gt;",
+        "text/plain",
+    )
+
+    assert html_text == "A &amp; B / &lt;draft&gt;"
+    assert plain_text == "A &amp; B / &lt;draft&gt;"
+
+
+def test_boilerplate_phrases_require_real_token_boundaries(hub_api):
+    body = b"""
+      <main>
+        <div class="unrelatedContent">Legitimate unrelated content remains.</div>
+        <div class="notRelatedContent">This section explicitly is not related content.</div>
+        <div aria-label="Cookie consent">Accept all cookies</div>
+      </main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == (
+        "Legitimate unrelated content remains.\n"
+        "This section explicitly is not related content."
+    )
+
+
+def test_hidden_primary_and_common_auxiliary_labels_are_excluded(hub_api):
+    body = b"""
+      <main hidden>Stale hidden template text is deliberately much longer than the
+      visible notice and must never become the selected source region.</main>
+      <main aria-hidden="true">Another inaccessible archived source record.</main>
+      <div class="cookieNotice">Accept cookies and manage preferences.</div>
+      <article class="relatedArticles">A long recommendation card must not replace
+      the actual visible source merely because it uses an article element.</article>
+      <main><h1>Visible notice</h1><p>The operative measure applies today.</p></main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "Visible notice\nThe operative measure applies today."
+
+
+def test_inline_hidden_style_cannot_win_primary_selection(hub_api):
+    body = b"""
+      <main style="display: none !important">A stale invisible main region is much
+      longer than the visible notice and must not be selected as source text.</main>
+      <main style="visibility:hidden">Another hidden archived record.</main>
+      <main><h1>Visible notice</h1><p>The operative measure applies today.</p></main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "Visible notice\nThe operative measure applies today."
+
+
+def test_hidden_word_in_class_does_not_hide_visible_analysis(hub_api):
+    body = b"""
+      <main class="not-hidden hidden-costs-analysis">
+        <h1>Visible cost analysis</h1>
+        <p>The source documents hidden costs but the element itself is visible.</p>
+      </main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == (
+        "Visible cost analysis\n"
+        "The source documents hidden costs but the element itself is visible."
+    )
+
+
+def test_common_cmp_identifiers_are_excluded_and_buttons_stay_separate(hub_api):
+    body = b"""
+      <main>
+        <div id="onetrust-banner-sdk"><p>Consent preferences</p><button>Accept all</button><button>Reject all</button></div>
+        <div id="CybotCookiebotDialog">Cookiebot controls</div>
+        <div class="cky-consent-container">Managed cookie notice</div>
+        <div class="osano-cm-window">Consent management window</div>
+        <p>The visible source statement remains after consent controls.</p>
+      </main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "The visible source statement remains after consent controls."
+
+
+def test_placeholder_main_does_not_replace_substantive_visible_source(hub_api):
+    outside = b"""
+      <section>The institution published a complete decision with its operative
+      measure, effective date, responsible body, scope, and review route.</section>
+    """
+    text, _, _ = hub_api.extract_text_document(
+        b"<main>Loading...</main>" + outside,
+        "text/html",
+    )
+    article_text, _, _ = hub_api.extract_text_document(
+        b"<main>Please wait</main><article>The institution published a complete "
+        b"decision with its operative measure, effective date, responsible body, "
+        b"scope, and review route.</article>",
+        "text/html",
+    )
+
+    assert text == (
+        "The institution published a complete decision with its operative measure, "
+        "effective date, responsible body, scope, and review route."
+    )
+    assert article_text == (
+        "The institution published a complete decision with its operative measure, "
+        "effective date, responsible body, scope, and review route."
+    )
+
+    prefixed_text, _, _ = hub_api.extract_text_document(
+        b"<main>Loading content...</main>" + outside,
+        "text/html",
+    )
+    welcome_text, _, _ = hub_api.extract_text_document(
+        b"<main>Welcome</main>" + outside,
+        "text/html",
+    )
+    assert prefixed_text == text
+    assert welcome_text == text
+
+
+def test_short_structured_main_dominates_print_controls(hub_api):
+    body = b"""
+      <main><h1>Recall 24-17</h1><p>Stop use now.</p><p>Fire risk.</p></main>
+      <div>Print</div>
+    """
+
+    text, _, truncated = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "Recall 24-17\nStop use now.\nFire risk."
+    assert truncated is False
+
+
+def test_html_parser_has_deterministic_depth_and_primary_region_bounds(hub_api):
+    parser = hub_api.TextExtractor()
+    parser.feed(
+        ("<div>" * (hub_api.MAX_HTML_DEPTH + 100))
+        + "ignored deep text"
+        + "</wrong>text that must not leak after a mismatched close"
+        + ("</div>" * (hub_api.MAX_HTML_DEPTH + 100))
+        + "<main>Visible tail must remain unavailable after the hard bound.</main>"
+    )
+    parser.close()
+
+    assert parser.limit_exceeded is True
+    assert "ignored deep text" not in "".join(parser.parts)
+    assert "must not leak" not in "".join(parser.parts)
+    assert "Visible tail" not in "".join(parser.parts)
+
+    text, _, truncated = hub_api.extract_text_document(
+        (
+            ("<div>" * (hub_api.MAX_HTML_DEPTH + 1))
+            + "substantive section beyond the supported depth"
+            + ("</div>" * (hub_api.MAX_HTML_DEPTH + 1))
+        ).encode(),
+        "text/html",
+    )
+    assert text == ""
+    assert truncated is True
+
+    siblings = hub_api.TextExtractor()
+    siblings.feed(
+        "<article>A bounded sibling article with enough source text.</article>" * 200
+    )
+    siblings.close()
+
+    assert siblings.limit_exceeded is False
+    assert len(parser.primary_regions) <= hub_api.MAX_PRIMARY_REGIONS
+    assert len(siblings.primary_regions) <= hub_api.MAX_PRIMARY_REGIONS
+    assert "bounded sibling article" in "".join(siblings.parts)
+
+
+def test_article_candidate_cap_reserves_a_main_region(hub_api):
+    cards = "".join(
+        f"<article>Recommendation card {index} contains unrelated auxiliary text.</article>"
+        for index in range(hub_api.MAX_PRIMARY_REGIONS)
+    )
+    body = (
+        cards
+        + "<main>Actual decision applies today.</main>"
+    ).encode()
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "Actual decision applies today."
+
+
+def test_truncated_title_sets_the_shared_truncation_flag(hub_api):
+    oversized_title = "T" * (hub_api.MAX_EXTRACTED_TEXT_CHARS + 20)
+    body = f"<title>{oversized_title}</title><main>Short body.</main>".encode()
+
+    text, title, truncated = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "Short body."
+    assert title == "T" * hub_api.MAX_EXTRACTED_TEXT_CHARS + "…"
+    assert truncated is True
+
+
+def test_article_header_and_legitimate_social_topic_are_retained(hub_api):
+    body = b"""
+      <main class="social">
+        <article>
+          <header><h1>Social policy update</h1><p>By Ana. 2 August.</p></header>
+          <p>The legitimate social-policy article remains available.</p>
+        </article>
+      </main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == (
+        "Social policy update\n"
+        "By Ana. 2 August.\n"
+        "The legitimate social-policy article remains available."
+    )
+
+
+def test_short_structured_source_facts_are_not_discarded(hub_api):
+    body = b"""
+      <main>
+        <h1>Recall 24-17</h1>
+        <ul><li>Model AX9</li><li>Stop use now</li><li>Fire risk</li></ul>
+        <p>See notice.</p>
+      </main>
+    """
+
+    text, _, _ = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "Recall 24-17\nModel AX9\nStop use now\nFire risk\nSee notice."
+
+
+@pytest.mark.parametrize(
+    "content_type",
+    [
+        'text/html; charset="windows-1252"',
+        "text/html; charset = windows-1252",
+    ],
+)
+def test_declared_quoted_or_spaced_charset_is_used(hub_api, content_type):
+    text, _, _ = hub_api.extract_text_document(
+        "Café e institución".encode("windows-1252"),
+        content_type,
+    )
+
+    assert text == "Café e institución"
+
+
+@pytest.mark.parametrize(
+    "content_type",
+    [
+        "text/plain; charset=iso-8859-1; charset=utf-8",
+        "text/plain; charset=utf-8; charset=iso-8859-1",
+        "text/plain; CHARSET=utf-8; charset=utf-8",
+        "text/plain; charset=",
+    ],
+    ids=["latin-first", "utf8-first", "case-insensitive-duplicate", "empty"],
+)
+def test_ambiguous_or_empty_charset_parameters_are_rejected(
+    hub_api,
+    content_type,
+):
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.extract_text_document("Café".encode("utf-8"), content_type)
+
+    assert caught.value.status == 415
+    assert caught.value.code == "unsupported_content_type"
+
+
+@pytest.mark.parametrize(
+    "content_type",
+    [
+        "text/plain; charset=iso-8859-1; charset=utf-8",
+        "text/plain; charset=utf-8; charset=iso-8859-1",
+    ],
+    ids=["fetch-latin-first", "fetch-utf8-first"],
+)
+def test_fetch_rejects_conflicting_charset_parameters(
+    hub_api,
+    monkeypatch,
+    content_type,
+):
+    body = "Café".encode("utf-8")
+
+    def fake_getaddrinfo(host, port, type):
+        assert host == "public.example"
+        return [address_info("8.8.8.8", port)]
+
+    class AmbiguousCharsetResponse:
+        headers = {
+            "Content-Type": content_type,
+            "Content-Length": str(len(body)),
+        }
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+        def getcode(self):
+            return 200
+
+        def read(self, limit):
+            return body
+
+        def geturl(self):
+            return "https://public.example/article"
+
+    class AmbiguousCharsetOpener:
+        def open(self, request, timeout):
+            return AmbiguousCharsetResponse()
+
+    monkeypatch.setattr(hub_api.socket, "getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr(
+        hub_api,
+        "build_pinned_opener",
+        lambda pinned_ips, deadline: AmbiguousCharsetOpener(),
+    )
+
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.fetch_url_text("https://public.example/article")
+
+    assert caught.value.status == 415
+    assert caught.value.code == "unsupported_content_type"
+
+
+@pytest.mark.parametrize(
+    ("body", "content_type"),
+    [
+        (
+            b"Claim: \xff evidence",
+            "text/plain; charset=definitely-not-a-codec",
+        ),
+        (
+            b"Claim: incomplete UTF-8 \xe2\x82",
+            "text/plain; charset=utf-8",
+        ),
+    ],
+    ids=["unknown-explicit-charset", "incomplete-declared-utf8"],
+)
+def test_source_bytes_that_cannot_be_decoded_exactly_are_rejected(
+    hub_api,
+    body,
+    content_type,
+):
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.extract_text_document(body, content_type)
+
+    assert caught.value.status == 415
+    assert caught.value.code == "unsupported_content_type"
+    assert "\ufffd" not in caught.value.message
+
+
+@pytest.mark.parametrize(
+    ("body", "content_type"),
+    [
+        (
+            b"Claim: \xff evidence",
+            "text/plain; charset=definitely-not-a-codec",
+        ),
+        (
+            b"Claim: incomplete UTF-8 \xe2\x82",
+            "text/plain; charset=utf-8",
+        ),
+    ],
+    ids=["fetch-unknown-explicit-charset", "fetch-incomplete-declared-utf8"],
+)
+def test_fetch_rejects_undecodable_source_without_replacement_text(
+    hub_api,
+    monkeypatch,
+    body,
+    content_type,
+):
+    def fake_getaddrinfo(host, port, type):
+        assert host == "public.example"
+        return [address_info("8.8.8.8", port)]
+
+    class UndecodableResponse:
+        headers = {
+            "Content-Type": content_type,
+            "Content-Length": str(len(body)),
+        }
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+        def getcode(self):
+            return 200
+
+        def read(self, limit):
+            return body
+
+        def geturl(self):
+            return "https://public.example/article"
+
+    class UndecodableOpener:
+        def open(self, request, timeout):
+            return UndecodableResponse()
+
+    monkeypatch.setattr(hub_api.socket, "getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr(
+        hub_api,
+        "build_pinned_opener",
+        lambda pinned_ips, deadline: UndecodableOpener(),
+    )
+
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.fetch_url_text("https://public.example/article")
+
+    assert caught.value.status == 415
+    assert caught.value.code == "unsupported_content_type"
+
+
+@pytest.mark.parametrize("charset", ["unicode_escape", "raw_unicode_escape"])
+def test_remote_charset_cannot_introduce_non_scalar_unicode(hub_api, charset):
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.extract_text_document(
+            b"Visible source text: \\ud800",
+            f"text/plain; charset={charset}",
+        )
+
+    assert caught.value.status == 415
+    assert caught.value.code == "unsupported_content_type"
+    assert "supported text encoding" in caught.value.message
+
+
+@pytest.mark.parametrize("charset", ["unicode_escape", "raw_unicode_escape", "utf-7", "punycode"])
+def test_transformation_codecs_cannot_rewrite_literal_source_text(hub_api, charset):
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.extract_text_document(
+            b"Literal source characters: \\n and \\x41",
+            f"text/plain; charset={charset}",
+        )
+
+    assert caught.value.status == 415
+    assert caught.value.code == "unsupported_content_type"
+
+
+@pytest.mark.parametrize(
+    "content_type",
+    [
+        "application/x-text/html-garbage",
+        "text/htmlx",
+        "text/plain-javascript",
+    ],
+)
+def test_lookalike_content_types_are_not_accepted(hub_api, content_type):
+    media_type, _ = hub_api.parse_content_type(content_type)
+
+    assert media_type not in {"text/html", "text/plain", "application/xhtml+xml"}
+
+
+def test_charset_parser_ignores_non_charset_parameters(hub_api):
+    assert hub_api.parse_content_type("text/html; xcharset=utf-16") == (
+        "text/html",
+        "utf-8",
+    )
+    assert hub_api.parse_content_type('text/html; foo="charset=utf-16"') == (
+        "text/html",
+        "utf-8",
+    )
+
+
+@pytest.mark.parametrize(
+    "content_type",
+    [
+        'text/plain; charset="utf-8\x00"',
+        "text/plain; charset=utf-8\r\n x-folded: value",
+        "text/plain; charset=utf-8\x7f",
+    ],
+    ids=["nul", "obs-fold", "delete"],
+)
+def test_content_type_controls_cannot_escape_as_codec_or_contract_errors(
+    hub_api,
+    content_type,
+):
+    assert hub_api.parse_content_type(content_type) == ("", "utf-8")
+    with pytest.raises(hub_api.IntakeError) as caught:
+        hub_api.extract_text_document(b"Visible source text", content_type)
+
+    assert caught.value.status == 415
+    assert caught.value.code == "unsupported_content_type"
+
+
+def test_extracted_text_cap_sets_truncated_even_below_raw_byte_cap(hub_api):
+    body = ("A" * (hub_api.MAX_EXTRACTED_TEXT_CHARS + 100)).encode("utf-8")
+
+    text, _, truncated = hub_api.extract_text_document(body, "text/plain")
+
+    assert len(body) < hub_api.MAX_URL_BYTES
+    assert text == "A" * hub_api.MAX_EXTRACTED_TEXT_CHARS + "…"
+    assert truncated is True
+
+
+def test_parser_close_flushes_text_before_an_incomplete_entity(hub_api):
+    body = b"<main><p>" + (b"A" * 100) + b" &amp"
+
+    text, _, truncated = hub_api.extract_text_document(body, "text/html")
+
+    assert text == "A" * 100 + " &"
+    assert truncated is False
 
 
 @pytest.mark.parametrize(
@@ -913,6 +2049,9 @@ def test_response_read_errors_fail_cleanly(
 
     class BrokenResponse:
         headers = {"Content-Type": "text/plain"}
+
+        def getcode(self):
+            return 200
 
         def __enter__(self):
             return self
@@ -1375,6 +2514,9 @@ def test_total_deadline_closes_a_slow_response(
 
     class SlowResponse:
         headers = {"Content-Type": "text/plain"}
+
+        def getcode(self):
+            return 200
 
         def __enter__(self):
             return self

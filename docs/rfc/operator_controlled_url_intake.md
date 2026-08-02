@@ -152,7 +152,14 @@ The implementation rejects:
   resolved addresses;
 - known IPv6 transition forms that embed a non-global IPv4 destination;
 - redirects to a rejected destination;
-- redirects without `Location`;
+- redirects without exactly one non-empty `Location` header;
+- non-200 or partial (`Content-Range`) success responses;
+- compressed or otherwise transformed response bodies;
+- ambiguous `Content-Length`/`Transfer-Encoding` framing and bodies that end
+  before their declared length;
+- duplicate, empty, unknown, or transformation charsets and bytes that are
+  invalid for the declared text encoding; decoding never substitutes
+  replacement characters;
 - unsupported content types;
 - empty extracted text.
 
@@ -172,7 +179,12 @@ For each supplied URL and permitted redirect hop, the current launcher:
 - preserves the hostname for the HTTP `Host` header and HTTPS SNI/certificate
   verification;
 - validates every redirect before the next request;
-- sends no cookies, authorization header, local credentials, or browser state.
+- sends no cookies, authorization header, local credentials, or browser state;
+- requests `Accept-Encoding: identity` and rejects any encoded or partial body
+  instead of presenting undecoded or incomplete bytes as source text;
+- validates every representation/framing header occurrence, permits either one
+  decimal `Content-Length` or one supported `chunked` transfer framing, and
+  rejects an early end-of-body against a declared length.
 
 The synchronous Linux server uses one monotonic eight-second application budget
 across address candidates, redirects, TLS, headers, and body reading.
@@ -190,35 +202,56 @@ These are implemented values, not recommendations:
 | JSON request body | 4,096 bytes |
 | Submitted URL | 2,048 characters |
 | Total fetch budget | 8 seconds |
+| Browser request deadline | 15 seconds before a local `url_fetch_timeout` fallback |
 | Redirects | At most 3 |
 | Retained raw response body | 1,000,000 bytes |
 | Extracted source text | At most 24,000 characters before an optional ellipsis |
 | Maximum returned `text` | 24,001 characters including an optional ellipsis |
+| HTML element depth | At most 256 open elements; exceeding it stops parsing fail-closed |
+| Candidate `main`/`article` regions | At most 64 |
 | Remote request method | `GET` |
 | Accepted schemes | `http`, `https` |
+| Accepted content encoding | absent or `identity` |
 | User-Agent | `HUB_Optimus-Operator-URL-Intake/0.1 (+https://huboptimus.dev/operator/)` |
 
-The reader requests one byte beyond the raw-body limit to detect overflow,
-retains at most 1,000,000 bytes, and sets `truncated=true`; it does not claim to
-have read or extracted the remainder.
+The reader requests one byte beyond the raw-body limit to detect overflow and
+retains at most 1,000,000 bytes. It sets `truncated=true` when the raw body,
+cleaned source text, title, or HTML structural depth exceeds its bound; it does
+not claim to have read or extracted the remainder. After the HTML depth limit
+is reached the parser ignores the remainder rather than trying to recover from
+untrusted mismatched closing tags.
+
+The browser deadline is deliberately longer than the backend application
+budget so normal backend timeouts can retain their versioned response. It also
+bounds a stalled proxy, connection, or response body. Changing the input or
+starting another request aborts the earlier browser request; a caller abort is
+kept distinct from `url_fetch_timeout`.
 
 ## Extraction behavior
 
 The current extractor:
 
 - accepts HTML, XHTML, and plain-text responses;
-- decodes the declared charset when known and falls back to UTF-8 with
-  replacement for undecodable bytes;
-- ignores `canvas`, `iframe`, `noscript`, `script`, `style`, `svg`, and
-  `template` element content;
+- parses an exact supported media type, accepts zero or one unambiguous safe
+  text `charset` parameter, rejects unknown or transformation codecs such as
+  escape decoders, and rejects undecodable bytes without replacement;
+- ignores non-content containers such as `aside`, `canvas`, `dialog`, `footer`,
+  `form`, `header`, `iframe`, `nav`, `noscript`, `script`, `style`, `svg`, and
+  `template`, plus containers explicitly labelled as cookie, consent,
+  navigation, advertising, sharing, sidebar, related-content, or promotional
+  UI;
+- preserves spacing across inline HTML elements instead of splitting one
+  sentence into unrelated fragments;
+- scores individual `main`/`article` regions against the cleaned document,
+  avoiding replacement of a longer document by an unrelated article card;
 - preserves a cleaned document title when available;
-- normalizes whitespace, removes duplicate cleaned lines, and drops short
-  non-sentence fragments;
+- normalizes whitespace, removes duplicate cleaned lines, and preserves short
+  structured facts such as headings, identifiers, and list items;
 - returns non-empty bounded text or a controlled `empty_extraction` error.
 
-It is a bounded text extractor, not a complete article parser. It may retain
-navigation or other visible boilerplate and may omit meaningful dynamic,
-embedded, caption, or short-form content. It does not:
+It is a bounded heuristic text extractor, not a complete article parser. It may
+still retain unlabelled boilerplate or omit meaningful dynamic, embedded,
+caption, or short-form content. It does not:
 
 - execute JavaScript;
 - interact with cookie banners;
@@ -230,25 +263,85 @@ embedded, caption, or short-form content. It does not:
 ## Operator behavior
 
 The repository Operator posts only `{"url": sourceUrl}` to the controlled
-endpoint when a URL exists and source text is empty.
+endpoint whenever a URL is supplied. Optional pasted text is never included in
+that request: it remains separately attributed operator context.
 
 On success, it:
 
-- uses `text` as the browser-local draft input;
+- shows `text` in a review preview and requires explicit human confirmation
+  before preparing a draft;
 - preserves submitted and final URL, source domain, title, retrieval time,
   redirect chain, content type, byte count, truncation, and unreviewed status;
-- continues through the existing local conservative-triage UI.
+- canonicalizes source text to NFC with LF line endings, proposes up to five
+  mechanical source lines, then requires the operator to confirm one to five
+  exact passages whose Unicode-code-point locators and SHA-256 fingerprint use
+  that same canonical representation;
+- rejects a selected passage when the exact same text occurs more than once in
+  the source, asking the operator to expand it until the locator is unique,
+  rather than silently binding it to the first occurrence;
+- creates one attributed claim and one source-excerpt record per selection;
+- links those records explicitly as attribution support, not independent
+  corroboration;
+- keeps claims, excerpts, inference boundaries, uncertainty, provenance, and
+  next review action separate in a draft `CaseInput v1` payload.
 
 On failure, it:
 
 - shows the controlled error message;
-- asks the operator to paste source text;
+- asks the operator to paste source text and remove the unavailable URL before
+  using text-only intake;
 - does not fetch the third-party URL directly from the browser;
 - does not classify the failed source as false or invalid.
 
-If the operator supplies text and a URL, the browser treats the URL as
-operator-provided, unfetched attribution. The primary action analyzes actual
-text only: pasted text or text returned by controlled intake.
+If the operator supplies text and a URL, the URL is still retrieved. The
+retrieved page supplies the source-bound excerpts; the pasted text is recorded
+separately as `operator-provided-context-not-attributed-to-source`. The
+description is therefore optional when URL extraction succeeds.
+
+Operator context longer than the local 1,200-character metadata field is
+stored with explicit original/canonical/stored character counts, a truncation
+flag, and the SHA-256 fingerprint of the complete canonical context. It is not
+silently presented as complete: the input hint states the limit and both the
+primary result and Advanced readout show retained/original Unicode counts and
+the separately attributed retained text.
+
+The browser keeps the exact submitted URL only long enough to perform the
+controlled request and compare the in-flight request with the current intake.
+The exact URL, including path, query, and fragment, is visible to the controlled
+intake service even though the fragment is not sent onward in an HTTP request.
+Operator therefore warns users not to submit private or signed links, tokens,
+one-time codes, or personal data in a URL. The request body still contains only
+that URL and never the separately supplied operator context.
+Draft, memory, provenance, redirect, and sharing records retain only each URL's
+public origin; credentials, path, query, and fragment are withheld because any
+of them can contain an opaque secret under an unknown name. Editing the URL
+advances the intake generation and discards an earlier response. Editing
+operator context or source type invalidates the draft but does not cancel a
+valid URL retrieval already in flight; both preparation controls remain
+disabled until that retrieval settles.
+
+The Advanced normalizer delegates to the same retrieval and confirmation gate
+as the primary action. Removing confirmation, editing a case field, or adding
+or removing a claim/evidence record invalidates saving and sharing until a new
+draft is prepared. Structural relationships and evidence claim references are
+reconciled after record changes so no removed record remains referenced.
+
+The Advanced result viewer is also fail-closed. It accepts either the exact
+successful backend response identity or the explicit browser-local normalized
+draft identity, requires the complete `AnalysisResult` shape and record types,
+checks claim/evidence references, and binds the response to the current case
+and core version. When a non-empty input summary is present it must also match.
+Malformed, oversized, unrelated, cross-case, or stale responses clear the
+visible result instead of being rendered with plausible-looking fallbacks. The
+generated local handoff command performs the same envelope and case-identity
+checks before printing a response for the viewer.
+
+The primary action prepares a browser-local source review draft. It does not
+claim to analyze truth, corroborate the underlying statements, infer intent,
+score risk, or execute the Semantic Engine. Changing the URL, context, or
+source type invalidates the previous shareable draft. Human-readable share
+text enumerates all records within its explicit message bound and states the
+number omitted when that bound is exceeded.
 
 The hard-coded endpoint URL in the static Operator is repository configuration,
 not proof that the service is publicly deployed, reachable, secure, or
@@ -264,6 +357,16 @@ No implementation may log full article text, personal data, cookies,
 authorization headers, or sensitive operator content by default without a
 separately reviewed policy and change.
 
+The browser's Advanced console can explicitly save one complete current case
+in its local browser profile. The saved envelope is versioned, validated as a
+`CaseInput v1` before any UI mutation, and remains until it is replaced or
+explicitly deleted. Clearing visible fields does not delete that saved case and
+the UI says so. Loading a saved case aborts and clears any live Primary URL
+intake/selection binding, keeping saved-case provenance separate from a later
+source retrieval. Meta-learning candidates use a separate IndexedDB lifecycle
+with inspect, export, import, per-record/per-case deletion, and human-only state
+transitions; neither local store is canonical project knowledge.
+
 ## Stable application failure codes
 
 The schema and launcher currently define:
@@ -277,6 +380,7 @@ The schema and launcher currently define:
 - `unsupported_url_port`;
 - `blocked_url_host`;
 - `unresolvable_url_host`;
+- `unsupported_content_encoding`;
 - `unsupported_content_type`;
 - `empty_extraction`;
 - `redirect_without_location`;
@@ -302,6 +406,8 @@ The repository tests cover:
 - disabled environment proxies;
 - absent cookies and authorization headers;
 - malformed HTTP and read failures;
+- duplicate representation headers, ambiguous framing, partial responses,
+  encoded bodies, early EOF, non-scalar Unicode, and excessive JSON nesting;
 - single-resource fetching;
 - unreviewed success and failure provenance.
 

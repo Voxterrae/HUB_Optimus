@@ -12,7 +12,7 @@ cat > "$API_FILE" <<'PY'
 from __future__ import annotations
 
 import datetime as dt
-import html
+import codecs
 import ipaddress
 import json
 import os
@@ -24,6 +24,7 @@ import tempfile
 import threading
 import time
 from contextlib import contextmanager
+from email.message import Message
 from html.parser import HTMLParser
 from http.client import (
     HTTPConnection,
@@ -54,6 +55,8 @@ MAX_URL_BODY_LENGTH = 4096
 MAX_ANALYZE_BODY_LENGTH = 64_000
 MAX_URL_BYTES = 1_000_000
 MAX_EXTRACTED_TEXT_CHARS = 24_000
+MAX_HTML_DEPTH = 256
+MAX_PRIMARY_REGIONS = 64
 MAX_REDIRECTS = 3
 URL_TIMEOUT_SECONDS = 8
 USER_AGENT = "HUB_Optimus-Operator-URL-Intake/0.1 (+https://huboptimus.dev/operator/)"
@@ -79,14 +82,55 @@ def reject_non_standard_json_constant(value: str) -> None:
     raise ValueError(f"non-standard numeric constant {value} is not valid JSON")
 
 
+def require_scalar_unicode(value, max_depth: int = 64, max_nodes: int = 100_000) -> None:
+    stack = [(value, "$", 0)]
+    seen_containers = set()
+    visited = 0
+
+    while stack:
+        current, path, depth = stack.pop()
+        visited += 1
+        if visited > max_nodes:
+            raise ValueError("JSON structure exceeds maximum node count")
+        if depth > max_depth:
+            raise ValueError("JSON structure exceeds maximum depth")
+        if isinstance(current, str):
+            try:
+                current.encode("utf-8")
+            except UnicodeEncodeError as exc:
+                raise ValueError(f"{path} contains non-scalar Unicode") from exc
+            continue
+        if isinstance(current, (list, dict)):
+            identity = id(current)
+            if identity in seen_containers:
+                raise ValueError("JSON structure contains a repeated or circular container")
+            seen_containers.add(identity)
+        if isinstance(current, list):
+            stack.extend(
+                (item, f"{path}[{index}]", depth + 1)
+                for index, item in reversed(list(enumerate(current)))
+            )
+        elif isinstance(current, dict):
+            for key, item in current.items():
+                if isinstance(key, str):
+                    stack.append((key, f"{path}.<key>", depth + 1))
+                stack.append((item, f"{path}.<value>", depth + 1))
+
+
 def load_strict_json(raw: str):
-    return json.loads(
-        raw,
-        parse_constant=reject_non_standard_json_constant,
-    )
+    try:
+        payload = json.loads(
+            raw,
+            parse_constant=reject_non_standard_json_constant,
+        )
+    except RecursionError as exc:
+        raise ValueError("JSON structure exceeds parser depth") from exc
+    require_scalar_unicode(payload)
+    return payload
 
 
 def dump_strict_json(payload) -> str:
+    require_scalar_unicode(payload)
     return json.dumps(
         payload,
         allow_nan=False,
@@ -327,61 +371,261 @@ def build_pinned_opener(pinned_ips, deadline):
 
 class TextExtractor(HTMLParser):
     block_tags = {
-        "article", "aside", "blockquote", "br", "dd", "div", "dl", "dt", "figcaption",
+        "article", "aside", "blockquote", "br", "button", "dd", "div", "dl", "dt", "figcaption",
         "footer", "h1", "h2", "h3", "h4", "h5", "h6", "header", "li", "main", "nav",
         "ol", "p", "pre", "section", "table", "td", "th", "tr", "ul"
     }
 
     skipped_tags = {
-        "canvas", "iframe", "noscript", "script", "style", "svg", "template"
+        "aside", "canvas", "dialog", "footer", "form", "iframe", "nav",
+        "noscript", "script", "style", "svg", "template"
+    }
+
+    primary_tags = {"article", "main"}
+
+    void_tags = {
+        "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+        "meta", "param", "source", "track", "wbr"
+    }
+
+    boilerplate_tokens = {
+        "advert", "advertisement", "cookiebot", "footer", "modal",
+        "navbar", "navigation", "newsletter", "onetrust", "promo", "sidebar"
+    }
+
+    boilerplate_phrases = {
+        "consent banner", "consent modal", "cookie banner", "cookie consent",
+        "cookie notice", "cookie settings", "main menu", "nav menu",
+        "cky consent", "osano cm",
+        "related articles", "related content", "related posts", "related stories",
+        "share bar", "share buttons",
+        "share tools", "site menu", "social buttons", "social links",
+        "social share"
+    }
+
+    paragraph_closing_tags = {
+        "address", "article", "aside", "blockquote", "div", "dl", "fieldset",
+        "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header",
+        "hr", "main", "nav", "ol", "p", "pre", "section", "table", "ul"
     }
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.parts: list[str] = []
+        self.outside_primary_parts: list[str] = []
+        self.primary_regions: list[dict] = []
         self.title_parts: list[str] = []
-        self.skip_stack: list[str] = []
+        self.open_elements: list[dict] = []
+        self.skip_depth = 0
+        self.active_primary_index: int | None = None
+        self.limit_exceeded = False
         self.in_title = False
+
+    @staticmethod
+    def _attribute_label(attrs) -> str:
+        values = " ".join(
+            value
+            for key, value in attrs
+            if key.lower() in {"aria-label", "class", "id", "role"}
+            and isinstance(value, str)
+        )
+        values = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", values)
+        return " ".join(re.findall(r"[a-z0-9]+", values.lower()))
+
+    def _is_boilerplate_container(self, tag: str, attrs, in_primary: bool) -> bool:
+        normalized_attrs = {str(key).lower(): value for key, value in attrs}
+        if "hidden" in normalized_attrs:
+            return True
+        if str(normalized_attrs.get("aria-hidden", "")).strip().lower() == "true":
+            return True
+        inline_style = str(normalized_attrs.get("style", ""))
+        if re.search(
+            r"(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:!important\s*)?(?:;|$)",
+            inline_style,
+            re.I,
+        ):
+            return True
+        if tag in self.skipped_tags:
+            return True
+        if tag == "header" and not in_primary:
+            return True
+
+        label = self._attribute_label(attrs)
+        tokens = set(label.split())
+        words = label.split()
+
+        def contains_phrase(phrase: str) -> bool:
+            phrase_words = phrase.split()
+            width = len(phrase_words)
+            return any(
+                words[index:index + width] == phrase_words
+                and (index == 0 or words[index - 1] not in {"not", "unrelated"})
+                for index in range(max(0, len(words) - width + 1))
+            )
+
+        return bool(
+            tokens & self.boilerplate_tokens
+            or any(contains_phrase(phrase) for phrase in self.boilerplate_phrases)
+        )
+
+    def _active_primary_indexes(self) -> list[int]:
+        if self.active_primary_index is None:
+            return []
+        return [self.active_primary_index]
+
+    def _is_skipping(self) -> bool:
+        return self.skip_depth > 0
+
+    @staticmethod
+    def _append_text(target: list[str], data: str) -> None:
+        # Preserve whether the source contained whitespace at an inline boundary.
+        # Adding a separator unconditionally corrupts identifiers such as
+        # ``state-<em>owned</em>``, ``can'<em>t</em>`` and ``2<b>0</b>26``.
+        cleaned = re.sub(r"\s+", " ", data)
+        if not cleaned:
+            return
+        if not cleaned.strip():
+            if target and not target[-1].endswith(("\n", " ")):
+                target.append(" ")
+            return
+        target.append(cleaned)
+
+    def _append_break(self) -> None:
+        if self.parts and self.parts[-1] != "\n":
+            self.parts.append("\n")
+        active_indexes = self._active_primary_indexes()
+        if not active_indexes and self.outside_primary_parts and self.outside_primary_parts[-1] != "\n":
+            self.outside_primary_parts.append("\n")
+        for index in active_indexes:
+            parts = self.primary_regions[index]["parts"]
+            if parts and parts[-1] != "\n":
+                parts.append("\n")
 
     def handle_starttag(self, tag: str, attrs) -> None:
         normalized = tag.lower()
 
+        if self.limit_exceeded:
+            return
+
+        # HTMLParser intentionally does not apply HTML's implied end-tag rules.
+        # Close the common optional-end elements so an excluded container cannot
+        # swallow later visible siblings that a browser would parse separately.
+        if self.open_elements:
+            current = self.open_elements[-1]["tag"]
+            if (
+                normalized in self.paragraph_closing_tags
+                and any(frame["tag"] == "p" for frame in self.open_elements)
+            ):
+                self.handle_endtag("p")
+            elif current == "li" and normalized == "li":
+                self.handle_endtag(current)
+            elif current in {"dt", "dd"} and normalized in {"dt", "dd"}:
+                self.handle_endtag(current)
+            elif current == "tr" and normalized == "tr":
+                self.handle_endtag(current)
+            elif current in {"th", "td"} and normalized in {"th", "td"}:
+                self.handle_endtag(current)
+
+        if normalized not in self.void_tags and len(self.open_elements) >= MAX_HTML_DEPTH:
+            # Fail closed for the remainder. Attempting to recover from arbitrary
+            # malformed closing tags can resume at the wrong depth and leak text
+            # from an excluded region. The response exposes this as truncation.
+            self.limit_exceeded = True
+            return
+
+        inherited_skip = self._is_skipping()
+        active_primary = self._active_primary_indexes()
+        container_skip = self._is_boilerplate_container(
+            normalized,
+            attrs,
+            bool(active_primary),
+        )
+        skipped = inherited_skip or container_skip
+
         if normalized == "title":
             self.in_title = True
 
-        if normalized in self.skipped_tags:
-            self.skip_stack.append(normalized)
-            return
+        if not skipped and normalized in self.block_tags:
+            self._append_break()
 
-        if not self.skip_stack and normalized in self.block_tags:
-            self.parts.append("\n")
+        primary_index = None
+        if (
+            not skipped
+            and normalized in self.primary_tags
+            and self.active_primary_index is None
+        ):
+            primary_limit = (
+                MAX_PRIMARY_REGIONS
+                if normalized == "main"
+                or any(region["tag"] == "main" for region in self.primary_regions)
+                else MAX_PRIMARY_REGIONS - 1
+            )
+            if len(self.primary_regions) < primary_limit:
+                primary_index = len(self.primary_regions)
+                self.primary_regions.append({"tag": normalized, "parts": []})
+                self.active_primary_index = primary_index
+
+        if normalized not in self.void_tags:
+            self.open_elements.append(
+                {
+                    "tag": normalized,
+                    "starts_skip": container_skip,
+                    "primary_index": primary_index,
+                }
+            )
+            if container_skip:
+                self.skip_depth += 1
 
     def handle_endtag(self, tag: str) -> None:
         normalized = tag.lower()
 
-        if normalized == "title":
+        if self.limit_exceeded:
+            return
+
+        matching_index = next(
+            (
+                index
+                for index in range(len(self.open_elements) - 1, -1, -1)
+                if self.open_elements[index]["tag"] == normalized
+            ),
+            None,
+        )
+        if matching_index is None:
+            return
+
+        if not self._is_skipping() and normalized in self.block_tags:
+            self._append_break()
+
+        closed = self.open_elements[matching_index:]
+        del self.open_elements[matching_index:]
+        self.skip_depth = max(
+            0,
+            self.skip_depth - sum(1 for frame in closed if frame["starts_skip"]),
+        )
+        if any(
+            frame["primary_index"] == self.active_primary_index
+            for frame in closed
+        ):
+            self.active_primary_index = None
+        if any(frame["tag"] == "title" for frame in closed):
             self.in_title = False
 
-        if self.skip_stack and self.skip_stack[-1] == normalized:
-            self.skip_stack.pop()
-            return
-
-        if not self.skip_stack and normalized in self.block_tags:
-            self.parts.append("\n")
-
     def handle_data(self, data: str) -> None:
-        if self.skip_stack:
+        if self.limit_exceeded:
             return
-
-        cleaned = data.strip()
-        if not cleaned:
+        if self._is_skipping():
             return
 
         if self.in_title:
-            self.title_parts.append(cleaned)
+            self._append_text(self.title_parts, data)
             return
 
-        self.parts.append(cleaned)
+        self._append_text(self.parts, data)
+        active_indexes = self._active_primary_indexes()
+        if not active_indexes:
+            self._append_text(self.outside_primary_parts, data)
+        for index in active_indexes:
+            self._append_text(self.primary_regions[index]["parts"], data)
 
 
 def read_text(path: Path, default: str = "") -> str:
@@ -635,16 +879,89 @@ def validate_intake_url(
     )
 
 
-def response_charset(content_type: str) -> str:
-    match = re.search(r"charset=([A-Za-z0-9._-]+)", content_type or "", re.I)
-    if match:
-        return match.group(1)
-    return "utf-8"
+def parse_content_type(content_type: str) -> tuple[str, str]:
+    raw = content_type or ""
+    if any(ord(character) < 0x20 or ord(character) == 0x7F for character in raw):
+        return "", "utf-8"
+    media_type = raw.split(";", 1)[0].strip().lower()
+    token = r"[!#$%&'*+.^_`|~0-9A-Za-z-]+"
+    if not re.fullmatch(rf"{token}/{token}", media_type):
+        return "", "utf-8"
+
+    message = Message()
+    message["content-type"] = raw
+    parameters = message.get_params(header="content-type", unquote=True) or []
+    charset_values = [
+        value
+        for key, value in parameters[1:]
+        if isinstance(key, str) and key.casefold() == "charset"
+    ]
+    if (
+        len(charset_values) > 1
+        or (
+            len(charset_values) == 1
+            and (
+                not isinstance(charset_values[0], str)
+                or not charset_values[0].strip()
+            )
+        )
+    ):
+        raise IntakeError(
+            415,
+            "unsupported_content_type",
+            "Source Content-Type must declare at most one non-empty charset.",
+        )
+    charset = charset_values[0].strip() if charset_values else "utf-8"
+    return media_type, charset
 
 
-def clean_extracted_text(raw: str) -> str:
-    normalized = html.unescape(raw)
-    normalized = normalized.replace("\u00a0", " ")
+def response_header_values(headers, name: str) -> list[str]:
+    get_all = getattr(headers, "get_all", None)
+    if callable(get_all):
+        values = get_all(name, []) or []
+    else:
+        values = [
+            value
+            for key, value in headers.items()
+            if str(key).lower() == name.lower()
+        ]
+    return [str(value) for value in values if value is not None]
+
+
+def source_text_charset(declared_charset: str) -> str:
+    try:
+        canonical = codecs.lookup(declared_charset).name.lower()
+    except LookupError as exc:
+        raise IntakeError(
+            415,
+            "unsupported_content_type",
+            "Source charset is unknown or unsupported.",
+        ) from exc
+
+    safe_names = {
+        "ascii", "big5", "big5hkscs", "euc_jp", "euc_kr", "gb18030",
+        "gb2312", "gbk", "hz", "johab", "koi8-r", "koi8-u", "latin-1",
+        "mac-roman", "ptcp154", "shift_jis", "tis-620", "utf-8",
+        "utf-8-sig", "utf-16", "utf-16-be", "utf-16-le", "utf-32",
+        "utf-32-be", "utf-32-le",
+    }
+    if (
+        canonical in safe_names
+        or re.fullmatch(r"cp[0-9]+", canonical)
+        or re.fullmatch(r"iso8859-[0-9]+", canonical)
+    ):
+        return canonical
+    raise IntakeError(
+        415,
+        "unsupported_content_type",
+        "Source charset is not a supported text encoding.",
+    )
+
+
+def clean_extracted_text(raw: str) -> tuple[str, bool]:
+    # HTMLParser already resolves character references exactly once. Plain text
+    # is not HTML, so entity-looking strings there must remain literal.
+    normalized = raw.replace("\u00a0", " ")
     normalized = re.sub(r"[ \t\r\f\v]+", " ", normalized)
 
     lines = []
@@ -655,9 +972,6 @@ def clean_extracted_text(raw: str) -> str:
         if not item:
             continue
 
-        if len(item) < 28 and not item.endswith((".", ":", "!", "?")):
-            continue
-
         key = item.lower()
         if key in seen:
             continue
@@ -665,31 +979,119 @@ def clean_extracted_text(raw: str) -> str:
         seen.add(key)
         lines.append(item)
 
-    text = "\n".join(lines)
-    if len(text) > MAX_EXTRACTED_TEXT_CHARS:
-        text = text[:MAX_EXTRACTED_TEXT_CHARS].rstrip() + "…"
+    full_text = "\n".join(lines)
+    truncated = len(full_text) > MAX_EXTRACTED_TEXT_CHARS
+    text = full_text
+    if truncated:
+        text = full_text[:MAX_EXTRACTED_TEXT_CHARS].rstrip() + "…"
 
-    return text
+    return text, truncated
 
 
-def extract_text_document(body: bytes, content_type: str) -> tuple[str, str | None]:
-    charset = response_charset(content_type)
+def extract_text_document(body: bytes, content_type: str) -> tuple[str, str | None, bool]:
+    media_type, charset = parse_content_type(content_type)
+    if media_type not in {"text/html", "text/plain", "application/xhtml+xml"}:
+        raise IntakeError(
+            415,
+            "unsupported_content_type",
+            "Source Content-Type is malformed or unsupported.",
+        )
+    charset = source_text_charset(charset)
 
     try:
-        decoded = body.decode(charset, errors="replace")
-    except LookupError:
-        decoded = body.decode("utf-8", errors="replace")
+        decoded = body.decode(charset, errors="strict")
+    except (LookupError, UnicodeDecodeError, ValueError) as exc:
+        raise IntakeError(
+            415,
+            "unsupported_content_type",
+            "Source bytes are not valid for the declared text encoding.",
+        ) from exc
+    try:
+        decoded.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise IntakeError(
+            415,
+            "unsupported_content_type",
+            "Decoded source text contains unsupported non-scalar Unicode.",
+        ) from exc
 
-    if "html" not in content_type.lower():
-        return clean_extracted_text(decoded), None
+    if media_type == "text/plain":
+        text, truncated = clean_extracted_text(decoded)
+        return text, None, truncated
 
     parser = TextExtractor()
     parser.feed(decoded)
+    parser.close()
 
-    title = clean_extracted_text("\n".join(parser.title_parts))
-    text = clean_extracted_text("\n".join(parser.parts))
+    title, title_truncated = clean_extracted_text("".join(parser.title_parts))
+    fallback_text, fallback_truncated = clean_extracted_text("".join(parser.parts))
+    outside_text, outside_truncated = clean_extracted_text(
+        "".join(parser.outside_primary_parts)
+    )
 
-    return text, title or None
+    cleaned_regions = []
+    for region in parser.primary_regions:
+        region_text, region_truncated = clean_extracted_text("".join(region["parts"]))
+        if region_text:
+            cleaned_regions.append(
+                (region["tag"], region_text, region_truncated)
+            )
+
+    main_region = max(
+        (item for item in cleaned_regions if item[0] == "main"),
+        key=lambda item: len(item[1]),
+        default=None,
+    )
+    article_region = max(
+        (item for item in cleaned_regions if item[0] == "article"),
+        key=lambda item: len(item[1]),
+        default=None,
+    )
+
+    placeholder_text = (
+        " ".join(main_region[1].casefold().split()).strip(" .…!?。！？؟")
+        if main_region
+        else ""
+    )
+    placeholder_prefixes = {
+        "loading", "please wait", "redirecting", "just a moment",
+        "welcome", "bienvenido", "willkommen",
+        "cargando", "espere", "bitte warten", "wird geladen",
+        "загрузка", "пожалуйста подождите", "טוען", "נא להמתין",
+        "加载中", "请稍候",
+    }
+    placeholder_main = bool(
+        main_region
+        and len(main_region[1]) < 80
+        and any(
+            placeholder_text == prefix or placeholder_text.startswith(prefix + " ")
+            for prefix in placeholder_prefixes
+        )
+    )
+    if main_region and not placeholder_main:
+        _, text, text_truncated = main_region
+    elif (
+        article_region
+        and len(article_region[1]) >= 40
+        and len(article_region[1]) >= max(1, len(outside_text)) * 2
+    ):
+        _, text, text_truncated = article_region
+    elif (
+        article_region
+        and outside_text
+        and len(outside_text) >= len(article_region[1]) * 1.5
+    ):
+        text, text_truncated = outside_text, outside_truncated
+    elif main_region and outside_text:
+        text, text_truncated = outside_text, outside_truncated
+    else:
+        text, text_truncated = fallback_text, fallback_truncated
+
+    return (
+        text,
+        title or None,
+        text_truncated or title_truncated or parser.limit_exceeded,
+    )
 
 
 def fetch_url_text_with_deadline(raw_url: str, deadline: FetchDeadline) -> dict:
@@ -706,6 +1108,7 @@ def fetch_url_text_with_deadline(raw_url: str, deadline: FetchDeadline) -> dict:
                 headers={
                     "User-Agent": USER_AGENT,
                     "Accept": "text/html, text/plain, application/xhtml+xml;q=0.9, */*;q=0.4",
+                    "Accept-Encoding": "identity",
                 },
                 method="GET",
             )
@@ -721,12 +1124,87 @@ def fetch_url_text_with_deadline(raw_url: str, deadline: FetchDeadline) -> dict:
                 request,
                 timeout=deadline.remaining_seconds(),
             ) as response:
-                content_type = response.headers.get("Content-Type", "")
-                if not (
-                    "text/html" in content_type.lower()
-                    or "text/plain" in content_type.lower()
-                    or "application/xhtml+xml" in content_type.lower()
-                ):
+                status_code = response.getcode()
+                content_range_values = response_header_values(
+                    response.headers,
+                    "Content-Range",
+                )
+                if status_code != 200 or content_range_values:
+                    raise IntakeError(
+                        502,
+                        "url_fetch_failed",
+                        "URL fetch returned a partial or unsupported success status.",
+                    )
+                content_encoding_values = response_header_values(
+                    response.headers,
+                    "Content-Encoding",
+                )
+                if len(content_encoding_values) > 1:
+                    raise IntakeError(
+                        415,
+                        "unsupported_content_encoding",
+                        "Multiple content encodings are not supported.",
+                    )
+                content_encoding = (
+                    content_encoding_values[0].strip().lower()
+                    if content_encoding_values
+                    else ""
+                )
+                if content_encoding not in {"", "identity"}:
+                    raise IntakeError(
+                        415,
+                        "unsupported_content_encoding",
+                        f"Unsupported content encoding: {content_encoding}.",
+                    )
+                content_type_values = response_header_values(
+                    response.headers,
+                    "Content-Type",
+                )
+                if len(content_type_values) != 1:
+                    raise IntakeError(
+                        415,
+                        "unsupported_content_type",
+                        "Exactly one Content-Type header is required.",
+                    )
+                content_type = content_type_values[0]
+                content_length_values = response_header_values(
+                    response.headers,
+                    "Content-Length",
+                )
+                transfer_encoding_values = response_header_values(
+                    response.headers,
+                    "Transfer-Encoding",
+                )
+                if len(content_length_values) > 1 or len(transfer_encoding_values) > 1:
+                    raise IntakeError(
+                        502,
+                        "url_fetch_failed",
+                        "URL response framing headers are ambiguous.",
+                    )
+                declared_length = None
+                if content_length_values:
+                    raw_length = content_length_values[0].strip()
+                    if len(raw_length) > 20 or not re.fullmatch(r"[0-9]+", raw_length):
+                        raise IntakeError(
+                            502,
+                            "url_fetch_failed",
+                            "URL response Content-Length is invalid.",
+                        )
+                    declared_length = int(raw_length)
+                if transfer_encoding_values:
+                    transfer_encoding = transfer_encoding_values[0].strip().lower()
+                    if transfer_encoding != "chunked" or declared_length is not None:
+                        raise IntakeError(
+                            502,
+                            "url_fetch_failed",
+                            "URL response transfer framing is unsupported.",
+                        )
+                media_type, _ = parse_content_type(content_type)
+                if media_type not in {
+                    "text/html",
+                    "text/plain",
+                    "application/xhtml+xml",
+                }:
                     raise IntakeError(
                         415,
                         "unsupported_content_type",
@@ -734,11 +1212,22 @@ def fetch_url_text_with_deadline(raw_url: str, deadline: FetchDeadline) -> dict:
                     )
 
                 body = response.read(MAX_URL_BYTES + 1)
+                expected_read = (
+                    min(declared_length, MAX_URL_BYTES + 1)
+                    if declared_length is not None
+                    else None
+                )
+                if expected_read is not None and len(body) != expected_read:
+                    raise IntakeError(
+                        502,
+                        "url_fetch_failed",
+                        "URL response ended before its declared Content-Length.",
+                    )
                 truncated = len(body) > MAX_URL_BYTES
                 if truncated:
                     body = body[:MAX_URL_BYTES]
 
-                text, title = extract_text_document(body, content_type)
+                text, title, text_truncated = extract_text_document(body, content_type)
                 if not text:
                     raise IntakeError(422, "empty_extraction", "URL was fetched but no readable text was extracted.")
 
@@ -756,7 +1245,7 @@ def fetch_url_text_with_deadline(raw_url: str, deadline: FetchDeadline) -> dict:
                     "text": text,
                     "content_type": content_type,
                     "bytes_read": len(body),
-                    "truncated": truncated,
+                    "truncated": truncated or text_truncated,
                     "redirects": redirects,
                     "verification_status": "unreviewed",
                     "learning_status": "candidate-source-not-verified",
@@ -769,9 +1258,14 @@ def fetch_url_text_with_deadline(raw_url: str, deadline: FetchDeadline) -> dict:
 
         except HTTPError as exc:
             if exc.code in {301, 302, 303, 307, 308}:
-                location = exc.headers.get("Location")
-                if not location:
-                    raise IntakeError(502, "redirect_without_location", "URL redirect did not include a Location header.")
+                location_values = response_header_values(exc.headers, "Location")
+                if len(location_values) != 1 or not location_values[0].strip():
+                    raise IntakeError(
+                        502,
+                        "redirect_without_location",
+                        "URL redirect must include exactly one non-empty Location header.",
+                    )
+                location = location_values[0].strip()
 
                 try:
                     next_url = urljoin(current.url, location)
@@ -830,13 +1324,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_json(self, status: int, payload: dict) -> None:
         try:
-            body = dump_strict_json(payload)
-        except (TypeError, ValueError):
+            encoded = dump_strict_json(payload).encode("utf-8")
+        except (TypeError, ValueError, UnicodeEncodeError):
             status = 500
-            body = dump_strict_json(
+            encoded = dump_strict_json(
                 {"error": "response payload is not valid strict JSON"}
-            )
-        encoded = body.encode("utf-8")
+            ).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(encoded)))
@@ -844,21 +1337,40 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(encoded)
 
     def read_json_body(self, max_body_length: int) -> dict | None:
-        content_length = self.headers.get("Content-Length")
+        content_length_values = response_header_values(
+            self.headers,
+            "Content-Length",
+        )
+        transfer_encoding_values = response_header_values(
+            self.headers,
+            "Transfer-Encoding",
+        )
 
-        if content_length is None:
+        if transfer_encoding_values:
+            self.send_json(
+                400,
+                {"error": "Transfer-Encoding request bodies are not supported"},
+            )
+            return None
+
+        if not content_length_values:
             self.send_json(411, {"error": "Content-Length header is required"})
             return None
 
-        try:
-            length = int(content_length)
-        except ValueError:
+        if len(content_length_values) != 1:
+            self.send_json(
+                400,
+                {"error": "exactly one Content-Length header is required"},
+            )
+            return None
+
+        content_length = content_length_values[0].strip()
+
+        if len(content_length) > 20 or not re.fullmatch(r"[0-9]+", content_length):
             self.send_json(400, {"error": "Content-Length header must be an integer"})
             return None
 
-        if length < 0:
-            self.send_json(400, {"error": "Content-Length header must not be negative"})
-            return None
+        length = int(content_length)
 
         if length > max_body_length:
             self.send_json(
@@ -871,7 +1383,20 @@ class Handler(BaseHTTPRequestHandler):
             return None
 
         try:
-            raw = self.rfile.read(length).decode("utf-8")
+            raw_bytes = self.rfile.read(length)
+        except (OSError, ValueError):
+            self.send_json(400, {"error": "request body could not be read"})
+            return None
+
+        if len(raw_bytes) != length:
+            self.send_json(
+                400,
+                {"error": "request body ended before its declared Content-Length"},
+            )
+            return None
+
+        try:
+            raw = raw_bytes.decode("utf-8")
         except UnicodeDecodeError:
             self.send_json(400, {"error": "request body must be valid UTF-8"})
             return None

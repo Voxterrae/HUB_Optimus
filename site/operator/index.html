@@ -590,6 +590,7 @@
       border-radius: 0.85rem;
       padding: 0.8rem;
       background: rgba(0, 8, 22, 0.68);
+      overflow-wrap: anywhere;
     }
 
     .output-card.full {
@@ -653,6 +654,64 @@
     }
     .product-intake textarea {
       min-height: 11rem;
+    }
+
+    .source-preview {
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.48);
+      border-radius: 0.9rem;
+      background: rgba(var(--brand-signal-rgb), 0.06);
+    }
+
+    .source-preview[hidden] {
+      display: none;
+    }
+
+    .source-preview blockquote {
+      max-height: 18rem;
+      margin: 0.8rem 0;
+      padding: 0.8rem;
+      overflow: auto;
+      border-inline-start: 0.25rem solid var(--brand-signal);
+      background: rgba(0, 8, 22, 0.72);
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    .source-confirmation {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      letter-spacing: normal;
+      text-transform: none;
+    }
+
+    .source-confirmation input {
+      width: auto;
+      margin-top: 0.2rem;
+    }
+
+    #product_output:focus {
+      outline: 3px solid var(--brand-signal);
+      outline-offset: 4px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
     }
 
     .product-progress-status {
@@ -874,20 +933,20 @@
       <b>Scope:</b> organize submitted material into an editable draft, preserve source provenance and uncertainty, then hand the draft to a separately controlled runtime only when an operator chooses to do so.
     </p>
 
-    <section class="panel full product-intake" id="product_intake">
-      <h2>Prepare a review draft</h2>
+    <form class="panel full product-intake" id="product_intake" aria-labelledby="product_intake_title">
+      <h2 id="product_intake_title">Prepare a review draft</h2>
       <p class="product-lede">Paste a URL or source text. Operator records provenance, keeps submitted claims separate from corroboration, and prepares an editable local draft. It does not verify truth, infer motives, score risk, or execute the Semantic Engine.</p>
 
       <div class="row">
         <div class="field">
           <label for="product_source_url">Source URL</label>
-          <input id="product_source_url" placeholder="https://example.com/news-or-github-source">
-          <p class="field-hint">Used for controlled URL intake. If the source blocks access, paste the article text below.</p>
+          <input id="product_source_url" name="source_url" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" aria-describedby="product_source_url_hint" placeholder="https://example.com/news-or-github-source">
+          <p class="field-hint" id="product_source_url_hint">Sent only to the controlled URL intake service. If retrieval fails, paste the relevant source text below.</p>
         </div>
         <div class="field">
           <label for="signal_source_type">Source type</label>
-          <select id="signal_source_type">
-            <option value="automatic">automatic from URL/text</option>
+          <select id="signal_source_type" name="source_type">
+            <option value="automatic">detect conservatively from URL</option>
             <option value="external-source">external source</option>
             <option value="news-article">news article</option>
             <option value="github-issue">GitHub issue</option>
@@ -903,13 +962,23 @@
       </div>
 
       <div class="field">
-        <label for="product_source_text">Source text or operator account</label>
-        <textarea id="product_source_text" placeholder="Paste the article text, copied post, GitHub issue body, CI failure excerpt, or describe the situation here."></textarea>
-        <p class="field-hint">When text and a URL are both supplied, the URL attribution is recorded as operator-provided and unverified; the URL is not fetched automatically.</p>
+        <label for="product_source_text">Source text or operator context <span class="meta">(optional when a URL can be retrieved)</span></label>
+        <textarea id="product_source_text" name="source_text" aria-describedby="product_source_text_hint" placeholder="Paste source text or add context that must remain separate from the retrieved page."></textarea>
+        <p class="field-hint" id="product_source_text_hint">When a URL and text are both supplied, Operator retrieves the URL and records this text separately as operator-provided context.</p>
       </div>
 
+      <section class="source-preview" id="product_source_preview" aria-labelledby="product_source_preview_title" hidden>
+        <h3 id="product_source_preview_title">Review extracted source text</h3>
+        <p id="product_source_preview_meta">No URL has been retrieved.</p>
+        <blockquote id="product_source_preview_text"></blockquote>
+        <label class="source-confirmation" for="product_confirm_source">
+          <input id="product_confirm_source" type="checkbox">
+          <span>I reviewed this extraction and want to use these source-bound excerpts. This confirms selection, not truth.</span>
+        </label>
+      </section>
+
       <div class="actions">
-        <button class="primary" id="product_analyze" type="button">Prepare draft</button>
+        <button class="primary" id="product_analyze" type="submit">Prepare draft</button>
         <button id="product_load_news_demo" type="button">Example</button>
         <button id="product_show_advanced" type="button">Advanced</button>
       </div>
@@ -945,7 +1014,7 @@
         <b id="product_loader_percent">0%</b>
       </div>
 
-      <div id="product_output" class="output-grid" aria-live="polite">
+      <div id="product_output" class="output-grid" tabindex="-1" aria-live="polite">
         <section class="output-card full">
           <h3>Draft</h3>
           <p class="empty">Provide source material to prepare a structured draft for human review.</p>
@@ -958,7 +1027,7 @@
         <button id="share_memory_whatsapp" type="button" disabled>WhatsApp</button>
       </div>
       <p class="memory-status" id="memory_status" role="status" aria-live="polite">Prepare a draft to unlock memory and sharing.</p>
-    </section>
+    </form>
 
     <details class="advanced-shell" id="advanced_operator_console">
       <summary><b>Advanced / Audit JSON</b><span>Open technical normalizer, generated JSON, local backend command and raw response viewer.</span></summary>
@@ -1157,7 +1226,7 @@
     <footer class="footer">
       <span>This page embeds no client-side analytics or advertising tracking, performs no hidden scoring, and loads no third-party JavaScript. Hosting providers may retain operational logs.</span>
       <span>Public analysis API: not exposed. Controlled URL intake: bounded.</span>
-      <span>Pasted text stays on-device. A URL is sent to controlled intake only when no text is supplied.</span>
+      <span>Pasted text stays on-device. Every supplied URL is sent alone to controlled intake; operator context is not sent with it.</span>
     </footer>
   </main>
 
@@ -1167,6 +1236,12 @@
     const memoryKey = "hub_optimus_operator_memory_v1";
     let currentMemoryRecord = null;
     let currentIntakeRecord = null;
+    let currentRetrievedSourceText = "";
+    let currentRetrievedSourceUrl = "";
+    let currentCaseMetadata = {};
+    let intakeGeneration = 0;
+    let intakeRequestSequence = 0;
+    let activeIntakeRequestToken = 0;
 
     let claims = [];
     let evidence = [];
@@ -1203,6 +1278,60 @@
       return prefix + "-" + String(recordSequences[prefix]).padStart(3, "0");
     }
 
+    function reconcileRecordRelationships() {
+      const claimIds = new Set(claims.map((record) => record?.claim_id).filter(Boolean));
+      const evidenceIds = new Set(evidence.map((record) => record?.evidence_id).filter(Boolean));
+
+      evidence = evidence.map((item) => ({
+        ...item,
+        supports_claim_ids: Array.isArray(item.supports_claim_ids)
+          ? item.supports_claim_ids.filter((id) => claimIds.has(id))
+          : [],
+        contradicts_claim_ids: Array.isArray(item.contradicts_claim_ids)
+          ? item.contradicts_claim_ids.filter((id) => claimIds.has(id))
+          : []
+      }));
+
+      const relationships = Array.isArray(currentCaseMetadata.relationships)
+        ? currentCaseMetadata.relationships.filter((relationship) => (
+            evidenceIds.has(relationship?.from_ref) &&
+            claimIds.has(relationship?.to_ref)
+          ))
+        : [];
+
+      const relationshipKeys = new Set(
+        relationships.map((relationship) => `${relationship.from_ref}\u0000${relationship.to_ref}\u0000${relationship.type}`)
+      );
+      evidence.forEach((item) => {
+        [
+          ["supports_claim_ids", item?.metadata?.support_scope === "attribution-only" ? "SUPPORTS_ATTRIBUTION" : "SUPPORTS_CLAIM"],
+          ["contradicts_claim_ids", "CONTRADICTS_CLAIM"]
+        ].forEach(([field, type]) => {
+          (item[field] || []).forEach((claimId) => {
+            const key = `${item.evidence_id}\u0000${claimId}\u0000${type}`;
+            if (relationshipKeys.has(key)) return;
+            relationshipKeys.add(key);
+            relationships.push({
+              relationship_id: `relation-${relationships.length + 1}-${item.evidence_id}-${claimId}`,
+              type,
+              from_ref: item.evidence_id,
+              to_ref: claimId,
+              status: "candidate",
+              created_by: "operator-record-reconciliation-v1"
+            });
+          });
+        });
+      });
+
+      currentCaseMetadata = Object.assign({}, currentCaseMetadata, { relationships });
+    }
+
+    function invalidateShareableResult(message = "Draft edited. Prepare the review draft again before saving or sharing.") {
+      currentMemoryRecord = null;
+      setMemoryActionsEnabled(false);
+      renderMemoryStatus(message, false);
+    }
+
     function removeClaimAt(index) {
       const [removedClaim] = claims.splice(index, 1);
       if (removedClaim?.claim_id) {
@@ -1217,7 +1346,16 @@
         }));
       }
 
+      reconcileRecordRelationships();
+      invalidateShareableResult();
       renderClaims();
+      renderEvidence();
+    }
+
+    function removeEvidenceAt(index) {
+      evidence.splice(index, 1);
+      reconcileRecordRelationships();
+      invalidateShareableResult();
       renderEvidence();
     }
     // OPERATOR_RECORD_INTEGRITY_END
@@ -1245,6 +1383,7 @@
     }
 
     function buildPayload() {
+      reconcileRecordRelationships();
       const payload = {
         case_id: value("case_id") || "operator-case-001",
         core_version_ref: value("core_version_ref") || "main",
@@ -1266,9 +1405,9 @@
       const signal = value("operational_signal");
       if (signal) payload.operational_signal = signal;
 
-      const metadata = {
-        operator_mode: "browser-local-draft"
-      };
+      const metadata = Object.assign({}, currentCaseMetadata, {
+        operator_mode: currentCaseMetadata.operator_mode || "browser-local-draft"
+      });
       const intake = value("intake_channel");
       if (intake) metadata.intake_channel = intake;
       if (currentIntakeRecord) metadata.intake_record = currentIntakeRecord;
@@ -1352,6 +1491,8 @@
       });
 
       $("claim_text").value = "";
+      reconcileRecordRelationships();
+      invalidateShareableResult();
       renderClaims();
     }
 
@@ -1362,18 +1503,21 @@
         return;
       }
 
+      const knownClaimIds = new Set(claims.map((record) => record.claim_id));
       evidence.push({
         evidence_id: nextRecordId("evidence"),
         text,
         source_ref: value("evidence_source") || "operator-submission",
         source_type: value("evidence_type") || "unknown",
-        supports_claim_ids: splitComma(value("evidence_supports")),
+        supports_claim_ids: splitComma(value("evidence_supports")).filter((id) => knownClaimIds.has(id)),
         contradicts_claim_ids: [],
         limitations: lines("evidence_limitations"),
         metadata: {}
       });
 
       $("evidence_text").value = "";
+      reconcileRecordRelationships();
+      invalidateShareableResult();
       renderEvidence();
     }
 
@@ -1478,15 +1622,20 @@
     }
 
     function loadPayload(payload) {
+      invalidateShareableResult("A different case was loaded. Prepare its review output before saving or sharing.");
       $("case_id").value = payload.case_id || "operator-case-001";
       $("core_version_ref").value = payload.core_version_ref || "main";
       $("input_summary").value = payload.input_summary || "";
       $("operational_signal").value = payload.operational_signal || "none";
       $("intake_channel").value = payload.metadata?.intake_channel || "operator-pwa";
       currentIntakeRecord = payload.metadata?.intake_record || null;
+      currentCaseMetadata = payload.metadata && typeof payload.metadata === "object"
+        ? structuredClone(payload.metadata)
+        : {};
 
       claims = Array.isArray(payload.claims) ? payload.claims : [];
       evidence = Array.isArray(payload.evidence) ? payload.evidence : [];
+      reconcileRecordRelationships();
       syncRecordSequences();
 
       $("inferences").value = Array.isArray(payload.inferences) ? payload.inferences.join("\n") : "";
@@ -1543,16 +1692,6 @@
       return `${normalized.slice(0, maxLength - 1).trim()}…`;
     }
 
-    function firstReadableSentence(raw) {
-      const normalized = String(raw || "").replace(/\s+/g, " ").trim();
-      const parts = normalized
-        .split(/(?<=[.!?])\s+|\n+/)
-        .map((item) => item.trim())
-        .filter((item) => item.length >= 24);
-
-      return parts[0] || compactText(normalized, 220);
-    }
-
     function uniqueList(items, limit = 6) {
       const seen = new Set();
       const result = [];
@@ -1569,12 +1708,153 @@
       return result.slice(0, limit);
     }
 
-    function sourceSentences(raw) {
+    // OPERATOR_SOURCE_BOUND_START
+    function canonicalizeSourceText(raw) {
       return String(raw || "")
-        .replace(/\s+/g, " ")
-        .split(/(?<=[.!?])\s+|;\s+|\n+/)
-        .map((item) => item.trim())
-        .filter((item) => item.length >= 28);
+        .replace(/\r\n?/g, "\n")
+        .normalize("NFC");
+    }
+
+    function sha256Hex(value) {
+      const roundConstants = new Uint32Array([
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+        0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
+        0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+        0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+        0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
+        0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
+        0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+      ]);
+      const state = new Uint32Array([
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+      ]);
+      const bytes = new TextEncoder().encode(String(value || ""));
+      const bitLength = bytes.length * 8;
+      const paddedLength = Math.ceil((bytes.length + 9) / 64) * 64;
+      const padded = new Uint8Array(paddedLength);
+      padded.set(bytes);
+      padded[bytes.length] = 0x80;
+      const paddedView = new DataView(padded.buffer);
+      paddedView.setUint32(paddedLength - 8, Math.floor(bitLength / 0x100000000));
+      paddedView.setUint32(paddedLength - 4, bitLength >>> 0);
+      const words = new Uint32Array(64);
+      const rotateRight = (word, shift) => (word >>> shift) | (word << (32 - shift));
+
+      for (let offset = 0; offset < paddedLength; offset += 64) {
+        for (let index = 0; index < 16; index += 1) {
+          words[index] = paddedView.getUint32(offset + index * 4);
+        }
+        for (let index = 16; index < 64; index += 1) {
+          const previous15 = words[index - 15];
+          const previous2 = words[index - 2];
+          const sigma0 = rotateRight(previous15, 7) ^ rotateRight(previous15, 18) ^ (previous15 >>> 3);
+          const sigma1 = rotateRight(previous2, 17) ^ rotateRight(previous2, 19) ^ (previous2 >>> 10);
+          words[index] = (words[index - 16] + sigma0 + words[index - 7] + sigma1) >>> 0;
+        }
+
+        let [a, b, c, d, e, f, g, h] = state;
+        for (let index = 0; index < 64; index += 1) {
+          const sum1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25);
+          const choose = (e & f) ^ (~e & g);
+          const temporary1 = (h + sum1 + choose + roundConstants[index] + words[index]) >>> 0;
+          const sum0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
+          const majority = (a & b) ^ (a & c) ^ (b & c);
+          const temporary2 = (sum0 + majority) >>> 0;
+          h = g;
+          g = f;
+          f = e;
+          e = (d + temporary1) >>> 0;
+          d = c;
+          c = b;
+          b = a;
+          a = (temporary1 + temporary2) >>> 0;
+        }
+
+        state[0] = (state[0] + a) >>> 0;
+        state[1] = (state[1] + b) >>> 0;
+        state[2] = (state[2] + c) >>> 0;
+        state[3] = (state[3] + d) >>> 0;
+        state[4] = (state[4] + e) >>> 0;
+        state[5] = (state[5] + f) >>> 0;
+        state[6] = (state[6] + g) >>> 0;
+        state[7] = (state[7] + h) >>> 0;
+      }
+
+      return Array.from(state, (word) => word.toString(16).padStart(8, "0")).join("");
+    }
+
+    function sourceFingerprint(canonicalText) {
+      return `sha256:${sha256Hex(canonicalText)}`;
+    }
+
+    function canonicalSource(raw) {
+      const text = canonicalizeSourceText(raw);
+      return { text, fingerprint: sourceFingerprint(text) };
+    }
+
+    function buildOperatorContextRecord(raw, maxStoredCharacters = 1200) {
+      const originalText = String(raw || "");
+      const canonical = canonicalSource(originalText);
+      const truncated = canonical.text.length > maxStoredCharacters;
+      const storedText = truncated
+        ? canonical.text.slice(0, maxStoredCharacters)
+        : canonical.text;
+
+      return {
+        text: storedText,
+        attribution: "operator-provided-context-not-attributed-to-source",
+        original_character_count: originalText.length,
+        canonical_character_count: canonical.text.length,
+        stored_character_count: storedText.length,
+        truncated,
+        source_text_fingerprint: canonical.fingerprint
+      };
+    }
+
+    function sourceExcerpts(source, fingerprint, limit = 5) {
+      const excerpts = [];
+      const seen = new Set();
+      const sentencePattern = /[^.!?。！？؟\n]+(?:[.!?。！？؟]+|$)/gu;
+      let match;
+
+      while ((match = sentencePattern.exec(source)) && excerpts.length < limit) {
+        const segment = match[0];
+        const trimmed = segment.trim();
+        if (trimmed.length < 40) continue;
+
+        const trimmedCodePoints = Array.from(trimmed);
+        const text = trimmedCodePoints.length > 480
+          ? trimmedCodePoints.slice(0, 480).join("").trimEnd()
+          : trimmed;
+        const key = text.replace(/\s+/g, " ").toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        const leading = segment.indexOf(trimmed);
+        const utf16Start = match.index + Math.max(0, leading);
+        const start = Array.from(source.slice(0, utf16Start)).length;
+        const end = start + Array.from(text).length;
+        excerpts.push({
+          excerpt_id: `excerpt-${String(excerpts.length + 1).padStart(3, "0")}`,
+          text,
+          span_start: start,
+          span_end: end,
+          span_unit: "unicode-code-point",
+          source_text_fingerprint: fingerprint
+        });
+      }
+
+      return excerpts;
     }
 
 
@@ -1601,30 +1881,94 @@
     }
 
     function buildSourceProfile(raw, sourceType, sourceUrl) {
-      const keySentences = uniqueList(
-        sourceSentences(raw).map((sentence) => compactText(sentence, 320)),
-        3
-      );
-      const primarySentence = compactText(
-        keySentences[0] || firstReadableSentence(raw),
-        360
-      );
+      const canonical = canonicalSource(raw);
+      const excerpts = sourceExcerpts(canonical.text, canonical.fingerprint);
+      const keySentences = excerpts.map((excerpt) => excerpt.text);
       const sourceLabel = String(sourceType || "operator-submission").replaceAll("-", " ");
 
       return {
         sourceType,
         sourceUrl,
+        canonicalText: canonical.text,
         sourceLabel,
         domain: detectSignalDomain(raw, sourceType),
         actors: extractActors(raw),
+        excerpts,
         keySentences,
-        primarySentence,
-        summary: `Local draft from ${sourceLabel}. Submitted statements remain unverified until a human reviews primary records and independent corroboration.`
+        primarySentence: keySentences[0] || "",
+        sourceFingerprint: canonical.fingerprint,
+        summary: `Source-bound review draft with ${excerpts.length} exact excerpt${excerpts.length === 1 ? "" : "s"} from ${sourceLabel}. Truth, causality and relevance have not been evaluated.`
       };
     }
 
-    function buildSpecificClaim(profile) {
-      return compactText(`Submitted source states: ${profile.primarySentence}`, 420);
+    function buildSpecificClaim(excerpt) {
+      return `The submitted source states: “${excerpt.text}”`;
+    }
+
+    function buildSourceBoundRecords(profile, {
+      sourceRef,
+      claimType,
+      retrieved
+    }) {
+      const claims = profile.excerpts.map((excerpt, index) => {
+        const claimId = `claim-${String(index + 1).padStart(3, "0")}`;
+        return {
+          claim_id: claimId,
+          text: buildSpecificClaim(excerpt),
+          source_ref: sourceRef,
+          claim_type: claimType,
+          requires_evidence: true,
+          status: "pending",
+          metadata: {
+            excerpt_id: excerpt.excerpt_id,
+            source_text_fingerprint: excerpt.source_text_fingerprint,
+            span_start: excerpt.span_start,
+            span_end: excerpt.span_end,
+            span_unit: excerpt.span_unit,
+            support_scope: "attribution-only",
+            intake_record_ref: "metadata.intake_record",
+            normalized_by: "operator-source-bound-v1"
+          }
+        };
+      });
+      const evidence = profile.excerpts.map((excerpt, index) => {
+        const claimId = `claim-${String(index + 1).padStart(3, "0")}`;
+        return {
+          evidence_id: `evidence-${String(index + 1).padStart(3, "0")}`,
+          text: excerpt.text,
+          source_ref: sourceRef,
+          source_type: retrieved
+            ? "retrieved-source-excerpt"
+            : "operator-provided-excerpt",
+          supports_claim_ids: [claimId],
+          contradicts_claim_ids: [],
+          limitations: [
+            "This exact excerpt supports only that the submitted source contains the attributed statement.",
+            "It is not independent corroboration of the underlying claim.",
+            "Authorship, context, completeness and relevance still require human review."
+          ],
+          metadata: {
+            excerpt_id: excerpt.excerpt_id,
+            source_text_fingerprint: excerpt.source_text_fingerprint,
+            span_start: excerpt.span_start,
+            span_end: excerpt.span_end,
+            span_unit: excerpt.span_unit,
+            support_scope: "attribution-only",
+            intake_record_ref: "metadata.intake_record",
+            normalized_by: "operator-source-bound-v1"
+          }
+        };
+      });
+      const relationships = evidence.map((item, index) => ({
+        relationship_id: `relation-${String(index + 1).padStart(3, "0")}`,
+        type: "SUPPORTS_ATTRIBUTION",
+        from_ref: item.evidence_id,
+        to_ref: item.supports_claim_ids[0],
+        status: "candidate",
+        created_by: "operator-source-bound-v1"
+      }));
+
+      return { claims, evidence, relationships };
     }
 
     function buildConservativeTriage(profile) {
@@ -1633,8 +1977,8 @@
       return {
         domain_id: profile.domain.id,
         domain_label: profile.domain.label,
-        summary: `Local draft from ${sourceLabel}. Operator organizes the submitted text but does not verify it, infer intent, score risk, or execute the Semantic Engine.`,
-        problem: "No underlying problem is established automatically. The draft preserves the submitted statement for human review.",
+        summary: `Source-bound review draft from ${sourceLabel}. Operator preserves exact excerpts but does not verify them, infer intent, score risk, or execute the Semantic Engine.`,
+        problem: `${profile.excerpts.length} source excerpt${profile.excerpts.length === 1 ? " is" : "s are"} recorded as attributed statements. No underlying fact or problem is established automatically.`,
         incentives: "No motives or incentives are inferred from the submitted text.",
         affected: "No affected parties are identified automatically.",
         evidence_to_check: [
@@ -1662,19 +2006,21 @@
         .join("");
     }
 
-    function conservativeTriageCard(profile) {
+    function sourceReviewCard(profile) {
       const analysis = buildConservativeTriage(profile);
 
       return `
         <section class="output-card full">
-          <h3>Conservative triage</h3>
-          <p><b>What this draft establishes:</b> ${escapeHtml(analysis.problem)}</p>
+          <h3>Source review draft</h3>
+          <p><b>What is actually recorded:</b> ${escapeHtml(analysis.problem)}</p>
+          <p><b>Exact source excerpts:</b></p>
+          <ol>${profile.excerpts.map((excerpt) => `<li><b>${escapeHtml(excerpt.excerpt_id)}</b> — ${escapeHtml(excerpt.text)}</li>`).join("")}</ol>
           <p><b>Motives and incentives:</b> ${escapeHtml(analysis.incentives)}</p>
           <p><b>Affected parties:</b> ${escapeHtml(analysis.affected)}</p>
           <p><b>Material to review:</b></p>
           <ul>${themeList(analysis.evidence_to_check)}</ul>
           <p><b>Next review step:</b> ${escapeHtml(analysis.safe_action)}</p>
-          <p class="meta">triage_profile=generic-conservative-v1 · browser-local draft · human review required</p>
+          <p class="meta">review_profile=source-bound-v1 · browser-local draft · human review required</p>
         </section>
       `;
     }
@@ -1687,8 +2033,38 @@
         narrative_amplification: triage.narrative_amplification
       };
     }
+    // OPERATOR_SOURCE_BOUND_END
 
     // OPERATOR_INTAKE_RECORD_START
+    function redactUrlForPersistence(sourceUrl) {
+      if (!sourceUrl) return null;
+      try {
+        const parsed = new URL(sourceUrl);
+        if (!["http:", "https:"].includes(parsed.protocol)) return null;
+        parsed.username = "";
+        parsed.password = "";
+        parsed.hash = "";
+        // URL paths and queries can carry opaque credentials under arbitrary
+        // names (tickets, SAML assertions, OTPs, nested redirect URLs, etc.).
+        // Persist/share only the public origin; the exact URL exists solely in
+        // the in-flight request and current input field.
+        parsed.pathname = "/";
+        parsed.search = "";
+        return parsed.toString();
+      } catch {
+        return null;
+      }
+    }
+
+    function redactRedirectsForPersistence(redirects) {
+      if (!Array.isArray(redirects)) return redirects;
+      return redirects.map((redirect) => ({
+        from: redactUrlForPersistence(redirect?.from),
+        to: redactUrlForPersistence(redirect?.to),
+        status: Number.isInteger(redirect?.status) ? redirect.status : null
+      }));
+    }
+
     function sourceDomain(sourceUrl) {
       if (!sourceUrl) return null;
       try {
@@ -1706,15 +2082,17 @@
 
     function buildIntakeRecord(raw, sourceUrl, intakePayload = null) {
       if (intakePayload) {
+        const originalUrl = redactUrlForPersistence(intakePayload.url || sourceUrl);
+        const finalUrl = redactUrlForPersistence(intakePayload.final_url || intakePayload.url || sourceUrl);
         return {
           version: "operator-intake-record-v1",
           mode: "controlled-url",
-          original_url: intakePayload.url || sourceUrl || null,
-          final_url: intakePayload.final_url || intakePayload.url || sourceUrl || null,
-          source_domain: intakePayload.source_domain || sourceDomain(intakePayload.final_url || sourceUrl),
+          original_url: originalUrl,
+          final_url: finalUrl,
+          source_domain: intakePayload.source_domain || sourceDomain(finalUrl),
           title: intakePayload.title || null,
           retrieved_at: intakePayload.retrieved_at_utc || intakePayload.retrieved_at || null,
-          redirects: intakePayload.redirects ?? 0,
+          redirects: redactRedirectsForPersistence(intakePayload.redirects ?? 0),
           content_type: intakePayload.content_type || null,
           truncated: Boolean(intakePayload.truncated),
           status: intakePayload.status || "unknown",
@@ -1727,13 +2105,14 @@
       const hasText = Boolean(String(raw || "").trim());
       const hasUrl = Boolean(String(sourceUrl || "").trim());
       const unverifiedUrlAttribution = hasText && hasUrl;
+      const persistedUrl = hasUrl ? redactUrlForPersistence(sourceUrl) : null;
 
       return {
         version: "operator-intake-record-v1",
         mode: unverifiedUrlAttribution ? "operator-pasted-text-with-url" : "operator-pasted-text",
-        original_url: hasUrl ? sourceUrl : null,
+        original_url: persistedUrl,
         final_url: null,
-        source_domain: hasUrl ? sourceDomain(sourceUrl) : null,
+        source_domain: hasUrl ? sourceDomain(persistedUrl) : null,
         title: null,
         retrieved_at: null,
         redirects: 0,
@@ -1760,91 +2139,75 @@
     // OPERATOR_INTAKE_RECORD_END
 
     function buildNormalizedPayload() {
-      const {
-        sourceText: raw,
-        sourceType,
-        sourceUrl
-      } = canonicalIntakeState();
+      const intakeState = canonicalIntakeState();
+      const { sourceText: operatorContext, sourceType, sourceUrl } = intakeState;
       const claimType = sourceTypeToClaimType(sourceType);
       const signal = sourceTypeToSignal(sourceType);
+      const canReuseControlledIntake = (
+        currentIntakeRecord?.mode === "controlled-url" &&
+        currentRetrievedSourceUrl === sourceUrl &&
+        Boolean(currentRetrievedSourceText)
+      );
+      const raw = canReuseControlledIntake
+        ? currentRetrievedSourceText
+        : operatorContext;
 
       if (!raw) {
-        alert("Source text is required. Paste article text, GitHub content, or a human situation.");
+        alert("Readable source material is required. Retrieve the URL or paste source text first.");
         return null;
       }
 
-      const canReuseControlledIntake = (
-        currentIntakeRecord?.mode === "controlled-url" &&
-        currentIntakeRecord.original_url === sourceUrl
-      );
       const intakeRecord = canReuseControlledIntake
         ? currentIntakeRecord
         : buildIntakeRecord(raw, sourceUrl);
       currentIntakeRecord = intakeRecord;
       const sourceRef = sourceReferenceForIntake(intakeRecord);
       const profile = buildSourceProfile(raw, sourceType, sourceUrl);
+      if (!profile.excerpts.length) {
+        alert("The source is too short or fragmented to create source-bound excerpts. Add more source text.");
+        return null;
+      }
+
       const triage = buildConservativeTriage(profile);
       const protocol = buildProtocolNotes(profile);
-      const claimText = buildSpecificClaim(profile);
-      const evidenceText = profile.keySentences.length
-        ? compactText(profile.keySentences.join(" "), 640)
-        : compactText(raw, 640);
+      const { claims, evidence, relationships } = buildSourceBoundRecords(profile, {
+        sourceRef,
+        claimType,
+        retrieved: canReuseControlledIntake
+      });
 
       const payload = {
         case_id: `operator-signal-${Date.now()}`,
         core_version_ref: value("core_version_ref") || "main",
         input_summary: triage.summary,
-        claims: [
-          {
-            claim_id: "claim-001",
-            text: claimText,
-            source_ref: sourceRef,
-            claim_type: claimType,
-            requires_evidence: true,
-            status: "pending",
-            metadata: {
-              source_type: sourceType,
-              intake_record_ref: "metadata.intake_record",
-              normalized_by: "operator-generic-triage-v1"
-            }
-          }
-        ],
-        evidence: [
-          {
-            evidence_id: "evidence-001",
-            text: evidenceText,
-            source_ref: sourceRef,
-            source_type: sourceTypeToEvidenceType(sourceType),
-            supports_claim_ids: ["claim-001"],
-            contradicts_claim_ids: [],
-            limitations: [
-              "Source text was submitted by the operator and still requires independent verification.",
-              "The selected evidence sentences are source-bound excerpts, not independent corroboration.",
-              "The normalizer preserves claims for review; it does not establish truth, causality, or institutional responsibility."
-            ],
-            metadata: {
-              source_type: sourceType,
-              intake_record_ref: "metadata.intake_record",
-              normalized_by: "operator-generic-triage-v1"
-            }
-          }
-        ],
+        claims,
+        evidence,
         inferences: protocol.inferences,
         uncertainties: protocol.uncertainties,
         narrative_amplification: protocol.narrative_amplification,
         operational_signal: signal,
+        status: "draft",
         metadata: {
+          contract: "CaseInput-v1",
           intake_channel: "operator-pwa-source-normalizer",
           source_type: sourceType,
           source_url: intakeRecord.mode === "controlled-url" ? intakeRecord.final_url : null,
           intake_record: intakeRecord,
+          operator_context: canReuseControlledIntake && operatorContext
+            ? buildOperatorContextRecord(operatorContext)
+            : null,
+          source_text_fingerprint: profile.sourceFingerprint,
           signal_domain: profile.domain.id,
           signal_domain_label: profile.domain.label,
+          semantic_engine_executed: false,
+          verification_performed: false,
+          model_used: false,
+          relationships,
           review_guidance: {
             safe_next_action: triage.safe_action
           },
-          normalizer_version: "operator-generic-triage-v1",
-          operator_mode: "browser-local-draft"
+          normalizer_version: "operator-source-bound-v1",
+          operator_mode: "browser-local-source-bound-draft"
         }
       };
 
@@ -1875,6 +2238,20 @@
 
     function renderNormalizerReadout(payload) {
       const intakeRecord = payload.metadata?.intake_record;
+      const claimCards = payload.claims.map((claim) => `
+        <section class="output-card full">
+          <h3>${escapeHtml(claim.claim_id)} // attributed source statement</h3>
+          <p>${escapeHtml(claim.text)}</p>
+          <p class="meta">excerpt=${escapeHtml(claim.metadata?.excerpt_id)} · source_ref=${escapeHtml(claim.source_ref)}</p>
+        </section>
+      `).join("");
+      const excerptCards = payload.evidence.map((item) => `
+        <section class="output-card full">
+          <h3>${escapeHtml(item.evidence_id)} // exact source excerpt</h3>
+          <p>${escapeHtml(item.text)}</p>
+          <p class="meta">supports attribution only · source_ref=${escapeHtml(item.source_ref)}</p>
+        </section>
+      `).join("");
       $("normalizer_readout").innerHTML = `
         <section class="output-card">
           <h3>Readout</h3>
@@ -1891,16 +2268,8 @@
 
         ${intakeRecordCard(intakeRecord)}
 
-        <section class="output-card full">
-          <h3>Submitted claim draft</h3>
-          <p>${escapeHtml(payload.claims[0].text)}</p>
-        </section>
-
-        <section class="output-card full">
-          <h3>Source-bound excerpt</h3>
-          <p>${escapeHtml(payload.evidence[0].text)}</p>
-          <p class="meta">source_ref=${escapeHtml(payload.evidence[0].source_ref)}</p>
-        </section>
+        ${claimCards}
+        ${excerptCards}
 
         <section class="output-card">
           <h3>Inference boundary</h3>
@@ -1919,13 +2288,18 @@
       `;
     }
 
-    function normalizeSignal() {
+    function normalizePreparedSignal() {
       const payload = buildNormalizedPayload();
-      if (!payload) return;
+      if (!payload) return null;
 
       loadPayload(payload);
       renderNormalizerReadout(payload);
       renderCaseOutput();
+      return payload;
+    }
+
+    function normalizeSignal() {
+      void runProductAnalyze();
     }
 
     const productLoaderCellCount = 18;
@@ -1977,6 +2351,85 @@
       setProductLoader(0, "idle");
     }
 
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    function focusProductOutput() {
+      const output = $("product_output");
+      output.focus({ preventScroll: true });
+      output.scrollIntoView({
+        behavior: reducedMotion.matches ? "auto" : "smooth",
+        block: "start"
+      });
+    }
+
+    function clearRetrievedSourcePreview() {
+      currentRetrievedSourceText = "";
+      currentRetrievedSourceUrl = "";
+      $("product_confirm_source").checked = false;
+      $("product_source_preview").hidden = true;
+      $("product_source_preview_meta").textContent = "No URL has been retrieved.";
+      $("product_source_preview_text").textContent = "";
+    }
+
+    function renderRetrievedSourcePreview(intake, sourceUrl) {
+      const canonical = canonicalSource(intake.text);
+      currentRetrievedSourceText = canonical.text;
+      currentRetrievedSourceUrl = sourceUrl;
+      $("product_confirm_source").checked = false;
+      $("product_source_preview").hidden = false;
+      $("product_source_preview_meta").textContent = [
+        intake.title || "Untitled source",
+        redactUrlForPersistence(intake.final_url || intake.url || sourceUrl) || "URL withheld",
+        `${currentRetrievedSourceText.length} extracted characters`,
+        `fingerprint ${canonical.fingerprint}`
+      ].join(" · ");
+      $("product_source_preview_text").textContent = currentRetrievedSourceText;
+    }
+
+    function draftSourceText(intakeState = canonicalIntakeState()) {
+      const controlledSourceIsCurrent = (
+        currentIntakeRecord?.mode === "controlled-url" &&
+        currentRetrievedSourceUrl === intakeState.sourceUrl
+      );
+      return controlledSourceIsCurrent
+        ? currentRetrievedSourceText
+        : intakeState.sourceText;
+    }
+
+    function invalidatePreparedDraft(reason = "The source URL, operator context or source type changed. Retrieve/review the source and prepare a new draft.") {
+      const sourceBoundDraftWasActive = currentCaseMetadata.normalizer_version === "operator-source-bound-v1";
+      const hadPreparedDraft = Boolean(
+        currentMemoryRecord ||
+        currentCaseMetadata.normalizer_version ||
+        claims.length ||
+        evidence.length
+      );
+      invalidateShareableResult();
+      currentCaseMetadata = {};
+
+      if (sourceBoundDraftWasActive) {
+        claims = [];
+        evidence = [];
+        $("input_summary").value = "Source changed; prepare a new source-bound draft.";
+        $("operational_signal").value = "none";
+        $("inferences").value = "";
+        $("uncertainties").value = "";
+        $("narrative_amplification").value = "";
+        renderClaims();
+        renderEvidence();
+      }
+
+      if (hadPreparedDraft) {
+        $("product_output").innerHTML = `
+          <section class="output-card full">
+            <h3>Previous draft invalidated</h3>
+            <p>${escapeHtml(reason)}</p>
+          </section>
+        `;
+        $("product_wait_status").textContent = "Inputs changed. The previous draft is stale and cannot be shared.";
+      }
+    }
+
     // OPERATOR_CANONICAL_INTAKE_START
     function inferProductSourceType(sourceUrl, raw) {
       if (!sourceUrl) return raw ? "human-situation" : "external-source";
@@ -2021,33 +2474,49 @@
     }
 
     function syncProductInputState({
-      resetIntakeRecord = true
+      resetIntakeRecord = true,
+      resetRetrievedSource = false,
+      invalidateRetrieval = false
     } = {}) {
       const analyzeButton = $("product_analyze");
+      const advancedNormalizeButton = $("normalize_signal");
       const intakeState = canonicalIntakeState();
+      if (invalidateRetrieval) {
+        intakeGeneration += 1;
+        activeIntakeRequestToken = 0;
+      }
 
       if (resetIntakeRecord) currentIntakeRecord = null;
-      currentMemoryRecord = null;
-      setMemoryActionsEnabled(false);
+      if (resetRetrievedSource) clearRetrievedSourcePreview();
+      invalidatePreparedDraft();
       syncAuditIntakeView(intakeState);
 
       if (!analyzeButton) return;
+      if (activeIntakeRequestToken) {
+        analyzeButton.disabled = true;
+        if (advancedNormalizeButton) advancedNormalizeButton.disabled = true;
+        $("product_wait_status").textContent = "URL retrieval continues. Operator context remains separate and the previous draft is stale.";
+        return;
+      }
 
       if (intakeState.sourceText) {
         analyzeButton.disabled = false;
+        if (advancedNormalizeButton) advancedNormalizeButton.disabled = false;
         $("product_wait_status").textContent = intakeState.sourceUrl
-          ? "Ready to prepare a draft. Text-to-URL attribution will be marked as operator-provided and unverified."
+          ? "Ready to retrieve the URL. Supplied text will remain separate operator context."
           : "Ready to prepare a local draft from operator-provided text.";
         return;
       }
 
       if (intakeState.sourceUrl) {
         analyzeButton.disabled = false;
+        if (advancedNormalizeButton) advancedNormalizeButton.disabled = false;
         $("product_wait_status").textContent = "Ready to read URL from controlled intake. If the source blocks access, paste the article text.";
         return;
       }
 
       analyzeButton.disabled = true;
+      if (advancedNormalizeButton) advancedNormalizeButton.disabled = true;
       $("product_wait_status").textContent = "Paste a URL, paste text, or load the example to begin.";
     }
 
@@ -2055,7 +2524,10 @@
       $("product_source_url").value = sourceUrl;
       $("product_source_text").value = sourceText;
       $("signal_source_type").value = sourceType || "automatic";
-      syncProductInputState();
+      syncProductInputState({
+        resetRetrievedSource: true,
+        invalidateRetrieval: true
+      });
     }
     // OPERATOR_CANONICAL_INTAKE_END
 
@@ -2079,7 +2551,7 @@
             <h3>4 // Explicit handoff</h3>
             <p>Only a human-approved draft should be handed to a separately controlled runtime. This browser step is not an engine run.</p>
           </article>
-          <p class="meta">review_profile=generic-conservative-v1 · local draft · no truth verdict</p>
+          <p class="meta">review_profile=source-bound-v1 · local draft · no truth verdict</p>
         </section>
       `;
     }
@@ -2090,7 +2562,7 @@
       const intakeState = canonicalIntakeState();
 
       const profile = buildSourceProfile(
-        intakeState.sourceText,
+        draftSourceText(intakeState),
         intakeState.sourceType,
         intakeState.sourceUrl
       );
@@ -2098,7 +2570,7 @@
       output.innerHTML = `
         ${resultView.innerHTML}
         ${intakeRecordCard(currentIntakeRecord)}
-        ${conservativeTriageCard(profile)}
+        ${sourceReviewCard(profile)}
         ${reviewChecklistCard()}
       `;
     }
@@ -2130,12 +2602,20 @@
       const payload = buildPayload();
       const intakeState = canonicalIntakeState();
       const profile = buildSourceProfile(
-        intakeState.sourceText,
+        draftSourceText(intakeState),
         intakeState.sourceType,
         intakeState.sourceUrl
       );
-      const claim = payload.claims?.[0]?.text || "No claim generated.";
-      const evidenceText = payload.evidence?.[0]?.text || "No evidence generated.";
+      const claimRecords = (payload.claims || []).map((item) => ({
+        id: item.claim_id || "claim-without-id",
+        text: String(item.text || "")
+      }));
+      const evidenceRecords = (payload.evidence || []).map((item) => ({
+        id: item.evidence_id || "evidence-without-id",
+        text: String(item.text || "")
+      }));
+      const claim = claimRecords[0]?.text || "No claim generated.";
+      const evidenceText = evidenceRecords[0]?.text || "No evidence generated.";
 
       return {
         version: "operator-memory-v0.1",
@@ -2149,6 +2629,10 @@
         actors: profile.actors,
         operational_signal: payload.operational_signal || "triage",
         summary: payload.input_summary || profile.summary,
+        claim_count: claimRecords.length,
+        evidence_count: evidenceRecords.length,
+        claims: claimRecords,
+        evidence_records: evidenceRecords,
         claim: compactText(claim, 420),
         evidence: compactText(evidenceText, 520),
         uncertainty: compactText((payload.uncertainties || []).join(" "), 360),
@@ -2184,13 +2668,13 @@
       $("product_output").innerHTML = `
         <section class="output-card full">
           <h3>URL not accessible from controlled intake</h3>
-          <p>The URL could not be read from the controlled HUB_Optimus origin. Paste the source text or relevant excerpt below and prepare the draft again.</p>
+          <p>The URL could not be read from the controlled HUB_Optimus origin. Paste the source text or relevant excerpt below, remove the unavailable URL, and prepare a text-only draft.</p>
           <p>This does not mean the source is false or invalid. Some sources block automated access, DNS may not be ready, or the origin may reject cross-origin requests.</p>
           ${detailLine}
           <p class="meta">No browser scraping · no paywall bypass · source remains unreviewed</p>
         </section>
       `;
-      $("product_wait_status").textContent = "URL unavailable from controlled intake. Paste text to analyze.";
+      $("product_wait_status").textContent = "URL unavailable. Paste source text, clear the URL, and prepare the draft again.";
       $("product_source_text").focus();
       setMemoryActionsEnabled(false);
     }
@@ -2268,11 +2752,13 @@
         v: 1,
         type: "hub-optimus-operator-memory",
         saved_at_utc: record.saved_at_utc,
-        source_url: record.source_url,
+        source_url: redactUrlForPersistence(record.source_url),
         domain: record.signal_domain_label,
         actors: record.actors,
         signal: record.operational_signal,
         summary: compactText(record.summary, 300),
+        claim_count: Number(record.claim_count || record.claims?.length || (record.claim ? 1 : 0)),
+        evidence_count: Number(record.evidence_count || record.evidence_records?.length || (record.evidence ? 1 : 0)),
         claim: compactText(record.claim, 360),
         evidence: compactText(record.evidence, 360),
         uncertainty: compactText(record.uncertainty, 260),
@@ -2301,7 +2787,7 @@
     // OPERATOR_SHARE_PROVENANCE_START
     function shareProvenanceLines(record) {
       const intakeRecord = record?.intake_record;
-      const sourceUrl = (
+      const sourceUrl = redactUrlForPersistence(
         intakeRecord?.final_url ||
         intakeRecord?.original_url ||
         record?.source_url ||
@@ -2338,6 +2824,23 @@
     }
     // OPERATOR_SHARE_PROVENANCE_END
 
+    function shareRecordLines(label, records, legacyText, maxRecords = 20) {
+      const safeRecords = Array.isArray(records) && records.length
+        ? records
+        : (legacyText ? [{ id: `${label.toLowerCase()}-legacy`, text: legacyText }] : []);
+      const visibleRecords = safeRecords.slice(0, maxRecords);
+      const lines = [`${label} (${safeRecords.length}):`];
+
+      visibleRecords.forEach((record, index) => {
+        lines.push(`- ${record.id || `${label.toLowerCase()}-${index + 1}`}: ${compactText(record.text, 360)}`);
+      });
+      if (safeRecords.length > visibleRecords.length) {
+        lines.push(`- ${safeRecords.length - visibleRecords.length} additional ${label.toLowerCase()} record(s) omitted from this message; copy the case JSON for the complete draft.`);
+      }
+      if (!safeRecords.length) lines.push("- none");
+      return lines;
+    }
+
     function buildHumanShareText(record) {
       const lines = [
         "HUB_Optimus Operator snapshot",
@@ -2347,7 +2850,9 @@
         "",
         `Summary: ${compactText(record.summary, 280)}`,
         "",
-        `Submitted claim: ${compactText(record.claim, 320)}`,
+        ...shareRecordLines("Claims", record.claims, record.claim),
+        "",
+        ...shareRecordLines("Evidence", record.evidence_records, record.evidence),
         "",
         `Uncertainty: ${compactText(record.uncertainty, 260)}`,
         "",
@@ -2420,11 +2925,20 @@
       }
     }
 
+    function isCurrentIntakeRequest(token, generation, sourceUrl) {
+      return (
+        activeIntakeRequestToken === token &&
+        intakeGeneration === generation &&
+        canonicalIntakeState().sourceUrl === sourceUrl
+      );
+    }
+
     async function runProductAnalyze() {
       const initialIntakeState = canonicalIntakeState();
       let raw = initialIntakeState.sourceText;
       const sourceUrl = initialIntakeState.sourceUrl;
       const analyzeButton = $("product_analyze");
+      const advancedNormalizeButton = $("normalize_signal");
 
       if (!raw && !sourceUrl) {
         $("product_output").innerHTML = `
@@ -2435,6 +2949,7 @@
           </section>
         `;
         $("product_wait_status").textContent = "Paste a URL or text to prepare a draft.";
+        $("product_source_url").focus();
         setMemoryActionsEnabled(false);
         return;
       }
@@ -2443,25 +2958,65 @@
       setMemoryActionsEnabled(false);
       currentMemoryRecord = null;
       if (analyzeButton) analyzeButton.disabled = true;
+      if (advancedNormalizeButton) advancedNormalizeButton.disabled = true;
 
-      if (!raw && sourceUrl) {
-        productStep("product_step_capture", "running");
-        $("product_wait_status").textContent = "Reading URL through controlled intake…";
-        setProductLoader(1, "controlled URL intake");
+      if (sourceUrl) {
+        const retrievalIsCurrent = (
+          currentIntakeRecord?.mode === "controlled-url" &&
+          currentRetrievedSourceUrl === sourceUrl &&
+          Boolean(currentRetrievedSourceText)
+        );
 
-        try {
-          const intake = await readControlledUrlText(sourceUrl);
-          raw = intake.text;
-          currentIntakeRecord = buildIntakeRecord(raw, sourceUrl, intake);
-          $("product_source_text").value = raw;
-          syncAuditIntakeView();
-          $("product_wait_status").textContent = "URL retrieved. Preparing a provenance-aware draft…";
-        } catch (error) {
-          productStep("product_step_capture", "done");
-          renderUrlIntakeFallback(sourceUrl, error.message);
-          if (analyzeButton) analyzeButton.disabled = false;
+        if (!retrievalIsCurrent) {
+          const requestGeneration = intakeGeneration;
+          const requestToken = ++intakeRequestSequence;
+          activeIntakeRequestToken = requestToken;
+          productStep("product_step_capture", "running");
+          $("product_wait_status").textContent = "Reading URL through controlled intake…";
+          setProductLoader(1, "controlled URL intake");
+
+          try {
+            const intake = await readControlledUrlText(sourceUrl);
+            if (!isCurrentIntakeRequest(requestToken, requestGeneration, sourceUrl)) return;
+            activeIntakeRequestToken = 0;
+            if (!buildSourceProfile(intake.text, initialIntakeState.sourceType, sourceUrl).excerpts.length) {
+              throw new Error("The URL returned text, but it was too short or fragmented for source-bound excerpts.");
+            }
+            currentIntakeRecord = buildIntakeRecord(intake.text, sourceUrl, intake);
+            renderRetrievedSourcePreview(intake, sourceUrl);
+            syncAuditIntakeView();
+            productStep("product_step_capture", "done");
+            setProductLoader(4, "source retrieved for review");
+            $("product_wait_status").textContent = "URL retrieved. Review the extracted text and confirm it before preparing the draft.";
+            analyzeButton.textContent = "Prepare source-bound draft";
+            analyzeButton.disabled = false;
+            if (advancedNormalizeButton) advancedNormalizeButton.disabled = false;
+            $("product_source_preview").scrollIntoView({
+              behavior: reducedMotion.matches ? "auto" : "smooth",
+              block: "start"
+            });
+            return;
+          } catch (error) {
+            if (!isCurrentIntakeRequest(requestToken, requestGeneration, sourceUrl)) return;
+            activeIntakeRequestToken = 0;
+            productStep("product_step_capture", "done");
+            clearRetrievedSourcePreview();
+            renderUrlIntakeFallback(sourceUrl, error.message);
+            if (analyzeButton) analyzeButton.disabled = false;
+            if (advancedNormalizeButton) advancedNormalizeButton.disabled = false;
+            return;
+          }
+        }
+
+        if (!$("product_confirm_source").checked) {
+          $("product_wait_status").textContent = "Review the extracted text and tick the confirmation before preparing the draft.";
+          $("product_confirm_source").focus();
+          analyzeButton.disabled = false;
+          if (advancedNormalizeButton) advancedNormalizeButton.disabled = false;
           return;
         }
+
+        raw = currentRetrievedSourceText;
       } else if (
         currentIntakeRecord?.mode !== "controlled-url" ||
         currentIntakeRecord.original_url !== sourceUrl
@@ -2479,7 +3034,13 @@
       productStep("product_step_normalize", "running");
       $("product_wait_status").textContent = "2/4 Normalizing claim, evidence and source boundary…";
       setProductLoader(6, "structuring submitted material");
-      normalizeSignal();
+      const payload = normalizePreparedSignal();
+      if (!payload) {
+        resetProductProgress();
+        analyzeButton.disabled = false;
+        if (advancedNormalizeButton) advancedNormalizeButton.disabled = false;
+        return;
+      }
 
       productStep("product_step_normalize", "done");
       productStep("product_step_boundary", "running");
@@ -2497,14 +3058,19 @@
 
       productStep("product_step_output", "done");
       $("product_wait_status").textContent = "Draft ready. Human review is required; no Semantic Engine run occurred.";
-      if (analyzeButton) analyzeButton.disabled = false;
-      window.location.hash = "product_output";
+      if (analyzeButton) {
+        analyzeButton.disabled = false;
+        analyzeButton.textContent = "Prepare draft again";
+      }
+      if (advancedNormalizeButton) advancedNormalizeButton.disabled = false;
+      focusProductOutput();
     }
 
     function loadProductNewsDemo() {
       setCanonicalIntake(
-        "https://example.com/news-report",
-        "A news report says a public institution has introduced an automated decision system. The article says affected users may not receive clear explanations when decisions are made. The report cites complaints from several users but does not include the full administrative record or official technical documentation."
+        "",
+        "A news report says a public institution has introduced an automated decision system. The article says affected users may not receive clear explanations when decisions are made. The report cites complaints from several users but does not include the full administrative record or official technical documentation.",
+        "news-article"
       );
     }
 
@@ -2513,12 +3079,15 @@
       if (!advanced) return;
       syncAuditIntakeView();
       advanced.open = true;
-      advanced.scrollIntoView({ behavior: "smooth", block: "start" });
+      advanced.scrollIntoView({
+        behavior: reducedMotion.matches ? "auto" : "smooth",
+        block: "start"
+      });
     }
 
     function loadNewsDemo() {
       setCanonicalIntake(
-        "https://example.com/news-report",
+        "",
         "A news report says a public institution has introduced an automated decision system. The article says affected users may not receive clear explanations when decisions are made. The report cites complaints from several users but does not include the full administrative record or official technical documentation.",
         "news-article"
       );
@@ -2526,7 +3095,7 @@
 
     function loadGithubDemo() {
       setCanonicalIntake(
-        "https://github.com/Voxterrae/HUB_Optimus/issues/example",
+        "",
         "A contributor reports that the current workflow is unclear because the documentation says to use Related to #N while the PR template still suggests an auto-closing keyword. This may create contributor friction and accidental issue closure risk.",
         "github-issue"
       );
@@ -2716,8 +3285,7 @@
       }
 
       if (event.target.dataset.removeEvidence !== undefined) {
-        evidence.splice(Number(event.target.dataset.removeEvidence), 1);
-        renderEvidence();
+        removeEvidenceAt(Number(event.target.dataset.removeEvidence));
       }
     });
 
@@ -2730,20 +3298,54 @@
       "inferences",
       "uncertainties",
       "narrative_amplification"
-    ].forEach((id) => $(id).addEventListener("input", updateJson));
+    ].forEach((id) => $(id).addEventListener("input", () => {
+      invalidateShareableResult();
+      updateJson();
+    }));
 
-    ["product_source_url", "product_source_text"].forEach((id) => {
-      $(id).addEventListener("input", syncProductInputState);
+    $("result_input").addEventListener("input", () => {
+      invalidateShareableResult();
+    });
+
+    $("product_source_url").addEventListener("input", () => {
+      syncProductInputState({
+        resetIntakeRecord: true,
+        resetRetrievedSource: true,
+        invalidateRetrieval: true
+      });
+    });
+    $("product_source_text").addEventListener("input", () => {
+      const retrievedUrlIsCurrent = (
+        currentIntakeRecord?.mode === "controlled-url" &&
+        currentRetrievedSourceUrl === value("product_source_url")
+      );
+      syncProductInputState({
+        resetIntakeRecord: !retrievedUrlIsCurrent,
+        resetRetrievedSource: false
+      });
     });
     $("signal_source_type").addEventListener("change", () => {
       syncProductInputState({
         resetIntakeRecord: false
       });
     });
+    $("product_confirm_source").addEventListener("change", () => {
+      if (!$("product_confirm_source").checked) {
+        invalidatePreparedDraft("Source confirmation was removed. Review and confirm the current extraction before preparing a new draft.");
+        $("product_wait_status").textContent = "Source confirmation removed. The previous draft is stale and cannot be shared.";
+        return;
+      }
+
+      invalidateShareableResult("Source confirmed for selection only. Prepare a new review draft before saving or sharing.");
+      $("product_wait_status").textContent = "Source selection confirmed. Prepare the source-bound draft when ready.";
+    });
     $("save_memory_result").addEventListener("click", saveCurrentMemoryResult);
     $("share_memory_link").addEventListener("click", shareMemoryLink);
     $("share_memory_whatsapp").addEventListener("click", shareMemoryWhatsapp);
-    $("product_analyze").addEventListener("click", runProductAnalyze);
+    $("product_intake").addEventListener("submit", (event) => {
+      event.preventDefault();
+      void runProductAnalyze();
+    });
     $("product_load_news_demo").addEventListener("click", loadProductNewsDemo);
     $("product_show_advanced").addEventListener("click", openAdvancedConsole);
     $("normalize_signal").addEventListener("click", normalizeSignal);

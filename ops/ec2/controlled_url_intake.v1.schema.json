@@ -21,6 +21,8 @@
     "raw_response_bytes": 1000000,
     "extracted_text_characters": 24000,
     "maximum_returned_text_characters": 24001,
+    "html_element_depth": 256,
+    "html_primary_regions": 64,
     "redirects": 3,
     "timeout_seconds": 8,
     "remote_request_method": "GET",
@@ -39,6 +41,7 @@
     "redirect_without_location": 502,
     "too_many_redirects": 508,
     "unresolvable_url_host": 400,
+    "unsupported_content_encoding": 415,
     "unsupported_content_type": 415,
     "unsupported_url_credentials": 400,
     "unsupported_url_iri": 400,
@@ -143,7 +146,8 @@
           "maximum": 1000000
         },
         "truncated": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "True when the retained raw response, cleaned extracted text, title, or HTML structural depth exceeded its documented bound."
         },
         "redirects": {
           "type": "array",
@@ -218,6 +222,7 @@
             "redirect_without_location",
             "too_many_redirects",
             "unresolvable_url_host",
+            "unsupported_content_encoding",
             "unsupported_content_type",
             "unsupported_url_credentials",
             "unsupported_url_iri",
