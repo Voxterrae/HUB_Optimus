@@ -504,7 +504,7 @@ points: the portfolio, the branded 404 page, and Operator.
 - Same-origin links, assets, routes, and fragments are resolved against the
   checked-out `site/` artifact; repository evidence links resolve against
   local paths and are pinned to commit
-  `f99bfed196dbcb76c8a29a4bab31559fdb567ee5` rather than mutable `main`.
+  `8426b08e5f88b650c4d79e41d3ce3afd7d42746b` rather than mutable `main`.
 - Live navigation to the repository, its issue tracker, and the separate Labs
   repository is allowlisted structurally. Pytest performs no external network
   request and therefore does not attest current remote availability.

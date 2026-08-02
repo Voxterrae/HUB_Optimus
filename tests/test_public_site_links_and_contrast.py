@@ -7,7 +7,7 @@ from urllib.parse import unquote, urljoin, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
 PUBLIC_ORIGIN = "https://huboptimus.dev"
-EVIDENCE_REF = "f99bfed196dbcb76c8a29a4bab31559fdb567ee5"
+EVIDENCE_REF = "8426b08e5f88b650c4d79e41d3ce3afd7d42746b"
 PUBLIC_ROUTES = {
     "/": SITE / "index.html",
     "/404.html": SITE / "404.html",
