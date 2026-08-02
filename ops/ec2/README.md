@@ -83,20 +83,73 @@ command, its exit code, its final output line, and its validation log. Failed
 validation leaves its candidate release and metadata for inspection but never
 switches `current`.
 
+The release state also records the SHA-256 of the selected `hub-api.sh`
+launcher. Before changing operational state, deployment validates that the
+current release is a managed, usable rollback target and stages all replacement
+artifacts. If any later step fails, an exit handler restores the exact previous
+`current` symlink, shared launcher, shared release state, current-release
+marker, previous-release pointer, and any transactionally completed legacy
+release state. The failed candidate retains its validation log,
+`pre-deploy-state` snapshot, and `recovery.log`; recovery does not depend on an
+external or temporary checkout. Restoration is attempted even when the
+recovery log cannot be opened or written; that condition is reported as a
+failed recovery outcome rather than a false success.
+
 The script fixes and records the selected source revision; it does not itself
 prove that a commit or tag was reviewed or signed. GitHub review records and the
 human deploy decision remain the authority for that claim.
 
 Before switching, deployment preserves provenance for the current release.
-`rollback-current` verifies that the recorded commit still matches the target,
-switches explicitly to `previous_release`, restores that release's API launcher
-and deployment state, and writes a separate `ROLLBACK_STATE` transition record.
-Deploy and rollback share a non-blocking host lock so they cannot mutate release
-state concurrently.
+`rollback-current` rejects duplicate target-state identity keys, verifies the
+recorded commit, path, release, and launcher hash, then snapshots and stages its
+own complete transition. Any injected or ordinary failure after rollback
+mutation begins restores the exact pre-rollback symlink, launcher, release
+state, rollback state, current marker, and prior transition marker. A successful
+rollback publishes a separate `ROLLBACK_STATE`. Deploy and rollback share a
+non-blocking host lock so they cannot mutate release state concurrently.
 
 Neither operation silently restarts the running API service. After a deploy or
 rollback, an operator must review the recorded state and explicitly restart the
 service when the process should load the restored launcher.
+
+At launcher start, the API captures the full commit of the resolved running
+release and the SHA-256 of the launcher that started it. `/status` reports those
+immutable process-bound values as `running_release`, `running_commit`, and
+`running_launcher_sha256`. It reports the mutable symlink separately as
+`configured_current_release` and `configured_current_commit`. Moving `current`
+without restarting therefore cannot make an old process claim the new running
+identity.
+
+## Issue #1831 host safeguards
+
+[`adopt-legacy-current.sh`](adopt-legacy-current.sh) is the one-time,
+idempotent migration boundary for the confirmed pre-#1832 current release. It
+requires the operator to supply that checkout's full commit SHA, then validates
+the managed symlink, exact repository origin, clean checkout, marker, and
+byte-identical versioned/shared launcher. It does not trust the legacy short
+commit or validation-count claim as authority. The original six-field state is
+retained byte-for-byte as mode-`0400` `LEGACY_RELEASE_STATE`; its SHA-256 and
+short prefix are linked from the new full-SHA state. The shared/per-release
+states are postvalidated before success. Any post-mutation failure restores the
+exact snapshot, and an exact completed adoption can be rerun without change.
+
+[`preflight-deploy.sh`](preflight-deploy.sh) is the read-only, fail-closed host
+gate for the exact-SHA localhost intake operation. It checks rollback release
+identity and launcher provenance, requires the shared launcher and shared
+release state to match the configured current release exactly, checks
+non-interactive sudo, required tooling, GitHub/reference-URL egress, and
+explicit t3.small resource floors before a deploy is attempted. A historical
+`previous_release` without per-release state is inventoried as unattested but
+is not trusted as the next deployment's rollback target; the fully adopted
+current release becomes that target when the deploy switches.
+
+[`intake-smoke-evidence.py`](intake-smoke-evidence.py) renders only the reviewed
+evidence allowlist from a retained localhost response. It never reproduces the
+fetched text or passes through unknown response fields, and success requires
+both curl transport success and HTTP 200. The complete repinning, attestation,
+and failure boundary is documented in
+[`ISSUE_1831_RUNBOOK.md`](ISSUE_1831_RUNBOOK.md). That template requires a new
+exact merged SHA before host execution and does not itself authorize a deploy.
 
 ## Controlled URL intake network boundary
 
@@ -177,5 +230,10 @@ curl -sS http://127.0.0.1:8080/health
 Repository regression coverage:
 
 ```bash
-python -m pytest -q tests/test_ec2_run_identity_and_provenance.py
+python -m pytest -q \
+  tests/test_ec2_run_identity_and_provenance.py \
+  tests/test_ec2_deploy_hub_api_sync.py \
+  tests/test_ec2_legacy_adoption.py \
+  tests/test_ec2_preflight_and_evidence.py \
+  tests/test_ec2_runbook_attestation.py
 ```

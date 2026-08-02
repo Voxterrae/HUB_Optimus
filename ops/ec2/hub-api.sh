@@ -1,9 +1,47 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_ROOT="/opt/hub-optimus"
+APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 API_DIR="$APP_ROOT/shared/api"
 API_FILE="$API_DIR/hub_api.py"
+
+case "$APP_ROOT" in
+  /*) ;;
+  *)
+    echo "[hub-api:error] HUB_OPTIMUS_APP_ROOT must be an absolute path." >&2
+    exit 1
+    ;;
+esac
+
+RUNNING_RELEASE="$(readlink -f "$APP_ROOT/current")"
+case "$RUNNING_RELEASE" in
+  "$APP_ROOT/releases/"*) ;;
+  *)
+    echo "[hub-api:error] current is outside the managed releases directory." >&2
+    exit 1
+    ;;
+esac
+[ -d "$RUNNING_RELEASE" ] || {
+  echo "[hub-api:error] running release directory does not exist." >&2
+  exit 1
+}
+
+RUNNING_COMMIT="$(git -C "$RUNNING_RELEASE" rev-parse --verify HEAD)"
+[[ "$RUNNING_COMMIT" =~ ^[0-9a-f]{40}$ ]] || {
+  echo "[hub-api:error] running release has no full commit identity." >&2
+  exit 1
+}
+
+RUNNING_LAUNCHER_SHA256="$(sha256sum -- "$0" | awk '{print $1}')"
+[[ "$RUNNING_LAUNCHER_SHA256" =~ ^[0-9a-f]{64}$ ]] || {
+  echo "[hub-api:error] launcher SHA-256 could not be captured." >&2
+  exit 1
+}
+
+export HUB_OPTIMUS_API_APP_ROOT="$APP_ROOT"
+export HUB_OPTIMUS_API_RUNNING_RELEASE="$RUNNING_RELEASE"
+export HUB_OPTIMUS_API_RUNNING_COMMIT="$RUNNING_COMMIT"
+export HUB_OPTIMUS_API_RUNNING_LAUNCHER_SHA256="$RUNNING_LAUNCHER_SHA256"
 
 mkdir -p "$API_DIR"
 
@@ -46,9 +84,15 @@ from urllib.request import (
     build_opener,
 )
 
-APP_ROOT = Path("/opt/hub-optimus")
+APP_ROOT = Path(os.environ.get("HUB_OPTIMUS_API_APP_ROOT", "/opt/hub-optimus"))
 CURRENT = APP_ROOT / "current"
 SHARED = APP_ROOT / "shared"
+RUNNING_RELEASE = os.environ.get("HUB_OPTIMUS_API_RUNNING_RELEASE", "")
+RUNNING_COMMIT = os.environ.get("HUB_OPTIMUS_API_RUNNING_COMMIT", "")
+RUNNING_LAUNCHER_SHA256 = os.environ.get(
+    "HUB_OPTIMUS_API_RUNNING_LAUNCHER_SHA256",
+    "",
+)
 
 MAX_URL_LENGTH = 2048
 MAX_URL_BODY_LENGTH = 4096
@@ -647,20 +691,36 @@ def run_command(args: list[str], input_text: str | None = None) -> tuple[int, st
 
 
 def product_status() -> dict:
-    current_path = ""
-    commit = ""
+    configured_current_release = ""
+    configured_current_commit = ""
     if CURRENT.is_symlink():
-        current_path = str(CURRENT.resolve())
-        code, stdout, _ = run_command(["git", "-C", current_path, "rev-parse", "--short", "HEAD"])
+        configured_current_release = str(CURRENT.resolve())
+        code, stdout, _ = run_command(
+            [
+                "git",
+                "-C",
+                configured_current_release,
+                "rev-parse",
+                "--verify",
+                "HEAD",
+            ]
+        )
         if code == 0:
-            commit = stdout.strip()
+            candidate = stdout.strip()
+            if re.fullmatch(r"[0-9a-f]{40}", candidate):
+                configured_current_commit = candidate
 
     release_state = read_text(SHARED / "RELEASE_STATE")
 
     return {
         "product": "HUB_Optimus backend v0.1",
-        "current": current_path,
-        "commit": commit,
+        "current": RUNNING_RELEASE,
+        "commit": RUNNING_COMMIT,
+        "running_release": RUNNING_RELEASE,
+        "running_commit": RUNNING_COMMIT,
+        "running_launcher_sha256": RUNNING_LAUNCHER_SHA256,
+        "configured_current_release": configured_current_release,
+        "configured_current_commit": configured_current_commit,
         "release_state": release_state,
         "capabilities": {
             "semantic_analyze": True,

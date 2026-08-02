@@ -1,0 +1,6 @@
+release=20260720T225606Z
+commit=9d67719
+path=/opt/hub-optimus/releases/20260720T225606Z
+validated_at_utc=2026-07-20T22:56:06Z
+validation=pytest 55 passed
+status=production-candidate-core
