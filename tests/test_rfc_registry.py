@@ -106,7 +106,7 @@ def test_current_lifecycle_snapshot_is_explicitly_unratified() -> None:
         entry for entry in entries if entry["id"] == "operator-controlled-url-intake"
     )
 
-    assert counts["Draft"] == 14
+    assert counts["Draft"] == 15
     assert counts["Partially Implemented"] == 1
     assert counts["Accepted"] == 0
     assert counts["Implemented"] == 0
