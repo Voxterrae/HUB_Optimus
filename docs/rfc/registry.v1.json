@@ -233,10 +233,13 @@
         "site/operator/learning-candidate.v1.js",
         "site/operator/schemas/operator_learning_candidate.v1.schema.json",
         "site/operator/learning-store.v1.js",
+        "site/operator/index.html",
+        "site/operator/sw.js",
         "tests/test_operator_learning_candidate.py",
-        "tests/test_operator_learning_store.py"
+        "tests/test_operator_learning_store.py",
+        "tests/test_operator_learning_ui.py"
       ],
-      "note": "An executable local data model and an unloaded IndexedDB adapter prototype exist. Operator and its service worker do not load them, no user-facing persistence or learning workflow is available, and no training, remote memory, automatic promotion, or governance ratification is claimed."
+      "note": "A draft local Operator workflow now loads the executable candidate model and fail-closed IndexedDB adapter, exposes explicit human creation, inspection, transitions, import/export and deletion, and precaches the versioned assets. It does not train a model, create remote or institutional memory, promote records automatically, prove public deployment, or constitute governance ratification."
     },
     {
       "id": "post-quantum-control-plane",

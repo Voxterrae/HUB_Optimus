@@ -1,0 +1,14 @@
+{
+  "id": "./",
+  "lang": "zh-Hans",
+  "dir": "ltr",
+  "name": "HUB_Optimus Operator",
+  "short_name": "HUB Operator",
+  "description": "HUB_Optimus 本地优先浏览器原型，用于准备供人工复核的结构化草稿。",
+  "start_url": "./?lang=zh-Hans",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

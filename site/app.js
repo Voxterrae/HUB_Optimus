@@ -76,6 +76,7 @@
       coreCopy: "Canonical v1 methodology, operational flow, scenarios, and meta-learning. Spanish is authoritative for v1; English is the parity target.",
       viewCanonical: "Canonical core",
       viewStatus: "Status policy",
+      metaLearningGuide: "Meta-learning workflow",
       simulatorTitle: "Deterministic Scenario Simulator",
       simulatorCopy: "Strict JSON-schema validation, seeded round execution, deterministic JSON output, frozen benchmarks, and structural drift diagnostics.",
       runScenario: "Run a scenario",
@@ -84,13 +85,14 @@
       semanticCopy: "Minimal claim, evidence, result, audit-log, and decision-trace contracts with a local CLI that validates and preserves structured case records. It does not evaluate or score claims.",
       inspectEngine: "Inspect the engine",
       cliContract: "CLI contract",
-      operatorCopy: "A local-first PWA for structured intake, editable case records, deterministic browser triage, local memory, readable sharing, JSON, and result rendering.",
-      operatorDisclosure: "This locale pack translates the portfolio description, not the Operator interface. Operator performs deterministic browser-side triage and does not execute the Semantic Engine. Triage does not verify stated provenance.",
+      operatorCopy: "A local-first PWA for structured intake, editable case records, deterministic browser triage, human-controlled local learning candidates, readable sharing, JSON, and result rendering.",
+      operatorDisclosure: "Operator's primary and Advanced / Audit JSON workflows are available in this language. Technical JSON keys, code, IDs and commands remain language-neutral and LTR. All interface translations still require qualified human linguistic review. Operator prepares a local, source-bound draft; it does not execute the Semantic Engine or verify source truth. Triage does not verify stated provenance.",
       inspectSource: "Inspect source",
       intakeTitle: "Controlled URL intake",
       intakeCopy: "Repository code and tests define bounded URL retrieval. GitHub alone does not establish that a public endpoint is deployed or available. Retrieved text is not verified evidence.",
       inspectIntake: "Inspect intake source",
       intakeTests: "Inspect tests",
+      intakeContract: "How URL intake works",
       researchTitle: "Scenario & Narrative Research",
       researchCopy: "Experimental scenario generation, mutation sweeps, boundary search, scenario telemetry, narrative consistency checks, and source-labelled research datasets.",
       labState: "Lab state",
@@ -158,9 +160,14 @@
       footerNavAria: "Legal and project links",
       security: "Security",
       issues: "Issues",
-      translationReview: "English, Spanish, and German received an AI-assisted terminology and register audit; named qualified human review is still required. Russian, Hebrew, and Simplified Chinese remain machine-assisted drafts. All interface translations are non-authoritative: canonical v1 Spanish remains authoritative, and no constitutional translation is ratified.",
+      translationReview: "Existing portfolio and primary Operator text in English, Spanish, and German received an AI-assisted terminology and register audit; named qualified human review is still required. The new Advanced translations, plus Russian, Hebrew, and Simplified Chinese, remain AI/machine-assisted drafts. All interface translations are non-authoritative: canonical v1 Spanish remains authoritative, and no constitutional translation is ratified.",
       translationStatus: "Translation status",
-      termbase: "Versioned termbase"
+      termbase: "Versioned termbase",
+      documentSource: "source",
+      documentFallback: "fallback",
+      documentCanonical: "canonical",
+      documentReviewNeeded: "review needed",
+      documentRouterUnavailable: "language route unavailable"
     },
     es: {
       title: "HUB_Optimus — Portfolio público versionado",
@@ -233,6 +240,7 @@
       coreCopy: "Metodología v1 canónica, flujo operativo, escenarios y metaaprendizaje. El español es la fuente canónica de v1; el inglés es el objetivo de paridad.",
       viewCanonical: "Core canónico",
       viewStatus: "Política de estado",
+      metaLearningGuide: "Flujo de metaaprendizaje",
       simulatorTitle: "Simulador determinista de escenarios",
       simulatorCopy: "Validación estricta mediante esquema JSON, ejecución por rondas con semilla, salida JSON determinista, pruebas de referencia congeladas y diagnóstico de deriva estructural.",
       runScenario: "Ejecutar un escenario",
@@ -241,13 +249,14 @@
       semanticCopy: "Contratos mínimos de afirmaciones, evidencias, resultados, registros de auditoría y trazas de decisión, junto con una CLI local que valida y conserva expedientes estructurados. No evalúa ni puntúa afirmaciones.",
       inspectEngine: "Inspeccionar el motor",
       cliContract: "Contrato de la CLI",
-      operatorCopy: "Una PWA que prioriza el funcionamiento local, con ingesta estructurada, expedientes editables, triaje determinista en el navegador, memoria local, resúmenes legibles para compartir, JSON y visualización de resultados.",
-      operatorDisclosure: "Este paquete de idioma traduce la descripción del portfolio, no la interfaz de Operator. Operator realiza un triaje determinista en el navegador y no ejecuta el Semantic Engine. El triaje no verifica la procedencia declarada.",
+      operatorCopy: "Una PWA que prioriza el funcionamiento local, con ingesta estructurada, expedientes editables, triaje determinista en el navegador, candidatos locales de aprendizaje bajo control humano, resúmenes legibles para compartir, JSON y visualización de resultados.",
+      operatorDisclosure: "Los flujos principal y Advanced / Audit JSON de Operator están disponibles en este idioma. Las claves JSON técnicas, el código, los ID y los comandos siguen siendo neutrales respecto al idioma y LTR. Todas las traducciones de interfaz todavía requieren revisión lingüística humana cualificada. Operator prepara un borrador local ligado a la fuente; no ejecuta el Semantic Engine ni verifica la veracidad de la fuente. El triaje no verifica la procedencia declarada.",
       inspectSource: "Inspeccionar el código",
       intakeTitle: "Ingesta controlada de URL",
       intakeCopy: "El repositorio contiene código y pruebas para una recuperación acotada de URL. GitHub por sí solo no demuestra que exista un endpoint público desplegado o disponible. El texto recuperado no es evidencia verificada.",
       inspectIntake: "Inspeccionar el código de ingesta",
       intakeTests: "Inspeccionar las pruebas",
+      intakeContract: "Cómo funciona la entrada por URL",
       researchTitle: "Investigación de escenarios y narrativas",
       researchCopy: "Generación experimental de escenarios, barridos de mutaciones, búsqueda de límites, telemetría de escenarios, controles de coherencia narrativa y conjuntos de datos de investigación con fuentes identificadas.",
       labState: "Estado del laboratorio",
@@ -315,9 +324,14 @@
       footerNavAria: "Enlaces legales y del proyecto",
       security: "Seguridad",
       issues: "Issues",
-      translationReview: "El inglés, el español y el alemán han pasado una auditoría terminológica y de registro asistida por IA; todavía requieren una revisión humana cualificada con revisor identificado. El ruso, el hebreo y el chino simplificado siguen siendo borradores asistidos por máquina. Ninguna de estas traducciones de interfaz tiene carácter autoritativo: el español canónico de v1 sigue siendo la referencia y no hay traducciones constitucionales ratificadas.",
+      translationReview: "Los textos existentes del portfolio y del flujo principal de Operator en inglés, español y alemán han pasado una auditoría terminológica y de registro asistida por IA; todavía requieren una revisión humana cualificada con revisor identificado. Las nuevas traducciones de Advanced, junto con el ruso, el hebreo y el chino simplificado, siguen siendo borradores asistidos por IA/máquina. Ninguna traducción de interfaz tiene carácter autoritativo: el español canónico de v1 sigue siendo la referencia y no hay traducciones constitucionales ratificadas.",
       translationStatus: "Estado de las traducciones",
-      termbase: "Base terminológica versionada"
+      termbase: "Base terminológica versionada",
+      documentSource: "fuente",
+      documentFallback: "alternativa",
+      documentCanonical: "canónico",
+      documentReviewNeeded: "revisión pendiente",
+      documentRouterUnavailable: "ruta lingüística no disponible"
     },
     de: {
       title: "HUB_Optimus — Versioniertes öffentliches Portfolio",
@@ -390,6 +404,7 @@
       coreCopy: "Kanonische v1-Methodik, operativer Ablauf, Szenarien und Meta-Lernen. Spanisch ist für v1 maßgeblich; Englisch ist das Paritätsziel.",
       viewCanonical: "Kanonischer Core",
       viewStatus: "Statusrichtlinie",
+      metaLearningGuide: "Meta-Learning-Workflow",
       simulatorTitle: "Deterministischer Szenario-Simulator",
       simulatorCopy: "Strikte JSON-Schema-Validierung, rundenbasierte Ausführung mit Seed, deterministische JSON-Ausgabe, eingefrorene Benchmarks und Diagnose struktureller Abweichungen.",
       runScenario: "Szenario ausführen",
@@ -398,13 +413,14 @@
       semanticCopy: "Minimale Verträge für Behauptungen, Evidenz, Ergebnisse, Audit-Protokolle und Entscheidungsspuren sowie eine lokale CLI, die strukturierte Falldaten validiert und in die Ausgabe übernimmt. Sie bewertet oder bepunktet keine Behauptungen.",
       inspectEngine: "Engine prüfen",
       cliContract: "CLI-Vertrag",
-      operatorCopy: "Eine auf lokalen Betrieb ausgerichtete PWA für strukturierte Erfassung, editierbare Falldaten, deterministische Browser-Triage, lokalen Speicher, lesbare Zusammenfassungen zum Teilen, JSON und Ergebnisdarstellung.",
-      operatorDisclosure: "Dieses Sprachpaket übersetzt die Portfolio-Beschreibung, nicht die Operator-Oberfläche. Operator führt im Browser eine deterministische Triage durch; die Semantic Engine wird dabei nicht ausgeführt. Die Triage verifiziert die angegebene Herkunft nicht.",
+      operatorCopy: "Eine auf lokalen Betrieb ausgerichtete PWA für strukturierte Erfassung, editierbare Falldaten, deterministische Browser-Triage, lokal gespeicherte Lernkandidaten unter menschlicher Kontrolle, lesbare Zusammenfassungen zum Teilen, JSON und Ergebnisdarstellung.",
+      operatorDisclosure: "Die primären und Advanced-/Audit-JSON-Abläufe von Operator sind in dieser Sprache verfügbar. Technische JSON-Schlüssel, Code, IDs und Befehle bleiben sprachneutral und LTR. Alle Oberflächenübersetzungen erfordern weiterhin eine qualifizierte menschliche Sprachprüfung. Operator erstellt einen lokalen, quellgebundenen Entwurf; die Semantic Engine wird dabei nicht ausgeführt und der Wahrheitsgehalt der Quelle nicht verifiziert. Die Triage verifiziert die angegebene Herkunft nicht.",
       inspectSource: "Quellcode prüfen",
       intakeTitle: "Kontrollierte URL-Erfassung",
       intakeCopy: "Das Repository enthält Code und Tests für einen begrenzten URL-Abruf. GitHub allein belegt nicht, dass ein öffentlicher Endpunkt bereitgestellt oder verfügbar ist. Abgerufener Text ist keine verifizierte Evidenz.",
       inspectIntake: "Quellcode der Erfassung prüfen",
       intakeTests: "Tests prüfen",
+      intakeContract: "So funktioniert die URL-Erfassung",
       researchTitle: "Szenario- & Narrativforschung",
       researchCopy: "Experimentelle Szenariogenerierung, Mutationsläufe, Grenzwertsuche, Szenario-Telemetrie, Konsistenzprüfungen für Narrative und quellgekennzeichnete Forschungsdatensätze.",
       labState: "Laborstatus",
@@ -472,9 +488,14 @@
       footerNavAria: "Rechtliche und projektbezogene Links",
       security: "Sicherheit",
       issues: "Issues",
-      translationReview: "Englisch, Spanisch und Deutsch wurden einer KI-gestützten Terminologie- und Registerprüfung unterzogen; eine qualifizierte menschliche Prüfung durch namentlich benannte Prüfende steht weiterhin aus. Russisch, Hebräisch und vereinfachtes Chinesisch bleiben maschinell unterstützte Entwürfe. Keine dieser Oberflächenübersetzungen ist maßgeblich: Das kanonische Spanisch von v1 bleibt maßgeblich, und keine Verfassungsübersetzung ist ratifiziert.",
+      translationReview: "Bestehende Portfolio- und primäre Operator-Texte in Englisch, Spanisch und Deutsch wurden einer KI-gestützten Terminologie- und Registerprüfung unterzogen; eine qualifizierte menschliche Prüfung durch namentlich benannte Prüfende steht weiterhin aus. Die neuen Advanced-Übersetzungen sowie Russisch, Hebräisch und vereinfachtes Chinesisch bleiben KI-/maschinenunterstützte Entwürfe. Keine Oberflächenübersetzung ist maßgeblich: Das kanonische Spanisch von v1 bleibt maßgeblich, und keine Verfassungsübersetzung ist ratifiziert.",
       translationStatus: "Übersetzungsstatus",
-      termbase: "Versionierte Termbase"
+      termbase: "Versionierte Termbase",
+      documentSource: "Quelle",
+      documentFallback: "Fallback",
+      documentCanonical: "kanonisch",
+      documentReviewNeeded: "Prüfung erforderlich",
+      documentRouterUnavailable: "Sprachroute nicht verfügbar"
     },
     ru: {
       title: "HUB_Optimus — Версионируемый публичный портфель",
@@ -547,6 +568,7 @@
       coreCopy: "Каноническая методология v1, операционный поток, сценарии и метаобучение. Испанский является авторитетным для v1; английский служит эталоном паритета.",
       viewCanonical: "Канонический Core",
       viewStatus: "Политика статуса",
+      metaLearningGuide: "Цикл метаобучения",
       simulatorTitle: "Детерминированный симулятор сценариев",
       simulatorCopy: "Строгая проверка по JSON Schema, раундовое выполнение с заданным seed, детерминированный вывод JSON, зафиксированные эталонные тесты и диагностика структурного дрейфа.",
       runScenario: "Запустить сценарий",
@@ -555,13 +577,14 @@
       semanticCopy: "Минимальные контракты утверждений, доказательств, результатов, журнала аудита и трассы решений с локальным CLI, который проверяет и сохраняет структурированные материалы дела. Он не оценивает утверждения и не присваивает им баллы.",
       inspectEngine: "Изучить движок",
       cliContract: "Контракт CLI",
-      operatorCopy: "Локальная PWA для структурированного ввода, редактируемых материалов дела, детерминированной браузерной сортировки, локальной памяти, удобного обмена, JSON и отображения результатов.",
-      operatorDisclosure: "Этот языковой пакет переводит описание портфеля, но не интерфейс Operator. Operator выполняет детерминированную сортировку в браузере и не запускает Semantic Engine. Непроверенное происхождение остаётся непроверенным.",
+      operatorCopy: "Локальная PWA для структурированного ввода, редактируемых материалов дела, детерминированной браузерной сортировки, локальных кандидатов на обучение под контролем человека, удобного обмена, JSON и отображения результатов.",
+      operatorDisclosure: "Основной и Advanced / Audit JSON процессы Operator доступны на этом языке. Технические ключи JSON, код, идентификаторы и команды остаются нейтральными к языку и имеют направление LTR. Все переводы интерфейса по-прежнему требуют квалифицированной проверки человеком. Operator готовит локальный черновик, привязанный к источнику; он не запускает Semantic Engine и не проверяет истинность источника. Сортировка не проверяет заявленное происхождение.",
       inspectSource: "Изучить исходный код",
       intakeTitle: "Контролируемое получение URL",
       intakeCopy: "Код и тесты в репозитории определяют ограниченное получение содержимого по URL. Один лишь GitHub не подтверждает, что публичная конечная точка развёрнута или доступна. Полученный текст не является проверенным доказательством.",
       inspectIntake: "Изучить код получения",
       intakeTests: "Изучить тесты",
+      intakeContract: "Как работает приём URL",
       researchTitle: "Исследование сценариев и нарративов",
       researchCopy: "Экспериментальная генерация сценариев, серии мутаций, поиск границ, телеметрия сценариев, проверки согласованности нарратива и исследовательские наборы данных с указанием источников.",
       labState: "Состояние лаборатории",
@@ -629,9 +652,14 @@
       footerNavAria: "Юридические ссылки и ссылки проекта",
       security: "Безопасность",
       issues: "Issues",
-      translationReview: "Русская, ивритская и упрощённая китайская версии являются черновиками, созданными с машинной поддержкой; требуется квалифицированная проверка указанными по имени специалистами. Эти переводы интерфейса не являются авторитетными: канонический испанский v1 сохраняет приоритет, а конституционные переводы не ратифицированы.",
+      translationReview: "Существующие тексты портфолио и основного процесса Operator на английском, испанском и немецком прошли терминологический и стилистический аудит с помощью ИИ. Новые переводы Advanced, а также русский, иврит и упрощённый китайский остаются черновиками, подготовленными с помощью ИИ/машины; требуется квалифицированная проверка указанными по имени специалистами. Переводы интерфейса не являются авторитетными: канонический испанский v1 сохраняет приоритет, а конституционные переводы не ратифицированы.",
       translationStatus: "Статус перевода",
-      termbase: "Версионируемая терминологическая база"
+      termbase: "Версионируемая терминологическая база",
+      documentSource: "источник",
+      documentFallback: "резерв",
+      documentCanonical: "канонический",
+      documentReviewNeeded: "требуется проверка",
+      documentRouterUnavailable: "языковой маршрут недоступен"
     },
     he: {
       title: "HUB_Optimus — פורטפוליו ציבורי מנוהל בגרסאות",
@@ -704,6 +732,7 @@
       coreCopy: "מתודולוגיית v1 הקנונית, זרימה תפעולית, תרחישים ומטה-למידה. ספרדית היא המקור הסמכותי ל-v1; אנגלית היא ייחוס לשוויון תוכן.",
       viewCanonical: "Core קנוני",
       viewStatus: "מדיניות מצב",
+      metaLearningGuide: "תהליך מטא־למידה",
       simulatorTitle: "סימולטור תרחישים דטרמיניסטי",
       simulatorCopy: "אימות קפדני לפי JSON Schema, הרצה בסבבים עם seed, פלט JSON דטרמיניסטי, מבחני ייחוס קפואים ואבחון סטייה מבנית.",
       runScenario: "הרצת תרחיש",
@@ -712,13 +741,14 @@
       semanticCopy: "חוזים מינימליים לטענות, ראיות, תוצאות, יומן ביקורת ועקבות החלטה, יחד עם ממשק שורת פקודה מקומי שמאמת ושומר תיקי מקרה מובנים. הוא אינו מעריך טענות ואינו מעניק להן ציונים.",
       inspectEngine: "בדיקת המנוע",
       cliContract: "חוזה ממשק שורת הפקודה",
-      operatorCopy: "יישום PWA בגישה מקומית לקליטה מובנית, תיקי מקרה הניתנים לעריכה, מיון דטרמיניסטי בדפדפן, זיכרון מקומי, שיתוף קריא, JSON והצגת תוצאות.",
-      operatorDisclosure: "חבילת שפה זו מתרגמת את תיאור הפורטפוליו, אך לא את ממשק Operator. ‏Operator מבצע מיון דטרמיניסטי בדפדפן ואינו מפעיל את Semantic Engine. מקור שלא אומת נשאר בלתי מאומת.",
+      operatorCopy: "יישום PWA בגישה מקומית לקליטה מובנית, תיקי מקרה הניתנים לעריכה, מיון דטרמיניסטי בדפדפן, מועמדי למידה מקומיים בשליטה אנושית, שיתוף קריא, JSON והצגת תוצאות.",
+      operatorDisclosure: "התהליכים הראשי ו־Advanced / Audit JSON של Operator זמינים בשפה זו. מפתחות JSON טכניים, קוד, מזהים ופקודות נשארים ניטרליים לשפה ובכיוון LTR. כל תרגומי הממשק עדיין דורשים בדיקה לשונית מוסמכת בידי אדם. Operator מכין טיוטה מקומית הקשורה למקור; הוא אינו מפעיל את Semantic Engine ואינו מאמת את אמיתות המקור. המיון אינו מאמת את המקור המוצהר.",
       inspectSource: "בדיקת קוד המקור",
       intakeTitle: "קליטת URL מבוקרת",
       intakeCopy: "הקוד והבדיקות במאגר מגדירים אחזור מוגבל מ-URL. ‏GitHub לבדו אינו מוכיח שנקודת קצה ציבורית נפרסה או זמינה. טקסט שאוחזר אינו ראיה מאומתת.",
       inspectIntake: "בדיקת קוד הקליטה",
       intakeTests: "בדיקת הבדיקות",
+      intakeContract: "כיצד קליטת URL פועלת",
       researchTitle: "מחקר תרחישים ונרטיבים",
       researchCopy: "יצירת תרחישים ניסיונית, סריקות מוטציה, חיפוש גבולות, טלמטריית תרחישים, בדיקות עקביות נרטיבית ומערכי נתוני מחקר עם ציון מקור.",
       labState: "מצב המעבדה",
@@ -786,9 +816,14 @@
       footerNavAria: "קישורים משפטיים וקישורי הפרויקט",
       security: "אבטחה",
       issues: "Issues",
-      translationReview: "רוסית, עברית וסינית מפושטת הן טיוטות בסיוע מכונה; נדרשת ביקורת אנושית מוסמכת בידי בודקים שיזוהו בשמם. תרגומי הממשק האלה אינם סמכותיים: הספרדית הקנונית של v1 נשארת סמכותית, ולא אושרר שום תרגום חוקתי.",
+      translationReview: "הטקסטים הקיימים של הפורטפוליו ושל התהליך הראשי ב־Operator באנגלית, ספרדית וגרמנית עברו ביקורת מונחים ומשלב בסיוע בינה מלאכותית. התרגומים החדשים של Advanced, וכן רוסית, עברית וסינית מפושטת, נשארים טיוטות בסיוע בינה מלאכותית/מכונה; נדרשת ביקורת אנושית מוסמכת בידי בודקים שיזוהו בשמם. תרגומי הממשק אינם סמכותיים: הספרדית הקנונית של v1 נשארת סמכותית, ולא אושרר שום תרגום חוקתי.",
       translationStatus: "מצב התרגום",
-      termbase: "בסיס מונחים מנוהל בגרסאות"
+      termbase: "בסיס מונחים מנוהל בגרסאות",
+      documentSource: "מקור",
+      documentFallback: "חלופה",
+      documentCanonical: "קנוני",
+      documentReviewNeeded: "נדרשת בדיקה",
+      documentRouterUnavailable: "נתיב השפה אינו זמין"
     },
     "zh-Hans": {
       title: "HUB_Optimus — 版本化公开项目组合",
@@ -861,6 +896,7 @@
       coreCopy: "v1 规范方法论、运营流程、场景和元学习。西班牙语是 v1 的权威版本；英语是对等性参考。",
       viewCanonical: "规范 Core",
       viewStatus: "状态政策",
+      metaLearningGuide: "元学习工作流",
       simulatorTitle: "确定性场景模拟器",
       simulatorCopy: "严格的 JSON Schema 验证、带 seed 的分轮执行、确定性 JSON 输出、冻结基准和结构漂移诊断。",
       runScenario: "运行场景",
@@ -869,13 +905,14 @@
       semanticCopy: "最小化的声明、证据、结果、审计日志和决策轨迹合约，以及用于验证并保存结构化案例记录的本地 CLI。它不会评估声明，也不会为声明评分。",
       inspectEngine: "检查引擎",
       cliContract: "CLI 合约",
-      operatorCopy: "本地优先的 PWA，用于结构化录入、可编辑案例记录、确定性浏览器分流、本地存储、可读分享、JSON 和结果呈现。",
-      operatorDisclosure: "此语言包翻译项目组合中的说明，不翻译 Operator 界面。Operator 仅在浏览器中执行确定性分流，不会运行 Semantic Engine。未经核实的来源信息仍然未经核实。",
+      operatorCopy: "本地优先的 PWA，用于结构化录入、可编辑案例记录、确定性浏览器分流、由人工控制的本地学习候选记录、可读分享、JSON 和结果呈现。",
+      operatorDisclosure: "Operator 的主要流程和 Advanced / Audit JSON 工作流均提供此语言版本。技术 JSON 键、代码、ID 和命令保持语言中立并采用 LTR。所有界面译文仍需合格人员审核。Operator 会准备绑定来源的本地草稿；它不会运行 Semantic Engine，也不会核实来源内容的真实性。分流不会核实所声明的来源信息。",
       inspectSource: "检查源代码",
       intakeTitle: "受控 URL 获取",
       intakeCopy: "仓库代码和测试定义了有边界的 URL 内容获取。仅凭 GitHub 无法证明公共端点已经部署或可用。获取的文本不是经过核实的证据。",
       inspectIntake: "检查获取源代码",
       intakeTests: "检查测试",
+      intakeContract: "URL 导入如何运作",
       researchTitle: "场景与叙事研究",
       researchCopy: "实验性场景生成、变异扫描、边界搜索、场景遥测、叙事一致性检查，以及标注来源的研究数据集。",
       labState: "实验室状态",
@@ -943,9 +980,14 @@
       footerNavAria: "法律与项目链接",
       security: "安全",
       issues: "Issues",
-      translationReview: "俄语、希伯来语和简体中文均为机器辅助草稿；需要由具名的合格人工审核人员进行审核。这些界面翻译不具有权威性：v1 规范西班牙语仍是权威版本，并且没有任何宪制性翻译获得批准。",
+      translationReview: "现有英语、西班牙语和德语的作品集及 Operator 主要流程文本已进行 AI 辅助的术语与语域审计。新的 Advanced 译文以及俄语、希伯来语和简体中文仍为 AI/机器辅助草稿；需要由具名的合格人工审核人员进行审核。所有界面翻译均不具权威性：v1 规范西班牙语仍是权威版本，并且没有任何宪制性翻译获得批准。",
       translationStatus: "翻译状态",
-      termbase: "版本化术语库"
+      termbase: "版本化术语库",
+      documentSource: "来源",
+      documentFallback: "回退",
+      documentCanonical: "规范",
+      documentReviewNeeded: "需要审核",
+      documentRouterUnavailable: "语言路由不可用"
     }
   };
 
@@ -958,6 +1000,7 @@
     if (supportedLanguages.includes(value)) return value;
 
     const normalized = value.toLowerCase().replace(/_/g, "-");
+    if (normalized === "iw" || normalized.startsWith("iw-")) return "he";
     if (
       normalized === "zh-hans"
       || normalized.startsWith("zh-hans-")
@@ -975,6 +1018,15 @@
   }
 
   function chooseInitialLanguage() {
+    try {
+      if (typeof URLSearchParams === "function") {
+        const requested = new URLSearchParams(window.location?.search || "").get("lang");
+        if (requested !== null) return normalizeLanguage(requested);
+      }
+    } catch {
+      // Continue with the stored/browser preference when the URL is unavailable.
+    }
+
     let saved = "";
     try {
       saved = window.localStorage.getItem("hub_optimus_language") || "";
@@ -982,7 +1034,7 @@
       saved = "";
     }
 
-    if (supportedLanguages.includes(saved)) return saved;
+    if (saved) return normalizeLanguage(saved);
     return normalizeLanguage(window.navigator.language || "en");
   }
 
@@ -992,6 +1044,92 @@
     const dictionary = translations[activeLanguage];
     button.textContent = globePaused ? dictionary.resumeGlobe : dictionary.pauseGlobe;
     button.setAttribute("aria-pressed", String(globePaused));
+  }
+
+  function applyDocumentRoutes(locale, dictionary) {
+    const routeApi = globalThis.HUB_OPTIMUS_DOCUMENT_ROUTES;
+    const relationKeys = {
+      source: "documentSource",
+      fallback: "documentFallback"
+    };
+    const maturityKeys = {
+      canonical: "documentCanonical",
+      "review-needed": "documentReviewNeeded"
+    };
+    const links = document.querySelectorAll("[data-document-route]");
+
+    if (!routeApi?.resolve) {
+      links.forEach((link) => {
+        const badge = link.querySelector(".document-language-badge");
+        if (badge) badge.textContent = `? · ${dictionary.documentRouterUnavailable}`;
+        link.setAttribute("data-document-route-state", "unavailable");
+        link.removeAttribute("aria-label");
+      });
+      return;
+    }
+
+    links.forEach((link) => {
+      const routeId = link.getAttribute("data-document-route");
+      const resolved = routeApi.resolve(routeId, locale);
+      const badge = link.querySelector(".document-language-badge");
+      if (!resolved) {
+        if (badge) badge.textContent = `? · ${dictionary.documentRouterUnavailable}`;
+        link.setAttribute("data-document-route-state", "unavailable");
+        link.removeAttribute("aria-label");
+        return;
+      }
+
+      const relationLabel = resolved.relation === "data"
+        ? ""
+        : (dictionary[relationKeys[resolved.relation]] || resolved.relation);
+      const maturityLabel = resolved.maturity
+        ? (dictionary[maturityKeys[resolved.maturity]] || resolved.maturity)
+        : "";
+      const languageLabel = resolved.language === "data"
+        ? "DATA"
+        : resolved.language.toUpperCase();
+      const badgeParts = [languageLabel];
+      if (relationLabel) badgeParts.push(relationLabel);
+      if (maturityLabel) badgeParts.push(maturityLabel);
+
+      link.setAttribute("href", resolved.href);
+      link.setAttribute("data-document-route-state", "ready");
+      link.setAttribute("data-document-relation", resolved.relation);
+      if (resolved.maturity) {
+        link.setAttribute("data-document-maturity", resolved.maturity);
+      } else {
+        link.removeAttribute("data-document-maturity");
+      }
+      if (resolved.language === "data") {
+        link.removeAttribute("hreflang");
+      } else {
+        link.setAttribute("hreflang", resolved.language);
+      }
+      if (badge) {
+        badge.textContent = badgeParts.join(" · ");
+        badge.setAttribute("lang", locale);
+      }
+      link.removeAttribute("aria-label");
+    });
+  }
+
+  function applyOperatorRoutes(locale) {
+    const href = `./operator/?lang=${encodeURIComponent(locale)}#product_intake`;
+    document.querySelectorAll("[data-operator-route]").forEach((link) => {
+      link.setAttribute("href", href);
+      link.setAttribute("hreflang", locale);
+    });
+  }
+
+  function persistLanguageInUrl(locale) {
+    try {
+      if (typeof URL !== "function" || !window.location?.href || !window.history?.replaceState) return;
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.set("lang", locale);
+      window.history.replaceState(null, "", `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+    } catch {
+      // URL persistence is progressive; the selected language still applies locally.
+    }
   }
 
   function applyLanguage(language) {
@@ -1036,6 +1174,10 @@
       button.classList.toggle("is-active", selected);
       button.setAttribute("aria-pressed", String(selected));
     });
+
+    applyDocumentRoutes(nextLanguage, dictionary);
+    applyOperatorRoutes(nextLanguage);
+    persistLanguageInUrl(nextLanguage);
 
     try {
       window.localStorage.setItem("hub_optimus_language", nextLanguage);

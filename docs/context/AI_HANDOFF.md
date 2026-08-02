@@ -690,7 +690,14 @@ Catalunya fire-response draft:
 
 - `.github/copilot-instructions.md` currently identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
 - Other meta-learning copies or link targets require canonical/parity/legacy classification in a separate PR.
-- Do not consolidate or delete meta-learning files in this handoff/status discipline PR.
+- Issue #1836 adds a draft, local-only Operator review loop bound to that exact method digest. The fifth primary section remains visible but its authoring form is locked until a current `operator-source-bound-v1` draft exists.
+- Candidate records are explicit human graphs stored in fail-closed IndexedDB. State and freshness are separate; freshness re-evaluation never rewrites accepted/rejected history, and local acceptance requires a current full case snapshot plus all five closure checks.
+- Candidate IDs are append-only: only a binding-only update or a pure transition with the prior history as an immutable prefix is valid. Any content, provenance, metric, closure, or graph change requires a new candidate ID.
+- Every candidate mutation, deletion, case deletion, and export carries the latest full-entry SHA-256 CAS token as well as the candidate and case-revision tokens; do not reduce this to candidate-only concurrency.
+- The learning modules have no network or `localStorage` fallback. Candidate data must never enter case/analyze payloads, saved draft memory, share text, WhatsApp, hash fragments, clean URLs, or controlled URL intake.
+- Local `accepted` means only a human decision on that browser profile. It does not update Core, the Semantic Engine, repository knowledge, training, or any remote memory.
+- The RFC remains Draft and the repository implementation is not evidence of public deployment or real-device QA. Cross-device sync, automatic suggestions or promotion require a separately governed change.
+- Do not consolidate or delete other meta-learning files as part of this implementation.
 
 ## Do Not Do
 

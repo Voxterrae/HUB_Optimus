@@ -1,13 +1,19 @@
 {
-  "manifest_version": "1.1.0",
+  "manifest_version": "1.3.1",
   "issue": 1750,
-  "latest_audit_issue": 1736,
-  "scope": "Static public portfolio and 404 interface only",
+  "latest_audit_issue": 1834,
+  "scope": "Static public portfolio, 404 interface, and complete Operator interface in six locales; technical JSON, code, IDs, enums, hashes, timestamps, URLs, and commands remain language-neutral",
   "canonical_v1_language": "es",
   "interface_baseline": "en",
   "constitutional_translation_status": "not ratified",
-  "operator_interface_localized": false,
-  "portfolio_translation_key_count": 155,
+  "operator_interface_localization": {
+    "primary_flow": true,
+    "advanced_audit_console": true,
+    "advanced_audit_console_locales": ["en", "es", "de", "ru", "he", "zh-Hans"],
+    "supported_locales": ["en", "es", "de", "ru", "he", "zh-Hans"],
+    "review_status": "AI/machine-assisted; qualified human linguistic review required"
+  },
+  "portfolio_translation_key_count": 162,
   "field_status": {
     "document_title_and_description": {
       "en": "AI-assisted terminology and register audit; named qualified human review required",
@@ -57,10 +63,18 @@
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
     },
-    "operator_description_and_disclosure": {
+    "operator_primary_flow_and_disclosure": {
       "en": "AI-assisted terminology and register audit; named qualified human review required",
       "es": "AI-assisted terminology and register audit; named qualified human review required",
       "de": "AI-assisted terminology and register audit; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
+    "operator_advanced_audit_console": {
+      "en": "AI-assisted draft; named qualified human review required",
+      "es": "AI-assisted draft; named qualified human review required",
+      "de": "AI-assisted draft; named qualified human review required",
       "ru": "machine-assisted draft; qualified human review required",
       "he": "machine-assisted draft; qualified human review required",
       "zh-Hans": "machine-assisted draft; qualified human review required"
@@ -101,42 +115,42 @@
   "locales": {
     "en": {
       "direction": "ltr",
-      "scope": "existing portfolio interface baseline",
-      "translation_method": "existing baseline; AI-assisted terminology and register audit",
+      "scope": "portfolio, 404, and complete Operator interface baseline",
+      "translation_method": "mixed: existing baseline with AI-assisted terminology and register audit; Advanced extension is an AI-assisted draft",
       "review_status": "named qualified human review required",
       "named_reviewer": null
     },
     "es": {
       "direction": "ltr",
-      "scope": "existing portfolio interface translation",
-      "translation_method": "existing translation; AI-assisted terminology and register audit",
+      "scope": "portfolio, 404, and complete Operator interface translation",
+      "translation_method": "mixed: existing translation with AI-assisted terminology and register audit; Advanced extension is an AI-assisted draft",
       "review_status": "named qualified human review required",
       "named_reviewer": null
     },
     "de": {
       "direction": "ltr",
-      "scope": "existing portfolio interface translation",
-      "translation_method": "existing translation; AI-assisted terminology and register audit",
+      "scope": "portfolio, 404, and complete Operator interface translation",
+      "translation_method": "mixed: existing translation with AI-assisted terminology and register audit; Advanced extension is an AI-assisted draft",
       "review_status": "named qualified human review required",
       "named_reviewer": null
     },
     "ru": {
       "direction": "ltr",
-      "scope": "portfolio and 404 interface",
+      "scope": "portfolio, 404, and complete Operator interface",
       "translation_method": "machine-assisted draft",
       "review_status": "qualified human review required",
       "named_reviewer": null
     },
     "he": {
       "direction": "rtl",
-      "scope": "portfolio and 404 interface",
+      "scope": "portfolio, 404, and complete Operator interface",
       "translation_method": "machine-assisted draft",
       "review_status": "qualified human review required",
       "named_reviewer": null
     },
     "zh-Hans": {
       "direction": "ltr",
-      "scope": "portfolio and 404 interface; Simplified Chinese only",
+      "scope": "portfolio, 404, and complete Operator interface; Simplified Chinese only",
       "translation_method": "machine-assisted draft",
       "review_status": "qualified human review required",
       "named_reviewer": null

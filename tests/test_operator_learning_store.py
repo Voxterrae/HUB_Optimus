@@ -378,7 +378,7 @@ def run_store_script(body: str):
     return completed.stdout
 
 
-def test_learning_store_contract_is_model_only_and_has_no_ambient_side_channels():
+def test_learning_store_contract_is_loaded_without_ambient_side_channels():
     source = ADAPTER.read_text(encoding="utf-8")
     rfc = " ".join(RFC.read_text(encoding="utf-8").split())
 
@@ -402,9 +402,14 @@ def test_learning_store_contract_is_model_only_and_has_no_ambient_side_channels(
     ):
         assert forbidden not in source
 
-    assert "learning-store.v1.js" not in OPERATOR.read_text(encoding="utf-8")
-    assert "learning-store.v1.js" not in SERVICE_WORKER.read_text(encoding="utf-8")
-    assert "current Operator HTML and service worker do not load or cache it" in rfc
+    operator = OPERATOR.read_text(encoding="utf-8")
+    service_worker = SERVICE_WORKER.read_text(encoding="utf-8")
+    assert operator.index("learning-candidate.v1.js") < operator.index("learning-store.v1.js")
+    assert operator.index("learning-store.v1.js") < operator.index("const $ =")
+    assert '"./learning-candidate.v1.js"' in service_worker
+    assert '"./learning-store.v1.js"' in service_worker
+    assert '"./schemas/operator_learning_candidate.v1.schema.json"' in service_worker
+    assert "service worker precaches both modules" in rfc
     assert "additional hard ceiling of 16 MiB" in rfc
 
 
