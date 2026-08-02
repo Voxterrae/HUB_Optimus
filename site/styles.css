@@ -1373,6 +1373,8 @@ canvas {
   }
 
   .globe-stage {
+    width: 100%;
+    aspect-ratio: auto;
     min-height: clamp(18rem, 80vw, 23rem);
   }
 

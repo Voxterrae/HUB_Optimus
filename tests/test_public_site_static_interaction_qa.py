@@ -565,6 +565,7 @@ def test_focus_motion_rtl_and_responsive_css_contracts_remain_versioned():
     assert ".boundary-row { grid-template-columns: 1fr;" in mobile
     assert ".site-footer { justify-items: start;" in mobile
     assert ".hero h1 { font-size: clamp(1.75rem, 18vw, 5.8rem);" in mobile
+    assert ".globe-stage { width: 100%; aspect-ratio: auto;" in mobile
 
     narrow = compact_css(css_block(portfolio, "@media (max-width: 540px)"))
     assert ".site-header { position: static; grid-template-columns: 1fr;" in narrow
