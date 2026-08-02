@@ -1221,6 +1221,7 @@
       <span>HUB_OPTIMUS // OPERATOR</span>
       <span data-op-i18n="prototypeLabel">LOCAL-FIRST BROWSER PROTOTYPE</span>
       <span><a id="operator_landing_link" href="../?lang=en" hreflang="en" data-op-i18n="landingLink">PUBLIC LANDING</a></span>
+      <span id="private_operator_session_actions" hidden><a id="private_operator_sign_out" href="https://api.huboptimus.dev/oauth2/sign_out?rd=%2Fsigned-out" data-op-i18n="privateIntakeSignOut">SIGN OUT</a></span>
     </div>
 
     <div class="operator-language-switcher" role="group" aria-label="Language" aria-describedby="translation_review_notice" data-op-i18n-aria="languageLabel">
@@ -1312,14 +1313,15 @@
 
     <form class="panel full product-intake" id="product_intake" aria-labelledby="product_intake_title">
       <h2 id="product_intake_title" data-op-i18n="intakeTitle">Prepare a review draft</h2>
-      <p class="product-lede" data-op-i18n="intakeLede">Paste source text and, optionally, its URL for unverified attribution. Public Operator keeps both inputs local during intake and prepares an editable draft. It does not retrieve the URL, verify truth, infer motives, score risk, or execute the Semantic Engine.</p>
+      <p class="product-lede" data-op-i18n="intakeLede">Paste source text and, optionally, its URL. Public Operator keeps both local and treats the URL as unverified attribution; authenticated private Operator may retrieve the URL through controlled intake. Neither path verifies truth, infers motives, scores risk, or executes the Semantic Engine.</p>
 
       <div class="row">
         <div class="field">
           <label for="product_source_url" data-op-i18n="sourceUrlLabel">Source URL</label>
-          <input id="product_source_url" name="source_url" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" dir="ltr" aria-describedby="product_source_url_hint product_source_url_disclosure" placeholder="https://example.com/news-or-github-source" data-op-i18n-placeholder="sourceUrlPlaceholder">
-          <p class="field-hint" id="product_source_url_hint" data-op-i18n="sourceUrlHint">Public Operator does not send or retrieve this URL. Paste the source text below, or open the private Operator for authenticated automatic retrieval.</p>
-          <p class="field-hint" id="product_source_url_disclosure" data-op-i18n="sourceUrlDisclosure">When source text is also supplied, the exact URL is retained only as unverified attribution in the local draft. Explicit share actions can include it. Do not enter private or signed links, tokens, one-time passwords or personal data.</p>
+          <input id="product_source_url" name="source_url" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" dir="ltr" aria-describedby="product_source_url_hint product_source_url_disclosure product_private_intake_hint" placeholder="https://example.com/news-or-github-source" data-op-i18n-placeholder="sourceUrlPlaceholder">
+          <p class="field-hint" id="product_source_url_hint" data-op-i18n="sourceUrlAccessHint">The authenticated private Operator can send this URL to controlled intake. Public Operator does not send it; paste the relevant source text below instead.</p>
+          <p class="field-hint" id="product_source_url_disclosure" data-op-i18n="sourceUrlPrivacyDisclosure">On the public Operator, an exact URL supplied with source text stays local as unverified attribution; explicit share actions can include it. On the authenticated private Operator, retrieval sends that exact URL, including its path, query and fragment, to controlled intake. Do not use private or signed links, tokens, one-time passwords or personal data.</p>
+          <p class="field-hint" id="product_private_intake_hint"><a href="https://api.huboptimus.dev/oauth2/start?rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F" rel="noopener noreferrer" data-op-i18n="privateIntakeLink">Open authenticated URL intake</a> · <span data-op-i18n="privateIntakeHint">Automatic retrieval is limited to authorized owner/team accounts. Public Operator continues to support pasted source text without sending the URL.</span></p>
         </div>
         <div class="field">
           <label for="signal_source_type" data-op-i18n="sourceTypeLabel">Source type</label>
@@ -1340,7 +1342,7 @@
       </div>
 
       <div class="field">
-        <label for="product_source_text"><span data-op-i18n="sourceTextLabel">Source text</span> <span class="meta" data-op-i18n="sourceTextOptional">(required for a public draft; no 1,200-character limit)</span></label>
+        <label for="product_source_text"><span data-op-i18n="sourceTextLabel">Source text</span> <span class="meta" data-op-i18n="sourceTextOptional">(required for a public draft; optional private context when a URL is retrieved; public text has no 1,200-character limit)</span></label>
         <textarea id="product_source_text" name="source_text" dir="auto" aria-describedby="product_source_text_hint" placeholder="Paste the complete source text to review locally." data-op-i18n-placeholder="sourceTextPlaceholder"></textarea>
         <p class="field-hint" id="product_source_text_hint" data-op-i18n="sourceTextHint">In the public Operator, pasted text is used in full as the local source; the 1,200-character context limit does not apply. In the authenticated private Operator, when a URL is retrieved, up to 1,200 Unicode characters of pasted text are recorded separately as local operator context. The draft indicates whether any remainder was omitted.</p>
       </div>
@@ -1764,7 +1766,7 @@
     <footer class="footer">
       <span data-op-i18n="footerPrivacy">This page embeds no client-side analytics or advertising tracking, performs no hidden scoring, and loads no third-party JavaScript. Hosting providers may retain operational logs.</span>
       <span data-op-i18n="footerApi">Public analysis API: not exposed. Controlled URL intake: bounded.</span>
-      <span data-op-i18n="footerIntake">Operator does not upload pasted text during intake. Explicit copy, WhatsApp or handoff actions can share the content they identify. Every supplied URL is sent alone to controlled intake; operator context is not sent with it.</span>
+      <span data-op-i18n="footerIntake">Public Operator sends neither URLs nor pasted text during intake. A supplied URL remains local, unverified attribution when pasted text is used. Authenticated private Operator sends only the URL to controlled intake; operator context remains local. Explicit copy, WhatsApp or handoff actions can share the content they identify.</span>
     </footer>
   </main>
 
@@ -4231,9 +4233,9 @@
     }
 
     // OPERATOR_CONTROLLED_INTAKE_CONTRACT_START
+    const PRIVATE_OPERATOR_ORIGIN = "https://api.huboptimus.dev";
     const PRIVATE_OPERATOR_LOGIN_URL = "https://api.huboptimus.dev/oauth2/start?rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F";
-    const PUBLIC_OPERATOR_CONTROLLED_URL_INTAKE_ENABLED = false;
-    const CONTROLLED_URL_INTAKE_ENDPOINT = "https://api.huboptimus.dev/intake/url";
+    const CONTROLLED_URL_INTAKE_ENDPOINT = "/api/intake";
     const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;
     const CONTROLLED_INTAKE_LIMITS = Object.freeze({
       urlCharacters: 2048,
@@ -4306,11 +4308,61 @@
     const CONTROLLED_INTAKE_ERROR_CODES = new Set(
       Object.keys(CONTROLLED_INTAKE_ERROR_HTTP_STATUS)
     );
+    const PUBLIC_INTAKE_SCHEMA_VERSION = "operator_public_intake.v1";
+    const PUBLIC_INTAKE_SUCCESS_FIELDS = Object.freeze([
+      "schema_version",
+      "request_id",
+      "status",
+      "intake"
+    ]);
+    const PUBLIC_INTAKE_ERROR_FIELDS = Object.freeze([
+      "schema_version",
+      "request_id",
+      "status",
+      "error"
+    ]);
+    const PUBLIC_INTAKE_ERROR_DETAIL_FIELDS = Object.freeze(["code", "message"]);
+    const PUBLIC_INTAKE_NGINX_ERROR_FIELDS = Object.freeze(["error", "request_id"]);
+    const PUBLIC_INTAKE_NGINX_ERROR_HTTP_STATUS = Object.freeze({
+      "authentication_required": 401,
+      "forbidden": 403,
+      "not_found": 404,
+      "method_not_allowed": 405,
+      "request_timeout": 408,
+      "request_too_large": 413,
+      "rate_limited": 429,
+      "invalid_request": 400,
+      "internal_error": 500,
+      "upstream_unavailable": 502,
+      "upstream_busy": 503,
+      "upstream_timeout": 504
+    });
+    const PUBLIC_INTAKE_GATEWAY_ERROR_HTTP_STATUS = Object.freeze({
+      "internal_error": 500,
+      "invalid_client_ip": 400,
+      "invalid_framing": 400,
+      "invalid_request": 400,
+      "length_required": 411,
+      "method_not_allowed": 405,
+      "not_found": 404,
+      "origin_forbidden": 403,
+      "rate_limited": 429,
+      "request_timeout": 408,
+      "request_too_large": 413,
+      "subject_busy": 429,
+      "unauthorized": 401,
+      "untrusted_headers": 400,
+      "unsupported_media_type": 415,
+      "upstream_busy": 503,
+      "upstream_malformed": 502,
+      "upstream_response_too_large": 502,
+      "upstream_timeout": 504,
+      "upstream_unavailable": 502,
+      "forbidden": 403
+    });
 
     function controlledUrlIntakeAvailable() {
-      // GitHub Pages is deliberately manual/local. Authenticated retrieval is
-      // a separate private deployment and cannot be enabled by this artifact.
-      return PUBLIC_OPERATOR_CONTROLLED_URL_INTAKE_ENABLED;
+      return typeof window !== "undefined" && window.location?.origin === PRIVATE_OPERATOR_ORIGIN;
     }
 
     function isControlledIntakeObject(value) {
@@ -4325,6 +4377,74 @@
       if (actualFields.length !== expectedFields.length) return false;
       const expected = new Set(expectedFields);
       return actualFields.every((field) => expected.has(field));
+    }
+
+    function isPublicIntakeRequestId(value) {
+      return typeof value === "string" && /^req_[0-9a-f]{32}$/.test(value);
+    }
+
+    function publicIntakeErrorStatus(code) {
+      return PUBLIC_INTAKE_GATEWAY_ERROR_HTTP_STATUS[code]
+        ?? CONTROLLED_INTAKE_ERROR_HTTP_STATUS[code]
+        ?? null;
+    }
+
+    function validateNginxIntakeBoundaryError(payload, response) {
+      if (!hasExactControlledIntakeFields(payload, PUBLIC_INTAKE_NGINX_ERROR_FIELDS)) {
+        return null;
+      }
+      const expectedStatus = PUBLIC_INTAKE_NGINX_ERROR_HTTP_STATUS[payload.error] ?? null;
+      if (
+        expectedStatus === null ||
+        response?.ok !== false ||
+        response.status !== expectedStatus ||
+        !isPublicIntakeRequestId(payload.request_id)
+      ) {
+        return null;
+      }
+      return {
+        errorCode: payload.error,
+        httpStatus: response.status,
+        requestId: payload.request_id
+      };
+    }
+
+    function validatePublicIntakeEnvelope(payload, sourceUrl, response) {
+      const expectedFields = payload?.status === "ok"
+        ? PUBLIC_INTAKE_SUCCESS_FIELDS
+        : PUBLIC_INTAKE_ERROR_FIELDS;
+      if (
+        !hasExactControlledIntakeFields(payload, expectedFields) ||
+        payload.schema_version !== PUBLIC_INTAKE_SCHEMA_VERSION ||
+        !isPublicIntakeRequestId(payload.request_id)
+      ) {
+        return null;
+      }
+
+      if (payload.status === "ok") {
+        if (response?.ok !== true || response.status !== 200) return null;
+        const intake = validateControlledIntakeSuccess(payload.intake, sourceUrl);
+        return intake ? { intake, requestId: payload.request_id } : null;
+      }
+
+      if (
+        payload.status !== "error" ||
+        response?.ok !== false ||
+        !hasExactControlledIntakeFields(payload.error, PUBLIC_INTAKE_ERROR_DETAIL_FIELDS) ||
+        typeof payload.error.code !== "string" ||
+        publicIntakeErrorStatus(payload.error.code) !== response.status ||
+        typeof payload.error.message !== "string" ||
+        !payload.error.message.length ||
+        payload.error.message.length > 512 ||
+        !hasWellFormedUnicode(payload.error.message)
+      ) {
+        return null;
+      }
+      return {
+        errorCode: payload.error.code,
+        httpStatus: response.status,
+        requestId: payload.request_id
+      };
     }
 
     function controlledIntakeUrl(value) {
@@ -4524,15 +4644,23 @@
     }
 
     class ControlledIntakeError extends Error {
-      constructor(code, httpStatus = null) {
+      constructor(code, httpStatus = null, requestId = null) {
         super(String(code || "intake_rejected"));
         this.name = "ControlledIntakeError";
         this.code = String(code || "intake_rejected");
         this.httpStatus = Number.isInteger(httpStatus) ? httpStatus : null;
+        this.requestId = typeof requestId === "string" ? requestId : null;
       }
     }
 
     function controlledIntakeActionKey(code) {
+      if (code === "private_intake_required") return "msgPrivateIntakeRequiredBody";
+      if (["authentication_required", "unauthorized"].includes(code)) {
+        return "msgAuthenticationRequiredBody";
+      }
+      if (["forbidden", "origin_forbidden"].includes(code)) {
+        return "msgAuthorizationDeniedBody";
+      }
       if ([
         "invalid_url",
         "invalid_url_host",
@@ -4555,40 +4683,78 @@
       return "msgIntakeActionTemporary";
     }
 
+    function controlledIntakeTitleKey(code) {
+      if (code === "private_intake_required") return "msgPrivateIntakeRequiredTitle";
+      if (["authentication_required", "unauthorized"].includes(code)) {
+        return "msgAuthenticationRequiredTitle";
+      }
+      if (["forbidden", "origin_forbidden"].includes(code)) {
+        return "msgAuthorizationDeniedTitle";
+      }
+      return "msgUrlFallbackTitle";
+    }
+
+    function controlledIntakeWaitKey(code) {
+      if (code === "private_intake_required") return "msgPrivateIntakeRequiredWait";
+      if (["authentication_required", "unauthorized"].includes(code)) {
+        return "msgAuthenticationRequiredWait";
+      }
+      if (["forbidden", "origin_forbidden"].includes(code)) {
+        return "msgAuthorizationDeniedWait";
+      }
+      return "msgUrlFallbackWait";
+    }
+
     function renderUrlIntakeFallback(sourceUrl, error = null, { focus = true } = {}) {
       currentIntakeFailure = { sourceUrl, error };
       const code = error instanceof ControlledIntakeError ? error.code : "intake_rejected";
-      if (code === "private_intake_required") {
-        $("product_output").innerHTML = `
-          <section class="output-card full">
-            <h3>${escapeHtml(opText("msgPrivateIntakeRequiredTitle"))}</h3>
-            <p>${escapeHtml(opText("msgPrivateIntakeRequiredBody"))}</p>
-            <p><a href="${PRIVATE_OPERATOR_LOGIN_URL}" rel="noopener noreferrer">${escapeHtml(opText("privateIntakeLink"))}</a></p>
-            <p class="meta">${escapeHtml(opText("msgUrlFallbackBoundary"))}</p>
-          </section>
-        `;
-        setOperatorMessage("product_wait_status", "msgPrivateIntakeRequiredWait");
-        if (focus) $("product_source_text").focus();
-        preparedDraftReady = false;
-        setMemoryActionsEnabled(false);
-        return;
-      }
       const actionKey = controlledIntakeActionKey(code);
+      const titleKey = controlledIntakeTitleKey(code);
+      const boundaryFailure = [
+        "private_intake_required",
+        "authentication_required",
+        "unauthorized",
+        "forbidden",
+        "origin_forbidden"
+      ].includes(code);
+      const loginAction = ["authentication_required", "unauthorized"].includes(code)
+        ? `<p><a href="${PRIVATE_OPERATOR_LOGIN_URL}" rel="noopener noreferrer">${escapeHtml(opText("privateIntakeSignIn"))}</a></p>`
+        : code === "private_intake_required"
+          ? `<p><a href="${PRIVATE_OPERATOR_LOGIN_URL}" rel="noopener noreferrer">${escapeHtml(opText("privateIntakeLink"))}</a></p>`
+          : "";
       $("product_output").innerHTML = `
         <section class="output-card full">
-          <h3>${escapeHtml(opText("msgUrlFallbackTitle"))}</h3>
+          <h3>${escapeHtml(opText(titleKey))}</h3>
           <p>${escapeHtml(opText(actionKey))}</p>
-          <p>${escapeHtml(opText("msgUrlFallbackNonVerdict"))}</p>
-          <p class="meta">${escapeHtml(opText("msgUrlFallbackBoundary"))}</p>
+          ${loginAction}
+          ${boundaryFailure ? "" : `<p>${escapeHtml(opText("msgUrlFallbackNonVerdict"))}</p>`}
+          <p class="meta">${escapeHtml(opText(boundaryFailure ? "msgAuthenticatedIntakeBoundary" : "msgUrlFallbackBoundary"))}</p>
         </section>
       `;
-      setOperatorMessage("product_wait_status", "msgUrlFallbackWait");
+      setOperatorMessage("product_wait_status", controlledIntakeWaitKey(code));
       if (focus) $("product_source_text").focus();
       preparedDraftReady = false;
       setMemoryActionsEnabled(false);
     }
 
+    function canUsePastedTextAfterPrivateBoundary(failure, sourceUrl, rawText) {
+      return Boolean(
+        rawText &&
+        failure?.sourceUrl === sourceUrl &&
+        failure.error instanceof ControlledIntakeError &&
+        [
+          "authentication_required",
+          "unauthorized",
+          "forbidden",
+          "origin_forbidden"
+        ].includes(failure.error.code)
+      );
+    }
+
     async function readControlledUrlText(sourceUrl, { signal = undefined } = {}) {
+      if (!controlledUrlIntakeAvailable()) {
+        throw new ControlledIntakeError("private_intake_required");
+      }
       const deadlineController = typeof AbortController === "function"
         ? new AbortController()
         : null;
@@ -4611,6 +4777,9 @@
         try {
           response = await fetch(CONTROLLED_URL_INTAKE_ENDPOINT, {
             method: "POST",
+            credentials: "include",
+            cache: "no-store",
+            redirect: "error",
             headers: {
               "Content-Type": "application/json"
             },
@@ -4630,21 +4799,27 @@
           throw new ControlledIntakeError("invalid_response", response.status);
         }
 
-        if (payload?.status === "error") {
-          const errorCode = validateControlledIntakeError(payload, sourceUrl, response);
-          if (!errorCode) {
-            throw new ControlledIntakeError("invalid_response", response.status);
-          }
-          throw new ControlledIntakeError(errorCode, response.status);
-        }
-        if (response?.ok !== true || response.status !== 200) {
-          throw new ControlledIntakeError("invalid_response", response?.status);
+        const nginxBoundaryError = validateNginxIntakeBoundaryError(payload, response);
+        if (nginxBoundaryError) {
+          throw new ControlledIntakeError(
+            nginxBoundaryError.errorCode,
+            nginxBoundaryError.httpStatus,
+            nginxBoundaryError.requestId
+          );
         }
 
-        const validatedPayload = validateControlledIntakeSuccess(payload, sourceUrl);
-        if (!validatedPayload) {
+        const envelope = validatePublicIntakeEnvelope(payload, sourceUrl, response);
+        if (!envelope) {
           throw new ControlledIntakeError("invalid_response", response.status);
         }
+        if (envelope.errorCode) {
+          throw new ControlledIntakeError(
+            envelope.errorCode,
+            envelope.httpStatus,
+            envelope.requestId
+          );
+        }
+        const validatedPayload = envelope.intake;
         if (!validatedPayload.text.trim()) {
           throw new ControlledIntakeError("empty_extraction", response.status);
         }
@@ -4848,6 +5023,7 @@
       const initialIntakeState = canonicalIntakeState();
       let raw = initialIntakeState.sourceText;
       const sourceUrl = initialIntakeState.sourceUrl;
+      const priorIntakeFailure = currentIntakeFailure;
       const analyzeButton = $("product_analyze");
       const advancedNormalizeButton = $("normalize_signal");
 
@@ -4875,9 +5051,21 @@
       if (analyzeButton) analyzeButton.disabled = true;
       if (advancedNormalizeButton) advancedNormalizeButton.disabled = true;
 
-      const useControlledUrlIntake = Boolean(
-        sourceUrl && controlledUrlIntakeAvailable()
+      const usePastedTextAfterBoundary = canUsePastedTextAfterPrivateBoundary(
+        priorIntakeFailure,
+        sourceUrl,
+        raw
       );
+      const useControlledUrlIntake = Boolean(
+        sourceUrl &&
+        controlledUrlIntakeAvailable() &&
+        !usePastedTextAfterBoundary
+      );
+      if (usePastedTextAfterBoundary) {
+        // Source selection is a two-submit review flow. Preserve the boundary
+        // decision until that local-only draft is actually completed.
+        currentIntakeFailure = priorIntakeFailure;
+      }
       if (sourceUrl && !useControlledUrlIntake && !raw) {
         renderUrlIntakeFallback(
           sourceUrl,
@@ -5050,6 +5238,7 @@
 
       renderProductOutput();
       currentMemoryRecord = buildMemoryRecord();
+      currentIntakeFailure = null;
       preparedDraftReady = true;
       setMemoryActionsEnabled(true);
       renderMemoryStatus("msgDraftReadyShare", {}, true);
@@ -6334,9 +6523,44 @@
     updateJson();
     void initializeLearningWorkspace();
 
+    const privateSessionActions = $("private_operator_session_actions");
+    if (privateSessionActions) {
+      privateSessionActions.hidden = !controlledUrlIntakeAvailable();
+    }
+
+    async function removePrivateOperatorOfflineState() {
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations
+          .filter((registration) => registration.scope.startsWith(`${PRIVATE_OPERATOR_ORIGIN}/operator/`))
+          .map((registration) => registration.unregister()));
+      }
+      if ("caches" in window) {
+        const cacheKeys = await window.caches.keys();
+        await Promise.all(cacheKeys
+          .filter((key) => key.startsWith("hub-optimus-operator-"))
+          .map((key) => window.caches.delete(key)));
+      }
+    }
+
+    const privateSignOut = $("private_operator_sign_out");
+    privateSignOut?.addEventListener("click", (event) => {
+      if (!controlledUrlIntakeAvailable()) return;
+      event.preventDefault();
+      const signOutUrl = privateSignOut.href;
+      privateSignOut.setAttribute("aria-disabled", "true");
+      void removePrivateOperatorOfflineState().finally(() => {
+        window.location.assign(signOutUrl);
+      });
+    });
+
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js");
+        if (controlledUrlIntakeAvailable()) {
+          void removePrivateOperatorOfflineState();
+          return;
+        }
+        void navigator.serviceWorker.register("./sw.js");
       });
     }
   </script>

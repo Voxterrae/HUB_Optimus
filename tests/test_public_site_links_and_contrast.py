@@ -179,6 +179,8 @@ def test_live_external_navigation_targets_are_explicit_and_network_free_in_pytes
         "https://github.com/Voxterrae/HUB_Optimus",
         "https://github.com/Voxterrae/HUB_Optimus/issues",
         "https://github.com/Voxterrae/HUB-Optimus-labs",
+        "https://api.huboptimus.dev/oauth2/start?rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F",
+        "https://api.huboptimus.dev/oauth2/sign_out?rd=%2Fsigned-out",
     }
     external_navigation = set()
 

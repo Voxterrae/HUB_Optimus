@@ -1,4 +1,6 @@
-const CACHE_NAME = "hub-optimus-operator-v0-27";
+const CACHE_NAME = "hub-optimus-operator-v0-28";
+const PRIVATE_OPERATOR_ORIGIN = "https://api.huboptimus.dev";
+const IS_PRIVATE_OPERATOR_ORIGIN = self.location.origin === PRIVATE_OPERATOR_ORIGIN;
 const OFFLINE_FALLBACK = "./index.html";
 const STATIC_ASSETS = [
   "./",
@@ -67,25 +69,36 @@ async function cacheFirst(request) {
 }
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(cacheStaticAssets());
+  event.waitUntil(
+    IS_PRIVATE_OPERATOR_ORIGIN
+      ? Promise.resolve()
+      : cacheStaticAssets()
+  );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(
-      keys
-        .filter((
-          key
-        ) => key.startsWith("hub-optimus-operator-") && key !== CACHE_NAME)
-        .map((key) => caches.delete(key))
-    ))
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys
+        .filter((key) => (
+          key.startsWith("hub-optimus-operator-") &&
+          (IS_PRIVATE_OPERATOR_ORIGIN || key !== CACHE_NAME)
+        ))
+        .map((key) => caches.delete(key)));
+      if (IS_PRIVATE_OPERATOR_ORIGIN) {
+        await self.registration.unregister();
+      }
+      await self.clients.claim();
+    })()
   );
-
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
+  // The authenticated console must never work from an offline shell after a
+  // session expires or is deliberately closed. NGINX is its only source.
+  if (IS_PRIVATE_OPERATOR_ORIGIN) return;
   if (event.request.method !== "GET") return;
 
   const url = new URL(event.request.url);
