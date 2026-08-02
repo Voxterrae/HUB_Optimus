@@ -321,7 +321,7 @@ def test_learning_scripts_schema_and_offline_assets_are_versioned_in_order():
     assert source.index("./learning-candidate.v1.js") < source.index("./learning-store.v1.js")
     assert source.index("./learning-store.v1.js") < source.index("const $ =")
     service_worker = SW.read_text(encoding="utf-8")
-    assert 'hub-optimus-operator-v0-26' in service_worker
+    assert 'hub-optimus-operator-v0-27' in service_worker
     for asset in (
         './learning-candidate.v1.js',
         './learning-store.v1.js',

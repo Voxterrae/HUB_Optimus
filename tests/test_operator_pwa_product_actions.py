@@ -20,6 +20,173 @@ URL_INTAKE_SCHEMA = (
 NODE = shutil.which("node")
 
 
+FULL_PAGE_HARNESS = r'''
+const vm = require("node:vm");
+function fakeClassList() {
+  return { add() {}, remove() {}, toggle() {}, contains() { return false; } };
+}
+function element(id = "") {
+  const events = {};
+  const node = {
+    id,
+    value: "",
+    textContent: "",
+    innerHTML: "",
+    hidden: false,
+    disabled: false,
+    checked: false,
+    dataset: {},
+    style: { setProperty() {}, removeProperty() {} },
+    classList: fakeClassList(),
+    children: [],
+    files: [],
+    attributes: {},
+    addEventListener(type, fn) { (events[type] ||= []).push(fn); },
+    async emit(type, event = {}) {
+      for (const fn of events[type] || []) {
+        await fn(Object.assign({ target: node, preventDefault() {} }, event));
+      }
+    },
+    appendChild(child) { this.children.push(child); child.parentElement = this; return child; },
+    append(...children) { children.forEach((child) => this.appendChild(child)); },
+    replaceChildren(...children) { this.children = []; children.forEach((child) => this.appendChild(child)); },
+    remove() {},
+    focus() {},
+    scrollIntoView() {},
+    click() {},
+    reset() {},
+    reportValidity() {},
+    checkValidity() { return true; },
+    setCustomValidity() {},
+    setAttribute(key, value) {
+      this.attributes[key] = String(value);
+      if (key === "value") this.value = String(value);
+    },
+    getAttribute(key) { return this.attributes[key] ?? null; },
+    removeAttribute(key) { delete this.attributes[key]; },
+    querySelector() { return null; },
+    querySelectorAll() { return []; },
+    closest() { return null; },
+    cloneNode() { return element(`${id}-clone`); },
+    getBoundingClientRect() { return { top: 0, left: 0, width: 10, height: 10 }; },
+    get events() { return events; }
+  };
+  return node;
+}
+const nodes = new Map();
+function byId(id) {
+  if (!nodes.has(id)) nodes.set(id, element(id));
+  return nodes.get(id);
+}
+const documentEvents = {};
+const document = {
+  documentElement: element("html"),
+  body: element("body"),
+  title: "",
+  getElementById: byId,
+  createElement: (tag) => element(tag),
+  createTextNode: (text) => ({ textContent: String(text) }),
+  querySelector(selector) { return element(selector); },
+  querySelectorAll() { return []; },
+  addEventListener(type, fn) { (documentEvents[type] ||= []).push(fn); },
+  execCommand() { return true; }
+};
+const storage = new Map();
+const localStorage = {
+  getItem: (key) => storage.get(key) ?? null,
+  setItem: (key, value) => storage.set(key, String(value)),
+  removeItem: (key) => storage.delete(key)
+};
+const windowEvents = {};
+const window = {
+  document,
+  location: {
+    href: "https://huboptimus.dev/operator/",
+    search: "",
+    origin: "https://huboptimus.dev"
+  },
+  navigator: { language: "en" },
+  localStorage,
+  history: { replaceState() {} },
+  matchMedia() {
+    return { matches: true, addEventListener() {}, removeEventListener() {} };
+  },
+  addEventListener(type, fn) { (windowEvents[type] ||= []).push(fn); },
+  open() {}
+};
+let fetchCalls = 0;
+const context = {
+  console,
+  document,
+  window,
+  localStorage,
+  navigator: window.navigator,
+  location: window.location,
+  history: window.history,
+  fetch: async () => {
+    fetchCalls += 1;
+    throw new Error("fetch forbidden in public intake");
+  },
+  alert() {},
+  confirm() { return false; },
+  matchMedia: window.matchMedia,
+  requestAnimationFrame(fn) { fn(); return 1; },
+  cancelAnimationFrame() {},
+  setTimeout,
+  clearTimeout,
+  queueMicrotask,
+  URL,
+  URLSearchParams,
+  TextEncoder,
+  Blob,
+  AbortController,
+  structuredClone,
+  crypto: globalThis.crypto,
+  CSS: { escape: (value) => String(value) },
+  HUB_OPTIMUS_OPERATOR_I18N: {
+    supportedLocales: ["en", "es", "de", "ru", "he", "zh-Hans"],
+    messages: { en: {} }
+  }
+};
+context.globalThis = context;
+context.self = context;
+window.navigator.serviceWorker = undefined;
+vm.createContext(context);
+vm.runInContext(SOURCE, context, { filename: "operator-inline.js" });
+
+async function submit(url, text) {
+  byId("product_source_url").value = url;
+  byId("product_source_text").value = text;
+  byId("signal_source_type").value = "automatic";
+  const listeners = byId("product_intake").events.submit || [];
+  if (listeners.length !== 1) {
+    throw new Error(`expected one submit handler, got ${listeners.length}`);
+  }
+  listeners[0]({ preventDefault() {}, target: byId("product_intake") });
+  await new Promise((resolve) => setImmediate(resolve));
+}
+
+(async () => {
+  await submit("https://example.com/news", "");
+  if (fetchCalls !== 0) throw new Error(`URL-only fetched ${fetchCalls} times`);
+  if (!byId("product_output").innerHTML.includes("api.huboptimus.dev")) {
+    throw new Error("URL-only submit did not render the private Operator action");
+  }
+
+  const completeText = "Full local source text. ".repeat(100);
+  if (Array.from(completeText).length <= 1200) throw new Error("test fixture is too short");
+  await submit("https://example.com/news", completeText);
+  if (fetchCalls !== 0) throw new Error(`URL+text fetched ${fetchCalls} times`);
+  if (byId("product_source_preview").hidden) {
+    throw new Error("URL+text did not enter the local source review flow");
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+'''
+
+
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
@@ -353,6 +520,10 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert f"https://api.huboptimus.dev{limits['endpoint']}" in html
     assert "fetch(CONTROLLED_URL_INTAKE_ENDPOINT" in html
     assert "JSON.stringify({ url: sourceUrl })" in html
+    assert "const PUBLIC_OPERATOR_CONTROLLED_URL_INTAKE_ENABLED = false;" in html
+    assert "return PUBLIC_OPERATOR_CONTROLLED_URL_INTAKE_ENABLED;" in html
+    assert "sourceUrl && !useControlledUrlIntake && !raw" in html
+    assert "if (useControlledUrlIntake)" in html
     assert request["required"] == ["url"]
     assert set(request["properties"]) == {"url"}
     assert {"status", "text"} <= success_fields
@@ -379,6 +550,22 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert 'id="product_confirm_source" type="checkbox"' in html
     assert '<script src="./i18n.v1.js"></script>' in html
     assert re.search(r'<script[^>]+src="https?://', html) is None
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_full_public_operator_submit_never_fetches_a_supplied_url():
+    html = _read(INDEX)
+    scripts = re.findall(r"<script>(.*?)</script>", html, re.DOTALL)
+    assert len(scripts) == 1
+    smoke = f"const SOURCE = {json.dumps(scripts[0])};\n{FULL_PAGE_HARNESS}"
+    completed = subprocess.run(
+        [NODE, "-"],
+        input=smoke,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def test_operator_browser_validator_mirrors_the_versioned_intake_contract():
@@ -698,7 +885,7 @@ def test_operator_progress_is_immediate_and_only_network_intake_has_a_deadline()
     assert "const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;" in html
     assert 'new ControlledIntakeError("url_fetch_timeout", 504)' in html
     assert "return await Promise.race([request, deadline]);" in html
-    assert "hub-optimus-operator-v0-26" in sw
+    assert "hub-optimus-operator-v0-27" in sw
 
 
 def test_operator_draft_is_source_bound_and_conservative():
@@ -1319,6 +1506,7 @@ let activeIntakeAbortController = null;
 let fallbackCount = 0;
 let profileAttempts = 0;
 const reducedMotion = {matches: true};
+function controlledUrlIntakeAvailable() { return true; }
 function resetProductProgress() {}
 function setMemoryActionsEnabled() {}
 function confirmedSourceExcerptsFor() { return null; }
@@ -1466,7 +1654,12 @@ let confirmed = false;
 let outputCount = 0;
 let memoryCount = 0;
 let retrievalCount = 0;
+let fallbackCount = 0;
+let fallbackErrorCode = null;
+let lastLocalSourceText = null;
+let controlledIntakeEnabled = true;
 const reducedMotion = {matches: true};
+function controlledUrlIntakeAvailable() { return controlledIntakeEnabled; }
 function resetProductProgress() {}
 function setMemoryActionsEnabled(enabled) { fields.shareEnabled = enabled; }
 function productStep() {}
@@ -1481,8 +1674,9 @@ function buildSourceProfile(raw) {
   return {candidateCount: raw ? 1 : 0, excerpts: raw ? [{text: raw}] : []};
 }
 function buildIntakeRecord(text, url, intake = null) {
+  if (!intake) lastLocalSourceText = text;
   return {
-    mode: intake ? "controlled-url" : "operator-pasted-text",
+    mode: intake ? "controlled-url" : (url ? "operator-pasted-text-with-url" : "operator-pasted-text"),
     original_url: url || null,
     final_url: intake?.final_url || null,
     text
@@ -1525,9 +1719,12 @@ function clearRetrievedSourcePreview() {
   fields.product_source_preview.hidden = true;
 }
 function renderUrlIntakeFallback(url, error) {
-  throw new Error(`unexpected fallback for ${url}: ${error}`);
+  fallbackCount += 1;
+  fallbackErrorCode = error?.code || null;
 }
-class ControlledIntakeError extends Error {}
+class ControlledIntakeError extends Error {
+  constructor(code) { super(code); this.code = code; }
+}
 async function readControlledUrlText(url, {signal} = {}) {
   retrievalCount += 1;
   if (signal?.aborted) throw Object.assign(new Error("aborted"), {name: "AbortError"});
@@ -1569,6 +1766,56 @@ async function readControlledUrlText(url, {signal} = {}) {
   await runProductAnalyze();
   if (outputCount !== 2 || memoryCount !== 2 || !preparedDraftReady) {
     throw new Error("text confirmation did not produce exactly one additional ephemeral draft");
+  }
+
+  controlledIntakeEnabled = false;
+  const publicSourceText = `${"A".repeat(1300)}\nA complete public source remains available beyond 1,200 characters.`;
+  intakeState = {
+    sourceUrl: "https://public.example/report",
+    sourceText: publicSourceText,
+    sourceType: "external-source"
+  };
+  currentIntakeRecord = null;
+  clearRetrievedSourcePreview();
+  preparedDraftReady = false;
+  await runProductAnalyze();
+  if (
+    retrievalCount !== 1 ||
+    selectionMode !== "operator-text" ||
+    currentIntakeRecord?.mode !== "operator-pasted-text-with-url" ||
+    lastLocalSourceText !== publicSourceText ||
+    Array.from(lastLocalSourceText).length <= 1200 ||
+    outputCount !== 2 ||
+    memoryCount !== 2
+  ) {
+    throw new Error("public URL plus complete pasted text did not remain local and untruncated");
+  }
+  confirmed = true;
+  fields.product_confirm_source.checked = true;
+  await runProductAnalyze();
+  if (retrievalCount !== 1 || outputCount !== 3 || memoryCount !== 3 || !preparedDraftReady) {
+    throw new Error("public URL plus pasted text did not produce one local draft");
+  }
+
+  intakeState = {
+    sourceUrl: "https://public.example/url-only",
+    sourceText: "",
+    sourceType: "external-source"
+  };
+  currentIntakeRecord = null;
+  clearRetrievedSourcePreview();
+  preparedDraftReady = false;
+  await runProductAnalyze();
+  if (
+    retrievalCount !== 1 ||
+    fallbackCount !== 1 ||
+    fallbackErrorCode !== "private_intake_required" ||
+    fields.product_analyze.disabled ||
+    fields.normalize_signal.disabled ||
+    outputCount !== 3 ||
+    memoryCount !== 3
+  ) {
+    throw new Error("public URL-only intake did not stop immediately at the private Operator action");
   }
 })().catch((error) => {
   console.error(error);
@@ -1621,6 +1868,7 @@ let activeIntakeAbortController = null;
 let fallbackCount = 0;
 let requestCount = 0;
 const reducedMotion = {matches: true};
+function controlledUrlIntakeAvailable() { return true; }
 function resetProductProgress() {}
 function setMemoryActionsEnabled() {}
 function productStep() {}
@@ -1675,7 +1923,7 @@ async function readControlledUrlText(url, {signal} = {}) {
     assert completed.returncode == 0, completed.stderr
 
 
-def test_url_and_operator_context_are_kept_as_distinct_inputs():
+def test_public_url_and_complete_text_stay_local_with_unverified_attribution():
     html = _read(INDEX)
     catalog = _read(OPERATOR_I18N)
     run = re.search(
@@ -1686,7 +1934,10 @@ def test_url_and_operator_context_are_kept_as_distinct_inputs():
     assert run is not None
     body = run.group(1)
 
-    assert "if (sourceUrl)" in body
+    assert "const useControlledUrlIntake = Boolean(" in body
+    assert "sourceUrl && controlledUrlIntakeAvailable()" in body
+    assert "sourceUrl && !useControlledUrlIntake && !raw" in body
+    assert "if (useControlledUrlIntake)" in body
     assert "readControlledUrlText(sourceUrl, {" in body
     assert "signal: requestAbortController?.signal" in body
     assert '$("product_source_text").value = raw' not in body
@@ -1694,7 +1945,16 @@ def test_url_and_operator_context_are_kept_as_distinct_inputs():
     assert "confirmedSourceExcerptsFor(currentRetrievedSourceText)" in body
     assert "currentRetrievedSourceText" in body
     assert "operator-provided-context-not-attributed-to-source" in html
-    assert "Every supplied URL is sent alone to controlled intake" in catalog
+    assert "Public Operator sends neither URLs nor pasted text during intake" in catalog
+    assert "A supplied URL remains local, unverified attribution" in catalog
+    assert (
+        'const PRIVATE_OPERATOR_LOGIN_URL = "https://api.huboptimus.dev/oauth2/start?'
+        'rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F";' in html
+    )
+    assert 'new ControlledIntakeError("private_intake_required")' in body
+    source_text = re.search(r'<textarea id="product_source_text"[^>]*>', html)
+    assert source_text is not None
+    assert "maxlength=" not in source_text.group(0)
     assert 'sourceBoundDraftWasActive = currentCaseMetadata.normalizer_version === "operator-source-bound-v1"' in html
     assert "claims = [];" in html
     assert "evidence = [];" in html
@@ -1711,7 +1971,8 @@ def test_operator_context_limit_is_disclosed_and_visible_in_every_locale():
         re.DOTALL,
     )
     assert card is not None
-    assert "records up to 1,200 Unicode characters" in html
+    assert "pasted text is used in full as the local source" in html
+    assert "the 1,200-character context limit does not apply" in html
     assert "operatorContextCard(currentCaseMetadata.operator_context)" in html
 
     smoke = (
@@ -1729,6 +1990,18 @@ function operatorTextFor(language, key, parameters = {}) {
   ));
 }
 let activeOperatorLanguage = "en";
+const expectedSourceTextHints = {
+  en: "In the public Operator, pasted text is used in full as the local source; the 1,200-character context limit does not apply. In the authenticated private Operator, when a URL is retrieved, up to 1,200 Unicode characters of pasted text are recorded separately as local operator context. The draft indicates whether any remainder was omitted.",
+  es: "En el Operator público, el texto pegado se usa completo como fuente local; no se aplica el límite de 1.200 caracteres de contexto. En el Operator privado autenticado, cuando se recupera una URL, se registran por separado hasta 1.200 caracteres Unicode del texto pegado como contexto local aportado por el operador. El borrador indica si se omitió el resto.",
+  de: "Im öffentlichen Operator wird der eingefügte Text vollständig als lokale Quelle verwendet; die Begrenzung des Kontexts auf 1.200 Zeichen gilt dort nicht. Im authentifizierten privaten Operator werden beim Abruf einer URL bis zu 1.200 Unicode-Zeichen des eingefügten Textes getrennt als lokaler, vom Operator bereitgestellter Kontext erfasst. Der Entwurf zeigt an, ob der Rest ausgelassen wurde.",
+  ru: "В публичном Operator вставленный текст полностью используется как локальный источник; ограничение контекста в 1 200 символов к нему не применяется. В аутентифицированном приватном Operator при получении URL отдельно сохраняется до 1 200 символов Unicode вставленного текста как локальный контекст, предоставленный оператором. В черновике указывается, была ли оставшаяся часть опущена.",
+  he: "ב־Operator הציבורי, הטקסט שהודבק משמש במלואו כמקור מקומי; מגבלת ההקשר של 1,200 תווים אינה חלה עליו. ב־Operator הפרטי המאומת, כאשר כתובת URL מאוחזרת, נשמרים בנפרד עד 1,200 תווי Unicode מהטקסט שהודבק כהקשר מקומי שסיפק המפעיל. הטיוטה מציינת אם יתרת הטקסט הושמטה.",
+  "zh-Hans": "在公开版 Operator 中，粘贴的文本会完整用作本地来源，不受 1,200 字符的上下文限制。在已认证的私有 Operator 中，获取 URL 时，最多会将粘贴文本中的 1,200 个 Unicode 字符单独记录为操作员提供的本地上下文。草稿会说明其余内容是否被省略。"
+};
+for (const [language, expected] of Object.entries(expectedSourceTextHints)) {
+  const actual = globalThis.HUB_OPTIMUS_OPERATOR_I18N.messages[language].sourceTextHint;
+  if (actual !== expected) throw new Error(`source text boundary copy changed in ${language}`);
+}
 '''
         + card.group(0)
         + r'''
@@ -1835,6 +2108,9 @@ const pasted = buildIntakeRecord("Operator supplied text", "https://example.com/
 if (pasted.mode !== "operator-pasted-text-with-url") throw new Error("pasted+URL mode missing");
 if (pasted.status !== "operator-attribution-unverified") throw new Error("unverified status missing");
 if (pasted.final_url !== null || pasted.retrieved_at !== null) throw new Error("pasted URL was presented as fetched");
+const exactAttribution = "https://news.example/world/report-42?edition=evening#details";
+const attributed = buildIntakeRecord("Operator supplied text", exactAttribution);
+if (attributed.original_url !== exactAttribution) throw new Error("exact local URL attribution lost");
 if (sourceReferenceForIntake(pasted) !== "operator-pasted-text-with-unverified-url-attribution") {
   throw new Error("pasted text was attributed to an unverified URL");
 }
@@ -2352,20 +2628,25 @@ if (withoutIsolates(fetched[1]) !== "Retrieved URL: https://final.example/") {
     assert completed.returncode == 0, completed.stderr
 
 
-def test_operator_url_fallback_remains_actionable():
+def test_public_url_only_fallback_is_immediate_and_points_to_private_operator():
     html = _read(INDEX)
     catalog = _read(OPERATOR_I18N)
 
-    assert "URL not accessible from controlled intake" in catalog
-    assert "paste the source text" in catalog.lower()
-    assert "Some sources block automated access" in catalog
-    assert "msgIntakeActionTemporary" in catalog
+    assert "Authenticated URL intake required" in catalog
+    assert "Public Operator did not send this URL" in catalog
+    assert "Sign in to private Operator" in catalog
+    assert "no request was sent" in catalog
+    assert (
+        'const PRIVATE_OPERATOR_LOGIN_URL = "https://api.huboptimus.dev/oauth2/start?'
+        'rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F";' in html
+    )
+    assert '${PRIVATE_OPERATOR_LOGIN_URL}' in html
     assert "readControlledUrlText" in html
     assert "renderUrlIntakeFallback" in html
-    assert "Ready to read the URL through controlled intake" in catalog
+    assert "URL recorded locally only" in catalog
 
 
-def test_operator_install_assets_use_institutional_mark_and_cache_v023():
+def test_operator_install_assets_use_institutional_mark_and_cache_v027():
     icon = _read(ICON)
     sw = _read(SW)
 
@@ -2375,10 +2656,89 @@ def test_operator_install_assets_use_institutional_mark_and_cache_v023():
         icon,
         re.IGNORECASE,
     ) is None
-    assert "hub-optimus-operator-v0-26" in sw
+    assert "hub-optimus-operator-v0-27" in sw
     assert "./index.html" in sw
     assert "../assets/brand/hub-optimus-logo-lockup.png" in sw
     assert "./og.svg" in sw
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
+def test_operator_service_worker_refetches_v027_assets_and_deletes_v026():
+    sw = _read(SW)
+    smoke = r'''
+const vm = require("node:vm");
+const source = process.env.SW_SOURCE;
+const listeners = {};
+const cacheNames = new Set(["hub-optimus-operator-v0-26"]);
+const installedRequests = [];
+const deleted = [];
+let skipWaitingCalls = 0;
+let claimCalls = 0;
+
+function cacheFor(name) {
+  return {
+    async addAll(requests) {
+      cacheNames.add(name);
+      installedRequests.push(...requests);
+    },
+    async match() { return null; },
+    async put() {}
+  };
+}
+
+const context = {
+  URL,
+  Request,
+  fetch: async () => { throw new Error("unexpected network request"); },
+  caches: {
+    async open(name) { return cacheFor(name); },
+    async keys() { return Array.from(cacheNames); },
+    async delete(name) { deleted.push(name); return cacheNames.delete(name); }
+  },
+  self: {
+    location: {href: "https://huboptimus.dev/operator/sw.js", origin: "https://huboptimus.dev"},
+    addEventListener(type, handler) { listeners[type] = handler; },
+    skipWaiting() { skipWaitingCalls += 1; },
+    clients: {claim() { claimCalls += 1; return Promise.resolve(); }}
+  }
+};
+vm.createContext(context);
+vm.runInContext(source, context);
+
+(async () => {
+  let installWork;
+  listeners.install({waitUntil(work) { installWork = work; }});
+  await installWork;
+  if (!installedRequests.length) throw new Error("no v0-27 assets installed");
+  if (installedRequests.some((request) => request.cache !== "reload")) {
+    throw new Error("an install request can reuse stale HTTP-cache bytes");
+  }
+  if (skipWaitingCalls !== 1) throw new Error("new worker did not skip waiting");
+
+  let activateWork;
+  listeners.activate({waitUntil(work) { activateWork = work; }});
+  await activateWork;
+  if (!deleted.includes("hub-optimus-operator-v0-26")) {
+    throw new Error("v0-26 cache was not deleted");
+  }
+  if (!cacheNames.has("hub-optimus-operator-v0-27")) {
+    throw new Error("v0-27 cache was not retained");
+  }
+  if (claimCalls !== 1) throw new Error("updated worker did not claim clients");
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+'''
+    completed = subprocess.run(
+        [NODE, "-"],
+        input=smoke,
+        text=True,
+        capture_output=True,
+        check=False,
+        env={"SW_SOURCE": sw},
+    )
+    assert completed.returncode == 0, completed.stderr
     assert "STATIC_ASSET_URLS.has(url.href)" in sw
     assert "event.respondWith(cacheFirst(event.request))" in sw
 
@@ -2409,6 +2769,12 @@ globalThis.caches = {
   async open() {
     return {
       async addAll() {},
+      async match(request) {
+        if (request.url === "https://huboptimus.dev/assets/brand/hub-optimus-logo-lockup.png") {
+          return {source: "precache"};
+        }
+        return null;
+      },
       async put() {}
     };
   },

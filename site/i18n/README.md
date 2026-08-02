@@ -1,6 +1,6 @@
 # Public portfolio translation status
 
-Operator interface catalog version: `1.3.1`.
+Operator interface catalog version: `1.3.2`.
 
 This directory records the translation boundary for the static public portfolio and
 the complete Operator interface. It does not translate the repository or the
@@ -45,10 +45,15 @@ commands, URLs, identifiers, hashes, timestamps, and enum values are never trans
 These translations are machine/AI-assisted and still require a named, qualified human
 language review.
 
-Operator extracts a bounded visible-text snapshot and creates a local, source-bound
-review draft; it does not execute the Semantic Engine, establish truth, or verify
-provenance. A localized interface therefore does not promote the browser prototype
-into a released analysis service. Triage does not verify stated provenance.
+Public Operator creates a local, source-bound review draft from the complete text
+pasted by the operator. It does not send or retrieve a supplied URL during intake;
+that exact URL remains local, unverified attribution and may be included by an
+explicit share action. Automatic URL retrieval belongs to a
+separate private Operator and is not enabled by this public artifact. The public
+Operator does not execute the Semantic Engine, establish truth, or verify provenance;
+neither does localization change those limits. A localized interface therefore does
+not promote the browser prototype into a released analysis service.
+Triage does not verify stated provenance.
 
 ## Document-link language resolution
 
