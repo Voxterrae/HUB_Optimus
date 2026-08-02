@@ -3405,8 +3405,9 @@
         parsed.hash = "";
         // URL paths and queries can carry opaque credentials under arbitrary
         // names (tickets, SAML assertions, OTPs, nested redirect URLs, etc.).
-        // Persist/share only the public origin; the exact URL exists solely in
-        // the in-flight request and current input field.
+        // Controlled retrieval persists/shares only the public origin. Manual
+        // public attribution follows the separate localAttributionUrl path and
+        // deliberately keeps the exact operator-supplied URL with a warning.
         parsed.pathname = "/";
         parsed.search = "";
         return parsed.toString();
