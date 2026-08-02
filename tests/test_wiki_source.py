@@ -37,6 +37,22 @@ def test_wiki_declares_its_audited_boundary_and_live_state_authorities():
     assert "https://github.com/Voxterrae/HUB_Optimus/actions" in roadmap
 
 
+def test_wiki_publication_is_restricted_one_way_and_verified_for_drift():
+    publishing = (WIKI / "README.md").read_text(encoding="utf-8")
+    hosting = (WIKI / "Hosting-and-Deployment.md").read_text(encoding="utf-8")
+
+    assert "Restrict editing to collaborators only" in publishing
+    assert "Direct edits in the published Wiki are not an authoring path" in publishing
+    assert "docs/wiki/*.md" in publishing
+    assert "HUB_Optimus.wiki.git" in publishing
+    assert "diff --cached --check" in publishing
+    assert "sha256sum -- *.md" in publishing
+    assert "The final `diff` must be empty" in publishing
+    assert "estado actual no reatestado" in hosting
+    assert "ACME DNS-01" in hosting
+    assert "HTTP-01" in hosting
+
+
 def test_wiki_contains_no_secret_material_or_live_secret_placeholders():
     text = "\n".join(
         path.read_text(encoding="utf-8") for path in sorted(WIKI.glob("*.md"))
