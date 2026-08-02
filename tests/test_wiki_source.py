@@ -1,0 +1,77 @@
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+WIKI = REPO_ROOT / "docs" / "wiki"
+
+
+def test_reviewed_wiki_source_has_the_required_navigation_pages():
+    expected = {
+        "README.md",
+        "Home.md",
+        "Operator-User-Guide.md",
+        "Operator-Troubleshooting.md",
+        "Architecture.md",
+        "Hosting-and-Deployment.md",
+        "Roadmap-and-Live-Status.md",
+        "_Sidebar.md",
+        "_Footer.md",
+    }
+    assert {path.name for path in WIKI.glob("*.md")} == expected
+
+    sidebar = (WIKI / "_Sidebar.md").read_text(encoding="utf-8")
+    for page in expected - {"README.md", "_Sidebar.md", "_Footer.md"}:
+        assert page.removesuffix(".md") in sidebar
+
+
+def test_wiki_declares_its_audited_boundary_and_live_state_authorities():
+    home = (WIKI / "Home.md").read_text(encoding="utf-8")
+    roadmap = (WIKI / "Roadmap-and-Live-Status.md").read_text(encoding="utf-8")
+    operator = (WIKI / "Operator-User-Guide.md").read_text(encoding="utf-8")
+    troubleshooting = (WIKI / "Operator-Troubleshooting.md").read_text(
+        encoding="utf-8"
+    )
+    publishing = (WIKI / "README.md").read_text(encoding="utf-8")
+
+    assert "c399c94e098058a723482001811c7d8491ebbd5e" in home
+    assert "main" in publishing
+    assert "independent source of truth" in publishing
+    assert "https://github.com/Voxterrae/HUB_Optimus/issues" in roadmap
+    assert "https://github.com/Voxterrae/HUB_Optimus/pulls" in roadmap
+    assert "https://github.com/Voxterrae/HUB_Optimus/actions" in roadmap
+    assert "una URL sin texto no inicia ninguna petición" in operator
+    assert "una URL con texto conserva la URL exacta" in operator
+    assert "worker antiguo `v0-26`" in troubleshooting
+    assert "Operator público `v0-27`" in troubleshooting
+
+
+def test_wiki_publication_is_restricted_one_way_and_verified_for_drift():
+    publishing = (WIKI / "README.md").read_text(encoding="utf-8")
+    hosting = (WIKI / "Hosting-and-Deployment.md").read_text(encoding="utf-8")
+
+    assert "Restrict editing to collaborators only" in publishing
+    assert "Direct edits in the published Wiki are not an authoring path" in publishing
+    assert "docs/wiki/*.md" in publishing
+    assert "HUB_Optimus.wiki.git" in publishing
+    assert "diff --cached --check" in publishing
+    assert "sha256sum -- *.md" in publishing
+    assert "The final `diff` must be empty" in publishing
+    assert "estado actual no reatestado" in hosting
+    assert "ACME DNS-01" in hosting
+    assert "HTTP-01" in hosting
+
+
+def test_wiki_contains_no_secret_material_or_live_secret_placeholders():
+    text = "\n".join(
+        path.read_text(encoding="utf-8") for path in sorted(WIKI.glob("*.md"))
+    ).lower()
+    forbidden = (
+        "-----begin private key-----",
+        "aws_access_key_id=",
+        "aws_secret_access_key=",
+        "client_secret=",
+        "cookie_secret=",
+        "hub_operator_intake_capability=",
+    )
+    for marker in forbidden:
+        assert marker not in text
