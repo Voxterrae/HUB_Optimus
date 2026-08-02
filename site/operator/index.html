@@ -1312,14 +1312,14 @@
 
     <form class="panel full product-intake" id="product_intake" aria-labelledby="product_intake_title">
       <h2 id="product_intake_title" data-op-i18n="intakeTitle">Prepare a review draft</h2>
-      <p class="product-lede" data-op-i18n="intakeLede">Paste a URL or source text. Operator records provenance, keeps submitted claims separate from corroboration, and prepares an editable local draft. It does not verify truth, infer motives, score risk, or execute the Semantic Engine.</p>
+      <p class="product-lede" data-op-i18n="intakeLede">Paste source text and, optionally, its URL for unverified attribution. Public Operator keeps both inputs local during intake and prepares an editable draft. It does not retrieve the URL, verify truth, infer motives, score risk, or execute the Semantic Engine.</p>
 
       <div class="row">
         <div class="field">
           <label for="product_source_url" data-op-i18n="sourceUrlLabel">Source URL</label>
           <input id="product_source_url" name="source_url" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" dir="ltr" aria-describedby="product_source_url_hint product_source_url_disclosure" placeholder="https://example.com/news-or-github-source" data-op-i18n-placeholder="sourceUrlPlaceholder">
-          <p class="field-hint" id="product_source_url_hint" data-op-i18n="sourceUrlHint">Sent only to the controlled URL intake service. If retrieval fails, paste the relevant source text below.</p>
-          <p class="field-hint" id="product_source_url_disclosure" data-op-i18n="sourceUrlDisclosure">Operator sends the exact URL, including its path, query and fragment, to controlled intake. Do not use private or signed links, tokens, one-time passwords or personal data.</p>
+          <p class="field-hint" id="product_source_url_hint" data-op-i18n="sourceUrlHint">Public Operator does not send or retrieve this URL. Paste the source text below, or open the private Operator for authenticated automatic retrieval.</p>
+          <p class="field-hint" id="product_source_url_disclosure" data-op-i18n="sourceUrlDisclosure">When source text is also supplied, the exact URL is retained only as unverified attribution in the local draft. Explicit share actions can include it. Do not enter private or signed links, tokens, one-time passwords or personal data.</p>
         </div>
         <div class="field">
           <label for="signal_source_type" data-op-i18n="sourceTypeLabel">Source type</label>
@@ -1340,9 +1340,9 @@
       </div>
 
       <div class="field">
-        <label for="product_source_text"><span data-op-i18n="sourceTextLabel">Source text or operator context</span> <span class="meta" data-op-i18n="sourceTextOptional">(optional when a URL can be retrieved)</span></label>
-        <textarea id="product_source_text" name="source_text" dir="auto" aria-describedby="product_source_text_hint" placeholder="Paste source text or add context that must remain separate from the retrieved page." data-op-i18n-placeholder="sourceTextPlaceholder"></textarea>
-        <p class="field-hint" id="product_source_text_hint" data-op-i18n="sourceTextHint">When a URL and text are both supplied, Operator retrieves the URL and records up to 1,200 Unicode characters separately as operator-provided context. The draft shows whether any remainder was omitted.</p>
+        <label for="product_source_text"><span data-op-i18n="sourceTextLabel">Source text</span> <span class="meta" data-op-i18n="sourceTextOptional">(required for a public draft; no 1,200-character limit)</span></label>
+        <textarea id="product_source_text" name="source_text" dir="auto" aria-describedby="product_source_text_hint" placeholder="Paste the complete source text to review locally." data-op-i18n-placeholder="sourceTextPlaceholder"></textarea>
+        <p class="field-hint" id="product_source_text_hint" data-op-i18n="sourceTextHint">In the public Operator, pasted text is used in full as the local source; the 1,200-character context limit does not apply. In the authenticated private Operator, when a URL is retrieved, up to 1,200 Unicode characters of pasted text are recorded separately as local operator context. The draft indicates whether any remainder was omitted.</p>
       </div>
 
       <section class="source-preview" id="product_source_preview" aria-labelledby="product_source_preview_title" hidden>
@@ -3405,11 +3405,26 @@
         parsed.hash = "";
         // URL paths and queries can carry opaque credentials under arbitrary
         // names (tickets, SAML assertions, OTPs, nested redirect URLs, etc.).
-        // Persist/share only the public origin; the exact URL exists solely in
-        // the in-flight request and current input field.
+        // Controlled retrieval persists/shares only the public origin. Manual
+        // public attribution follows the separate localAttributionUrl path and
+        // deliberately keeps the exact operator-supplied URL with a warning.
         parsed.pathname = "/";
         parsed.search = "";
         return parsed.toString();
+      } catch {
+        return null;
+      }
+    }
+
+    function localAttributionUrl(sourceUrl) {
+      if (!sourceUrl) return null;
+      try {
+        const parsed = new URL(sourceUrl);
+        if (!["http:", "https:"].includes(parsed.protocol)) return null;
+        // Manual public intake makes no request. Preserve the operator's exact,
+        // already-trimmed URL as unverified attribution; the UI warns that an
+        // explicit share action can include it and forbids secrets/private URLs.
+        return String(sourceUrl);
       } catch {
         return null;
       }
@@ -3464,7 +3479,7 @@
       const hasText = Boolean(String(raw || "").trim());
       const hasUrl = Boolean(String(sourceUrl || "").trim());
       const unverifiedUrlAttribution = hasText && hasUrl;
-      const persistedUrl = hasUrl ? redactUrlForPersistence(sourceUrl) : null;
+      const persistedUrl = hasUrl ? localAttributionUrl(sourceUrl) : null;
 
       return {
         version: "operator-intake-record-v1",
@@ -4216,6 +4231,8 @@
     }
 
     // OPERATOR_CONTROLLED_INTAKE_CONTRACT_START
+    const PRIVATE_OPERATOR_LOGIN_URL = "https://api.huboptimus.dev/oauth2/start?rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F";
+    const PUBLIC_OPERATOR_CONTROLLED_URL_INTAKE_ENABLED = false;
     const CONTROLLED_URL_INTAKE_ENDPOINT = "https://api.huboptimus.dev/intake/url";
     const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;
     const CONTROLLED_INTAKE_LIMITS = Object.freeze({
@@ -4289,6 +4306,12 @@
     const CONTROLLED_INTAKE_ERROR_CODES = new Set(
       Object.keys(CONTROLLED_INTAKE_ERROR_HTTP_STATUS)
     );
+
+    function controlledUrlIntakeAvailable() {
+      // GitHub Pages is deliberately manual/local. Authenticated retrieval is
+      // a separate private deployment and cannot be enabled by this artifact.
+      return PUBLIC_OPERATOR_CONTROLLED_URL_INTAKE_ENABLED;
+    }
 
     function isControlledIntakeObject(value) {
       if (!value || typeof value !== "object" || Array.isArray(value)) return false;
@@ -4535,6 +4558,21 @@
     function renderUrlIntakeFallback(sourceUrl, error = null, { focus = true } = {}) {
       currentIntakeFailure = { sourceUrl, error };
       const code = error instanceof ControlledIntakeError ? error.code : "intake_rejected";
+      if (code === "private_intake_required") {
+        $("product_output").innerHTML = `
+          <section class="output-card full">
+            <h3>${escapeHtml(opText("msgPrivateIntakeRequiredTitle"))}</h3>
+            <p>${escapeHtml(opText("msgPrivateIntakeRequiredBody"))}</p>
+            <p><a href="${PRIVATE_OPERATOR_LOGIN_URL}" rel="noopener noreferrer">${escapeHtml(opText("privateIntakeLink"))}</a></p>
+            <p class="meta">${escapeHtml(opText("msgUrlFallbackBoundary"))}</p>
+          </section>
+        `;
+        setOperatorMessage("product_wait_status", "msgPrivateIntakeRequiredWait");
+        if (focus) $("product_source_text").focus();
+        preparedDraftReady = false;
+        setMemoryActionsEnabled(false);
+        return;
+      }
       const actionKey = controlledIntakeActionKey(code);
       $("product_output").innerHTML = `
         <section class="output-card full">
@@ -4837,7 +4875,20 @@
       if (analyzeButton) analyzeButton.disabled = true;
       if (advancedNormalizeButton) advancedNormalizeButton.disabled = true;
 
-      if (sourceUrl) {
+      const useControlledUrlIntake = Boolean(
+        sourceUrl && controlledUrlIntakeAvailable()
+      );
+      if (sourceUrl && !useControlledUrlIntake && !raw) {
+        renderUrlIntakeFallback(
+          sourceUrl,
+          new ControlledIntakeError("private_intake_required")
+        );
+        if (analyzeButton) analyzeButton.disabled = false;
+        if (advancedNormalizeButton) advancedNormalizeButton.disabled = false;
+        return;
+      }
+
+      if (useControlledUrlIntake) {
         const retrievalIsCurrent = (
           currentIntakeRecord?.mode === "controlled-url" &&
           currentRetrievedSourceUrl === sourceUrl &&

@@ -976,7 +976,7 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     normalized_readme = " ".join(readme.split())
     html = INDEX.read_text(encoding="utf-8")
 
-    assert metadata["manifest_version"] == "1.3.1"
+    assert metadata["manifest_version"] == "1.3.2"
     assert metadata["issue"] == 1750
     assert metadata["latest_audit_issue"] == 1834
     assert metadata["canonical_v1_language"] == "es"

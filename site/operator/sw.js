@@ -1,4 +1,4 @@
-const CACHE_NAME = "hub-optimus-operator-v0-26";
+const CACHE_NAME = "hub-optimus-operator-v0-27";
 const OFFLINE_FALLBACK = "./index.html";
 const STATIC_ASSETS = [
   "./",
@@ -24,7 +24,11 @@ const STATIC_ASSET_URLS = new Set(
 
 async function cacheStaticAssets() {
   const cache = await caches.open(CACHE_NAME);
-  await cache.addAll(STATIC_ASSETS);
+  const requests = STATIC_ASSETS.map((asset) => new Request(
+    new URL(asset, self.location.href).href,
+    { cache: "reload" }
+  ));
+  await cache.addAll(requests);
 }
 
 async function networkFirst(request) {
@@ -50,12 +54,12 @@ async function networkFirst(request) {
 }
 
 async function cacheFirst(request) {
-  const cached = await caches.match(request);
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
   if (cached) return cached;
 
   const response = await fetch(request);
   if (response && response.ok) {
-    const cache = await caches.open(CACHE_NAME);
     await cache.put(request, response.clone());
   }
 

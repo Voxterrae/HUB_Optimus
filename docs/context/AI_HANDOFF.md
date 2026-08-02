@@ -584,6 +584,36 @@ because their changes also affect execution or credential behavior.
 - Repository tests and launcher source do not assert that this change is
   deployed on any host.
 
+## Public Operator Manual URL Boundary
+
+The public static Operator keeps URL intake manual and local:
+
+- the public artifact hard-disables its controlled-URL retrieval branch, so a
+  URL alone produces an immediate localized link to the separate private
+  Operator without starting a request or showing network progress;
+- a URL plus pasted text uses the complete pasted text as the local source and
+  records the exact URL only as unverified operator attribution; explicit share
+  actions can include it, so the interface forbids private/signed URLs, tokens,
+  one-time passwords and personal data;
+- the 1,200-Unicode-character limit applies only to separately recorded
+  operator context after a private controlled retrieval; it does not limit the
+  public source-text field;
+- the existing canonical form helper trims only leading/trailing whitespace;
+  it preserves the remaining Unicode source text without the 1,200-character
+  context truncation;
+- dormant controlled-intake validation helpers remain in the static artifact
+  for contract compatibility, but the public execution gate is fixed to false;
+- automatic authenticated retrieval, AWS exposure, identity, DNS, TLS and
+  rollback remain separate deployment work and are not established by this
+  public hotfix.
+
+The public action points to the fixed Entra sign-in route planned by issue
+`#1835`; it becomes usable only after that private OIDC deployment exists.
+
+The Operator service-worker cache and six-locale catalog are versioned with the
+same boundary so returning clients cannot retain the prior public URL-fetch
+behavior.
+
 ## Capability Truth Snapshot Boundary
 
 Issue #1807 establishes one precedence map in
