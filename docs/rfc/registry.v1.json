@@ -218,6 +218,27 @@
       "note": "A local/private, single-URL prototype, browser fallback, and versioned application payload schema exist. This does not ratify the RFC, verify retrieved content, or prove a public deployment."
     },
     {
+      "id": "operator-local-learning-candidate",
+      "path": "docs/rfc/operator_local_learning_candidate.md",
+      "title": "Operator Local Learning Candidate",
+      "lifecycle": "Draft",
+      "proposal_issue": 1836,
+      "record_pr": null,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/operator_local_learning_candidate.md",
+        "site/operator/learning-candidate.v1.js",
+        "site/operator/schemas/operator_learning_candidate.v1.schema.json",
+        "site/operator/learning-store.v1.js",
+        "tests/test_operator_learning_candidate.py",
+        "tests/test_operator_learning_store.py"
+      ],
+      "note": "An executable local data model and an unloaded IndexedDB adapter prototype exist. Operator and its service worker do not load them, no user-facing persistence or learning workflow is available, and no training, remote memory, automatic promotion, or governance ratification is claimed."
+    },
+    {
       "id": "post-quantum-control-plane",
       "path": "docs/rfc/post_quantum_control_plane.md",
       "title": "Post-Quantum Control Plane",
