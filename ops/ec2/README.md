@@ -13,19 +13,19 @@ Included:
 - local API launcher
 - local API systemd control wrapper
 - systemd unit for the local API
+- owner/team OIDC proxy configuration and systemd unit
+- authenticated intake gateway, schema and systemd unit
+- NGINX same-origin reverse-proxy configuration
 
 ## Non-goals
 
-This does not add:
+This does not automatically provision or prove:
 
-- public API exposure
-- nginx
-- DNS/domain configuration
-- Elastic IP configuration
-- Terraform
-- AWS automation
-- frontend
-- secrets handling
+- a public deployment
+- DNS, TLS, Elastic IP, firewall or Redis configuration
+- Entra tenant, App Registration, roles, assignments, MFA or Conditional Access
+- secret generation, distribution, rotation or recovery
+- Terraform or other AWS automation
 
 ## Current validated shape
 
@@ -38,6 +38,9 @@ The local backend runs as:
 - hub-api: localhost API wrapper
 - hub-api-control: systemd wrapper
 - hub-api.service: local API service
+- oauth2-proxy: loopback Entra OIDC/session boundary
+- operator-intake-gateway: loopback authorization, rate/concurrency and envelope boundary
+- nginx: the only intended public listener for the private Operator and intake API
 
 ## Local API
 
@@ -51,6 +54,20 @@ Validated endpoints:
 - GET /status
 - POST /intake/url
 - POST /analyze
+
+The local `/intake/url` route remains internal. The reviewed public candidate
+route is `POST https://api.huboptimus.dev/api/intake`, reachable only through
+NGINX, oauth2-proxy and the intake gateway. It is never proxied directly to
+hub-api.
+
+For that public candidate, NGINX protects the console and every local static
+dependency, disables caching, exposes only exact OAuth routes, and emits a
+two-field JSON error for every locally generated 400/401/403/404/405/408/413/
+429/500/502/503/504 response. The gateway uses the same NGINX request ID in its
+versioned envelope and upstream hop. It rejects any success/error payload whose
+URL differs from the requested URL, as well as discontinuous redirects or a
+final domain mismatch. The private console unregisters the public Operator PWA
+shell; signing out cannot leave a protected offline shell available.
 
 POST /analyze returns direct JSON with:
 
@@ -214,12 +231,22 @@ Manual installation targets:
 
 - /opt/hub-optimus/shared/bin/
 - /etc/systemd/system/hub-api.service
+- /etc/systemd/system/oauth2-proxy.service
+- /etc/systemd/system/operator-intake-gateway.service
+- /etc/hub-optimus/oauth2-proxy.cfg
+- /etc/nginx/conf.d/hub-optimus-operator-api.conf
+- /etc/hub-optimus/secrets/ (external values only; never the repository examples)
+- /etc/hub-optimus/operator-intake-gateway.env (root-managed capability only)
+
+The complete identity, deployment, acceptance and rollback sequence is
+[`docs/maintenance/operator_oidc_owner_team.md`](../../docs/maintenance/operator_oidc_owner_team.md).
 
 ## Validation
 
 Run from the repository root:
 
 bash -n ops/ec2/*.sh
+python -m py_compile ops/ec2/operator-intake-gateway.py
 
 Runtime validation on EC2:
 

@@ -181,7 +181,9 @@ def test_operator_catalog_has_six_locale_parity_and_plain_text_values():
         assert all(isinstance(value, str) for value in messages.values())
         assert not any(re.search(r"<[^>]*>", value) for value in messages.values())
         assert messages["translationReviewNotice"].strip()
-        assert messages["sourceUrlDisclosure"].strip()
+        assert messages["sourceUrlAccessHint"].strip()
+        assert messages["sourceUrlPrivacyDisclosure"].strip()
+        assert messages["privateIntakeHint"].strip()
         assert messages["selectionAmbiguousPassage"].strip()
 
     assert 'id="translation_review_notice" role="note"' in html
@@ -192,31 +194,48 @@ def test_operator_catalog_has_six_locale_parity_and_plain_text_values():
         for locale in LOCALES
     }) == len(LOCALES)
     assert len({
-        catalog["messages"][locale]["sourceUrlDisclosure"]
+        catalog["messages"][locale]["sourceUrlPrivacyDisclosure"]
         for locale in LOCALES
     }) == len(LOCALES)
     assert len({
         catalog["messages"][locale]["selectionAmbiguousPassage"]
         for locale in LOCALES
     }) == len(LOCALES)
-    assert 'aria-describedby="product_source_url_hint product_source_url_disclosure"' in html
-    assert 'data-op-i18n="sourceUrlDisclosure"' in html
+    assert 'aria-describedby="product_source_url_hint product_source_url_disclosure product_private_intake_hint"' in html
+    assert 'data-op-i18n="sourceUrlPrivacyDisclosure"' in html
+    assert 'data-op-i18n="privateIntakeLink"' in html
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for catalog validation")
 def test_operator_catalog_version_matches_locale_metadata_readme_and_cache():
     catalog = _catalog_snapshot()
     metadata = json.loads(_read(LOCALE_METADATA))
-    assert catalog["version"] == "1.3.2"
+    assert catalog["version"] == "1.4.1"
     assert metadata["manifest_version"] == catalog["version"]
     assert f'catalog version: `{catalog["version"]}`' in _read(LOCALE_README)
-    assert "hub-optimus-operator-v0-27" in _read(SW)
+    assert "hub-optimus-operator-v0-28" in _read(SW)
+
+
+def test_operator_advanced_catalog_rows_have_unique_keys():
+    source = _read(CATALOG)
+    advanced_rows = re.search(
+        r"const advancedRows = Object\.freeze\(\{(.*?)\n  \}\);",
+        source,
+        re.DOTALL,
+    )
+    assert advanced_rows is not None
+    keys = re.findall(
+        r"^    ([A-Za-z][A-Za-z0-9]*): advancedRow\(",
+        advanced_rows.group(1),
+        re.MULTILINE,
+    )
+    assert len(keys) == len(set(keys))
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for catalog validation")
 def test_future_learning_catalog_is_exact_localized_and_semantically_bounded():
     catalog = _catalog_snapshot()
-    assert catalog["version"] == "1.3.2"
+    assert catalog["version"] == "1.4.1"
     assert len(LEARNING_KEYS) == 91
 
     messages = catalog["messages"]
@@ -351,7 +370,7 @@ def test_localized_manifests_share_identity_match_metadata_and_allow_all_orienta
         assert "orientation" not in manifest
 
     sw = _read(SW)
-    assert "hub-optimus-operator-v0-27" in sw
+    assert "hub-optimus-operator-v0-28" in sw
     assert '"./i18n.v1.js"' in sw
     for locale in LOCALES:
         assert f'"./manifest.{locale}.webmanifest"' in sw
@@ -622,7 +641,7 @@ def test_source_snapshot_is_keyboard_focusable_and_accessibly_described():
 def test_advanced_ui_is_localized_in_six_languages_and_technical_data_stays_ltr():
     html = _read(INDEX)
     catalog = _catalog_snapshot()
-    assert catalog["version"] == "1.3.2"
+    assert catalog["version"] == "1.4.1"
     advanced_keys = {
         key for key in catalog["messages"]["en"] if key.startswith("advanced")
     }

@@ -273,7 +273,20 @@ def _controlled_intake_contract_helpers(html: str) -> str:
         re.DOTALL,
     )
     assert unicode_helper is not None
-    return unicode_helper.group(0) + "\n" + match.group(1)
+    private_origin = (
+        'const window = {location: {origin: "https://api.huboptimus.dev"}};\n'
+    )
+    return private_origin + unicode_helper.group(0) + "\n" + match.group(1)
+
+
+def _private_boundary_helper(html: str) -> str:
+    match = re.search(
+        r"    function canUsePastedTextAfterPrivateBoundary\(.*?\n    \}",
+        html,
+        re.DOTALL,
+    )
+    assert match is not None
+    return match.group(0)
 
 
 def _source_selection_dom_helpers(html: str) -> str:
@@ -517,13 +530,18 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     limits = schema["x-hub-optimus-runtime-limits"]
 
     assert "CONTROLLED_URL_INTAKE_ENDPOINT" in html
-    assert f"https://api.huboptimus.dev{limits['endpoint']}" in html
+    assert limits["endpoint"] == "/intake/url"
+    assert 'const PRIVATE_OPERATOR_ORIGIN = "https://api.huboptimus.dev";' in html
+    assert 'const CONTROLLED_URL_INTAKE_ENDPOINT = "/api/intake";' in html
     assert "fetch(CONTROLLED_URL_INTAKE_ENDPOINT" in html
     assert "JSON.stringify({ url: sourceUrl })" in html
-    assert "const PUBLIC_OPERATOR_CONTROLLED_URL_INTAKE_ENABLED = false;" in html
-    assert "return PUBLIC_OPERATOR_CONTROLLED_URL_INTAKE_ENABLED;" in html
+    assert 'credentials: "include"' in html
+    assert 'cache: "no-store"' in html
+    assert 'redirect: "error"' in html
+    assert "controlledUrlIntakeAvailable()" in html
     assert "sourceUrl && !useControlledUrlIntake && !raw" in html
     assert "if (useControlledUrlIntake)" in html
+    assert "https://api.huboptimus.dev/intake/url" not in html
     assert request["required"] == ["url"]
     assert set(request["properties"]) == {"url"}
     assert {"status", "text"} <= success_fields
@@ -633,16 +651,37 @@ def test_controlled_intake_vm_rejects_incomplete_and_incoherent_responses():
 const sourceUrl = "https://origin.example/report";
 let expectedRequestUrl = sourceUrl;
 const responses = [];
+let responseSequence = 0;
+function publicEnvelope(payload) {
+  const requestId = `req_${String(++responseSequence).padStart(32, "0")}`;
+  if (payload?.status === "error") {
+    return {
+      schema_version: "operator_public_intake.v1",
+      request_id: requestId,
+      status: "error",
+      error: {code: payload.error, message: payload.message}
+    };
+  }
+  return {
+    schema_version: "operator_public_intake.v1",
+    request_id: requestId,
+    status: "ok",
+    intake: payload
+  };
+}
 async function fetch(endpoint, options) {
   if (endpoint !== CONTROLLED_URL_INTAKE_ENDPOINT) throw new Error("wrong endpoint");
   if (options.method !== "POST" || JSON.parse(options.body).url !== expectedRequestUrl) {
     throw new Error("wrong controlled request");
   }
+  if (options.credentials !== "include" || options.cache !== "no-store" || options.redirect !== "error") {
+    throw new Error("private intake request policy changed");
+  }
   const response = responses.shift();
   return {
     ok: response.ok,
     status: response.status,
-    async json() { return response.payload; }
+    async json() { return response.rawPayload ?? publicEnvelope(response.payload); }
   };
 }
 function successPayload(overrides = {}) {
@@ -790,6 +829,100 @@ async function expectInvalid(payload, status = 200, ok = true, requestUrl = sour
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_public_intake_envelope_and_auth_errors_fail_closed():
+    helpers = _controlled_intake_contract_helpers(_read(INDEX))
+    smoke = (
+        helpers
+        + r'''
+const sourceUrl = "https://origin.example/report";
+const success = {
+  status: "ok",
+  intake_type: "controlled_url",
+  url: sourceUrl,
+  final_url: sourceUrl,
+  source_domain: "origin.example",
+  retrieved_at_utc: "2026-08-02T12:00:00+00:00",
+  title: "Source title",
+  text: "Exact source text.",
+  content_type: "text/plain; charset=utf-8",
+  bytes_read: 18,
+  truncated: false,
+  redirects: [],
+  verification_status: "unreviewed",
+  learning_status: "candidate-source-not-verified",
+  extraction_notes: ["Human review required."]
+};
+const okEnvelope = {
+  schema_version: "operator_public_intake.v1",
+  request_id: "req_0123456789abcdef0123456789abcdef",
+  status: "ok",
+  intake: success
+};
+const accepted = validatePublicIntakeEnvelope(okEnvelope, sourceUrl, {ok: true, status: 200});
+if (!accepted || accepted.intake.text !== success.text) throw new Error("valid public envelope rejected");
+
+const extraTopLevel = {...okEnvelope, identity: "leak"};
+if (validatePublicIntakeEnvelope(extraTopLevel, sourceUrl, {ok: true, status: 200})) {
+  throw new Error("extra public-envelope field accepted");
+}
+const forgedRequestId = {...okEnvelope, request_id: "req_not-a-valid-id"};
+if (validatePublicIntakeEnvelope(forgedRequestId, sourceUrl, {ok: true, status: 200})) {
+  throw new Error("forged request id accepted");
+}
+
+const rateLimited = {
+  schema_version: "operator_public_intake.v1",
+  request_id: "req_abcdef0123456789abcdef0123456789",
+  status: "error",
+  error: {code: "rate_limited", message: "Retry later."}
+};
+const acceptedError = validatePublicIntakeEnvelope(rateLimited, sourceUrl, {ok: false, status: 429});
+if (!acceptedError || acceptedError.errorCode !== "rate_limited") {
+  throw new Error("valid gateway error rejected");
+}
+if (validatePublicIntakeEnvelope(rateLimited, sourceUrl, {ok: false, status: 403})) {
+  throw new Error("gateway error/status mismatch accepted");
+}
+
+const authRequired = {
+  error: "authentication_required",
+  request_id: "req_0123456789abcdef0123456789abcdef"
+};
+const acceptedAuth = validateNginxIntakeBoundaryError(authRequired, {ok: false, status: 401});
+if (!acceptedAuth || acceptedAuth.errorCode !== "authentication_required") {
+  throw new Error("valid nginx authentication boundary rejected");
+}
+if (validateNginxIntakeBoundaryError({...authRequired, detail: "leak"}, {ok: false, status: 401})) {
+  throw new Error("extra nginx auth field accepted");
+}
+if (validateNginxIntakeBoundaryError(authRequired, {ok: false, status: 403})) {
+  throw new Error("nginx auth status mismatch accepted");
+}
+for (const [error, status] of Object.entries(PUBLIC_INTAKE_NGINX_ERROR_HTTP_STATUS)) {
+  const edgeError = {
+    error,
+    request_id: "req_abcdef0123456789abcdef0123456789"
+  };
+  const acceptedEdgeError = validateNginxIntakeBoundaryError(
+    edgeError,
+    {ok: false, status}
+  );
+  if (!acceptedEdgeError || acceptedEdgeError.errorCode !== error) {
+    throw new Error(`valid nginx edge error rejected: ${error}`);
+  }
+  if (validateNginxIntakeBoundaryError(edgeError, {ok: false, status: 418})) {
+    throw new Error(`nginx edge status mismatch accepted: ${error}`);
+  }
+}
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
 def test_controlled_intake_client_deadline_settles_and_preserves_caller_abort():
     helpers = _controlled_intake_contract_helpers(_read(INDEX))
     smoke = (
@@ -885,7 +1018,7 @@ def test_operator_progress_is_immediate_and_only_network_intake_has_a_deadline()
     assert "const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;" in html
     assert 'new ControlledIntakeError("url_fetch_timeout", 504)' in html
     assert "return await Promise.race([request, deadline]);" in html
-    assert "hub-optimus-operator-v0-27" in sw
+    assert "hub-optimus-operator-v0-28" in sw
 
 
 def test_operator_draft_is_source_bound_and_conservative():
@@ -1553,6 +1686,8 @@ function renderUrlIntakeFallback(url, error) {
   fields.product_output.innerHTML = "actionable URL fallback";
 }
 '''
+        + _private_boundary_helper(html)
+        + "\n"
         + "function isCurrentIntakeRequest(token, generation, sourceUrl) {"
         + request_guard.group(1)
         + "\n}\n"
@@ -1736,7 +1871,7 @@ async function readControlledUrlText(url, {signal} = {}) {
     text: "Retrieved line one.\nRetrieved line two."
   };
 }
-''' + "function isCurrentIntakeRequest(token, generation, sourceUrl) {" + request_guard.group(1) + "\n}\n" + "async function runProductAnalyze() {" + analyze.group(1) + "\n}\n" + r'''
+''' + _private_boundary_helper(html) + "\n" + "function isCurrentIntakeRequest(token, generation, sourceUrl) {" + request_guard.group(1) + "\n}\n" + "async function runProductAnalyze() {" + analyze.group(1) + "\n}\n" + r'''
 (async () => {
   await runProductAnalyze();
   if (retrievalCount !== 1 || selectionMode !== "controlled-url" || outputCount || memoryCount) {
@@ -1892,7 +2027,7 @@ async function readControlledUrlText(url, {signal} = {}) {
   }
   return {status: "ok", url, final_url: url, source_domain: "new.example", text: "Fresh exact line."};
 }
-''' + "function isCurrentIntakeRequest(token, generation, sourceUrl) {" + request_guard.group(1) + "\n}\n" + "async function runProductAnalyze() {" + analyze.group(1) + "\n}\n" + r'''
+''' + _private_boundary_helper(html) + "\n" + "function isCurrentIntakeRequest(token, generation, sourceUrl) {" + request_guard.group(1) + "\n}\n" + "async function runProductAnalyze() {" + analyze.group(1) + "\n}\n" + r'''
 (async () => {
   const stale = runProductAnalyze();
   await Promise.resolve();
@@ -1935,7 +2070,8 @@ def test_public_url_and_complete_text_stay_local_with_unverified_attribution():
     body = run.group(1)
 
     assert "const useControlledUrlIntake = Boolean(" in body
-    assert "sourceUrl && controlledUrlIntakeAvailable()" in body
+    assert "controlledUrlIntakeAvailable() &&" in body
+    assert "!usePastedTextAfterBoundary" in body
     assert "sourceUrl && !useControlledUrlIntake && !raw" in body
     assert "if (useControlledUrlIntake)" in body
     assert "readControlledUrlText(sourceUrl, {" in body
@@ -1947,6 +2083,7 @@ def test_public_url_and_complete_text_stay_local_with_unverified_attribution():
     assert "operator-provided-context-not-attributed-to-source" in html
     assert "Public Operator sends neither URLs nor pasted text during intake" in catalog
     assert "A supplied URL remains local, unverified attribution" in catalog
+    assert "Authenticated private Operator sends only the URL" in catalog
     assert (
         'const PRIVATE_OPERATOR_LOGIN_URL = "https://api.huboptimus.dev/oauth2/start?'
         'rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F";' in html
@@ -1973,6 +2110,9 @@ def test_operator_context_limit_is_disclosed_and_visible_in_every_locale():
     assert card is not None
     assert "pasted text is used in full as the local source" in html
     assert "the 1,200-character context limit does not apply" in html
+    assert 'id="product_source_text"' in html
+    assert 'id="product_source_text" name="source_text"' in html
+    assert not re.search(r'id="product_source_text"[^>]*\bmaxlength=', html)
     assert "operatorContextCard(currentCaseMetadata.operator_context)" in html
 
     smoke = (
@@ -2643,10 +2783,10 @@ def test_public_url_only_fallback_is_immediate_and_points_to_private_operator():
     assert '${PRIVATE_OPERATOR_LOGIN_URL}' in html
     assert "readControlledUrlText" in html
     assert "renderUrlIntakeFallback" in html
-    assert "URL recorded locally only" in catalog
+    assert "Public Operator will not send it" in catalog
 
 
-def test_operator_install_assets_use_institutional_mark_and_cache_v027():
+def test_operator_install_assets_use_institutional_mark_and_cache_v028():
     icon = _read(ICON)
     sw = _read(SW)
 
@@ -2656,20 +2796,20 @@ def test_operator_install_assets_use_institutional_mark_and_cache_v027():
         icon,
         re.IGNORECASE,
     ) is None
-    assert "hub-optimus-operator-v0-27" in sw
+    assert "hub-optimus-operator-v0-28" in sw
     assert "./index.html" in sw
     assert "../assets/brand/hub-optimus-logo-lockup.png" in sw
     assert "./og.svg" in sw
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
-def test_operator_service_worker_refetches_v027_assets_and_deletes_v026():
+def test_operator_service_worker_refetches_v028_assets_and_deletes_v027():
     sw = _read(SW)
     smoke = r'''
 const vm = require("node:vm");
 const source = process.env.SW_SOURCE;
 const listeners = {};
-const cacheNames = new Set(["hub-optimus-operator-v0-26"]);
+const cacheNames = new Set(["hub-optimus-operator-v0-27"]);
 const installedRequests = [];
 const deleted = [];
 let skipWaitingCalls = 0;
@@ -2709,7 +2849,7 @@ vm.runInContext(source, context);
   let installWork;
   listeners.install({waitUntil(work) { installWork = work; }});
   await installWork;
-  if (!installedRequests.length) throw new Error("no v0-27 assets installed");
+  if (!installedRequests.length) throw new Error("no v0-28 assets installed");
   if (installedRequests.some((request) => request.cache !== "reload")) {
     throw new Error("an install request can reuse stale HTTP-cache bytes");
   }
@@ -2718,11 +2858,11 @@ vm.runInContext(source, context);
   let activateWork;
   listeners.activate({waitUntil(work) { activateWork = work; }});
   await activateWork;
-  if (!deleted.includes("hub-optimus-operator-v0-26")) {
-    throw new Error("v0-26 cache was not deleted");
+  if (!deleted.includes("hub-optimus-operator-v0-27")) {
+    throw new Error("v0-27 cache was not deleted");
   }
-  if (!cacheNames.has("hub-optimus-operator-v0-27")) {
-    throw new Error("v0-27 cache was not retained");
+  if (!cacheNames.has("hub-optimus-operator-v0-28")) {
+    throw new Error("v0-28 cache was not retained");
   }
   if (claimCalls !== 1) throw new Error("updated worker did not claim clients");
 })().catch((error) => {

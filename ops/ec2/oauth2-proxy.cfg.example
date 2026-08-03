@@ -1,0 +1,88 @@
+# HUB_Optimus Operator identity boundary.
+#
+# Runtime contract: oauth2-proxy v7.15.3 only.  The matching systemd unit
+# checks the binary version and runs --config-test before every start.
+# Replace only the two non-secret Entra placeholders before installation.
+# Secret values must remain in the referenced root-managed files, with no
+# trailing newline for the client secret and exactly 32 raw bytes for the
+# cookie secret.  Do not copy either secret into this file or an environment
+# variable.
+
+provider = "entra-id"
+provider_display_name = "Microsoft Entra ID"
+client_id = "<MICROSOFT_ENTRA_APPLICATION_CLIENT_ID>"
+client_secret_file = "/etc/hub-optimus/secrets/oauth2-proxy-client-secret"
+
+# Single-tenant issuer only.  Never replace this with common, organizations,
+# consumers, or a tenant-independent endpoint.
+oidc_issuer_url = "https://login.microsoftonline.com/<MICROSOFT_ENTRA_TENANT_ID>/v2.0"
+entra_id_allowed_tenants = ["<MICROSOFT_ENTRA_TENANT_ID>"]
+redirect_url = "https://api.huboptimus.dev/oauth2/callback"
+scope = "openid profile email"
+code_challenge_method = "S256"
+
+# HUB.Owner and HUB.Operator are app roles on this same Entra application.
+# Entra emits them in the ID token's roles claim; oauth2-proxy treats that
+# claim as its groups input and denies every session without either role.
+oidc_groups_claim = "roles"
+user_id_claim = "sub"
+allowed_groups = ["HUB.Owner", "HUB.Operator"]
+email_domains = ["*"]
+
+# Discovery, issuer, TLS and nonce verification are all mandatory.
+skip_oidc_discovery = false
+insecure_oidc_skip_issuer_verification = false
+insecure_oidc_skip_nonce = false
+insecure_oidc_allow_unverified_email = false
+ssl_insecure_skip_verify = false
+oidc_enabled_signing_algs = ["RS256"]
+
+# NGINX is the only caller.  oauth2-proxy is an auth_request service, not an
+# application reverse proxy, and trusts forwarded headers only from loopback.
+http_address = "127.0.0.1:4180"
+reverse_proxy = true
+trusted_proxy_ips = ["127.0.0.1/32", "::1/128"]
+real_client_ip_header = "X-Real-IP"
+proxy_prefix = "/oauth2"
+upstreams = ["static://202"]
+skip_provider_button = true
+whitelist_domains = ["api.huboptimus.dev"]
+
+# Only the identity and role response headers needed by NGINX auth_request are
+# enabled.  Tokens, Authorization and Basic Auth are never sent downstream.
+set_xauthrequest = true
+set_authorization_header = false
+set_basic_auth = false
+pass_access_token = false
+pass_authorization_header = false
+pass_basic_auth = false
+pass_user_headers = false
+skip_auth_strip_headers = false
+
+# The browser receives only an opaque Redis ticket.  Redis itself is loopback
+# only and is not exposed by NGINX.
+session_store_type = "redis"
+redis_connection_url = "redis://127.0.0.1:6379/0"
+redis_connection_idle_timeout = 30
+
+cookie_name = "__Host-hub_optimus_session"
+cookie_secret_file = "/etc/hub-optimus/secrets/oauth2-proxy-cookie-secret"
+cookie_secure = true
+cookie_httponly = true
+cookie_samesite = "lax"
+cookie_path = "/"
+cookie_expire = "55m"
+cookie_refresh = "0"
+cookie_csrf_per_request = true
+cookie_csrf_per_request_limit = 4
+cookie_csrf_expire = "5m"
+cookie_csrf_samesite = "lax"
+
+show_debug_on_error = false
+silence_ping_logging = true
+# Callback query strings contain a short-lived authorization code and state.
+# Keep them out of oauth2-proxy's request log and disable its default auth log,
+# whose format includes a username/email. Standard secret-free service errors
+# remain available separately; Entra retains its own identity audit record.
+request_logging = false
+auth_logging = false

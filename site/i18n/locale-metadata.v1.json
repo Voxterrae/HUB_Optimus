@@ -1,5 +1,5 @@
 {
-  "manifest_version": "1.3.2",
+  "manifest_version": "1.4.1",
   "issue": 1750,
   "latest_audit_issue": 1834,
   "scope": "Static public portfolio, 404 interface, and complete Operator interface in six locales; technical JSON, code, IDs, enums, hashes, timestamps, URLs, and commands remain language-neutral",
