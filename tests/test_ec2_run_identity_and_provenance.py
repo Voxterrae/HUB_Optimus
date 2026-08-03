@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -362,6 +363,110 @@ def test_api_failure_keeps_its_run_identity_and_cleans_input(
     ]
 
 
+def test_api_status_identity_is_bound_to_process_start(
+    tmp_path: Path,
+) -> None:
+    namespace = _load_embedded_api_namespace()
+    app_root = tmp_path / "app"
+    release_a = app_root / "releases" / "release-a"
+    release_b = app_root / "releases" / "release-b"
+    commit_a = _init_git_repo(release_a)
+    _init_git_repo(release_b)
+    (release_b / "tracked.txt").write_text("release-b\n", encoding="utf-8")
+    _git(release_b, "add", "tracked.txt")
+    _git(release_b, "commit", "-qm", "different configured release")
+    commit_b = _git(release_b, "rev-parse", "HEAD")
+    assert commit_a != commit_b
+
+    shared = app_root / "shared"
+    shared.mkdir(parents=True)
+    (shared / "RELEASE_STATE").write_text(
+        f"commit={commit_a}\n",
+        encoding="utf-8",
+    )
+    current = app_root / "current"
+    current.symlink_to(release_a, target_is_directory=True)
+    running_launcher_sha256 = "a" * 64
+
+    namespace["CURRENT"] = current
+    namespace["SHARED"] = shared
+    namespace["RUNNING_RELEASE"] = str(release_a)
+    namespace["RUNNING_COMMIT"] = commit_a
+    namespace["RUNNING_LAUNCHER_SHA256"] = running_launcher_sha256
+
+    before_switch = namespace["product_status"]()
+    replacement = app_root / "current.new"
+    replacement.symlink_to(release_b, target_is_directory=True)
+    os.replace(replacement, current)
+    (shared / "RELEASE_STATE").write_text(
+        f"commit={commit_b}\n",
+        encoding="utf-8",
+    )
+    after_switch = namespace["product_status"]()
+
+    for status in (before_switch, after_switch):
+        assert status["current"] == str(release_a)
+        assert status["commit"] == commit_a
+        assert status["running_release"] == str(release_a)
+        assert status["running_commit"] == commit_a
+        assert status["running_launcher_sha256"] == running_launcher_sha256
+        assert len(status["running_commit"]) == 40
+
+    assert before_switch["configured_current_release"] == str(release_a)
+    assert before_switch["configured_current_commit"] == commit_a
+    assert after_switch["configured_current_release"] == str(release_b)
+    assert after_switch["configured_current_commit"] == commit_b
+
+    launcher = HUB_API.read_text(encoding="utf-8")
+    assert 'sha256sum -- "$0"' in launcher
+    assert 'export HUB_OPTIMUS_API_RUNNING_COMMIT="$RUNNING_COMMIT"' in launcher
+    assert '"--short"' not in launcher
+
+
+def test_api_launcher_captures_real_process_identity_at_start(
+    tmp_path: Path,
+) -> None:
+    app_root = tmp_path / "app"
+    release = app_root / "releases" / "release-a"
+    commit = _init_git_repo(release)
+    shared_launcher = app_root / "shared" / "bin" / "hub-api"
+    shared_launcher.parent.mkdir(parents=True)
+    shared_launcher.write_bytes(HUB_API.read_bytes())
+    shared_launcher.chmod(0o755)
+    (app_root / "current").symlink_to(release, target_is_directory=True)
+
+    fake_bin = tmp_path / "fake-api-bin"
+    fake_bin.mkdir()
+    fake_python = fake_bin / "python3"
+    fake_python.write_text(
+        "#!/usr/bin/env bash\n"
+        "printf 'app_root=%s\\n' \"$HUB_OPTIMUS_API_APP_ROOT\"\n"
+        "printf 'running_release=%s\\n' \"$HUB_OPTIMUS_API_RUNNING_RELEASE\"\n"
+        "printf 'running_commit=%s\\n' \"$HUB_OPTIMUS_API_RUNNING_COMMIT\"\n"
+        "printf 'launcher_sha256=%s\\n' \"$HUB_OPTIMUS_API_RUNNING_LAUNCHER_SHA256\"\n",
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+    env = os.environ.copy()
+    env["HUB_OPTIMUS_APP_ROOT"] = str(app_root)
+    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+
+    result = _run(["bash", shared_launcher], env=env)
+
+    assert result.returncode == 0, result.stderr
+    identity = dict(
+        line.split("=", 1)
+        for line in result.stdout.splitlines()
+        if "=" in line
+    )
+    assert identity["app_root"] == str(app_root)
+    assert identity["running_release"] == str(release)
+    assert identity["running_commit"] == commit
+    assert identity["launcher_sha256"] == hashlib.sha256(
+        shared_launcher.read_bytes()
+    ).hexdigest()
+
+
 def _source_repository(path: Path) -> tuple[str, str]:
     path.mkdir()
     assert _run(["git", "init", "-q", path]).returncode == 0
@@ -425,6 +530,26 @@ def _deploy_env(
     return env
 
 
+def _operational_snapshot(app_root: Path) -> dict[str, object]:
+    snapshot: dict[str, object] = {
+        "current_target": os.readlink(app_root / "current"),
+        "current_resolved": (app_root / "current").resolve(),
+    }
+    for name, path in {
+        "launcher": app_root / "shared" / "bin" / "hub-api",
+        "release_state": app_root / "shared" / "RELEASE_STATE",
+        "current_release": app_root / "shared" / "current_release",
+        "previous_release": app_root / "shared" / "previous_release",
+        "rollback_state": app_root / "shared" / "ROLLBACK_STATE",
+        "last_rollback_from": app_root / "shared" / "last_rollback_from",
+    }.items():
+        snapshot[f"{name}_present"] = path.exists()
+        if path.exists():
+            snapshot[f"{name}_bytes"] = path.read_bytes()
+            snapshot[f"{name}_mode"] = stat.S_IMODE(path.stat().st_mode)
+    return snapshot
+
+
 def test_deploy_is_ref_bound_records_validation_and_rolls_back(
     tmp_path: Path,
 ) -> None:
@@ -457,6 +582,7 @@ def test_deploy_is_ref_bound_records_validation_and_rolls_back(
     assert second_state["requested_ref"] == head_commit
     assert second_state["requested_ref_kind"] == "commit"
     assert second_state["commit"] == head_commit
+    assert re.fullmatch(r"[0-9a-f]{64}", second_state["launcher_sha256"])
     assert (app_root / "shared" / "bin" / "hub-api").read_text(
         encoding="utf-8"
     ).endswith("echo api-v2\n")
@@ -474,32 +600,310 @@ def test_deploy_is_ref_bound_records_validation_and_rolls_back(
     ).endswith("echo api-v1\n")
 
 
+def test_every_injected_post_switch_failure_restores_exact_state(
+    tmp_path: Path,
+) -> None:
+    stages = (
+        "previous-release",
+        "current",
+        "launcher",
+        "release-state",
+        "current-release",
+    )
+
+    for stage in stages:
+        case_root = tmp_path / stage
+        case_root.mkdir()
+        source_repo = case_root / "source"
+        reviewed_commit, head_commit = _source_repository(source_repo)
+        fake_bin = _fake_deploy_python(case_root)
+        app_root = case_root / "app"
+        env = _deploy_env(app_root, source_repo, fake_bin)
+
+        first = _run([DEPLOY, reviewed_commit], env=env)
+        assert first.returncode == 0, first.stderr
+        before = _operational_snapshot(app_root)
+
+        env["HUB_OPTIMUS_TEST_FAIL_AFTER_MUTATION"] = stage
+        failed = _run([DEPLOY, head_commit], env=env)
+
+        assert failed.returncode == 1
+        assert f"injected test failure after mutation stage: {stage}" in failed.stderr
+        assert "Pre-deploy operational state restored" in failed.stderr
+        assert _operational_snapshot(app_root) == before
+
+        candidates = [
+            release
+            for release in (app_root / "releases").iterdir()
+            if (release / ".hub-deployment" / "RELEASE_STATE").is_file()
+            and _state(release / ".hub-deployment" / "RELEASE_STATE").get(
+                "commit"
+            )
+            == head_commit
+        ]
+        assert len(candidates) == 1
+        candidate = candidates[0]
+        assert (candidate / ".hub-deployment" / "validation.log").is_file()
+        recovery_log = candidate / ".hub-deployment" / "recovery.log"
+        assert "Pre-deploy operational state restored" in recovery_log.read_text(
+            encoding="utf-8"
+        )
+        assert (candidate / ".hub-deployment" / "pre-deploy-state").is_dir()
+
+
+def test_deploy_recovery_runs_when_recovery_log_cannot_open(
+    tmp_path: Path,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    fake_bin = _fake_deploy_python(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo, fake_bin)
+
+    first = _run([DEPLOY, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    before = _operational_snapshot(app_root)
+    unusable_log = tmp_path / "recovery-log-is-a-directory"
+    unusable_log.mkdir()
+    env["HUB_OPTIMUS_TEST_FAIL_AFTER_MUTATION"] = "current"
+    env["HUB_OPTIMUS_TEST_RECOVERY_LOG_PATH"] = str(unusable_log)
+
+    failed = _run([DEPLOY, head_commit], env=env)
+
+    assert failed.returncode == 1
+    assert _operational_snapshot(app_root) == before
+    assert "Restoring exact pre-deploy operational state" in failed.stderr
+    assert "Operational state restored, but recovery evidence could not be recorded" in failed.stderr
+    assert "[deploy:recovery] Pre-deploy operational state restored" not in failed.stderr
+
+
+def test_injected_legacy_state_completion_is_recovered(
+    tmp_path: Path,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    fake_bin = _fake_deploy_python(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo, fake_bin)
+
+    first = _run([DEPLOY, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    current_release = (app_root / "current").resolve()
+    legacy_state = current_release / ".hub-deployment" / "RELEASE_STATE"
+    legacy_state.unlink()
+    before = _operational_snapshot(app_root)
+
+    env["HUB_OPTIMUS_TEST_FAIL_AFTER_MUTATION"] = "previous-release-state"
+    result = _run([DEPLOY, head_commit], env=env)
+
+    assert result.returncode == 1
+    assert "injected test failure after mutation stage: previous-release-state" in result.stderr
+    assert "Pre-deploy operational state restored" in result.stderr
+    assert _operational_snapshot(app_root) == before
+    assert not legacy_state.exists()
+
+
+def test_rollback_rejects_launcher_drift_before_switching(
+    tmp_path: Path,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    fake_bin = _fake_deploy_python(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo, fake_bin)
+
+    first = _run([DEPLOY, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    first_release = (app_root / "current").resolve()
+    second = _run([DEPLOY, head_commit], env=env)
+    assert second.returncode == 0, second.stderr
+    before = _operational_snapshot(app_root)
+    (first_release / "ops" / "ec2" / "hub-api.sh").write_text(
+        "#!/usr/bin/env bash\necho tampered\n",
+        encoding="utf-8",
+    )
+
+    result = _run([ROLLBACK], env=env)
+
+    assert result.returncode == 1
+    assert "launcher does not match its deployment state" in result.stderr
+    assert _operational_snapshot(app_root) == before
+
+
+def test_every_injected_rollback_failure_restores_exact_state(
+    tmp_path: Path,
+) -> None:
+    stages = (
+        "last-rollback-from",
+        "current",
+        "launcher",
+        "release-state",
+        "rollback-state",
+        "current-release",
+    )
+
+    for stage in stages:
+        case_root = tmp_path / stage
+        case_root.mkdir()
+        source_repo = case_root / "source"
+        reviewed_commit, head_commit = _source_repository(source_repo)
+        fake_bin = _fake_deploy_python(case_root)
+        app_root = case_root / "app"
+        env = _deploy_env(app_root, source_repo, fake_bin)
+
+        first = _run([DEPLOY, reviewed_commit], env=env)
+        assert first.returncode == 0, first.stderr
+        second = _run([DEPLOY, head_commit], env=env)
+        assert second.returncode == 0, second.stderr
+        before = _operational_snapshot(app_root)
+        env["HUB_OPTIMUS_TEST_ROLLBACK_FAIL_AFTER_MUTATION"] = stage
+
+        failed = _run([ROLLBACK], env=env)
+
+        assert failed.returncode == 1
+        assert f"injected test failure after mutation stage: {stage}" in failed.stderr
+        assert "Pre-rollback operational state restored" in failed.stderr
+        assert _operational_snapshot(app_root) == before
+        recovery_roots = list(
+            (app_root / "shared").glob("rollback-transaction.*")
+        )
+        assert len(recovery_roots) == 1
+        recovery_log = recovery_roots[0] / "recovery.log"
+        assert "Pre-rollback operational state restored" in recovery_log.read_text(
+            encoding="utf-8"
+        )
+        assert (recovery_roots[0] / "pre-rollback-state").is_dir()
+
+
+def test_rollback_recovery_runs_when_recovery_log_cannot_open(
+    tmp_path: Path,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    fake_bin = _fake_deploy_python(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo, fake_bin)
+
+    assert _run([DEPLOY, reviewed_commit], env=env).returncode == 0
+    assert _run([DEPLOY, head_commit], env=env).returncode == 0
+    before = _operational_snapshot(app_root)
+    unusable_log = tmp_path / "rollback-log-is-a-directory"
+    unusable_log.mkdir()
+    env["HUB_OPTIMUS_TEST_ROLLBACK_FAIL_AFTER_MUTATION"] = "current"
+    env["HUB_OPTIMUS_TEST_ROLLBACK_RECOVERY_LOG_PATH"] = str(unusable_log)
+
+    failed = _run([ROLLBACK], env=env)
+
+    assert failed.returncode == 1
+    assert _operational_snapshot(app_root) == before
+    assert "Restoring exact pre-rollback operational state" in failed.stderr
+    assert "Operational state restored, but recovery evidence could not be recorded" in failed.stderr
+    assert "[rollback:recovery] Pre-rollback operational state restored" not in failed.stderr
+
+
+def test_rollback_state_parser_rejects_duplicate_identity_keys(
+    tmp_path: Path,
+) -> None:
+    for key in ("commit", "path", "release", "launcher_sha256"):
+        case_root = tmp_path / key
+        case_root.mkdir()
+        source_repo = case_root / "source"
+        reviewed_commit, head_commit = _source_repository(source_repo)
+        fake_bin = _fake_deploy_python(case_root)
+        app_root = case_root / "app"
+        env = _deploy_env(app_root, source_repo, fake_bin)
+
+        assert _run([DEPLOY, reviewed_commit], env=env).returncode == 0
+        first_release = (app_root / "current").resolve()
+        assert _run([DEPLOY, head_commit], env=env).returncode == 0
+        previous_state_path = (
+            first_release / ".hub-deployment" / "RELEASE_STATE"
+        )
+        state = _state(previous_state_path)
+        with previous_state_path.open("a", encoding="utf-8") as handle:
+            handle.write(f"{key}={state[key]}\n")
+        before = _operational_snapshot(app_root)
+
+        result = _run([ROLLBACK], env=env)
+
+        assert result.returncode == 1
+        assert f"must contain exactly one {key} field" in result.stderr
+        assert _operational_snapshot(app_root) == before
+        assert not list((app_root / "shared").glob("rollback-transaction.*"))
+
+
+def test_invalid_rollback_target_state_fails_before_mutation(
+    tmp_path: Path,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    fake_bin = _fake_deploy_python(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo, fake_bin)
+
+    first = _run([DEPLOY, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    current_release = (app_root / "current").resolve()
+    current_state_path = current_release / ".hub-deployment" / "RELEASE_STATE"
+    current_state = current_state_path.read_text(encoding="utf-8")
+    current_state_path.write_text(
+        current_state.replace(
+            f"commit={reviewed_commit}",
+            f"commit={'0' * 40}",
+        ),
+        encoding="utf-8",
+    )
+    before = _operational_snapshot(app_root)
+
+    result = _run([DEPLOY, head_commit], env=env)
+
+    assert result.returncode == 1
+    assert "Rollback target commit does not match" in result.stderr
+    assert "Restoring exact pre-deploy" not in result.stderr
+    assert _operational_snapshot(app_root) == before
+
+
 def test_failed_validation_is_recorded_without_switching_current(
     tmp_path: Path,
 ) -> None:
     source_repo = tmp_path / "source"
-    reviewed_commit, _ = _source_repository(source_repo)
+    reviewed_commit, head_commit = _source_repository(source_repo)
     fake_bin = _fake_deploy_python(tmp_path)
     app_root = tmp_path / "app"
     env = _deploy_env(app_root, source_repo, fake_bin)
+
+    first = _run([DEPLOY, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    before = _operational_snapshot(app_root)
+
     env["HUB_TEST_VALIDATION_EXIT"] = "1"
     env["HUB_TEST_VALIDATION_OUTPUT"] = "2 failed in 0.01s"
 
-    result = _run([DEPLOY, reviewed_commit], env=env)
+    result = _run([DEPLOY, head_commit], env=env)
 
     assert result.returncode == 1
     assert "validation failed (exit 1): 2 failed in 0.01s" in result.stderr
-    assert not (app_root / "current").exists()
-    releases = list((app_root / "releases").iterdir())
-    assert len(releases) == 1
-    failed_state = _state(
-        releases[0] / ".hub-deployment" / "RELEASE_STATE"
+    assert _operational_snapshot(app_root) == before
+    failed_releases = [
+        release
+        for release in (app_root / "releases").iterdir()
+        if (release / ".hub-deployment" / "RELEASE_STATE").is_file()
+        and _state(release / ".hub-deployment" / "RELEASE_STATE").get(
+            "status"
+        )
+        == "validation-failed"
+    ]
+    assert len(failed_releases) == 1
+    failed_state_path = (
+        failed_releases[0] / ".hub-deployment" / "RELEASE_STATE"
     )
-    assert failed_state["commit"] == reviewed_commit
+    failed_state = _state(failed_state_path)
+    assert failed_state["commit"] == head_commit
     assert failed_state["validation_command"] == "python -m pytest -q"
     assert failed_state["validation_exit_code"] == "1"
     assert failed_state["validation_result"] == "2 failed in 0.01s"
     assert failed_state["status"] == "validation-failed"
+    assert (failed_releases[0] / ".hub-deployment" / "validation.log").is_file()
 
 
 def test_deploy_requires_explicit_ref_and_hub_ops_forwards_it(

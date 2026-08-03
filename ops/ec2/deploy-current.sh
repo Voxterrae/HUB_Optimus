@@ -23,6 +23,17 @@ fail() {
   exit 1
 }
 
+sha256_file() {
+  local path="$1"
+  local digest
+
+  digest="$(sha256sum -- "$path" | awk '{print $1}')"
+  if [[ ! "$digest" =~ ^[0-9a-f]{64}$ ]]; then
+    fail "could not calculate SHA-256 for $path"
+  fi
+  printf '%s\n' "$digest"
+}
+
 state_value() {
   local state_file="$1"
   local key="$2"
@@ -32,54 +43,249 @@ state_value() {
   sed -n "s/^${key}=//p" "$state_file" 2>/dev/null | head -n 1
 }
 
-write_previous_release_state() {
+required_state_value() {
+  local state_file="$1"
+  local key="$2"
+  local count
+
+  count="$(grep -c "^${key}=" "$state_file" 2>/dev/null || true)"
+  [ "$count" -eq 1 ] \
+    || fail "$state_file must contain exactly one $key field."
+  state_value "$state_file" "$key"
+}
+
+validate_release_state() {
+  local previous="$1"
+  local state_file="$2"
+  local actual_commit="$3"
+  local actual_launcher_sha256="$4"
+  local recorded_release
+  local recorded_commit
+  local recorded_path
+  local recorded_launcher_sha256
+
+  [ -f "$state_file" ] \
+    || fail "Rollback target has no deployment state: $state_file"
+
+  recorded_release="$(required_state_value "$state_file" "release")"
+  recorded_commit="$(required_state_value "$state_file" "commit")"
+  recorded_path="$(required_state_value "$state_file" "path")"
+  recorded_launcher_sha256="$(
+    state_value "$state_file" "launcher_sha256"
+  )"
+  if [ "$(grep -c '^launcher_sha256=' "$state_file" 2>/dev/null || true)" -gt 1 ]; then
+    fail "$state_file contains duplicate launcher_sha256 fields."
+  fi
+
+  [ "$recorded_release" = "$(basename "$previous")" ] \
+    || fail "Rollback target release does not match its deployment state."
+  [ "$recorded_commit" = "$actual_commit" ] \
+    || fail "Rollback target commit does not match its deployment state."
+  [ "$recorded_path" = "$previous" ] \
+    || fail "Rollback target path does not match its deployment state."
+
+  if [ -n "$recorded_launcher_sha256" ] \
+    && [ "$recorded_launcher_sha256" != "$actual_launcher_sha256" ]; then
+    fail "Rollback target launcher does not match its deployment state."
+  fi
+}
+
+prepare_previous_release_state() {
   local previous="$1"
   local previous_state="$previous/.hub-deployment/RELEASE_STATE"
+  local shared_state="$APP_ROOT/shared/RELEASE_STATE"
+  local previous_release
+  local previous_commit
+  local previous_launcher_sha256
+  local source_state
+  local recorded_launcher_sha256
+
+  previous_release="$(basename "$previous")"
+  previous_commit="$(git -C "$previous" rev-parse --verify HEAD)"
+  [[ "$previous_commit" =~ ^[0-9a-f]{40}$ ]] \
+    || fail "Rollback target does not resolve to one full commit SHA."
+
+  [ -f "$previous/ops/ec2/hub-api.sh" ] \
+    || fail "Rollback target has no hub-api launcher: $previous/ops/ec2/hub-api.sh"
+  previous_launcher_sha256="$(sha256_file "$previous/ops/ec2/hub-api.sh")"
 
   if [ -f "$previous_state" ]; then
+    source_state="$previous_state"
+  else
+    source_state="$shared_state"
+  fi
+
+  validate_release_state \
+    "$previous" \
+    "$source_state" \
+    "$previous_commit" \
+    "$previous_launcher_sha256"
+
+  PREVIOUS_STATE_PATH="$previous_state"
+  recorded_launcher_sha256="$(
+    state_value "$source_state" "launcher_sha256"
+  )"
+  if [ "$source_state" = "$previous_state" ] \
+    && [ -n "$recorded_launcher_sha256" ]; then
+    PREVIOUS_STATE_INSTALL_SOURCE=""
     return
   fi
 
-  local previous_release
-  local previous_commit
-  local previous_validated_at
-  local previous_validation
-  local previous_status
+  PREVIOUS_STATE_INSTALL_SOURCE="$DEPLOYMENT_DIR/PREVIOUS_RELEASE_STATE"
+  sed '/^launcher_sha256=/d' \
+    "$source_state" \
+    > "$PREVIOUS_STATE_INSTALL_SOURCE"
+  printf 'launcher_sha256=%s\n' "$previous_launcher_sha256" \
+    >> "$PREVIOUS_STATE_INSTALL_SOURCE"
+  if [ "$source_state" = "$shared_state" ]; then
+    printf 'provenance=adopted-pre-1832\n' \
+      >> "$PREVIOUS_STATE_INSTALL_SOURCE"
+  fi
+  chmod 0600 "$PREVIOUS_STATE_INSTALL_SOURCE"
+}
 
-  previous_release="$(basename "$previous")"
-  previous_commit="$(git -C "$previous" rev-parse HEAD)"
-  previous_validated_at="$(
-    state_value "$APP_ROOT/shared/RELEASE_STATE" "validated_at_utc"
-  )"
-  previous_validation="$(
-    state_value "$APP_ROOT/shared/RELEASE_STATE" "validation"
-  )"
-  previous_status="$(
-    state_value "$APP_ROOT/shared/RELEASE_STATE" "status"
-  )"
+snapshot_item() {
+  local source="$1"
+  local name="$2"
 
-  mkdir -p "$previous/.hub-deployment"
-  chmod 0700 "$previous/.hub-deployment"
-  if [ -d "$previous/.git/info" ]; then
-    grep -qxF ".hub-deployment/" "$previous/.git/info/exclude" \
-      || echo ".hub-deployment/" >> "$previous/.git/info/exclude"
+  if [ -e "$source" ] || [ -L "$source" ]; then
+    printf 'present\n' > "$RECOVERY_DIR/$name.presence"
+    cp -a -- "$source" "$RECOVERY_DIR/$name"
+  else
+    printf 'absent\n' > "$RECOVERY_DIR/$name.presence"
+  fi
+}
+
+restore_item() {
+  local target="$1"
+  local name="$2"
+  local presence
+
+  presence="$(cat "$RECOVERY_DIR/$name.presence")"
+  if [ -d "$target" ] && [ ! -L "$target" ]; then
+    echo "[deploy:recovery:error] Refusing to replace directory: $target" >&2
+    return 1
+  fi
+  rm -f -- "$target"
+
+  case "$presence" in
+    present)
+      cp -a -- "$RECOVERY_DIR/$name" "$target"
+      ;;
+    absent)
+      ;;
+    *)
+      echo "[deploy:recovery:error] Invalid snapshot marker for $target" >&2
+      return 1
+      ;;
+  esac
+}
+
+recover_predeploy_state() {
+  local state_restore_failed=0
+  local recovery_succeeded=0
+
+  RECOVERY_LOG_READY=0
+  RECOVERY_LOG_FAILED=0
+
+  set +e
+  if [ -n "$RECOVERY_LOG" ] \
+    && { exec 8>> "$RECOVERY_LOG"; } 2>/dev/null; then
+    RECOVERY_LOG_READY=1
+    chmod 0600 "$RECOVERY_LOG" 2>/dev/null || RECOVERY_LOG_FAILED=1
+  else
+    RECOVERY_LOG_FAILED=1
   fi
 
-  cat > "$previous_state" <<STATE
-release=$previous_release
-requested_ref=unrecorded-pre-1764
-requested_ref_kind=legacy
-commit=$previous_commit
-path=$previous
-validated_at_utc=${previous_validated_at:-unknown}
-validation_command=unrecorded-pre-1764
-validation_exit_code=unknown
-validation_result=unverified legacy metadata: ${previous_validation:-not recorded}
-status=${previous_status:-legacy-release}
-provenance=adopted-pre-1764
-STATE
-  chmod 0600 "$previous_state"
+  recovery_note \
+    "[deploy:recovery] Restoring exact pre-deploy operational state" \
+    allow-missing-log
+  if [ -n "$PREVIOUS_STATE_PATH" ]; then
+    restore_item "$PREVIOUS_STATE_PATH" "previous-release-state" \
+      || state_restore_failed=1
+  fi
+  restore_item "$APP_ROOT/shared/bin/hub-api" "shared-launcher" \
+    || state_restore_failed=1
+  restore_item "$APP_ROOT/shared/RELEASE_STATE" "shared-release-state" \
+    || state_restore_failed=1
+  restore_item "$APP_ROOT/shared/current_release" "current-release-marker" \
+    || state_restore_failed=1
+  restore_item "$APP_ROOT/shared/previous_release" "previous-release-pointer" \
+    || state_restore_failed=1
+  restore_item "$APP_ROOT/current" "current-symlink" \
+    || state_restore_failed=1
+  rm -f -- "$CURRENT_NEW" || state_restore_failed=1
+  if [ -n "$PREVIOUS_STATE_NEW" ]; then
+    rm -f -- "$PREVIOUS_STATE_NEW" || state_restore_failed=1
+  fi
+
+  if [ "$state_restore_failed" -eq 0 ] \
+    && [ "$RECOVERY_LOG_FAILED" -eq 0 ] \
+    && recovery_note \
+      "[deploy:recovery] Pre-deploy operational state restored" \
+      require-log; then
+    recovery_succeeded=1
+  elif [ "$state_restore_failed" -eq 0 ]; then
+    recovery_note \
+      "[deploy:recovery:error] Operational state restored, but recovery evidence could not be recorded; treating recovery as failed" \
+      allow-missing-log
+  else
+    recovery_note \
+      "[deploy:recovery:error] Recovery was incomplete; inspect the retained snapshot" \
+      allow-missing-log
+  fi
+
+  if [ "$RECOVERY_LOG_READY" -eq 1 ]; then
+    exec 8>&-
+  fi
+  set -e
+  [ "$recovery_succeeded" -eq 1 ]
 }
+
+recovery_note() {
+  local message="$1"
+  local log_requirement="$2"
+
+  if [ "$RECOVERY_LOG_READY" -eq 1 ]; then
+    if ! printf '%s\n' "$message" >&8; then
+      RECOVERY_LOG_FAILED=1
+      RECOVERY_LOG_READY=0
+      [ "$log_requirement" != "require-log" ] || return 1
+    fi
+  elif [ "$log_requirement" = "require-log" ]; then
+    return 1
+  fi
+  printf '%s\n' "$message" >&2 || true
+}
+
+on_exit() {
+  local exit_code="$?"
+
+  trap - EXIT
+  if [ "$exit_code" -ne 0 ] && [ "$MUTATION_STARTED" -eq 1 ]; then
+    recover_predeploy_state || exit_code=1
+  fi
+  exit "$exit_code"
+}
+
+inject_test_failure() {
+  local stage="$1"
+
+  if [ "${HUB_OPTIMUS_TEST_FAIL_AFTER_MUTATION:-}" = "$stage" ]; then
+    fail "injected test failure after mutation stage: $stage"
+  fi
+}
+
+MUTATION_STARTED=0
+PREVIOUS_STATE_PATH=""
+PREVIOUS_STATE_INSTALL_SOURCE=""
+RECOVERY_DIR=""
+RECOVERY_LOG="/dev/null"
+RECOVERY_LOG_READY=0
+RECOVERY_LOG_FAILED=0
+CURRENT_NEW=""
+PREVIOUS_STATE_NEW=""
+trap on_exit EXIT
 
 case "$APP_ROOT" in
   /*) ;;
@@ -143,6 +349,15 @@ fi
 git -C "$RELEASE_DIR" checkout --quiet --detach "$RESOLVED_COMMIT"
 
 echo "[deploy] Resolved commit: $RESOLVED_COMMIT"
+echo "[deploy] Verifying hub-api launcher source"
+if [ ! -f "$RELEASE_DIR/ops/ec2/hub-api.sh" ]; then
+  fail "Missing hub-api launcher source: $RELEASE_DIR/ops/ec2/hub-api.sh"
+fi
+CANDIDATE_LAUNCHER_SHA256="$(
+  sha256_file "$RELEASE_DIR/ops/ec2/hub-api.sh"
+)"
+echo "[deploy] Candidate launcher SHA-256: $CANDIDATE_LAUNCHER_SHA256"
+
 echo "[deploy] Creating venv"
 cd "$RELEASE_DIR"
 python3 -m venv .venv
@@ -189,6 +404,7 @@ validation_exit_code=$VALIDATION_EXIT_CODE
 validation_result=$VALIDATION_RESULT
 validation_log=$VALIDATION_LOG
 validation_log_exit_code=$VALIDATION_LOG_EXIT_CODE
+launcher_sha256=$CANDIDATE_LAUNCHER_SHA256
 status=$RELEASE_STATUS
 STATE
 chmod 0600 "$DEPLOYMENT_STATE" "$VALIDATION_LOG"
@@ -207,31 +423,92 @@ if [ "$VALIDATION_EXIT_CODE" -ne 0 ]; then
   fail "validation failed (exit $VALIDATION_EXIT_CODE): $VALIDATION_RESULT"
 fi
 
-echo "[deploy] Verifying hub-api launcher source"
-if [ ! -f "$RELEASE_DIR/ops/ec2/hub-api.sh" ]; then
-  echo "[deploy:error] Missing hub-api launcher source: $RELEASE_DIR/ops/ec2/hub-api.sh" >&2
-  exit 1
-fi
-
+PREVIOUS=""
 if [ -L "$APP_ROOT/current" ]; then
   PREVIOUS="$(readlink -f "$APP_ROOT/current")"
-  write_previous_release_state "$PREVIOUS"
-  echo "$PREVIOUS" > "$APP_ROOT/shared/previous_release"
+  case "$PREVIOUS" in
+    "$APP_ROOT/releases/"*) ;;
+    *) fail "Rollback target is outside the managed releases directory: $PREVIOUS" ;;
+  esac
+  [ -d "$PREVIOUS" ] \
+    || fail "Rollback target directory does not exist: $PREVIOUS"
+  prepare_previous_release_state "$PREVIOUS"
   echo "[deploy] Previous release: $PREVIOUS"
+elif [ -e "$APP_ROOT/current" ]; then
+  fail "Current exists but is not a symlink: $APP_ROOT/current"
 else
   echo "[deploy] No previous release detected"
 fi
 
+TRANSACTION_DIR="$DEPLOYMENT_DIR/transaction"
+RECOVERY_DIR="$DEPLOYMENT_DIR/pre-deploy-state"
+RECOVERY_LOG="${HUB_OPTIMUS_TEST_RECOVERY_LOG_PATH:-$DEPLOYMENT_DIR/recovery.log}"
+CURRENT_NEW="$APP_ROOT/current.new.$RELEASE_ID"
+mkdir -p "$TRANSACTION_DIR" "$RECOVERY_DIR"
+chmod 0700 "$TRANSACTION_DIR" "$RECOVERY_DIR"
+
+install -m 0755 \
+  "$RELEASE_DIR/ops/ec2/hub-api.sh" \
+  "$TRANSACTION_DIR/hub-api"
+install -m 0644 "$DEPLOYMENT_STATE" "$TRANSACTION_DIR/RELEASE_STATE"
+printf '%s\n' "$RELEASE_ID" > "$TRANSACTION_DIR/current_release"
+if [ -n "$PREVIOUS" ]; then
+  printf '%s\n' "$PREVIOUS" > "$TRANSACTION_DIR/previous_release"
+fi
+
+snapshot_item "$APP_ROOT/current" "current-symlink"
+snapshot_item "$APP_ROOT/shared/bin/hub-api" "shared-launcher"
+snapshot_item "$APP_ROOT/shared/RELEASE_STATE" "shared-release-state"
+snapshot_item "$APP_ROOT/shared/current_release" "current-release-marker"
+snapshot_item "$APP_ROOT/shared/previous_release" "previous-release-pointer"
+if [ -n "$PREVIOUS_STATE_PATH" ]; then
+  snapshot_item "$PREVIOUS_STATE_PATH" "previous-release-state"
+fi
+
+MUTATION_STARTED=1
+
+if [ -n "$PREVIOUS_STATE_INSTALL_SOURCE" ]; then
+  echo "[deploy] Completing rollback-target deployment state"
+  mkdir -p "$(dirname "$PREVIOUS_STATE_PATH")"
+  chmod 0700 "$(dirname "$PREVIOUS_STATE_PATH")"
+  PREVIOUS_STATE_NEW="$PREVIOUS_STATE_PATH.new.$RELEASE_ID"
+  install -m 0600 \
+    "$PREVIOUS_STATE_INSTALL_SOURCE" \
+    "$PREVIOUS_STATE_NEW"
+  mv -Tf \
+    "$PREVIOUS_STATE_NEW" \
+    "$PREVIOUS_STATE_PATH"
+  inject_test_failure "previous-release-state"
+fi
+
+if [ -n "$PREVIOUS" ]; then
+  echo "[deploy] Recording rollback target"
+  mv -Tf \
+    "$TRANSACTION_DIR/previous_release" \
+    "$APP_ROOT/shared/previous_release"
+  inject_test_failure "previous-release"
+fi
+
 echo "[deploy] Switching current symlink"
-ln -sfn "$RELEASE_DIR" "$APP_ROOT/current.new"
-mv -Tf "$APP_ROOT/current.new" "$APP_ROOT/current"
+ln -s "$RELEASE_DIR" "$CURRENT_NEW"
+mv -Tf "$CURRENT_NEW" "$APP_ROOT/current"
+inject_test_failure "current"
 
 echo "[deploy] Syncing hub-api launcher"
-install -m 0755 "$APP_ROOT/current/ops/ec2/hub-api.sh" "$APP_ROOT/shared/bin/hub-api"
+mv -Tf "$TRANSACTION_DIR/hub-api" "$APP_ROOT/shared/bin/hub-api"
+inject_test_failure "launcher"
 
-install -m 0644 "$DEPLOYMENT_STATE" "$APP_ROOT/shared/RELEASE_STATE.new"
-mv -Tf "$APP_ROOT/shared/RELEASE_STATE.new" "$APP_ROOT/shared/RELEASE_STATE"
-echo "$RELEASE_ID" > "$APP_ROOT/shared/current_release"
+echo "[deploy] Publishing release state"
+mv -Tf \
+  "$TRANSACTION_DIR/RELEASE_STATE" \
+  "$APP_ROOT/shared/RELEASE_STATE"
+inject_test_failure "release-state"
+
+echo "[deploy] Publishing current-release marker"
+mv -Tf \
+  "$TRANSACTION_DIR/current_release" \
+  "$APP_ROOT/shared/current_release"
+inject_test_failure "current-release"
 
 cd "$APP_ROOT/current"
 
@@ -248,3 +525,7 @@ echo "[deploy] Release state:"
 cat "$APP_ROOT/shared/RELEASE_STATE"
 
 echo "[deploy] Done"
+MUTATION_STARTED=0
+if ! rm -rf -- "$RECOVERY_DIR" "$TRANSACTION_DIR"; then
+  echo "[deploy:warning] Could not remove completed transaction snapshot." >&2
+fi

@@ -118,6 +118,52 @@ These scripts remain a manually installed EC2 backend layer. Repository tests
 exercise their isolated contracts; only a reviewed deployment and runtime
 inspection can attest the state of a real EC2 host.
 
+Issue #1832 hardens that boundary before the blocked host operation in #1831:
+
+- the confirmed legacy current release has a separate, explicit adoption
+  command bound to its real full commit; it validates repository/release/
+  symlink/launcher identity, preserves the original six-field state
+  byte-for-byte as mode-`0400` evidence, records its hash without re-attesting
+  the legacy test-count claim, postvalidates exact shared/per-release state,
+  and recovers transactionally at every mutation failpoint;
+- candidate validation still completes before operational mutation; a failed
+  candidate and validation log remain inspectable without changing `current`;
+- before mutation, deploy validates the managed rollback target's directory,
+  full commit, release/path state, launcher presence, and launcher SHA-256;
+- replacement launcher, release state, current marker, and rollback pointer are
+  staged, while exact pre-deploy artifacts are snapshotted inside the persistent
+  candidate release;
+- any later deploy failure restores the previous symlink and shared artifacts,
+  records recovery, and retains the failed candidate without depending on a
+  disposable reviewed-tools checkout; unavailable recovery logging never
+  suppresses restoration or produces a success result;
+- rollback validates unique state identity keys and uses its own persistent
+  snapshot, staged artifacts, exit recovery, and injected-failure coverage for
+  the complete multi-file transition;
+- the API captures its full running commit and launcher SHA-256 at process
+  start; `/status` exposes those immutable running values separately from the
+  mutable configured-current symlink and commit;
+- the #1831 host preflight is read-only and fail-closed on exact shared/current
+  launcher and release-state parity, rollback identity, complete operation-tool
+  inventory, `sudo -n`, egress, disk, inode, available-memory, and load floors;
+  an older unattested previous pointer is inventory only, while the adopted
+  current release becomes the next deploy's attested rollback target;
+- the host runbook requires both complete disk-state and process-bound
+  attestation after deploy and after any explicit rollback before either may
+  be called complete; disk attestation rejects malformed, duplicate, partial,
+  or divergent shared/per-release state and derives launcher identity from
+  both versioned and shared files, while process attestation binds both running
+  and configured release paths to the exact selected release;
+- localhost URL-intake evidence is reconstructed from an explicit allowlist;
+  fetched text and unknown/debug/body fields are never printed, and a passing
+  smoke requires curl success, HTTP 200, and exact running-launcher parity with
+  the reviewed release state.
+
+This repository state does not attest deployment on EC2 and does not authorize
+DNS, TLS, nginx, Security Group, public API, provider, reboot, schema,
+simulator, benchmark, or governance changes. Issue #1831 must be repinned to the
+reviewed merged commit and receive a fresh human-approved execution decision.
+
 ## Python Packaging Boundary
 
 Issue #1763 records drift between the documented Python minimum, executable
