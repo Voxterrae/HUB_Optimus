@@ -45,6 +45,55 @@ GitHub remains the source of truth; chat summaries are advisory unless reflected
 - AI operators must read `docs/governance/PROJECT_STEWARDSHIP.md` and must not infer authority beyond versioned GitHub records.
 - Foundational principle: technology amplifies human judgment; it never replaces human responsibility.
 
+## AI Access Matrix Boundary
+
+The actor and access-level matrix implementing issue #1584 is defined in the
+[AI access matrix](../../AGENTS.md#ai-access-matrix).
+
+Operational boundary:
+
+- ChatGPT is level 1 for tracked proposals and review. Codex and GitHub
+  Copilot, including Coding Agent, are level 2 for issue- or PR-scoped
+  implementation and review. Models outside the approved repository workflow
+  are consultative level 0.
+- Any unlisted model, agent, wrapper, or AI workflow defaults to level 0 until
+  a scoped issue and reviewed matrix change say otherwise.
+- These levels are policy ceilings, not technical permission grants. The
+  active operator authorization, tool or sandbox, GitHub credentials,
+  repository roles, and rulesets remain the actual technical access boundary.
+  CODEOWNERS records intended review responsibility; enforcement depends on
+  GitHub permissions and rulesets.
+- No AI actor gains project ownership, human stewardship, CODEOWNERS
+  authority, governance ratification, independent approval, discretionary
+  merge, release, credential, or repository-settings authority.
+- Codex may mechanically execute an exact GitHub mutation, including an
+  identified PR merge, only when a human operator explicitly authorizes that
+  target and action after the repository's
+  [PR merge requirements](../../CONTRIBUTING.md#pr-merge-requirements) and
+  human review are satisfied. Execution does not supply approval or transfer
+  authority. A governance change authored by a model must instead be merged by
+  a human authenticated actor.
+- Any actionable work requires an issue or PR. Implementation proposed for
+  merge requires a reviewable commit and PR with scope, affected files,
+  validation, risks or limitations, and material AI assistance recorded.
+- No chat-only decision changes roadmap, architecture, runtime contracts, or
+  governance.
+- Every external-model review request and its findings follow the
+  [External AI Review Protocol](../governance/EXTERNAL_AI_REVIEW_PROTOCOL.md);
+  the request uses its Standard Review Packet, and an authorized human or
+  internal operator triages the output back into GitHub.
+- The matrix does not claim that CODEOWNERS, required checks, or branch
+  restrictions are fully machine-enforced. Their current repository evidence
+  and settings gaps remain recorded in the
+  [System Protection Matrix](../governance/SYSTEM_PROTECTION_MATRIX.md).
+- The external-model boundary is policy, not a repository-enforced provider
+  control; its evidence and handling rules live in the matrix and the External
+  AI Review Protocol.
+- `AGENTS.md` and this handoff file are not currently protected paths in
+  `.github/CODEOWNERS` or `tools/kernel_guard.py`. The governance-scoped PR
+  therefore requires explicit human review even though those controls do not
+  request it automatically. Expanding protected paths is a separate scope.
+
 ## Governance Intelligence Boundary
 
 Issue #1694 and PR #1695 are the ratification record for the canonical Governance Intelligence protocol.
