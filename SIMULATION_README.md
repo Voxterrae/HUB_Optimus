@@ -86,6 +86,9 @@ ese mismo cargador y no introduce valores predeterminados permisivos.
 * `max_rounds` limita el número máximo de rondas para evitar bucles infinitos.
 
 La plantilla de trabajo más rica (`v1_core/workflow/04_scenario_template.md`) sirve para diseñar escenarios humanos con contexto, verificación, riesgos, evaluación y meta-learning. Esas secciones no forman parte del JSON ejecutable actual salvo que el schema, los ejemplos, los tests y la documentación se actualicen en un PR específico.
+La relación campo por campo, incluidas las pérdidas deliberadas de esa
+proyección manual, se documenta en
+[`docs/governance/SCENARIO_SCHEMA.md`](docs/governance/SCENARIO_SCHEMA.md).
 
 ## 3. Ejecución desde la línea de comandos
 
