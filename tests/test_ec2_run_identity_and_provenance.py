@@ -573,6 +573,10 @@ def test_deploy_is_ref_bound_records_validation_and_rolls_back(
     assert first_state["validation_exit_code"] == "0"
     assert first_state["validation_log_exit_code"] == "0"
     assert first_state["validation_result"] == "17 passed in 0.01s"
+    first_validation_log = first_release / ".hub-deployment" / "validation.log"
+    assert first_state["validation_log_sha256"] == hashlib.sha256(
+        first_validation_log.read_bytes()
+    ).hexdigest()
     assert "55 passed" not in (app_root / "shared" / "RELEASE_STATE").read_text()
 
     second = _run([DEPLOY, head_commit], env=env)
@@ -935,9 +939,10 @@ def test_deploy_rejects_shared_only_state_drift_before_mutation(
             handle.write("malformed-state-line\n")
     else:
         shared_state.write_text(
-            shared_state.read_text(encoding="utf-8").replace(
-                "validation_result=17 passed in 0.01s",
-                "validation_result=18 passed in 0.01s",
+            re.sub(
+                r"(?m)^validated_at_utc=.*$",
+                "validated_at_utc=2000-01-01T00:00:00Z",
+                shared_state.read_text(encoding="utf-8"),
             ),
             encoding="utf-8",
         )
@@ -990,6 +995,12 @@ def test_failed_validation_is_recorded_without_switching_current(
     assert failed_state["validation_command"] == "python -m pytest -q"
     assert failed_state["validation_exit_code"] == "1"
     assert failed_state["validation_result"] == "2 failed in 0.01s"
+    failed_validation_log = (
+        failed_releases[0] / ".hub-deployment" / "validation.log"
+    )
+    assert failed_state["validation_log_sha256"] == hashlib.sha256(
+        failed_validation_log.read_bytes()
+    ).hexdigest()
     assert failed_state["status"] == "validation-failed"
     assert (failed_releases[0] / ".hub-deployment" / "validation.log").is_file()
 

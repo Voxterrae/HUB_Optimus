@@ -66,7 +66,8 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
 
     deployment_dir = release / ".hub-deployment"
     validation_log = deployment_dir / "validation.log"
-    _write_bytes(validation_log, b"692 passed\n", 0o600)
+    validation_log_raw = b"collecting tests\n692 passed in 30.45s\n\n"
+    _write_bytes(validation_log, validation_log_raw, 0o600)
     fields = {
         "release": release.name,
         "requested_ref": commit,
@@ -79,6 +80,7 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
         "validation_result": "692 passed in 30.45s",
         "validation_log": str(validation_log),
         "validation_log_exit_code": "0",
+        "validation_log_sha256": hashlib.sha256(validation_log_raw).hexdigest(),
         "launcher_sha256": launcher_sha256,
         "status": "production-candidate-core",
     }
@@ -98,6 +100,7 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
         "launcher_sha256": launcher_sha256,
         "release": release,
         "release_state": release_state,
+        "validation_log": validation_log,
         "shared_launcher": shared_launcher,
         "shared_state": shared_state,
         "versioned_launcher": versioned_launcher,
@@ -119,6 +122,9 @@ def test_post_deploy_disk_attestation_accepts_exact_release(tmp_path: Path) -> N
     assert evidence["release"] == Path(fixture["release"]).name
     assert evidence["commit"] == fixture["commit"]
     assert evidence["launcher_sha256"] == fixture["launcher_sha256"]
+    assert evidence["validation_log_sha256"] == hashlib.sha256(
+        Path(fixture["validation_log"]).read_bytes()
+    ).hexdigest()
 
 
 @pytest.mark.parametrize(
@@ -130,6 +136,33 @@ def test_post_deploy_disk_attestation_accepts_exact_release(tmp_path: Path) -> N
         ("extra-field", "exact field set"),
         ("release", "wrong release name"),
         ("path", "wrong release path"),
+        (
+            "validation-log-truncated",
+            "validation log does not match RELEASE_STATE",
+        ),
+        (
+            "validation-log-replaced",
+            "validation log does not match RELEASE_STATE",
+        ),
+        (
+            "validation-result",
+            "validation result does not match the validation log",
+        ),
+        ("validation-log-invalid-utf8", "validation log is not UTF-8"),
+        (
+            "validation-log-nul",
+            "validation log is not canonical UTF-8/LF text",
+        ),
+        (
+            "validation-log-crlf",
+            "validation log is not canonical UTF-8/LF text",
+        ),
+        (
+            "validation-log-line-separator",
+            "validation log is not canonical UTF-8/LF text",
+        ),
+        ("validation-log-missing-lf", "validation log has no terminal LF"),
+        ("validation-log-mode", "unexpected validation-log mode"),
         ("state-launcher", "launcher hashes do not match"),
         ("versioned-launcher", "shared and versioned launchers differ"),
         ("shared-launcher", "shared and versioned launchers differ"),
@@ -181,6 +214,43 @@ def test_post_deploy_disk_attestation_rejects_every_identity_drift(
                 b"path=/tmp/wrong\n",
             ),
         )
+    elif invalid_case == "validation-log-truncated":
+        Path(fixture["validation_log"]).write_bytes(b"collecting tests\n")
+    elif invalid_case == "validation-log-replaced":
+        Path(fixture["validation_log"]).write_bytes(
+            b"replacement context\n692 passed in 30.45s\n\n"
+        )
+    elif invalid_case == "validation-result":
+        _replace_state_pair(
+            release_state,
+            shared_state,
+            lambda raw: raw.replace(
+                b"validation_result=692 passed in 30.45s\n",
+                b"validation_result=forged result\n",
+            ),
+        )
+    elif invalid_case == "validation-log-invalid-utf8":
+        Path(fixture["validation_log"]).write_bytes(
+            b"invalid=\xff\n692 passed in 30.45s\n"
+        )
+    elif invalid_case == "validation-log-nul":
+        Path(fixture["validation_log"]).write_bytes(
+            b"has=\x00\n692 passed in 30.45s\n"
+        )
+    elif invalid_case == "validation-log-crlf":
+        Path(fixture["validation_log"]).write_bytes(
+            b"uses CRLF\r\n692 passed in 30.45s\n"
+        )
+    elif invalid_case == "validation-log-line-separator":
+        Path(fixture["validation_log"]).write_bytes(
+            "uses LS\u2028\n692 passed in 30.45s\n".encode()
+        )
+    elif invalid_case == "validation-log-missing-lf":
+        Path(fixture["validation_log"]).write_bytes(
+            b"692 passed in 30.45s"
+        )
+    elif invalid_case == "validation-log-mode":
+        Path(fixture["validation_log"]).chmod(0o644)
     elif invalid_case == "state-launcher":
         _replace_state_pair(
             release_state,

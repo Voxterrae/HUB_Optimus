@@ -406,6 +406,7 @@ VALIDATION_RESULT="$(
   awk 'NF { result=$0 } END { print result == "" ? "no output" : result }' \
     "$VALIDATION_LOG"
 )"
+VALIDATION_LOG_SHA256="$(sha256_file "$VALIDATION_LOG")"
 
 if [ "$VALIDATION_EXIT_CODE" -eq 0 ] \
   && [ "$VALIDATION_LOG_EXIT_CODE" -eq 0 ]; then
@@ -426,6 +427,7 @@ validation_exit_code=$VALIDATION_EXIT_CODE
 validation_result=$VALIDATION_RESULT
 validation_log=$VALIDATION_LOG
 validation_log_exit_code=$VALIDATION_LOG_EXIT_CODE
+validation_log_sha256=$VALIDATION_LOG_SHA256
 launcher_sha256=$CANDIDATE_LAUNCHER_SHA256
 status=$RELEASE_STATUS
 STATE
