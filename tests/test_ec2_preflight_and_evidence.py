@@ -54,9 +54,12 @@ def test_runbook_retains_reviewed_tools_and_uses_allowlisted_evidence() -> None:
     assert "9d6771994095e4fc04e8fdbf2caa644ccb002ab1" in text
     assert "shared/reviewed-tools/$TARGET_SHA" in text
     assert "Do not put it behind an" in text
-    assert "preflight-deploy.sh" in text
-    assert "adopt-legacy-current.sh" in text
-    assert text.index("adopt-legacy-current.sh") < text.index("preflight-deploy.sh")
+    assert "run-reviewed-operation.py" in text
+    assert "  preflight \"$TARGET_SHA\" \"$REFERENCE_URL\"" in text
+    assert "  adopt \"$LEGACY_CURRENT_SHA\"" in text
+    assert text.index('  adopt "$LEGACY_CURRENT_SHA"') < text.index(
+        '  preflight "$TARGET_SHA"'
+    )
     assert "LEGACY_RELEASE_STATE" in text
     assert "legacy_state_sha256=" in text
     assert "legacy-unattested-not-deploy-rollback-target" in text

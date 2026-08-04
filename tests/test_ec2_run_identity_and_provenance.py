@@ -485,6 +485,64 @@ def _source_repository(path: Path) -> tuple[str, str]:
     (path / "requirements-dev.txt").write_text("pytest\n", encoding="utf-8")
     for source in DEPENDENCY_LOCKS:
         shutil.copyfile(source, path / "ops" / "ec2" / source.name)
+    shutil.copyfile(
+        ROOT / "ops" / "ec2" / "verify-release-worktree.py",
+        path / "ops" / "ec2" / "verify-release-worktree.py",
+    )
+    validation_runner = path / "ops" / "ec2" / "run-release-validation.py"
+    validation_runner.write_text(
+        "import hashlib\n"
+        "import json\n"
+        "import os\n"
+        "import subprocess\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "def controls(release):\n"
+        "    return Path((release / '.hub-deployment' / 'test-controls').read_text().strip())\n"
+        "def venv_digest(release):\n"
+        "    digest = hashlib.sha256()\n"
+        "    for item in sorted((release / '.venv').rglob('*')):\n"
+        "        relative = str(item.relative_to(release / '.venv')).encode()\n"
+        "        digest.update(len(relative).to_bytes(8, 'big')); digest.update(relative)\n"
+        "        if item.is_file(): digest.update(item.read_bytes())\n"
+        "    return digest.hexdigest()\n"
+        "if sys.argv[1] == 'manifest-venv':\n"
+        "    print(venv_digest(Path(sys.argv[2])))\n"
+        "    raise SystemExit(0)\n"
+        "release = Path(sys.argv[1]); commit = sys.argv[2]; control = controls(release)\n"
+        "if (control / 'swap-lock-during-pytest').exists():\n"
+        "    lock = release / 'ops/ec2/requirements-validation.lock'\n"
+        "    original = lock.read_bytes(); lock.write_bytes(original + b'# changed\\n'); lock.write_bytes(original)\n"
+        "    (control / 'lock-was-swapped').touch()\n"
+        "source = subprocess.run([\n"
+        "    '/usr/bin/python3', '-I', str(Path(__file__).with_name('verify-release-worktree.py')),\n"
+        "    str(release), commit, '--allow-generated', '.venv',\n"
+        "    '--allow-generated', '.hub-deployment',\n"
+        "], env={'HOME':'/nonexistent','LANG':'C.UTF-8','PATH':'/usr/bin:/bin'},\n"
+        "capture_output=True, text=True, check=False)\n"
+        "if source.returncode != 0:\n"
+        "    sys.stderr.write(source.stderr); raise SystemExit(1)\n"
+        "source_digest = json.loads(source.stdout)['source_tree_sha256']\n"
+        "exit_path = control / 'pytest.exit'\n"
+        "exit_code = int(exit_path.read_text()) if exit_path.exists() else 0\n"
+        "output_path = control / 'pytest.output'\n"
+        "if output_path.exists(): print(output_path.read_text(), end='')\n"
+        "else: print('17 passed in 0.01s')\n"
+        "collected = 17 if exit_code == 0 else 2\n"
+        "passed = collected if exit_code == 0 else 0\n"
+        "failed = 0 if exit_code == 0 else collected\n"
+        "result = 'passed' if exit_code == 0 else 'failed'\n"
+        "nodeids = 'd' * 64\n"
+        "print(\n"
+        "    'HUB_OPTIMUS_VALIDATION_V1 '\n"
+        "    f'collected={collected} terminal={collected} passed={passed} skipped=0 '\n"
+        "    f'failed={failed} pytest_exit_code={exit_code} nodeids_sha256={nodeids} '\n"
+        "    f'descendants=0 source_tree_sha256={source_digest} '\n"
+        "    f'venv_tree_sha256={venv_digest(release)} worker_uid=65534 result={result}'\n"
+        ")\n"
+        "raise SystemExit(exit_code)\n",
+        encoding="utf-8",
+    )
     launcher = path / "ops" / "ec2" / "hub-api.sh"
     launcher.write_text("#!/usr/bin/env bash\necho api-v1\n", encoding="utf-8")
     launcher.chmod(0o755)
@@ -652,10 +710,19 @@ def _deploy_fixture(path: Path) -> tuple[Path, Path]:
     assignment = 'SYSTEM_PYTHON="/usr/bin/python3"'
     assert deploy_text.count(assignment) == 1
     assert '"$SYSTEM_PYTHON" -I -m venv' in deploy_text
-    assert '"$VENV_PYTHON" -m pytest -q' in deploy_text
-    assert '"$VENV_PYTHON" -I -m pytest -q' not in deploy_text
+    assert '"$CANDIDATE_VALIDATION_RUNNER" \\\n' in deploy_text
+    assert '"$VENV_PYTHON" -m pytest' not in deploy_text
     assert "HUB_OPTIMUS_TEST_MODE" not in deploy_text
     assert "HUB_TEST_" not in deploy_text
+    deployment_marker = 'chmod 0700 "$DEPLOYMENT_DIR"\n'
+    assert deploy_text.count(deployment_marker) == 1
+    deploy_text = deploy_text.replace(
+        deployment_marker,
+        deployment_marker
+        + f"printf '%s\\n' {quoted_controls} > "
+        + '"$DEPLOYMENT_DIR/test-controls"\n',
+        1,
+    )
     deploy.write_text(
         deploy_text.replace(
             assignment,
@@ -689,9 +756,11 @@ def _deploy_env(
 
 
 def _expected_validation_command(release: Path) -> str:
+    commit = _git(release, "rev-parse", "HEAD")
     return (
-        f"/usr/bin/env -i HOME={release} LANG=C.UTF-8 PATH=/usr/bin:/bin "
-        f"PYTHONNOUSERSITE=1 {release}/.venv/bin/python -m pytest -q"
+        "/usr/bin/env -i HOME=/nonexistent LANG=C.UTF-8 PATH=/usr/bin:/bin "
+        f"/usr/bin/python3 -I {release}/ops/ec2/run-release-validation.py "
+        f"{release} {commit} {release}/ops/ec2/verify-release-worktree.py"
     )
 
 
@@ -742,7 +811,18 @@ def test_deploy_is_ref_bound_records_validation_and_rolls_back(
     assert re.fullmatch(r"[0-9a-f]{64}", first_state["dependency_lock_sha256"])
     assert first_state["validation_exit_code"] == "0"
     assert first_state["validation_log_exit_code"] == "0"
-    assert first_state["validation_result"] == "17 passed in 0.01s"
+    assert first_state["validation_protocol"] == "isolated-pytest-v1"
+    assert first_state["validation_collected"] == "17"
+    assert first_state["validation_terminal"] == "17"
+    assert first_state["validation_passed"] == "17"
+    assert first_state["validation_skipped"] == "0"
+    assert first_state["validation_failed"] == "0"
+    assert first_state["validation_descendants"] == "0"
+    assert first_state["validation_result"].startswith(
+        "HUB_OPTIMUS_VALIDATION_V1 collected=17 terminal=17 passed=17 "
+    )
+    assert re.fullmatch(r"[0-9a-f]{64}", first_state["source_tree_sha256"])
+    assert re.fullmatch(r"[0-9a-f]{64}", first_state["venv_tree_sha256"])
     first_validation_log = first_release / ".hub-deployment" / "validation.log"
     assert first_state["validation_log_sha256"] == hashlib.sha256(
         first_validation_log.read_bytes()
@@ -1148,7 +1228,7 @@ def test_failed_validation_is_recorded_without_switching_current(
     result = _run([deploy, head_commit], env=env)
 
     assert result.returncode == 1
-    assert "validation failed (exit 1): 2 failed in 0.01s" in result.stderr
+    assert "validation failed (exit 1): HUB_OPTIMUS_VALIDATION_V1" in result.stderr
     assert _operational_snapshot(app_root) == before
     failed_releases = [
         release
@@ -1169,7 +1249,10 @@ def test_failed_validation_is_recorded_without_switching_current(
         failed_releases[0]
     )
     assert failed_state["validation_exit_code"] == "1"
-    assert failed_state["validation_result"] == "2 failed in 0.01s"
+    assert failed_state["validation_result"].startswith(
+        "HUB_OPTIMUS_VALIDATION_V1 collected=2 terminal=2 passed=0 "
+    )
+    assert failed_state["validation_failed"] == "2"
     failed_validation_log = (
         failed_releases[0] / ".hub-deployment" / "validation.log"
     )
@@ -1278,5 +1361,7 @@ def test_deploy_requires_explicit_ref_and_hub_ops_forwards_it(
     assert result.returncode == 2
     assert not (app_root / "current").exists()
     hub_ops = HUB_OPS.read_text(encoding="utf-8")
-    assert "  deploy)\n    shift\n" in hub_ops
-    assert 'deploy-current" "$@"' in hub_ops
+    assert hub_ops.startswith("#!/usr/bin/python3 -I\n")
+    assert 'MUTATING_OPERATIONS = frozenset({"adopt", "deploy", "preflight", "rollback"})' in hub_ops
+    assert 'dispatcher = tools / "run-reviewed-operation.py"' in hub_ops
+    assert "run_operation(command, remaining)" in hub_ops

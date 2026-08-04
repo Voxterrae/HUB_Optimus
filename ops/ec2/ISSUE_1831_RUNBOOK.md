@@ -44,8 +44,14 @@ git -C "$TOOLS_ROOT" fetch --quiet --depth 1 origin "$TARGET_SHA"
 git -C "$TOOLS_ROOT" checkout --quiet --detach FETCH_HEAD
 test "$(git -C "$TOOLS_ROOT" rev-parse --verify HEAD)" = "$TARGET_SHA"
 
-bash -n "$TOOLS_ROOT"/ops/ec2/*.sh
-python3 -m py_compile "$TOOLS_ROOT/ops/ec2/intake-smoke-evidence.py"
+find "$TOOLS_ROOT/ops/ec2" -maxdepth 1 -type f -name '*.sh' \
+  ! -name 'hub-ops.sh' -exec bash -n '{}' +
+python3 -m py_compile \
+  "$TOOLS_ROOT/ops/ec2/hub-ops.sh" \
+  "$TOOLS_ROOT/ops/ec2/intake-smoke-evidence.py" \
+  "$TOOLS_ROOT/ops/ec2/run-reviewed-operation.py" \
+  "$TOOLS_ROOT/ops/ec2/run-release-validation.py" \
+  "$TOOLS_ROOT/ops/ec2/verify-release-worktree.py"
 ```
 
 Removal of this retained checkout is a separate post-operation cleanup choice;
@@ -59,10 +65,11 @@ file, the launcher, or a symlink by hand. The command is deliberately bound to
 the known full current commit rather than the legacy state's short SHA:
 
 ```bash
-HUB_OPTIMUS_APP_ROOT="$APP_ROOT" \
-HUB_OPTIMUS_REPO_URL="$REPO_URL" \
-  bash "$TOOLS_ROOT/ops/ec2/adopt-legacy-current.sh" \
-    "$LEGACY_CURRENT_SHA"
+/usr/bin/python3 -I \
+  "$TOOLS_ROOT/ops/ec2/run-reviewed-operation.py" \
+  --app-root "$APP_ROOT" \
+  --repo-url "$REPO_URL" \
+  adopt "$LEGACY_CURRENT_SHA"
 
 ADOPTED_CURRENT="$(readlink -f "$APP_ROOT/current")"
 ADOPTED_STATE="$ADOPTED_CURRENT/.hub-deployment/RELEASE_STATE"
@@ -95,11 +102,11 @@ and inspect that evidence; do not repair or retry by hand.
 Run the versioned preflight before deployment:
 
 ```bash
-HUB_OPTIMUS_APP_ROOT="$APP_ROOT" \
-HUB_OPTIMUS_REPO_URL="$REPO_URL" \
-  bash "$TOOLS_ROOT/ops/ec2/preflight-deploy.sh" \
-    "$TARGET_SHA" \
-    "$REFERENCE_URL"
+/usr/bin/python3 -I \
+  "$TOOLS_ROOT/ops/ec2/run-reviewed-operation.py" \
+  --app-root "$APP_ROOT" \
+  --repo-url "$REPO_URL" \
+  preflight "$TARGET_SHA" "$REFERENCE_URL"
 ```
 
 The preflight stops unless all of the following are true:
@@ -125,9 +132,11 @@ Do not override a failed threshold or identity check inside the same operation.
 ## 4. Exact-SHA deploy and review
 
 ```bash
-HUB_OPTIMUS_APP_ROOT="$APP_ROOT" \
-HUB_OPTIMUS_REPO_URL="$REPO_URL" \
-  bash "$TOOLS_ROOT/ops/ec2/deploy-current.sh" "$TARGET_SHA"
+/usr/bin/python3 -I \
+  "$TOOLS_ROOT/ops/ec2/run-reviewed-operation.py" \
+  --app-root "$APP_ROOT" \
+  --repo-url "$REPO_URL" \
+  deploy "$TARGET_SHA"
 
 DEPLOYED_RELEASE="$(readlink -f "$APP_ROOT/current")"
 test "$(git -C "$DEPLOYED_RELEASE" rev-parse --verify HEAD)" = "$TARGET_SHA"
@@ -532,8 +541,11 @@ deploy itself completed, retain the local response and use the rollback script
 from the persistent deployed release, not a temporary checkout:
 
 ```bash
-HUB_OPTIMUS_APP_ROOT="$APP_ROOT" \
-  bash "$DEPLOYED_RELEASE/ops/ec2/rollback-current.sh"
+/usr/bin/python3 -I \
+    "$DEPLOYED_RELEASE/ops/ec2/run-reviewed-operation.py" \
+    --app-root "$APP_ROOT" \
+    --repo-url "$REPO_URL" \
+    rollback
 
 ROLLED_BACK_RELEASE="$(readlink -f "$APP_ROOT/current")"
 RESTORED_COMMIT="$(git -C "$ROLLED_BACK_RELEASE" rev-parse --verify HEAD)"

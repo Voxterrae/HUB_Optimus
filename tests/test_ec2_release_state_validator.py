@@ -22,8 +22,17 @@ DEPENDENCY_LOCKS = (
 COMMIT = "b" * 40
 LAUNCHER_SHA256 = "c" * 64
 LEGACY_SHA256 = "d" * 64
-VALIDATION_RESULT = "719 passed in 30.45s"
-VALIDATION_LOG_RAW = f"collecting tests\n{VALIDATION_RESULT}\n\n".encode()
+NODEIDS_SHA256 = "1" * 64
+SOURCE_TREE_SHA256 = "2" * 64
+VENV_TREE_SHA256 = "3" * 64
+VALIDATION_RESULT = (
+    "HUB_OPTIMUS_VALIDATION_V1 collected=719 terminal=719 passed=700 "
+    "skipped=19 failed=0 pytest_exit_code=0 "
+    f"nodeids_sha256={NODEIDS_SHA256} descendants=0 "
+    f"source_tree_sha256={SOURCE_TREE_SHA256} "
+    f"venv_tree_sha256={VENV_TREE_SHA256} worker_uid=65534 result=passed"
+)
+VALIDATION_LOG_RAW = f"collecting tests\n719 passed in 30.45s\n{VALIDATION_RESULT}\n".encode()
 ADOPTION_RESULT = (
     "legacy validation claim not re-attested; original state retained by SHA-256"
 )
@@ -50,9 +59,11 @@ def _production_fields(*, transitional: bool = False) -> list[tuple[str, str]]:
     validation_command = "python -m pytest -q"
     if not transitional:
         validation_command = (
-            f"/usr/bin/env -i HOME={release_path} LANG=C.UTF-8 "
-            "PATH=/usr/bin:/bin PYTHONNOUSERSITE=1 "
-            f"{release_path}/.venv/bin/python -m pytest -q"
+            "/usr/bin/env -i HOME=/nonexistent LANG=C.UTF-8 "
+            "PATH=/usr/bin:/bin /usr/bin/python3 -I "
+            f"{release_path}/ops/ec2/run-release-validation.py "
+            f"{release_path} {COMMIT} "
+            f"{release_path}/ops/ec2/verify-release-worktree.py"
         )
     fields = [
         ("release", "20260803T120000Z.ABC123"),
@@ -78,6 +89,18 @@ def _production_fields(*, transitional: bool = False) -> list[tuple[str, str]]:
                     "validation_log_sha256",
                     hashlib.sha256(VALIDATION_LOG_RAW).hexdigest(),
                 ),
+                ("validation_protocol", "isolated-pytest-v1"),
+                ("validation_collected", "719"),
+                ("validation_terminal", "719"),
+                ("validation_passed", "700"),
+                ("validation_skipped", "19"),
+                ("validation_failed", "0"),
+                ("validation_pytest_exit_code", "0"),
+                ("validation_nodeids_sha256", NODEIDS_SHA256),
+                ("validation_descendants", "0"),
+                ("validation_worker_uid", "65534"),
+                ("source_tree_sha256", SOURCE_TREE_SHA256),
+                ("venv_tree_sha256", VENV_TREE_SHA256),
                 ("dependency_tier", "runtime+validation-v1"),
                 (
                     "dependency_lock",
@@ -136,8 +159,10 @@ def _production_fixture(
         fields,
         "validation_command",
         (
-            f"/usr/bin/env -i HOME={release} LANG=C.UTF-8 PATH=/usr/bin:/bin "
-            f"PYTHONNOUSERSITE=1 {release}/.venv/bin/python -m pytest -q"
+            "/usr/bin/env -i HOME=/nonexistent LANG=C.UTF-8 "
+            "PATH=/usr/bin:/bin /usr/bin/python3 -I "
+            f"{release}/ops/ec2/run-release-validation.py "
+            f"{release} {COMMIT} {release}/ops/ec2/verify-release-worktree.py"
         ),
     )
     fields = _replace_field(fields, "validation_log", str(validation_log))
@@ -510,6 +535,6 @@ def test_attestation_scope_excludes_operational_hardening() -> None:
     )
 
     assert "validation_log_sha256" in sources
-    assert "validate-release-worktree" not in sources
+    assert "verify-release-worktree.py" in sources
     assert "recovery-snapshot" not in sources
     assert "PYTEST_ADDOPTS" not in sources

@@ -234,7 +234,11 @@ Manual installation targets:
 
 Run from the repository root:
 
-bash -n ops/ec2/*.sh
+```bash
+find ops/ec2 -maxdepth 1 -type f -name '*.sh' \
+  ! -name 'hub-ops.sh' -exec bash -n '{}' +
+python3 -m py_compile ops/ec2/hub-ops.sh ops/ec2/*.py
+```
 
 Runtime validation on EC2:
 
