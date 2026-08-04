@@ -128,6 +128,9 @@ Issue #1832 hardens that boundary before the blocked host operation in #1831:
   and recovers transactionally at every mutation failpoint;
 - candidate validation still completes before operational mutation; a failed
   candidate and validation log remain inspectable without changing `current`;
+- every successful production state records the complete validation log's
+  SHA-256 and must match that log's final non-empty line; preflight, deploy, and
+  rollback reject truncated, replaced, or result-divergent evidence;
 - before mutation, deploy validates the managed rollback target's directory,
   full commit, release/path state, launcher presence, and launcher SHA-256;
 - replacement launcher, release state, current marker, and rollback pointer are
