@@ -60,7 +60,15 @@ def _replace_loose_object(
         + b"\0"
         + payload
     )
-    object_path.write_bytes(zlib.compress(canonical))
+    # Git deliberately stores loose objects read-only.  Root can overwrite
+    # those files directly, which hid this portability bug in the local
+    # adversarial run; hosted runners execute as an unprivileged owner.  Model
+    # an attacker replacing the directory entry instead, preserving the
+    # read-only mode of a normal loose object.
+    replacement = object_path.with_name(f".{object_path.name}.replacement")
+    replacement.write_bytes(zlib.compress(canonical))
+    replacement.chmod(0o444)
+    os.replace(replacement, object_path)
 
 
 def _repository(tmp_path: Path) -> tuple[Path, str]:

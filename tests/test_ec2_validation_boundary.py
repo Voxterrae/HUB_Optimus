@@ -85,9 +85,9 @@ def isolated_release() -> tuple[Path, Path, Path, Path]:
         encoding="utf-8",
     )
     verifier.chmod(0o644)
-    # The sandbox running these tests maps only UID 0, so chown/setuid(nobody)
-    # is impossible. Instrument a private copy to exercise the supervisor,
-    # evidence, subreaper and cleanup paths as the current UID. A separate
+    # Instrument a private copy to exercise the supervisor, evidence,
+    # subreaper and cleanup paths as the current UID.  This works both in the
+    # root-only local sandbox and on an unprivileged hosted runner.  A separate
     # assertion below keeps the production root->nobody contract exact.
     runner = fixture_root / RUNNER.name
     runner_source = RUNNER.read_text(encoding="utf-8")
@@ -124,9 +124,16 @@ def isolated_release() -> tuple[Path, Path, Path, Path]:
         encoding="utf-8",
     )
     runner.chmod(0o644)
+    # The hosted runner owns this fixture.  Make the candidate root itself
+    # non-writable so the test exercises the same read-only source boundary as
+    # the production root->nobody transition instead of accidentally granting
+    # the worker owner-write access.
+    release.chmod(0o555)
     try:
         yield release, tests, verifier, runner
     finally:
+        for directory, _subdirectories, _files in os.walk(release):
+            Path(directory).chmod(0o755)
         shutil.rmtree(fixture_root, ignore_errors=True)
 
 
