@@ -241,10 +241,7 @@ def test_api_uses_its_own_run_marker_and_cleans_private_input(
         input_text: str | None = None,
     ) -> tuple[int, str, str]:
         assert input_text is None
-        assert args[:2] == [
-            "/opt/hub-optimus/shared/bin/hub-core",
-            "analyze",
-        ]
+        assert args[:2] == [str(shared / "bin" / "hub-core"), "analyze"]
         case_path = Path(args[2])
         seen_case_paths.append(case_path)
         assert case_path.name.startswith("case-")
