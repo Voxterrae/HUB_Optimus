@@ -4,6 +4,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DEPLOY = ROOT / "ops" / "ec2" / "deploy-current.sh"
 SERVICE = ROOT / "ops" / "ec2" / "hub-api.service"
+API = ROOT / "ops" / "ec2" / "hub-api.sh"
+CORE = ROOT / "ops" / "ec2" / "hub-core.sh"
 
 
 def test_deploy_syncs_hub_api_launcher_into_shared_bin():
@@ -36,3 +38,14 @@ def test_systemd_execstart_uses_synced_shared_launcher():
     text = SERVICE.read_text(encoding="utf-8")
 
     assert "ExecStart=/opt/hub-optimus/shared/bin/hub-api" in text
+
+
+def test_runtime_launchers_do_not_write_caches_into_release_source():
+    api = API.read_text(encoding="utf-8")
+    core = CORE.read_text(encoding="utf-8")
+    service = SERVICE.read_text(encoding="utf-8")
+
+    assert "export PYTHONDONTWRITEBYTECODE=1" in api
+    assert "export PYTHONDONTWRITEBYTECODE=1" in core
+    assert "Environment=PYTHONDONTWRITEBYTECODE=1" in service
+    assert "python -m pytest -q -p no:cacheprovider" in core

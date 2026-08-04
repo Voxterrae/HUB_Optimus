@@ -149,6 +149,79 @@ def test_same_second_hub_core_runs_get_exclusive_ids(tmp_path: Path) -> None:
         assert run_state["commit"] == commit
 
 
+def test_hub_core_test_and_analyze_preserve_release_source_authority(
+    tmp_path: Path,
+) -> None:
+    app_root = tmp_path / "app"
+    release = app_root / "releases" / "current-release"
+    commit = _init_git_repo(release)
+    activate = release / ".venv" / "bin" / "activate"
+    activate.parent.mkdir(parents=True)
+    activate.write_text("deactivate() { :; }\n", encoding="utf-8")
+    (app_root / "shared").mkdir(parents=True)
+    (app_root / "current").symlink_to(release, target_is_directory=True)
+
+    fake_bin = tmp_path / "runtime-bin"
+    fake_bin.mkdir()
+    fake_python = fake_bin / "python"
+    fake_python.write_text(
+        "#!/usr/bin/env bash\n"
+        "set -eu\n"
+        "if [ -z \"${PYTHONDONTWRITEBYTECODE:-}\" ]; then\n"
+        "  mkdir -p semantic_engine/__pycache__\n"
+        "  printf poison > semantic_engine/__pycache__/runtime.pyc\n"
+        "fi\n"
+        "case \" $* \" in\n"
+        "  *' -m pytest '*)\n"
+        "    case \" $* \" in\n"
+        "      *' -p no:cacheprovider '*) ;;\n"
+        "      *) mkdir -p .pytest_cache; printf poison > .pytest_cache/CACHEDIR.TAG ;;\n"
+        "    esac\n"
+        "    printf '1 passed in 0.01s\\n'\n"
+        "    ;;\n"
+        "  *)\n"
+        "    previous=''\n"
+        "    for argument in \"$@\"; do\n"
+        "      if [ \"$previous\" = '--output' ]; then\n"
+        "        printf '{\"status\":\"draft\"}\\n' > \"$argument\"\n"
+        "      fi\n"
+        "      previous=\"$argument\"\n"
+        "    done\n"
+        "    ;;\n"
+        "esac\n",
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+    case_path = tmp_path / "case.json"
+    case_path.write_text("{}\n", encoding="utf-8")
+    env = os.environ.copy()
+    env.pop("PYTHONDONTWRITEBYTECODE", None)
+    env["HUB_OPTIMUS_APP_ROOT"] = str(app_root)
+    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+
+    tested = _run(["bash", HUB_CORE, "test"], env=env)
+    analyzed = _run(["bash", HUB_CORE, "analyze", case_path], env=env)
+
+    assert tested.returncode == 0, tested.stderr
+    assert analyzed.returncode == 0, analyzed.stderr
+    assert not (release / "semantic_engine" / "__pycache__").exists()
+    assert not (release / ".pytest_cache").exists()
+    verified = _run(
+        [
+            "/usr/bin/python3",
+            "-I",
+            ROOT / "ops" / "ec2" / "verify-release-worktree.py",
+            release,
+            commit,
+            "--allow-generated",
+            ".venv",
+            "--allow-generated",
+            ".hub-deployment",
+        ],
+    )
+    assert verified.returncode == 0, verified.stderr
+
+
 def test_hub_core_pins_one_release_for_the_complete_run(
     tmp_path: Path,
 ) -> None:
@@ -494,17 +567,32 @@ def _source_repository(path: Path) -> tuple[str, str]:
         "import hashlib\n"
         "import json\n"
         "import os\n"
+        "import stat\n"
         "import subprocess\n"
         "import sys\n"
         "from pathlib import Path\n"
         "def controls(release):\n"
         "    return Path((release / '.hub-deployment' / 'test-controls').read_text().strip())\n"
+        "IDENTITY_FIELDS = ('st_dev','st_ino','st_mode','st_nlink','st_uid','st_gid','st_size','st_mtime_ns','st_ctime_ns')\n"
         "def venv_digest(release):\n"
-        "    digest = hashlib.sha256()\n"
-        "    for item in sorted((release / '.venv').rglob('*')):\n"
-        "        relative = str(item.relative_to(release / '.venv')).encode()\n"
-        "        digest.update(len(relative).to_bytes(8, 'big')); digest.update(relative)\n"
-        "        if item.is_file(): digest.update(item.read_bytes())\n"
+        "    root = (release / '.venv').resolve()\n"
+        "    digest = hashlib.sha256(); pending = [root]; records = []\n"
+        "    while pending:\n"
+        "        directory = pending.pop(); info = directory.stat(follow_symlinks=False)\n"
+        "        relative = str(directory.relative_to(root)) or '.'\n"
+        "        records.append((relative + '/', b'directory', info))\n"
+        "        for item in sorted(os.scandir(directory), key=lambda entry: entry.name):\n"
+        "            path = Path(item.path); entry_info = item.stat(follow_symlinks=False)\n"
+        "            item_relative = str(path.relative_to(root))\n"
+        "            if stat.S_ISDIR(entry_info.st_mode): pending.append(path)\n"
+        "            elif stat.S_ISREG(entry_info.st_mode): records.append((item_relative, path.read_bytes(), path.stat(follow_symlinks=False)))\n"
+        "            elif stat.S_ISLNK(entry_info.st_mode): records.append((item_relative, ('symlink:' + os.readlink(path)).encode(), path.stat(follow_symlinks=False)))\n"
+        "            else: raise SystemExit('unsupported fake venv entry')\n"
+        "    for relative, raw, info in sorted(records, key=lambda record: record[0]):\n"
+        "        encoded = relative.encode('utf-8')\n"
+        "        digest.update(len(encoded).to_bytes(8, 'big')); digest.update(encoded)\n"
+        "        digest.update(len(raw).to_bytes(8, 'big')); digest.update(raw)\n"
+        "        for field in IDENTITY_FIELDS: digest.update(int(getattr(info, field)).to_bytes(16, 'big'))\n"
         "    return digest.hexdigest()\n"
         "if sys.argv[1] == 'manifest-venv':\n"
         "    print(venv_digest(Path(sys.argv[2])))\n"
@@ -784,6 +872,76 @@ def _operational_snapshot(app_root: Path) -> dict[str, object]:
     return snapshot
 
 
+def _wait_for_operation_barrier(
+    ready: Path,
+    process: subprocess.Popen[str],
+) -> None:
+    deadline = time.monotonic() + 30
+    while not ready.exists() and process.poll() is None:
+        if time.monotonic() >= deadline:
+            process.terminate()
+            _stdout, stderr = process.communicate(timeout=5)
+            raise AssertionError(
+                f"operation did not reach test barrier {ready}: {stderr}"
+            )
+        time.sleep(0.01)
+    if not ready.exists():
+        _stdout, stderr = process.communicate(timeout=5)
+        raise AssertionError(
+            f"operation exited before test barrier {ready}: {stderr}"
+        )
+
+
+def _advance_head_without_tree_change(release: Path) -> str:
+    _git(
+        release,
+        "-c",
+        "user.email=tests@example.invalid",
+        "-c",
+        "user.name=HUB tests",
+        "commit",
+        "--allow-empty",
+        "-qm",
+        "external HEAD drift",
+    )
+    return _git(release, "rev-parse", "HEAD")
+
+
+def _install_manifest_barrier(
+    runner: Path,
+    target: Path,
+    ready: Path,
+    proceed: Path,
+) -> None:
+    original = runner.with_name("run-release-validation.original.py")
+    runner.replace(original)
+    runner.write_text(
+        "import os\n"
+        "import sys\n"
+        "import time\n"
+        "from pathlib import Path\n"
+        f"target = {str(target)!r}\n"
+        f"ready = Path({str(ready)!r})\n"
+        f"proceed = Path({str(proceed)!r})\n"
+        f"original = {str(original)!r}\n"
+        "if (\n"
+        "    len(sys.argv) == 3\n"
+        "    and sys.argv[1] == 'manifest-venv'\n"
+        "    and os.path.realpath(sys.argv[2]) == target\n"
+        "):\n"
+        "    ready.touch(exist_ok=False)\n"
+        "    deadline = time.monotonic() + 30\n"
+        "    while not proceed.exists():\n"
+        "        if time.monotonic() >= deadline:\n"
+        "            raise SystemExit('manifest barrier timed out')\n"
+        "        time.sleep(0.01)\n"
+        "os.execv('/usr/bin/python3', [\n"
+        "    '/usr/bin/python3', '-I', original, *sys.argv[1:]\n"
+        "])\n",
+        encoding="utf-8",
+    )
+
+
 def test_deploy_is_ref_bound_records_validation_and_rolls_back(
     tmp_path: Path,
 ) -> None:
@@ -959,6 +1117,127 @@ def test_injected_legacy_state_completion_is_recovered(
     assert not legacy_state.exists()
 
 
+@pytest.mark.parametrize("drift", ("source", "venv"))
+def test_deploy_rejects_rollback_target_authority_drift_before_mutation(
+    tmp_path: Path,
+    drift: str,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    deploy, controls = _deploy_fixture(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo)
+
+    first = _run([deploy, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    rollback_target = (app_root / "current").resolve()
+    if drift == "source":
+        _git(rollback_target, "update-index", "--assume-unchanged", "version.txt")
+        (rollback_target / "version.txt").write_text(
+            "hidden rollback-target drift\n",
+            encoding="utf-8",
+        )
+    else:
+        with (rollback_target / ".venv" / "bin" / "python").open(
+            "ab",
+        ) as handle:
+            handle.write(b"# rollback-target drift\n")
+    before = _operational_snapshot(app_root)
+
+    failed = _run([deploy, head_commit], env=env)
+
+    assert failed.returncode == 1
+    if drift == "source":
+        assert "source tree differs from its reviewed commit" in failed.stderr
+    else:
+        assert "Rollback target venv does not match RELEASE_STATE" in failed.stderr
+    assert _operational_snapshot(app_root) == before
+    assert "Restoring exact pre-deploy" not in failed.stderr
+
+
+def test_deploy_rejects_rollback_target_head_change_at_authority_barrier(
+    tmp_path: Path,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    deploy, _controls = _deploy_fixture(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo)
+
+    assert _run([deploy, reviewed_commit], env=env).returncode == 0
+    previous = (app_root / "current").resolve()
+    before = _operational_snapshot(app_root)
+    ready = tmp_path / "deploy-authority-ready"
+    proceed = tmp_path / "deploy-authority-proceed"
+    env["HUB_OPTIMUS_TEST_DEPLOY_BEFORE_AUTHORITY_READY"] = str(ready)
+    env["HUB_OPTIMUS_TEST_DEPLOY_BEFORE_AUTHORITY_PROCEED"] = str(proceed)
+    process = subprocess.Popen(
+        [str(deploy), head_commit],
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    _wait_for_operation_barrier(ready, process)
+    assert _advance_head_without_tree_change(previous) != reviewed_commit
+    proceed.touch()
+    _stdout, stderr = process.communicate(timeout=30)
+
+    assert process.returncode == 1
+    assert "Release HEAD differs from its recorded commit" in stderr
+    assert _operational_snapshot(app_root) == before
+    assert "Restoring exact pre-deploy" not in stderr
+
+
+@pytest.mark.parametrize("operation", ("deploy", "rollback"))
+def test_operation_rejects_head_change_during_venv_authority_hash(
+    tmp_path: Path,
+    operation: str,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    deploy, _controls = _deploy_fixture(tmp_path)
+    rollback = deploy.parent / "rollback-current.sh"
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo)
+
+    assert _run([deploy, reviewed_commit], env=env).returncode == 0
+    target = (app_root / "current").resolve()
+    command: list[str | Path]
+    if operation == "deploy":
+        command = [deploy, head_commit]
+        recorded_commit = reviewed_commit
+    else:
+        assert _run([deploy, head_commit], env=env).returncode == 0
+        command = [rollback]
+        recorded_commit = reviewed_commit
+    before = _operational_snapshot(app_root)
+    ready = tmp_path / f"{operation}-venv-authority-ready"
+    proceed = tmp_path / f"{operation}-venv-authority-proceed"
+    _install_manifest_barrier(
+        deploy.parent / "run-release-validation.py",
+        target,
+        ready,
+        proceed,
+    )
+    process = subprocess.Popen(
+        [str(item) for item in command],
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    _wait_for_operation_barrier(ready, process)
+    assert _advance_head_without_tree_change(target) != recorded_commit
+    proceed.touch()
+    _stdout, stderr = process.communicate(timeout=30)
+
+    assert process.returncode == 1
+    assert "Release HEAD differs from its recorded commit" in stderr
+    assert _operational_snapshot(app_root) == before
+    assert "Restoring exact pre-" not in stderr
+
+
 def test_rollback_rejects_launcher_drift_before_switching(
     tmp_path: Path,
 ) -> None:
@@ -984,6 +1263,94 @@ def test_rollback_rejects_launcher_drift_before_switching(
     assert result.returncode == 1
     assert "launcher does not match its deployment state" in result.stderr
     assert _operational_snapshot(app_root) == before
+
+
+@pytest.mark.parametrize(
+    ("release_role", "drift"),
+    (
+        ("current", "source"),
+        ("current", "venv"),
+        ("previous", "source"),
+        ("previous", "venv"),
+    ),
+)
+def test_rollback_rejects_current_and_previous_authority_drift(
+    tmp_path: Path,
+    release_role: str,
+    drift: str,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    deploy, controls = _deploy_fixture(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo)
+
+    assert _run([deploy, reviewed_commit], env=env).returncode == 0
+    previous = (app_root / "current").resolve()
+    assert _run([deploy, head_commit], env=env).returncode == 0
+    current = (app_root / "current").resolve()
+    target = current if release_role == "current" else previous
+    if drift == "source":
+        _git(target, "update-index", "--skip-worktree", "version.txt")
+        (target / "version.txt").write_text(
+            f"hidden {release_role} drift\n",
+            encoding="utf-8",
+        )
+    else:
+        with (target / ".venv" / "bin" / "python").open("ab") as handle:
+            handle.write(f"# {release_role} venv drift\n".encode())
+    before = _operational_snapshot(app_root)
+
+    failed = _run([ROLLBACK], env=env)
+
+    assert failed.returncode == 1
+    label = "Current release" if release_role == "current" else "Previous release"
+    if drift == "source":
+        assert "source tree differs from its reviewed commit" in failed.stderr
+    else:
+        assert f"{label} venv does not match RELEASE_STATE" in failed.stderr
+    assert _operational_snapshot(app_root) == before
+    assert not list((app_root / "shared").glob("rollback-transaction.*"))
+
+
+@pytest.mark.parametrize("release_role", ("current", "previous"))
+def test_rollback_rejects_head_change_at_authority_barrier(
+    tmp_path: Path,
+    release_role: str,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    deploy, _controls = _deploy_fixture(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo)
+
+    assert _run([deploy, reviewed_commit], env=env).returncode == 0
+    previous = (app_root / "current").resolve()
+    assert _run([deploy, head_commit], env=env).returncode == 0
+    current = (app_root / "current").resolve()
+    target = current if release_role == "current" else previous
+    recorded = head_commit if release_role == "current" else reviewed_commit
+    before = _operational_snapshot(app_root)
+    ready = tmp_path / f"rollback-{release_role}-authority-ready"
+    proceed = tmp_path / f"rollback-{release_role}-authority-proceed"
+    env["HUB_OPTIMUS_TEST_ROLLBACK_BEFORE_AUTHORITY_READY"] = str(ready)
+    env["HUB_OPTIMUS_TEST_ROLLBACK_BEFORE_AUTHORITY_PROCEED"] = str(proceed)
+    process = subprocess.Popen(
+        [str(ROLLBACK)],
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    _wait_for_operation_barrier(ready, process)
+    assert _advance_head_without_tree_change(target) != recorded
+    proceed.touch()
+    _stdout, stderr = process.communicate(timeout=30)
+
+    assert process.returncode == 1
+    assert "Release HEAD differs from its recorded commit" in stderr
+    assert _operational_snapshot(app_root) == before
+    assert "Restoring exact pre-rollback" not in stderr
 
 
 def test_every_injected_rollback_failure_restores_exact_state(

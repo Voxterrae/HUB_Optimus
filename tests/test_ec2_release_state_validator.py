@@ -190,9 +190,11 @@ def _adopted_fields() -> list[tuple[str, str]]:
         ("validation_result", ADOPTION_RESULT),
         ("validation_log", "not-applicable"),
         ("validation_log_exit_code", "not-run"),
+        ("source_tree_sha256", SOURCE_TREE_SHA256),
+        ("venv_tree_sha256", VENV_TREE_SHA256),
         ("launcher_sha256", LAUNCHER_SHA256),
         ("status", "adopted-legacy-current"),
-        ("provenance", "adopted-legacy-current-v1"),
+        ("provenance", "adopted-legacy-current-v2"),
         ("legacy_state_sha256", LEGACY_SHA256),
         ("legacy_commit_prefix", COMMIT[:7]),
     ]
@@ -250,6 +252,23 @@ def test_validator_accepts_an_exact_tag_state(tmp_path: Path) -> None:
 
     assert result.returncode == 0, result.stderr
     assert "PASS production" in result.stdout
+
+
+def test_validator_rejects_superseded_legacy_adoption_v1(
+    tmp_path: Path,
+) -> None:
+    state = tmp_path / "adopted-v1"
+    fields = _replace_field(
+        _adopted_fields(),
+        "provenance",
+        "adopted-legacy-current-v1",
+    )
+    _write_state(state, fields)
+
+    result = _run(state)
+
+    assert result.returncode == 1
+    assert "invalid legacy-adoption provenance" in result.stderr
 
 
 def test_validator_accepts_digest_bound_transitional_state(tmp_path: Path) -> None:

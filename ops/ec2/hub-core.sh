@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export PYTHONDONTWRITEBYTECODE=1
+
 APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 RUN_ROOT="$APP_ROOT/shared/runs"
 RUN_ID_PREFIX="[hub-core:run-id]"
@@ -127,7 +129,7 @@ run_tests() {
   announce_run "$dir"
 
   echo "[hub-core:test] Output dir: $dir"
-  python -m pytest -q | tee "$dir/pytest.log"
+  python -m pytest -q -p no:cacheprovider | tee "$dir/pytest.log"
 
   deactivate
   echo "[hub-core:test] Done"

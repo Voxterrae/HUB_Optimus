@@ -89,13 +89,22 @@ Adoption validates the managed symlink, exact repository origin, clean release
 checkout, full commit, marker, and byte-identical versioned/shared launcher. It
 does not re-assert the old `pytest 55 passed` claim. Instead it preserves the
 original legacy state byte-for-byte as mode-`0400` evidence, records its
-SHA-256 and short-commit prefix in a new full-SHA state, and postvalidates that
-the per-release and shared states are identical before committing success.
+SHA-256 and short-commit prefix in a new full-SHA v2 adoption state. That state
+also records the reviewed source-tree and venv digests. Adoption verifies HEAD,
+source, and venv at baseline, immediately before mutation, and after
+publication, then postvalidates that the per-release and shared states are
+identical before committing success.
 
 The command is idempotent only when that complete evidence bundle remains
 exact. A failure after mutation begins restores the pre-adoption state and
 retains its snapshot and recovery log under `shared/legacy-adoption.*`. Stop
 and inspect that evidence; do not repair or retry by hand.
+
+Normal API and core execution must not write caches into a release: the
+reviewed launchers and unit set `PYTHONDONTWRITEBYTECODE=1`, and `hub-core test`
+disables pytest's cache provider. Any pre-existing `__pycache__` or
+`.pytest_cache` is unexpected source drift and blocks adoption, deploy, and
+rollback.
 
 ## 3. Fail-closed host preflight
 
@@ -168,6 +177,18 @@ required_keys = {
     "validation_log",
     "validation_log_exit_code",
     "validation_log_sha256",
+    "validation_protocol",
+    "validation_collected",
+    "validation_terminal",
+    "validation_passed",
+    "validation_skipped",
+    "validation_failed",
+    "validation_pytest_exit_code",
+    "validation_nodeids_sha256",
+    "validation_descendants",
+    "validation_worker_uid",
+    "source_tree_sha256",
+    "venv_tree_sha256",
     "dependency_tier",
     "dependency_lock",
     "dependency_lock_sha256",
@@ -330,8 +351,9 @@ if not re.fullmatch(
 ):
     raise SystemExit("release-state validation timestamp is invalid")
 expected_validation_command = (
-    f"/usr/bin/env -i HOME={deployed} LANG=C.UTF-8 PATH=/usr/bin:/bin "
-    f"PYTHONNOUSERSITE=1 {deployed}/.venv/bin/python -m pytest -q"
+    "/usr/bin/env -i HOME=/nonexistent LANG=C.UTF-8 PATH=/usr/bin:/bin "
+    f"/usr/bin/python3 -I {deployed}/ops/ec2/run-release-validation.py "
+    f"{deployed} {target} {deployed}/ops/ec2/verify-release-worktree.py"
 )
 if state["validation_command"] != expected_validation_command:
     raise SystemExit("release-state validation command differs")
@@ -356,6 +378,53 @@ if not validation_result_lines:
     raise SystemExit("validation log has no non-empty result line")
 if validation_result_lines[-1] != state["validation_result"]:
     raise SystemExit("validation result does not match the validation log")
+if state["validation_protocol"] != "isolated-pytest-v1":
+    raise SystemExit("release state has the wrong validation protocol")
+numeric_validation_fields = (
+    "validation_collected",
+    "validation_terminal",
+    "validation_passed",
+    "validation_skipped",
+    "validation_failed",
+    "validation_pytest_exit_code",
+    "validation_descendants",
+    "validation_worker_uid",
+)
+if any(not state[field].isdigit() for field in numeric_validation_fields):
+    raise SystemExit("release state has non-numeric validation evidence")
+collected = int(state["validation_collected"])
+terminal = int(state["validation_terminal"])
+passed = int(state["validation_passed"])
+skipped = int(state["validation_skipped"])
+failed = int(state["validation_failed"])
+if not (
+    collected > 0
+    and terminal == collected
+    and failed == 0
+    and state["validation_pytest_exit_code"] == "0"
+    and state["validation_descendants"] == "0"
+    and passed + skipped == terminal
+):
+    raise SystemExit("release state has incomplete validation evidence")
+for field in (
+    "validation_nodeids_sha256",
+    "source_tree_sha256",
+    "venv_tree_sha256",
+):
+    if not re.fullmatch(r"[0-9a-f]{64}", state[field]):
+        raise SystemExit(f"release state has invalid {field}")
+expected_validation_result = (
+    f"HUB_OPTIMUS_VALIDATION_V1 collected={collected} terminal={terminal} "
+    f"passed={passed} skipped={skipped} failed={failed} "
+    f"pytest_exit_code={state['validation_pytest_exit_code']} "
+    f"nodeids_sha256={state['validation_nodeids_sha256']} "
+    f"descendants={state['validation_descendants']} "
+    f"source_tree_sha256={state['source_tree_sha256']} "
+    f"venv_tree_sha256={state['venv_tree_sha256']} "
+    f"worker_uid={state['validation_worker_uid']} result=passed"
+)
+if state["validation_result"] != expected_validation_result:
+    raise SystemExit("validation result does not match structured evidence")
 if state["dependency_tier"] != "runtime+validation-v1":
     raise SystemExit("release state has the wrong dependency tier")
 expected_dependency_lock = deployed / "ops" / "ec2" / "requirements-validation.lock"
@@ -587,6 +656,8 @@ adopted_keys = {
     "validation_result",
     "validation_log",
     "validation_log_exit_code",
+    "source_tree_sha256",
+    "venv_tree_sha256",
     "launcher_sha256",
     "status",
     "provenance",
@@ -699,8 +770,12 @@ if release_state["validation_log_exit_code"] != "not-run":
     raise SystemExit("restored adoption log exit differs")
 if release_state["status"] != "adopted-legacy-current":
     raise SystemExit("restored adoption status differs")
-if release_state["provenance"] != "adopted-legacy-current-v1":
+if release_state["provenance"] != "adopted-legacy-current-v2":
     raise SystemExit("restored adoption provenance differs")
+if not re.fullmatch(r"[0-9a-f]{64}", release_state["source_tree_sha256"]):
+    raise SystemExit("restored source-tree authority is invalid")
+if not re.fullmatch(r"[0-9a-f]{64}", release_state["venv_tree_sha256"]):
+    raise SystemExit("restored venv authority is invalid")
 if not re.fullmatch(r"[0-9a-f]{64}", release_state["legacy_state_sha256"]):
     raise SystemExit("restored legacy-state identity is invalid")
 legacy_prefix = release_state["legacy_commit_prefix"]

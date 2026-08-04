@@ -74,10 +74,33 @@ dependency_lock_digest() {
   printf '%s\n' "$digest"
 }
 
+verify_release_head() {
+  local release_path="$1"
+  local commit="$2"
+  local head_commit
+
+  head_commit="$(
+    /usr/bin/env -i \
+      HOME=/nonexistent \
+      LANG=C.UTF-8 \
+      PATH=/usr/bin:/bin \
+      GIT_CONFIG_GLOBAL=/dev/null \
+      GIT_CONFIG_NOSYSTEM=1 \
+      GIT_NO_REPLACE_OBJECTS=1 \
+      /usr/bin/git --no-replace-objects \
+        -C "$release_path" rev-parse --verify HEAD
+  )" || fail "Release HEAD could not be resolved safely: $release_path"
+  [[ "$head_commit" =~ ^[0-9a-f]{40}$ ]] \
+    && [ "$head_commit" = "$commit" ] \
+    || fail "Release HEAD differs from its recorded commit: $release_path"
+}
+
 verify_candidate_source() {
   local release_path="$1"
   local commit="$2"
   local evidence
+
+  verify_release_head "$release_path" "$commit"
 
   [ -f "$SOURCE_TREE_TOOL" ] && [ ! -L "$SOURCE_TREE_TOOL" ] \
     || fail "Source-tree verifier is not one regular file: $SOURCE_TREE_TOOL"
@@ -95,6 +118,7 @@ verify_candidate_source() {
   )" || fail "Candidate source tree differs from its reviewed commit."
   [ -n "$evidence" ] \
     || fail "Source-tree verifier returned empty evidence."
+  verify_release_head "$release_path" "$commit"
   printf '%s\n' "$evidence"
 }
 
@@ -118,6 +142,68 @@ candidate_venv_digest() {
   [[ "$digest" =~ ^[0-9a-f]{64}$ ]] \
     || fail "Validation supervisor returned an invalid venv digest."
   printf '%s\n' "$digest"
+}
+
+source_tree_digest() {
+  local evidence="$1"
+  local expected_commit="$2"
+
+  /usr/bin/python3 -I - "$expected_commit" "$evidence" <<'PY_SOURCE_EVIDENCE'
+import json
+import re
+import sys
+
+
+expected_commit, raw = sys.argv[1:]
+try:
+    evidence = json.loads(raw)
+except json.JSONDecodeError:
+    raise SystemExit(1)
+digest = evidence.get("source_tree_sha256")
+if evidence.get("commit") != expected_commit or not isinstance(digest, str):
+    raise SystemExit(1)
+if re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+    raise SystemExit(1)
+print(digest)
+PY_SOURCE_EVIDENCE
+}
+
+verify_recorded_release_authority() {
+  local release_path="$1"
+  local state_file="$2"
+  local label="$3"
+  local commit
+  local evidence
+  local actual_source_tree_sha256
+  local actual_venv_tree_sha256
+  local recorded_source_tree_sha256
+  local recorded_venv_tree_sha256
+
+  commit="$(required_state_value "$state_file" commit)"
+  recorded_source_tree_sha256="$(
+    required_state_value "$state_file" source_tree_sha256
+  )"
+  recorded_venv_tree_sha256="$(
+    required_state_value "$state_file" venv_tree_sha256
+  )"
+  [[ "$recorded_source_tree_sha256" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "$label RELEASE_STATE has no valid source-tree SHA-256."
+  [[ "$recorded_venv_tree_sha256" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "$label RELEASE_STATE has no valid venv-tree SHA-256."
+
+  evidence="$(verify_candidate_source "$release_path" "$commit")"
+  actual_source_tree_sha256="$(source_tree_digest "$evidence" "$commit")" \
+    || fail "$label source-tree verifier returned invalid evidence."
+  [ "$actual_source_tree_sha256" = "$recorded_source_tree_sha256" ] \
+    || fail "$label source tree does not match RELEASE_STATE."
+
+  actual_venv_tree_sha256="$(
+    candidate_venv_digest "$release_path" "$VALIDATION_RUNNER"
+  )"
+  [ "$actual_venv_tree_sha256" = "$recorded_venv_tree_sha256" ] \
+    || fail "$label venv does not match RELEASE_STATE."
+  verify_release_head "$release_path" "$commit"
+  printf '%s:%s\n' "$actual_source_tree_sha256" "$actual_venv_tree_sha256"
 }
 
 parse_validation_marker() {
@@ -298,6 +384,14 @@ prepare_previous_release_state() {
     source_state="$shared_state"
   fi
 
+  PREVIOUS_AUTHORITY_STATE="$source_state"
+  PREVIOUS_AUTHORITY_COMMIT="$previous_commit"
+  verify_recorded_release_authority \
+    "$previous" \
+    "$PREVIOUS_AUTHORITY_STATE" \
+    "Rollback target" \
+    >/dev/null
+
   PREVIOUS_STATE_PATH="$previous_state"
   recorded_launcher_sha256="$(
     state_value "$source_state" "launcher_sha256"
@@ -457,6 +551,8 @@ inject_test_failure() {
 MUTATION_STARTED=0
 PREVIOUS_STATE_PATH=""
 PREVIOUS_STATE_INSTALL_SOURCE=""
+PREVIOUS_AUTHORITY_STATE=""
+PREVIOUS_AUTHORITY_COMMIT=""
 RECOVERY_DIR=""
 RECOVERY_LOG="/dev/null"
 RECOVERY_LOG_READY=0
@@ -636,6 +732,12 @@ VALIDATION_RESULT="$(
 parse_validation_marker "$VALIDATION_RESULT"
 [ "$SOURCE_TREE_SHA256" = "$INITIAL_SOURCE_TREE_SHA256" ] \
   || fail "Validation source-tree evidence differs from initial verification."
+OPERATIONAL_VENV_TREE_SHA256="$(
+  candidate_venv_digest "$RELEASE_DIR" "$VALIDATION_RUNNER"
+)"
+[ "$OPERATIONAL_VENV_TREE_SHA256" = "$VENV_TREE_SHA256" ] \
+  || fail "Validation venv evidence differs from the operational verifier."
+verify_release_head "$RELEASE_DIR" "$RESOLVED_COMMIT"
 VALIDATION_LOG_SHA256="$(sha256_file "$VALIDATION_LOG")"
 [ "$(dependency_lock_digest "$RELEASE_DIR")" = "$DEPENDENCY_LOCK_SHA256" ] \
   || fail "dependency locks changed during installation or validation."
@@ -724,10 +826,11 @@ FINAL_SOURCE_EVIDENCE="$(
 [ "$FINAL_SOURCE_EVIDENCE" = "$INITIAL_SOURCE_EVIDENCE" ] \
   || fail "Candidate source evidence changed before publication."
 FINAL_VENV_TREE_SHA256="$(
-  candidate_venv_digest "$RELEASE_DIR" "$CANDIDATE_VALIDATION_RUNNER"
+  candidate_venv_digest "$RELEASE_DIR" "$VALIDATION_RUNNER"
 )"
 [ "$FINAL_VENV_TREE_SHA256" = "$VENV_TREE_SHA256" ] \
   || fail "Candidate venv evidence changed before publication."
+verify_release_head "$RELEASE_DIR" "$RESOLVED_COMMIT"
 
 PREVIOUS=""
 if [ -L "$APP_ROOT/current" ]; then
@@ -771,16 +874,33 @@ if [ -n "$PREVIOUS_STATE_PATH" ]; then
   snapshot_item "$PREVIOUS_STATE_PATH" "previous-release-state"
 fi
 
+if [ -n "${HUB_OPTIMUS_TEST_DEPLOY_BEFORE_AUTHORITY_READY:-}" ]; then
+  touch "$HUB_OPTIMUS_TEST_DEPLOY_BEFORE_AUTHORITY_READY"
+  while [ ! -e "${HUB_OPTIMUS_TEST_DEPLOY_BEFORE_AUTHORITY_PROCEED:-}" ]; do
+    sleep 0.01
+  done
+fi
 PRE_SWITCH_SOURCE_EVIDENCE="$(
   verify_candidate_source "$RELEASE_DIR" "$RESOLVED_COMMIT"
 )"
 [ "$PRE_SWITCH_SOURCE_EVIDENCE" = "$INITIAL_SOURCE_EVIDENCE" ] \
   || fail "Candidate source evidence changed before the operational switch."
 PRE_SWITCH_VENV_TREE_SHA256="$(
-  candidate_venv_digest "$RELEASE_DIR" "$CANDIDATE_VALIDATION_RUNNER"
+  candidate_venv_digest "$RELEASE_DIR" "$VALIDATION_RUNNER"
 )"
 [ "$PRE_SWITCH_VENV_TREE_SHA256" = "$VENV_TREE_SHA256" ] \
   || fail "Candidate venv evidence changed before the operational switch."
+if [ -n "$PREVIOUS" ]; then
+  verify_recorded_release_authority \
+    "$PREVIOUS" \
+    "$PREVIOUS_AUTHORITY_STATE" \
+    "Rollback target" \
+    >/dev/null
+fi
+verify_release_head "$RELEASE_DIR" "$RESOLVED_COMMIT"
+if [ -n "$PREVIOUS" ]; then
+  verify_release_head "$PREVIOUS" "$PREVIOUS_AUTHORITY_COMMIT"
+fi
 
 MUTATION_STARTED=1
 

@@ -5,6 +5,7 @@ import os
 import shutil
 import stat
 import subprocess
+import time
 from pathlib import Path
 
 import pytest
@@ -86,6 +87,15 @@ def _legacy_environment(
     clone = _run(["git", "clone", "-q", "--no-hardlinks", source, release])
     assert clone.returncode == 0, clone.stderr
     _git(release, "checkout", "-q", "--detach", commit)
+    venv = release / ".venv"
+    (venv / "bin").mkdir(parents=True)
+    (venv / "bin" / "python").write_bytes(b"fixture-python\n")
+    (venv / "bin" / "python").chmod(0o755)
+    with (release / ".git" / "info" / "exclude").open(
+        "a",
+        encoding="utf-8",
+    ) as handle:
+        handle.write(".venv/\n")
 
     shared = app_root / "shared"
     shared_launcher = shared / "bin" / "hub-api"
@@ -156,6 +166,61 @@ def _write_executable(path: Path, text: str) -> None:
     path.chmod(0o755)
 
 
+def _wait_for_barrier(ready: Path, process: subprocess.Popen[str]) -> None:
+    deadline = time.monotonic() + 30
+    while not ready.exists() and process.poll() is None:
+        if time.monotonic() >= deadline:
+            process.terminate()
+            _stdout, stderr = process.communicate(timeout=5)
+            raise AssertionError(f"adoption did not reach authority barrier: {stderr}")
+        time.sleep(0.01)
+    if not ready.exists():
+        _stdout, stderr = process.communicate(timeout=5)
+        raise AssertionError(f"adoption exited before authority barrier: {stderr}")
+
+
+def _install_manifest_barrier(
+    runner: Path,
+    target: Path,
+    ready: Path,
+    proceed: Path,
+    counter: Path,
+    trigger_call: int,
+) -> None:
+    original = runner.with_name("run-release-validation.original.py")
+    runner.replace(original)
+    runner.write_text(
+        "import os\n"
+        "import sys\n"
+        "import time\n"
+        "from pathlib import Path\n"
+        f"target = {str(target)!r}\n"
+        f"ready = Path({str(ready)!r})\n"
+        f"proceed = Path({str(proceed)!r})\n"
+        f"counter = Path({str(counter)!r})\n"
+        f"trigger_call = {trigger_call}\n"
+        f"original = {str(original)!r}\n"
+        "if (\n"
+        "    len(sys.argv) == 3\n"
+        "    and sys.argv[1] == 'manifest-venv'\n"
+        "    and os.path.realpath(sys.argv[2]) == target\n"
+        "):\n"
+        "    calls = int(counter.read_text()) + 1 if counter.exists() else 1\n"
+        "    counter.write_text(str(calls))\n"
+        "    if calls == trigger_call:\n"
+        "        ready.touch(exist_ok=False)\n"
+        "        deadline = time.monotonic() + 30\n"
+        "        while not proceed.exists():\n"
+        "            if time.monotonic() >= deadline:\n"
+        "                raise SystemExit('manifest barrier timed out')\n"
+        "            time.sleep(0.01)\n"
+        "os.execv('/usr/bin/python3', [\n"
+        "    '/usr/bin/python3', '-I', original, *sys.argv[1:]\n"
+        "])\n",
+        encoding="utf-8",
+    )
+
+
 def test_adopts_9d677_format_and_is_idempotent(tmp_path: Path) -> None:
     fixture = LEGACY_FIXTURE.read_text(encoding="utf-8")
     assert "commit=9d67719\n" in fixture
@@ -186,10 +251,12 @@ def test_adopts_9d677_format_and_is_idempotent(tmp_path: Path) -> None:
     assert state["requested_ref"] == commit
     assert state["requested_ref_kind"] == "legacy-host-adoption"
     assert state["launcher_sha256"] == LEGACY_LAUNCHER_SHA256
-    assert state["provenance"] == "adopted-legacy-current-v1"
+    assert state["provenance"] == "adopted-legacy-current-v2"
     assert state["legacy_state_sha256"] == legacy_state_sha256
     assert state["legacy_commit_prefix"] == commit[:7]
     assert state["validation_command"] == "not-run-during-legacy-adoption"
+    assert len(state["source_tree_sha256"]) == 64
+    assert len(state["venv_tree_sha256"]) == 64
     assert legacy_evidence.read_bytes() == rendered_fixture.encode()
     assert stat.S_IMODE(legacy_evidence.stat().st_mode) == 0o400
     assert (shared / "RELEASE_STATE").read_bytes() == release_state_path.read_bytes()
@@ -218,6 +285,102 @@ def test_success_is_postvalidated_before_transaction_closes() -> None:
     assert publish < postvalidate < close
     assert 'LEGACY_RELEASE_STATE"' in text
     assert "install -m 0400" in text
+    assert text.count("release_source_evidence") >= 4
+    baseline = text.index('BASELINE_SOURCE_EVIDENCE="$(')
+    pre_mutation = text.index('PRE_MUTATION_SOURCE_EVIDENCE="$(')
+    mutation = text.index("MUTATION_STARTED=1", pre_mutation)
+    postvalidation = text.index("validate_complete_adoption", mutation)
+
+    assert baseline < pre_mutation < mutation < postvalidation
+
+
+def test_adoption_rejects_head_change_after_baseline_before_mutation(
+    tmp_path: Path,
+) -> None:
+    app_root, release, commit, env = _legacy_environment(tmp_path)
+    before = _snapshot(app_root, release)
+    ready = tmp_path / "adoption-authority-ready"
+    proceed = tmp_path / "adoption-authority-proceed"
+    env["HUB_OPTIMUS_TEST_LEGACY_ADOPTION_BEFORE_AUTHORITY_READY"] = str(ready)
+    env["HUB_OPTIMUS_TEST_LEGACY_ADOPTION_BEFORE_AUTHORITY_PROCEED"] = str(
+        proceed
+    )
+    process = subprocess.Popen(
+        [str(ADOPT), commit],
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    _wait_for_barrier(ready, process)
+    _git(
+        release,
+        "-c",
+        "user.email=tests@example.invalid",
+        "-c",
+        "user.name=HUB tests",
+        "commit",
+        "--allow-empty",
+        "-qm",
+        "external HEAD drift",
+    )
+    assert _git(release, "rev-parse", "HEAD") != commit
+    proceed.touch()
+    _stdout, stderr = process.communicate(timeout=30)
+
+    assert process.returncode == 1
+    assert "Current release HEAD differs from its recorded commit" in stderr
+    assert _snapshot(app_root, release) == before
+    assert not (release / ".hub-deployment" / "RELEASE_STATE").exists()
+
+
+def test_adoption_rejects_head_change_during_postvalidation_venv_hash(
+    tmp_path: Path,
+) -> None:
+    app_root, release, commit, env = _legacy_environment(tmp_path)
+    before = _snapshot(app_root, release)
+    tools = tmp_path / "reviewed-tools"
+    shutil.copytree(ROOT / "ops" / "ec2", tools)
+    adopt = tools / "adopt-legacy-current.sh"
+    ready = tmp_path / "adoption-post-venv-ready"
+    proceed = tmp_path / "adoption-post-venv-proceed"
+    counter = tmp_path / "adoption-manifest-calls"
+    _install_manifest_barrier(
+        tools / "run-release-validation.py",
+        release,
+        ready,
+        proceed,
+        counter,
+        3,
+    )
+    process = subprocess.Popen(
+        [str(adopt), commit],
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    _wait_for_barrier(ready, process)
+    _git(
+        release,
+        "-c",
+        "user.email=tests@example.invalid",
+        "-c",
+        "user.name=HUB tests",
+        "commit",
+        "--allow-empty",
+        "-qm",
+        "external postvalidation HEAD drift",
+    )
+    assert _git(release, "rev-parse", "HEAD") != commit
+    proceed.touch()
+    _stdout, stderr = process.communicate(timeout=30)
+
+    assert process.returncode == 1
+    assert "Current release HEAD differs from its recorded commit" in stderr
+    assert "Pre-adoption state restored" in stderr
+    assert _snapshot(app_root, release) == before
+    assert not (release / ".hub-deployment" / "RELEASE_STATE").exists()
 
 
 def test_preflight_inventories_unattested_historical_pointer(
@@ -419,6 +582,7 @@ def test_adoption_still_restores_when_recovery_log_cannot_open(
         ("symlink", "outside the managed releases directory"),
         ("shared-launcher", "does not exactly match"),
         ("dirty-launcher", "worktree is not clean"),
+        ("hidden-tracked-drift", "source tree differs"),
     ),
 )
 def test_adoption_rejects_unattested_identity_before_mutation(
@@ -446,6 +610,10 @@ def test_adoption_rejects_unattested_identity_before_mutation(
             "#!/usr/bin/env bash\necho dirty\n",
             encoding="utf-8",
         )
+    elif invalid_case == "hidden-tracked-drift":
+        tracked = release / "tracked.txt"
+        _git(release, "update-index", "--assume-unchanged", "tracked.txt")
+        tracked.write_text("hidden drift\n", encoding="utf-8")
     before = _snapshot(app_root, release)
 
     failed = _run([ADOPT, expected_commit], env=env)

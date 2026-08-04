@@ -383,7 +383,8 @@ validate_adopted_legacy() {
   require_exact_keys \
     release requested_ref requested_ref_kind commit path adopted_at_utc \
     validation_command validation_exit_code validation_result validation_log \
-    validation_log_exit_code launcher_sha256 status provenance \
+    validation_log_exit_code source_tree_sha256 venv_tree_sha256 \
+    launcher_sha256 status provenance \
     legacy_state_sha256 legacy_commit_prefix
   require_common_identity
   commit="$(state_value commit)"
@@ -401,10 +402,13 @@ validate_adopted_legacy() {
     && [ "$(state_value validation_log_exit_code)" = "not-run" ] \
     || fail "$STATE_FILE has invalid legacy-adoption validation metadata."
   [ "$(state_value status)" = "adopted-legacy-current" ] \
-    && [ "$(state_value provenance)" = "adopted-legacy-current-v1" ] \
+    && [ "$(state_value provenance)" = "adopted-legacy-current-v2" ] \
     || fail "$STATE_FILE has invalid legacy-adoption provenance."
   [[ "$(state_value launcher_sha256)" =~ ^[0-9a-f]{64}$ ]] \
     || fail "$STATE_FILE has no valid launcher SHA-256."
+  [[ "$(state_value source_tree_sha256)" =~ ^[0-9a-f]{64}$ ]] \
+    && [[ "$(state_value venv_tree_sha256)" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "$STATE_FILE has invalid adopted source/venv authority."
   [[ "$(state_value legacy_state_sha256)" =~ ^[0-9a-f]{64}$ ]] \
     || fail "$STATE_FILE has an invalid legacy-state SHA-256."
   [[ "$prefix" =~ ^[0-9a-f]{7,39}$ ]] \
