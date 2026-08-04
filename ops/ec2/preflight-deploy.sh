@@ -7,6 +7,7 @@ TARGET_SHA="${1:-}"
 REFERENCE_URL="${2:-}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 STATE_VALIDATOR="$SCRIPT_DIR/validate-release-state.sh"
+SOURCE_TREE_TOOL="$SCRIPT_DIR/verify-release-worktree.py"
 
 # Fail-closed floor for the reviewed t3.small deployment operation.
 MIN_DISK_KIB=3145728
@@ -66,8 +67,6 @@ inspect_release_directory() {
     || fail "Release is not the Git worktree root: $release_path"
   [ "$(git -C "$release_path" remote get-url origin)" = "$REPO_URL" ] \
     || fail "Release origin is not the reviewed repository: $release_path"
-  [ -z "$(git -C "$release_path" status --porcelain --untracked-files=normal)" ] \
-    || fail "Release worktree is not clean: $release_path"
   [ -f "$release_path/ops/ec2/hub-api.sh" ] \
     && [ ! -L "$release_path/ops/ec2/hub-api.sh" ] \
     && [ -x "$release_path/ops/ec2/hub-api.sh" ] \
@@ -76,6 +75,20 @@ inspect_release_directory() {
   actual_commit="$(git -C "$release_path" rev-parse --verify HEAD)"
   [[ "$actual_commit" =~ ^[0-9a-f]{40}$ ]] \
     || fail "Release does not resolve to one full commit SHA: $release_path"
+  [ -f "$SOURCE_TREE_TOOL" ] && [ ! -L "$SOURCE_TREE_TOOL" ] \
+    || fail "Source-tree verifier is not one regular file: $SOURCE_TREE_TOOL"
+  /usr/bin/env -i \
+    HOME=/nonexistent \
+    LANG=C.UTF-8 \
+    PATH=/usr/bin:/bin \
+    /usr/bin/python3 -I \
+      "$SOURCE_TREE_TOOL" \
+      "$release_path" \
+      "$actual_commit" \
+      --allow-generated .venv \
+      --allow-generated .hub-deployment \
+      >/dev/null \
+    || fail "Release source tree differs from its commit: $release_path"
   actual_launcher_sha256="$(sha256_file "$release_path/ops/ec2/hub-api.sh")"
 
   printf '%s\t%s\n' "$actual_commit" "$actual_launcher_sha256"

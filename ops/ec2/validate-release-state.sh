@@ -108,13 +108,32 @@ validate_production() {
   local requested_ref_kind
   local digest_bound="no"
   local dependency_bound="no"
+  local isolated_bound="no"
   local validation_log
   local validation_log_sha256
   local dependency_lock_sha256
   local expected_validation_command
+  local validation_collected
+  local validation_terminal
+  local validation_passed
+  local validation_skipped
+  local validation_failed
 
   if [ "$transitional" = "yes" ]; then
-    if [[ -n "${SEEN_STATE_KEYS[dependency_lock_sha256]+present}" ]]; then
+    if [[ -n "${SEEN_STATE_KEYS[validation_protocol]+present}" ]]; then
+      require_exact_keys \
+        release requested_ref requested_ref_kind commit path validated_at_utc \
+        validation_command validation_exit_code validation_result validation_log \
+        validation_log_exit_code validation_log_sha256 validation_protocol \
+        validation_collected validation_terminal validation_passed \
+        validation_skipped validation_failed validation_pytest_exit_code \
+        validation_nodeids_sha256 validation_descendants validation_worker_uid \
+        source_tree_sha256 venv_tree_sha256 dependency_tier dependency_lock \
+        dependency_lock_sha256 launcher_sha256 status provenance
+      digest_bound="yes"
+      dependency_bound="yes"
+      isolated_bound="yes"
+    elif [[ -n "${SEEN_STATE_KEYS[dependency_lock_sha256]+present}" ]]; then
       require_exact_keys \
         release requested_ref requested_ref_kind commit path validated_at_utc \
         validation_command validation_exit_code validation_result validation_log \
@@ -142,11 +161,16 @@ validate_production() {
     require_exact_keys \
       release requested_ref requested_ref_kind commit path validated_at_utc \
       validation_command validation_exit_code validation_result validation_log \
-      validation_log_exit_code validation_log_sha256 dependency_tier \
-      dependency_lock dependency_lock_sha256 launcher_sha256 status
+      validation_log_exit_code validation_log_sha256 validation_protocol \
+      validation_collected validation_terminal validation_passed \
+      validation_skipped validation_failed validation_pytest_exit_code \
+      validation_nodeids_sha256 validation_descendants validation_worker_uid \
+      source_tree_sha256 venv_tree_sha256 dependency_tier dependency_lock \
+      dependency_lock_sha256 launcher_sha256 status
     schema="production"
     digest_bound="yes"
     dependency_bound="yes"
+    isolated_bound="yes"
   fi
 
   require_common_identity
@@ -172,7 +196,14 @@ validate_production() {
   esac
   [[ "$(state_value validated_at_utc)" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]] \
     || fail "$STATE_FILE has an invalid validation timestamp."
-  if [ "$dependency_bound" = "yes" ]; then
+  if [ "$isolated_bound" = "yes" ]; then
+    printf -v expected_validation_command \
+      '/usr/bin/env -i HOME=/nonexistent LANG=C.UTF-8 PATH=/usr/bin:/bin /usr/bin/python3 -I %q %q %q %q' \
+      "$(state_value path)/ops/ec2/run-release-validation.py" \
+      "$(state_value path)" \
+      "$commit" \
+      "$(state_value path)/ops/ec2/verify-release-worktree.py"
+  elif [ "$dependency_bound" = "yes" ]; then
     printf -v expected_validation_command \
       '/usr/bin/env -i HOME=%q LANG=C.UTF-8 PATH=/usr/bin:/bin PYTHONNOUSERSITE=1 %q -m pytest -q' \
       "$(state_value path)" \
@@ -188,6 +219,42 @@ validate_production() {
   [ -n "$(state_value validation_result)" ] \
     && [ -n "$(state_value validation_log)" ] \
     || fail "$STATE_FILE has incomplete validation evidence."
+
+  if [ "$isolated_bound" = "yes" ]; then
+    [ "$(state_value validation_protocol)" = "isolated-pytest-v1" ] \
+      || fail "$STATE_FILE has an unsupported validation protocol."
+    validation_collected="$(state_value validation_collected)"
+    validation_terminal="$(state_value validation_terminal)"
+    validation_passed="$(state_value validation_passed)"
+    validation_skipped="$(state_value validation_skipped)"
+    validation_failed="$(state_value validation_failed)"
+    for value in \
+      "$validation_collected" \
+      "$validation_terminal" \
+      "$validation_passed" \
+      "$validation_skipped" \
+      "$validation_failed" \
+      "$(state_value validation_pytest_exit_code)" \
+      "$(state_value validation_descendants)" \
+      "$(state_value validation_worker_uid)"; do
+      [[ "$value" =~ ^[0-9]+$ ]] \
+        || fail "$STATE_FILE has non-numeric validation evidence."
+    done
+    [ "$validation_collected" -gt 0 ] \
+      && [ "$validation_terminal" -eq "$validation_collected" ] \
+      && [ "$validation_failed" -eq 0 ] \
+      && [ "$(state_value validation_pytest_exit_code)" -eq 0 ] \
+      && [ "$(state_value validation_descendants)" -eq 0 ] \
+      && [ $((validation_passed + validation_skipped)) -eq "$validation_terminal" ] \
+      || fail "$STATE_FILE does not attest one completed pytest execution."
+    [[ "$(state_value validation_nodeids_sha256)" =~ ^[0-9a-f]{64}$ ]] \
+      && [[ "$(state_value source_tree_sha256)" =~ ^[0-9a-f]{64}$ ]] \
+      && [[ "$(state_value venv_tree_sha256)" =~ ^[0-9a-f]{64}$ ]] \
+      || fail "$STATE_FILE has invalid validation-tree evidence."
+    [ "$(state_value validation_result)" = \
+      "HUB_OPTIMUS_VALIDATION_V1 collected=$validation_collected terminal=$validation_terminal passed=$validation_passed skipped=$validation_skipped failed=$validation_failed pytest_exit_code=$(state_value validation_pytest_exit_code) nodeids_sha256=$(state_value validation_nodeids_sha256) descendants=$(state_value validation_descendants) source_tree_sha256=$(state_value source_tree_sha256) venv_tree_sha256=$(state_value venv_tree_sha256) worker_uid=$(state_value validation_worker_uid) result=passed" ] \
+      || fail "Validation result does not match its structured evidence: $STATE_FILE"
+  fi
 
   if [ "$digest_bound" = "yes" ]; then
     validation_log="$(state_value validation_log)"
@@ -316,7 +383,8 @@ validate_adopted_legacy() {
   require_exact_keys \
     release requested_ref requested_ref_kind commit path adopted_at_utc \
     validation_command validation_exit_code validation_result validation_log \
-    validation_log_exit_code launcher_sha256 status provenance \
+    validation_log_exit_code source_tree_sha256 venv_tree_sha256 \
+    launcher_sha256 status provenance \
     legacy_state_sha256 legacy_commit_prefix
   require_common_identity
   commit="$(state_value commit)"
@@ -334,10 +402,13 @@ validate_adopted_legacy() {
     && [ "$(state_value validation_log_exit_code)" = "not-run" ] \
     || fail "$STATE_FILE has invalid legacy-adoption validation metadata."
   [ "$(state_value status)" = "adopted-legacy-current" ] \
-    && [ "$(state_value provenance)" = "adopted-legacy-current-v1" ] \
+    && [ "$(state_value provenance)" = "adopted-legacy-current-v2" ] \
     || fail "$STATE_FILE has invalid legacy-adoption provenance."
   [[ "$(state_value launcher_sha256)" =~ ^[0-9a-f]{64}$ ]] \
     || fail "$STATE_FILE has no valid launcher SHA-256."
+  [[ "$(state_value source_tree_sha256)" =~ ^[0-9a-f]{64}$ ]] \
+    && [[ "$(state_value venv_tree_sha256)" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "$STATE_FILE has invalid adopted source/venv authority."
   [[ "$(state_value legacy_state_sha256)" =~ ^[0-9a-f]{64}$ ]] \
     || fail "$STATE_FILE has an invalid legacy-state SHA-256."
   [[ "$prefix" =~ ^[0-9a-f]{7,39}$ ]] \

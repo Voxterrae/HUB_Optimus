@@ -122,7 +122,10 @@ Issue #1832 hardens that boundary before the blocked host operation in #1831:
 
 - the confirmed legacy current release has a separate, explicit adoption
   command bound to its real full commit; it validates repository/release/
-  symlink/launcher identity, preserves the original six-field state
+  symlink/launcher identity, captures reviewed source-tree and venv authority,
+  repeats HEAD/source/venv validation before mutation and after publication,
+  writes that incompatible exact schema as `adopted-legacy-current-v2`, and
+  preserves the original six-field state
   byte-for-byte as mode-`0400` evidence, records its hash without re-attesting
   the legacy test-count claim, postvalidates exact shared/per-release state,
   and recovers transactionally at every mutation failpoint;
@@ -141,7 +144,9 @@ Issue #1832 hardens that boundary before the blocked host operation in #1831:
   exact installed inventory is revalidated after tests, while the combined lock
   digest, tier, and path are recorded in production release state;
 - before mutation, deploy validates the managed rollback target's directory,
-  full commit, release/path state, launcher presence, and launcher SHA-256;
+  full commit and live HEAD, release/path state, launcher presence and SHA-256,
+  source-tree digest, and venv manifest, then repeats mutable authority checks
+  immediately before publication;
 - replacement launcher, release state, current marker, and rollback pointer are
   staged, while exact pre-deploy artifacts are snapshotted inside the persistent
   candidate release;
@@ -149,9 +154,14 @@ Issue #1832 hardens that boundary before the blocked host operation in #1831:
   records recovery, and retains the failed candidate without depending on a
   disposable reviewed-tools checkout; unavailable recovery logging never
   suppresses restoration or produces a success result;
-- rollback validates unique state identity keys and uses its own persistent
-  snapshot, staged artifacts, exit recovery, and injected-failure coverage for
-  the complete multi-file transition;
+- rollback validates unique state identity keys plus live HEAD/source/venv
+  authority for both current and previous releases, repeats those checks before
+  mutation, and uses its own persistent snapshot, staged artifacts, exit
+  recovery, and injected-failure coverage for the complete multi-file
+  transition;
+- the API/core launchers and systemd unit disable Python bytecode writes, and
+  `hub-core test` disables pytest cache generation, so normal `analyze` and test
+  use cannot silently invalidate reviewed source authority;
 - the API captures its full running commit and launcher SHA-256 at process
   start; `/status` exposes those immutable running values separately from the
   mutable configured-current symlink and commit;

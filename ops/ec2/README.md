@@ -99,9 +99,11 @@ after validation and recorded with the selected tier and lock path in
 they are not the EC2 deployment lock.
 
 The release state also records the SHA-256 of the selected `hub-api.sh`
-launcher. Before changing operational state, deployment validates that the
-current release is a managed, usable rollback target and stages all replacement
-artifacts. If any later step fails, an exit handler restores the exact previous
+launcher, the reviewed source-tree digest, and the complete venv-manifest
+digest. Before changing operational state, deployment validates that the
+current release is a managed, usable rollback target whose HEAD, source bytes,
+and venv still match that state, then stages all replacement artifacts. If any
+later step fails, an exit handler restores the exact previous
 `current` symlink, shared launcher, shared release state, current-release
 marker, previous-release pointer, and any transactionally completed legacy
 release state. The failed candidate retains its validation log,
@@ -115,9 +117,11 @@ prove that a commit or tag was reviewed or signed. GitHub review records and the
 human deploy decision remain the authority for that claim.
 
 Before switching, deployment preserves provenance for the current release.
-`rollback-current` rejects duplicate target-state identity keys, verifies the
-recorded commit, path, release, and launcher hash, then snapshots and stages its
-own complete transition. Any injected or ordinary failure after rollback
+`rollback-current` rejects duplicate target-state identity keys and verifies
+the recorded commit, path, release, launcher hash, source tree, and venv for
+both the current release and rollback target. It repeats mutable HEAD, source,
+and venv checks immediately before mutation, then snapshots and stages its own
+complete transition. Any injected or ordinary failure after rollback
 mutation begins restores the exact pre-rollback symlink, launcher, release
 state, rollback state, current marker, and prior transition marker. A successful
 rollback publishes a separate `ROLLBACK_STATE`. Deploy and rollback share a
@@ -126,6 +130,10 @@ non-blocking host lock so they cannot mutate release state concurrently.
 Neither operation silently restarts the running API service. After a deploy or
 rollback, an operator must review the recorded state and explicitly restart the
 service when the process should load the restored launcher.
+
+The API launcher, core launcher, and systemd unit disable Python bytecode writes
+inside a release. `hub-core test` also disables pytest's cache provider, so
+normal `analyze` and test operations do not invalidate source authority.
 
 At launcher start, the API captures the full commit of the resolved running
 release and the SHA-256 of the launcher that started it. `/status` reports those
@@ -144,9 +152,12 @@ the managed symlink, exact repository origin, clean checkout, marker, and
 byte-identical versioned/shared launcher. It does not trust the legacy short
 commit or validation-count claim as authority. The original six-field state is
 retained byte-for-byte as mode-`0400` `LEGACY_RELEASE_STATE`; its SHA-256 and
-short prefix are linked from the new full-SHA state. The shared/per-release
-states are postvalidated before success. Any post-mutation failure restores the
-exact snapshot, and an exact completed adoption can be rerun without change.
+short prefix are linked from the new full-SHA state. The v2 adoption state also
+records source-tree and venv authority captured with reviewed helpers. HEAD,
+source, and venv are checked at baseline, immediately before mutation, and
+after publication. The shared/per-release states are postvalidated before
+success. Any post-mutation failure restores the exact snapshot, and an exact
+completed adoption can be rerun without change.
 
 [`preflight-deploy.sh`](preflight-deploy.sh) is the read-only, fail-closed host
 gate for the exact-SHA localhost intake operation. It checks rollback release
@@ -234,7 +245,11 @@ Manual installation targets:
 
 Run from the repository root:
 
-bash -n ops/ec2/*.sh
+```bash
+find ops/ec2 -maxdepth 1 -type f -name '*.sh' \
+  ! -name 'hub-ops.sh' -exec bash -n '{}' +
+python3 -m py_compile ops/ec2/hub-ops.sh ops/ec2/*.py
+```
 
 Runtime validation on EC2:
 
