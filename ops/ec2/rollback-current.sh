@@ -2,10 +2,21 @@
 set -euo pipefail
 
 APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+STATE_VALIDATOR="$SCRIPT_DIR/validate-release-state.sh"
 
 fail() {
   echo "[rollback:error] $*" >&2
   exit 1
+}
+
+validate_release_state_schema() {
+  local state_file="$1"
+
+  [ -f "$STATE_VALIDATOR" ] && [ ! -L "$STATE_VALIDATOR" ] \
+    || fail "Release-state validator is not one regular file: $STATE_VALIDATOR"
+  bash "$STATE_VALIDATOR" "$state_file" >/dev/null \
+    || fail "Complete release-state validation failed: $state_file"
 }
 
 state_value() {
@@ -201,6 +212,32 @@ esac
 [ -d "$CURRENT" ] || fail "Current release path does not exist: $CURRENT"
 [ -d "$PREVIOUS" ] || fail "Previous release path does not exist: $PREVIOUS"
 
+CURRENT_STATE="$CURRENT/.hub-deployment/RELEASE_STATE"
+SHARED_STATE="$APP_ROOT/shared/RELEASE_STATE"
+[ -f "$CURRENT_STATE" ] && [ ! -L "$CURRENT_STATE" ] \
+  || fail "Current release has no regular per-release state: $CURRENT_STATE"
+[ -f "$SHARED_STATE" ] && [ ! -L "$SHARED_STATE" ] \
+  || fail "Current release has no regular shared state: $SHARED_STATE"
+validate_release_state_schema "$CURRENT_STATE"
+validate_release_state_schema "$SHARED_STATE"
+cmp -s "$CURRENT_STATE" "$SHARED_STATE" \
+  || fail "Shared RELEASE_STATE differs from current per-release state."
+
+CURRENT_COMMIT="$(git -C "$CURRENT" rev-parse --verify HEAD)"
+[[ "$CURRENT_COMMIT" =~ ^[0-9a-f]{40}$ ]] \
+  || fail "Current release does not resolve to one full commit SHA."
+[ "$(required_state_value "$CURRENT_STATE" "commit")" = "$CURRENT_COMMIT" ] \
+  || fail "Current release commit does not match its deployment state."
+[ "$(required_state_value "$CURRENT_STATE" "path")" = "$CURRENT" ] \
+  || fail "Current release path does not match its deployment state."
+[ "$(required_state_value "$CURRENT_STATE" "release")" = "$(basename "$CURRENT")" ] \
+  || fail "Current release name does not match its deployment state."
+[ -f "$CURRENT/ops/ec2/hub-api.sh" ] \
+  || fail "Current release has no hub-api launcher: $CURRENT/ops/ec2/hub-api.sh"
+CURRENT_LAUNCHER_SHA256="$(sha256_file "$CURRENT/ops/ec2/hub-api.sh")"
+[ "$(required_state_value "$CURRENT_STATE" "launcher_sha256")" = "$CURRENT_LAUNCHER_SHA256" ] \
+  || fail "Current release launcher does not match its deployment state."
+
 if [ "$CURRENT" = "$PREVIOUS" ]; then
   echo "[rollback] Current release already matches previous_release target:"
   echo "$CURRENT"
@@ -208,10 +245,12 @@ if [ "$CURRENT" = "$PREVIOUS" ]; then
 fi
 
 PREVIOUS_STATE="$PREVIOUS/.hub-deployment/RELEASE_STATE"
-[ -f "$PREVIOUS_STATE" ] \
+[ -f "$PREVIOUS_STATE" ] && [ ! -L "$PREVIOUS_STATE" ] \
   || fail "Previous release has no recorded deployment state: $PREVIOUS_STATE"
 [ -f "$PREVIOUS/ops/ec2/hub-api.sh" ] \
   || fail "Previous release has no hub-api launcher: $PREVIOUS/ops/ec2/hub-api.sh"
+
+validate_release_state_schema "$PREVIOUS_STATE"
 
 RECORDED_COMMIT="$(required_state_value "$PREVIOUS_STATE" "commit")"
 RECORDED_PATH="$(required_state_value "$PREVIOUS_STATE" "path")"
@@ -234,9 +273,6 @@ ACTUAL_LAUNCHER_SHA256="$(sha256_file "$PREVIOUS/ops/ec2/hub-api.sh")"
 [ "$RECORDED_LAUNCHER_SHA256" = "$ACTUAL_LAUNCHER_SHA256" ] \
   || fail "Previous release launcher does not match its deployment state."
 
-CURRENT_COMMIT="$(git -C "$CURRENT" rev-parse --verify HEAD)"
-[[ "$CURRENT_COMMIT" =~ ^[0-9a-f]{40}$ ]] \
-  || fail "Current release does not resolve to one full commit SHA."
 CURRENT_RELEASE="$(basename "$CURRENT")"
 PREVIOUS_RELEASE="$(basename "$PREVIOUS")"
 
