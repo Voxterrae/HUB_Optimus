@@ -13,6 +13,7 @@ RUNBOOK = ROOT / "ops" / "ec2" / "ISSUE_1831_RUNBOOK.md"
 
 def test_host_preflight_is_noninteractive_and_fails_closed() -> None:
     text = PREFLIGHT.read_text(encoding="utf-8")
+    command_inventory = text.split("for command_name in", 1)[1].split("; do", 1)[0]
 
     assert "MIN_DISK_KIB=3145728" in text
     assert "MIN_FREE_INODES=50000" in text
@@ -43,7 +44,7 @@ def test_host_preflight_is_noninteractive_and_fails_closed() -> None:
         "tee",
         "tr",
     ):
-        assert command_name in text.split("; do", 1)[0]
+        assert command_name in command_inventory
     assert "systemctl restart" not in text
 
 

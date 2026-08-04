@@ -204,6 +204,6 @@ def test_operator_and_api_handoff_reach_the_same_cli_contract():
     core = (ROOT / "ops" / "ec2" / "hub-core.sh").read_text(encoding="utf-8")
 
     assert "http://127.0.0.1:8080/analyze" in operator
-    assert '"/opt/hub-optimus/shared/bin/hub-core"' in api
+    assert 'str(SHARED / "bin" / "hub-core")' in api
     assert '"analyze"' in api
     assert "python -m semantic_engine.cli analyze" in core

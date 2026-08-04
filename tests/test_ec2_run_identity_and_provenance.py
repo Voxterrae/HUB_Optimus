@@ -9,6 +9,8 @@ import subprocess
 import time
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 HUB_CORE = ROOT / "ops" / "ec2" / "hub-core.sh"
@@ -241,10 +243,7 @@ def test_api_uses_its_own_run_marker_and_cleans_private_input(
         input_text: str | None = None,
     ) -> tuple[int, str, str]:
         assert input_text is None
-        assert args[:2] == [
-            "/opt/hub-optimus/shared/bin/hub-core",
-            "analyze",
-        ]
+        assert args[:2] == [str(shared / "bin" / "hub-core"), "analyze"]
         case_path = Path(args[2])
         seen_case_paths.append(case_path)
         assert case_path.name.startswith("case-")
@@ -861,6 +860,124 @@ def test_invalid_rollback_target_state_fails_before_mutation(
     assert "Rollback target commit does not match" in result.stderr
     assert "Restoring exact pre-deploy" not in result.stderr
     assert _operational_snapshot(app_root) == before
+
+
+@pytest.mark.parametrize(
+    "operation, corruption, expected_error",
+    (
+        ("deploy", "status=duplicate", "exactly one status field"),
+        ("deploy", "malformed-state-line", "contains a malformed state line"),
+        ("rollback", "status=duplicate", "exactly one status field"),
+        ("rollback", "malformed-state-line", "contains a malformed state line"),
+    ),
+)
+def test_deploy_and_rollback_reject_malformed_target_state_before_mutation(
+    tmp_path: Path,
+    operation: str,
+    corruption: str,
+    expected_error: str,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    fake_bin = _fake_deploy_python(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo, fake_bin)
+
+    first = _run([DEPLOY, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    target_release = (app_root / "current").resolve()
+    target_state = target_release / ".hub-deployment" / "RELEASE_STATE"
+    if operation == "rollback":
+        second = _run([DEPLOY, head_commit], env=env)
+        assert second.returncode == 0, second.stderr
+    corrupted = target_state.read_text(encoding="utf-8") + f"{corruption}\n"
+    target_state.write_text(corrupted, encoding="utf-8")
+    if operation == "deploy":
+        (app_root / "shared" / "RELEASE_STATE").write_text(
+            corrupted,
+            encoding="utf-8",
+        )
+    before = _operational_snapshot(app_root)
+
+    command = [DEPLOY, head_commit] if operation == "deploy" else [ROLLBACK]
+    result = _run(command, env=env)
+
+    assert result.returncode == 1
+    assert expected_error in result.stderr
+    assert "Restoring exact pre-" not in result.stderr
+    assert _operational_snapshot(app_root) == before
+    assert not list((app_root / "shared").glob("rollback-transaction.*"))
+
+
+@pytest.mark.parametrize("schema_kind", ("normal", "transitional", "adopted"))
+def test_reconstructed_release_state_survives_deploy_rollback_round_trip(
+    tmp_path: Path,
+    schema_kind: str,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    fake_bin = _fake_deploy_python(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo, fake_bin)
+
+    first = _run([DEPLOY, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    first_release = (app_root / "current").resolve()
+    first_state_path = first_release / ".hub-deployment" / "RELEASE_STATE"
+    fields = _state(first_state_path)
+    if schema_kind == "transitional":
+        fields["provenance"] = "adopted-pre-1832"
+    elif schema_kind == "adopted":
+        legacy_raw = (
+            f"release={first_release.name}\n"
+            f"commit={reviewed_commit[:7]}\n"
+            f"path={first_release}\n"
+            "validated_at_utc=2026-07-20T22:56:06Z\n"
+            "validation=pytest 55 passed\n"
+            "status=production-candidate-core\n"
+        ).encode()
+        legacy_evidence = first_release / ".hub-deployment" / "LEGACY_RELEASE_STATE"
+        legacy_evidence.write_bytes(legacy_raw)
+        legacy_evidence.chmod(0o400)
+        fields = {
+            "release": first_release.name,
+            "requested_ref": reviewed_commit,
+            "requested_ref_kind": "legacy-host-adoption",
+            "commit": reviewed_commit,
+            "path": str(first_release),
+            "adopted_at_utc": "2026-08-03T12:00:00Z",
+            "validation_command": "not-run-during-legacy-adoption",
+            "validation_exit_code": "not-run",
+            "validation_result": (
+                "legacy validation claim not re-attested; original state retained "
+                "by SHA-256"
+            ),
+            "validation_log": "not-applicable",
+            "validation_log_exit_code": "not-run",
+            "launcher_sha256": fields["launcher_sha256"],
+            "status": "adopted-legacy-current",
+            "provenance": "adopted-legacy-current-v1",
+            "legacy_state_sha256": hashlib.sha256(legacy_raw).hexdigest(),
+            "legacy_commit_prefix": reviewed_commit[:7],
+        }
+    expected_raw = "".join(f"{key}={value}\n" for key, value in fields.items())
+    (app_root / "shared" / "RELEASE_STATE").write_text(
+        expected_raw,
+        encoding="utf-8",
+    )
+    first_state_path.unlink()
+
+    second = _run([DEPLOY, head_commit], env=env)
+    assert second.returncode == 0, second.stderr
+    assert first_state_path.read_text(encoding="utf-8") == expected_raw
+
+    rolled_back = _run([ROLLBACK], env=env)
+
+    assert rolled_back.returncode == 0, rolled_back.stderr
+    assert (app_root / "current").resolve() == first_release
+    assert (app_root / "shared" / "RELEASE_STATE").read_text(
+        encoding="utf-8"
+    ) == expected_raw
 
 
 def test_failed_validation_is_recorded_without_switching_current(
