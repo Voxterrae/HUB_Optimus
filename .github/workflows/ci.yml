@@ -79,6 +79,188 @@ jobs:
       - name: Run PowerShell tooling behavior tests
         run: python -m pytest -q tests/test_powershell_tooling_safety.py
 
+  ec2-locked-environment:
+    name: EC2 locked environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup reviewed EC2 Python ABI
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Verify dependency locks
+        run: bash ops/ec2/dependency-lock-digest.sh "$GITHUB_WORKSPACE"
+
+      - name: Certify reproducible offline dependency installs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python_bin="$(command -v python)"
+          node_bin="$(command -v node)"
+          case "$python_bin" in
+            /*) ;;
+            *)
+              echo "::error::setup-python did not provide an absolute interpreter path"
+              exit 1
+              ;;
+          esac
+          python_bin="$(readlink -f -- "$python_bin")"
+          case "$node_bin" in
+            /*) ;;
+            *)
+              echo "::error::runner did not provide an absolute Node path"
+              exit 1
+              ;;
+          esac
+          node_bin="$(readlink -f -- "$node_bin")"
+          node_dir="$(dirname -- "$node_bin")"
+          test -x "$node_bin"
+
+          workspace="$GITHUB_WORKSPACE"
+          wheelhouse="$RUNNER_TEMP/hub-ec2-wheelhouse"
+          corrupt_wheelhouse="$RUNNER_TEMP/hub-ec2-wheelhouse-corrupt"
+          corrupt_release="$RUNNER_TEMP/hub-ec2-corrupt-release"
+          release_a="$RUNNER_TEMP/hub-ec2-release-a"
+          release_b="$RUNNER_TEMP/hub-ec2-release-b"
+
+          create_release() {
+            local release="$1"
+            mkdir -p "$release/ops/ec2"
+            cp -- "$workspace/ops/ec2/requirements-runtime.lock" \
+              "$release/ops/ec2/requirements-runtime.lock"
+            cp -- "$workspace/ops/ec2/requirements-validation.lock" \
+              "$release/ops/ec2/requirements-validation.lock"
+            "$python_bin" -I -m venv "$release/.venv"
+          }
+
+          sealed_offline_install() {
+            local release="$1"
+            local links="$2"
+            env -i \
+              HOME="$release" \
+              LANG=C.UTF-8 \
+              PATH=/usr/bin:/bin \
+              PYTHONNOUSERSITE=1 \
+              "$python_bin" -I \
+                "$workspace/ops/ec2/verify-installed-dependencies.py" \
+                install-offline \
+                "$release" \
+                "$python_bin" \
+                "$dependency_digest" \
+                "$links"
+          }
+
+          mkdir -p "$wheelhouse"
+          env -i \
+            HOME="$RUNNER_TEMP/hub-ec2-download-home" \
+            LANG=C.UTF-8 \
+            PATH=/usr/bin:/bin \
+            PIP_CONFIG_FILE=/dev/null \
+            PIP_DISABLE_PIP_VERSION_CHECK=1 \
+            PIP_NO_CACHE_DIR=1 \
+            PIP_NO_INPUT=1 \
+            PYTHONNOUSERSITE=1 \
+            "$python_bin" -I -m pip download \
+              --disable-pip-version-check \
+              --index-url https://pypi.org/simple \
+              --isolated \
+              --no-cache-dir \
+              --no-deps \
+              --no-input \
+              --only-binary=:all: \
+              --require-hashes \
+              --dest "$wheelhouse" \
+              --requirement "$workspace/ops/ec2/requirements-validation.lock"
+
+          mapfile -t downloaded_wheels < <(
+            find "$wheelhouse" -maxdepth 1 -type f -name '*.whl' -print \
+              | LC_ALL=C sort
+          )
+          if [ "${#downloaded_wheels[@]}" -eq 0 ]; then
+            echo "::error::allowlisted download produced no wheels"
+            exit 1
+          fi
+
+          dependency_digest="$(
+            bash "$workspace/ops/ec2/dependency-lock-digest.sh" "$workspace"
+          )"
+
+          mkdir -p "$corrupt_wheelhouse"
+          cp -a -- "$wheelhouse/." "$corrupt_wheelhouse/"
+          corrupt_wheel="$corrupt_wheelhouse/$(basename "${downloaded_wheels[0]}")"
+          printf 'intentional-hash-corruption\n' >> "$corrupt_wheel"
+          create_release "$corrupt_release"
+          corrupt_log="$RUNNER_TEMP/hub-ec2-corrupt-wheel.log"
+          if sealed_offline_install \
+            "$corrupt_release" "$corrupt_wheelhouse" \
+            >"$corrupt_log" 2>&1; then
+            echo "::error::pip accepted a wheel whose reviewed hash was corrupted"
+            exit 1
+          fi
+          if ! grep -Fq \
+            'THESE PACKAGES DO NOT MATCH THE HASHES FROM THE REQUIREMENTS FILE' \
+            "$corrupt_log"; then
+            cat "$corrupt_log" >&2
+            echo "::error::corrupt-wheel install failed for a reason other than hash rejection"
+            exit 1
+          fi
+
+          create_release "$release_a"
+          create_release "$release_b"
+          test "$(
+            bash "$workspace/ops/ec2/dependency-lock-digest.sh" "$release_a"
+          )" = "$dependency_digest"
+          test "$(
+            bash "$workspace/ops/ec2/dependency-lock-digest.sh" "$release_b"
+          )" = "$dependency_digest"
+          token_a="$(
+            sealed_offline_install "$release_a" "$wheelhouse"
+          )"
+          token_b="$(
+            sealed_offline_install "$release_b" "$wheelhouse"
+          )"
+
+          inventory_a="$RUNNER_TEMP/hub-ec2-inventory-a.json"
+          inventory_b="$RUNNER_TEMP/hub-ec2-inventory-b.json"
+          env -i \
+            HOME="$release_a" \
+            LANG=C.UTF-8 \
+            PATH=/usr/bin:/bin \
+            PYTHONNOUSERSITE=1 \
+            "$release_a/.venv/bin/python" -I \
+              "$workspace/ops/ec2/verify-installed-dependencies.py" \
+              verify "$release_a" "$python_bin" "$dependency_digest" "$token_a" \
+              > "$inventory_a"
+          env -i \
+            HOME="$release_b" \
+            LANG=C.UTF-8 \
+            PATH=/usr/bin:/bin \
+            PYTHONNOUSERSITE=1 \
+            "$release_b/.venv/bin/python" -I \
+              "$workspace/ops/ec2/verify-installed-dependencies.py" \
+              verify "$release_b" "$python_bin" "$dependency_digest" "$token_b" \
+              > "$inventory_b"
+          if ! cmp -s -- "$inventory_a" "$inventory_b"; then
+            diff -u -- "$inventory_a" "$inventory_b" || true
+            echo "::error::fresh offline installs produced different inventories"
+            exit 1
+          fi
+
+          cd "$workspace"
+          env -i \
+            HOME="$release_a" \
+            LANG=C.UTF-8 \
+            PATH="$node_dir:/usr/bin:/bin" \
+            PYTHONNOUSERSITE=1 \
+            "$release_a/.venv/bin/python" -m pytest -q
+
   benchmarks:
     name: Benchmarks
     runs-on: ubuntu-latest

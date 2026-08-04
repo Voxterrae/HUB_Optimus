@@ -4,6 +4,8 @@ import hashlib
 import json
 import os
 import re
+import shlex
+import shutil
 import stat
 import subprocess
 import time
@@ -18,6 +20,10 @@ HUB_API = ROOT / "ops" / "ec2" / "hub-api.sh"
 HUB_OPS = ROOT / "ops" / "ec2" / "hub-ops.sh"
 DEPLOY = ROOT / "ops" / "ec2" / "deploy-current.sh"
 ROLLBACK = ROOT / "ops" / "ec2" / "rollback-current.sh"
+DEPENDENCY_LOCKS = (
+    ROOT / "ops" / "ec2" / "requirements-runtime.lock",
+    ROOT / "ops" / "ec2" / "requirements-validation.lock",
+)
 RUN_ID_RE = re.compile(r"^\d{8}T\d{6}Z\.[A-Za-z0-9]{6}$")
 
 
@@ -477,6 +483,8 @@ def _source_repository(path: Path) -> tuple[str, str]:
 
     (path / "ops" / "ec2").mkdir(parents=True)
     (path / "requirements-dev.txt").write_text("pytest\n", encoding="utf-8")
+    for source in DEPENDENCY_LOCKS:
+        shutil.copyfile(source, path / "ops" / "ec2" / source.name)
     launcher = path / "ops" / "ec2" / "hub-api.sh"
     launcher.write_text("#!/usr/bin/env bash\necho api-v1\n", encoding="utf-8")
     launcher.chmod(0o755)
@@ -494,42 +502,189 @@ def _source_repository(path: Path) -> tuple[str, str]:
     return reviewed_commit, head_commit
 
 
-def _fake_deploy_python(path: Path) -> Path:
-    bin_dir = path / "deploy-bin"
-    bin_dir.mkdir()
-    python3 = bin_dir / "python3"
-    python3.write_text(
-        "#!/usr/bin/env bash\n"
+def _locked_dependency_inventory() -> str:
+    inventory: dict[str, str] = {}
+    for lock in DEPENDENCY_LOCKS:
+        for raw_line in lock.read_text(encoding="ascii").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith(("#", "-r ")) or "==" not in line:
+                continue
+            name, version = line.removesuffix("\\").strip().split("==", 1)
+            normalized_name = re.sub(r"[-_.]+", "-", name).lower()
+            inventory[normalized_name] = version
+    assert inventory
+    return json.dumps(
+        [
+            {"name": name, "version": inventory[name]}
+            for name in sorted(inventory)
+        ],
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+
+def _deploy_fixture(path: Path) -> tuple[Path, Path]:
+    fixture_root = path / "deploy-fixture"
+    fixture_ec2 = fixture_root / "ops" / "ec2"
+    shutil.copytree(ROOT / "ops" / "ec2", fixture_ec2)
+
+    controls = fixture_root / "controls"
+    controls.mkdir()
+    (controls / "inventory.output").write_text(
+        f"{_locked_dependency_inventory()}\n",
+        encoding="ascii",
+    )
+
+    fake_system_python = fixture_root / "fake-system-python"
+    fake_venv_python = fixture_root / "fake-venv-python"
+    quoted_controls = shlex.quote(str(controls))
+    quoted_system_python = shlex.quote(str(fake_system_python))
+    fake_venv_python.write_text(
+        "#!/bin/bash\n"
         "set -eu\n"
-        "test \"${1:-}\" = '-m'\n"
-        "test \"${2:-}\" = 'venv'\n"
-        "mkdir -p \"$3/bin\"\n"
-        "cat > \"$3/bin/activate\" <<'ACTIVATE'\n"
-        "python() {\n"
-        "  if [ \"${1:-}\" = '-m' ] && [ \"${2:-}\" = 'pytest' ]; then\n"
-        "    printf '%s\\n' \"${HUB_TEST_VALIDATION_OUTPUT:-17 passed in 0.01s}\"\n"
-        "    return \"${HUB_TEST_VALIDATION_EXIT:-0}\"\n"
+        f"CONTROL_DIR={quoted_controls}\n"
+        f"SYSTEM_PYTHON={quoted_system_python}\n"
+        "control_exit() {\n"
+        "  if [ -f \"$CONTROL_DIR/$1.exit\" ]; then\n"
+        "    /bin/cat \"$CONTROL_DIR/$1.exit\"\n"
+        "  else\n"
+        "    printf '%s\\n' \"$2\"\n"
         "  fi\n"
-        "  return 0\n"
         "}\n"
-        "deactivate() { :; }\n"
-        "ACTIVATE\n",
+        "swap_lock_hash_and_restore() {\n"
+        "  lock=$HOME/ops/ec2/requirements-validation.lock\n"
+        "  /bin/cp -- \"$lock\" \"$CONTROL_DIR/original.lock\"\n"
+        "  /bin/sed '0,/sha256:[0-9a-f]/s//sha256:0/' \\\n"
+        "    \"$CONTROL_DIR/original.lock\" > \"$CONTROL_DIR/replacement.lock\"\n"
+        "  /bin/mv -- \"$CONTROL_DIR/replacement.lock\" \"$lock\"\n"
+        "  /bin/cp -- \"$CONTROL_DIR/original.lock\" \\\n"
+        "    \"$CONTROL_DIR/restored.lock\"\n"
+        "  /bin/mv -- \"$CONTROL_DIR/restored.lock\" \"$lock\"\n"
+        "  : > \"$CONTROL_DIR/lock-was-swapped\"\n"
+        "}\n"
+        "isolated=0\n"
+        "if [ \"${1:-}\" = '-I' ]; then\n"
+        "  isolated=1\n"
+        "  shift\n"
+        "fi\n"
+        "if [ \"${1:-}\" = '-m' ]; then\n"
+        "  module=\"${2:-}\"\n"
+        "  action=\"${3:-}\"\n"
+        "  case \"$module:$action\" in\n"
+        "    pip:install)\n"
+        "      test \"$isolated\" -eq 1\n"
+        "      if [ -f \"$CONTROL_DIR/swap-lock-during-pip\" ]; then\n"
+        "        swap_lock_hash_and_restore\n"
+        "      fi\n"
+        "      exit \"$(control_exit pip-install 0)\"\n"
+        "      ;;\n"
+        "    pip:check)\n"
+        "      test \"$isolated\" -eq 1\n"
+        "      exit \"$(control_exit pip-check 0)\"\n"
+        "      ;;\n"
+        "    pip:uninstall)\n"
+        "      test \"$isolated\" -eq 1\n"
+        "      exit \"$(control_exit pip-uninstall 0)\"\n"
+        "      ;;\n"
+        "    pytest:*)\n"
+        "      test \"$isolated\" -eq 0\n"
+        "      if [ -f \"$CONTROL_DIR/swap-lock-during-pytest\" ]; then\n"
+        "        swap_lock_hash_and_restore\n"
+        "      fi\n"
+        "      if [ -f \"$CONTROL_DIR/pytest.output\" ]; then\n"
+        "        /bin/cat \"$CONTROL_DIR/pytest.output\"\n"
+        "      else\n"
+        "        printf '17 passed in 0.01s\\n'\n"
+        "      fi\n"
+        "      exit \"$(control_exit pytest 0)\"\n"
+        "      ;;\n"
+        "    *) exit 2 ;;\n"
+        "  esac\n"
+        "fi\n"
+        "tool=\"${1:-}\"\n"
+        "operation=\"${2:-}\"\n"
+        "release=\"${3:-}\"\n"
+        "system_python=\"${4:-}\"\n"
+        "digest=\"${5:-}\"\n"
+        "token=\"${6:-}\"\n"
+        "test \"$isolated\" -eq 1\n"
+        "test \"${tool##*/}\" = 'verify-installed-dependencies.py'\n"
+        "test \"$operation\" = 'verify'\n"
+        "test -d \"$release\"\n"
+        "test \"$system_python\" = \"$SYSTEM_PYTHON\"\n"
+        "test \"${#digest}\" -eq 64\n"
+        "test \"${#token}\" -eq 64\n"
+        "if [ -f \"$CONTROL_DIR/lock-was-swapped\" ]; then\n"
+        "  echo '[dependency-lock:error] dependency-lock paths changed since capture' >&2\n"
+        "  exit 1\n"
+        "fi\n"
+        "/bin/cat \"$CONTROL_DIR/inventory.output\"\n"
+        "exit \"$(control_exit inventory 0)\"\n",
         encoding="utf-8",
     )
-    python3.chmod(0o755)
-    return bin_dir
+    fake_venv_python.chmod(0o755)
+
+    fake_system_python.write_text(
+        "#!/bin/bash\n"
+        "set -eu\n"
+        f"VENV_PYTHON={shlex.quote(str(fake_venv_python))}\n"
+        "if [ \"${1:-}\" = '-I' ] && [ \"${2:-}\" = '-' ]; then\n"
+        "  exit 0\n"
+        "fi\n"
+        "if [ \"${1:-}\" = '-I' ] \\\n"
+        "  && [ \"${2##*/}\" = 'verify-installed-dependencies.py' ]; then\n"
+        "  exec /usr/bin/python3 \"$@\"\n"
+        "fi\n"
+        "test \"${1:-}\" = '-I'\n"
+        "test \"${2:-}\" = '-m'\n"
+        "test \"${3:-}\" = 'venv'\n"
+        "test \"$#\" -eq 4\n"
+        "/bin/mkdir -p \"$4/bin\"\n"
+        "/bin/cp -- \"$VENV_PYTHON\" \"$4/bin/python\"\n"
+        "/bin/chmod 0755 \"$4/bin/python\"\n",
+        encoding="utf-8",
+    )
+    fake_system_python.chmod(0o755)
+
+    deploy = fixture_ec2 / "deploy-current.sh"
+    deploy_text = deploy.read_text(encoding="utf-8")
+    assignment = 'SYSTEM_PYTHON="/usr/bin/python3"'
+    assert deploy_text.count(assignment) == 1
+    assert '"$SYSTEM_PYTHON" -I -m venv' in deploy_text
+    assert '"$VENV_PYTHON" -m pytest -q' in deploy_text
+    assert '"$VENV_PYTHON" -I -m pytest -q' not in deploy_text
+    assert "HUB_OPTIMUS_TEST_MODE" not in deploy_text
+    assert "HUB_TEST_" not in deploy_text
+    deploy.write_text(
+        deploy_text.replace(
+            assignment,
+            f'SYSTEM_PYTHON="{fake_system_python}"',
+            1,
+        ),
+        encoding="utf-8",
+    )
+    return deploy, controls
 
 
 def _deploy_env(
     app_root: Path,
     source_repo: Path,
-    fake_bin: Path,
 ) -> dict[str, str]:
     env = os.environ.copy()
+    for name in tuple(env):
+        if name.startswith("PIP_"):
+            env.pop(name)
     env["HUB_OPTIMUS_APP_ROOT"] = str(app_root)
     env["HUB_OPTIMUS_REPO_URL"] = str(source_repo)
-    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
     return env
+
+
+def _expected_validation_command(release: Path) -> str:
+    return (
+        f"/usr/bin/env -i HOME={release} LANG=C.UTF-8 PATH=/usr/bin:/bin "
+        f"PYTHONNOUSERSITE=1 {release}/.venv/bin/python -m pytest -q"
+    )
 
 
 def _operational_snapshot(app_root: Path) -> dict[str, object]:
@@ -557,11 +712,11 @@ def test_deploy_is_ref_bound_records_validation_and_rolls_back(
 ) -> None:
     source_repo = tmp_path / "source"
     reviewed_commit, head_commit = _source_repository(source_repo)
-    fake_bin = _fake_deploy_python(tmp_path)
+    deploy, controls = _deploy_fixture(tmp_path)
     app_root = tmp_path / "app"
-    env = _deploy_env(app_root, source_repo, fake_bin)
+    env = _deploy_env(app_root, source_repo)
 
-    first = _run([DEPLOY, "reviewed-v1"], env=env)
+    first = _run([deploy, "reviewed-v1"], env=env)
     assert first.returncode == 0, first.stderr
     first_release = (app_root / "current").resolve()
     assert _git(first_release, "rev-parse", "HEAD") == reviewed_commit
@@ -569,7 +724,14 @@ def test_deploy_is_ref_bound_records_validation_and_rolls_back(
     assert first_state["requested_ref"] == "reviewed-v1"
     assert first_state["requested_ref_kind"] == "tag"
     assert first_state["commit"] == reviewed_commit
-    assert first_state["validation_command"] == "python -m pytest -q"
+    assert first_state["validation_command"] == _expected_validation_command(
+        first_release
+    )
+    assert first_state["dependency_tier"] == "runtime+validation-v1"
+    assert first_state["dependency_lock"] == str(
+        first_release / "ops" / "ec2" / "requirements-validation.lock"
+    )
+    assert re.fullmatch(r"[0-9a-f]{64}", first_state["dependency_lock_sha256"])
     assert first_state["validation_exit_code"] == "0"
     assert first_state["validation_log_exit_code"] == "0"
     assert first_state["validation_result"] == "17 passed in 0.01s"
@@ -579,7 +741,7 @@ def test_deploy_is_ref_bound_records_validation_and_rolls_back(
     ).hexdigest()
     assert "55 passed" not in (app_root / "shared" / "RELEASE_STATE").read_text()
 
-    second = _run([DEPLOY, head_commit], env=env)
+    second = _run([deploy, head_commit], env=env)
     assert second.returncode == 0, second.stderr
     second_release = (app_root / "current").resolve()
     assert second_release != first_release
@@ -622,16 +784,16 @@ def test_every_injected_post_switch_failure_restores_exact_state(
         case_root.mkdir()
         source_repo = case_root / "source"
         reviewed_commit, head_commit = _source_repository(source_repo)
-        fake_bin = _fake_deploy_python(case_root)
+        deploy, controls = _deploy_fixture(case_root)
         app_root = case_root / "app"
-        env = _deploy_env(app_root, source_repo, fake_bin)
+        env = _deploy_env(app_root, source_repo)
 
-        first = _run([DEPLOY, reviewed_commit], env=env)
+        first = _run([deploy, reviewed_commit], env=env)
         assert first.returncode == 0, first.stderr
         before = _operational_snapshot(app_root)
 
         env["HUB_OPTIMUS_TEST_FAIL_AFTER_MUTATION"] = stage
-        failed = _run([DEPLOY, head_commit], env=env)
+        failed = _run([deploy, head_commit], env=env)
 
         assert failed.returncode == 1
         assert f"injected test failure after mutation stage: {stage}" in failed.stderr
@@ -662,11 +824,11 @@ def test_deploy_recovery_runs_when_recovery_log_cannot_open(
 ) -> None:
     source_repo = tmp_path / "source"
     reviewed_commit, head_commit = _source_repository(source_repo)
-    fake_bin = _fake_deploy_python(tmp_path)
+    deploy, controls = _deploy_fixture(tmp_path)
     app_root = tmp_path / "app"
-    env = _deploy_env(app_root, source_repo, fake_bin)
+    env = _deploy_env(app_root, source_repo)
 
-    first = _run([DEPLOY, reviewed_commit], env=env)
+    first = _run([deploy, reviewed_commit], env=env)
     assert first.returncode == 0, first.stderr
     before = _operational_snapshot(app_root)
     unusable_log = tmp_path / "recovery-log-is-a-directory"
@@ -674,7 +836,7 @@ def test_deploy_recovery_runs_when_recovery_log_cannot_open(
     env["HUB_OPTIMUS_TEST_FAIL_AFTER_MUTATION"] = "current"
     env["HUB_OPTIMUS_TEST_RECOVERY_LOG_PATH"] = str(unusable_log)
 
-    failed = _run([DEPLOY, head_commit], env=env)
+    failed = _run([deploy, head_commit], env=env)
 
     assert failed.returncode == 1
     assert _operational_snapshot(app_root) == before
@@ -688,11 +850,11 @@ def test_injected_legacy_state_completion_is_recovered(
 ) -> None:
     source_repo = tmp_path / "source"
     reviewed_commit, head_commit = _source_repository(source_repo)
-    fake_bin = _fake_deploy_python(tmp_path)
+    deploy, controls = _deploy_fixture(tmp_path)
     app_root = tmp_path / "app"
-    env = _deploy_env(app_root, source_repo, fake_bin)
+    env = _deploy_env(app_root, source_repo)
 
-    first = _run([DEPLOY, reviewed_commit], env=env)
+    first = _run([deploy, reviewed_commit], env=env)
     assert first.returncode == 0, first.stderr
     current_release = (app_root / "current").resolve()
     legacy_state = current_release / ".hub-deployment" / "RELEASE_STATE"
@@ -700,7 +862,7 @@ def test_injected_legacy_state_completion_is_recovered(
     before = _operational_snapshot(app_root)
 
     env["HUB_OPTIMUS_TEST_FAIL_AFTER_MUTATION"] = "previous-release-state"
-    result = _run([DEPLOY, head_commit], env=env)
+    result = _run([deploy, head_commit], env=env)
 
     assert result.returncode == 1
     assert "injected test failure after mutation stage: previous-release-state" in result.stderr
@@ -714,14 +876,14 @@ def test_rollback_rejects_launcher_drift_before_switching(
 ) -> None:
     source_repo = tmp_path / "source"
     reviewed_commit, head_commit = _source_repository(source_repo)
-    fake_bin = _fake_deploy_python(tmp_path)
+    deploy, controls = _deploy_fixture(tmp_path)
     app_root = tmp_path / "app"
-    env = _deploy_env(app_root, source_repo, fake_bin)
+    env = _deploy_env(app_root, source_repo)
 
-    first = _run([DEPLOY, reviewed_commit], env=env)
+    first = _run([deploy, reviewed_commit], env=env)
     assert first.returncode == 0, first.stderr
     first_release = (app_root / "current").resolve()
-    second = _run([DEPLOY, head_commit], env=env)
+    second = _run([deploy, head_commit], env=env)
     assert second.returncode == 0, second.stderr
     before = _operational_snapshot(app_root)
     (first_release / "ops" / "ec2" / "hub-api.sh").write_text(
@@ -753,13 +915,13 @@ def test_every_injected_rollback_failure_restores_exact_state(
         case_root.mkdir()
         source_repo = case_root / "source"
         reviewed_commit, head_commit = _source_repository(source_repo)
-        fake_bin = _fake_deploy_python(case_root)
+        deploy, controls = _deploy_fixture(case_root)
         app_root = case_root / "app"
-        env = _deploy_env(app_root, source_repo, fake_bin)
+        env = _deploy_env(app_root, source_repo)
 
-        first = _run([DEPLOY, reviewed_commit], env=env)
+        first = _run([deploy, reviewed_commit], env=env)
         assert first.returncode == 0, first.stderr
-        second = _run([DEPLOY, head_commit], env=env)
+        second = _run([deploy, head_commit], env=env)
         assert second.returncode == 0, second.stderr
         before = _operational_snapshot(app_root)
         env["HUB_OPTIMUS_TEST_ROLLBACK_FAIL_AFTER_MUTATION"] = stage
@@ -786,12 +948,12 @@ def test_rollback_recovery_runs_when_recovery_log_cannot_open(
 ) -> None:
     source_repo = tmp_path / "source"
     reviewed_commit, head_commit = _source_repository(source_repo)
-    fake_bin = _fake_deploy_python(tmp_path)
+    deploy, controls = _deploy_fixture(tmp_path)
     app_root = tmp_path / "app"
-    env = _deploy_env(app_root, source_repo, fake_bin)
+    env = _deploy_env(app_root, source_repo)
 
-    assert _run([DEPLOY, reviewed_commit], env=env).returncode == 0
-    assert _run([DEPLOY, head_commit], env=env).returncode == 0
+    assert _run([deploy, reviewed_commit], env=env).returncode == 0
+    assert _run([deploy, head_commit], env=env).returncode == 0
     before = _operational_snapshot(app_root)
     unusable_log = tmp_path / "rollback-log-is-a-directory"
     unusable_log.mkdir()
@@ -815,13 +977,13 @@ def test_rollback_state_parser_rejects_duplicate_identity_keys(
         case_root.mkdir()
         source_repo = case_root / "source"
         reviewed_commit, head_commit = _source_repository(source_repo)
-        fake_bin = _fake_deploy_python(case_root)
+        deploy, controls = _deploy_fixture(case_root)
         app_root = case_root / "app"
-        env = _deploy_env(app_root, source_repo, fake_bin)
+        env = _deploy_env(app_root, source_repo)
 
-        assert _run([DEPLOY, reviewed_commit], env=env).returncode == 0
+        assert _run([deploy, reviewed_commit], env=env).returncode == 0
         first_release = (app_root / "current").resolve()
-        assert _run([DEPLOY, head_commit], env=env).returncode == 0
+        assert _run([deploy, head_commit], env=env).returncode == 0
         previous_state_path = (
             first_release / ".hub-deployment" / "RELEASE_STATE"
         )
@@ -848,13 +1010,13 @@ def test_rollback_rejects_malformed_managed_state_before_mutation(
 ) -> None:
     source_repo = tmp_path / "source"
     reviewed_commit, head_commit = _source_repository(source_repo)
-    fake_bin = _fake_deploy_python(tmp_path)
+    deploy, controls = _deploy_fixture(tmp_path)
     app_root = tmp_path / "app"
-    env = _deploy_env(app_root, source_repo, fake_bin)
+    env = _deploy_env(app_root, source_repo)
 
-    assert _run([DEPLOY, reviewed_commit], env=env).returncode == 0
+    assert _run([deploy, reviewed_commit], env=env).returncode == 0
     previous_release = (app_root / "current").resolve()
-    assert _run([DEPLOY, head_commit], env=env).returncode == 0
+    assert _run([deploy, head_commit], env=env).returncode == 0
     current_release = (app_root / "current").resolve()
     current_state = current_release / ".hub-deployment" / "RELEASE_STATE"
     shared_state = app_root / "shared" / "RELEASE_STATE"
@@ -884,11 +1046,11 @@ def test_invalid_rollback_target_state_fails_before_mutation(
 ) -> None:
     source_repo = tmp_path / "source"
     reviewed_commit, head_commit = _source_repository(source_repo)
-    fake_bin = _fake_deploy_python(tmp_path)
+    deploy, controls = _deploy_fixture(tmp_path)
     app_root = tmp_path / "app"
-    env = _deploy_env(app_root, source_repo, fake_bin)
+    env = _deploy_env(app_root, source_repo)
 
-    first = _run([DEPLOY, reviewed_commit], env=env)
+    first = _run([deploy, reviewed_commit], env=env)
     assert first.returncode == 0, first.stderr
     current_release = (app_root / "current").resolve()
     current_state_path = current_release / ".hub-deployment" / "RELEASE_STATE"
@@ -902,7 +1064,7 @@ def test_invalid_rollback_target_state_fails_before_mutation(
     )
     before = _operational_snapshot(app_root)
 
-    result = _run([DEPLOY, head_commit], env=env)
+    result = _run([deploy, head_commit], env=env)
 
     assert result.returncode == 1
     assert "requested commit differs from its resolved commit" in result.stderr
@@ -927,11 +1089,11 @@ def test_deploy_rejects_shared_only_state_drift_before_mutation(
 ) -> None:
     source_repo = tmp_path / "source"
     reviewed_commit, head_commit = _source_repository(source_repo)
-    fake_bin = _fake_deploy_python(tmp_path)
+    deploy, controls = _deploy_fixture(tmp_path)
     app_root = tmp_path / "app"
-    env = _deploy_env(app_root, source_repo, fake_bin)
+    env = _deploy_env(app_root, source_repo)
 
-    first = _run([DEPLOY, reviewed_commit], env=env)
+    first = _run([deploy, reviewed_commit], env=env)
     assert first.returncode == 0, first.stderr
     shared_state = app_root / "shared" / "RELEASE_STATE"
     if corruption == "malformed":
@@ -948,7 +1110,7 @@ def test_deploy_rejects_shared_only_state_drift_before_mutation(
         )
     before = _operational_snapshot(app_root)
 
-    result = _run([DEPLOY, head_commit], env=env)
+    result = _run([deploy, head_commit], env=env)
 
     assert result.returncode == 1
     assert expected_error in result.stderr
@@ -961,18 +1123,21 @@ def test_failed_validation_is_recorded_without_switching_current(
 ) -> None:
     source_repo = tmp_path / "source"
     reviewed_commit, head_commit = _source_repository(source_repo)
-    fake_bin = _fake_deploy_python(tmp_path)
+    deploy, controls = _deploy_fixture(tmp_path)
     app_root = tmp_path / "app"
-    env = _deploy_env(app_root, source_repo, fake_bin)
+    env = _deploy_env(app_root, source_repo)
 
-    first = _run([DEPLOY, reviewed_commit], env=env)
+    first = _run([deploy, reviewed_commit], env=env)
     assert first.returncode == 0, first.stderr
     before = _operational_snapshot(app_root)
 
-    env["HUB_TEST_VALIDATION_EXIT"] = "1"
-    env["HUB_TEST_VALIDATION_OUTPUT"] = "2 failed in 0.01s"
+    (controls / "pytest.exit").write_text("1\n", encoding="ascii")
+    (controls / "pytest.output").write_text(
+        "2 failed in 0.01s\n",
+        encoding="utf-8",
+    )
 
-    result = _run([DEPLOY, head_commit], env=env)
+    result = _run([deploy, head_commit], env=env)
 
     assert result.returncode == 1
     assert "validation failed (exit 1): 2 failed in 0.01s" in result.stderr
@@ -992,7 +1157,9 @@ def test_failed_validation_is_recorded_without_switching_current(
     )
     failed_state = _state(failed_state_path)
     assert failed_state["commit"] == head_commit
-    assert failed_state["validation_command"] == "python -m pytest -q"
+    assert failed_state["validation_command"] == _expected_validation_command(
+        failed_releases[0]
+    )
     assert failed_state["validation_exit_code"] == "1"
     assert failed_state["validation_result"] == "2 failed in 0.01s"
     failed_validation_log = (
@@ -1003,6 +1170,88 @@ def test_failed_validation_is_recorded_without_switching_current(
     ).hexdigest()
     assert failed_state["status"] == "validation-failed"
     assert (failed_releases[0] / ".hub-deployment" / "validation.log").is_file()
+
+
+@pytest.mark.parametrize(
+    "setting",
+    (
+        "PIP_INDEX_URL",
+        "PIP_EXTRA_INDEX_URL",
+        "PIP_CONFIG_FILE",
+        "PIP_FIND_LINKS",
+        "PIP_TRUSTED_HOST",
+    ),
+)
+def test_ambient_pip_settings_fail_before_host_mutation(
+    tmp_path: Path,
+    setting: str,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, _ = _source_repository(source_repo)
+    deploy, controls = _deploy_fixture(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo)
+    env[setting] = "poisoned"
+
+    result = _run([deploy, reviewed_commit], env=env)
+
+    assert result.returncode == 1
+    assert f"ambient pip setting is not allowed: {setting}" in result.stderr
+    assert not app_root.exists()
+
+
+def test_dependency_install_failure_preserves_operational_state(
+    tmp_path: Path,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    deploy, controls = _deploy_fixture(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo)
+
+    first = _run([deploy, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    before = _operational_snapshot(app_root)
+    (controls / "pip-install.exit").write_text("23\n", encoding="ascii")
+
+    result = _run([deploy, head_commit], env=env)
+
+    assert result.returncode == 23
+    assert _operational_snapshot(app_root) == before
+    assert "Switching current symlink" not in result.stdout
+
+
+@pytest.mark.parametrize("stage", ("pip", "pytest"))
+def test_temporary_lock_replacement_cannot_publish_a_candidate(
+    tmp_path: Path,
+    stage: str,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    deploy, controls = _deploy_fixture(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo)
+
+    first = _run([deploy, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    before = _operational_snapshot(app_root)
+    (controls / f"swap-lock-during-{stage}").touch()
+
+    result = _run([deploy, head_commit], env=env)
+
+    assert result.returncode == 1
+    assert "lock" in result.stderr
+    assert "changed" in result.stderr
+    assert _operational_snapshot(app_root) == before
+    assert "Switching current symlink" not in result.stdout
+    published = [
+        path
+        for path in (app_root / "releases").iterdir()
+        if (path / ".hub-deployment" / "RELEASE_STATE").is_file()
+        and _state(path / ".hub-deployment" / "RELEASE_STATE").get("commit")
+        == head_commit
+    ]
+    assert published == []
 
 
 def test_deploy_requires_explicit_ref_and_hub_ops_forwards_it(

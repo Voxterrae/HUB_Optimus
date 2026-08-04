@@ -4,9 +4,11 @@ set -euo pipefail
 APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 REPO_URL="${HUB_OPTIMUS_REPO_URL:-https://github.com/Voxterrae/HUB_Optimus.git}"
 DEPLOY_REF="${1:-}"
-VALIDATION_COMMAND_TEXT="python -m pytest -q"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 STATE_VALIDATOR="$SCRIPT_DIR/validate-release-state.sh"
+DEPENDENCY_LOCK_TOOL="$SCRIPT_DIR/dependency-lock-digest.sh"
+DEPENDENCY_INVENTORY_TOOL="$SCRIPT_DIR/verify-installed-dependencies.py"
+SYSTEM_PYTHON="/usr/bin/python3"
 
 usage() {
   cat <<USAGE
@@ -25,12 +27,35 @@ fail() {
   exit 1
 }
 
+reject_ambient_pip_environment() {
+  local name
+
+  while IFS= read -r name; do
+    case "$name" in
+      PIP_*) fail "ambient pip setting is not allowed: $name" ;;
+    esac
+  done < <(compgen -e)
+}
+
+dependency_lock_digest() {
+  local release_path="$1"
+  local digest
+
+  [ -f "$DEPENDENCY_LOCK_TOOL" ] && [ ! -L "$DEPENDENCY_LOCK_TOOL" ] \
+    || fail "Dependency-lock validator is not one regular file: $DEPENDENCY_LOCK_TOOL"
+  digest="$(/bin/bash "$DEPENDENCY_LOCK_TOOL" "$release_path")" \
+    || fail "Dependency lock validation failed for $release_path"
+  [[ "$digest" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "Dependency-lock validator returned an invalid digest."
+  printf '%s\n' "$digest"
+}
+
 validate_release_state_schema() {
   local state_file="$1"
 
   [ -f "$STATE_VALIDATOR" ] && [ ! -L "$STATE_VALIDATOR" ] \
     || fail "Release-state validator is not one regular file: $STATE_VALIDATOR"
-  bash "$STATE_VALIDATOR" "$state_file" >/dev/null \
+  /bin/bash "$STATE_VALIDATOR" "$state_file" >/dev/null \
     || fail "Complete release-state validation failed: $state_file"
 }
 
@@ -339,6 +364,21 @@ else
   FETCH_REF="refs/tags/$DEPLOY_REF"
 fi
 
+reject_ambient_pip_environment
+
+"$SYSTEM_PYTHON" -I - <<'PY_DEPLOY_ABI' \
+  || fail "EC2 dependency lock requires CPython 3.12 on Linux x86_64."
+import platform
+import sys
+
+if sys.implementation.name != "cpython":
+    raise SystemExit(1)
+if sys.version_info[:2] != (3, 12):
+    raise SystemExit(1)
+if sys.platform != "linux" or platform.machine() != "x86_64":
+    raise SystemExit(1)
+PY_DEPLOY_ABI
+
 echo "[deploy] Starting HUB_Optimus deploy"
 echo "[deploy] Requested $REF_KIND: $DEPLOY_REF"
 
@@ -380,33 +420,81 @@ CANDIDATE_LAUNCHER_SHA256="$(
 )"
 echo "[deploy] Candidate launcher SHA-256: $CANDIDATE_LAUNCHER_SHA256"
 
+echo "[deploy] Validating reviewed dependency locks"
+DEPENDENCY_LOCK_SHA256="$(dependency_lock_digest "$RELEASE_DIR")"
+DEPENDENCY_LOCK_PATH="$RELEASE_DIR/ops/ec2/requirements-validation.lock"
+echo "[deploy] Dependency-lock SHA-256: $DEPENDENCY_LOCK_SHA256"
+
 echo "[deploy] Creating venv"
 cd "$RELEASE_DIR"
-python3 -m venv .venv
-source .venv/bin/activate
+"$SYSTEM_PYTHON" -I -m venv .venv
+VENV_PYTHON="$RELEASE_DIR/.venv/bin/python"
+[ -x "$VENV_PYTHON" ] \
+  || fail "Virtual-environment Python is not executable."
+[ -f "$DEPENDENCY_INVENTORY_TOOL" ] && [ ! -L "$DEPENDENCY_INVENTORY_TOOL" ] \
+  || fail "Dependency-inventory verifier is not one regular file: $DEPENDENCY_INVENTORY_TOOL"
 
-echo "[deploy] Installing dependencies"
-python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
+printf -v VALIDATION_COMMAND_TEXT \
+  '/usr/bin/env -i HOME=%q LANG=C.UTF-8 PATH=/usr/bin:/bin PYTHONNOUSERSITE=1 %q -m pytest -q' \
+  "$RELEASE_DIR" \
+  "$VENV_PYTHON"
+
+echo "[deploy] Installing from one sealed, hash-locked dependency snapshot"
+DEPENDENCY_CAPTURE_TOKEN="$(
+  /usr/bin/env -i \
+    HOME="$RELEASE_DIR" \
+    LANG=C.UTF-8 \
+    PATH=/usr/bin:/bin \
+    PYTHONNOUSERSITE=1 \
+    "$SYSTEM_PYTHON" -I \
+      "$DEPENDENCY_INVENTORY_TOOL" \
+      install \
+      "$RELEASE_DIR" \
+      "$SYSTEM_PYTHON" \
+      "$DEPENDENCY_LOCK_SHA256"
+)"
+[[ "$DEPENDENCY_CAPTURE_TOKEN" =~ ^[0-9a-f]{64}$ ]] \
+  || fail "Dependency installer returned an invalid snapshot token."
 
 mkdir -p "$DEPLOYMENT_DIR"
 chmod 0700 "$DEPLOYMENT_DIR"
 
 echo "[deploy] Running validation: $VALIDATION_COMMAND_TEXT"
 set +e
-python -m pytest -q 2>&1 | tee "$VALIDATION_LOG"
+/usr/bin/env -i \
+  HOME="$RELEASE_DIR" \
+  LANG=C.UTF-8 \
+  PATH=/usr/bin:/bin \
+  PYTHONNOUSERSITE=1 \
+  "$VENV_PYTHON" -m pytest -q 2>&1 | tee "$VALIDATION_LOG"
 VALIDATION_PIPE_STATUS=("${PIPESTATUS[@]}")
 set -e
 VALIDATION_EXIT_CODE="${VALIDATION_PIPE_STATUS[0]}"
 VALIDATION_LOG_EXIT_CODE="${VALIDATION_PIPE_STATUS[1]}"
-
-deactivate
 
 VALIDATION_RESULT="$(
   awk 'NF { result=$0 } END { print result == "" ? "no output" : result }' \
     "$VALIDATION_LOG"
 )"
 VALIDATION_LOG_SHA256="$(sha256_file "$VALIDATION_LOG")"
+[ "$(dependency_lock_digest "$RELEASE_DIR")" = "$DEPENDENCY_LOCK_SHA256" ] \
+  || fail "dependency locks changed during installation or validation."
+DEPENDENCY_INVENTORY_AFTER="$(
+  /usr/bin/env -i \
+    HOME="$RELEASE_DIR" \
+    LANG=C.UTF-8 \
+    PATH=/usr/bin:/bin \
+    PYTHONNOUSERSITE=1 \
+    "$VENV_PYTHON" -I \
+      "$DEPENDENCY_INVENTORY_TOOL" \
+      verify \
+      "$RELEASE_DIR" \
+      "$SYSTEM_PYTHON" \
+      "$DEPENDENCY_LOCK_SHA256" \
+      "$DEPENDENCY_CAPTURE_TOKEN"
+)" || fail "Installed dependencies changed during validation."
+[ -n "$DEPENDENCY_INVENTORY_AFTER" ] \
+  || fail "Installed dependency inventory evidence is empty."
 
 if [ "$VALIDATION_EXIT_CODE" -eq 0 ] \
   && [ "$VALIDATION_LOG_EXIT_CODE" -eq 0 ]; then
@@ -428,6 +516,9 @@ validation_result=$VALIDATION_RESULT
 validation_log=$VALIDATION_LOG
 validation_log_exit_code=$VALIDATION_LOG_EXIT_CODE
 validation_log_sha256=$VALIDATION_LOG_SHA256
+dependency_tier=runtime+validation-v1
+dependency_lock=$DEPENDENCY_LOCK_PATH
+dependency_lock_sha256=$DEPENDENCY_LOCK_SHA256
 launcher_sha256=$CANDIDATE_LAUNCHER_SHA256
 status=$RELEASE_STATUS
 STATE

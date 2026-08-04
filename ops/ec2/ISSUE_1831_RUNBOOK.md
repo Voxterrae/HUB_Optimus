@@ -159,6 +159,9 @@ required_keys = {
     "validation_log",
     "validation_log_exit_code",
     "validation_log_sha256",
+    "dependency_tier",
+    "dependency_lock",
+    "dependency_lock_sha256",
     "launcher_sha256",
     "status",
 }
@@ -171,6 +174,34 @@ def require_regular(path, *, executable=False, mode=None):
         raise SystemExit(f"not executable: {path}")
     if mode is not None and actual_mode != mode:
         raise SystemExit(f"unexpected mode for {path}: {actual_mode:o}")
+
+def read_stable_regular(path, *, mode):
+    flags = os.O_RDONLY | os.O_CLOEXEC
+    if not hasattr(os, "O_NOFOLLOW"):
+        raise SystemExit("O_NOFOLLOW is unavailable for dependency-lock attestation")
+    descriptor = os.open(path, flags | os.O_NOFOLLOW)
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+            raise SystemExit(f"not one regular single-link file: {path}")
+        if stat.S_IMODE(before.st_mode) != mode:
+            raise SystemExit(f"unexpected mode for {path}: {stat.S_IMODE(before.st_mode):o}")
+        chunks = []
+        while True:
+            chunk = os.read(descriptor, 1024 * 1024)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        after = os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
+    fields = ("st_dev", "st_ino", "st_mode", "st_nlink", "st_size", "st_mtime_ns", "st_ctime_ns")
+    visible = os.stat(path, follow_symlinks=False)
+    if any(getattr(before, field) != getattr(after, field) for field in fields):
+        raise SystemExit(f"regular file changed while it was read: {path}")
+    if any(getattr(after, field) != getattr(visible, field) for field in fields):
+        raise SystemExit(f"regular file path changed while it was read: {path}")
+    return b"".join(chunks)
 
 def read_canonical_validation_log(path, *, mode):
     flags = os.O_RDONLY | os.O_CLOEXEC
@@ -289,7 +320,11 @@ if not re.fullmatch(
     state["validated_at_utc"],
 ):
     raise SystemExit("release-state validation timestamp is invalid")
-if state["validation_command"] != "python -m pytest -q":
+expected_validation_command = (
+    f"/usr/bin/env -i HOME={deployed} LANG=C.UTF-8 PATH=/usr/bin:/bin "
+    f"PYTHONNOUSERSITE=1 {deployed}/.venv/bin/python -m pytest -q"
+)
+if state["validation_command"] != expected_validation_command:
     raise SystemExit("release-state validation command differs")
 if state["validation_exit_code"] != "0" or state["validation_log_exit_code"] != "0":
     raise SystemExit("candidate validation did not pass")
@@ -312,6 +347,24 @@ if not validation_result_lines:
     raise SystemExit("validation log has no non-empty result line")
 if validation_result_lines[-1] != state["validation_result"]:
     raise SystemExit("validation result does not match the validation log")
+if state["dependency_tier"] != "runtime+validation-v1":
+    raise SystemExit("release state has the wrong dependency tier")
+expected_dependency_lock = deployed / "ops" / "ec2" / "requirements-validation.lock"
+if state["dependency_lock"] != str(expected_dependency_lock):
+    raise SystemExit("release state has the wrong dependency-lock path")
+dependency_digest = hashlib.sha256()
+for relative in (
+    "ops/ec2/requirements-runtime.lock",
+    "ops/ec2/requirements-validation.lock",
+):
+    raw = read_stable_regular(deployed / relative, mode=0o644)
+    relative_raw = relative.encode("ascii")
+    dependency_digest.update(len(relative_raw).to_bytes(4, "big"))
+    dependency_digest.update(relative_raw)
+    dependency_digest.update(len(raw).to_bytes(8, "big"))
+    dependency_digest.update(raw)
+if state["dependency_lock_sha256"] != dependency_digest.hexdigest():
+    raise SystemExit("dependency locks do not match RELEASE_STATE")
 if not re.fullmatch(r"[0-9a-f]{64}", state["launcher_sha256"]):
     raise SystemExit("launcher identity is missing")
 if state["status"] != "production-candidate-core":
@@ -337,6 +390,7 @@ if current_marker.read_bytes() != f"{deployed.name}\n".encode():
 
 print(json.dumps({
     "commit": state["commit"],
+    "dependency_lock_sha256": state["dependency_lock_sha256"],
     "launcher_sha256": state["launcher_sha256"],
     "path": state["path"],
     "release": state["release"],
@@ -356,7 +410,8 @@ EXPECTED_LAUNCHER_SHA256="$(
 The production release state is acceptable only while its mode-`0600`,
 canonical UTF-8/LF validation log can be read from one no-follow regular-file
 snapshot, still matches the recorded SHA-256, and has a final non-empty line
-equal to `validation_result`.
+equal to `validation_result`. Its reviewed runtime and validation locks must
+also reproduce the recorded combined digest.
 
 An internal failure after deployment mutation begins automatically restores the
 exact pre-deploy `current` symlink, shared launcher, shared release state,
