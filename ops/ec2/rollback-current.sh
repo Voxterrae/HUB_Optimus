@@ -4,10 +4,32 @@ set -euo pipefail
 APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 STATE_VALIDATOR="$SCRIPT_DIR/validate-release-state.sh"
+OPERATION_LOCK_TOOL="$SCRIPT_DIR/operation-lock.py"
+OPERATION_ENTRYPOINT="$SCRIPT_DIR/rollback-current.sh"
 
 fail() {
   echo "[rollback:error] $*" >&2
   exit 1
+}
+
+verify_or_acquire_operation_lock() {
+  [ -f "$OPERATION_LOCK_TOOL" ] && [ ! -L "$OPERATION_LOCK_TOOL" ] \
+    || fail "Operation-lock helper is not one regular file: $OPERATION_LOCK_TOOL"
+  if [ -z "${HUB_OPTIMUS_OPERATION_LOCK_FD:-}" ]; then
+    exec /usr/bin/python3 -I \
+      "$OPERATION_LOCK_TOOL" \
+      exec \
+      "$APP_ROOT" \
+      "$OPERATION_ENTRYPOINT" \
+      "$@"
+  fi
+  /usr/bin/python3 -I \
+    "$OPERATION_LOCK_TOOL" \
+    verify \
+    "$APP_ROOT" \
+    "$HUB_OPTIMUS_OPERATION_LOCK_FD" \
+    || fail "Inherited operation lock could not be verified."
+  unset HUB_OPTIMUS_OPERATION_LOCK_FD
 }
 
 validate_release_state_schema() {
@@ -188,8 +210,7 @@ case "$APP_ROOT" in
   *) fail "HUB_OPTIMUS_APP_ROOT must be an absolute path." ;;
 esac
 
-exec 9> "$APP_ROOT/shared/deploy.lock"
-flock -n 9 || fail "another deploy or rollback operation is active."
+verify_or_acquire_operation_lock "$@"
 
 if [ ! -L "$APP_ROOT/current" ]; then
   fail "Current symlink does not exist."

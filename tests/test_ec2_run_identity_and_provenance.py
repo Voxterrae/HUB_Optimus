@@ -671,6 +671,14 @@ def _deploy_env(
     app_root: Path,
     source_repo: Path,
 ) -> dict[str, str]:
+    shared = app_root / "shared"
+    shared.mkdir(parents=True, exist_ok=True)
+    app_root.chmod(0o755)
+    shared.chmod(0o755)
+    operation_lock = shared / "deploy.lock"
+    if not operation_lock.exists():
+        operation_lock.write_bytes(b"test-operation-lock-sentinel\n")
+        operation_lock.chmod(0o600)
     env = os.environ.copy()
     for name in tuple(env):
         if name.startswith("PIP_"):
@@ -1197,7 +1205,11 @@ def test_ambient_pip_settings_fail_before_host_mutation(
 
     assert result.returncode == 1
     assert f"ambient pip setting is not allowed: {setting}" in result.stderr
-    assert not app_root.exists()
+    assert (app_root / "shared" / "deploy.lock").read_bytes() == (
+        b"test-operation-lock-sentinel\n"
+    )
+    assert not (app_root / "releases").exists()
+    assert not (app_root / "current").exists()
 
 
 def test_dependency_install_failure_preserves_operational_state(
