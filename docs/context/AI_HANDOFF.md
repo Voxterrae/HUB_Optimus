@@ -118,6 +118,14 @@ These scripts remain a manually installed EC2 backend layer. Repository tests
 exercise their isolated contracts; only a reviewed deployment and runtime
 inspection can attest the state of a real EC2 host.
 
+Post-merge review of PR #1847 adds three fail-closed requirements before the
+blocked host operation in #1831 may resume: `/analyze` must execute `hub-core`
+from the configured application root, preflight must reject every malformed,
+duplicate, missing, or unsupported release-state field, and disk attestation
+must bind `validation_result` to the final non-empty line of the recorded
+validation log. AWS mutation remains blocked until the corrective PR is merged
+and #1831 is repinned to that exact reviewed `main` SHA.
+
 Issue #1832 hardens that boundary before the blocked host operation in #1831:
 
 - the confirmed legacy current release has a separate, explicit adoption

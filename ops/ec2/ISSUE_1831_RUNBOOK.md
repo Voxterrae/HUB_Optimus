@@ -231,6 +231,20 @@ expected_validation_log = deployed / ".hub-deployment" / "validation.log"
 if state["validation_log"] != str(expected_validation_log):
     raise SystemExit("release-state validation log path differs")
 require_regular(expected_validation_log, mode=0o600)
+try:
+    validation_lines = expected_validation_log.read_text(
+        encoding="utf-8"
+    ).splitlines()
+except UnicodeDecodeError as exc:
+    raise SystemExit("validation log is not UTF-8") from exc
+actual_validation_result = next(
+    (line for line in reversed(validation_lines) if line.strip()),
+    None,
+)
+if actual_validation_result is None:
+    raise SystemExit("validation log has no non-empty result line")
+if state["validation_result"] != actual_validation_result:
+    raise SystemExit("validation result does not match validation log")
 if not re.fullmatch(r"[0-9a-f]{64}", state["launcher_sha256"]):
     raise SystemExit("launcher identity is missing")
 if state["status"] != "production-candidate-core":

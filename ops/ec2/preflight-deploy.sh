@@ -28,6 +28,138 @@ required_state_value() {
   sed -n "s/^${key}=//p" "$state_file"
 }
 
+validate_exact_state_keys() {
+  local state_file="$1"
+  shift
+  local allowed=" $* "
+  local line
+  local key
+  local expected_count="$#"
+  local actual_count=0
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    actual_count=$((actual_count + 1))
+    [[ "$line" == *=* ]] \
+      || fail "$state_file contains a malformed state line."
+    key="${line%%=*}"
+    case "$allowed" in
+      *" $key "*) ;;
+      *) fail "$state_file contains an unsupported field: $key" ;;
+    esac
+  done < "$state_file"
+
+  for key in "$@"; do
+    required_state_value "$state_file" "$key" >/dev/null
+  done
+  [ "$actual_count" -eq "$expected_count" ] \
+    || fail "$state_file does not contain the exact expected field set."
+}
+
+validate_release_state_schema() {
+  local state_file="$1"
+  local requested_ref_kind
+  local provenance_count
+  local legacy_commit_prefix
+  local legacy_state_sha256
+  local recorded_commit
+
+  requested_ref_kind="$(
+    required_state_value "$state_file" "requested_ref_kind"
+  )"
+  case "$requested_ref_kind" in
+    commit|tag)
+      provenance_count="$(
+        grep -c '^provenance=' "$state_file" 2>/dev/null || true
+      )"
+      case "$provenance_count" in
+        0)
+          validate_exact_state_keys \
+            "$state_file" \
+            release requested_ref requested_ref_kind commit path \
+            validated_at_utc validation_command validation_exit_code \
+            validation_result validation_log validation_log_exit_code \
+            launcher_sha256 status
+          ;;
+        1)
+          [ "$(required_state_value "$state_file" "provenance")" \
+            = "adopted-pre-1832" ] \
+            || fail "$state_file has unsupported transitional provenance."
+          validate_exact_state_keys \
+            "$state_file" \
+            release requested_ref requested_ref_kind commit path \
+            validated_at_utc validation_command validation_exit_code \
+            validation_result validation_log validation_log_exit_code \
+            launcher_sha256 status provenance
+          ;;
+        *)
+          fail "$state_file contains duplicate provenance fields."
+          ;;
+      esac
+      ;;
+    legacy-host-adoption)
+      validate_exact_state_keys \
+        "$state_file" \
+        release requested_ref requested_ref_kind commit path adopted_at_utc \
+        validation_command validation_exit_code validation_result validation_log \
+        validation_log_exit_code launcher_sha256 status provenance \
+        legacy_state_sha256 legacy_commit_prefix
+      ;;
+    *)
+      fail "$state_file has an unsupported requested_ref_kind."
+      ;;
+  esac
+
+  case "$requested_ref_kind" in
+    commit|tag)
+      [ "$(required_state_value "$state_file" "validation_command")" \
+        = "python -m pytest -q" ] \
+        || fail "$state_file has an unexpected validation command."
+      [ "$(required_state_value "$state_file" "validation_exit_code")" = "0" ] \
+        && [ "$(required_state_value "$state_file" "validation_log_exit_code")" = "0" ] \
+        || fail "$state_file does not record successful validation."
+      [ -n "$(required_state_value "$state_file" "validation_result")" ] \
+        || fail "$state_file has an empty validation result."
+      [ "$(required_state_value "$state_file" "status")" \
+        = "production-candidate-core" ] \
+        || fail "$state_file is not a production candidate."
+      ;;
+    legacy-host-adoption)
+      recorded_commit="$(required_state_value "$state_file" "commit")"
+      legacy_commit_prefix="$(
+        required_state_value "$state_file" "legacy_commit_prefix"
+      )"
+      legacy_state_sha256="$(
+        required_state_value "$state_file" "legacy_state_sha256"
+      )"
+      [ "$(required_state_value "$state_file" "requested_ref")" \
+        = "$recorded_commit" ] \
+        || fail "$state_file legacy adoption is not commit-bound."
+      [ "$(required_state_value "$state_file" "validation_command")" \
+        = "not-run-during-legacy-adoption" ] \
+        && [ "$(required_state_value "$state_file" "validation_exit_code")" \
+          = "not-run" ] \
+        && [ "$(required_state_value "$state_file" "validation_log")" \
+          = "not-applicable" ] \
+        && [ "$(required_state_value "$state_file" "validation_log_exit_code")" \
+          = "not-run" ] \
+        || fail "$state_file has invalid legacy-adoption validation metadata."
+      [ "$(required_state_value "$state_file" "status")" \
+        = "adopted-legacy-current" ] \
+        && [ "$(required_state_value "$state_file" "provenance")" \
+          = "adopted-legacy-current-v1" ] \
+        || fail "$state_file has invalid legacy-adoption provenance."
+      [[ "$legacy_state_sha256" =~ ^[0-9a-f]{64}$ ]] \
+        || fail "$state_file has an invalid legacy-state SHA-256."
+      [[ "$legacy_commit_prefix" =~ ^[0-9a-f]{7,39}$ ]] \
+        || fail "$state_file has an invalid legacy commit prefix."
+      case "$recorded_commit" in
+        "$legacy_commit_prefix"*) ;;
+        *) fail "$state_file legacy commit prefix does not match commit." ;;
+      esac
+      ;;
+  esac
+}
+
 sha256_file() {
   local path="$1"
   local digest
@@ -83,6 +215,7 @@ validate_release() {
 
   [ -f "$state_file" ] && [ ! -L "$state_file" ] \
     || fail "Release state is not one regular file: $state_file"
+  validate_release_state_schema "$state_file"
 
   IFS=$'\t' read -r actual_commit actual_launcher_sha256 < <(
     inspect_release_directory "$release_path"

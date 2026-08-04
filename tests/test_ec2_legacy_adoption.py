@@ -280,6 +280,68 @@ def test_preflight_inventories_unattested_historical_pointer(
 
 
 @pytest.mark.parametrize(
+    "corruption, expected_error",
+    (
+        ("status=duplicate", "exactly one status field"),
+        ("malformed-state-line", "contains a malformed state line"),
+    ),
+)
+def test_preflight_rejects_matching_malformed_release_states(
+    tmp_path: Path,
+    corruption: str,
+    expected_error: str,
+) -> None:
+    app_root, release, commit, env = _legacy_environment(tmp_path)
+    adopted = _run([ADOPT, commit], env=env)
+    assert adopted.returncode == 0, adopted.stderr
+
+    release_state = release / ".hub-deployment" / "RELEASE_STATE"
+    shared_state = app_root / "shared" / "RELEASE_STATE"
+    corrupted = release_state.read_text(encoding="utf-8") + f"{corruption}\n"
+    release_state.write_text(corrupted, encoding="utf-8")
+    shared_state.write_text(corrupted, encoding="utf-8")
+
+    fake_bin = tmp_path / "preflight-schema-bin"
+    fake_bin.mkdir()
+    for command_name in ("sudo", "systemctl"):
+        _write_executable(fake_bin / command_name, "#!/usr/bin/env bash\nexit 0\n")
+    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+
+    result = _run([PREFLIGHT, "f" * 40, "https://example.com/article"], env=env)
+
+    assert result.returncode == 1
+    assert expected_error in result.stderr
+
+
+def test_preflight_rejects_forged_legacy_adoption_provenance(
+    tmp_path: Path,
+) -> None:
+    app_root, release, commit, env = _legacy_environment(tmp_path)
+    adopted = _run([ADOPT, commit], env=env)
+    assert adopted.returncode == 0, adopted.stderr
+
+    release_state = release / ".hub-deployment" / "RELEASE_STATE"
+    shared_state = app_root / "shared" / "RELEASE_STATE"
+    forged = release_state.read_text(encoding="utf-8").replace(
+        "provenance=adopted-legacy-current-v1",
+        "provenance=forged-but-schema-valid",
+    )
+    release_state.write_text(forged, encoding="utf-8")
+    shared_state.write_text(forged, encoding="utf-8")
+
+    fake_bin = tmp_path / "preflight-provenance-bin"
+    fake_bin.mkdir()
+    for command_name in ("sudo", "systemctl"):
+        _write_executable(fake_bin / command_name, "#!/usr/bin/env bash\nexit 0\n")
+    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+
+    result = _run([PREFLIGHT, "f" * 40, "https://example.com/article"], env=env)
+
+    assert result.returncode == 1
+    assert "invalid legacy-adoption provenance" in result.stderr
+
+
+@pytest.mark.parametrize(
     "stage",
     (
         "git-exclude",

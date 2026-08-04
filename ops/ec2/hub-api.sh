@@ -1544,7 +1544,7 @@ class Handler(BaseHTTPRequestHandler):
         cleanup_error: OSError | None = None
         try:
             code, stdout, stderr = run_command([
-                "/opt/hub-optimus/shared/bin/hub-core",
+                str(SHARED / "bin" / "hub-core"),
                 "analyze",
                 str(case_path),
             ])

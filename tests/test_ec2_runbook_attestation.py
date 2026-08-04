@@ -66,7 +66,7 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
 
     deployment_dir = release / ".hub-deployment"
     validation_log = deployment_dir / "validation.log"
-    _write_bytes(validation_log, b"692 passed\n", 0o600)
+    _write_bytes(validation_log, b"692 passed in 30.45s\n", 0o600)
     fields = {
         "release": release.name,
         "requested_ref": commit,
@@ -130,6 +130,8 @@ def test_post_deploy_disk_attestation_accepts_exact_release(tmp_path: Path) -> N
         ("extra-field", "exact field set"),
         ("release", "wrong release name"),
         ("path", "wrong release path"),
+        ("validation-log-empty", "no non-empty result line"),
+        ("validation-log-drift", "validation result does not match validation log"),
         ("state-launcher", "launcher hashes do not match"),
         ("versioned-launcher", "shared and versioned launchers differ"),
         ("shared-launcher", "shared and versioned launchers differ"),
@@ -181,6 +183,12 @@ def test_post_deploy_disk_attestation_rejects_every_identity_drift(
                 b"path=/tmp/wrong\n",
             ),
         )
+    elif invalid_case == "validation-log-empty":
+        validation_log = Path(fixture["release"]) / ".hub-deployment" / "validation.log"
+        validation_log.write_text("\n \n", encoding="utf-8")
+    elif invalid_case == "validation-log-drift":
+        validation_log = Path(fixture["release"]) / ".hub-deployment" / "validation.log"
+        validation_log.write_text("691 passed in 30.45s\n", encoding="utf-8")
     elif invalid_case == "state-launcher":
         _replace_state_pair(
             release_state,
@@ -501,6 +509,9 @@ def test_runbook_and_preflight_inventory_include_all_mutating_tools() -> None:
     preflight = (ROOT / "ops" / "ec2" / "preflight-deploy.sh").read_text(
         encoding="utf-8"
     )
+    command_inventory = preflight.split("for command_name in", 1)[1].split(
+        "; do", 1
+    )[0]
     for command in (
         "basename",
         "chmod",
@@ -520,4 +531,4 @@ def test_runbook_and_preflight_inventory_include_all_mutating_tools() -> None:
         "tr",
     ):
         assert command in runbook.split(")", 1)[0]
-        assert command in preflight.split("; do", 1)[0]
+        assert command in command_inventory
