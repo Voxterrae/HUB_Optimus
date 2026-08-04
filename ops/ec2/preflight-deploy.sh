@@ -5,6 +5,8 @@ APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 REPO_URL="${HUB_OPTIMUS_REPO_URL:-https://github.com/Voxterrae/HUB_Optimus.git}"
 TARGET_SHA="${1:-}"
 REFERENCE_URL="${2:-}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+STATE_VALIDATOR="$SCRIPT_DIR/validate-release-state.sh"
 
 # Fail-closed floor for the reviewed t3.small deployment operation.
 MIN_DISK_KIB=3145728
@@ -15,6 +17,15 @@ MAX_LOAD_1M=2.00
 fail() {
   echo "[preflight:error] $*" >&2
   exit 1
+}
+
+validate_release_state_schema() {
+  local state_file="$1"
+
+  [ -f "$STATE_VALIDATOR" ] && [ ! -L "$STATE_VALIDATOR" ] \
+    || fail "Release-state validator is not one regular file: $STATE_VALIDATOR"
+  bash "$STATE_VALIDATOR" "$state_file" >/dev/null \
+    || fail "Complete release-state validation failed: $state_file"
 }
 
 required_state_value() {
@@ -83,6 +94,7 @@ validate_release() {
 
   [ -f "$state_file" ] && [ ! -L "$state_file" ] \
     || fail "Release state is not one regular file: $state_file"
+  validate_release_state_schema "$state_file"
 
   IFS=$'\t' read -r actual_commit actual_launcher_sha256 < <(
     inspect_release_directory "$release_path"

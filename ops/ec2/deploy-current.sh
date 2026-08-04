@@ -5,6 +5,8 @@ APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 REPO_URL="${HUB_OPTIMUS_REPO_URL:-https://github.com/Voxterrae/HUB_Optimus.git}"
 DEPLOY_REF="${1:-}"
 VALIDATION_COMMAND_TEXT="python -m pytest -q"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+STATE_VALIDATOR="$SCRIPT_DIR/validate-release-state.sh"
 
 usage() {
   cat <<USAGE
@@ -21,6 +23,15 @@ USAGE
 fail() {
   echo "[deploy:error] $*" >&2
   exit 1
+}
+
+validate_release_state_schema() {
+  local state_file="$1"
+
+  [ -f "$STATE_VALIDATOR" ] && [ ! -L "$STATE_VALIDATOR" ] \
+    || fail "Release-state validator is not one regular file: $STATE_VALIDATOR"
+  bash "$STATE_VALIDATOR" "$state_file" >/dev/null \
+    || fail "Complete release-state validation failed: $state_file"
 }
 
 sha256_file() {
@@ -64,8 +75,9 @@ validate_release_state() {
   local recorded_path
   local recorded_launcher_sha256
 
-  [ -f "$state_file" ] \
+  [ -f "$state_file" ] && [ ! -L "$state_file" ] \
     || fail "Rollback target has no deployment state: $state_file"
+  validate_release_state_schema "$state_file"
 
   recorded_release="$(required_state_value "$state_file" "release")"
   recorded_commit="$(required_state_value "$state_file" "commit")"
@@ -109,17 +121,26 @@ prepare_previous_release_state() {
     || fail "Rollback target has no hub-api launcher: $previous/ops/ec2/hub-api.sh"
   previous_launcher_sha256="$(sha256_file "$previous/ops/ec2/hub-api.sh")"
 
-  if [ -f "$previous_state" ]; then
+  [ -f "$shared_state" ] && [ ! -L "$shared_state" ] \
+    || fail "Shared rollback state is not one regular file: $shared_state"
+  validate_release_state \
+    "$previous" \
+    "$shared_state" \
+    "$previous_commit" \
+    "$previous_launcher_sha256"
+
+  if [ -e "$previous_state" ] || [ -L "$previous_state" ]; then
+    validate_release_state \
+      "$previous" \
+      "$previous_state" \
+      "$previous_commit" \
+      "$previous_launcher_sha256"
+    cmp -s "$previous_state" "$shared_state" \
+      || fail "Shared RELEASE_STATE differs from current per-release state."
     source_state="$previous_state"
   else
     source_state="$shared_state"
   fi
-
-  validate_release_state \
-    "$previous" \
-    "$source_state" \
-    "$previous_commit" \
-    "$previous_launcher_sha256"
 
   PREVIOUS_STATE_PATH="$previous_state"
   recorded_launcher_sha256="$(
@@ -142,6 +163,7 @@ prepare_previous_release_state() {
       >> "$PREVIOUS_STATE_INSTALL_SOURCE"
   fi
   chmod 0600 "$PREVIOUS_STATE_INSTALL_SOURCE"
+  validate_release_state_schema "$PREVIOUS_STATE_INSTALL_SOURCE"
 }
 
 snapshot_item() {
@@ -422,6 +444,8 @@ fi
 if [ "$VALIDATION_EXIT_CODE" -ne 0 ]; then
   fail "validation failed (exit $VALIDATION_EXIT_CODE): $VALIDATION_RESULT"
 fi
+
+validate_release_state_schema "$DEPLOYMENT_STATE"
 
 PREVIOUS=""
 if [ -L "$APP_ROOT/current" ]; then
