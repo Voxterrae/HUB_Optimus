@@ -71,6 +71,8 @@ def test_runbook_retains_reviewed_tools_and_uses_allowlisted_evidence() -> None:
     assert 'if versioned_launcher_raw != shared_launcher_raw:' in text
     assert 'state["validation_log_sha256"] != validation_log_sha256' in text
     assert 'validation_result_lines[-1] != state["validation_result"]' in text
+    assert 'state["dependency_tier"] != "runtime+validation-v1"' in text
+    assert 'state["dependency_lock_sha256"] != dependency_digest.hexdigest()' in text
     assert "flags |= os.O_NOFOLLOW" in text
     assert "opened = os.fstat(descriptor)" in text
     assert "visible = os.stat(path, follow_symlinks=False)" in text
@@ -91,6 +93,7 @@ def test_runbook_retains_reviewed_tools_and_uses_allowlisted_evidence() -> None:
     assert "PY_ROLLBACK_STATUS" in text
     assert '"to_launcher_sha256"' in text
     assert '"validation_log_sha256": state["validation_log_sha256"]' in text
+    assert '"dependency_lock_sha256": state["dependency_lock_sha256"]' in text
     assert 'evidence["running_commit"] != expected_commit' in text
 
 

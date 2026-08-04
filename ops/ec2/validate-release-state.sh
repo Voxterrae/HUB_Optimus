@@ -7,6 +7,8 @@ if [ "$#" -ne 1 ]; then
 fi
 
 STATE_FILE="$1"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+DEPENDENCY_LOCK_TOOL="$SCRIPT_DIR/dependency-lock-digest.sh"
 
 fail() {
   echo "[release-state:error] $*" >&2
@@ -105,11 +107,22 @@ validate_production() {
   local requested_ref
   local requested_ref_kind
   local digest_bound="no"
+  local dependency_bound="no"
   local validation_log
   local validation_log_sha256
+  local dependency_lock_sha256
+  local expected_validation_command
 
   if [ "$transitional" = "yes" ]; then
-    if [[ -n "${SEEN_STATE_KEYS[validation_log_sha256]+present}" ]]; then
+    if [[ -n "${SEEN_STATE_KEYS[dependency_lock_sha256]+present}" ]]; then
+      require_exact_keys \
+        release requested_ref requested_ref_kind commit path validated_at_utc \
+        validation_command validation_exit_code validation_result validation_log \
+        validation_log_exit_code validation_log_sha256 dependency_tier \
+        dependency_lock dependency_lock_sha256 launcher_sha256 status provenance
+      digest_bound="yes"
+      dependency_bound="yes"
+    elif [[ -n "${SEEN_STATE_KEYS[validation_log_sha256]+present}" ]]; then
       require_exact_keys \
         release requested_ref requested_ref_kind commit path validated_at_utc \
         validation_command validation_exit_code validation_result validation_log \
@@ -129,9 +142,11 @@ validate_production() {
     require_exact_keys \
       release requested_ref requested_ref_kind commit path validated_at_utc \
       validation_command validation_exit_code validation_result validation_log \
-      validation_log_exit_code validation_log_sha256 launcher_sha256 status
+      validation_log_exit_code validation_log_sha256 dependency_tier \
+      dependency_lock dependency_lock_sha256 launcher_sha256 status
     schema="production"
     digest_bound="yes"
+    dependency_bound="yes"
   fi
 
   require_common_identity
@@ -157,7 +172,15 @@ validate_production() {
   esac
   [[ "$(state_value validated_at_utc)" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]] \
     || fail "$STATE_FILE has an invalid validation timestamp."
-  [ "$(state_value validation_command)" = "python -m pytest -q" ] \
+  if [ "$dependency_bound" = "yes" ]; then
+    printf -v expected_validation_command \
+      '/usr/bin/env -i HOME=%q LANG=C.UTF-8 PATH=/usr/bin:/bin PYTHONNOUSERSITE=1 %q -m pytest -q' \
+      "$(state_value path)" \
+      "$(state_value path)/.venv/bin/python"
+  else
+    expected_validation_command="python -m pytest -q"
+  fi
+  [ "$(state_value validation_command)" = "$expected_validation_command" ] \
     || fail "$STATE_FILE has an unexpected validation command."
   [ "$(state_value validation_exit_code)" = "0" ] \
     && [ "$(state_value validation_log_exit_code)" = "0" ] \
@@ -264,6 +287,20 @@ try:
 finally:
     os.close(descriptor)
 PY_VALIDATION_LOG
+  fi
+
+  if [ "$dependency_bound" = "yes" ]; then
+    [ "$(state_value dependency_tier)" = "runtime+validation-v1" ] \
+      || fail "$STATE_FILE has an unsupported dependency tier."
+    [ "$(state_value dependency_lock)" = "$(state_value path)/ops/ec2/requirements-validation.lock" ] \
+      || fail "$STATE_FILE has the wrong dependency-lock path."
+    dependency_lock_sha256="$(state_value dependency_lock_sha256)"
+    [[ "$dependency_lock_sha256" =~ ^[0-9a-f]{64}$ ]] \
+      || fail "$STATE_FILE has no valid dependency-lock SHA-256."
+    [ -f "$DEPENDENCY_LOCK_TOOL" ] && [ ! -L "$DEPENDENCY_LOCK_TOOL" ] \
+      || fail "Dependency-lock validator is not one regular file: $DEPENDENCY_LOCK_TOOL"
+    [ "$(/bin/bash "$DEPENDENCY_LOCK_TOOL" "$(state_value path)")" = "$dependency_lock_sha256" ] \
+      || fail "$STATE_FILE dependency lock does not match its reviewed release."
   fi
 
   [[ "$(state_value launcher_sha256)" =~ ^[0-9a-f]{64}$ ]] \

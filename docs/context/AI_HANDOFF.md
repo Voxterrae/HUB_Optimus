@@ -131,6 +131,15 @@ Issue #1832 hardens that boundary before the blocked host operation in #1831:
 - every successful production state records the complete validation log's
   SHA-256 and must match that log's final non-empty line; preflight, deploy, and
   rollback reject truncated, replaced, or result-divergent evidence;
+- the retained EC2 environment is installed from explicit runtime and
+  validation locks for the reviewed Linux x86_64 CPython 3.12 ABI; ambient
+  `PIP_*` settings, mutable version ranges, unhashed artifacts, unexpected
+  transitive packages, and pip self-upgrade are rejected; the environment must
+  originate from `/usr/bin/python3`, the bootstrap installer is removed, and
+  pip consumes an immutable sealed `memfd` derived from the same no-follow lock
+  snapshot as the digest; path replacement/restoration is rejected, and the
+  exact installed inventory is revalidated after tests, while the combined lock
+  digest, tier, and path are recorded in production release state;
 - before mutation, deploy validates the managed rollback target's directory,
   full commit, release/path state, launcher presence, and launcher SHA-256;
 - replacement launcher, release state, current marker, and rollback pointer are
