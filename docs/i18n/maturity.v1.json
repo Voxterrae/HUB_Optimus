@@ -171,6 +171,7 @@
         "CUSTODIANSHIP.md",
         "EVALUATION_STANDARD.md",
         "EXTERNAL_AI_REVIEW_PROTOCOL.md",
+        "FOUNDER_OWNERSHIP_AND_AUTHORITY.md",
         "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md",
         "GOVERNANCE_INTELLIGENCE.md",
         "IP_NOTICE.md",
@@ -192,6 +193,7 @@
           "default": "review-needed",
           "overrides": {
             "EVALUATION_STANDARD.md": "stub",
+            "FOUNDER_OWNERSHIP_AND_AUTHORITY.md": "stub",
             "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md": "stub",
             "GOVERNANCE_INTELLIGENCE.md": "stub",
             "IP_NOTICE.md": "stub",
@@ -203,6 +205,7 @@
         "de": {
           "default": "review-needed",
           "overrides": {
+            "FOUNDER_OWNERSHIP_AND_AUTHORITY.md": "stub",
             "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md": "stub",
             "IP_NOTICE.md": "stub",
             "PROJECT_STEWARDSHIP.md": "stub",
@@ -216,6 +219,7 @@
             "CONSENSUS_PROCESS.md": "stub",
             "CUSTODIANSHIP.md": "stub",
             "EVALUATION_STANDARD.md": "stub",
+            "FOUNDER_OWNERSHIP_AND_AUTHORITY.md": "stub",
             "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md": "stub",
             "GOVERNANCE_INTELLIGENCE.md": "stub",
             "IP_NOTICE.md": "stub",
@@ -233,6 +237,7 @@
             "CONSENSUS_PROCESS.md": "stub",
             "CUSTODIANSHIP.md": "stub",
             "EVALUATION_STANDARD.md": "stub",
+            "FOUNDER_OWNERSHIP_AND_AUTHORITY.md": "stub",
             "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md": "stub",
             "GOVERNANCE_INTELLIGENCE.md": "stub",
             "IP_NOTICE.md": "stub",
@@ -250,6 +255,7 @@
             "CONSENSUS_PROCESS.md": "stub",
             "CUSTODIANSHIP.md": "stub",
             "EVALUATION_STANDARD.md": "stub",
+            "FOUNDER_OWNERSHIP_AND_AUTHORITY.md": "stub",
             "GITHUB_SETTINGS_PROTECTION_CHECKLIST.md": "stub",
             "GOVERNANCE_INTELLIGENCE.md": "stub",
             "IP_NOTICE.md": "stub",

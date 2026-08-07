@@ -1,7 +1,7 @@
 name: Founder Authority Guard
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, edited, ready_for_review]
   pull_request_review:
     types: [submitted, dismissed]
@@ -11,7 +11,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: founder-authority-${{ github.event.pull_request.number || github.ref }}
+  group: founder-authority-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -21,91 +21,141 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Checkout reviewed pull request
-        uses: actions/checkout@v4
+      - name: Checkout trusted base policy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 1
           persist-credentials: false
 
       - name: Collect immutable GitHub evidence
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const pull = context.payload.pull_request;
-            if (!pull) {
-              core.setFailed('pull_request payload is required');
-              return;
-            }
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
 
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const pull_number = pull.number;
+          import json
+          import os
+          import pathlib
+          import urllib.request
 
-            const files = await github.paginate(
-              github.rest.pulls.listFiles,
-              { owner, repo, pull_number, per_page: 100 }
-            );
-            const reviews = await github.paginate(
-              github.rest.pulls.listReviews,
-              { owner, repo, pull_number, per_page: 100 }
-            );
-            const commits = await github.paginate(
-              github.rest.pulls.listCommits,
-              { owner, repo, pull_number, per_page: 100 }
-            );
+          event_path = pathlib.Path(os.environ["GITHUB_EVENT_PATH"])
+          event = json.loads(event_path.read_text(encoding="utf-8"))
+          pull = event.get("pull_request")
+          repository = event.get("repository")
+          if not isinstance(pull, dict) or not isinstance(repository, dict):
+              raise SystemExit("pull_request and repository payloads are required")
 
-            const evidence = {
-              repository: {
-                full_name: context.payload.repository.full_name,
-                owner: {
-                  login: context.payload.repository.owner.login,
-                  id: context.payload.repository.owner.id
-                }
+          token = os.environ.get("GITHUB_TOKEN", "")
+          if not token:
+              raise SystemExit("GITHUB_TOKEN is required")
+
+          api_url = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
+          full_name = repository.get("full_name")
+          pull_number = pull.get("number")
+          if not isinstance(full_name, str) or not full_name:
+              raise SystemExit("repository.full_name is required")
+          if not isinstance(pull_number, int) or pull_number <= 0:
+              raise SystemExit("pull_request.number must be a positive integer")
+
+          def api_get(path: str):
+              request = urllib.request.Request(
+                  f"{api_url}/repos/{full_name}/{path}",
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.load(response)
+
+          def paginated(path: str) -> list[dict]:
+              result: list[dict] = []
+              page = 1
+              while True:
+                  separator = "&" if "?" in path else "?"
+                  batch = api_get(f"{path}{separator}per_page=100&page={page}")
+                  if not isinstance(batch, list):
+                      raise SystemExit(f"GitHub API path {path!r} did not return an array")
+                  result.extend(item for item in batch if isinstance(item, dict))
+                  if len(batch) < 100:
+                      return result
+                  page += 1
+
+          files = paginated(f"pulls/{pull_number}/files")
+          reviews = paginated(f"pulls/{pull_number}/reviews")
+          commits = paginated(f"pulls/{pull_number}/commits")
+
+          owner = repository.get("owner") or {}
+          author = pull.get("user") or {}
+          base = pull.get("base") or {}
+          head = pull.get("head") or {}
+
+          evidence = {
+              "repository": {
+                  "full_name": full_name,
+                  "id": repository.get("id"),
+                  "owner": {
+                      "login": owner.get("login"),
+                      "id": owner.get("id"),
+                  },
               },
-              pull_request: {
-                number: pull.number,
-                author: {
-                  login: pull.user.login,
-                  id: pull.user.id
-                },
-                body: pull.body || '',
-                head_sha: pull.head.sha,
-                head_ref: pull.head.ref,
-                base_ref: pull.base.ref
+              "pull_request": {
+                  "number": pull_number,
+                  "author": {
+                      "login": author.get("login"),
+                      "id": author.get("id"),
+                  },
+                  "body": pull.get("body") or "",
+                  "head_sha": head.get("sha"),
+                  "head_ref": head.get("ref"),
+                  "base_ref": base.get("ref"),
               },
-              changed_files: files.map(file => file.filename),
-              reviews: reviews.map(review => ({
-                user: review.user ? {
-                  login: review.user.login,
-                  id: review.user.id
-                } : null,
-                state: review.state,
-                commit_id: review.commit_id,
-                submitted_at: review.submitted_at
-              })),
-              commits: commits.map(item => ({
-                sha: item.sha,
-                verification: item.commit.verification || {
-                  verified: false,
-                  reason: 'missing_verification'
-                },
-                author: item.author ? {
-                  login: item.author.login,
-                  id: item.author.id
-                } : null,
-                committer: item.committer ? {
-                  login: item.committer.login,
-                  id: item.committer.id
-                } : null
-              }))
-            };
+              "changed_files": [item.get("filename") for item in files],
+              "reviews": [
+                  {
+                      "user": {
+                          "login": (item.get("user") or {}).get("login"),
+                          "id": (item.get("user") or {}).get("id"),
+                      },
+                      "state": item.get("state"),
+                      "commit_id": item.get("commit_id"),
+                      "submitted_at": item.get("submitted_at"),
+                  }
+                  for item in reviews
+              ],
+              "commits": [
+                  {
+                      "sha": item.get("sha"),
+                      "verification": (item.get("commit") or {}).get("verification")
+                      or {"verified": False, "reason": "missing_verification"},
+                      "author": {
+                          "login": (item.get("author") or {}).get("login"),
+                          "id": (item.get("author") or {}).get("id"),
+                      }
+                      if item.get("author")
+                      else None,
+                      "committer": {
+                          "login": (item.get("committer") or {}).get("login"),
+                          "id": (item.get("committer") or {}).get("id"),
+                      }
+                      if item.get("committer")
+                      else None,
+                  }
+                  for item in commits
+              ],
+          }
 
-            fs.writeFileSync(
-              'founder-authority-evidence.json',
-              JSON.stringify(evidence, null, 2) + '\n',
-              { encoding: 'utf8', mode: 0o600 }
-            );
+          output = pathlib.Path("founder-authority-evidence.json")
+          output.write_text(
+              json.dumps(evidence, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          output.chmod(0o600)
+          PY
 
       - name: Validate founder authority and anti-impersonation boundary
         run: |
