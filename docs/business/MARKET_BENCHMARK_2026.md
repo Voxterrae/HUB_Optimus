@@ -39,13 +39,13 @@ not priced like commodity self-service automation.
 | [Retool pricing](https://retool.com/pricing) | Business lists USD 50/builder/month and USD 15/internal user/month; embedded/external and enterprise pricing are custom | Embedded distribution and enterprise governance justify separate commercial rights |
 | [n8n pricing](https://n8n.io/pricing/) | Business publicly lists EUR 667/month for 40,000 executions; paid plans meter executions | Execution-based usage is a recognized automation metric |
 | [Zapier pricing](https://zapier.com/pricing) | Public plans meter tasks; Enterprise is custom | Task usage and enterprise governance are separated |
-| [Make pricing](https://www.make.com/en/pricing) | Uses credits; extra credits carry a 25% premium | Pre-committed consumption plus premium overage is market-consistent |
-| [Azure API Management](https://azure.microsoft.com/pricing/details/api-management/) | Tiers include request allowances, scale, SLA, network, and enterprise features | API price depends on volume, governance, isolation, and SLA—not requests alone |
+| [Make extra credits](https://help.make.com/extra-credits) | Uses credits; extra credits carry a 25% premium | Pre-committed consumption plus premium overage is market-consistent |
+| [Azure API Management](https://azure.microsoft.com/en-us/pricing/details/api-management/) | Tiers include request allowances, scale, SLA, network, and enterprise features | API price depends on volume, governance, isolation, and SLA—not requests alone |
 | [Stripe Billing](https://stripe.com/billing/pricing) | Usage-based billing supports flat fees, meters, tiers, thresholds, and overage; public PAYG fee is 0.7% of billing volume in cited EU pricing | Hybrid subscription plus usage is operationally standard |
 | [Microsoft Marketplace transaction model](https://learn.microsoft.com/en-us/partner-center/marketplace-offers/marketplace-commercial-transaction-capabilities-and-considerations) | Microsoft keeps a 3% standard store fee and supports flat, per-user, and usage SaaS structures | Marketplace prices must preserve the publisher's target net amount |
 | [Paddle pricing](https://www.paddle.com/pricing) | Merchant of Record standard public fee: 5% + 50 cents per checkout transaction | Outsourced billing/tax/compliance has a material channel cost |
 | [Lemon Squeezy pricing](https://www.lemonsqueezy.com/pricing) | Merchant of Record public fee: 5% + 50 cents; includes sales-tax/VAT handling | MoR convenience must be priced into subscriptions |
-| [Azure ProDirect](https://azure.microsoft.com/support/plans/prodirect) | USD 1,000/month for higher-touch Azure support | Premium support is not automatically included in product price |
+| [Azure ProDirect](https://azure.microsoft.com/en-us/support/plans/prodirect) | USD 1,000/month for higher-touch Azure support | Premium support is not automatically included in product price |
 | [AWS Support pricing](https://aws.amazon.com/premiumsupport/pricing/) | Enterprise minimum publicly shown at USD 5,000/month; Unified Operations USD 50,000/month in current pricing | Mission-critical support can carry six-figure annual minimums |
 | [Google Cloud Premium Support](https://cloud.google.com/support/premium) | Minimum USD 15,000/month or tiered percentage of cloud spend | Dedicated critical support is a strategic annual commitment |
 
@@ -89,11 +89,11 @@ forcing HUB_Optimus to build a global tax stack from day one.
 
 ## 5. EU and Spain operational context
 
-- The European Commission's [cross-border VAT guidance](https://europa.eu/youreurope/business/taxation/vat/cross-border-vat/index_en.htm)
+- The European Commission's [cross-border VAT guidance](https://europa.eu/youreurope/business/finance-and-tax/vat/cross-border-vat/index_en.htm)
   explains that EU B2B services commonly use reverse charge when the customer is
   the liable business, while services to customers outside the EU are usually not
   charged EU VAT subject to exceptions.
-- [VIES](https://europa.eu/youreurope/business/taxation/vat/check-vat-number-vies/index_en.htm)
+- [VIES](https://europa.eu/youreurope/business/finance-and-tax/vat/check-vat-number-vies/index_en.htm)
   is the official validation tool for cross-border EU VAT registration.
 - The EU [late-payment guidance](https://europa.eu/youreurope/business/finance-and-tax/making-receiving-payments/late-payment/index_en.htm)
   reports Spain's statutory commercial late-payment rate at 10.40% for
