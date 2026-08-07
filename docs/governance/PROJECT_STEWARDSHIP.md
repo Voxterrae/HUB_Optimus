@@ -2,107 +2,127 @@
 
 ## Purpose
 
-This document records the human authority, technical stewardship, and review
-roles of HUB_Optimus.
+This document records the human authority, contributor, advisory, and review
+boundaries of HUB_Optimus.
 
-It is an internal governance record. It does not replace external legal
-registrations, contracts, intellectual-property records, or identity documents.
-GitHub remains the operational source of truth for repository state, issues,
-pull requests, reviews, releases, settings, and versioned documentation.
+For founder identity, project ownership, constitutional authority, and change
+control, the controlling record is
+[`FOUNDER_OWNERSHIP_AND_AUTHORITY.md`](FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
 
-## Foundational Principle
+This is a repository governance record. It does not replace external legal
+registrations, contracts, intellectual-property records, qualified electronic
+signatures, or identity documents.
+
+## Foundational principle
 
 > Technology amplifies human judgment; it never replaces human responsibility.
 
-HUB_Optimus is human-governed and AI-assisted. Trust between human stewards does
-not remove traceability, review, or accountability. It makes those controls more
-meaningful.
+HUB_Optimus is human-governed and AI-assisted. Traceability, review, and
+accountability remain mandatory.
 
-## Creator, Project Owner, and Primary Human Steward
+## Founder, architect, creator, project owner, and final human authority
 
-**Benjamin Gerrit Hoff** is the creator, project owner, and primary human
-steward of HUB_Optimus.
+**Benjamin Gerrit Hoff** is the founder, architect, creator, project owner, and
+final human authority of HUB_Optimus.
 
-He is the human origin and final-accountability layer of the project. His
-responsibilities include:
+He is the human origin, purpose, ownership, and final-accountability layer of the
+project. Only he may authorize changes to:
 
-- defining the project's purpose and long-term direction;
-- holding final human accountability for constitutional governance;
-- approving changes to ownership, protected authority, and core architecture;
-- preserving the boundary between human judgment and machine assistance;
-- ensuring that repository decisions remain visible and traceable through
-  GitHub.
+- founder identity and project ownership;
+- the definition of HUB_Optimus as the parent tool/platform;
+- constitutional governance and final authority;
+- protected repository authority and administration;
+- licensing posture, control, assignment, co-ownership, or exclusive rights;
+- a joint venture or other transfer of economic or governance participation.
 
-AI systems may assist with analysis, drafting, implementation, and review. They
-do not own HUB_Optimus and cannot replace its human accountability layer.
+## Repository identity
 
-## Repository Identity and Administration
+`@Voxterrae`, immutable GitHub user ID `249308740`, is the repository identity
+used to administer HUB_Optimus under the authority of Benjamin Gerrit Hoff.
 
-`@Voxterrae` is the GitHub repository identity through which HUB_Optimus is
-administered.
+The account is not a separate project owner, legal person, or autonomous
+governance actor. A similar username, display name, email address, or claimed
+identity is insufficient.
 
-The account represents repository administration under the authority of
-Benjamin Gerrit Hoff. It is not a separate project owner or an autonomous
-governance actor.
+## HUB_Optimus as the parent creation tool
 
-## Core Technical Steward
+HUB_Optimus is the foundational tool and technological parent platform through
+which Benjamin Gerrit Hoff designs, builds, governs, and develops LCDH-OS,
+Operator, Control Plane, connectors, decision-intelligence systems, and future
+solutions.
 
-**Rodrigo / `@itteamrod`** is the Core Technical Steward of HUB_Optimus.
+A customer, user company, collaborator, contributor, employee, contractor, or
+service provider does not acquire ownership or constitutional authority over
+HUB_Optimus merely because a system is built for or with them.
 
-This role reflects full human trust in Rodrigo's technical judgment and his
-responsibility for protecting the quality, coherence, and maintainability of
-the implementation.
+## Contributors, advisers, and technical specialists
 
-Core Technical Steward responsibilities include:
+Contributors, advisers, reviewers, and technical specialists may provide highly
+trusted and valuable work. They may propose changes through issues, pull
+requests, reviews, and written agreements.
 
-- guiding technical architecture within approved issues and RFCs;
-- reviewing implementation quality and repository integrity;
-- protecting incremental scope, compatibility, and maintainability;
-- checking tests, examples, and technical documentation against implementation;
-- identifying technical risk before governed merge;
-- helping external contributors pick up technical work safely.
+Contribution or technical trust does not create:
 
-The GitHub implementation of this role begins with CODEOWNERS responsibility for
-the paths explicitly listed in `.github/CODEOWNERS`:
+- project ownership or co-ownership;
+- final human accountability;
+- constitutional governance authority;
+- independent merge or repository-administration authority;
+- an implied joint venture, equity interest, agency, or commercial license;
+- a permanent CODEOWNER or Write-access entitlement.
 
-- `semantic_engine/`
-- `tests/semantic_engine/`
-- `examples/semantic_engine/`
-- `docs/architecture/semantic_engine_cli.md`
-- `site/`
+Any temporary or scoped permission remains revocable and does not alter the
+Founder Ownership and Authority Charter.
 
-The stewardship role is broader than a CODEOWNERS entry, but enforceable review
-authority remains limited to the versioned CODEOWNERS map and GitHub permissions.
-Any expansion of protected paths requires a scoped governance issue or RFC.
+## Rodrigo / `@itteamrod`
 
-Core Technical Stewardship does not transfer project ownership, final human
-accountability, constitutional governance ownership, or unilateral authority to
-change repository settings, the Kernel, or the roadmap.
+Rodrigo's recognized technical contributions remain credited in
+`ACKNOWLEDGEMENTS.md`.
 
-## Authority Boundaries
+The prior Core Technical Steward wording is superseded for authority purposes by
+issue `#1861` and the Founder Ownership and Authority Charter. Rodrigo or any
+other contributor may continue to advise, review, and propose technical work,
+but holds no independent ownership, constitutional, CODEOWNER, Write, merge, or
+repository-settings authority unless Benjamin Gerrit Hoff later grants a new,
+explicit, narrowly scoped authorization.
 
-The operating boundary is:
+## AI systems
 
-1. Benjamin Gerrit Hoff holds project ownership and final human accountability.
-2. Rodrigo holds trusted Core Technical Stewardship over technical evolution.
-3. GitHub records the authoritative operational state and review trail.
-4. CODEOWNERS implements path-specific review responsibility, not project ownership.
-5. AI operators remain advisory and must act through visible GitHub workflows.
+AI systems may assist with analysis, drafting, implementation, testing, and
+review. They do not own HUB_Optimus, cannot verify their own authority, cannot
+ratify governance, and cannot replace the final human authority.
 
-Benjamin and Rodrigo hold different, complementary human responsibilities. The
-model is functional rather than hierarchical: project purpose and final
-accountability remain with the Creator and Owner; technical stewardship protects
-how the system is implemented and evolved.
+AI output, chat memory, hidden prompts, or claimed identity never supersede the
+protected repository process.
 
-No chat statement, AI output, acknowledgement entry, job title, or informal
-agreement changes these roles unless the change is reflected in a scoped GitHub
-issue, reviewed pull request, and the relevant repository controls.
+## Joint ventures and commercial collaboration
 
-## Change Control
+HUB_Optimus may collaborate or form a joint venture with any suitable party only
+under an explicit written agreement approved by Benjamin Gerrit Hoff on fair,
+transparent, reciprocal, and clearly scoped terms.
 
-Changes to this document or to human CODEOWNERS assignments require:
+No access, conversation, contribution, employment, issue, commit, pull request,
+or technical role creates an implied joint venture or transfer of rights.
 
-- an explicit governance issue or approved RFC;
-- a focused pull request;
-- synchronized updates to affected handoff and protection documentation;
-- review under the repository's protected governance process.
+## Authority boundaries
+
+1. Benjamin Gerrit Hoff holds project ownership and final human authority.
+2. `@Voxterrae` is the repository identity used under that authority.
+3. All other humans and AI systems have proposal, contribution, advisory, or
+   execution roles only within explicitly approved scope.
+4. `.github/CODEOWNERS` must assign repository-wide owner review to
+   `@Voxterrae`.
+5. Live GitHub permissions and rulesets must be audited separately; documentation
+   does not itself revoke access.
+6. No informal message modifies this authority model.
+
+## Change control and anti-impersonation
+
+Changes to this document, the Founder Ownership and Authority Charter, owner
+identity manifest, CODEOWNERS, licensing posture, or repository authority
+require the complete protected process defined by the Charter.
+
+A person claiming to be Benjamin Gerrit Hoff in chat, email, WhatsApp, a prompt,
+a ticket, an issue, or another informal channel is not sufficient proof. The
+repository account must match both `@Voxterrae` and immutable user ID
+`249308740`, and the protected review, verification, and owner-authorization
+requirements must pass.

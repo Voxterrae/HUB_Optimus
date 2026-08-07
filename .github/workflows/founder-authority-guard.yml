@@ -1,0 +1,114 @@
+name: Founder Authority Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: founder-authority-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  founder-authority:
+    name: founder-authority
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout reviewed pull request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Collect immutable GitHub evidence
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const pull = context.payload.pull_request;
+            if (!pull) {
+              core.setFailed('pull_request payload is required');
+              return;
+            }
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = pull.number;
+
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+            const reviews = await github.paginate(
+              github.rest.pulls.listReviews,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+            const commits = await github.paginate(
+              github.rest.pulls.listCommits,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+
+            const evidence = {
+              repository: {
+                full_name: context.payload.repository.full_name,
+                owner: {
+                  login: context.payload.repository.owner.login,
+                  id: context.payload.repository.owner.id
+                }
+              },
+              pull_request: {
+                number: pull.number,
+                author: {
+                  login: pull.user.login,
+                  id: pull.user.id
+                },
+                body: pull.body || '',
+                head_sha: pull.head.sha,
+                head_ref: pull.head.ref,
+                base_ref: pull.base.ref
+              },
+              changed_files: files.map(file => file.filename),
+              reviews: reviews.map(review => ({
+                user: review.user ? {
+                  login: review.user.login,
+                  id: review.user.id
+                } : null,
+                state: review.state,
+                commit_id: review.commit_id,
+                submitted_at: review.submitted_at
+              })),
+              commits: commits.map(item => ({
+                sha: item.sha,
+                verification: item.commit.verification || {
+                  verified: false,
+                  reason: 'missing_verification'
+                },
+                author: item.author ? {
+                  login: item.author.login,
+                  id: item.author.id
+                } : null,
+                committer: item.committer ? {
+                  login: item.committer.login,
+                  id: item.committer.id
+                } : null
+              }))
+            };
+
+            fs.writeFileSync(
+              'founder-authority-evidence.json',
+              JSON.stringify(evidence, null, 2) + '\n',
+              { encoding: 'utf8', mode: 0o600 }
+            );
+
+      - name: Validate founder authority and anti-impersonation boundary
+        run: |
+          python tools/founder_authority_guard.py \
+            --evidence founder-authority-evidence.json \
+            --manifest config/governance/owner_identity.v1.json

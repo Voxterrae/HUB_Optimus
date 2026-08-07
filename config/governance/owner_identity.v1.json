@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "record_status": "RATIFICATION_PROPOSED",
+  "ratification_issue": 1861,
+  "legal_name": "Benjamin Gerrit Hoff",
+  "project": "HUB_Optimus",
+  "roles": [
+    "founder",
+    "architect",
+    "creator",
+    "project_owner",
+    "final_human_authority"
+  ],
+  "repository_identity": {
+    "login": "Voxterrae",
+    "immutable_user_id": 249308740,
+    "independent_owner_entity": false
+  },
+  "parent_platform_definition": "HUB_Optimus is the foundational tool and technological parent platform through which Benjamin Gerrit Hoff designs and builds the wider ecosystem.",
+  "authority": {
+    "sole_final_modification_authority": true,
+    "ownership_changes_require_explicit_owner_authorization": true,
+    "constitutional_changes_require_explicit_owner_authorization": true,
+    "repository_administration_changes_require_explicit_owner_authorization": true,
+    "contributors_have_implied_governance_rights": false,
+    "ai_systems_have_governance_authority": false
+  },
+  "joint_venture_policy": {
+    "allowed": true,
+    "requires_explicit_written_agreement": true,
+    "requires_owner_approval": true,
+    "required_principles": [
+      "fair",
+      "transparent",
+      "reciprocal",
+      "clearly_scoped"
+    ],
+    "implied_joint_venture_allowed": false
+  },
+  "anti_impersonation": {
+    "informal_identity_claim_is_authorization": false,
+    "required_repository_login": "Voxterrae",
+    "required_repository_user_id": 249308740,
+    "requires_protected_pull_request": true,
+    "requires_verified_commits": true,
+    "requires_explicit_owner_record": true,
+    "requires_required_checks": true
+  },
+  "cryptographic_owner_keys": {
+    "status": "PENDING_HARDWARE_BACKED_KEY_ENROLLMENT",
+    "fingerprints": [],
+    "policy": "Founder, ownership, and final-authority clauses may not be weakened or transferred through informal instructions while no owner signing key is pinned."
+  },
+  "third_party_rights_boundary": {
+    "claims_ownership_of_third_party_platforms": false,
+    "claims_ownership_of_third_party_preexisting_ip": false,
+    "retroactively_extinguishes_contributor_rights": false
+  },
+  "constitutional_files": [
+    "docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md",
+    "config/governance/owner_identity.v1.json",
+    "docs/governance/PROJECT_STEWARDSHIP.md",
+    "docs/context/OWNER_AUTHORITY_HANDOFF.md",
+    "docs/context/SOURCE_OF_TRUTH.md",
+    "IP_NOTICE.md",
+    ".github/CODEOWNERS",
+    ".github/workflows/founder-authority-guard.yml",
+    "tools/founder_authority_guard.py"
+  ]
+}
