@@ -1,0 +1,89 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Optimus Admin Gateway",
+    "description": "Governed allowlisted administration operations",
+    "version": "0.1.0"
+  },
+  "host": "REPLACE_WITH_GATEWAY_HOST",
+  "basePath": "/api/v1",
+  "schemes": ["https"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "securityDefinitions": {
+    "oauth2": {
+      "type": "oauth2",
+      "flow": "accessCode",
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+      "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      "scopes": {
+        "api://REPLACE_WITH_APP_ID/access_as_user": "Access Optimus Admin Gateway"
+      }
+    }
+  },
+  "security": [{"oauth2": ["api://REPLACE_WITH_APP_ID/access_as_user"]}],
+  "paths": {
+    "/operations": {
+      "get": {
+        "operationId": "ListAllowedOperations",
+        "summary": "List allowlisted operations",
+        "responses": {"200": {"description": "Operation catalog"}}
+      }
+    },
+    "/operations/{operation_id}:plan": {
+      "post": {
+        "operationId": "PlanAllowedOperation",
+        "summary": "Validate and plan an operation",
+        "parameters": [
+          {"name": "operation_id", "in": "path", "required": true, "type": "string"},
+          {"name": "body", "in": "body", "required": true, "schema": {"$ref": "#/definitions/OperationRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "Validated plan"},
+          "422": {"description": "Parameter validation failed"}
+        }
+      }
+    },
+    "/operations/{operation_id}:execute": {
+      "post": {
+        "operationId": "ExecuteAllowedOperation",
+        "summary": "Execute an allowlisted operation",
+        "parameters": [
+          {"name": "operation_id", "in": "path", "required": true, "type": "string"},
+          {"name": "body", "in": "body", "required": true, "schema": {"$ref": "#/definitions/OperationRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "DryRun or execution result"},
+          "403": {"description": "Approval required or invalid"},
+          "422": {"description": "Parameter validation failed"},
+          "503": {"description": "Tenant executor not configured"}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "OperationRequest": {
+      "type": "object",
+      "required": ["parameters", "idempotency_key"],
+      "additionalProperties": false,
+      "properties": {
+        "parameters": {"type": "object"},
+        "dry_run": {"type": "boolean", "default": true},
+        "idempotency_key": {"type": "string", "minLength": 8, "maxLength": 128},
+        "approval": {"$ref": "#/definitions/ApprovalReceipt"}
+      }
+    },
+    "ApprovalReceipt": {
+      "type": "object",
+      "required": ["approval_id", "plan_hash", "approved_by", "approved_at", "signature"],
+      "additionalProperties": false,
+      "properties": {
+        "approval_id": {"type": "string"},
+        "plan_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "approved_by": {"type": "string"},
+        "approved_at": {"type": "string", "format": "date-time"},
+        "signature": {"type": "string"}
+      }
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "solution": {
+    "uniqueName": "OptimusAdminGateway",
+    "displayName": "Optimus Admin Gateway",
+    "publisher": "Optimus",
+    "prefix": "opt",
+    "version": "0.1.0.0"
+  },
+  "tables": [
+    {
+      "logicalName": "opt_adminrequest",
+      "displayName": "Admin Request",
+      "ownership": "UserOrTeam",
+      "columns": [
+        {"name": "opt_name", "type": "String", "required": true, "maxLength": 200},
+        {"name": "opt_operationid", "type": "String", "required": true, "maxLength": 128},
+        {"name": "opt_planhash", "type": "String", "required": true, "maxLength": 64},
+        {"name": "opt_parametersjson", "type": "MultilineText", "required": true, "maxLength": 1048576},
+        {"name": "opt_dryrun", "type": "Boolean", "required": true, "default": true},
+        {"name": "opt_risk", "type": "Choice", "choices": ["low", "medium", "high"]},
+        {"name": "opt_state", "type": "Choice", "choices": ["REQUESTED", "VALIDATED", "PLANNED", "APPROVAL_REQUIRED", "APPROVED", "REJECTED", "QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"]},
+        {"name": "opt_idempotencykey", "type": "String", "required": true, "maxLength": 128},
+        {"name": "opt_requesterobjectid", "type": "String", "required": true, "maxLength": 128}
+      ],
+      "alternateKeys": [["opt_idempotencykey"]]
+    },
+    {
+      "logicalName": "opt_adminapproval",
+      "displayName": "Admin Approval",
+      "ownership": "UserOrTeam",
+      "columns": [
+        {"name": "opt_name", "type": "String", "required": true, "maxLength": 200},
+        {"name": "opt_approvalid", "type": "String", "required": true, "maxLength": 128},
+        {"name": "opt_planhash", "type": "String", "required": true, "maxLength": 64},
+        {"name": "opt_approvedbyobjectid", "type": "String", "required": true, "maxLength": 128},
+        {"name": "opt_decision", "type": "Choice", "choices": ["APPROVED", "REJECTED"]},
+        {"name": "opt_decidedatutc", "type": "DateTime", "required": true},
+        {"name": "opt_receipt", "type": "MultilineText", "required": false, "maxLength": 1048576}
+      ],
+      "alternateKeys": [["opt_approvalid"]]
+    },
+    {
+      "logicalName": "opt_adminjob",
+      "displayName": "Admin Job",
+      "ownership": "Organization",
+      "columns": [
+        {"name": "opt_name", "type": "String", "required": true, "maxLength": 200},
+        {"name": "opt_jobid", "type": "String", "required": true, "maxLength": 128},
+        {"name": "opt_operationid", "type": "String", "required": true, "maxLength": 128},
+        {"name": "opt_state", "type": "Choice", "choices": ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"]},
+        {"name": "opt_correlationid", "type": "String", "required": true, "maxLength": 128},
+        {"name": "opt_outputsummary", "type": "MultilineText", "required": false, "maxLength": 1048576},
+        {"name": "opt_startedatutc", "type": "DateTime", "required": false},
+        {"name": "opt_completedatutc", "type": "DateTime", "required": false}
+      ],
+      "alternateKeys": [["opt_jobid"]]
+    },
+    {
+      "logicalName": "opt_adminevent",
+      "displayName": "Admin Audit Event",
+      "ownership": "Organization",
+      "columns": [
+        {"name": "opt_name", "type": "String", "required": true, "maxLength": 200},
+        {"name": "opt_eventtype", "type": "String", "required": true, "maxLength": 128},
+        {"name": "opt_correlationid", "type": "String", "required": true, "maxLength": 128},
+        {"name": "opt_actorobjectid", "type": "String", "required": true, "maxLength": 128},
+        {"name": "opt_payload", "type": "MultilineText", "required": true, "maxLength": 1048576},
+        {"name": "opt_occurredatutc", "type": "DateTime", "required": true}
+      ]
+    }
+  ],
+  "relationships": [
+    {"from": "opt_adminapproval", "to": "opt_adminrequest", "type": "ManyToOne", "name": "opt_requestid"},
+    {"from": "opt_adminjob", "to": "opt_adminrequest", "type": "ManyToOne", "name": "opt_requestid"}
+  ]
+}
