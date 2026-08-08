@@ -1,0 +1,11 @@
+{
+  "location": "westeurope",
+  "resourcePrefix": "optimus-admin",
+  "environment": "test",
+  "automationRuntime": "PowerShell-7.4",
+  "exchangeOnlineManagementVersion": "PIN_AT_DEPLOYMENT",
+  "apiAuthentication": "EntraID",
+  "executorMode": "azure-automation",
+  "keyVaultReferencesOnly": true,
+  "publicNetworkAccess": "REVIEW_REQUIRED"
+}
