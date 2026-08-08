@@ -1,0 +1,148 @@
+{
+  "catalog_version": "2026-08-08.1",
+  "operations": [
+    {
+      "operation_id": "exchange.diagnose_mailbox",
+      "title": "Diagnose mailbox",
+      "category": "exchange",
+      "mutation": false,
+      "approval_required": false,
+      "risk": "low",
+      "executor": "runbook.exchange",
+      "parameter_schema": "MailboxTarget",
+      "description": "Inspect recipient, mailbox, store and folder state without mutation."
+    },
+    {
+      "operation_id": "exchange.get_mailbox_state",
+      "title": "Get mailbox state",
+      "category": "exchange",
+      "mutation": false,
+      "approval_required": false,
+      "risk": "low",
+      "executor": "runbook.exchange",
+      "parameter_schema": "MailboxTarget",
+      "description": "Return normalized mailbox configuration and state."
+    },
+    {
+      "operation_id": "exchange.get_mailbox_folder_health",
+      "title": "Get mailbox folder health",
+      "category": "exchange",
+      "mutation": false,
+      "approval_required": false,
+      "risk": "low",
+      "executor": "runbook.exchange",
+      "parameter_schema": "MailboxTarget",
+      "description": "Probe standard mailbox folders and report failures."
+    },
+    {
+      "operation_id": "exchange.get_mailbox_permissions",
+      "title": "Get mailbox permissions",
+      "category": "exchange",
+      "mutation": false,
+      "approval_required": false,
+      "risk": "low",
+      "executor": "runbook.exchange",
+      "parameter_schema": "MailboxTarget",
+      "description": "List delegated mailbox permissions."
+    },
+    {
+      "operation_id": "exchange.test_delegated_access",
+      "title": "Test delegated access",
+      "category": "exchange",
+      "mutation": false,
+      "approval_required": false,
+      "risk": "low",
+      "executor": "runbook.exchange",
+      "parameter_schema": "MailboxAndDelegate",
+      "description": "Determine whether a delegate has effective FullAccess."
+    },
+    {
+      "operation_id": "exchange.grant_full_access",
+      "title": "Grant FullAccess",
+      "category": "exchange",
+      "mutation": true,
+      "approval_required": true,
+      "risk": "high",
+      "executor": "runbook.exchange",
+      "parameter_schema": "FullAccessChange",
+      "description": "Grant narrowly scoped FullAccess after explicit approval."
+    },
+    {
+      "operation_id": "exchange.revoke_full_access",
+      "title": "Revoke FullAccess",
+      "category": "exchange",
+      "mutation": true,
+      "approval_required": true,
+      "risk": "high",
+      "executor": "runbook.exchange",
+      "parameter_schema": "FullAccessChange",
+      "description": "Remove narrowly scoped FullAccess after explicit approval."
+    },
+    {
+      "operation_id": "exchange.get_shared_mailbox_configuration",
+      "title": "Get shared mailbox configuration",
+      "category": "exchange",
+      "mutation": false,
+      "approval_required": false,
+      "risk": "low",
+      "executor": "runbook.exchange",
+      "parameter_schema": "MailboxTarget",
+      "description": "Read mailbox type, delivery and forwarding settings."
+    },
+    {
+      "operation_id": "exchange.check_forwarding",
+      "title": "Check mailbox forwarding",
+      "category": "exchange",
+      "mutation": false,
+      "approval_required": false,
+      "risk": "medium",
+      "executor": "runbook.exchange",
+      "parameter_schema": "MailboxTarget",
+      "description": "Inspect forwarding configuration without changing it."
+    },
+    {
+      "operation_id": "exchange.verify_recipient_alignment",
+      "title": "Verify recipient alignment",
+      "category": "exchange",
+      "mutation": false,
+      "approval_required": false,
+      "risk": "medium",
+      "executor": "runbook.exchange",
+      "parameter_schema": "MailboxTarget",
+      "description": "Compare Exchange recipient and mailbox identifiers."
+    },
+    {
+      "operation_id": "powershell.get_job_status",
+      "title": "Get runbook job status",
+      "category": "powershell",
+      "mutation": false,
+      "approval_required": false,
+      "risk": "low",
+      "executor": "azure.automation",
+      "parameter_schema": "JobTarget",
+      "description": "Read the state of an approved runbook job."
+    },
+    {
+      "operation_id": "powershell.get_job_output",
+      "title": "Get runbook job output",
+      "category": "powershell",
+      "mutation": false,
+      "approval_required": false,
+      "risk": "medium",
+      "executor": "azure.automation",
+      "parameter_schema": "JobTarget",
+      "description": "Read sanitized output from an approved runbook job."
+    },
+    {
+      "operation_id": "powershell.cancel_job",
+      "title": "Cancel runbook job",
+      "category": "powershell",
+      "mutation": true,
+      "approval_required": true,
+      "risk": "medium",
+      "executor": "azure.automation",
+      "parameter_schema": "JobTarget",
+      "description": "Cancel an approved runbook job after explicit approval."
+    }
+  ]
+}
