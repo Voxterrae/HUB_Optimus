@@ -1,0 +1,23 @@
+{
+  "request_id": "sample-enterprise-001",
+  "organization_name": "Example Institutional Buyer",
+  "organization_type": "enterprise",
+  "requested_track": "paid",
+  "decision_authority_confirmed": true,
+  "procurement_owner_confirmed": true,
+  "budget_band": "250k_750k",
+  "preferred_channel": "microsoft_marketplace",
+  "microsoft_aligned": true,
+  "estimated_first_year_value_eur": 600000,
+  "accepts_paid_diagnostic": true,
+  "accepts_paid_pov": true,
+  "requests_free_bespoke_work": false,
+  "requires_core_source_transfer": false,
+  "requires_ownership_or_control": false,
+  "requests_white_label_oem_resale_or_exclusivity": false,
+  "hidden_reseller_or_commercial_beneficiary": false,
+  "intended_commercial_use": true,
+  "verified_nonprofit": false,
+  "direct_human_or_animal_benefit": false,
+  "notes": "Synthetic example only."
+}
