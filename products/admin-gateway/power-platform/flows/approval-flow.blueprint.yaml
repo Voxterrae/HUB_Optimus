@@ -1,0 +1,30 @@
+name: Optimus-Admin-Gateway-Approval
+version: 0.1.0
+trigger:
+  type: DataverseRowAdded
+  table: opt_adminrequest
+  filter: opt_state eq 'APPROVAL_REQUIRED'
+steps:
+  - load_request_and_plan
+  - verify_requester_is_not_approver
+  - start_approval:
+      approval_type: ApproveRejectFirstToRespond
+      title: "Optimus admin change: @{operation_id}"
+      details:
+        - target_summary
+        - risk
+        - plan_hash
+        - reason
+        - change_ticket
+  - on_approve:
+      - persist_approval_receipt
+      - sign_or_seal_plan_hash_using_tenant_service
+      - call_gateway_execute_with_original_parameters
+  - on_reject:
+      - mark_request_rejected
+      - notify_requester
+controls:
+  mutation_only: true
+  disallow_self_approval: true
+  preserve_original_plan_hash: true
+  automatic_send_email: false

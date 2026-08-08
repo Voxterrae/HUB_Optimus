@@ -1,0 +1,23 @@
+{
+  "properties": {
+    "connectionParameters": {
+      "token": {
+        "type": "oauthSetting",
+        "oAuthSettings": {
+          "identityProvider": "aad",
+          "clientId": "REPLACE_WITH_CLIENT_ID",
+          "clientSecret": "REPLACE_IN_CONNECTION_ONLY",
+          "scopes": ["api://REPLACE_WITH_APP_ID/access_as_user"],
+          "redirectMode": "Global",
+          "properties": {
+            "IsFirstParty": "False",
+            "IsOnbehalfofLoginSupported": true
+          }
+        }
+      }
+    },
+    "iconBrandColor": "#000000",
+    "capabilities": [],
+    "policyTemplateInstances": []
+  }
+}
