@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huboptimus.dev/schemas/institutional-qualification.v0.1.json",
+  "title": "HUB_Optimus institutional access qualification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "organization_name",
+    "organization_type",
+    "requested_track",
+    "decision_authority_confirmed",
+    "procurement_owner_confirmed",
+    "budget_band",
+    "accepts_paid_diagnostic",
+    "accepts_paid_pov",
+    "requests_free_bespoke_work",
+    "requires_core_source_transfer",
+    "requires_ownership_or_control",
+    "hidden_reseller_or_commercial_beneficiary",
+    "intended_commercial_use",
+    "verified_nonprofit",
+    "direct_human_or_animal_benefit"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 100,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "organization_name": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 200
+    },
+    "organization_type": {
+      "enum": [
+        "company",
+        "enterprise",
+        "public_institution",
+        "nonprofit",
+        "university",
+        "partner",
+        "other"
+      ]
+    },
+    "requested_track": {
+      "enum": [
+        "paid",
+        "common_good"
+      ]
+    },
+    "decision_authority_confirmed": {
+      "type": "boolean"
+    },
+    "procurement_owner_confirmed": {
+      "type": "boolean"
+    },
+    "budget_band": {
+      "enum": [
+        "under_15k",
+        "15k_50k",
+        "50k_250k",
+        "250k_750k",
+        "750k_3m",
+        "over_3m",
+        "undisclosed"
+      ]
+    },
+    "preferred_channel": {
+      "enum": [
+        "microsoft_marketplace",
+        "aws_marketplace",
+        "direct_b2b",
+        "merchant_of_record",
+        "public_procurement",
+        "unknown"
+      ]
+    },
+    "microsoft_aligned": {
+      "type": "boolean"
+    },
+    "estimated_first_year_value_eur": {
+      "type": "number",
+      "minimum": 0
+    },
+    "accepts_paid_diagnostic": {
+      "type": "boolean"
+    },
+    "accepts_paid_pov": {
+      "type": "boolean"
+    },
+    "requests_free_bespoke_work": {
+      "type": "boolean"
+    },
+    "requires_core_source_transfer": {
+      "type": "boolean"
+    },
+    "requires_ownership_or_control": {
+      "type": "boolean"
+    },
+    "requests_white_label_oem_resale_or_exclusivity": {
+      "type": "boolean"
+    },
+    "hidden_reseller_or_commercial_beneficiary": {
+      "type": "boolean"
+    },
+    "intended_commercial_use": {
+      "type": "boolean"
+    },
+    "verified_nonprofit": {
+      "type": "boolean"
+    },
+    "direct_human_or_animal_benefit": {
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000
+    }
+  }
+}
