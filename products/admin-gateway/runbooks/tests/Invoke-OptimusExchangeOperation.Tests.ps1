@@ -1,7 +1,9 @@
 #requires -Version 7.4
 Describe 'Optimus Exchange runbook safety contract' {
-    $scriptPath = Join-Path $PSScriptRoot '..' 'Invoke-OptimusExchangeOperation.ps1'
-    $content = Get-Content -Raw -LiteralPath $scriptPath
+    BeforeAll {
+        $scriptPath = Join-Path $PSScriptRoot '..' 'Invoke-OptimusExchangeOperation.ps1'
+        $content = Get-Content -Raw -LiteralPath $scriptPath
+    }
 
     It 'uses an allowlisted ValidateSet' {
         $content | Should -Match '\[ValidateSet\('
