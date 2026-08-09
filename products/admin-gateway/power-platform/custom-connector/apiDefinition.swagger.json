@@ -14,8 +14,8 @@
     "oauth2": {
       "type": "oauth2",
       "flow": "accessCode",
-      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-      "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      "authorizationUrl": "https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID/oauth2/v2.0/authorize",
+      "tokenUrl": "https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID/oauth2/v2.0/token",
       "scopes": {
         "api://REPLACE_WITH_APP_ID/access_as_user": "Access Optimus Admin Gateway"
       }
@@ -27,7 +27,12 @@
       "get": {
         "operationId": "ListAllowedOperations",
         "summary": "List allowlisted operations",
-        "responses": {"200": {"description": "Operation catalog"}}
+        "responses": {
+          "200": {"description": "Operation catalog"},
+          "401": {"description": "Authenticated Entra principal required"},
+          "403": {"description": "Optimus.Reader role required"},
+          "503": {"description": "Entra tenant binding not configured"}
+        }
       }
     },
     "/operations/{operation_id}:plan": {
@@ -40,6 +45,10 @@
         ],
         "responses": {
           "200": {"description": "Validated plan"},
+          "401": {"description": "Authenticated Entra principal required"},
+          "403": {"description": "Optimus.Reader role required"},
+          "404": {"description": "Operation not found"},
+          "503": {"description": "Entra tenant binding not configured"},
           "422": {"description": "Parameter validation failed"}
         }
       }
@@ -54,9 +63,11 @@
         ],
         "responses": {
           "200": {"description": "DryRun or execution result"},
-          "403": {"description": "Approval required or invalid"},
+          "401": {"description": "Authenticated Entra principal required"},
+          "403": {"description": "Optimus.Reader is required; live mutations additionally require Optimus.Mutator and a valid approval"},
+          "404": {"description": "Operation not found"},
           "422": {"description": "Parameter validation failed"},
-          "503": {"description": "Tenant executor not configured"}
+          "503": {"description": "Entra tenant binding or tenant executor not configured"}
         }
       }
     }

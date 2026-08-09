@@ -5,6 +5,19 @@
   "automationRuntime": "PowerShell-7.4",
   "exchangeOnlineManagementVersion": "PIN_AT_DEPLOYMENT",
   "apiAuthentication": "EntraID",
+  "entraTenantId": "REPLACE_WITH_TENANT_ID",
+  "allowedTokenAudiences": ["api://REPLACE_WITH_APP_ID"],
+  "readerRole": "Optimus.Reader",
+  "mutatorRole": "Optimus.Mutator",
+  "requireAuthentication": true,
+  "unauthenticatedClientAction": "Return401",
+  "easyAuthIssuer": "https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID/v2.0",
+  "excludedPaths": ["/healthz"],
+  "applicationSettings": {
+    "OPTIMUS_ENTRA_TENANT_ID": "REPLACE_WITH_TENANT_ID",
+    "OPTIMUS_READER_ROLE": "Optimus.Reader",
+    "OPTIMUS_MUTATOR_ROLE": "Optimus.Mutator"
+  },
   "executorMode": "azure-automation",
   "keyVaultReferencesOnly": true,
   "publicNetworkAccess": "REVIEW_REQUIRED"

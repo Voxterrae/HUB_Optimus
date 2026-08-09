@@ -21,8 +21,25 @@
     "identity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ownerUpn", "approverUpns", "executorIdentityReference"],
+      "required": [
+        "entraTenantId",
+        "allowedTokenAudiences",
+        "readerRole",
+        "mutatorRole",
+        "ownerUpn",
+        "approverUpns",
+        "executorIdentityReference"
+      ],
       "properties": {
+        "entraTenantId": {"type": "string", "format": "uuid"},
+        "allowedTokenAudiences": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "format": "uri"}
+        },
+        "readerRole": {"const": "Optimus.Reader"},
+        "mutatorRole": {"const": "Optimus.Mutator"},
         "ownerUpn": {"type": "string", "format": "email"},
         "approverUpns": {"type": "array", "minItems": 1, "items": {"type": "string", "format": "email"}},
         "executorIdentityReference": {"type": "string", "minLength": 1}

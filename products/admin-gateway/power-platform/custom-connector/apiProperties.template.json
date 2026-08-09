@@ -9,6 +9,11 @@
           "clientSecret": "REPLACE_IN_CONNECTION_ONLY",
           "scopes": ["api://REPLACE_WITH_APP_ID/access_as_user"],
           "redirectMode": "Global",
+          "customParameters": {
+            "loginUri": {"value": "https://login.microsoftonline.com"},
+            "tenantId": {"value": "REPLACE_WITH_TENANT_ID"},
+            "resourceUri": {"value": "api://REPLACE_WITH_APP_ID"}
+          },
           "properties": {
             "IsFirstParty": "False",
             "IsOnbehalfofLoginSupported": true
