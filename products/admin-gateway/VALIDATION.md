@@ -1,20 +1,27 @@
 # Validation record
 
-Validation target: Optimus Admin Gateway foundation boundary.
+Validation target: Optimus Admin Gateway API and authentication slice.
 
-This slice contains product-boundary documentation only. It does not contain
-the API, operation catalog, runbook, Power Platform assets or deployment
-templates, so it makes no runtime-test or deployable-package claim.
+Executed locally for this stacked head:
 
-Verified for this slice:
+```text
+python -m pip install -e '.[dev]'
+python -m pytest -q
+28 passed
+```
 
-- the five tracked Admin Gateway files are the README, this validation record,
-  architecture, client-boundary and security documentation;
-- no pilot mailbox address, tenant ID, client environment URL, credential or
-  execution output is stored in the public foundation;
-- executable validation is deferred to the focused implementation slices that
-  introduce the corresponding assets.
+Verified in this slice:
 
-The complete package must be validated again at its final stacked head before
-review or deployment. A package manifest is intentionally absent until it can
-be generated from the files that actually exist in Git.
+- JSON syntax and model validation for the operation catalog;
+- YAML parsing and route parity for the canonical OpenAPI contract;
+- strict EasyAuth client-principal parsing and synthetic tenant binding;
+- rejection of legacy production headers and malformed identity claims;
+- independent `Optimus.Reader` and `Optimus.Mutator` role gates before the
+  approval gate;
+- public-boundary checks for tenant identifiers, mailbox addresses and client
+  environment URLs.
+
+PowerShell, Power Platform, Dataverse and deployment assets are not present in
+this slice and are not certified here. A package manifest remains intentionally
+absent until the final stacked package can generate it from files that actually
+exist in Git.

@@ -29,6 +29,14 @@ app = FastAPI(
 )
 
 
+def require_role(principal: Principal, role: str) -> None:
+    if role not in principal.roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "ROLE_REQUIRED", "required_role": role},
+        )
+
+
 def build_plan(operation_id: str, request: OperationRequest) -> tuple[OperationPlan, object]:
     definition = catalog.get(operation_id)
     if definition is None:
@@ -75,6 +83,7 @@ async def healthz() -> dict[str, str]:
 
 @app.get("/api/v1/operations", tags=["operations"])
 async def list_operations(principal: Principal = Depends(get_principal)) -> dict:
+    require_role(principal, settings.reader_role)
     return {
         "principal": principal.subject_id,
         "catalog_version": catalog.version,
@@ -88,7 +97,7 @@ async def plan_operation(
     request: OperationRequest,
     principal: Principal = Depends(get_principal),
 ) -> OperationPlan:
-    del principal
+    require_role(principal, settings.reader_role)
     plan, _definition = build_plan(operation_id, request)
     return plan
 
@@ -99,8 +108,10 @@ async def execute_operation(
     request: OperationRequest,
     principal: Principal = Depends(get_principal),
 ):
+    require_role(principal, settings.reader_role)
     plan, definition = build_plan(operation_id, request)
     if definition.mutation and not request.dry_run:
+        require_role(principal, settings.mutator_role)
         if request.approval is None:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

@@ -17,16 +17,24 @@ paths:
       tags: [operations]
       summary: List Operations
       operationId: list_operations_api_v1_operations_get
+      security:
+        - EntraOAuth2: [access_as_user]
       responses:
         '200':
           description: Successful Response
         '401':
           description: Authenticated Entra principal required
+        '403':
+          description: Optimus.Reader role required
+        '503':
+          description: Entra tenant binding not configured
   /api/v1/operations/{operation_id}:plan:
     post:
       tags: [operations]
       summary: Plan Operation
       operationId: plan_operation_api_v1_operations__operation_id__plan_post
+      security:
+        - EntraOAuth2: [access_as_user]
       parameters:
         - in: path
           name: operation_id
@@ -43,13 +51,18 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/OperationPlan'}
+        '401': {description: Authenticated Entra principal required}
+        '403': {description: Optimus.Reader role required}
         '404': {description: Operation not found}
+        '503': {description: Entra tenant binding not configured}
         '422': {description: Parameter validation failed}
   /api/v1/operations/{operation_id}:execute:
     post:
       tags: [operations]
       summary: Execute Operation
       operationId: execute_operation_api_v1_operations__operation_id__execute_post
+      security:
+        - EntraOAuth2: [access_as_user]
       parameters:
         - in: path
           name: operation_id
@@ -62,9 +75,20 @@ paths:
             schema: {$ref: '#/components/schemas/OperationRequest'}
       responses:
         '200': {description: DryRun or configured execution result}
-        '403': {description: Approval missing or invalid}
-        '503': {description: Tenant executor not configured}
+        '401': {description: Authenticated Entra principal required}
+        '403': {description: Required application role or approval missing or invalid}
+        '503': {description: Entra tenant binding or tenant executor not configured}
 components:
+  securitySchemes:
+    EntraOAuth2:
+      type: oauth2
+      description: Replace the tenant placeholder and bind the client-specific API audience before deployment.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID/oauth2/v2.0/authorize
+          tokenUrl: https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID/oauth2/v2.0/token
+          scopes:
+            access_as_user: Request governed Admin Gateway operations as the signed-in principal.
   schemas:
     ApprovalReceipt:
       type: object
