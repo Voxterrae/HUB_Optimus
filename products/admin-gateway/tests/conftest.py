@@ -16,7 +16,7 @@ PACKAGE_ROOT = Path(__file__).parents[1]
 SRC_ROOT = PACKAGE_ROOT / "src"
 sys.path.insert(0, str(SRC_ROOT))
 
-_REQUIRED_RUNTIME = ("fastapi", "httpx", "pydantic")
+_REQUIRED_RUNTIME = ("fastapi", "httpx", "httpx2", "pydantic")
 collect_ignore: list[str] = []
 if any(importlib.util.find_spec(module_name) is None for module_name in _REQUIRED_RUNTIME):
     collect_ignore.extend(["test_api.py", "test_auth.py", "test_catalog.py"])

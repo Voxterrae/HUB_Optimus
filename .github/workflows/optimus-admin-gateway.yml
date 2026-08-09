@@ -31,4 +31,6 @@ jobs:
       - name: Install module test dependencies
         run: python -m pip install -e '.[dev]'
       - name: Run API and authentication contract tests
-        run: python -m pytest -q
+        run: >-
+          python -m pytest -q
+          -W error::starlette.exceptions.StarletteDeprecationWarning
