@@ -198,9 +198,27 @@ def test_approval_flow_uses_numeric_choice_values_and_exact_plan_digest() -> Non
         "disallow_self_approval": True,
         "preserve_original_plan_digest": True,
         "numeric_choice_values_only": True,
+        "receipt_plan_hash_source": "opt_plandigest",
+        "approved_at_source": "utc_approval_decision",
+        "signed_receipt_fields": [
+            "approval_id",
+            "plan_hash",
+            "approved_by",
+            "approved_at",
+        ],
         "automatic_send_email": False,
     }
-    assert flow["steps"][4]["on_approve"][0]["create_opt_adminapproval"]["decision"] == 884832000
+    approval_steps = flow["steps"][4]["on_approve"]
+    assert approval_steps[0] == "capture_approved_at_from_utc_approval_decision"
+    assert approval_steps[1] == "sign_or_seal_complete_receipt_using_tenant_service"
+    persisted = approval_steps[2]["persist_complete_signed_approval_receipt"]
+    assert persisted == {
+        "table": "opt_adminapproval",
+        "decision": 884832000,
+        "bind_request_lookup": True,
+    }
+    assert approval_steps[3] == {"update_request_state": 884831004}
+    assert approval_steps[4] == "call_gateway_execute_with_original_parameters"
     assert flow["steps"][5]["on_reject"][0]["create_opt_adminapproval"]["decision"] == 884832001
 
 

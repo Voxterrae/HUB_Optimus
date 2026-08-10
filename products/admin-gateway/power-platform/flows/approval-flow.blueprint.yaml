@@ -28,10 +28,12 @@ steps:
         - opt_reason
         - opt_changeticket
   - on_approve:
-      - create_opt_adminapproval:
+      - capture_approved_at_from_utc_approval_decision
+      - sign_or_seal_complete_receipt_using_tenant_service
+      - persist_complete_signed_approval_receipt:
+          table: opt_adminapproval
           decision: 884832000
           bind_request_lookup: true
-      - sign_or_seal_exact_plan_digest_using_tenant_service
       - update_request_state: 884831004
       - call_gateway_execute_with_original_parameters
   - on_reject:
@@ -46,4 +48,11 @@ controls:
   disallow_self_approval: true
   preserve_original_plan_digest: true
   numeric_choice_values_only: true
+  receipt_plan_hash_source: opt_plandigest
+  approved_at_source: utc_approval_decision
+  signed_receipt_fields:
+    - approval_id
+    - plan_hash
+    - approved_by
+    - approved_at
   automatic_send_email: false

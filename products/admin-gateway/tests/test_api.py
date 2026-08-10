@@ -1,8 +1,14 @@
 import base64
+import hashlib
+import hmac
 import json
+from datetime import datetime, timedelta, timezone
 
+import pytest
 from fastapi.testclient import TestClient
 
+import optimus_admin_gateway.main as main_module
+from optimus_admin_gateway.approvals import ApprovalVerifier
 from optimus_admin_gateway.main import app
 
 client = TestClient(app)
@@ -36,6 +42,37 @@ def easyauth_headers(*roles: str) -> dict[str, str]:
 
 PRODUCTION_READER_HEADERS = easyauth_headers("Optimus.Reader")
 PRODUCTION_MUTATOR_HEADERS = easyauth_headers("Optimus.Reader", "Optimus.Mutator")
+APPROVAL_SECRET = "synthetic-api-approval-secret"
+APPROVAL_NOW = datetime(2026, 8, 10, 17, 0, tzinfo=timezone.utc)
+
+
+def signed_approval(plan_hash: str, approved_at: datetime) -> dict[str, str]:
+    normalized = approved_at.astimezone(timezone.utc)
+    material = "|".join(
+        ["approval-api-0001", plan_hash, "approver@example.com", normalized.isoformat()]
+    ).encode("utf-8")
+    signature = hmac.new(APPROVAL_SECRET.encode("utf-8"), material, hashlib.sha256).hexdigest()
+    return {
+        "approval_id": "approval-api-0001",
+        "plan_hash": plan_hash,
+        "approved_by": "approver@example.com",
+        "approved_at": normalized.isoformat(),
+        "signature": signature,
+    }
+
+
+def live_mutation_body(idempotency_key: str) -> dict:
+    return {
+        "parameters": {
+            "mailbox": "pilot@example.com",
+            "delegate": "owner@example.com",
+            "automapping": False,
+            "reason": "Restore delegated administrative access",
+            "change_ticket": "CHG-APPROVAL",
+        },
+        "dry_run": False,
+        "idempotency_key": idempotency_key,
+    }
 
 
 def test_health_is_public_and_safe() -> None:
@@ -164,6 +201,74 @@ def test_live_mutation_with_both_roles_reaches_approval_gate() -> None:
     )
     assert response.status_code == 403
     assert response.json()["detail"]["code"] == "APPROVAL_REQUIRED"
+
+
+def test_boundary_approval_reaches_the_disabled_executor(monkeypatch) -> None:
+    monkeypatch.setattr(
+        main_module,
+        "approvals",
+        ApprovalVerifier(APPROVAL_SECRET, max_age_seconds=900, now=lambda: APPROVAL_NOW),
+    )
+    body = live_mutation_body("test-approval-fresh-0001")
+    plan = client.post(
+        "/api/v1/operations/exchange.grant_full_access:plan",
+        json=body,
+        headers=PRODUCTION_MUTATOR_HEADERS,
+    )
+    assert plan.status_code == 200
+    body["approval"] = signed_approval(
+        plan.json()["plan_hash"],
+        APPROVAL_NOW - timedelta(seconds=900),
+    )
+
+    response = client.post(
+        "/api/v1/operations/exchange.grant_full_access:execute",
+        json=body,
+        headers=PRODUCTION_MUTATOR_HEADERS,
+    )
+    assert response.status_code == 503
+    assert response.json()["detail"]["code"] == "EXECUTOR_NOT_CONFIGURED"
+
+
+@pytest.mark.parametrize(
+    ("offset_seconds", "tamper_signature"),
+    [(-901, False), (1, False), (0, True)],
+)
+def test_invalid_approvals_return_the_same_generic_response(
+    monkeypatch,
+    offset_seconds: int,
+    tamper_signature: bool,
+) -> None:
+    monkeypatch.setattr(
+        main_module,
+        "approvals",
+        ApprovalVerifier(APPROVAL_SECRET, max_age_seconds=900, now=lambda: APPROVAL_NOW),
+    )
+    body = live_mutation_body(f"test-approval-invalid-{offset_seconds}-{int(tamper_signature)}")
+    plan = client.post(
+        "/api/v1/operations/exchange.grant_full_access:plan",
+        json=body,
+        headers=PRODUCTION_MUTATOR_HEADERS,
+    )
+    assert plan.status_code == 200
+    approval = signed_approval(
+        plan.json()["plan_hash"],
+        APPROVAL_NOW + timedelta(seconds=offset_seconds),
+    )
+    if tamper_signature:
+        approval["signature"] = "0" * 64
+    body["approval"] = approval
+
+    response = client.post(
+        "/api/v1/operations/exchange.grant_full_access:execute",
+        json=body,
+        headers=PRODUCTION_MUTATOR_HEADERS,
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == {
+        "code": "APPROVAL_INVALID",
+        "plan_hash": plan.json()["plan_hash"],
+    }
 
 
 def test_unknown_fields_are_rejected() -> None:
