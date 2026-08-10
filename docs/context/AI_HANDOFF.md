@@ -775,6 +775,53 @@ Catalunya fire-response draft:
 - The RFC remains Draft and the repository implementation is not evidence of public deployment or real-device QA. Cross-device sync, automatic suggestions or promotion require a separately governed change.
 - Do not consolidate or delete other meta-learning files as part of this implementation.
 
+## xAI / X Signal Bridge Foundation Boundary
+
+Issue #1874 introduces an isolated phase-one prototype under
+`hub_optimus/connect/`; the complete boundary is documented in
+`docs/architecture/xai_x_signal_bridge.md`.
+
+- The official visible project account is `@HubOptimus`. The handle is display
+  context, not stable authorization. No account `user_id` is asserted in the
+  repository; a future live write must bind `GET /2/users/me` to a separately
+  approved stable ID.
+- xAI remains an optional analytical witness and X remains an optional public
+  signal source / governed publication destination. Neither gains authority
+  over evidence, governance, decisions, or publication.
+- Provider, source, and publisher boundaries are separate. Provider and source
+  adapters default to disabled and accept only caller-injected transports; the
+  repository ships no SDK, HTTP client, credential loader, or live transport.
+- The xAI plan is public-project-data-only, uses an opaque model reference,
+  fixes the API surface to Responses, and sets Responses state/history
+  `store` to false. That setting does not imply Zero Data Retention; an
+  optional future transport policy requires explicit ZDR-header attestation.
+  The public classification remains a caller assertion. The dormant result
+  contract preserves `encountered` versus `inline_cited` citation scope for a
+  future reviewed tool policy; phase one enables no provider search tool.
+- X read-side records retain IDs as strings, observed/reference URLs,
+  timestamps, content-addressed provenance and evidence-reference digests,
+  edit history, and a normalized-text digest. The package does not copy the
+  observation body into the persistable record; caller/transport retention
+  remains external.
+- X publication planning defaults to disabled. When enabled, it remains a pure
+  `DryRun` planner bound to `@HubOptimus` and an exact deterministic payload
+  hash. It has no publish method or network transport.
+  Only a standalone text payload is planned; replies, mentions, quotes, DMs,
+  likes, follows, reposts, trends, drafts, client data, unresolved risks,
+  affiliation claims, and unratified commercial commitments fail closed.
+  Bare domain-shaped text that X may autolink also fails closed; outbound links
+  must use an exact declared public HTTPS URL.
+- Human-supplied gate flags constrain planning but do not verify themselves.
+  A future live write requires a separate issue, stable OAuth account binding,
+  exact human approval, an immutable HUB Gateway receipt, and post-check
+  evidence. Merge does not authorize that phase.
+- The package is not wired to the scenario runtime, Semantic Engine, Operator,
+  browser, EC2 layer, or deployment. LCDH-OS and customer data remain outside
+  the boundary.
+- The existing External AI Review Protocol remains unchanged. This phase does
+  not activate automated external review, feed model output into Core, or
+  create an autonomous source of truth.
+
 ## Do Not Do
 
 - Do not touch runtime unless an issue explicitly says so.
