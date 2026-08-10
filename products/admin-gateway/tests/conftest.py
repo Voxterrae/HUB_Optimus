@@ -20,3 +20,16 @@ _REQUIRED_RUNTIME = ("fastapi", "httpx", "httpx2", "pydantic")
 collect_ignore: list[str] = []
 if any(importlib.util.find_spec(module_name) is None for module_name in _REQUIRED_RUNTIME):
     collect_ignore.extend(["test_api.py", "test_auth.py", "test_catalog.py"])
+
+
+def pytest_configure(config) -> None:
+    """Fail on the TestClient fallback warning when this Starlette exposes it."""
+    if importlib.util.find_spec("starlette") is None:
+        return
+    from starlette import exceptions as starlette_exceptions
+
+    if getattr(starlette_exceptions, "StarletteDeprecationWarning", None) is not None:
+        config.addinivalue_line(
+            "filterwarnings",
+            "error::starlette.exceptions.StarletteDeprecationWarning",
+        )

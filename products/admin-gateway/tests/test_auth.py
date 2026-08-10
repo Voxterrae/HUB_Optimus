@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import base64
 import json
+import warnings
 from pathlib import Path
 
 import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
+from starlette import exceptions as starlette_exceptions
 
 from optimus_admin_gateway.auth import build_principal_dependency
 from optimus_admin_gateway.config import Settings
@@ -237,3 +239,11 @@ def test_reader_and_mutator_roles_cannot_collapse() -> None:
             reader_role="Optimus.Reader",
             mutator_role="Optimus.Reader",
         )
+
+
+def test_testclient_deprecation_is_fatal_when_available() -> None:
+    warning_type = getattr(starlette_exceptions, "StarletteDeprecationWarning", None)
+    if warning_type is None:
+        pytest.skip("This supported Starlette version predates the TestClient warning type")
+    with pytest.raises(warning_type):
+        warnings.warn("warning policy probe", warning_type, stacklevel=1)
