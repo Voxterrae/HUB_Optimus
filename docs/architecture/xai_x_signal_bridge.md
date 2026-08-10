@@ -130,9 +130,10 @@ rejects:
 These structural checks constrain a plan; classification and gate flags are
 caller assertions. They do not independently prove that content is true,
 public, rights-cleared, secure, or commercially ratified.
-Human review remains mandatory. X's current creation and automation boundaries
-are documented in [Create Posts](https://docs.x.com/x-api/posts/create-post)
-and the [X Automation Rules](https://help.x.com/en/rules-and-policies/x-automation).
+Human review remains mandatory. X documents the Post creation interface in
+[Create Posts](https://docs.x.com/x-api/posts/create-post) and applicable API
+restrictions, including automation, in
+[Restricted uses of the X API](https://docs.x.com/developer-terms/restricted-use-cases).
 
 ## Future live-write gate
 
