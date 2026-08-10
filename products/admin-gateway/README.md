@@ -22,6 +22,10 @@ See `docs/CLIENT_BOUNDARY.md`.
 
 ## Quick start
 
+The commands below apply to a complete Admin Gateway package checkout. The
+foundation slice establishes only the product and tenant boundary; executable
+API, runbook and deployment assets arrive in the focused follow-up slices.
+
 ```bash
 python -m venv .venv
 . .venv/bin/activate

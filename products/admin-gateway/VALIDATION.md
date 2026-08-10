@@ -1,19 +1,20 @@
 # Validation record
 
-Validation target: Optimus Admin Gateway v0.1.0 product package.
+Validation target: Optimus Admin Gateway foundation boundary.
 
-Executed locally:
+This slice contains product-boundary documentation only. It does not contain
+the API, operation catalog, runbook, Power Platform assets or deployment
+templates, so it makes no runtime-test or deployable-package claim.
 
-```text
-PYTHONPATH=src pytest -q
-10 passed
-```
+Verified for this slice:
 
-Additional checks:
+- the five tracked Admin Gateway files are the README, this validation record,
+  architecture, client-boundary and security documentation;
+- no pilot mailbox address, tenant ID, client environment URL, credential or
+  execution output is stored in the public foundation;
+- executable validation is deferred to the focused implementation slices that
+  introduce the corresponding assets.
 
-- JSON syntax: operation catalog, Dataverse schema, tenant-overlay schema and connector definition.
-- YAML syntax: OpenAPI and approval-flow blueprint.
-- Static PowerShell safety checks: allowlisted `ValidateSet`, DryRun default, no `Invoke-Expression`.
-- Public package scan: no pilot mailbox addresses, tenant IDs or client environment URL.
-
-PowerShell runtime behavior is not certified locally because PowerShell 7 is not installed in this execution environment. The GitHub workflow performs a PowerShell parser check on a runner with `pwsh`.
+The complete package must be validated again at its final stacked head before
+review or deployment. A package manifest is intentionally absent until it can
+be generated from the files that actually exist in Git.
