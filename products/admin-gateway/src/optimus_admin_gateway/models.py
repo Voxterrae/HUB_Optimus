@@ -13,6 +13,11 @@ MAILBOX_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 SAFE_ID_PATTERN_TEXT = r"^[A-Za-z0-9._-]{1,128}$"
 SAFE_KEY_PATTERN_TEXT = r"^[A-Za-z0-9._-]{8,128}$"
 SAFE_ID_PATTERN = re.compile(SAFE_ID_PATTERN_TEXT)
+SHA256_HEX_PATTERN = r"^[a-f0-9]{64}$"
+APPROVAL_SIGNATURE_PROFILE = "hmac-sha256-lp-v1"
+APPROVAL_TIMESTAMP_INPUT_PATTERN = re.compile(
+    r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})"
+)
 
 
 class StrictModel(BaseModel):
@@ -107,18 +112,40 @@ PARAMETER_MODELS: dict[str, type[StrictModel]] = {
 
 
 class ApprovalReceipt(StrictModel):
+    signature_profile: Literal[APPROVAL_SIGNATURE_PROFILE]
     approval_id: str = Field(min_length=8, max_length=128, pattern=SAFE_KEY_PATTERN_TEXT)
-    plan_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
+    plan_hash: str = Field(min_length=64, max_length=64, pattern=SHA256_HEX_PATTERN)
     approved_by: str = Field(min_length=1, max_length=256)
     approved_at: datetime
-    signature: str = Field(min_length=32, max_length=512)
+    signature: str = Field(min_length=64, max_length=64, pattern=SHA256_HEX_PATTERN)
+
+    @field_validator("signature_profile", "signature", mode="before")
+    @classmethod
+    def exact_security_string(cls, value: object) -> object:
+        if type(value) is not str or value != value.strip():
+            raise ValueError("must be an exact non-whitespace-padded string")
+        return value
+
+    @field_validator("approved_at", mode="before")
+    @classmethod
+    def strict_timestamp_input(cls, value: object) -> object:
+        if isinstance(value, datetime):
+            return value
+        if type(value) is not str or APPROVAL_TIMESTAMP_INPUT_PATTERN.fullmatch(value) is None:
+            raise ValueError("approved_at must be an RFC3339 date-time string")
+        return value
 
     @field_validator("approved_at")
     @classmethod
     def timezone_required(cls, value: datetime) -> datetime:
         if value.tzinfo is None:
             raise ValueError("approved_at must include a timezone")
-        return value.astimezone(timezone.utc)
+        try:
+            if value.utcoffset() is None:
+                raise ValueError("approved_at must include a timezone")
+            return value.astimezone(timezone.utc)
+        except (OverflowError, ValueError) as exc:
+            raise ValueError("approved_at must be representable in UTC") from exc
 
 
 class OperationRequest(StrictModel):

@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 from urllib.parse import urlsplit
 
+import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
 
@@ -62,6 +63,65 @@ def test_custom_connector_is_tenant_bound_and_role_aware() -> None:
         "Optimus.Reader is required; live mutations additionally require "
         "Optimus.Mutator and a valid approval"
     )
+
+
+def test_approval_signature_contract_matches_openapi_and_connector() -> None:
+    openapi = yaml.safe_load(
+        (PACKAGE_ROOT / "openapi" / "optimus-admin-gateway.openapi.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    connector = json.loads(
+        (PACKAGE_ROOT / "power-platform" / "custom-connector" / "apiDefinition.swagger.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    expected_required = [
+        "signature_profile",
+        "approval_id",
+        "plan_hash",
+        "approved_by",
+        "approved_at",
+        "signature",
+    ]
+    expected_properties = {
+        "signature_profile": {"type": "string", "enum": ["hmac-sha256-lp-v1"]},
+        "approval_id": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._-]{8,128}$",
+        },
+        "plan_hash": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[a-f0-9]{64}$",
+        },
+        "approved_by": {"type": "string", "minLength": 1, "maxLength": 256},
+        "approved_at": {"type": "string", "format": "date-time"},
+        "signature": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[a-f0-9]{64}$",
+        },
+    }
+    schemas = (
+        openapi["components"]["schemas"]["ApprovalReceipt"],
+        connector["definitions"]["ApprovalReceipt"],
+    )
+    for schema in schemas:
+        assert schema["required"] == expected_required
+        assert schema["additionalProperties"] is False
+        assert schema["properties"] == expected_properties
+
+    openapi_execute = openapi["paths"]["/api/v1/operations/{operation_id}:execute"]["post"]
+    connector_execute = connector["paths"]["/operations/{operation_id}:execute"]["post"]
+    expected_422 = "Request, parameter or approval receipt validation failed"
+    assert openapi_execute["responses"]["422"]["description"] == expected_422
+    assert connector_execute["responses"]["422"]["description"] == expected_422
 
 
 def test_overlay_and_azure_templates_require_fail_closed_identity_binding() -> None:

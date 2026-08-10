@@ -55,7 +55,7 @@ paths:
         '403': {description: Optimus.Reader role required}
         '404': {description: Operation not found}
         '503': {description: Entra tenant binding not configured}
-        '422': {description: Parameter validation failed}
+        '422': {description: 'Request, parameter or approval receipt validation failed'}
   /api/v1/operations/{operation_id}:execute:
     post:
       tags: [operations]
@@ -77,6 +77,7 @@ paths:
         '200': {description: DryRun or configured execution result}
         '401': {description: Authenticated Entra principal required}
         '403': {description: Required application role or approval missing or invalid}
+        '422': {description: 'Request, parameter or approval receipt validation failed'}
         '503': {description: Entra tenant binding or tenant executor not configured}
 components:
   securitySchemes:
@@ -93,17 +94,18 @@ components:
     ApprovalReceipt:
       type: object
       additionalProperties: false
-      required: [approval_id, plan_hash, approved_by, approved_at, signature]
+      required: [signature_profile, approval_id, plan_hash, approved_by, approved_at, signature]
       properties:
+        signature_profile: {type: string, enum: [hmac-sha256-lp-v1]}
         approval_id:
           type: string
           minLength: 8
           maxLength: 128
           pattern: '^[A-Za-z0-9._-]{8,128}$'
-        plan_hash: {type: string, pattern: '^[a-f0-9]{64}$'}
+        plan_hash: {type: string, minLength: 64, maxLength: 64, pattern: '^[a-f0-9]{64}$'}
         approved_by: {type: string, minLength: 1, maxLength: 256}
         approved_at: {type: string, format: date-time}
-        signature: {type: string, minLength: 32, maxLength: 512}
+        signature: {type: string, minLength: 64, maxLength: 64, pattern: '^[a-f0-9]{64}$'}
     OperationRequest:
       type: object
       additionalProperties: false

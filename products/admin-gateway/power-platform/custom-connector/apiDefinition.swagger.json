@@ -92,7 +92,7 @@
             "description": "Entra tenant binding not configured"
           },
           "422": {
-            "description": "Parameter validation failed"
+            "description": "Request, parameter or approval receipt validation failed"
           }
         }
       }
@@ -131,7 +131,7 @@
             "description": "Operation not found"
           },
           "422": {
-            "description": "Parameter validation failed"
+            "description": "Request, parameter or approval receipt validation failed"
           },
           "503": {
             "description": "Entra tenant binding or tenant executor not configured"
@@ -170,6 +170,7 @@
     "ApprovalReceipt": {
       "type": "object",
       "required": [
+        "signature_profile",
         "approval_id",
         "plan_hash",
         "approved_by",
@@ -178,6 +179,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "signature_profile": {
+          "type": "string",
+          "enum": [
+            "hmac-sha256-lp-v1"
+          ]
+        },
         "approval_id": {
           "type": "string",
           "minLength": 8,
@@ -186,17 +193,24 @@
         },
         "plan_hash": {
           "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
           "pattern": "^[a-f0-9]{64}$"
         },
         "approved_by": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
         },
         "approved_at": {
           "type": "string",
           "format": "date-time"
         },
         "signature": {
-          "type": "string"
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[a-f0-9]{64}$"
         }
       }
     }

@@ -200,7 +200,29 @@ def test_approval_flow_uses_numeric_choice_values_and_exact_plan_digest() -> Non
         "numeric_choice_values_only": True,
         "receipt_plan_hash_source": "opt_plandigest",
         "approved_at_source": "utc_approval_decision",
+        "signature_profile": "hmac-sha256-lp-v1",
+        "signature_algorithm": "hmac-sha256",
+        "signature_encoding": "lowercase-hex-64",
+        "signature_material": {
+            "domain_ascii": "HUB_OPTIMUS_APPROVAL_RECEIPT",
+            "domain_suffix_hex": "00",
+            "ordered_field_count": 5,
+            "field_count_prefix": "none",
+            "field_encoding": "utf-8-strict",
+            "length_prefix": "uint32-big-endian",
+            "bom": "forbidden",
+            "separator": "none",
+            "trailing_bytes": "forbidden",
+            "unicode_normalization": "none",
+            "timestamp_encoding": "utc-plus-00:00-seconds-with-optional-six-digit-fraction",
+            "secret_encoding": "utf-8-exact-no-trim-or-base64",
+            "secret_minimum_bytes": 32,
+            "secret_scope": "dedicated-per-tenant-environment-purpose",
+            "binary_framing_owner": "tenant_signer_service",
+            "legacy_fallback": False,
+        },
         "signed_receipt_fields": [
+            "signature_profile",
             "approval_id",
             "plan_hash",
             "approved_by",
@@ -210,7 +232,7 @@ def test_approval_flow_uses_numeric_choice_values_and_exact_plan_digest() -> Non
     }
     approval_steps = flow["steps"][4]["on_approve"]
     assert approval_steps[0] == "capture_approved_at_from_utc_approval_decision"
-    assert approval_steps[1] == "sign_or_seal_complete_receipt_using_tenant_service"
+    assert approval_steps[1] == "sign_v1_length_prefixed_receipt_using_tenant_service"
     persisted = approval_steps[2]["persist_complete_signed_approval_receipt"]
     assert persisted == {
         "table": "opt_adminapproval",
