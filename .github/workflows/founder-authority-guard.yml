@@ -159,6 +159,179 @@ jobs:
 
       - name: Validate founder authority and anti-impersonation boundary
         run: |
-          python tools/founder_authority_guard.py \
-            --evidence founder-authority-evidence.json \
-            --manifest config/governance/owner_identity.v1.json
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import pathlib
+          import re
+          import sys
+
+          ISSUE_REFERENCE_RE = re.compile(
+              r"(?im)^\s*(?:related\s+to|governance\s+issue)\s+#(?P<number>[1-9][0-9]*)\b"
+          )
+          PROTECTED_PREFIXES = ("docs/governance/", "config/governance/", ".github/")
+          PROTECTED_EXACT_PATHS = {
+              "AGENTS.md",
+              "ACKNOWLEDGEMENTS.md",
+              "CONTRIBUTING.md",
+              "IP_NOTICE.md",
+              "KERNEL_CHARTER.md",
+              "KERNEL_CHARTER_EN.md",
+              "README.md",
+              "docs/context/OWNER_AUTHORITY_HANDOFF.md",
+              "docs/context/SOURCE_OF_TRUTH.md",
+              "tools/founder_authority_guard.py",
+              "tests/test_founder_authority_guard.py",
+          }
+
+          class GuardError(RuntimeError):
+              pass
+
+          def require_mapping(value, label):
+              if not isinstance(value, dict):
+                  raise GuardError(f"{label} must be an object")
+              return value
+
+          def require_list(value, label):
+              if not isinstance(value, list):
+                  raise GuardError(f"{label} must be an array")
+              return value
+
+          def require_string(value, label):
+              if not isinstance(value, str) or not value.strip():
+                  raise GuardError(f"{label} must be a non-empty string")
+              return value.strip()
+
+          def require_int(value, label):
+              if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                  raise GuardError(f"{label} must be a positive integer")
+              return value
+
+          def normalize_path(value):
+              path = require_string(value, "changed file path").replace("\\", "/")
+              pure = pathlib.PurePosixPath(path)
+              if pure.is_absolute() or ".." in pure.parts or path.startswith("./"):
+                  raise GuardError(f"unsafe changed file path: {path!r}")
+              normalized = pure.as_posix()
+              if normalized in {"", "."}:
+                  raise GuardError("changed file path cannot be empty")
+              return normalized
+
+          def identity_matches(candidate, owner_login, owner_id):
+              candidate = require_mapping(candidate, "GitHub identity")
+              return candidate.get("login") == owner_login and candidate.get("id") == owner_id
+
+          def latest_owner_review(reviews, owner_login, owner_id):
+              latest = None
+              for raw in reviews:
+                  review = require_mapping(raw, "review")
+                  user = review.get("user")
+                  if not isinstance(user, dict) or not identity_matches(user, owner_login, owner_id):
+                      continue
+                  latest = review
+              return latest
+
+          def validate_verified_commits(commits):
+              if not commits:
+                  raise GuardError("pull request evidence contains no commits")
+              failures = []
+              for raw in commits:
+                  commit = require_mapping(raw, "commit")
+                  sha = require_string(commit.get("sha"), "commit SHA")
+                  verification = require_mapping(commit.get("verification"), "verification")
+                  if verification.get("verified") is not True:
+                      reason = verification.get("reason") or "unverified"
+                      failures.append(f"{sha[:12]} ({reason})")
+              if failures:
+                  raise GuardError(
+                      "all commits must be verified; failing commits: " + ", ".join(failures)
+                  )
+
+          try:
+              manifest = json.loads(
+                  pathlib.Path("config/governance/owner_identity.v1.json").read_text(encoding="utf-8")
+              )
+              evidence = json.loads(
+                  pathlib.Path("founder-authority-evidence.json").read_text(encoding="utf-8")
+              )
+
+              manifest = require_mapping(manifest, "owner identity manifest")
+              repository_identity = require_mapping(
+                  manifest.get("repository_identity"), "repository_identity"
+              )
+              owner_login = require_string(repository_identity.get("login"), "repository login")
+              owner_id = require_int(repository_identity.get("immutable_user_id"), "repository user ID")
+
+              repository = require_mapping(evidence.get("repository"), "repository")
+              repository_owner = require_mapping(repository.get("owner"), "repository owner")
+              if not identity_matches(repository_owner, owner_login, owner_id):
+                  raise GuardError(
+                      "repository owner identity does not match the pinned login and immutable user ID"
+                  )
+
+              pull_request = require_mapping(evidence.get("pull_request"), "pull_request")
+              author = require_mapping(pull_request.get("author"), "pull request author")
+              head_sha = require_string(pull_request.get("head_sha"), "head SHA")
+              base_ref = require_string(pull_request.get("base_ref"), "base ref")
+              body = pull_request.get("body")
+              if body is None:
+                  body = ""
+              if not isinstance(body, str):
+                  raise GuardError("pull request body must be a string")
+              if base_ref != "main":
+                  raise GuardError(f"owner-authority review must target main, not {base_ref!r}")
+
+              changed_files = tuple(
+                  normalize_path(value)
+                  for value in require_list(evidence.get("changed_files"), "changed_files")
+              )
+              if not changed_files:
+                  raise GuardError("pull request contains no changed files")
+
+              manifest_paths = tuple(
+                  normalize_path(value)
+                  for value in require_list(manifest.get("constitutional_files"), "constitutional_files")
+              )
+              protected_paths = tuple(
+                  path
+                  for path in changed_files
+                  if path in PROTECTED_EXACT_PATHS
+                  or path.startswith(PROTECTED_PREFIXES)
+                  or path in set(manifest_paths)
+              )
+
+              commits = require_list(evidence.get("commits"), "commits")
+              validate_verified_commits(commits)
+
+              owner_authored = identity_matches(author, owner_login, owner_id)
+              if protected_paths and not owner_authored:
+                  raise GuardError(
+                      "only the pinned owner identity may author constitutional/control-plane "
+                      "changes; protected paths: " + ", ".join(protected_paths)
+                  )
+              if protected_paths and ISSUE_REFERENCE_RE.search(body) is None:
+                  raise GuardError(
+                      "constitutional/control-plane changes require an explicit 'Related to #N' "
+                      "or 'Governance issue #N' reference in the pull request body"
+                  )
+
+              if not owner_authored:
+                  reviews = require_list(evidence.get("reviews"), "reviews")
+                  latest = latest_owner_review(reviews, owner_login, owner_id)
+                  if latest is None:
+                      raise GuardError(
+                          "a non-owner pull request requires approval by the pinned owner identity"
+                      )
+                  if str(latest.get("state", "")).upper() != "APPROVED":
+                      raise GuardError("the pinned owner's latest review is not APPROVED")
+                  if latest.get("commit_id") != head_sha:
+                      raise GuardError(
+                          "owner approval is stale; it must apply to the current pull request head"
+                      )
+          except (OSError, json.JSONDecodeError, GuardError) as exc:
+              print(f"FOUNDER_AUTHORITY_GUARD: FAIL: {exc}", file=sys.stderr)
+              raise SystemExit(1)
+
+          print("FOUNDER_AUTHORITY_GUARD: PASS")
+          PY
