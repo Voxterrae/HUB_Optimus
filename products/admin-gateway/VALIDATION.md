@@ -20,6 +20,8 @@ The contracts cover:
 - Version-aware enforcement of Starlette's TestClient deprecation warning.
 - Independent `Optimus.Reader` and `Optimus.Mutator` gates before the approval gate.
 - Deterministic approval freshness, expiry-boundary and fail-closed configuration checks.
+- Canonical `hmac-sha256-lp-v1` framing, an external fixed vector, UTF-8 byte lengths, legacy-collision separation and downgrade rejection.
+- Approval-signature profile parity across Pydantic, OpenAPI, the custom connector and the Power Platform flow blueprint.
 - Tenant-specific connector endpoints; `/common` is forbidden for the production template.
 - EasyAuth parameters that require authentication, return `401` and bind allowed audiences.
 - Alternate-key-safe identifiers across the API, OpenAPI contract and custom connector.

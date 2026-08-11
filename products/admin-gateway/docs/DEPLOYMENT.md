@@ -9,7 +9,7 @@
 7. Import the allowlisted runbooks and pin the ExchangeOnlineManagement module.
 8. Deploy the API behind EasyAuth with authentication required, a tenant-specific issuer, an allowed-audience list, `401` for unauthenticated API calls and no direct backend bypass. Map the same tenant to `OPTIMUS_ENTRA_TENANT_ID`, set a reviewed `OPTIMUS_APPROVAL_MAX_AGE_SECONDS` from 1 to 86400 (900 seconds by default), synchronize the gateway and approval-service clocks, and exclude only the data-free `/healthz` probe.
 9. Import the custom connector, replace its tenant, application and host placeholders, and verify that neither OAuth endpoint uses `/common`.
-10. Import or build the approval flow using the supplied blueprint. Capture `approved_at` from the UTC approval-decision time, sign the complete receipt material and dispatch immediately rather than treating queue time as fresh authorization.
+10. Import or build the approval flow using the supplied blueprint. Capture `approved_at` from the UTC approval-decision time and have the tenant signer construct the exact binary `hmac-sha256-lp-v1` material; do not reproduce byte lengths with Power Automate string functions. Generate a random, dedicated per-tenant and per-environment secret of at least 32 UTF-8 bytes, verify both published reference vectors, reject every legacy profile, and dispatch immediately rather than treating queue time as fresh authorization.
 11. Create Copilot Studio agents and add only the intended connector actions.
 12. Validate the private tenant overlay, including tenant ID, allowed audiences and both application-role names, then publish it to the client control area.
 13. Run read-only acceptance tests.

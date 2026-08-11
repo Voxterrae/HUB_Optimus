@@ -8,8 +8,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 import optimus_admin_gateway.main as main_module
-from optimus_admin_gateway.approvals import ApprovalVerifier
+from optimus_admin_gateway.approvals import ApprovalVerifier, approval_signature_material
 from optimus_admin_gateway.main import app
+from optimus_admin_gateway.models import APPROVAL_SIGNATURE_PROFILE, ApprovalReceipt
 
 client = TestClient(app)
 READER_HEADERS = {
@@ -42,23 +43,25 @@ def easyauth_headers(*roles: str) -> dict[str, str]:
 
 PRODUCTION_READER_HEADERS = easyauth_headers("Optimus.Reader")
 PRODUCTION_MUTATOR_HEADERS = easyauth_headers("Optimus.Reader", "Optimus.Mutator")
-APPROVAL_SECRET = "synthetic-api-approval-secret"
+APPROVAL_SECRET = "synthetic-api-approval-secret-32-bytes"
 APPROVAL_NOW = datetime(2026, 8, 10, 17, 0, tzinfo=timezone.utc)
 
 
 def signed_approval(plan_hash: str, approved_at: datetime) -> dict[str, str]:
-    normalized = approved_at.astimezone(timezone.utc)
-    material = "|".join(
-        ["approval-api-0001", plan_hash, "approver@example.com", normalized.isoformat()]
-    ).encode("utf-8")
-    signature = hmac.new(APPROVAL_SECRET.encode("utf-8"), material, hashlib.sha256).hexdigest()
-    return {
-        "approval_id": "approval-api-0001",
-        "plan_hash": plan_hash,
-        "approved_by": "approver@example.com",
-        "approved_at": normalized.isoformat(),
-        "signature": signature,
-    }
+    receipt = ApprovalReceipt(
+        signature_profile=APPROVAL_SIGNATURE_PROFILE,
+        approval_id="approval-api-0001",
+        plan_hash=plan_hash,
+        approved_by="approver@example.com",
+        approved_at=approved_at.astimezone(timezone.utc),
+        signature="0" * 64,
+    )
+    signature = hmac.new(
+        APPROVAL_SECRET.encode("utf-8"),
+        approval_signature_material(receipt),
+        hashlib.sha256,
+    ).hexdigest()
+    return receipt.model_copy(update={"signature": signature}).model_dump(mode="json")
 
 
 def live_mutation_body(idempotency_key: str) -> dict:
@@ -269,6 +272,92 @@ def test_invalid_approvals_return_the_same_generic_response(
         "code": "APPROVAL_INVALID",
         "plan_hash": plan.json()["plan_hash"],
     }
+
+
+def test_legacy_delimiter_signature_is_rejected_without_fallback(monkeypatch) -> None:
+    monkeypatch.setattr(
+        main_module,
+        "approvals",
+        ApprovalVerifier(APPROVAL_SECRET, max_age_seconds=900, now=lambda: APPROVAL_NOW),
+    )
+    body = live_mutation_body("test-approval-legacy-0001")
+    plan = client.post(
+        "/api/v1/operations/exchange.grant_full_access:plan",
+        json=body,
+        headers=PRODUCTION_MUTATOR_HEADERS,
+    )
+    assert plan.status_code == 200
+    approval = signed_approval(plan.json()["plan_hash"], APPROVAL_NOW)
+    legacy_material = "|".join(
+        [
+            approval["approval_id"],
+            approval["plan_hash"],
+            approval["approved_by"],
+            approval["approved_at"],
+        ]
+    ).encode("utf-8")
+    approval["signature"] = hmac.new(
+        APPROVAL_SECRET.encode("utf-8"),
+        legacy_material,
+        hashlib.sha256,
+    ).hexdigest()
+    body["approval"] = approval
+
+    response = client.post(
+        "/api/v1/operations/exchange.grant_full_access:execute",
+        json=body,
+        headers=PRODUCTION_MUTATOR_HEADERS,
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == {
+        "code": "APPROVAL_INVALID",
+        "plan_hash": plan.json()["plan_hash"],
+    }
+
+
+@pytest.mark.parametrize(
+    "malformation",
+    [
+        "missing-profile",
+        "unknown-profile",
+        "unicode-signature",
+        "numeric-timestamp",
+        "epoch-string-timestamp",
+        "underflow-timestamp",
+        "overflow-timestamp",
+    ],
+)
+def test_malformed_approval_contract_is_rejected_as_422(malformation: str) -> None:
+    body = live_mutation_body(f"test-approval-malformed-{malformation}")
+    plan = client.post(
+        "/api/v1/operations/exchange.grant_full_access:plan",
+        json=body,
+        headers=PRODUCTION_MUTATOR_HEADERS,
+    )
+    assert plan.status_code == 200
+    approval = signed_approval(plan.json()["plan_hash"], APPROVAL_NOW)
+    if malformation == "missing-profile":
+        approval.pop("signature_profile")
+    elif malformation == "unknown-profile":
+        approval["signature_profile"] = "hmac-sha256-legacy"
+    elif malformation == "unicode-signature":
+        approval["signature"] = chr(233) * 32
+    elif malformation == "numeric-timestamp":
+        approval["approved_at"] = 1786381200
+    elif malformation == "epoch-string-timestamp":
+        approval["approved_at"] = "1786381200"
+    elif malformation == "underflow-timestamp":
+        approval["approved_at"] = "0001-01-01T00:00:00+14:00"
+    else:
+        approval["approved_at"] = "9999-12-31T23:59:59-14:00"
+    body["approval"] = approval
+
+    response = client.post(
+        "/api/v1/operations/exchange.grant_full_access:execute",
+        json=body,
+        headers=PRODUCTION_MUTATOR_HEADERS,
+    )
+    assert response.status_code == 422
 
 
 def test_unknown_fields_are_rejected() -> None:
