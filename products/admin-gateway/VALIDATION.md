@@ -19,6 +19,7 @@ The contracts cover:
 - Strict EasyAuth principal parsing, synthetic tenant binding and legacy-header rejection.
 - Version-aware enforcement of Starlette's TestClient deprecation warning.
 - Independent `Optimus.Reader` and `Optimus.Mutator` gates before the approval gate.
+- Deterministic approval freshness, expiry-boundary and fail-closed configuration checks.
 - Tenant-specific connector endpoints; `/common` is forbidden for the production template.
 - EasyAuth parameters that require authentication, return `401` and bind allowed audiences.
 - Alternate-key-safe identifiers across the API, OpenAPI contract and custom connector.

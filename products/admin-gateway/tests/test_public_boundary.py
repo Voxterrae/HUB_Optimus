@@ -84,11 +84,16 @@ def test_overlay_and_azure_templates_require_fail_closed_identity_binding() -> N
     assert azure["unauthenticatedClientAction"] == "Return401"
     assert "REPLACE_WITH_TENANT_ID" in azure["easyAuthIssuer"]
     assert azure["excludedPaths"] == ["/healthz"]
+    assert azure["approvalMaxAgeSeconds"] == 900
     assert azure["applicationSettings"] == {
         "OPTIMUS_ENTRA_TENANT_ID": "REPLACE_WITH_TENANT_ID",
         "OPTIMUS_READER_ROLE": "Optimus.Reader",
         "OPTIMUS_MUTATOR_ROLE": "Optimus.Mutator",
+        "OPTIMUS_APPROVAL_MAX_AGE_SECONDS": "900",
     }
+    assert int(azure["applicationSettings"]["OPTIMUS_APPROVAL_MAX_AGE_SECONDS"]) == azure[
+        "approvalMaxAgeSeconds"
+    ]
 
 
 def test_public_package_uses_only_allowlisted_synthetic_identifiers() -> None:

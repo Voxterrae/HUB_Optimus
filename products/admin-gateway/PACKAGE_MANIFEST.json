@@ -1,7 +1,7 @@
 {
   "package": "optimus-admin-gateway",
   "version": "0.1.0",
-  "fileCount": 53,
+  "fileCount": 54,
   "files": [
     {
       "path": ".github/workflows/optimus-admin-gateway.yml",
@@ -15,8 +15,8 @@
     },
     {
       "path": "VALIDATION.md",
-      "sha256": "3c0463972f717ac038605a7ff5ec548a1d6bf29d2b4ac89267a92571c033d4a9",
-      "size": 3163
+      "sha256": "09cac05b61d2ffe1892f0f7a6b5d061b000a755d79571edc16a1ae98f7c3a04e",
+      "size": 3253
     },
     {
       "path": "config/operations.catalog.json",
@@ -85,8 +85,8 @@
     },
     {
       "path": "deployment/azure/parameters.template.json",
-      "sha256": "5046af7b3ded56ab4844088c852778f03fcc358a1490a526c6826657c964ce9d",
-      "size": 892
+      "sha256": "ce9c9b8da65b8947501882285caa1c8533d83812db9c2611faa237751e4a7c2f",
+      "size": 971
     },
     {
       "path": "deployment/sharepoint/client-overlay.example.json",
@@ -115,8 +115,8 @@
     },
     {
       "path": "docs/DEPLOYMENT.md",
-      "sha256": "b1228f2e889ca16b5e6cfb05ba0d0a1d5885f64daef02c7982c1403ea446b448",
-      "size": 1612
+      "sha256": "f3e09e5b38bce9744e551a6cbdb289eb7d8a85b955acc307e19d242c2809aa0b",
+      "size": 2065
     },
     {
       "path": "docs/OPERATIONS.md",
@@ -125,8 +125,8 @@
     },
     {
       "path": "docs/SECURITY.md",
-      "sha256": "3899e056d9a6541313330bd9a355bffcaab89dbd57a5593b64eb64fe7efeb812",
-      "size": 3121
+      "sha256": "efc0cc4798d707fba601fed20748a106b8193f95c81a9d168f4645c00f2e6998",
+      "size": 4856
     },
     {
       "path": "openapi/optimus-admin-gateway.openapi.yaml",
@@ -145,8 +145,8 @@
     },
     {
       "path": "power-platform/flows/approval-flow.blueprint.yaml",
-      "sha256": "d06542e4d2c94a31079dd1070aeaf81bcc4fb2cb78c9f80a64f2260c0686f5b3",
-      "size": 1422
+      "sha256": "245483fc71068b085386d4fde59b35fb23ec4a82fa515123d8a853f1dbd225d3",
+      "size": 1709
     },
     {
       "path": "pyproject.toml",
@@ -185,8 +185,8 @@
     },
     {
       "path": "src/optimus_admin_gateway/approvals.py",
-      "sha256": "9e11a2ad829e9ea117c233413f7f27c495193d4b8869b8b68a0789420512fd4f",
-      "size": 940
+      "sha256": "c218e3675f325a2e69eae51cb8def964f072e7c720d70468449ed7a6cfe56809",
+      "size": 1887
     },
     {
       "path": "src/optimus_admin_gateway/auth.py",
@@ -200,8 +200,8 @@
     },
     {
       "path": "src/optimus_admin_gateway/config.py",
-      "sha256": "ee2c9fd0a234b659b79778767846e3f756fe9f9a4ba940643a68ecafd38e2f54",
-      "size": 1417
+      "sha256": "477faa905fefaa792d43b7ad206e87e2a1bf21122ae0c2d8268ea69e306398c0",
+      "size": 2667
     },
     {
       "path": "src/optimus_admin_gateway/executors.py",
@@ -210,8 +210,8 @@
     },
     {
       "path": "src/optimus_admin_gateway/main.py",
-      "sha256": "a12d4445c369aa9d608a45bfa8cd90d9fcc36f4a7ab584ee4d690cfbe36eb9c4",
-      "size": 5025
+      "sha256": "5da39fe352083a0dacb1ced906eb8e1fa4c475dfafda78c1e691427cf390dec1",
+      "size": 5071
     },
     {
       "path": "src/optimus_admin_gateway/models.py",
@@ -220,13 +220,18 @@
     },
     {
       "path": "tests/conftest.py",
-      "sha256": "421cb5a3ac81805ba31a83c92b33b43da4fc3a3448482d21b1402dc2a49e0049",
-      "size": 1391
+      "sha256": "8c24e17c4656e12c881685abce51a5959785ad323b492c9e46214d7fba98849f",
+      "size": 1412
     },
     {
       "path": "tests/test_api.py",
-      "sha256": "034ec8edbe2d7a72295813e5a965825b803bd75c0f09aca7c222feb059291ed5",
-      "size": 6550
+      "sha256": "a8c6e711fca7c2317784224daa87b88ec2daab5c2a9209d65d904839b44948a8",
+      "size": 10033
+    },
+    {
+      "path": "tests/test_approvals.py",
+      "sha256": "24c270c582dcec496429d3fb6cbbae9f075a3c2b4d2a6ec14822b35a4964be8f",
+      "size": 6731
     },
     {
       "path": "tests/test_auth.py",
@@ -240,8 +245,8 @@
     },
     {
       "path": "tests/test_dataverse_schema_contract.py",
-      "sha256": "429feb3a307ec580d3fdc5ba5789b482cbcbe299504497ec3f983d0be8f1fdae",
-      "size": 8561
+      "sha256": "e612522635a702a3bf1e1423d89f657230b4748c47553e5700e6a0e4341b38af",
+      "size": 9306
     },
     {
       "path": "tests/test_dataverse_solution_baseline.py",
@@ -250,8 +255,8 @@
     },
     {
       "path": "tests/test_pac_bootstrap_safety.py",
-      "sha256": "280e071df8b35e5d95f4bc44891ff51008b4b48f6f65e553426a2aeb9668ed4b",
-      "size": 2496
+      "sha256": "c48a87cc57e84bdc1cc5cda7bccd5b6963c5a6165bbf4af10726088ea84e30f1",
+      "size": 3050
     },
     {
       "path": "tests/test_package_manifest.py",
@@ -260,8 +265,8 @@
     },
     {
       "path": "tests/test_public_boundary.py",
-      "sha256": "f1444c8be6b17e66fd0befa3adbc7d33174614334efbe4166592abf489946856",
-      "size": 4724
+      "sha256": "782c93441f47aca2d31fa640706b479f644fe5fe7a75c43f92fac6641284d4a6",
+      "size": 4953
     },
     {
       "path": "tests/test_runbook_safety.py",
