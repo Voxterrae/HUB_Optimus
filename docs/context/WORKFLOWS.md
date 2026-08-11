@@ -53,8 +53,10 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   - verifies that the package manifest exactly matches the tracked Git-index
     bytes for the Admin Gateway package and its workflow.
 - Job `powershell-contract`:
-  - parses every Admin Gateway runbook with PowerShell's language parser;
-  - rejects dynamic execution and a non-safe DryRun default;
+  - parses every Admin Gateway PowerShell asset with PowerShell's language parser;
+  - self-tests an executable-AST guard that allows inert strings and comments
+    while rejecting direct dynamic-execution calls;
+  - rejects a non-safe DryRun default;
   - runs the versioned Pester safety contracts with `Invoke-Pester -CI`.
 - Writes to repo: no.
 

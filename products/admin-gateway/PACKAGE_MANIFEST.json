@@ -5,8 +5,8 @@
   "files": [
     {
       "path": ".github/workflows/optimus-admin-gateway.yml",
-      "sha256": "55782564f0784b80c57ac944339ed802e7b601e503a034f591d1c2f271287055",
-      "size": 3236
+      "sha256": "f442c75681af5c979c113f441a5a9247a37442cfd4984aa17e8cb673da0927fe",
+      "size": 7272
     },
     {
       "path": "README.md",

@@ -46,23 +46,130 @@ jobs:
       - name: Parse and inspect all PowerShell 7 assets
         shell: pwsh
         run: |
+          function Find-ForbiddenDynamicExecution {
+            param(
+              [Parameter(Mandatory)]
+              [System.Management.Automation.Language.Ast]$Ast
+            )
+
+            @($Ast.FindAll({
+              param($node)
+
+              if ($node -is [System.Management.Automation.Language.CommandAst]) {
+                $commandName = $node.GetCommandName()
+                if ($null -eq $commandName) {
+                  return $false
+                }
+
+                $leafName = ($commandName -split '\\')[-1]
+                return ($leafName -ieq 'Invoke-Expression') -or
+                  ($leafName -ieq 'iex')
+              }
+
+              if ($node -isnot [System.Management.Automation.Language.InvokeMemberExpressionAst]) {
+                return $false
+              }
+              if ($node.Member -isnot [System.Management.Automation.Language.StringConstantExpressionAst]) {
+                return $false
+              }
+
+              $memberName = $node.Member.Value
+              if ($memberName -ieq 'DownloadString') {
+                return $true
+              }
+
+              if (-not $node.Static -or $memberName -ine 'Create') {
+                return $false
+              }
+              if ($node.Expression -isnot [System.Management.Automation.Language.TypeExpressionAst]) {
+                return $false
+              }
+
+              $typeName = $node.Expression.TypeName.FullName
+              return ($typeName -ieq 'ScriptBlock') -or
+                ($typeName -ieq 'System.Management.Automation.ScriptBlock')
+            }, $true))
+          }
+
+          $scannerFixtures = @(
+            @{
+              Name = 'inert words'
+              Source = (@(
+                '# Invoke-Expression iex DownloadString [ScriptBlock]::Create'
+                '$label = ''Invoke-Expression iex DownloadString [ScriptBlock]::Create'''
+                '$content | Should -Not -Match ''Invoke-Expression'''
+              ) -join "`n")
+              Expected = 0
+            }
+            @{ Name = 'Invoke-Expression'; Source = 'Invoke-Expression ''payload'''; Expected = 1 }
+            @{ Name = 'iex'; Source = 'iex ''payload'''; Expected = 1 }
+            @{
+              Name = 'call-operator Invoke-Expression'
+              Source = '& ''Invoke-Expression'' ''payload'''
+              Expected = 1
+            }
+            @{
+              Name = 'module-qualified Invoke-Expression'
+              Source = 'Microsoft.PowerShell.Utility\Invoke-Expression ''payload'''
+              Expected = 1
+            }
+            @{ Name = 'DownloadString'; Source = '$client.DownloadString(''payload'')'; Expected = 1 }
+            @{
+              Name = 'ScriptBlock.Create'
+              Source = '[ScriptBlock]::Create(''payload'')'
+              Expected = 1
+            }
+            @{
+              Name = 'fully-qualified ScriptBlock.Create'
+              Source = '[System.Management.Automation.ScriptBlock]::Create(''payload'')'
+              Expected = 1
+            }
+          )
+
+          foreach ($fixture in $scannerFixtures) {
+            $fixtureTokens = $null
+            $fixtureErrors = $null
+            $fixtureAst = [System.Management.Automation.Language.Parser]::ParseInput(
+              $fixture.Source,
+              [ref]$fixtureTokens,
+              [ref]$fixtureErrors
+            )
+            if ($fixtureErrors.Count -gt 0) {
+              throw "AST scanner fixture failed to parse: $($fixture.Name)"
+            }
+
+            $fixtureFindings = @(Find-ForbiddenDynamicExecution -Ast $fixtureAst)
+            if ($fixtureFindings.Count -ne $fixture.Expected) {
+              throw "AST scanner self-test failed: $($fixture.Name)"
+            }
+          }
+          Write-Host 'Executable-AST scanner self-test: PASS'
+
           $files = Get-ChildItem -Recurse products/admin-gateway -Filter *.ps1
           if ($files.Count -eq 0) { throw 'No PowerShell assets found.' }
           foreach ($file in $files) {
             $tokens = $null
             $errors = $null
-            [System.Management.Automation.Language.Parser]::ParseFile(
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile(
               $file.FullName,
               [ref]$tokens,
               [ref]$errors
-            ) | Out-Null
+            )
             if ($errors.Count -gt 0) {
               $errors | ForEach-Object { Write-Error "$($file.FullName): $($_.Message)" }
               throw "PowerShell parse failed for $($file.FullName)."
             }
-            $content = Get-Content -Raw $file.FullName
-            if ($content -match '(?i)Invoke-Expression|\biex\b|DownloadString|ScriptBlock\]::Create') {
-              throw "Dynamic execution is forbidden: $($file.FullName)"
+
+            $forbiddenNodes = @(Find-ForbiddenDynamicExecution -Ast $ast)
+            if ($forbiddenNodes.Count -gt 0) {
+              $details = $forbiddenNodes | ForEach-Object {
+                '{0}:{1}:{2}: {3}' -f
+                  $file.FullName,
+                  $_.Extent.StartLineNumber,
+                  $_.Extent.StartColumnNumber,
+                  $_.Extent.Text
+              }
+              throw "Dynamic execution is forbidden:`n$($details -join "`n")"
             }
           }
           $runbook = Get-Content -Raw products/admin-gateway/runbooks/Invoke-OptimusExchangeOperation.ps1
