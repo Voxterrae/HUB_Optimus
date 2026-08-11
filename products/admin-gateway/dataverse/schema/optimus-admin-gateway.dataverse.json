@@ -2,8 +2,9 @@
   "solution": {
     "uniqueName": "OptimusAdminGateway",
     "displayName": "Optimus Admin Gateway",
-    "publisher": "Optimus",
+    "publisher": "HUB_Optimus",
     "prefix": "opt",
+    "choiceValuePrefix": 88483,
     "version": "0.1.0.0"
   },
   "tables": [

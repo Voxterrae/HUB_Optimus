@@ -23,6 +23,8 @@ The contracts cover:
 - Static PowerShell safety: reviewed `ValidateSet`, DryRun default and no dynamic execution.
 - Pester runbook contracts on PowerShell 7 in GitHub Actions.
 - Public-boundary scans for tenant identifiers, client addresses, secrets and environment URLs.
+- Sanitized unpacked Dataverse baseline checks bind `OptimusAdminGateway` v0.1.0.0 to publisher `HUB_Optimus`, prefix `opt` and choice prefix `88483`.
+- Baseline checks prove zero root components, zero missing dependencies and no committed binary export.
 - Deterministic package coverage, byte sizes and SHA-256 hashes for every tracked asset.
 
-No live Microsoft tenant, Dataverse environment, mailbox, Azure resource or approval was changed or certified by these repository tests. Deployment remains gated on tenant-side EasyAuth, audience, role, network-boundary and executor verification.
+Repository tests do not perform or certify live tenant changes. A private non-production client-zero sandbox was used by the owner to create and export the empty solution baseline; tenant IDs, environment URLs, identities and the binary export remain outside the public repository. Deployment remains gated on tenant-side EasyAuth, audience, role, network-boundary and executor verification.

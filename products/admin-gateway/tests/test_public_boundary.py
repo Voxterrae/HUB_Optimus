@@ -24,6 +24,7 @@ ALLOWED_PUBLIC_HOSTS = {
     "login.microsoftonline.com",
     "schemas.microsoft.com",
     "schemas.xmlsoap.org",
+    "www.w3.org",
 }
 
 

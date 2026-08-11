@@ -1,7 +1,7 @@
 {
   "package": "optimus-admin-gateway",
   "version": "0.1.0",
-  "fileCount": 42,
+  "fileCount": 47,
   "files": [
     {
       "path": ".github/workflows/optimus-admin-gateway.yml",
@@ -10,13 +10,13 @@
     },
     {
       "path": "README.md",
-      "sha256": "a2f9fed4c1578555e8b66c746cadd9f628329a510adb2f12b57d232cde1277e4",
-      "size": 2118
+      "sha256": "d44549fc9d0ecabf84cbaae7c0b8a306d5f1ff5a1a60afae649863c3c39b4988",
+      "size": 2156
     },
     {
       "path": "VALIDATION.md",
-      "sha256": "67196ce02f5ed14fcc86f9d9437eae5ad7accf5eacf476e5e8ebb5998f868963",
-      "size": 1570
+      "sha256": "9aa2a2283f75c5064313d07c3bb5b97ae14eb19de9f6e55665d1be45bab6f9ed",
+      "size": 1970
     },
     {
       "path": "config/operations.catalog.json",
@@ -35,13 +35,33 @@
     },
     {
       "path": "dataverse/pac/bootstrap-solution.ps1",
-      "sha256": "08c8756705fa41946a40a38cb6a2e63439ae6fabe970a3b56d78b3ce2ba0d3b0",
-      "size": 2116
+      "sha256": "8b9480c192e187edf4acc2c27e5e978f6499ff46d2b6914ebbc2e7d3ce855a02",
+      "size": 2120
     },
     {
       "path": "dataverse/schema/optimus-admin-gateway.dataverse.json",
-      "sha256": "130672dea3f27be8323609183ff691c9c9e66eef48e7a3c51c3a5d422e489f11",
-      "size": 3994
+      "sha256": "1a63af4fa7f48f4b5b6edd3ecc8bff6a053576bac8b42a6795b6f1b9892f9e1d",
+      "size": 4030
+    },
+    {
+      "path": "dataverse/solutions/OptimusAdminGateway/Other/Customizations.xml",
+      "sha256": "d0a23777e998caf5c2074c4b8c66b71a380a7951ee11d1b200871cac76bad5ad",
+      "size": 531
+    },
+    {
+      "path": "dataverse/solutions/OptimusAdminGateway/Other/Solution.xml",
+      "sha256": "aec786f438707798c7d7d2a7d0af64e92d1bf20564548987c3b22eb8b5bcd914",
+      "size": 4400
+    },
+    {
+      "path": "dataverse/solutions/OptimusAdminGateway/README.md",
+      "sha256": "20ed4ef2ad2040e9a057c9ca62764da10f1630de427e1ed54b71b19a43ac8b5f",
+      "size": 763
+    },
+    {
+      "path": "dataverse/solutions/OptimusAdminGateway/baseline-verification.json",
+      "sha256": "2f95a0d352932c8e2c072c5a6ce02971cf80d37eea47cbecc9be9f0e546b457a",
+      "size": 523
     },
     {
       "path": "deployment/azure/README.md",
@@ -194,9 +214,14 @@
       "size": 790
     },
     {
+      "path": "tests/test_dataverse_solution_baseline.py",
+      "sha256": "113e65b5c84f577e102bb1130f479f64d21c6a357152fdd07c904563dc4f9944",
+      "size": 3743
+    },
+    {
       "path": "tests/test_pac_bootstrap_safety.py",
-      "sha256": "29e2ac2f55b68483f22735cac0d4857a9a259ba3dd67b4a1ed069d4d363bdd8f",
-      "size": 965
+      "sha256": "f54d3545ec98675d513323872f772251039869a70aed3f4cf9aae6c963730fdb",
+      "size": 1085
     },
     {
       "path": "tests/test_package_manifest.py",
@@ -205,8 +230,8 @@
     },
     {
       "path": "tests/test_public_boundary.py",
-      "sha256": "09974313e399750d0a890742b29586e837a822b3034e65909b8b364367dad035",
-      "size": 4706
+      "sha256": "f1444c8be6b17e66fd0befa3adbc7d33174614334efbe4166592abf489946856",
+      "size": 4724
     },
     {
       "path": "tests/test_runbook_safety.py",

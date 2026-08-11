@@ -2,7 +2,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory)] [string]$EnvironmentUrl,
-    [string]$PublisherName = 'Optimus',
+    [string]$PublisherName = 'HUB_Optimus',
     [string]$PublisherPrefix = 'opt',
     [string]$SolutionName = 'OptimusAdminGateway',
     [string]$OutputDirectory = './out/OptimusAdminGateway',

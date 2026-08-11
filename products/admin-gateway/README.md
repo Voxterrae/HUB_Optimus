@@ -48,6 +48,6 @@ export OPTIMUS_DEV_MODE=true
 - `power-platform/custom-connector/` — Swagger 2.0 custom connector template.
 - `runbooks/` — PowerShell 7 allowlisted dispatcher and operation scripts.
 - `copilot-studio/agents/` — agent instruction templates.
-- `dataverse/` — tenant-neutral data model and PAC bootstrap.
+- `dataverse/` — tenant-neutral data model, sanitized unpacked solution baseline and PAC bootstrap.
 - `power-platform/flows/` — approval-flow blueprint.
 - `deployment/` — deployment and tenant-overlay templates.

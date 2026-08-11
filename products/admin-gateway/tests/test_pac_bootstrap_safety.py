@@ -13,6 +13,8 @@ def test_pac_bootstrap_is_dry_run_first_and_has_no_dynamic_script_execution() ->
     assert "invoke-expression" not in lowered
     assert "& pac @arguments" in lowered
     assert "unexpected executable in reviewed plan" in lowered
+    assert "[string]$publishername = 'hub_optimus'" in lowered
+    assert "[string]$publisherprefix = 'opt'" in lowered
 
 
 def test_approval_blueprint_targets_the_declared_dataverse_table() -> None:
