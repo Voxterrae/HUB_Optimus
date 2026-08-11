@@ -178,3 +178,29 @@ def test_unknown_fields_are_rejected() -> None:
         headers=READER_HEADERS,
     )
     assert response.status_code == 422
+
+
+def test_dataverse_alternate_key_identifiers_reject_odata_reserved_characters() -> None:
+    body = {
+        "parameters": {"mailbox": "pilot@example.com"},
+        "dry_run": True,
+        "idempotency_key": "request:0001",
+    }
+    response = client.post(
+        "/api/v1/operations/exchange.diagnose_mailbox:plan",
+        json=body,
+        headers=PRODUCTION_READER_HEADERS,
+    )
+    assert response.status_code == 422
+
+    safe_body = {
+        "parameters": {"mailbox": "pilot@example.com"},
+        "dry_run": True,
+        "idempotency_key": "request.0001-safe",
+    }
+    safe_response = client.post(
+        "/api/v1/operations/exchange.diagnose_mailbox:plan",
+        json=safe_body,
+        headers=PRODUCTION_READER_HEADERS,
+    )
+    assert safe_response.status_code == 200

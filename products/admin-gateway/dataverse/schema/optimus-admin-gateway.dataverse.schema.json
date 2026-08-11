@@ -1,0 +1,467 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huboptimus.example/schemas/optimus-admin-gateway-dataverse-contract.json",
+  "title": "Optimus Admin Gateway Dataverse contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "solution",
+    "conventions",
+    "globalChoices",
+    "tables",
+    "relationships",
+    "privacy",
+    "deployment"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "solution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uniqueName",
+        "displayName",
+        "publisher",
+        "prefix",
+        "choiceValuePrefix",
+        "version",
+        "packageType",
+        "baseLanguageCode"
+      ],
+      "properties": {
+        "uniqueName": {
+          "const": "OptimusAdminGateway"
+        },
+        "displayName": {
+          "const": "Optimus Admin Gateway"
+        },
+        "publisher": {
+          "const": "HUB_Optimus"
+        },
+        "prefix": {
+          "const": "opt"
+        },
+        "choiceValuePrefix": {
+          "const": 88483
+        },
+        "version": {
+          "const": "0.1.0.0"
+        },
+        "packageType": {
+          "const": "Unmanaged"
+        },
+        "baseLanguageCode": {
+          "const": 1033
+        }
+      }
+    },
+    "conventions": {
+      "type": "object"
+    },
+    "globalChoices": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schemaName",
+          "logicalName",
+          "displayName",
+          "description",
+          "options"
+        ],
+        "properties": {
+          "schemaName": {
+            "type": "string",
+            "pattern": "^opt_[A-Za-z0-9]+$"
+          },
+          "logicalName": {
+            "type": "string",
+            "pattern": "^opt_[a-z0-9]+$"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "options": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "label",
+                "value"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 884830000,
+                  "maximum": 884839999
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "tables": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schemaName",
+          "logicalName",
+          "entitySetName",
+          "displayName",
+          "displayCollectionName",
+          "description",
+          "ownershipType",
+          "auditEnabled",
+          "changeTrackingEnabled",
+          "hasActivities",
+          "hasNotes",
+          "primaryName",
+          "columns",
+          "alternateKeys",
+          "governance"
+        ],
+        "properties": {
+          "schemaName": {
+            "type": "string",
+            "pattern": "^opt_[A-Za-z0-9]+$"
+          },
+          "logicalName": {
+            "type": "string",
+            "pattern": "^opt_[a-z0-9]+$"
+          },
+          "entitySetName": {
+            "type": "string",
+            "pattern": "^opt_[a-z0-9]+$"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "displayCollectionName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "ownershipType": {
+            "enum": [
+              "UserOwned",
+              "OrganizationOwned"
+            ]
+          },
+          "auditEnabled": {
+            "const": true
+          },
+          "changeTrackingEnabled": {
+            "const": true
+          },
+          "hasActivities": {
+            "const": false
+          },
+          "hasNotes": {
+            "const": false
+          },
+          "primaryName": {
+            "$ref": "#/$defs/primaryName"
+          },
+          "columns": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/column"
+            }
+          },
+          "alternateKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/alternateKey"
+            }
+          },
+          "governance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "appendOnly",
+              "retentionClass",
+              "largePayloadColumns"
+            ],
+            "properties": {
+              "appendOnly": {
+                "type": "boolean"
+              },
+              "retentionClass": {
+                "const": "TenantConfigured"
+              },
+              "largePayloadColumns": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^opt_[a-z0-9]+$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schemaName",
+          "referencedTable",
+          "referencingTable",
+          "lookup",
+          "cascade"
+        ],
+        "properties": {
+          "schemaName": {
+            "type": "string",
+            "pattern": "^opt_[A-Za-z0-9_]+$"
+          },
+          "referencedTable": {
+            "type": "string",
+            "pattern": "^opt_[a-z0-9]+$"
+          },
+          "referencingTable": {
+            "type": "string",
+            "pattern": "^opt_[a-z0-9]+$"
+          },
+          "lookup": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "schemaName",
+              "logicalName",
+              "displayName",
+              "requiredLevel"
+            ],
+            "properties": {
+              "schemaName": {
+                "type": "string",
+                "pattern": "^opt_[A-Za-z0-9]+$"
+              },
+              "logicalName": {
+                "type": "string",
+                "pattern": "^opt_[a-z0-9]+$"
+              },
+              "displayName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "requiredLevel": {
+                "enum": [
+                  "None",
+                  "ApplicationRequired"
+                ]
+              }
+            }
+          },
+          "cascade": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "assign",
+              "delete",
+              "merge",
+              "reparent",
+              "share",
+              "unshare"
+            ],
+            "properties": {
+              "assign": {
+                "const": "NoCascade"
+              },
+              "delete": {
+                "const": "Restrict"
+              },
+              "merge": {
+                "const": "NoCascade"
+              },
+              "reparent": {
+                "const": "NoCascade"
+              },
+              "share": {
+                "const": "NoCascade"
+              },
+              "unshare": {
+                "const": "NoCascade"
+              }
+            }
+          }
+        }
+      }
+    },
+    "privacy": {
+      "type": "object"
+    },
+    "deployment": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "primaryName": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaName",
+        "logicalName",
+        "displayName",
+        "maxLength",
+        "requiredLevel",
+        "auditEnabled"
+      ],
+      "properties": {
+        "schemaName": {
+          "const": "opt_Name"
+        },
+        "logicalName": {
+          "const": "opt_name"
+        },
+        "displayName": {
+          "const": "Name"
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4000
+        },
+        "requiredLevel": {
+          "const": "ApplicationRequired"
+        },
+        "auditEnabled": {
+          "const": true
+        }
+      }
+    },
+    "column": {
+      "type": "object",
+      "required": [
+        "schemaName",
+        "logicalName",
+        "displayName",
+        "type",
+        "requiredLevel",
+        "auditEnabled"
+      ],
+      "properties": {
+        "schemaName": {
+          "type": "string",
+          "pattern": "^opt_[A-Za-z0-9]+$"
+        },
+        "logicalName": {
+          "type": "string",
+          "pattern": "^opt_[a-z0-9]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "type": {
+          "enum": [
+            "String",
+            "Memo",
+            "Boolean",
+            "Choice",
+            "DateTime"
+          ]
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "requiredLevel": {
+          "enum": [
+            "None",
+            "ApplicationRequired"
+          ]
+        },
+        "format": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "default": {},
+        "globalChoice": {
+          "type": "string",
+          "pattern": "^opt_[a-z0-9]+$"
+        },
+        "behavior": {
+          "enum": [
+            "UserLocal"
+          ]
+        },
+        "auditEnabled": {
+          "type": "boolean"
+        },
+        "containsSensitiveData": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "alternateKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaName",
+        "columns"
+      ],
+      "properties": {
+        "schemaName": {
+          "type": "string",
+          "pattern": "^opt_[A-Za-z0-9_]+$"
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "pattern": "^opt_[a-z0-9]+$"
+          }
+        }
+      }
+    }
+  }
+}

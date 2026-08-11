@@ -95,7 +95,11 @@ components:
       additionalProperties: false
       required: [approval_id, plan_hash, approved_by, approved_at, signature]
       properties:
-        approval_id: {type: string, minLength: 8, maxLength: 128}
+        approval_id:
+          type: string
+          minLength: 8
+          maxLength: 128
+          pattern: '^[A-Za-z0-9._-]{8,128}$'
         plan_hash: {type: string, pattern: '^[a-f0-9]{64}$'}
         approved_by: {type: string, minLength: 1, maxLength: 256}
         approved_at: {type: string, format: date-time}
@@ -107,7 +111,11 @@ components:
       properties:
         parameters: {type: object, additionalProperties: true}
         dry_run: {type: boolean, default: true}
-        idempotency_key: {type: string, minLength: 8, maxLength: 128}
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 128
+          pattern: '^[A-Za-z0-9._-]{8,128}$'
         approval:
           oneOf:
             - {$ref: '#/components/schemas/ApprovalReceipt'}

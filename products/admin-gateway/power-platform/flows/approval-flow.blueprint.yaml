@@ -1,30 +1,49 @@
 name: Optimus-Admin-Gateway-Approval
-version: 0.1.0
+version: 0.2.0
 trigger:
-  type: DataverseRowAdded
+  type: DataverseRowAddedOrModified
   table: opt_adminrequest
-  filter: opt_state eq 'APPROVAL_REQUIRED'
+  filter: opt_mutation eq true and opt_dryrun eq false and opt_requeststate eq 884831003
+load:
+  columns:
+    - opt_operationkey
+    - opt_plandigest
+    - opt_parametersjson
+    - opt_risk
+    - opt_requesterobjectkey
+    - opt_targetsummary
+    - opt_reason
+    - opt_changeticket
 steps:
-  - load_request_and_plan
+  - load_request_and_exact_plan
   - verify_requester_is_not_approver
+  - verify_plan_digest_is_sha256
   - start_approval:
       approval_type: ApproveRejectFirstToRespond
-      title: "Optimus admin change: @{operation_id}"
+      title: "Optimus admin change: @{opt_operationkey}"
       details:
-        - target_summary
-        - risk
-        - plan_hash
-        - reason
-        - change_ticket
+        - opt_targetsummary
+        - opt_risk
+        - opt_plandigest
+        - opt_reason
+        - opt_changeticket
   - on_approve:
-      - persist_approval_receipt
-      - sign_or_seal_plan_hash_using_tenant_service
+      - create_opt_adminapproval:
+          decision: 884832000
+          bind_request_lookup: true
+      - sign_or_seal_exact_plan_digest_using_tenant_service
+      - update_request_state: 884831004
       - call_gateway_execute_with_original_parameters
   - on_reject:
-      - mark_request_rejected
+      - create_opt_adminapproval:
+          decision: 884832001
+          bind_request_lookup: true
+      - update_request_state: 884831005
       - notify_requester
 controls:
   mutation_only: true
+  dry_run_must_be_false: true
   disallow_self_approval: true
-  preserve_original_plan_hash: true
+  preserve_original_plan_digest: true
+  numeric_choice_values_only: true
   automatic_send_email: false
