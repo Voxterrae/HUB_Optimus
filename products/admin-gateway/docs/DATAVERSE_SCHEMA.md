@@ -148,3 +148,46 @@ may remove only the newly created components in reverse order after exporting
 evidence. After business data exists, automatic metadata deletion is
 prohibited; recovery uses a reviewed solution upgrade/data migration or an
 environment backup and restore.
+
+## Prepared idempotent applicator
+
+The apply implementation is now present as reviewed source but remains
+unexecuted. `scripts/apply-dataverse-schema.py` provides four modes:
+
+```text
+offline review  public hash and contract verification only
+inspect         live read-only comparison; missing metadata => WOULD_CREATE
+apply           separately authorized metadata creation
+rollback        zero-row, journal-bound reverse-order recovery only
+```
+
+The PowerShell entry point is
+`dataverse/pac/Invoke-OptimusDataverseSchemaApply.ps1`. Apply requires a private
+apply authorization derived from `dataverse/apply/authorization.template.json`,
+an exact environment URL and ID, a token file, a pre-apply unmanaged export and
+an explicit evidence directory. Authorization is mode-specific, has a unique
+ID, expires no more than four hours after approval, and binds the base commit,
+contract hash, plan hash, published applicator commit and current
+solution-component count. All private files and evidence must remain outside
+the repository.
+
+The check-first implementation first scans the complete declared model with
+writes disabled, rechecks the target boundary, then performs the reviewed
+phases in order with propagation barriers after tables, scalar columns and
+alternate keys. Each created metadata ID is journaled immediately. Exact
+existing metadata is reused; any partial or conflicting definition fails
+closed. All component creates use the `MSCRM.SolutionUniqueName` header.
+Metadata-cache and throttling responses use bounded retries; alternate-key
+indexes are polled until numeric `Active` status 2. A no-change rerun does not
+republish customizations.
+
+Rollback uses the separate
+`dataverse/apply/rollback-authorization.template.json`. It requires the exact
+apply-journal SHA-256, target solution, environment and applicator commit,
+exports before and after recovery, verifies all target tables have zero rows,
+deletes only allowlisted journal entries in reverse phase order and publishes
+once after deletion.
+
+No apply command is invoked by CI or by the PR publication step. The first live
+metadata write still requires a separate authorization tied to the then-current
+applicator commit and private target evidence.

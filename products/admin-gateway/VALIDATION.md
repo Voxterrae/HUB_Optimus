@@ -38,3 +38,32 @@ The contracts cover:
 Repository tests do not perform or certify live tenant changes. A private non-production client-zero sandbox was used by the owner to create and export the empty solution baseline and may be used for a read-only schema preflight; tenant IDs, environment URLs, identities, private dry-run output and the binary export remain outside the public repository.
 
 No table, column, choice, alternate key, relationship or row is created by the committed dry-run plan. Metadata application remains gated on a separate explicit authorization tied to the exact Git commit, contract hash, plan hash, target environment and expected current component count.
+
+## Idempotent metadata-applicator contract
+
+The committed applicator is validated without a live write token or private
+environment binding. The tests prove that:
+
+- offline review verifies the exact authorized base commit, contract and plan;
+- inspect mode reports `WOULD_CREATE` and performs no non-GET request;
+- apply mode completes a full read-only check-first pass before the first write
+  and then uses check-first semantics for every choice, table, column, key and
+  relationship;
+- every metadata create request carries `MSCRM.SolutionUniqueName` with
+  `OptimusAdminGateway`;
+- a second authorized run reuses exact metadata and emits no metadata writes;
+- drift fails before creating additional components;
+- table, column and alternate-key phases include explicit metadata propagation
+  barriers, while alternate-key indexes are polled to numeric `Active` status 2;
+- customizations publish once only when metadata was actually created;
+- apply and rollback authorizations are separate, expiring and commit-bound;
+- rollback is additionally bound to one exact journal SHA-256, requires the
+  exact solution and applicator commit, refuses any non-allowlisted path, and
+  refuses to delete anything when any target table contains a row;
+- live private paths are rejected inside the repository;
+- journals and templates contain no token or private tenant binding.
+
+GitHub Actions parses every PowerShell asset under `products/admin-gateway`,
+rejects dynamic execution, verifies that the wrapper defaults to `Offline`, and
+runs the Python applicator tests. CI never supplies `-Apply`, a completed
+authorization file, a Dataverse token or a customer environment identity.

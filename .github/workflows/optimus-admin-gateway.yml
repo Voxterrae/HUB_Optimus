@@ -30,8 +30,10 @@ jobs:
           python-version: '3.11'
       - name: Install module test dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Run API and authentication contract tests
+      - name: Run API, authentication and Dataverse applicator contract tests
         run: python -m pytest -q
+      - name: Verify offline Dataverse applicator binding
+        run: python scripts/apply-dataverse-schema.py
       - name: Verify deterministic package manifest
         run: python scripts/build-package-manifest.py
 
@@ -41,11 +43,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Parse and inspect PowerShell 7 runbooks
+      - name: Parse and inspect all PowerShell 7 assets
         shell: pwsh
         run: |
-          $files = Get-ChildItem -Recurse products/admin-gateway/runbooks -Filter *.ps1
-          if ($files.Count -eq 0) { throw 'No PowerShell runbooks found.' }
+          $files = Get-ChildItem -Recurse products/admin-gateway -Filter *.ps1
+          if ($files.Count -eq 0) { throw 'No PowerShell assets found.' }
           foreach ($file in $files) {
             $tokens = $null
             $errors = $null
@@ -58,13 +60,21 @@ jobs:
               $errors | ForEach-Object { Write-Error "$($file.FullName): $($_.Message)" }
               throw "PowerShell parse failed for $($file.FullName)."
             }
+            $content = Get-Content -Raw $file.FullName
+            if ($content -match '(?i)Invoke-Expression|\biex\b|DownloadString|ScriptBlock\]::Create') {
+              throw "Dynamic execution is forbidden: $($file.FullName)"
+            }
           }
           $runbook = Get-Content -Raw products/admin-gateway/runbooks/Invoke-OptimusExchangeOperation.ps1
-          if ($runbook -match '(?i)Invoke-Expression|\biex\b|DownloadString') {
-            throw 'Dynamic execution is forbidden.'
-          }
           if ($runbook -notmatch '\[bool\]\$DryRun = \$true') {
             throw 'DryRun must default to true.'
+          }
+          $applyWrapper = Get-Content -Raw products/admin-gateway/dataverse/pac/Invoke-OptimusDataverseSchemaApply.ps1
+          if ($applyWrapper -notmatch 'DefaultParameterSetName\s*=\s*''Offline''') {
+            throw 'Dataverse applicator wrapper must default to Offline.'
+          }
+          if ($applyWrapper -notmatch '\[switch\]\$Apply') {
+            throw 'Dataverse metadata writes require an explicit Apply switch.'
           }
       - name: Run PowerShell safety contracts
         shell: pwsh

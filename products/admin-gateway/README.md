@@ -73,3 +73,26 @@ See `docs/DATAVERSE_SCHEMA.md`.
 - `dataverse/` — tenant-neutral schema contract, deterministic dry-run plan, sanitized unpacked solution baseline and PAC preflight.
 - `power-platform/flows/` — approval-flow blueprint using numeric Dataverse choice values.
 - `deployment/` — deployment and tenant-overlay templates.
+
+## Dataverse metadata applicator
+
+The repository now includes a source-only, check-first metadata applicator. Its
+default mode is offline review and it cannot write metadata unless an operator
+supplies all of the following at runtime: an explicit `-Apply` switch, a
+mode-specific private authorization valid for no more than four hours, the
+exact target environment identity, an access-token file and a durable evidence
+directory. Secret, authorization, journal, export and evidence paths are
+rejected when they resolve inside the repository.
+
+The applicator is bound to the reviewed base commit `4aab546e...`, contract
+`ad0275c6...` and plan `dd1a4c4d...`. It also requires the private authorization
+to name the exact published applicator commit being executed. Every metadata
+create request is solution-scoped to `OptimusAdminGateway`; a full read-only
+check-first pass must succeed before the first write, missing components are
+created in propagation-safe phases, exact matches are reused and conflicting
+metadata stops the run. Apply and rollback use distinct authorizations; a
+rollback authorization is bound to the SHA-256 of one exact apply journal.
+
+Publishing this source does not apply it. CI performs only offline hash checks,
+static safety checks and fake-transport idempotency tests. See
+`dataverse/apply/README.md`.

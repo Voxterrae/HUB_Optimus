@@ -1,22 +1,22 @@
 {
   "package": "optimus-admin-gateway",
   "version": "0.1.0",
-  "fileCount": 53,
+  "fileCount": 59,
   "files": [
     {
       "path": ".github/workflows/optimus-admin-gateway.yml",
-      "sha256": "9e8bbe511fe487cb2fb298fa5f1237dce1713f732c6d90d73584bbf9590c9537",
-      "size": 2567
+      "sha256": "55782564f0784b80c57ac944339ed802e7b601e503a034f591d1c2f271287055",
+      "size": 3236
     },
     {
       "path": "README.md",
-      "sha256": "060ab81e4b5360c7d92d0ceb186a1f65751935abc04b59276fd434cabd9f5deb",
-      "size": 3065
+      "sha256": "18b2470994b89752996081123c463ff84eccc06b7f538a5e8dadd68a4151f8de",
+      "size": 4397
     },
     {
       "path": "VALIDATION.md",
-      "sha256": "3c0463972f717ac038605a7ff5ec548a1d6bf29d2b4ac89267a92571c033d4a9",
-      "size": 3163
+      "sha256": "5fd61da16eb2fd1485a6c167a1e8818da8ff2f663183c9c9438ab7d12cddf446",
+      "size": 4842
     },
     {
       "path": "config/operations.catalog.json",
@@ -32,6 +32,26 @@
       "path": "copilot-studio/agents/optimus-powershell-ops.agent.yaml",
       "sha256": "9e7d348281c4b492971b6da9c6325162144ffc7f391ee16da9b0c32fd74dc8f8",
       "size": 564
+    },
+    {
+      "path": "dataverse/apply/README.md",
+      "sha256": "c9d5ab27aa3cb310864a01c9d35e600d863f50d072e145c9b5ac2c27ab940ec0",
+      "size": 3584
+    },
+    {
+      "path": "dataverse/apply/authorization.template.json",
+      "sha256": "0a4d29aca8514d5bdb19414cb7602e32823cd4d9deebdce73591e941c442f82d",
+      "size": 909
+    },
+    {
+      "path": "dataverse/apply/rollback-authorization.template.json",
+      "sha256": "93191ff06d7374de0c4cbfdd2fffe2d8783166db243fa6cc38c95c84c28df381",
+      "size": 974
+    },
+    {
+      "path": "dataverse/pac/Invoke-OptimusDataverseSchemaApply.ps1",
+      "sha256": "20862c8329f1fdbbc6dfa10aafc69a7af2d81a504342d5744023719d4e4aa5db",
+      "size": 13742
     },
     {
       "path": "dataverse/pac/Test-OptimusDataverseSchemaPlan.ps1",
@@ -110,8 +130,8 @@
     },
     {
       "path": "docs/DATAVERSE_SCHEMA.md",
-      "sha256": "6c37dd6ec24761ce102360ea511faaf84541edaa214c78ed700aac278e31e1fb",
-      "size": 5549
+      "sha256": "46bc498b02f673ac40e17c6cac80f7147289daa114f1283b14343605e53944c9",
+      "size": 7775
     },
     {
       "path": "docs/DEPLOYMENT.md",
@@ -162,6 +182,11 @@
       "path": "runbooks/tests/Invoke-OptimusExchangeOperation.Tests.ps1",
       "sha256": "0c99a56149a4af85138c191c878ccee8ccc73af2d3e0a2de838d6899ca67b6f0",
       "size": 733
+    },
+    {
+      "path": "scripts/apply-dataverse-schema.py",
+      "sha256": "09d200be85347dab430b82ed81eb40f9e9c51c44b3280ea795b0aeb9c9ec8337",
+      "size": 78924
     },
     {
       "path": "scripts/build-dataverse-schema-plan.py",
@@ -237,6 +262,11 @@
       "path": "tests/test_catalog.py",
       "sha256": "40e0f4249abc9d6ff8519fe6972f7456467c70e9c36422afab7cfed21ceccb89",
       "size": 790
+    },
+    {
+      "path": "tests/test_dataverse_schema_applicator.py",
+      "sha256": "1cbb5a29f136938a90f495d4450c0ba4643c5037074a3c8fd0f3d54d8073de68",
+      "size": 39229
     },
     {
       "path": "tests/test_dataverse_schema_contract.py",
