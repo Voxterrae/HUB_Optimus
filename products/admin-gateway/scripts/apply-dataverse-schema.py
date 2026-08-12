@@ -159,6 +159,45 @@ def normalize_environment_url(value: str) -> str:
     return urllib.parse.urlunsplit(("https", f"{host}{port}", "/", "", ""))
 
 
+ODATA_PATH_SAFE = "/()',$=-._~:@%"
+ODATA_QUERY_SAFE = "$&'()*+,-./:;=@_~%"
+ODATA_CONTROL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
+
+
+def encode_odata_relative_path(path: str) -> str:
+    """Encode a relative Dataverse Web API path while preserving OData syntax."""
+    if not isinstance(path, str) or not path:
+        raise ApplicatorError("Dataverse request path must be a non-empty string.")
+    if ODATA_CONTROL_CHARACTER.search(path):
+        raise ApplicatorError("Dataverse request path contains a control character.")
+    if "\\" in path:
+        raise ApplicatorError("Dataverse request path must not contain backslashes.")
+
+    parsed = urllib.parse.urlsplit(path)
+    if parsed.scheme or parsed.netloc:
+        raise ApplicatorError(
+            "Dataverse request path must remain relative to the approved environment."
+        )
+    if parsed.fragment:
+        raise ApplicatorError("Dataverse request path must not contain a URL fragment.")
+    if any(segment == ".." for segment in parsed.path.split("/")):
+        raise ApplicatorError("Dataverse request path must not traverse outside the API root.")
+
+    encoded_path = urllib.parse.quote(
+        parsed.path.lstrip("/"),
+        safe=ODATA_PATH_SAFE,
+        encoding="utf-8",
+        errors="strict",
+    )
+    encoded_query = urllib.parse.quote(
+        parsed.query,
+        safe=ODATA_QUERY_SAFE,
+        encoding="utf-8",
+        errors="strict",
+    )
+    return urllib.parse.urlunsplit(("", "", encoded_path, encoded_query, ""))
+
+
 class ApplicatorError(RuntimeError):
     pass
 
@@ -199,7 +238,7 @@ class UrllibTransport:
         body: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
     ) -> Response:
-        url = urllib.parse.urljoin(self.base_url, path.lstrip("/"))
+        url = urllib.parse.urljoin(self.base_url, encode_odata_relative_path(path))
         payload = None if body is None else json.dumps(body, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         request_headers = {
             "Authorization": f"Bearer {self.access_token}",

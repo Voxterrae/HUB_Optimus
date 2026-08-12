@@ -1,7 +1,7 @@
 {
   "package": "optimus-admin-gateway",
   "version": "0.1.0",
-  "fileCount": 59,
+  "fileCount": 60,
   "files": [
     {
       "path": ".github/workflows/optimus-admin-gateway.yml",
@@ -185,8 +185,8 @@
     },
     {
       "path": "scripts/apply-dataverse-schema.py",
-      "sha256": "09d200be85347dab430b82ed81eb40f9e9c51c44b3280ea795b0aeb9c9ec8337",
-      "size": 78924
+      "sha256": "b4a27c1e74aa4c69da0858ca1ed51d4f39341c945f7ac3c184a618c10151a178",
+      "size": 80449
     },
     {
       "path": "scripts/build-dataverse-schema-plan.py",
@@ -262,6 +262,11 @@
       "path": "tests/test_catalog.py",
       "sha256": "40e0f4249abc9d6ff8519fe6972f7456467c70e9c36422afab7cfed21ceccb89",
       "size": 790
+    },
+    {
+      "path": "tests/test_dataverse_odata_url_encoding.py",
+      "sha256": "71a646b341901d5371ad8421bfd525a0fea7135f8cf0149a5762e2db59efb720",
+      "size": 3329
     },
     {
       "path": "tests/test_dataverse_schema_applicator.py",
