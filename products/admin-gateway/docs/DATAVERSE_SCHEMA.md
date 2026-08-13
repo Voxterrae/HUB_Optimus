@@ -191,3 +191,32 @@ once after deletion.
 No apply command is invoked by CI or by the PR publication step. The first live
 metadata write still requires a separate authorization tied to the then-current
 applicator commit and private target evidence.
+
+
+## Effective solution membership for table subcomponents
+
+Dataverse can represent a table as a root solution component with
+`RootComponentBehavior = 0` (`Include Subcomponents`). In that state, a column,
+alternate key, relationship, or relationship-created lookup can be part of the
+exported solution through the table root even when no direct child
+`solutioncomponent` row exists.
+
+The applicator therefore accepts either:
+
+1. a direct solution-component record for the exact metadata ID and component
+   type; or
+2. exact metadata that belongs to a contract table whose table root is in
+   `OptimusAdminGateway` with `RootComponentBehavior = 0`.
+
+The second path is fail-closed: table roots with behavior `1` (`Do not include
+subcomponents`), behavior `2` (`Include as shell only`), missing table roots,
+wrong parent tables, or metadata drift remain fatal. Every accepted path is
+written to the evidence journal as `DIRECT_SOLUTION_COMPONENT` or
+`INCLUDED_VIA_TABLE_ROOT`.
+
+Rollback remains journal-bound and reverse ordered. Child columns, keys, and
+relationships recorded by a completed apply are deleted before their table
+roots. A partial apply journal containing only table roots may be recovered by
+deleting those roots, but the private rollback procedure must verify zero rows,
+absence of all effective subcomponents, a zero final solution-component count,
+and pre/post rollback exports.

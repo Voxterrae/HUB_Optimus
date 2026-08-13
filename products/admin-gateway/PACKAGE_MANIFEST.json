@@ -130,8 +130,8 @@
     },
     {
       "path": "docs/DATAVERSE_SCHEMA.md",
-      "sha256": "46bc498b02f673ac40e17c6cac80f7147289daa114f1283b14343605e53944c9",
-      "size": 7775
+      "sha256": "1a2249f24033844764598062f019c7b80eb78eb8e20af359833f8538bf3fea12",
+      "size": 9174
     },
     {
       "path": "docs/DEPLOYMENT.md",
@@ -185,8 +185,8 @@
     },
     {
       "path": "scripts/apply-dataverse-schema.py",
-      "sha256": "b4a27c1e74aa4c69da0858ca1ed51d4f39341c945f7ac3c184a618c10151a178",
-      "size": 80449
+      "sha256": "19ad739bb66ab143ad4b0003cbe2993701597471dc35be3c4a7a0c61f5d8e321",
+      "size": 85679
     },
     {
       "path": "scripts/build-dataverse-schema-plan.py",
@@ -270,8 +270,8 @@
     },
     {
       "path": "tests/test_dataverse_schema_applicator.py",
-      "sha256": "1cbb5a29f136938a90f495d4450c0ba4643c5037074a3c8fd0f3d54d8073de68",
-      "size": 39229
+      "sha256": "a34243c12f70b50884dcadd104a315a5ad6d91ac0807831ec25751c178a3409f",
+      "size": 48706
     },
     {
       "path": "tests/test_dataverse_schema_contract.py",

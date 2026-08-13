@@ -45,6 +45,8 @@ class FakeTransport:
         self.row_counts: dict[str, int] = {table["entitySetName"]: 0 for table in CONTRACT["tables"]}
         self.solution_id = guid(900000)
         self.solution_members: set[tuple[int, str]] = set()
+        self.solution_root_behaviors: dict[tuple[int, str], int | None] = {}
+        self.direct_child_components = False
         self.outside_solution_ids: set[str] = set()
         self.missing_entity_sets: set[str] = set()
 
@@ -58,8 +60,12 @@ class FakeTransport:
         return {"OData-EntityId": f"https://example.crm4.dynamics.com/api/data/v9.2/metadata({metadata_id})"}
 
     def _register_component(self, kind: str, metadata_id: str, headers: dict[str, str]) -> None:
-        if headers.get(app.SOLUTION_HEADER) == app.AUTHORIZED_SOLUTION:
-            self.solution_members.add((app.COMPONENT_TYPES[kind], metadata_id))
+        if headers.get(app.SOLUTION_HEADER) != app.AUTHORIZED_SOLUTION:
+            return
+        component = (app.COMPONENT_TYPES[kind], metadata_id)
+        if kind in {"GlobalChoice", "Table"} or self.direct_child_components:
+            self.solution_members.add(component)
+            self.solution_root_behaviors[component] = 0 if kind == "Table" else None
 
     @staticmethod
     def _path_logical_name(path: str, marker: str = "LogicalName='") -> str | None:
@@ -106,12 +112,15 @@ class FakeTransport:
                 metadata_id = path.split("objectid eq ", 1)[1].split(" ", 1)[0]
                 component_type = int(path.split("componenttype eq ", 1)[1].split("&", 1)[0])
                 values = []
-                if (component_type, metadata_id) in self.solution_members and metadata_id not in self.outside_solution_ids:
+                component = (component_type, metadata_id)
+                if component in self.solution_members and metadata_id not in self.outside_solution_ids:
                     values = [
                         {
                             "solutioncomponentid": guid(990000 + component_type),
                             "objectid": metadata_id,
                             "componenttype": component_type,
+                            "rootcomponentbehavior": self.solution_root_behaviors.get(component),
+                            "rootsolutioncomponentid": None,
                         }
                     ]
                 return app.Response(200, {}, {"value": values})
@@ -362,6 +371,7 @@ def test_apply_is_check_first_solution_scoped_and_idempotent(tmp_path: Path, mon
 
     writes_before = len(transport.writes)
     actual_component_count = len(transport.solution_members)
+    assert actual_component_count == 8
     second_journal = make_journal(tmp_path / "second", "APPLY")
     second = app.SchemaApplicator(
         CONTRACT,
@@ -910,3 +920,250 @@ def test_rollback_tolerates_target_tables_that_are_already_absent(tmp_path: Path
     )
     assert result["zeroRowsVerified"] is True
     assert result["deleted"][0]["status"] == "DELETED"
+
+# EFFECTIVE_SOLUTION_MEMBERSHIP_REGRESSION_TESTS
+
+
+# EFFECTIVE_SOLUTION_MEMBERSHIP_REGRESSION_TESTS
+
+def _effective_membership_details(journal: app.EvidenceJournal) -> list[dict[str, Any]]:
+    return [
+        check["details"]
+        for check in journal.data["checks"]
+        if check["name"] == "Effective solution membership"
+        and check["result"] == "PASS"
+    ]
+
+
+def test_table_root_membership_accepts_columns_keys_and_relationships_and_is_idempotent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    transport = FakeTransport()
+    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+
+    first_journal = make_journal(tmp_path / "root-first", "APPLY")
+    first = app.SchemaApplicator(
+        CONTRACT, PLAN, transport, first_journal, apply=True
+    ).run()
+
+    assert first["createdCount"] == 57
+    assert len(transport.solution_members) == 8
+
+    unique_root_memberships = {
+        (
+            details["kind"],
+            details["description"],
+            details["rootTable"],
+        )
+        for details in _effective_membership_details(first_journal)
+        if details["mode"] == "INCLUDED_VIA_TABLE_ROOT"
+    }
+    assert sum(1 for kind, _description, _root in unique_root_memberships if kind == "Column") == 41
+    assert sum(1 for kind, _description, _root in unique_root_memberships if kind == "AlternateKey") == 4
+    assert sum(1 for kind, _description, _root in unique_root_memberships if kind == "Relationship") == 4
+
+    writes_before = len(transport.writes)
+    second_journal = make_journal(tmp_path / "root-second", "APPLY")
+    second = app.SchemaApplicator(
+        CONTRACT,
+        PLAN,
+        transport,
+        second_journal,
+        apply=True,
+        expected_component_count=8,
+    ).run()
+
+    assert second["createdCount"] == 0
+    assert second["reusedCount"] == 57
+    assert transport.writes[writes_before:] == []
+
+
+def test_direct_child_solution_components_remain_supported(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    transport = FakeTransport()
+    transport.direct_child_components = True
+    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+
+    journal = make_journal(tmp_path, "APPLY")
+    result = app.SchemaApplicator(
+        CONTRACT, PLAN, transport, journal, apply=True
+    ).run()
+
+    assert result["createdCount"] == 57
+    child_direct_modes = {
+        details["kind"]
+        for details in _effective_membership_details(journal)
+        if details["mode"] == "DIRECT_SOLUTION_COMPONENT"
+        and details["kind"] in {"Column", "AlternateKey", "Relationship"}
+    }
+    assert child_direct_modes == {"Column", "AlternateKey", "Relationship"}
+
+
+@pytest.mark.parametrize("root_behavior", [1, 2])
+def test_segmented_or_shell_table_rejects_orphan_column(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    root_behavior: int,
+) -> None:
+    transport = FakeTransport()
+    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    applicator = app.SchemaApplicator(
+        CONTRACT, PLAN, transport, make_journal(tmp_path), apply=True
+    )
+    applicator.verify_target()
+
+    table = CONTRACT["tables"][0]
+    applicator.ensure_table(table)
+    table_id = transport.tables[table["logicalName"]]["MetadataId"]
+    table_component = (app.COMPONENT_TYPES["Table"], table_id)
+    transport.solution_root_behaviors[table_component] = root_behavior
+
+    column = next(item for item in table["columns"] if item["type"] == "String")
+    column_id = guid(770000 + root_behavior)
+    transport.columns[(table["logicalName"], column["logicalName"])] = {
+        "MetadataId": column_id,
+        "LogicalName": column["logicalName"],
+        "SchemaName": column["schemaName"],
+        "AttributeType": "String",
+        "RequiredLevel": {"Value": column["requiredLevel"]},
+        "IsAuditEnabled": {"Value": column["auditEnabled"]},
+        "MaxLength": column["maxLength"],
+        "FormatName": {"Value": column.get("format", "Text")},
+    }
+
+    with pytest.raises(app.ApplicatorError, match="not a component of solution"):
+        applicator.ensure_column(table, column)
+
+
+@pytest.mark.parametrize(
+    ("kind", "parent_count"),
+    [("AlternateKey", 1), ("Relationship", 2)],
+)
+def test_real_orphans_for_keys_and_relationships_are_rejected(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    kind: str,
+    parent_count: int,
+) -> None:
+    transport = FakeTransport()
+    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    applicator = app.SchemaApplicator(
+        CONTRACT, PLAN, transport, make_journal(tmp_path), apply=True
+    )
+    applicator.verify_target()
+
+    parent_tables = CONTRACT["tables"][:parent_count]
+    for table in parent_tables:
+        applicator.ensure_table(table)
+        table_id = transport.tables[table["logicalName"]]["MetadataId"]
+        transport.solution_root_behaviors[
+            (app.COMPONENT_TYPES["Table"], table_id)
+        ] = 1
+
+    with pytest.raises(app.ApplicatorError, match="not a component of solution"):
+        applicator._require_solution_membership(
+            guid(780000 + parent_count),
+            kind,
+            f"synthetic {kind}",
+            parent_tables=tuple(table["logicalName"] for table in parent_tables),
+        )
+
+
+def test_rollback_deletes_root_included_subcomponents_before_table_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    transport = FakeTransport()
+    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+
+    table = CONTRACT["tables"][0]
+    column = table["columns"][0]
+    key = table["alternateKeys"][0]
+    relationship = CONTRACT["relationships"][0]
+
+    table_id = guid(810001)
+    column_id = guid(810002)
+    key_id = guid(810003)
+    relationship_id = guid(810004)
+
+    journal_path = tmp_path / "root-included-journal.json"
+    journal_path.write_text(
+        json.dumps(
+            {
+                "mode": "APPLY",
+                "contractSha256": app.AUTHORIZED_CONTRACT_SHA256,
+                "planSha256": app.AUTHORIZED_PLAN_SHA256,
+                "target": {
+                    "environmentUrl": "https://example.crm4.dynamics.com/",
+                    "environmentId": guid(700000),
+                    "solution": app.AUTHORIZED_SOLUTION,
+                    "applicatorCommit": app.AUTHORIZED_BASE_COMMIT,
+                },
+                "created": [
+                    {
+                        "kind": "Table",
+                        "name": table["logicalName"],
+                        "metadataId": table_id,
+                        "rollbackPath": f"EntityDefinitions({table_id})",
+                    },
+                    {
+                        "kind": "Column",
+                        "name": f"{table['logicalName']}.{column['logicalName']}",
+                        "metadataId": column_id,
+                        "rollbackPath": (
+                            f"EntityDefinitions(LogicalName='{table['logicalName']}')"
+                            f"/Attributes({column_id})"
+                        ),
+                        "solutionInclusion": "INCLUDED_VIA_TABLE_ROOT",
+                    },
+                    {
+                        "kind": "AlternateKey",
+                        "name": key["schemaName"],
+                        "metadataId": key_id,
+                        "rollbackPath": (
+                            f"EntityDefinitions(LogicalName='{table['logicalName']}')"
+                            f"/Keys({key_id})"
+                        ),
+                        "solutionInclusion": "INCLUDED_VIA_TABLE_ROOT",
+                    },
+                    {
+                        "kind": "Relationship",
+                        "name": relationship["schemaName"],
+                        "metadataId": relationship_id,
+                        "rollbackPath": f"RelationshipDefinitions({relationship_id})",
+                        "solutionInclusion": "INCLUDED_VIA_TABLE_ROOT",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = app.rollback_from_journal(
+        transport,
+        journal_path,
+        rollback_authorization(journal_path),
+        CONTRACT,
+        tmp_path / "root-included-rollback",
+    )
+
+    deletes = [
+        path
+        for method, path, _body, _headers in transport.writes
+        if method == "DELETE"
+    ]
+    assert deletes == [
+        f"RelationshipDefinitions({relationship_id})",
+        (
+            f"EntityDefinitions(LogicalName='{table['logicalName']}')"
+            f"/Keys({key_id})"
+        ),
+        (
+            f"EntityDefinitions(LogicalName='{table['logicalName']}')"
+            f"/Attributes({column_id})"
+        ),
+        f"EntityDefinitions({table_id})",
+    ]
+    assert result["zeroRowsVerified"] is True
+    assert result["customizationsPublished"] is True
+    assert result["rowsDeleted"] == 0

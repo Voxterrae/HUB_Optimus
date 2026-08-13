@@ -597,29 +597,149 @@ class SchemaApplicator:
         if self.solution_id is None:
             raise ApplicatorError("Target solution ID is unavailable.")
         return (
-            "solutioncomponents?$select=solutioncomponentid,objectid,componenttype&$top=2"
+            "solutioncomponents?"
+            "$select=solutioncomponentid,objectid,componenttype,"
+            "rootcomponentbehavior,rootsolutioncomponentid&$top=2"
             f"&$filter=_solutionid_value eq {self.solution_id} "
             f"and objectid eq {metadata_id} and componenttype eq {component_type}"
         )
 
+    @staticmethod
+    def _normalize_root_component_behavior(value: Any) -> int | None:
+        if isinstance(value, dict):
+            value = value.get("Value")
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError) as exc:
+            raise ApplicatorError(
+                f"Invalid solution root-component behavior: {value!r}"
+            ) from exc
+
+    def _solution_component_records(
+        self, metadata_id: str, component_type: int
+    ) -> list[dict[str, Any]]:
+        response = self._request(
+            "GET",
+            self._solution_component_query(metadata_id, component_type),
+            headers={"Consistency": "Strong"},
+        )
+        values = (response.body or {}).get("value", [])
+        if not isinstance(values, list):
+            raise ApplicatorError("Unexpected solution-component response shape.")
+        if len(values) > 1:
+            raise ApplicatorError(
+                f"Duplicate solution-component membership for {metadata_id} "
+                f"(component type {component_type})."
+            )
+        return values
+
+    def _table_root_membership(self, table_name: str) -> dict[str, Any]:
+        metadata_id = self.table_metadata_ids.get(table_name)
+        if not metadata_id:
+            return {
+                "table": table_name,
+                "metadataId": None,
+                "rootComponentBehavior": None,
+                "included": False,
+                "reason": "TABLE_METADATA_ID_UNAVAILABLE",
+            }
+
+        records = self._solution_component_records(
+            metadata_id, COMPONENT_TYPES["Table"]
+        )
+        if not records:
+            return {
+                "table": table_name,
+                "metadataId": metadata_id,
+                "rootComponentBehavior": None,
+                "included": False,
+                "reason": "TABLE_ROOT_NOT_IN_SOLUTION",
+            }
+
+        behavior = self._normalize_root_component_behavior(
+            records[0].get("rootcomponentbehavior")
+        )
+        return {
+            "table": table_name,
+            "metadataId": metadata_id,
+            "rootComponentBehavior": behavior,
+            "included": behavior == 0,
+            "reason": (
+                "INCLUDE_SUBCOMPONENTS"
+                if behavior == 0
+                else "ROOT_DOES_NOT_INCLUDE_SUBCOMPONENTS"
+            ),
+        }
+
     def _require_solution_membership(
-        self, metadata_id: str, kind: str, description: str, *, wait: bool = False
-    ) -> None:
+        self,
+        metadata_id: str,
+        kind: str,
+        description: str,
+        *,
+        parent_tables: tuple[str, ...] = (),
+        wait: bool = False,
+    ) -> dict[str, Any]:
         component_type = COMPONENT_TYPES[kind]
         deadline = time.monotonic() + (180 if wait else 0)
+        last_parent_states: list[dict[str, Any]] = []
+
         while True:
-            response = self._request(
-                "GET",
-                self._solution_component_query(metadata_id, component_type),
-                headers={"ConsistencyLevel": "eventual"},
-            )
-            values = (response.body or {}).get("value", [])
-            if values:
-                return
-            if not wait or time.monotonic() >= deadline:
-                raise ApplicatorError(
-                    f"Existing {description} is not a component of solution {AUTHORIZED_SOLUTION}."
+            direct = self._solution_component_records(metadata_id, component_type)
+            if direct:
+                details = {
+                    "kind": kind,
+                    "description": description,
+                    "metadataId": metadata_id,
+                    "mode": "DIRECT_SOLUTION_COMPONENT",
+                    "rootTable": None,
+                    "rootComponentBehavior": self._normalize_root_component_behavior(
+                        direct[0].get("rootcomponentbehavior")
+                    ),
+                }
+                self.journal.check(
+                    "Effective solution membership", "PASS", details
                 )
+                return details
+
+            last_parent_states = []
+            for table_name in dict.fromkeys(parent_tables):
+                root = self._table_root_membership(table_name)
+                last_parent_states.append(root)
+                if root["included"]:
+                    details = {
+                        "kind": kind,
+                        "description": description,
+                        "metadataId": metadata_id,
+                        "mode": "INCLUDED_VIA_TABLE_ROOT",
+                        "rootTable": table_name,
+                        "rootMetadataId": root["metadataId"],
+                        "rootComponentBehavior": root["rootComponentBehavior"],
+                    }
+                    self.journal.check(
+                        "Effective solution membership", "PASS", details
+                    )
+                    return details
+
+            if not wait or time.monotonic() >= deadline:
+                parent_summary = (
+                    "; ".join(
+                        f"{item['table']}={item['rootComponentBehavior']!r}/"
+                        f"{item['reason']}"
+                        for item in last_parent_states
+                    )
+                    if last_parent_states
+                    else "no eligible parent table"
+                )
+                raise ApplicatorError(
+                    f"Existing {description} is not a component of solution "
+                    f"{AUTHORIZED_SOLUTION} and is not effectively included "
+                    f"through a table root with RootComponentBehavior=0 "
+                    f"({parent_summary})."
+                )
+
             time.sleep(5)
 
     def _record_reused(self, entry: dict[str, Any]) -> None:
@@ -1049,7 +1169,12 @@ class SchemaApplicator:
         if response.status == 200:
             existing = response.body or {}
             metadata_id = self._validate_column(table, column, existing)
-            self._require_solution_membership(metadata_id, "Column", f"column {full_name}")
+            self._require_solution_membership(
+                metadata_id,
+                "Column",
+                f"column {full_name}",
+                parent_tables=(table["logicalName"],),
+            )
             self._record_reused({"kind": "Column", "name": full_name, "metadataId": metadata_id})
             return
         if response.status != 404:
@@ -1081,7 +1206,13 @@ class SchemaApplicator:
         metadata_id = metadata_id or verified_id
         if metadata_id != verified_id:
             raise ApplicatorError(f"Column identity mismatch after create: {full_name}")
-        self._require_solution_membership(metadata_id, "Column", f"column {full_name}", wait=True)
+        self._require_solution_membership(
+            metadata_id,
+            "Column",
+            f"column {full_name}",
+            parent_tables=(table["logicalName"],),
+            wait=True,
+        )
         self.journal.created(
             {
                 "kind": "Column",
@@ -1145,7 +1276,10 @@ class SchemaApplicator:
             existing = self._wait_for_active_key(table, key)
             metadata_id = str(existing.get("MetadataId", "")).lower()
             self._require_solution_membership(
-                metadata_id, "AlternateKey", f"alternate key {key['schemaName']}"
+                metadata_id,
+                "AlternateKey",
+                f"alternate key {key['schemaName']}",
+                parent_tables=(table["logicalName"],),
             )
             self._record_reused(
                 {"kind": "AlternateKey", "name": key["schemaName"], "metadataId": metadata_id}
@@ -1174,7 +1308,11 @@ class SchemaApplicator:
         if metadata_id != verified_id:
             raise ApplicatorError(f"Alternate key identity mismatch after create: {key['schemaName']}")
         self._require_solution_membership(
-            metadata_id, "AlternateKey", f"alternate key {key['schemaName']}", wait=True
+            metadata_id,
+            "AlternateKey",
+            f"alternate key {key['schemaName']}",
+            parent_tables=(table["logicalName"],),
+            wait=True,
         )
         self.journal.created(
             {
@@ -1297,7 +1435,13 @@ class SchemaApplicator:
             if metadata_id != verified_id:
                 raise ApplicatorError(f"Relationship identity drift: {relationship['schemaName']}")
             self._require_solution_membership(
-                metadata_id, "Relationship", f"relationship {relationship['schemaName']}"
+                metadata_id,
+                "Relationship",
+                f"relationship {relationship['schemaName']}",
+                parent_tables=(
+                    relationship["referencedTable"],
+                    relationship["referencingTable"],
+                ),
             )
             self._record_reused(
                 {"kind": "Relationship", "name": relationship["schemaName"], "metadataId": metadata_id}
@@ -1327,7 +1471,14 @@ class SchemaApplicator:
         if metadata_id != verified_id:
             raise ApplicatorError(f"Relationship identity mismatch after create: {relationship['schemaName']}")
         self._require_solution_membership(
-            metadata_id, "Relationship", f"relationship {relationship['schemaName']}", wait=True
+            metadata_id,
+            "Relationship",
+            f"relationship {relationship['schemaName']}",
+            parent_tables=(
+                relationship["referencedTable"],
+                relationship["referencingTable"],
+            ),
+            wait=True,
         )
         self.journal.created(
             {
