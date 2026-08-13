@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "clientCode": "EXAMPLE",
+  "environment": {
+    "name": "Example non-production environment",
+    "classification": "TEST",
+    "dataverseUrl": "https://example.crm4.dynamics.com"
+  },
+  "identity": {
+    "entraTenantId": "11111111-1111-4111-8111-111111111111",
+    "allowedTokenAudiences": ["api://22222222-2222-4222-8222-222222222222"],
+    "readerRole": "Optimus.Reader",
+    "mutatorRole": "Optimus.Mutator",
+    "ownerUpn": "owner@example.com",
+    "approverUpns": ["approver@example.com"],
+    "executorIdentityReference": "keyvault://example/executor-identity"
+  },
+  "storage": {
+    "sharePointControlPath": "Optimus_Deployments/EXAMPLE/AdminGateway",
+    "auditTablePrefix": "opt"
+  },
+  "pilot": {
+    "targetMailbox": "pilot@example.com",
+    "delegateMailbox": "owner@example.com",
+    "allowedOperations": [
+      "exchange.diagnose_mailbox",
+      "exchange.get_mailbox_permissions",
+      "exchange.test_delegated_access",
+      "exchange.grant_full_access"
+    ]
+  }
+}

@@ -10,7 +10,9 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 MAILBOX_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
-SAFE_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+SAFE_ID_PATTERN_TEXT = r"^[A-Za-z0-9._-]{1,128}$"
+SAFE_KEY_PATTERN_TEXT = r"^[A-Za-z0-9._-]{8,128}$"
+SAFE_ID_PATTERN = re.compile(SAFE_ID_PATTERN_TEXT)
 
 
 class StrictModel(BaseModel):
@@ -93,14 +95,7 @@ class FullAccessChange(MailboxAndDelegate):
 
 
 class JobTarget(StrictModel):
-    job_id: str = Field(min_length=8, max_length=128)
-
-    @field_validator("job_id")
-    @classmethod
-    def validate_job_id(cls, value: str) -> str:
-        if not SAFE_ID_PATTERN.fullmatch(value):
-            raise ValueError("invalid job identifier")
-        return value
+    job_id: str = Field(min_length=8, max_length=128, pattern=SAFE_KEY_PATTERN_TEXT)
 
 
 PARAMETER_MODELS: dict[str, type[StrictModel]] = {
@@ -112,7 +107,7 @@ PARAMETER_MODELS: dict[str, type[StrictModel]] = {
 
 
 class ApprovalReceipt(StrictModel):
-    approval_id: str = Field(min_length=8, max_length=128)
+    approval_id: str = Field(min_length=8, max_length=128, pattern=SAFE_KEY_PATTERN_TEXT)
     plan_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
     approved_by: str = Field(min_length=1, max_length=256)
     approved_at: datetime
@@ -129,15 +124,8 @@ class ApprovalReceipt(StrictModel):
 class OperationRequest(StrictModel):
     parameters: dict[str, Any]
     dry_run: bool = True
-    idempotency_key: str = Field(min_length=8, max_length=128)
+    idempotency_key: str = Field(min_length=8, max_length=128, pattern=SAFE_KEY_PATTERN_TEXT)
     approval: ApprovalReceipt | None = None
-
-    @field_validator("idempotency_key")
-    @classmethod
-    def validate_idempotency_key(cls, value: str) -> str:
-        if not SAFE_ID_PATTERN.fullmatch(value):
-            raise ValueError("invalid idempotency key")
-        return value
 
 
 class OperationPlan(StrictModel):

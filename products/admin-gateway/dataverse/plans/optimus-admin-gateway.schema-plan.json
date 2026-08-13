@@ -1,0 +1,1186 @@
+{
+  "schemaVersion": "1.0",
+  "mode": "DRY_RUN",
+  "apply": false,
+  "solution": {
+    "uniqueName": "OptimusAdminGateway",
+    "displayName": "Optimus Admin Gateway",
+    "publisher": "HUB_Optimus",
+    "prefix": "opt",
+    "choiceValuePrefix": 88483,
+    "version": "0.1.0.0",
+    "packageType": "Unmanaged",
+    "baseLanguageCode": 1033
+  },
+  "contractSha256": "ad0275c652f8877c2fc091dcdf66c8ab5fea6db3b2d4b64e847e17716c549d1d",
+  "counts": {
+    "globalChoices": 4,
+    "choiceOptions": 21,
+    "tables": 4,
+    "primaryColumns": 4,
+    "scalarColumns": 41,
+    "lookupColumns": 4,
+    "alternateKeys": 4,
+    "relationships": 4,
+    "plannedActions": 60
+  },
+  "actions": [
+    {
+      "index": 1,
+      "phase": "VerifyTargetSolutionAndPublisher",
+      "action": "Verify",
+      "target": "OptimusAdminGateway",
+      "wouldMutateEnvironment": false,
+      "details": {
+        "publisher": "HUB_Optimus",
+        "prefix": "opt",
+        "choiceValuePrefix": 88483,
+        "expectedPackageType": "Unmanaged"
+      }
+    },
+    {
+      "index": 2,
+      "phase": "CreateGlobalChoices",
+      "action": "CreateGlobalChoice",
+      "target": "opt_adminrisk",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminRisk",
+        "displayName": "Admin Risk",
+        "options": [
+          {
+            "name": "low",
+            "label": "Low",
+            "value": 884830000
+          },
+          {
+            "name": "medium",
+            "label": "Medium",
+            "value": 884830001
+          },
+          {
+            "name": "high",
+            "label": "High",
+            "value": 884830002
+          }
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "phase": "CreateGlobalChoices",
+      "action": "CreateGlobalChoice",
+      "target": "opt_adminrequeststate",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminRequestState",
+        "displayName": "Admin Request State",
+        "options": [
+          {
+            "name": "REQUESTED",
+            "label": "Requested",
+            "value": 884831000
+          },
+          {
+            "name": "VALIDATED",
+            "label": "Validated",
+            "value": 884831001
+          },
+          {
+            "name": "PLANNED",
+            "label": "Planned",
+            "value": 884831002
+          },
+          {
+            "name": "APPROVAL_REQUIRED",
+            "label": "Approval Required",
+            "value": 884831003
+          },
+          {
+            "name": "APPROVED",
+            "label": "Approved",
+            "value": 884831004
+          },
+          {
+            "name": "REJECTED",
+            "label": "Rejected",
+            "value": 884831005
+          },
+          {
+            "name": "QUEUED",
+            "label": "Queued",
+            "value": 884831006
+          },
+          {
+            "name": "RUNNING",
+            "label": "Running",
+            "value": 884831007
+          },
+          {
+            "name": "SUCCEEDED",
+            "label": "Succeeded",
+            "value": 884831008
+          },
+          {
+            "name": "FAILED",
+            "label": "Failed",
+            "value": 884831009
+          },
+          {
+            "name": "CANCELLED",
+            "label": "Cancelled",
+            "value": 884831010
+          }
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "phase": "CreateGlobalChoices",
+      "action": "CreateGlobalChoice",
+      "target": "opt_adminapprovaldecision",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminApprovalDecision",
+        "displayName": "Admin Approval Decision",
+        "options": [
+          {
+            "name": "APPROVED",
+            "label": "Approved",
+            "value": 884832000
+          },
+          {
+            "name": "REJECTED",
+            "label": "Rejected",
+            "value": 884832001
+          }
+        ]
+      }
+    },
+    {
+      "index": 5,
+      "phase": "CreateGlobalChoices",
+      "action": "CreateGlobalChoice",
+      "target": "opt_adminjobstate",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminJobState",
+        "displayName": "Admin Job State",
+        "options": [
+          {
+            "name": "QUEUED",
+            "label": "Queued",
+            "value": 884833000
+          },
+          {
+            "name": "RUNNING",
+            "label": "Running",
+            "value": 884833001
+          },
+          {
+            "name": "SUCCEEDED",
+            "label": "Succeeded",
+            "value": 884833002
+          },
+          {
+            "name": "FAILED",
+            "label": "Failed",
+            "value": 884833003
+          },
+          {
+            "name": "CANCELLED",
+            "label": "Cancelled",
+            "value": 884833004
+          }
+        ]
+      }
+    },
+    {
+      "index": 6,
+      "phase": "CreateTablesWithPrimaryColumns",
+      "action": "CreateTable",
+      "target": "opt_adminrequest",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminRequest",
+        "entitySetName": "opt_adminrequests",
+        "ownershipType": "UserOwned",
+        "primaryName": {
+          "schemaName": "opt_Name",
+          "logicalName": "opt_name",
+          "displayName": "Name",
+          "maxLength": 200,
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        "auditEnabled": true,
+        "changeTrackingEnabled": true,
+        "hasActivities": false,
+        "hasNotes": false
+      }
+    },
+    {
+      "index": 7,
+      "phase": "CreateTablesWithPrimaryColumns",
+      "action": "CreateTable",
+      "target": "opt_adminapproval",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminApproval",
+        "entitySetName": "opt_adminapprovals",
+        "ownershipType": "UserOwned",
+        "primaryName": {
+          "schemaName": "opt_Name",
+          "logicalName": "opt_name",
+          "displayName": "Name",
+          "maxLength": 200,
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        "auditEnabled": true,
+        "changeTrackingEnabled": true,
+        "hasActivities": false,
+        "hasNotes": false
+      }
+    },
+    {
+      "index": 8,
+      "phase": "CreateTablesWithPrimaryColumns",
+      "action": "CreateTable",
+      "target": "opt_adminjob",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminJob",
+        "entitySetName": "opt_adminjobs",
+        "ownershipType": "OrganizationOwned",
+        "primaryName": {
+          "schemaName": "opt_Name",
+          "logicalName": "opt_name",
+          "displayName": "Name",
+          "maxLength": 200,
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        "auditEnabled": true,
+        "changeTrackingEnabled": true,
+        "hasActivities": false,
+        "hasNotes": false
+      }
+    },
+    {
+      "index": 9,
+      "phase": "CreateTablesWithPrimaryColumns",
+      "action": "CreateTable",
+      "target": "opt_adminevent",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminEvent",
+        "entitySetName": "opt_adminevents",
+        "ownershipType": "OrganizationOwned",
+        "primaryName": {
+          "schemaName": "opt_Name",
+          "logicalName": "opt_name",
+          "displayName": "Name",
+          "maxLength": 200,
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        "auditEnabled": true,
+        "changeTrackingEnabled": true,
+        "hasActivities": false,
+        "hasNotes": false
+      }
+    },
+    {
+      "index": 10,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_operationkey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_OperationKey",
+        "logicalName": "opt_operationkey",
+        "displayName": "Operation Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 11,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_plandigest",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_PlanDigest",
+        "logicalName": "opt_plandigest",
+        "displayName": "Plan SHA-256",
+        "type": "String",
+        "maxLength": 64,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "pattern": "^[a-f0-9]{64}$",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 12,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_parametersjson",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_ParametersJson",
+        "logicalName": "opt_parametersjson",
+        "displayName": "Normalized Parameters JSON",
+        "type": "Memo",
+        "maxLength": 131072,
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": false,
+        "containsSensitiveData": true
+      }
+    },
+    {
+      "index": 13,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_dryrun",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_DryRun",
+        "logicalName": "opt_dryrun",
+        "displayName": "Dry Run",
+        "type": "Boolean",
+        "requiredLevel": "ApplicationRequired",
+        "default": true,
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 14,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_mutation",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_Mutation",
+        "logicalName": "opt_mutation",
+        "displayName": "Mutation",
+        "type": "Boolean",
+        "requiredLevel": "ApplicationRequired",
+        "default": false,
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 15,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_approvalrequired",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_ApprovalRequired",
+        "logicalName": "opt_approvalrequired",
+        "displayName": "Approval Required",
+        "type": "Boolean",
+        "requiredLevel": "ApplicationRequired",
+        "default": false,
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 16,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_risk",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_Risk",
+        "logicalName": "opt_risk",
+        "displayName": "Risk",
+        "type": "Choice",
+        "globalChoice": "opt_adminrisk",
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 17,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_requeststate",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_RequestState",
+        "logicalName": "opt_requeststate",
+        "displayName": "Request State",
+        "type": "Choice",
+        "globalChoice": "opt_adminrequeststate",
+        "requiredLevel": "ApplicationRequired",
+        "default": 884831000,
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 18,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_idempotencykey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_IdempotencyKey",
+        "logicalName": "opt_idempotencykey",
+        "displayName": "Idempotency Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "pattern": "^[A-Za-z0-9._-]{8,128}$",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 19,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_requesterobjectkey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_RequesterObjectKey",
+        "logicalName": "opt_requesterobjectkey",
+        "displayName": "Requester Object Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 20,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_requesterdisplayname",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_RequesterDisplayName",
+        "logicalName": "opt_requesterdisplayname",
+        "displayName": "Requester Display Name",
+        "type": "String",
+        "maxLength": 256,
+        "requiredLevel": "None",
+        "format": "Text",
+        "auditEnabled": false,
+        "containsSensitiveData": true
+      }
+    },
+    {
+      "index": 21,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_catalogversion",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_CatalogVersion",
+        "logicalName": "opt_catalogversion",
+        "displayName": "Catalog Version",
+        "type": "String",
+        "maxLength": 64,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 22,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_targetsummary",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_TargetSummary",
+        "logicalName": "opt_targetsummary",
+        "displayName": "Target Summary",
+        "type": "String",
+        "maxLength": 1000,
+        "requiredLevel": "None",
+        "format": "TextArea",
+        "auditEnabled": false,
+        "containsSensitiveData": true
+      }
+    },
+    {
+      "index": 23,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_reason",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_Reason",
+        "logicalName": "opt_reason",
+        "displayName": "Reason",
+        "type": "String",
+        "maxLength": 500,
+        "requiredLevel": "None",
+        "format": "TextArea",
+        "auditEnabled": false,
+        "containsSensitiveData": true
+      }
+    },
+    {
+      "index": 24,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_changeticket",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_ChangeTicket",
+        "logicalName": "opt_changeticket",
+        "displayName": "Change Ticket",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "None",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 25,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminrequest.opt_requestedatutc",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_RequestedAtUtc",
+        "logicalName": "opt_requestedatutc",
+        "displayName": "Requested At UTC",
+        "type": "DateTime",
+        "requiredLevel": "ApplicationRequired",
+        "behavior": "UserLocal",
+        "format": "DateAndTime",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 26,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminapproval.opt_approvalkey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_ApprovalKey",
+        "logicalName": "opt_approvalkey",
+        "displayName": "Approval Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "pattern": "^[A-Za-z0-9._-]{8,128}$",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 27,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminapproval.opt_plandigest",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_PlanDigest",
+        "logicalName": "opt_plandigest",
+        "displayName": "Plan SHA-256",
+        "type": "String",
+        "maxLength": 64,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "pattern": "^[a-f0-9]{64}$",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 28,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminapproval.opt_decision",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_Decision",
+        "logicalName": "opt_decision",
+        "displayName": "Decision",
+        "type": "Choice",
+        "globalChoice": "opt_adminapprovaldecision",
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 29,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminapproval.opt_decidedbyobjectkey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_DecidedByObjectKey",
+        "logicalName": "opt_decidedbyobjectkey",
+        "displayName": "Decided By Object Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 30,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminapproval.opt_decidedbydisplayname",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_DecidedByDisplayName",
+        "logicalName": "opt_decidedbydisplayname",
+        "displayName": "Decided By Display Name",
+        "type": "String",
+        "maxLength": 256,
+        "requiredLevel": "None",
+        "format": "Text",
+        "auditEnabled": false,
+        "containsSensitiveData": true
+      }
+    },
+    {
+      "index": 31,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminapproval.opt_decidedatutc",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_DecidedAtUtc",
+        "logicalName": "opt_decidedatutc",
+        "displayName": "Decided At UTC",
+        "type": "DateTime",
+        "requiredLevel": "ApplicationRequired",
+        "behavior": "UserLocal",
+        "format": "DateAndTime",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 32,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminapproval.opt_signature",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_Signature",
+        "logicalName": "opt_signature",
+        "displayName": "Approval Signature",
+        "type": "String",
+        "maxLength": 512,
+        "requiredLevel": "None",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 33,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminapproval.opt_receiptjson",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_ReceiptJson",
+        "logicalName": "opt_receiptjson",
+        "displayName": "Approval Receipt JSON",
+        "type": "Memo",
+        "maxLength": 32768,
+        "requiredLevel": "None",
+        "auditEnabled": false,
+        "containsSensitiveData": true
+      }
+    },
+    {
+      "index": 34,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminjob.opt_jobkey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_JobKey",
+        "logicalName": "opt_jobkey",
+        "displayName": "Job Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "pattern": "^[A-Za-z0-9._-]{8,128}$",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 35,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminjob.opt_operationkey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_OperationKey",
+        "logicalName": "opt_operationkey",
+        "displayName": "Operation Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 36,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminjob.opt_jobstate",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_JobState",
+        "logicalName": "opt_jobstate",
+        "displayName": "Job State",
+        "type": "Choice",
+        "globalChoice": "opt_adminjobstate",
+        "requiredLevel": "ApplicationRequired",
+        "default": 884833000,
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 37,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminjob.opt_correlationkey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_CorrelationKey",
+        "logicalName": "opt_correlationkey",
+        "displayName": "Correlation Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 38,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminjob.opt_plandigest",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_PlanDigest",
+        "logicalName": "opt_plandigest",
+        "displayName": "Plan SHA-256",
+        "type": "String",
+        "maxLength": 64,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "pattern": "^[a-f0-9]{64}$",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 39,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminjob.opt_dryrun",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_DryRun",
+        "logicalName": "opt_dryrun",
+        "displayName": "Dry Run",
+        "type": "Boolean",
+        "requiredLevel": "ApplicationRequired",
+        "default": true,
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 40,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminjob.opt_outputsummaryjson",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_OutputSummaryJson",
+        "logicalName": "opt_outputsummaryjson",
+        "displayName": "Sanitized Output Summary JSON",
+        "type": "Memo",
+        "maxLength": 131072,
+        "requiredLevel": "None",
+        "auditEnabled": false,
+        "containsSensitiveData": true
+      }
+    },
+    {
+      "index": 41,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminjob.opt_outputdigest",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_OutputDigest",
+        "logicalName": "opt_outputdigest",
+        "displayName": "Output SHA-256",
+        "type": "String",
+        "maxLength": 64,
+        "requiredLevel": "None",
+        "format": "Text",
+        "pattern": "^[a-f0-9]{64}$",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 42,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminjob.opt_startedatutc",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_StartedAtUtc",
+        "logicalName": "opt_startedatutc",
+        "displayName": "Started At UTC",
+        "type": "DateTime",
+        "requiredLevel": "None",
+        "behavior": "UserLocal",
+        "format": "DateAndTime",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 43,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminjob.opt_completedatutc",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_CompletedAtUtc",
+        "logicalName": "opt_completedatutc",
+        "displayName": "Completed At UTC",
+        "type": "DateTime",
+        "requiredLevel": "None",
+        "behavior": "UserLocal",
+        "format": "DateAndTime",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 44,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminevent.opt_eventkey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_EventKey",
+        "logicalName": "opt_eventkey",
+        "displayName": "Event Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "pattern": "^[A-Za-z0-9._-]{8,128}$",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 45,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminevent.opt_eventtype",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_EventType",
+        "logicalName": "opt_eventtype",
+        "displayName": "Event Type",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 46,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminevent.opt_correlationkey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_CorrelationKey",
+        "logicalName": "opt_correlationkey",
+        "displayName": "Correlation Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 47,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminevent.opt_actorobjectkey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_ActorObjectKey",
+        "logicalName": "opt_actorobjectkey",
+        "displayName": "Actor Object Key",
+        "type": "String",
+        "maxLength": 128,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 48,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminevent.opt_payloadjson",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_PayloadJson",
+        "logicalName": "opt_payloadjson",
+        "displayName": "Sanitized Payload JSON",
+        "type": "Memo",
+        "maxLength": 65536,
+        "requiredLevel": "None",
+        "auditEnabled": false,
+        "containsSensitiveData": true
+      }
+    },
+    {
+      "index": 49,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminevent.opt_payloaddigest",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_PayloadDigest",
+        "logicalName": "opt_payloaddigest",
+        "displayName": "Payload SHA-256",
+        "type": "String",
+        "maxLength": 64,
+        "requiredLevel": "ApplicationRequired",
+        "format": "Text",
+        "pattern": "^[a-f0-9]{64}$",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 50,
+      "phase": "CreateScalarColumns",
+      "action": "CreateColumn",
+      "target": "opt_adminevent.opt_occurredatutc",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_OccurredAtUtc",
+        "logicalName": "opt_occurredatutc",
+        "displayName": "Occurred At UTC",
+        "type": "DateTime",
+        "requiredLevel": "ApplicationRequired",
+        "behavior": "UserLocal",
+        "format": "DateAndTime",
+        "auditEnabled": true
+      }
+    },
+    {
+      "index": 51,
+      "phase": "CreateAlternateKeysAndWaitForIndexes",
+      "action": "CreateAlternateKey",
+      "target": "opt_adminrequest.opt_AdminRequest_IdempotencyKey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "columns": [
+          "opt_idempotencykey"
+        ]
+      }
+    },
+    {
+      "index": 52,
+      "phase": "CreateAlternateKeysAndWaitForIndexes",
+      "action": "CreateAlternateKey",
+      "target": "opt_adminapproval.opt_AdminApproval_ApprovalKey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "columns": [
+          "opt_approvalkey"
+        ]
+      }
+    },
+    {
+      "index": 53,
+      "phase": "CreateAlternateKeysAndWaitForIndexes",
+      "action": "CreateAlternateKey",
+      "target": "opt_adminjob.opt_AdminJob_JobKey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "columns": [
+          "opt_jobkey"
+        ]
+      }
+    },
+    {
+      "index": 54,
+      "phase": "CreateAlternateKeysAndWaitForIndexes",
+      "action": "CreateAlternateKey",
+      "target": "opt_adminevent.opt_AdminEvent_EventKey",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "columns": [
+          "opt_eventkey"
+        ]
+      }
+    },
+    {
+      "index": 55,
+      "phase": "CreateRestrictiveRelationships",
+      "action": "CreateOneToManyRelationship",
+      "target": "opt_AdminRequest_AdminApproval",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminRequest_AdminApproval",
+        "referencedTable": "opt_adminrequest",
+        "referencingTable": "opt_adminapproval",
+        "lookup": {
+          "schemaName": "opt_Request",
+          "logicalName": "opt_request",
+          "displayName": "Admin Request",
+          "requiredLevel": "ApplicationRequired"
+        },
+        "cascade": {
+          "assign": "NoCascade",
+          "delete": "Restrict",
+          "merge": "NoCascade",
+          "reparent": "NoCascade",
+          "share": "NoCascade",
+          "unshare": "NoCascade"
+        }
+      }
+    },
+    {
+      "index": 56,
+      "phase": "CreateRestrictiveRelationships",
+      "action": "CreateOneToManyRelationship",
+      "target": "opt_AdminRequest_AdminJob",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminRequest_AdminJob",
+        "referencedTable": "opt_adminrequest",
+        "referencingTable": "opt_adminjob",
+        "lookup": {
+          "schemaName": "opt_Request",
+          "logicalName": "opt_request",
+          "displayName": "Admin Request",
+          "requiredLevel": "ApplicationRequired"
+        },
+        "cascade": {
+          "assign": "NoCascade",
+          "delete": "Restrict",
+          "merge": "NoCascade",
+          "reparent": "NoCascade",
+          "share": "NoCascade",
+          "unshare": "NoCascade"
+        }
+      }
+    },
+    {
+      "index": 57,
+      "phase": "CreateRestrictiveRelationships",
+      "action": "CreateOneToManyRelationship",
+      "target": "opt_AdminRequest_AdminEvent",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminRequest_AdminEvent",
+        "referencedTable": "opt_adminrequest",
+        "referencingTable": "opt_adminevent",
+        "lookup": {
+          "schemaName": "opt_Request",
+          "logicalName": "opt_request",
+          "displayName": "Admin Request",
+          "requiredLevel": "None"
+        },
+        "cascade": {
+          "assign": "NoCascade",
+          "delete": "Restrict",
+          "merge": "NoCascade",
+          "reparent": "NoCascade",
+          "share": "NoCascade",
+          "unshare": "NoCascade"
+        }
+      }
+    },
+    {
+      "index": 58,
+      "phase": "CreateRestrictiveRelationships",
+      "action": "CreateOneToManyRelationship",
+      "target": "opt_AdminJob_AdminEvent",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "schemaName": "opt_AdminJob_AdminEvent",
+        "referencedTable": "opt_adminjob",
+        "referencingTable": "opt_adminevent",
+        "lookup": {
+          "schemaName": "opt_Job",
+          "logicalName": "opt_job",
+          "displayName": "Admin Job",
+          "requiredLevel": "None"
+        },
+        "cascade": {
+          "assign": "NoCascade",
+          "delete": "Restrict",
+          "merge": "NoCascade",
+          "reparent": "NoCascade",
+          "share": "NoCascade",
+          "unshare": "NoCascade"
+        }
+      }
+    },
+    {
+      "index": 59,
+      "phase": "PublishCustomizations",
+      "action": "PublishCustomizations",
+      "target": "OptimusAdminGateway",
+      "wouldMutateEnvironment": true,
+      "details": {
+        "scope": "solution"
+      }
+    },
+    {
+      "index": 60,
+      "phase": "VerifyMetadataAndExportSolution",
+      "action": "VerifyAndExport",
+      "target": "OptimusAdminGateway",
+      "wouldMutateEnvironment": false,
+      "details": {
+        "verifyChoices": true,
+        "verifyTables": true,
+        "verifyColumns": true,
+        "verifyAlternateKeys": true,
+        "verifyRelationships": true,
+        "exportUnmanaged": true
+      }
+    }
+  ],
+  "safety": {
+    "containsExecutableMutationCommands": false,
+    "environmentBinding": "private-runtime-only",
+    "requiresExplicitApplyAuthorization": true,
+    "tablesCreatedByThisPlan": 0,
+    "rowsCreatedByThisPlan": 0,
+    "merge": false,
+    "deployment": false
+  },
+  "planHash": "dd1a4c4d2ab24f224172bb8f87f6c89d89f09e86ea36cc3886e8551d12751a06"
+}
