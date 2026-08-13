@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: optimus-admin-gateway
+Version: 0.1.0
+Summary: Governed administration gateway for HUB_Optimus
+Requires-Python: >=3.11
+Requires-Dist: fastapi<1,>=0.110
+Requires-Dist: pydantic<3,>=2.6
+Requires-Dist: uvicorn<1,>=0.29
+Provides-Extra: dev
+Requires-Dist: httpx<1,>=0.27; extra == "dev"
+Requires-Dist: httpx2<3,>=2; extra == "dev"
+Requires-Dist: jsonschema<5,>=4; extra == "dev"
+Requires-Dist: pytest<9,>=8; extra == "dev"
+Requires-Dist: pytest-cov<7,>=5; extra == "dev"
+Requires-Dist: PyYAML<7,>=6; extra == "dev"
