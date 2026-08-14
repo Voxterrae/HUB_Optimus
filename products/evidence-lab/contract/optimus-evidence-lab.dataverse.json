@@ -1,0 +1,985 @@
+{
+  "schemaVersion": "1.0",
+  "solution": {
+    "uniqueName": "OptimusEvidenceLab",
+    "displayName": "Optimus Evidence Lab",
+    "publisher": "HUB_Optimus",
+    "prefix": "opt",
+    "choiceValuePrefix": 88483,
+    "version": "0.1.0.0",
+    "packageType": "Unmanaged",
+    "baseLanguageCode": 1033
+  },
+  "deploymentPolicy": {
+    "allowedEnvironmentTypes": [
+      "Sandbox",
+      "Developer"
+    ],
+    "productionAllowed": false,
+    "requiresSeparateApplyAuthorization": true,
+    "requiresPreApplyExport": true,
+    "requiresPostApplyExport": true,
+    "seedRequiresSeparateAuthorization": true
+  },
+  "conventions": {
+    "alternateKeyPattern": "^[A-Za-z0-9._|:-]{3,128}$",
+    "sha256Pattern": "^[a-f0-9]{64}$",
+    "dateOnlyBehavior": "DateOnly",
+    "decimalPrecision": 4,
+    "tableDefaults": {
+      "ownershipType": "OrganizationOwned",
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false
+    },
+    "responsibleUse": "Store aggregated public-health evidence only. Do not infer acquisition, intent, individual risk, or causality from nationality, country of birth, residence, or migration route."
+  },
+  "globalChoices": [
+    {
+      "schemaName": "opt_GeographyLevel",
+      "logicalName": "opt_geographylevel",
+      "displayName": "Geography Level",
+      "description": "Semantic level of the geography. UNAIDS regions remain distinct from UN M49 regions.",
+      "options": [
+        {
+          "name": "World",
+          "label": "World",
+          "value": 884834000
+        },
+        {
+          "name": "UNAIDSRegion",
+          "label": "UNAIDS Region",
+          "value": 884834001
+        },
+        {
+          "name": "M49Region",
+          "label": "UN M49 Region",
+          "value": 884834002
+        },
+        {
+          "name": "CountryOrArea",
+          "label": "Country or Area",
+          "value": 884834003
+        },
+        {
+          "name": "SourceExtension",
+          "label": "Source-specific Extension",
+          "value": 884834004
+        }
+      ]
+    },
+    {
+      "schemaName": "opt_VerificationStatus",
+      "logicalName": "opt_verificationstatus",
+      "displayName": "Verification Status",
+      "description": "Verification and lifecycle state of a source or release.",
+      "options": [
+        {
+          "name": "VerifiedPrimary",
+          "label": "Verified Primary",
+          "value": 884835000
+        },
+        {
+          "name": "VerifiedSecondary",
+          "label": "Verified Secondary",
+          "value": 884835001
+        },
+        {
+          "name": "PendingCapture",
+          "label": "Pending Capture",
+          "value": 884835002
+        },
+        {
+          "name": "Unavailable",
+          "label": "Unavailable",
+          "value": 884835003
+        },
+        {
+          "name": "Superseded",
+          "label": "Superseded",
+          "value": 884835004
+        }
+      ]
+    },
+    {
+      "schemaName": "opt_MetricUnit",
+      "logicalName": "opt_metricunit",
+      "displayName": "Metric Unit",
+      "description": "Normalized unit while preserving source text on each observation.",
+      "options": [
+        {
+          "name": "Persons",
+          "label": "Persons",
+          "value": 884836000
+        },
+        {
+          "name": "PersonsPerYear",
+          "label": "Persons per Year",
+          "value": 884836001
+        },
+        {
+          "name": "DeathsPerYear",
+          "label": "Deaths per Year",
+          "value": 884836002
+        },
+        {
+          "name": "Proportion",
+          "label": "Proportion",
+          "value": 884836003
+        },
+        {
+          "name": "RatePer1000",
+          "label": "Rate per 1,000",
+          "value": 884836004
+        },
+        {
+          "name": "Text",
+          "label": "Text / Non-numeric",
+          "value": 884836005
+        }
+      ]
+    },
+    {
+      "schemaName": "opt_MeasureType",
+      "logicalName": "opt_measuretype",
+      "displayName": "Measure Type",
+      "description": "Interpretation of the metric's published value.",
+      "options": [
+        {
+          "name": "PointEstimate",
+          "label": "Point Estimate",
+          "value": 884837000
+        },
+        {
+          "name": "IntervalEstimate",
+          "label": "Interval Estimate",
+          "value": 884837001
+        },
+        {
+          "name": "UpperBound",
+          "label": "Upper Bound",
+          "value": 884837002
+        },
+        {
+          "name": "Coverage",
+          "label": "Coverage",
+          "value": 884837003
+        },
+        {
+          "name": "Status",
+          "label": "Status",
+          "value": 884837004
+        }
+      ]
+    },
+    {
+      "schemaName": "opt_ValueQualifier",
+      "logicalName": "opt_valuequalifier",
+      "displayName": "Value Qualifier",
+      "description": "Qualifier preserving source semantics such as less-than values.",
+      "options": [
+        {
+          "name": "Exact",
+          "label": "Exact",
+          "value": 884838000
+        },
+        {
+          "name": "Estimated",
+          "label": "Estimated",
+          "value": 884838001
+        },
+        {
+          "name": "LessThan",
+          "label": "Less Than",
+          "value": 884838002
+        },
+        {
+          "name": "GreaterThan",
+          "label": "Greater Than",
+          "value": 884838003
+        },
+        {
+          "name": "RangeOnly",
+          "label": "Range Only",
+          "value": 884838004
+        },
+        {
+          "name": "NotApplicable",
+          "label": "Not Applicable",
+          "value": 884838005
+        }
+      ]
+    },
+    {
+      "schemaName": "opt_ValueStatus",
+      "logicalName": "opt_valuestatus",
+      "displayName": "Value Status",
+      "description": "Publication and comparability status of an observation.",
+      "options": [
+        {
+          "name": "PublishedNumeric",
+          "label": "Published Numeric",
+          "value": 884839000
+        },
+        {
+          "name": "PublishedQualified",
+          "label": "Published Qualified",
+          "value": 884839001
+        },
+        {
+          "name": "Unavailable",
+          "label": "Unavailable",
+          "value": 884839002
+        },
+        {
+          "name": "NotReported",
+          "label": "Not Reported",
+          "value": 884839003
+        },
+        {
+          "name": "NotComparable",
+          "label": "Not Comparable",
+          "value": 884839004
+        },
+        {
+          "name": "PendingValidation",
+          "label": "Pending Validation",
+          "value": 884839005
+        }
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "ownershipType": "OrganizationOwned",
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false,
+      "schemaName": "opt_Geography",
+      "logicalName": "opt_geography",
+      "entitySetName": "opt_geographies",
+      "displayName": "Geography",
+      "displayCollectionName": "Geographies",
+      "description": "Canonical or source-specific geography used to scope evidence. Political recognition is never inferred.",
+      "primaryName": {
+        "schemaName": "opt_Name",
+        "logicalName": "opt_name",
+        "displayName": "Name",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      },
+      "columns": [
+        {
+          "schemaName": "opt_GeographyKey",
+          "logicalName": "opt_geographykey",
+          "displayName": "Geography Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[A-Za-z0-9._|:-]{3,128}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Scheme",
+          "logicalName": "opt_scheme",
+          "displayName": "Scheme",
+          "type": "String",
+          "maxLength": 64,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_SourceCode",
+          "logicalName": "opt_sourcecode",
+          "displayName": "Source Code",
+          "type": "String",
+          "maxLength": 64,
+          "requiredLevel": "None",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_M49Code",
+          "logicalName": "opt_m49code",
+          "displayName": "UN M49 Code",
+          "type": "String",
+          "maxLength": 3,
+          "requiredLevel": "None",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_ISOAlpha3",
+          "logicalName": "opt_isoalpha3",
+          "displayName": "ISO Alpha-3",
+          "type": "String",
+          "maxLength": 3,
+          "requiredLevel": "None",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_NameEs",
+          "logicalName": "opt_namees",
+          "displayName": "Spanish Name",
+          "type": "String",
+          "maxLength": 200,
+          "requiredLevel": "None",
+          "format": "Text",
+          "auditEnabled": false
+        },
+        {
+          "schemaName": "opt_GeographyLevel",
+          "logicalName": "opt_geographylevel",
+          "displayName": "Geography Level",
+          "type": "Choice",
+          "globalChoice": "opt_geographylevel",
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_UNMemberState",
+          "logicalName": "opt_unmemberstate",
+          "displayName": "UN Member State",
+          "type": "Boolean",
+          "requiredLevel": "ApplicationRequired",
+          "default": false,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_UNObserverState",
+          "logicalName": "opt_unobserverstate",
+          "displayName": "UN Observer State",
+          "type": "Boolean",
+          "requiredLevel": "ApplicationRequired",
+          "default": false,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_IsExtension",
+          "logicalName": "opt_isextension",
+          "displayName": "Source-specific Extension",
+          "type": "Boolean",
+          "requiredLevel": "ApplicationRequired",
+          "default": false,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_ValidFrom",
+          "logicalName": "opt_validfrom",
+          "displayName": "Valid From",
+          "type": "DateTime",
+          "requiredLevel": "None",
+          "behavior": "DateOnly",
+          "format": "DateOnly",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_ValidTo",
+          "logicalName": "opt_validto",
+          "displayName": "Valid To",
+          "type": "DateTime",
+          "requiredLevel": "None",
+          "behavior": "DateOnly",
+          "format": "DateOnly",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Notes",
+          "logicalName": "opt_notes",
+          "displayName": "Notes",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None",
+          "auditEnabled": false
+        }
+      ],
+      "alternateKeys": [
+        {
+          "schemaName": "opt_Geography_GeographyKey",
+          "columns": [
+            "opt_geographykey"
+          ]
+        }
+      ],
+      "governance": {
+        "referenceData": true,
+        "politicalRecognitionInference": false,
+        "retentionClass": "LongLivedReference"
+      }
+    },
+    {
+      "ownershipType": "OrganizationOwned",
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false,
+      "schemaName": "opt_Source",
+      "logicalName": "opt_source",
+      "entitySetName": "opt_sources",
+      "displayName": "Source",
+      "displayCollectionName": "Sources",
+      "description": "Primary or secondary provenance source with reproducibility metadata.",
+      "primaryName": {
+        "schemaName": "opt_Name",
+        "logicalName": "opt_name",
+        "displayName": "Name",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      },
+      "columns": [
+        {
+          "schemaName": "opt_SourceKey",
+          "logicalName": "opt_sourcekey",
+          "displayName": "Source Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[A-Za-z0-9._|:-]{3,128}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Organization",
+          "logicalName": "opt_organization",
+          "displayName": "Organization",
+          "type": "String",
+          "maxLength": 200,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Title",
+          "logicalName": "opt_title",
+          "displayName": "Title",
+          "type": "String",
+          "maxLength": 500,
+          "requiredLevel": "ApplicationRequired",
+          "format": "TextArea",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Url",
+          "logicalName": "opt_url",
+          "displayName": "URL",
+          "type": "String",
+          "maxLength": 2000,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Url",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Domain",
+          "logicalName": "opt_domain",
+          "displayName": "Domain",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_LanguageCoverage",
+          "logicalName": "opt_languagecoverage",
+          "displayName": "Language Coverage",
+          "type": "String",
+          "maxLength": 500,
+          "requiredLevel": "None",
+          "format": "TextArea",
+          "auditEnabled": false
+        },
+        {
+          "schemaName": "opt_VerificationStatus",
+          "logicalName": "opt_verificationstatus",
+          "displayName": "Verification Status",
+          "type": "Choice",
+          "globalChoice": "opt_verificationstatus",
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_SHA256",
+          "logicalName": "opt_sha256",
+          "displayName": "SHA-256",
+          "type": "String",
+          "maxLength": 64,
+          "requiredLevel": "None",
+          "format": "Text",
+          "pattern": "^[a-f0-9]{64}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_AccessedOn",
+          "logicalName": "opt_accessedon",
+          "displayName": "Accessed On",
+          "type": "DateTime",
+          "requiredLevel": "ApplicationRequired",
+          "behavior": "DateOnly",
+          "format": "DateOnly",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Notes",
+          "logicalName": "opt_notes",
+          "displayName": "Notes",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None",
+          "auditEnabled": false
+        }
+      ],
+      "alternateKeys": [
+        {
+          "schemaName": "opt_Source_SourceKey",
+          "columns": [
+            "opt_sourcekey"
+          ]
+        }
+      ],
+      "governance": {
+        "referenceData": true,
+        "provenanceRequired": true,
+        "retentionClass": "LongLivedEvidence"
+      }
+    },
+    {
+      "ownershipType": "OrganizationOwned",
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false,
+      "schemaName": "opt_Release",
+      "logicalName": "opt_release",
+      "entitySetName": "opt_releases",
+      "displayName": "Release",
+      "displayCollectionName": "Releases",
+      "description": "Versioned publication or captured release of a source.",
+      "primaryName": {
+        "schemaName": "opt_Name",
+        "logicalName": "opt_name",
+        "displayName": "Name",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      },
+      "columns": [
+        {
+          "schemaName": "opt_ReleaseKey",
+          "logicalName": "opt_releasekey",
+          "displayName": "Release Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[A-Za-z0-9._|:-]{3,128}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_PublishedOn",
+          "logicalName": "opt_publishedon",
+          "displayName": "Published On",
+          "type": "DateTime",
+          "requiredLevel": "None",
+          "behavior": "DateOnly",
+          "format": "DateOnly",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_DataYear",
+          "logicalName": "opt_datayear",
+          "displayName": "Data Year",
+          "type": "Integer",
+          "requiredLevel": "None",
+          "minValue": 1900,
+          "maxValue": 2100,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Vintage",
+          "logicalName": "opt_vintage",
+          "displayName": "Vintage",
+          "type": "String",
+          "maxLength": 500,
+          "requiredLevel": "ApplicationRequired",
+          "format": "TextArea",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_VersionLabel",
+          "logicalName": "opt_versionlabel",
+          "displayName": "Version Label",
+          "type": "String",
+          "maxLength": 200,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_RetrievedOn",
+          "logicalName": "opt_retrievedon",
+          "displayName": "Retrieved On",
+          "type": "DateTime",
+          "requiredLevel": "ApplicationRequired",
+          "behavior": "DateOnly",
+          "format": "DateOnly",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_ArchiveUri",
+          "logicalName": "opt_archiveuri",
+          "displayName": "Archive URI",
+          "type": "String",
+          "maxLength": 2000,
+          "requiredLevel": "None",
+          "format": "Url",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_SHA256",
+          "logicalName": "opt_sha256",
+          "displayName": "SHA-256",
+          "type": "String",
+          "maxLength": 64,
+          "requiredLevel": "None",
+          "format": "Text",
+          "pattern": "^[a-f0-9]{64}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_VerificationStatus",
+          "logicalName": "opt_verificationstatus",
+          "displayName": "Verification Status",
+          "type": "Choice",
+          "globalChoice": "opt_verificationstatus",
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Notes",
+          "logicalName": "opt_notes",
+          "displayName": "Notes",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None",
+          "auditEnabled": false
+        }
+      ],
+      "alternateKeys": [
+        {
+          "schemaName": "opt_Release_ReleaseKey",
+          "columns": [
+            "opt_releasekey"
+          ]
+        }
+      ],
+      "governance": {
+        "appendOnlyPreferred": true,
+        "provenanceRequired": true,
+        "retentionClass": "LongLivedEvidence"
+      }
+    },
+    {
+      "ownershipType": "OrganizationOwned",
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false,
+      "schemaName": "opt_Metric",
+      "logicalName": "opt_metric",
+      "entitySetName": "opt_metrics",
+      "displayName": "Metric",
+      "displayCollectionName": "Metrics",
+      "description": "Stable definition of a measurable indicator.",
+      "primaryName": {
+        "schemaName": "opt_Name",
+        "logicalName": "opt_name",
+        "displayName": "Name",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      },
+      "columns": [
+        {
+          "schemaName": "opt_MetricKey",
+          "logicalName": "opt_metrickey",
+          "displayName": "Metric Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[A-Za-z0-9._|:-]{3,128}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Definition",
+          "logicalName": "opt_definition",
+          "displayName": "Definition",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Unit",
+          "logicalName": "opt_unit",
+          "displayName": "Unit",
+          "type": "Choice",
+          "globalChoice": "opt_metricunit",
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Population",
+          "logicalName": "opt_population",
+          "displayName": "Population",
+          "type": "String",
+          "maxLength": 500,
+          "requiredLevel": "ApplicationRequired",
+          "format": "TextArea",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_MeasureType",
+          "logicalName": "opt_measuretype",
+          "displayName": "Measure Type",
+          "type": "Choice",
+          "globalChoice": "opt_measuretype",
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_IsComparable",
+          "logicalName": "opt_iscomparable",
+          "displayName": "Comparable Across Releases",
+          "type": "Boolean",
+          "requiredLevel": "ApplicationRequired",
+          "default": true,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Notes",
+          "logicalName": "opt_notes",
+          "displayName": "Notes",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None",
+          "auditEnabled": false
+        }
+      ],
+      "alternateKeys": [
+        {
+          "schemaName": "opt_Metric_MetricKey",
+          "columns": [
+            "opt_metrickey"
+          ]
+        }
+      ],
+      "governance": {
+        "definitionChangeRequiresNewMetricKey": true,
+        "retentionClass": "LongLivedReference"
+      }
+    },
+    {
+      "ownershipType": "OrganizationOwned",
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false,
+      "schemaName": "opt_Observation",
+      "logicalName": "opt_observation",
+      "entitySetName": "opt_observations",
+      "displayName": "Observation",
+      "displayCollectionName": "Observations",
+      "description": "Published aggregate observation bound to one geography, release and metric.",
+      "primaryName": {
+        "schemaName": "opt_Name",
+        "logicalName": "opt_name",
+        "displayName": "Name",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      },
+      "columns": [
+        {
+          "schemaName": "opt_ObservationKey",
+          "logicalName": "opt_observationkey",
+          "displayName": "Observation Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[A-Za-z0-9._|:-]{3,128}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_DataYear",
+          "logicalName": "opt_datayear",
+          "displayName": "Data Year",
+          "type": "Integer",
+          "requiredLevel": "ApplicationRequired",
+          "minValue": 1900,
+          "maxValue": 2100,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_PointValue",
+          "logicalName": "opt_pointvalue",
+          "displayName": "Point Value",
+          "type": "Decimal",
+          "precision": 4,
+          "minValue": -1000000000000,
+          "maxValue": 1000000000000,
+          "requiredLevel": "None",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_LowerBound",
+          "logicalName": "opt_lowerbound",
+          "displayName": "Lower Bound",
+          "type": "Decimal",
+          "precision": 4,
+          "minValue": -1000000000000,
+          "maxValue": 1000000000000,
+          "requiredLevel": "None",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_UpperBound",
+          "logicalName": "opt_upperbound",
+          "displayName": "Upper Bound",
+          "type": "Decimal",
+          "precision": 4,
+          "minValue": -1000000000000,
+          "maxValue": 1000000000000,
+          "requiredLevel": "None",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_ValueQualifier",
+          "logicalName": "opt_valuequalifier",
+          "displayName": "Value Qualifier",
+          "type": "Choice",
+          "globalChoice": "opt_valuequalifier",
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_ValueStatus",
+          "logicalName": "opt_valuestatus",
+          "displayName": "Value Status",
+          "type": "Choice",
+          "globalChoice": "opt_valuestatus",
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_IsComparable",
+          "logicalName": "opt_iscomparable",
+          "displayName": "Comparable",
+          "type": "Boolean",
+          "requiredLevel": "ApplicationRequired",
+          "default": true,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_OriginalText",
+          "logicalName": "opt_originaltext",
+          "displayName": "Original Text",
+          "type": "String",
+          "maxLength": 500,
+          "requiredLevel": "ApplicationRequired",
+          "format": "TextArea",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Notes",
+          "logicalName": "opt_notes",
+          "displayName": "Notes",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None",
+          "auditEnabled": false
+        }
+      ],
+      "alternateKeys": [
+        {
+          "schemaName": "opt_Observation_ObservationKey",
+          "columns": [
+            "opt_observationkey"
+          ]
+        }
+      ],
+      "governance": {
+        "aggregateOnly": true,
+        "personalDataAllowed": false,
+        "individualRiskScoringAllowed": false,
+        "retentionClass": "LongLivedEvidence"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "schemaName": "opt_Source_Release",
+      "relationshipType": "OneToMany",
+      "referencedTable": "opt_source",
+      "referencedPrimaryKey": "opt_sourceid",
+      "referencingTable": "opt_release",
+      "lookup": {
+        "schemaName": "opt_SourceId",
+        "logicalName": "opt_sourceid",
+        "displayName": "Source",
+        "requiredLevel": "ApplicationRequired"
+      },
+      "cascade": "ReferentialRestrictDelete"
+    },
+    {
+      "schemaName": "opt_Geography_Observation",
+      "relationshipType": "OneToMany",
+      "referencedTable": "opt_geography",
+      "referencedPrimaryKey": "opt_geographyid",
+      "referencingTable": "opt_observation",
+      "lookup": {
+        "schemaName": "opt_GeographyId",
+        "logicalName": "opt_geographyid",
+        "displayName": "Geography",
+        "requiredLevel": "ApplicationRequired"
+      },
+      "cascade": "ReferentialRestrictDelete"
+    },
+    {
+      "schemaName": "opt_Release_Observation",
+      "relationshipType": "OneToMany",
+      "referencedTable": "opt_release",
+      "referencedPrimaryKey": "opt_releaseid",
+      "referencingTable": "opt_observation",
+      "lookup": {
+        "schemaName": "opt_ReleaseId",
+        "logicalName": "opt_releaseid",
+        "displayName": "Release",
+        "requiredLevel": "ApplicationRequired"
+      },
+      "cascade": "ReferentialRestrictDelete"
+    },
+    {
+      "schemaName": "opt_Metric_Observation",
+      "relationshipType": "OneToMany",
+      "referencedTable": "opt_metric",
+      "referencedPrimaryKey": "opt_metricid",
+      "referencingTable": "opt_observation",
+      "lookup": {
+        "schemaName": "opt_MetricId",
+        "logicalName": "opt_metricid",
+        "displayName": "Metric",
+        "requiredLevel": "ApplicationRequired"
+      },
+      "cascade": "ReferentialRestrictDelete"
+    }
+  ]
+}

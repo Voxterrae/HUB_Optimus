@@ -1,0 +1,33 @@
+OPTIMUS EVIDENCE LAB — OFFLINE VALIDATION
+Status: PASS
+Tests: 24
+
+test_alternate_keys_reference_existing_columns (test_contract.ContractTests.test_alternate_keys_reference_existing_columns) ... ok
+test_choice_values_are_unique_and_in_range (test_contract.ContractTests.test_choice_values_are_unique_and_in_range) ... ok
+test_contract_hash_shape (test_contract.ContractTests.test_contract_hash_shape) ... ok
+test_exact_inventory (test_contract.ContractTests.test_exact_inventory) ... ok
+test_names_are_prefixed (test_contract.ContractTests.test_names_are_prefixed) ... ok
+test_observation_is_aggregate_only (test_contract.ContractTests.test_observation_is_aggregate_only) ... ok
+test_relationships_are_restrictive (test_contract.ContractTests.test_relationships_are_restrictive) ... ok
+test_solution_identity (test_contract.ContractTests.test_solution_identity) ... ok
+test_table_names (test_contract.ContractTests.test_table_names) ... ok
+test_manifest_matches_package (test_manifest.ManifestTests.test_manifest_matches_package) ... ok
+test_schema_counts (test_plan.PlanTests.test_schema_counts) ... ok
+test_schema_hash_binding (test_plan.PlanTests.test_schema_hash_binding) ... ok
+test_seed_hash_binding_and_counts (test_plan.PlanTests.test_seed_hash_binding_and_counts) ... ok
+test_zero_write_dry_run (test_plan.PlanTests.test_zero_write_dry_run) ... ok
+test_package_contains_no_tenant_identifiers (test_public_boundary.PublicBoundaryTests.test_package_contains_no_tenant_identifiers) ... ok
+test_aggregate_and_no_personal_data (test_seed.SeedTests.test_aggregate_and_no_personal_data) ... ok
+test_all_lookups_resolve (test_seed.SeedTests.test_all_lookups_resolve) ... ok
+test_alternate_keys_are_unique (test_seed.SeedTests.test_alternate_keys_are_unique) ... ok
+test_bounds_are_ordered (test_seed.SeedTests.test_bounds_are_ordered) ... ok
+test_cut_and_data_year (test_seed.SeedTests.test_cut_and_data_year) ... ok
+test_exact_17_rows (test_seed.SeedTests.test_exact_17_rows) ... ok
+test_idempotent_upsert_simulation (test_seed.SeedTests.test_idempotent_upsert_simulation) ... ok
+test_six_global_observations (test_seed.SeedTests.test_six_global_observations) ... ok
+test_source_rows_match_corpus (test_seed.SeedTests.test_source_rows_match_corpus) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 0.015s
+
+OK
