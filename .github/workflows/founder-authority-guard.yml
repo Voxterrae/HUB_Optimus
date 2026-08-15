@@ -2,13 +2,16 @@ name: Founder Authority Guard
 
 on:
   pull_request_target:
+    branches: [main]
     types: [opened, synchronize, reopened, edited, ready_for_review]
   pull_request_review:
     types: [submitted, dismissed]
 
 permissions:
   contents: read
+  issues: read
   pull-requests: read
+  checks: write
 
 concurrency:
   group: founder-authority-${{ github.event.pull_request.number }}
@@ -16,11 +19,82 @@ concurrency:
 
 jobs:
   founder-authority:
-    name: founder-authority
+    name: founder-authority-bootstrap
+    if: github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
+      - name: Create trusted check on pull-request head
+        id: head-check
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import os
+          import pathlib
+          import urllib.request
+
+          event = json.loads(
+              pathlib.Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8")
+          )
+          pull = event.get("pull_request")
+          repository = event.get("repository")
+          if not isinstance(pull, dict) or not isinstance(repository, dict):
+              raise SystemExit("pull_request and repository payloads are required")
+
+          full_name = repository.get("full_name")
+          head_sha = ((pull.get("head") or {}).get("sha"))
+          if not isinstance(full_name, str) or not full_name:
+              raise SystemExit("repository.full_name is required")
+          if not isinstance(head_sha, str) or len(head_sha) != 40:
+              raise SystemExit("pull_request.head.sha must be a full commit SHA")
+
+          token = os.environ.get("GITHUB_TOKEN", "")
+          if not token:
+              raise SystemExit("GITHUB_TOKEN is required")
+          api_url = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
+
+          payload = json.dumps(
+              {
+                  "name": "founder-authority",
+                  "head_sha": head_sha,
+                  "status": "in_progress",
+                  "output": {
+                      "title": "Founder Authority Guard",
+                      "summary": "Trusted-base validation is running for this exact pull-request head.",
+                  },
+              }
+          ).encode("utf-8")
+          request = urllib.request.Request(
+              f"{api_url}/repos/{full_name}/check-runs",
+              data=payload,
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {token}",
+                  "Accept": "application/vnd.github+json",
+                  "Content-Type": "application/json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              check_run = json.load(response)
+
+          check_run_id = check_run.get("id")
+          if not isinstance(check_run_id, int) or check_run_id <= 0:
+              raise SystemExit("GitHub did not return a valid check-run ID")
+
+          with pathlib.Path(os.environ["GITHUB_OUTPUT"]).open(
+              "a", encoding="utf-8"
+          ) as output:
+              output.write(f"check_run_id={check_run_id}\n")
+              output.write(f"head_sha={head_sha}\n")
+          PY
+
       - name: Checkout trusted base policy
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pinned SHA
         with:
@@ -39,10 +113,17 @@ jobs:
           import json
           import os
           import pathlib
+          import urllib.error
           import urllib.request
 
-          event_path = pathlib.Path(os.environ["GITHUB_EVENT_PATH"])
-          event = json.loads(event_path.read_text(encoding="utf-8"))
+          from tools.founder_authority_guard import (
+              collect_changed_paths,
+              extract_issue_numbers,
+          )
+
+          event = json.loads(
+              pathlib.Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8")
+          )
           pull = event.get("pull_request")
           repository = event.get("repository")
           if not isinstance(pull, dict) or not isinstance(repository, dict):
@@ -53,12 +134,16 @@ jobs:
               raise SystemExit("GITHUB_TOKEN is required")
 
           api_url = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
+          graphql_url = os.environ.get(
+              "GITHUB_GRAPHQL_URL", "https://api.github.com/graphql"
+          )
           full_name = repository.get("full_name")
           pull_number = pull.get("number")
-          if not isinstance(full_name, str) or not full_name:
+          if not isinstance(full_name, str) or "/" not in full_name:
               raise SystemExit("repository.full_name is required")
           if not isinstance(pull_number, int) or pull_number <= 0:
               raise SystemExit("pull_request.number must be a positive integer")
+          repository_owner_name, repository_name = full_name.split("/", 1)
 
           def api_get(path: str):
               request = urllib.request.Request(
@@ -85,6 +170,107 @@ jobs:
                       return result
                   page += 1
 
+          def graphql(query: str, variables: dict[str, object]) -> dict:
+              payload = json.dumps(
+                  {"query": query, "variables": variables}
+              ).encode("utf-8")
+              request = urllib.request.Request(
+                  graphql_url,
+                  data=payload,
+                  method="POST",
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Accept": "application/vnd.github+json",
+                      "Content-Type": "application/json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  result = json.load(response)
+              errors = result.get("errors") if isinstance(result, dict) else None
+              if errors:
+                  raise SystemExit(f"GitHub GraphQL returned errors: {errors}")
+              data = result.get("data") if isinstance(result, dict) else None
+              if not isinstance(data, dict):
+                  raise SystemExit("GitHub GraphQL returned no data object")
+              return data
+
+          signature_query = """
+          query CommitSignature(
+            $owner: String!,
+            $name: String!,
+            $oid: GitObjectID!
+          ) {
+            repository(owner: $owner, name: $name) {
+              object(oid: $oid) {
+                ... on Commit {
+                  signature {
+                    __typename
+                    isValid
+                    state
+                    verifiedAt
+                    wasSignedByGitHub
+                    signer {
+                      login
+                      databaseId
+                    }
+                    ... on GpgSignature {
+                      keyId
+                    }
+                    ... on SshSignature {
+                      keyFingerprint
+                    }
+                  }
+                }
+              }
+            }
+          }
+          """
+
+          manifest = json.loads(
+              pathlib.Path("config/governance/owner_identity.v1.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          key_status = str(
+              ((manifest.get("cryptographic_owner_keys") or {}).get("status")) or ""
+          ).upper()
+
+          def signature_for_commit(sha: str) -> dict | None:
+              if key_status != "ACTIVE":
+                  return None
+              data = graphql(
+                  signature_query,
+                  {
+                      "owner": repository_owner_name,
+                      "name": repository_name,
+                      "oid": sha,
+                  },
+              )
+              repo = data.get("repository")
+              obj = repo.get("object") if isinstance(repo, dict) else None
+              signature = obj.get("signature") if isinstance(obj, dict) else None
+              if signature is None:
+                  return None
+              if not isinstance(signature, dict):
+                  raise SystemExit(f"invalid signature evidence for commit {sha}")
+              signer = signature.get("signer")
+              return {
+                  "type": signature.get("__typename"),
+                  "is_valid": signature.get("isValid"),
+                  "state": signature.get("state"),
+                  "verified_at": signature.get("verifiedAt"),
+                  "was_signed_by_github": signature.get("wasSignedByGitHub"),
+                  "signer": {
+                      "login": signer.get("login"),
+                      "id": signer.get("databaseId"),
+                  }
+                  if isinstance(signer, dict)
+                  else None,
+                  "key_fingerprint": signature.get("keyFingerprint"),
+                  "key_id": signature.get("keyId"),
+              }
+
           files = paginated(f"pulls/{pull_number}/files")
           reviews = paginated(f"pulls/{pull_number}/reviews")
           commits = paginated(f"pulls/{pull_number}/commits")
@@ -93,6 +279,72 @@ jobs:
           author = pull.get("user") or {}
           base = pull.get("base") or {}
           head = pull.get("head") or {}
+          body = pull.get("body") or ""
+          changed_paths = collect_changed_paths(files)
+
+          governance_issues: list[dict] = []
+          for number in extract_issue_numbers(body):
+              try:
+                  issue = api_get(f"issues/{number}")
+              except urllib.error.HTTPError as exc:
+                  if exc.code not in {404, 410}:
+                      raise
+                  governance_issues.append(
+                      {
+                          "number": number,
+                          "exists": False,
+                          "is_pull_request": False,
+                          "state": None,
+                          "labels": [],
+                          "author": None,
+                      }
+                  )
+                  continue
+              labels = issue.get("labels") or []
+              issue_author = issue.get("user") or {}
+              governance_issues.append(
+                  {
+                      "number": number,
+                      "exists": True,
+                      "is_pull_request": isinstance(issue.get("pull_request"), dict),
+                      "state": issue.get("state"),
+                      "labels": [
+                          item.get("name")
+                          for item in labels
+                          if isinstance(item, dict) and isinstance(item.get("name"), str)
+                      ],
+                      "author": {
+                          "login": issue_author.get("login"),
+                          "id": issue_author.get("id"),
+                      },
+                  }
+              )
+
+          commit_evidence: list[dict] = []
+          for item in commits:
+              sha = item.get("sha")
+              if not isinstance(sha, str) or len(sha) != 40:
+                  raise SystemExit("pull-request commit is missing a full SHA")
+              commit_evidence.append(
+                  {
+                      "sha": sha,
+                      "verification": (item.get("commit") or {}).get("verification")
+                      or {"verified": False, "reason": "missing_verification"},
+                      "author": {
+                          "login": (item.get("author") or {}).get("login"),
+                          "id": (item.get("author") or {}).get("id"),
+                      }
+                      if item.get("author")
+                      else None,
+                      "committer": {
+                          "login": (item.get("committer") or {}).get("login"),
+                          "id": (item.get("committer") or {}).get("id"),
+                      }
+                      if item.get("committer")
+                      else None,
+                      "signature": signature_for_commit(sha),
+                  }
+              )
 
           evidence = {
               "repository": {
@@ -109,14 +361,16 @@ jobs:
                       "login": author.get("login"),
                       "id": author.get("id"),
                   },
-                  "body": pull.get("body") or "",
+                  "body": body,
                   "head_sha": head.get("sha"),
                   "head_ref": head.get("ref"),
                   "base_ref": base.get("ref"),
               },
-              "changed_files": [item.get("filename") for item in files],
+              "changed_files": list(changed_paths),
+              "governance_issues": governance_issues,
               "reviews": [
                   {
+                      "id": item.get("id"),
                       "user": {
                           "login": (item.get("user") or {}).get("login"),
                           "id": (item.get("user") or {}).get("id"),
@@ -127,26 +381,7 @@ jobs:
                   }
                   for item in reviews
               ],
-              "commits": [
-                  {
-                      "sha": item.get("sha"),
-                      "verification": (item.get("commit") or {}).get("verification")
-                      or {"verified": False, "reason": "missing_verification"},
-                      "author": {
-                          "login": (item.get("author") or {}).get("login"),
-                          "id": (item.get("author") or {}).get("id"),
-                      }
-                      if item.get("author")
-                      else None,
-                      "committer": {
-                          "login": (item.get("committer") or {}).get("login"),
-                          "id": (item.get("committer") or {}).get("id"),
-                      }
-                      if item.get("committer")
-                      else None,
-                  }
-                  for item in commits
-              ],
+              "commits": commit_evidence,
           }
 
           output = pathlib.Path("founder-authority-evidence.json")
@@ -158,180 +393,94 @@ jobs:
           PY
 
       - name: Validate founder authority and anti-impersonation boundary
+        id: validate
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          python tools/founder_authority_guard.py \
+            --evidence founder-authority-evidence.json \
+            --manifest config/governance/owner_identity.v1.json \
+            > founder-authority-output.txt 2>&1
+          exit_code=$?
+          cat founder-authority-output.txt
+          echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
+          exit "$exit_code"
+
+      - name: Finalize trusted head check
+        if: always() && steps.head-check.outputs.check_run_id != ''
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CHECK_RUN_ID: ${{ steps.head-check.outputs.check_run_id }}
+          VALIDATION_OUTCOME: ${{ steps.validate.outcome }}
         run: |
           python - <<'PY'
           from __future__ import annotations
 
           import json
+          import os
           import pathlib
-          import re
-          import sys
+          import urllib.request
 
-          ISSUE_REFERENCE_RE = re.compile(
-              r"(?im)^\s*(?:related\s+to|governance\s+issue)\s+#(?P<number>[1-9][0-9]*)\b"
+          event = json.loads(
+              pathlib.Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8")
           )
-          PROTECTED_PREFIXES = ("docs/governance/", "config/governance/", ".github/")
-          PROTECTED_EXACT_PATHS = {
-              "AGENTS.md",
-              "ACKNOWLEDGEMENTS.md",
-              "CONTRIBUTING.md",
-              "IP_NOTICE.md",
-              "KERNEL_CHARTER.md",
-              "KERNEL_CHARTER_EN.md",
-              "README.md",
-              "docs/context/OWNER_AUTHORITY_HANDOFF.md",
-              "docs/context/SOURCE_OF_TRUTH.md",
-              "tools/founder_authority_guard.py",
-              "tests/test_founder_authority_guard.py",
-          }
+          repository = event.get("repository") or {}
+          full_name = repository.get("full_name")
+          if not isinstance(full_name, str) or not full_name:
+              raise SystemExit("repository.full_name is required")
 
-          class GuardError(RuntimeError):
+          token = os.environ.get("GITHUB_TOKEN", "")
+          check_run_id = os.environ.get("CHECK_RUN_ID", "")
+          outcome = os.environ.get("VALIDATION_OUTCOME", "")
+          if not token or not check_run_id:
+              raise SystemExit("head-check finalization inputs are missing")
+
+          output_path = pathlib.Path("founder-authority-output.txt")
+          summary = (
+              output_path.read_text(encoding="utf-8", errors="replace")
+              if output_path.exists()
+              else "Validation did not produce an output file."
+          )
+          summary = summary[-60000:]
+          conclusion = "success" if outcome == "success" else "failure"
+          title = (
+              "Founder Authority Guard passed"
+              if conclusion == "success"
+              else "Founder Authority Guard failed closed"
+          )
+
+          api_url = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
+          payload = json.dumps(
+              {
+                  "status": "completed",
+                  "conclusion": conclusion,
+                  "output": {"title": title, "summary": summary},
+              }
+          ).encode("utf-8")
+          request = urllib.request.Request(
+              f"{api_url}/repos/{full_name}/check-runs/{check_run_id}",
+              data=payload,
+              method="PATCH",
+              headers={
+                  "Authorization": f"Bearer {token}",
+                  "Accept": "application/vnd.github+json",
+                  "Content-Type": "application/json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30):
               pass
-
-          def require_mapping(value, label):
-              if not isinstance(value, dict):
-                  raise GuardError(f"{label} must be an object")
-              return value
-
-          def require_list(value, label):
-              if not isinstance(value, list):
-                  raise GuardError(f"{label} must be an array")
-              return value
-
-          def require_string(value, label):
-              if not isinstance(value, str) or not value.strip():
-                  raise GuardError(f"{label} must be a non-empty string")
-              return value.strip()
-
-          def require_int(value, label):
-              if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-                  raise GuardError(f"{label} must be a positive integer")
-              return value
-
-          def normalize_path(value):
-              path = require_string(value, "changed file path").replace("\\", "/")
-              pure = pathlib.PurePosixPath(path)
-              if pure.is_absolute() or ".." in pure.parts or path.startswith("./"):
-                  raise GuardError(f"unsafe changed file path: {path!r}")
-              normalized = pure.as_posix()
-              if normalized in {"", "."}:
-                  raise GuardError("changed file path cannot be empty")
-              return normalized
-
-          def identity_matches(candidate, owner_login, owner_id):
-              candidate = require_mapping(candidate, "GitHub identity")
-              return candidate.get("login") == owner_login and candidate.get("id") == owner_id
-
-          def latest_owner_review(reviews, owner_login, owner_id):
-              latest = None
-              for raw in reviews:
-                  review = require_mapping(raw, "review")
-                  user = review.get("user")
-                  if not isinstance(user, dict) or not identity_matches(user, owner_login, owner_id):
-                      continue
-                  latest = review
-              return latest
-
-          def validate_verified_commits(commits):
-              if not commits:
-                  raise GuardError("pull request evidence contains no commits")
-              failures = []
-              for raw in commits:
-                  commit = require_mapping(raw, "commit")
-                  sha = require_string(commit.get("sha"), "commit SHA")
-                  verification = require_mapping(commit.get("verification"), "verification")
-                  if verification.get("verified") is not True:
-                      reason = verification.get("reason") or "unverified"
-                      failures.append(f"{sha[:12]} ({reason})")
-              if failures:
-                  raise GuardError(
-                      "all commits must be verified; failing commits: " + ", ".join(failures)
-                  )
-
-          try:
-              manifest = json.loads(
-                  pathlib.Path("config/governance/owner_identity.v1.json").read_text(encoding="utf-8")
-              )
-              evidence = json.loads(
-                  pathlib.Path("founder-authority-evidence.json").read_text(encoding="utf-8")
-              )
-
-              manifest = require_mapping(manifest, "owner identity manifest")
-              repository_identity = require_mapping(
-                  manifest.get("repository_identity"), "repository_identity"
-              )
-              owner_login = require_string(repository_identity.get("login"), "repository login")
-              owner_id = require_int(repository_identity.get("immutable_user_id"), "repository user ID")
-
-              repository = require_mapping(evidence.get("repository"), "repository")
-              repository_owner = require_mapping(repository.get("owner"), "repository owner")
-              if not identity_matches(repository_owner, owner_login, owner_id):
-                  raise GuardError(
-                      "repository owner identity does not match the pinned login and immutable user ID"
-                  )
-
-              pull_request = require_mapping(evidence.get("pull_request"), "pull_request")
-              author = require_mapping(pull_request.get("author"), "pull request author")
-              head_sha = require_string(pull_request.get("head_sha"), "head SHA")
-              base_ref = require_string(pull_request.get("base_ref"), "base ref")
-              body = pull_request.get("body")
-              if body is None:
-                  body = ""
-              if not isinstance(body, str):
-                  raise GuardError("pull request body must be a string")
-              if base_ref != "main":
-                  raise GuardError(f"owner-authority review must target main, not {base_ref!r}")
-
-              changed_files = tuple(
-                  normalize_path(value)
-                  for value in require_list(evidence.get("changed_files"), "changed_files")
-              )
-              if not changed_files:
-                  raise GuardError("pull request contains no changed files")
-
-              manifest_paths = tuple(
-                  normalize_path(value)
-                  for value in require_list(manifest.get("constitutional_files"), "constitutional_files")
-              )
-              protected_paths = tuple(
-                  path
-                  for path in changed_files
-                  if path in PROTECTED_EXACT_PATHS
-                  or path.startswith(PROTECTED_PREFIXES)
-                  or path in set(manifest_paths)
-              )
-
-              commits = require_list(evidence.get("commits"), "commits")
-              validate_verified_commits(commits)
-
-              owner_authored = identity_matches(author, owner_login, owner_id)
-              if protected_paths and not owner_authored:
-                  raise GuardError(
-                      "only the pinned owner identity may author constitutional/control-plane "
-                      "changes; protected paths: " + ", ".join(protected_paths)
-                  )
-              if protected_paths and ISSUE_REFERENCE_RE.search(body) is None:
-                  raise GuardError(
-                      "constitutional/control-plane changes require an explicit 'Related to #N' "
-                      "or 'Governance issue #N' reference in the pull request body"
-                  )
-
-              if not owner_authored:
-                  reviews = require_list(evidence.get("reviews"), "reviews")
-                  latest = latest_owner_review(reviews, owner_login, owner_id)
-                  if latest is None:
-                      raise GuardError(
-                          "a non-owner pull request requires approval by the pinned owner identity"
-                      )
-                  if str(latest.get("state", "")).upper() != "APPROVED":
-                      raise GuardError("the pinned owner's latest review is not APPROVED")
-                  if latest.get("commit_id") != head_sha:
-                      raise GuardError(
-                          "owner approval is stale; it must apply to the current pull request head"
-                      )
-          except (OSError, json.JSONDecodeError, GuardError) as exc:
-              print(f"FOUNDER_AUTHORITY_GUARD: FAIL: {exc}", file=sys.stderr)
-              raise SystemExit(1)
-
-          print("FOUNDER_AUTHORITY_GUARD: PASS")
           PY
+
+      - name: Enforce guard result
+        if: always()
+        shell: bash
+        env:
+          VALIDATION_OUTCOME: ${{ steps.validate.outcome }}
+        run: |
+          if [[ "$VALIDATION_OUTCOME" != "success" ]]; then
+            echo "Founder Authority Guard did not pass for the current PR head." >&2
+            exit 1
+          fi

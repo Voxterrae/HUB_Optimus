@@ -5,10 +5,11 @@ The guard does not prove a human's legal identity and cannot prevent account
 compromise. It enforces the repository evidence that can be checked safely:
 
 - immutable GitHub login and numeric user ID;
-- protected-path authorship by the owner repository identity;
+- protected-path pull-request and commit authorship by the owner identity;
 - verified commits;
-- explicit issue linkage for constitutional changes;
-- owner approval at the current head for non-owner contribution PRs.
+- owner-authored, governance-labelled issue linkage for protected changes;
+- owner approval at the current head for non-owner contribution PRs;
+- exact owner SSH signing-key fingerprint binding after key activation.
 
 Private keys and signing secrets must never be stored in the repository.
 """
@@ -28,6 +29,14 @@ ISSUE_REFERENCE_RE = re.compile(
     r"(?im)^\s*(?:related\s+to|governance\s+issue)\s+#(?P<number>[1-9][0-9]*)\b"
 )
 
+# GitHub's web editor and merge UI may record the repository owner as the Git
+# author while GitHub's immutable web-flow identity is the committer. No other
+# non-owner committer is accepted for a protected-path pull request.
+TRUSTED_GITHUB_COMMITTERS = frozenset({("web-flow", 19864447)})
+STATE_CHANGING_REVIEW_STATES = frozenset(
+    {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}
+)
+
 # These prefixes are constitutional or control-plane surfaces. A non-owner may
 # discuss them in an issue, but may not author a pull request that changes them.
 PROTECTED_PREFIXES = (
@@ -44,6 +53,8 @@ PROTECTED_EXACT_PATHS = {
     "KERNEL_CHARTER.md",
     "KERNEL_CHARTER_EN.md",
     "README.md",
+    "docs/context/AI_HANDOFF.md",
+    "docs/context/AI_HANDOFF_HISTORY_PRE_1862.md",
     "docs/context/OWNER_AUTHORITY_HANDOFF.md",
     "docs/context/SOURCE_OF_TRUTH.md",
     "tools/founder_authority_guard.py",
@@ -68,6 +79,8 @@ class GuardDecision:
     owner_authored: bool
     protected_paths: tuple[str, ...]
     owner_approval_required: bool
+    governance_issues: tuple[int, ...]
+    owner_key_attested: bool
     warnings: tuple[str, ...]
 
 
@@ -114,6 +127,8 @@ def load_owner_identity(path: pathlib.Path = DEFAULT_MANIFEST) -> OwnerIdentity:
     fingerprints: list[str] = []
     for index, value in enumerate(fingerprints_raw):
         fingerprint = _require_string(value, f"fingerprints[{index}]")
+        if fingerprint in fingerprints:
+            raise GuardError(f"duplicate owner key fingerprint: {fingerprint}")
         fingerprints.append(fingerprint)
 
     return OwnerIdentity(
@@ -137,6 +152,33 @@ def normalize_path(value: Any) -> str:
     return normalized
 
 
+def collect_changed_paths(file_records: Iterable[Any]) -> tuple[str, ...]:
+    """Return current and previous paths, preserving order and removing duplicates."""
+
+    paths: list[str] = []
+    for raw in file_records:
+        record = _require_mapping(raw, "changed file record")
+        for key in ("filename", "previous_filename"):
+            value = record.get(key)
+            if value is None:
+                continue
+            path = normalize_path(value)
+            if path not in paths:
+                paths.append(path)
+    return tuple(paths)
+
+
+def extract_issue_numbers(body: str) -> tuple[int, ...]:
+    if not isinstance(body, str):
+        raise GuardError("pull request body must be a string")
+    numbers: list[int] = []
+    for match in ISSUE_REFERENCE_RE.finditer(body):
+        number = int(match.group("number"))
+        if number not in numbers:
+            numbers.append(number)
+    return tuple(numbers)
+
+
 def is_protected_path(path: str, manifest_paths: Iterable[str]) -> bool:
     if path in PROTECTED_EXACT_PATHS:
         return True
@@ -153,16 +195,32 @@ def identity_matches(candidate: Any, owner: OwnerIdentity) -> bool:
     )
 
 
-def _latest_owner_review(
+def _identity_is_trusted_committer(candidate: Any, owner: OwnerIdentity) -> bool:
+    if identity_matches(candidate, owner):
+        return True
+    candidate = _require_mapping(candidate, "commit committer")
+    return (candidate.get("login"), candidate.get("id")) in TRUSTED_GITHUB_COMMITTERS
+
+
+def _effective_owner_review(
     reviews: list[Any], owner: OwnerIdentity
 ) -> dict[str, Any] | None:
+    """Return the latest state-changing owner review.
+
+    COMMENTED reviews are deliberately ignored because they do not revoke an
+    existing approval. APPROVED, CHANGES_REQUESTED, and DISMISSED are effective
+    state changes and the last one controls.
+    """
+
     latest: dict[str, Any] | None = None
     for raw in reviews:
         review = _require_mapping(raw, "review")
         user = review.get("user")
         if not isinstance(user, dict) or not identity_matches(user, owner):
             continue
-        latest = review
+        state = str(review.get("state", "")).upper()
+        if state in STATE_CHANGING_REVIEW_STATES:
+            latest = review
     return latest
 
 
@@ -181,6 +239,127 @@ def _validate_verified_commits(commits: list[Any]) -> None:
         raise GuardError(
             "all commits must be verified; failing commits: " + ", ".join(failures)
         )
+
+
+def _validate_protected_commit_authorship(
+    commits: list[Any], owner: OwnerIdentity
+) -> None:
+    failures: list[str] = []
+    for raw in commits:
+        commit = _require_mapping(raw, "commit")
+        sha = _require_string(commit.get("sha"), "commit SHA")
+        author = commit.get("author")
+        committer = commit.get("committer")
+        try:
+            author_matches = identity_matches(author, owner)
+        except GuardError:
+            author_matches = False
+        try:
+            committer_matches = _identity_is_trusted_committer(committer, owner)
+        except GuardError:
+            committer_matches = False
+        if not author_matches or not committer_matches:
+            failures.append(sha[:12])
+    if failures:
+        raise GuardError(
+            "every commit in a protected-path pull request must be owner-authored "
+            "and owner-committed or committed by GitHub web-flow; failing commits: "
+            + ", ".join(failures)
+        )
+
+
+def _validate_governance_issues(
+    evidence: dict[str, Any], body: str, owner: OwnerIdentity
+) -> tuple[int, ...]:
+    referenced = extract_issue_numbers(body)
+    if not referenced:
+        raise GuardError(
+            "constitutional/control-plane changes require an explicit 'Related to #N' "
+            "or 'Governance issue #N' reference in the pull request body"
+        )
+
+    raw_issues = _require_list(evidence.get("governance_issues"), "governance_issues")
+    issues_by_number: dict[int, dict[str, Any]] = {}
+    for raw in raw_issues:
+        issue = _require_mapping(raw, "governance issue")
+        number = _require_int(issue.get("number"), "governance issue number")
+        if number in issues_by_number:
+            raise GuardError(f"duplicate governance issue evidence for #{number}")
+        issues_by_number[number] = issue
+
+    failures: list[str] = []
+    for number in referenced:
+        issue = issues_by_number.get(number)
+        if issue is None or issue.get("exists") is not True:
+            failures.append(f"#{number} does not exist")
+            continue
+        if issue.get("is_pull_request") is True:
+            failures.append(f"#{number} is a pull request, not a governance issue")
+            continue
+        author = issue.get("author")
+        try:
+            author_matches = identity_matches(author, owner)
+        except GuardError:
+            author_matches = False
+        if not author_matches:
+            failures.append(f"#{number} is not owner-authored")
+            continue
+        labels = _require_list(issue.get("labels"), f"governance issue #{number} labels")
+        normalized_labels = {
+            _require_string(label, f"governance issue #{number} label").casefold()
+            for label in labels
+        }
+        if "governance" not in normalized_labels:
+            failures.append(f"#{number} is not labelled governance")
+
+    if failures:
+        raise GuardError("invalid governance issue linkage: " + "; ".join(failures))
+    return referenced
+
+
+def _validate_owner_key_attestation(
+    commits: list[Any], owner: OwnerIdentity
+) -> bool:
+    if owner.key_status.upper() != "ACTIVE":
+        return False
+    if not owner.key_fingerprints:
+        raise GuardError("owner key status is ACTIVE but no fingerprints are pinned")
+
+    failures: list[str] = []
+    for raw in commits:
+        commit = _require_mapping(raw, "commit")
+        sha = _require_string(commit.get("sha"), "commit SHA")
+        signature = commit.get("signature")
+        if not isinstance(signature, dict):
+            failures.append(f"{sha[:12]} (missing signature evidence)")
+            continue
+        if signature.get("type") != "SshSignature":
+            failures.append(f"{sha[:12]} (owner-key mode requires SSH signatures)")
+            continue
+        if signature.get("is_valid") is not True:
+            failures.append(f"{sha[:12]} (invalid SSH signature)")
+            continue
+        if signature.get("was_signed_by_github") is True:
+            failures.append(f"{sha[:12]} (signed by GitHub, not the owner key)")
+            continue
+        signer = signature.get("signer")
+        try:
+            signer_matches = identity_matches(signer, owner)
+        except GuardError:
+            signer_matches = False
+        if not signer_matches:
+            failures.append(f"{sha[:12]} (signature signer is not the owner)")
+            continue
+        fingerprint = signature.get("key_fingerprint")
+        if fingerprint not in owner.key_fingerprints:
+            failures.append(f"{sha[:12]} (unrecognized SSH fingerprint)")
+
+    if failures:
+        raise GuardError(
+            "protected commits must be attested by a pinned owner SSH key; "
+            + ", ".join(failures)
+        )
+    return True
 
 
 def evaluate(
@@ -231,37 +410,37 @@ def evaluate(
     _validate_verified_commits(commits)
 
     owner_authored = identity_matches(author, owner)
-    if protected_paths and not owner_authored:
-        raise GuardError(
-            "only the pinned owner identity may author constitutional/control-plane "
-            "changes; protected paths: " + ", ".join(protected_paths)
-        )
-
-    if protected_paths and ISSUE_REFERENCE_RE.search(body) is None:
-        raise GuardError(
-            "constitutional/control-plane changes require an explicit 'Related to #N' "
-            "or 'Governance issue #N' reference in the pull request body"
-        )
+    governance_issues: tuple[int, ...] = ()
+    owner_key_attested = False
+    if protected_paths:
+        if not owner_authored:
+            raise GuardError(
+                "only the pinned owner identity may author constitutional/control-plane "
+                "changes; protected paths: " + ", ".join(protected_paths)
+            )
+        _validate_protected_commit_authorship(commits, owner)
+        governance_issues = _validate_governance_issues(evidence, body, owner)
+        owner_key_attested = _validate_owner_key_attestation(commits, owner)
 
     owner_approval_required = not owner_authored
     if owner_approval_required:
         reviews = _require_list(evidence.get("reviews"), "reviews")
-        latest = _latest_owner_review(reviews, owner)
+        latest = _effective_owner_review(reviews, owner)
         if latest is None:
             raise GuardError(
                 "a non-owner pull request requires approval by the pinned owner identity"
             )
         if str(latest.get("state", "")).upper() != "APPROVED":
-            raise GuardError("the pinned owner's latest review is not APPROVED")
+            raise GuardError("the pinned owner's effective review is not APPROVED")
         if latest.get("commit_id") != head_sha:
             raise GuardError(
                 "owner approval is stale; it must apply to the current pull request head"
             )
 
     warnings: list[str] = []
-    if owner.key_status != "ACTIVE" or not owner.key_fingerprints:
+    if owner.key_status.upper() != "ACTIVE" or not owner.key_fingerprints:
         warnings.append(
-            "No active hardware-backed owner signing fingerprint is pinned. "
+            "No active hardware-backed owner SSH signing fingerprint is pinned. "
             "Repository identity checks reduce impersonation risk but do not prove "
             "physical human identity or prevent account compromise."
         )
@@ -270,6 +449,8 @@ def evaluate(
         owner_authored=owner_authored,
         protected_paths=protected_paths,
         owner_approval_required=owner_approval_required,
+        governance_issues=governance_issues,
+        owner_key_attested=owner_key_attested,
         warnings=tuple(warnings),
     )
 
@@ -312,6 +493,15 @@ def main(argv: list[str] | None = None) -> int:
         "owner_approval_required="
         + str(decision.owner_approval_required).lower()
     )
+    print(
+        "governance_issues="
+        + (
+            ",".join(f"#{number}" for number in decision.governance_issues)
+            if decision.governance_issues
+            else "none"
+        )
+    )
+    print(f"owner_key_attested={str(decision.owner_key_attested).lower()}")
     for warning in decision.warnings:
         print(f"WARNING: {warning}")
     return 0

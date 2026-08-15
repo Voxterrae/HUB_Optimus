@@ -61,6 +61,8 @@
     "config/governance/owner_identity.v1.json",
     "docs/governance/PROJECT_STEWARDSHIP.md",
     "docs/context/OWNER_AUTHORITY_HANDOFF.md",
+    "docs/context/AI_HANDOFF.md",
+    "docs/context/AI_HANDOFF_HISTORY_PRE_1862.md",
     "docs/context/SOURCE_OF_TRUTH.md",
     "IP_NOTICE.md",
     ".github/CODEOWNERS",
