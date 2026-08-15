@@ -68,6 +68,8 @@
     ".github/CODEOWNERS",
     ".github/workflows/founder-authority-guard.yml",
     ".github/scripts/founder_authority_workflow.py",
-    "tools/founder_authority_guard.py"
+    "tools/founder_authority_guard.py",
+    "tests/test_founder_authority_guard.py",
+    "tests/test_founder_authority_workflow.py"
   ]
 }
