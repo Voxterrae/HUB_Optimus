@@ -176,6 +176,27 @@
       "claim_boundary": "Versioned human-governance protocol; it does not create automatic legal, political or technical authority."
     },
     {
+      "id": "labs",
+      "display_name": "HUB-Optimus Labs",
+      "lifecycle_state": "official-empty-incubation",
+      "source_status": "merged",
+      "public_section": "what-exists-today",
+      "publicly_listed": true,
+      "released_public_artifact": true,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "8426b08e5f88b650c4d79e41d3ce3afd7d42746b",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/site/index.html"
+        }
+      ],
+      "claim_boundary": "Official public incubation surface; the separate Labs repository is presented as empty and no unreleased engine, dataset, deployment or security capability is attributed to it."
+    },
+    {
       "id": "admin-gateway",
       "display_name": "Optimus Admin Gateway",
       "lifecycle_state": "draft",
