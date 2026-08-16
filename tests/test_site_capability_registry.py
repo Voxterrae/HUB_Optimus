@@ -28,6 +28,7 @@ PUBLIC_COMPONENTS = {
     "controlled-url-intake",
     "research",
     "governance-intelligence",
+    "labs",
 }
 IN_DEVELOPMENT_COMPONENTS = {
     "admin-gateway",
@@ -43,6 +44,7 @@ ALLOWED_LIFECYCLE_STATES = {
     "implementation-present-deployment-unverified",
     "experimental-tooling",
     "active-ratified-protocol",
+    "official-empty-incubation",
     "draft",
     "issue-only",
 }
