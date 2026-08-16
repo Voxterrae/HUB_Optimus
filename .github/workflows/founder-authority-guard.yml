@@ -1,0 +1,40 @@
+name: Founder Authority Guard
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  checks: write
+
+concurrency:
+  group: founder-authority-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  founder-authority:
+    name: founder-authority-bootstrap
+    if: github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout trusted base policy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Validate exact pull-request head from trusted base
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PYTHONPATH: .
+        run: python .github/scripts/founder_authority_workflow.py
