@@ -2,43 +2,59 @@
 
 This file records public contribution credit for HUB_Optimus.
 
-GitHub remains the source of truth for commits, pull requests, reviews, and
-repository authority. Acknowledgement is descriptive; active authority is
-defined by `docs/governance/PROJECT_STEWARDSHIP.md`, `.github/CODEOWNERS`,
-protected GitHub settings, and the governed RFC process.
+Acknowledgement is descriptive. It does not create ownership, co-ownership,
+constitutional governance authority, repository-administration authority,
+CODEOWNER entitlement, Write access, equity, an implied joint venture, agency,
+or commercial licensing rights.
 
-## Project Creator and Human Steward
+The controlling authority record is
+`docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md`.
+
+## Founder, architect, creator, project owner, and final human authority
 
 ### Benjamin Gerrit Hoff
 
-**Role:** Creator, Project Owner, and Primary Human Steward
+**Role:** Founder, Architect, Creator, Project Owner, and Final Human Authority
 
-Benjamin Gerrit Hoff is the originating human intelligence and final human
-accountability layer of HUB_Optimus. The authoritative role boundary is defined
-in `docs/governance/PROJECT_STEWARDSHIP.md`.
+Benjamin Gerrit Hoff is the originating human intelligence, project owner, and
+final human-accountability layer of HUB_Optimus. HUB_Optimus is the foundational
+tool and parent technological platform through which he builds LCDH-OS and the
+wider ecosystem.
 
-## Core Technical Steward
+Repository administration is performed through `@Voxterrae`, immutable GitHub
+user ID `249308740`, under his authority.
 
-### Rodrigo / @itteamrod
+## Recognized technical contributor
 
-**Role:** Core Technical Steward and Scoped Technical CODEOWNER
+### Rodrigo / `@itteamrod`
 
-Rodrigo is entrusted with protecting the technical quality, coherence,
-maintainability, and repository integrity of HUB_Optimus within governed GitHub
-workflows.
+**Role:** Recognized Technical Contributor and Adviser
+
+Rodrigo is recognized for technical work that has supported the quality,
+coherence, maintainability, and presentation of HUB_Optimus.
 
 **Recognized contributions:**
 
-- Public landing interface restyle and static site presentation.
-- Semantic Engine structured case intake implementation.
-- Incremental, reviewable pull request execution aligned with HUB_Optimus repository discipline.
+- public landing interface restyle and static-site presentation;
+- Semantic Engine structured case-intake implementation;
+- incremental, reviewable pull-request execution aligned with repository
+  discipline.
 
 **Authority boundary:**
 
-- Core Technical Stewardship is a trusted human governance role for technical evolution.
-- `@itteamrod` holds enforceable CODEOWNERS responsibility only for paths explicitly assigned in `.github/CODEOWNERS`.
-- Expansion of CODEOWNERS scope requires a scoped governance issue or approved RFC.
-- This role does not transfer project ownership, final human accountability, or constitutional governance ownership.
-- This role does not independently change branch protection, rulesets, repository settings, or roadmap authority.
-- Project ownership and final human accountability remain with Benjamin Gerrit Hoff.
-- Repository authority remains controlled through GitHub issues, pull requests, CODEOWNERS, protected settings, and the governed RFC process.
+- contribution credit remains valid and should not be erased;
+- the prior Core Technical Steward authority wording is superseded by issue
+  `#1861` and the Founder Ownership and Authority Charter;
+- recognition does not grant project ownership, final human accountability,
+  constitutional governance authority, independent modification rights,
+  CODEOWNER status, Write access, merge authority, repository-settings
+  authority, or an implied joint venture;
+- future authority, access, licensing, economic participation, or joint-venture
+  rights require a new explicit written authorization by Benjamin Gerrit Hoff.
+
+## Other contributors
+
+All other contributors retain accurate credit through Git history, pull
+requests, reviews, release notes, and any specific acknowledgement entries.
+Credit and intellectual-property rights are distinct questions and must not be
+conflated with project ownership or governance authority.

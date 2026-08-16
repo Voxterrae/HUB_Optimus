@@ -1,52 +1,102 @@
-# Intellectual Property Notice — HUB_Optimus
+# Intellectual Property and Authority Notice — HUB_Optimus
 
-HUB_Optimus is a structured evaluation system protected under applicable
-copyright, trademark, and patent-pending frameworks.
+## Owner and project authority
 
-This is a publicly visible repository with restricted rights. Contribution and use
-are governed by this notice; public visibility does not grant an unrestricted
-license, commercial authorization, or permission to create competing derivative
-systems.
+**Benjamin Gerrit Hoff is the founder, architect, creator, project owner, and
+final human authority of HUB_Optimus.**
 
-## 1. Scope
-This repository contains materials with different legal statuses:
-- Immutable Kernel (protected)
-- Operational Method (restricted)
-- Reference Documentation (limited public reference use)
-- Examples & Scenarios (non-commercial)
+`@Voxterrae`, immutable GitHub user ID `249308740`, is the repository identity
+used under his authority. The account is not a separate owner or autonomous
+governance actor.
 
-## 2. Immutable Kernel
-Files designated as Kernel (e.g. KERNEL.md, TRUST_LAYER.md, CHARTER.md)
-constitute the constitutional core of HUB_Optimus.
+HUB_Optimus is the foundational tool and technological parent platform through
+which Benjamin Gerrit Hoff designs and builds systems including LCDH-OS,
+Operator, Control Plane, governed connectors, decision-intelligence systems, and
+future products.
 
-They may be:
-- read,
-- referenced,
-- cited.
+The constitutional authority boundary is defined in
+[`docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md`](docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
 
-They may NOT be:
-- modified,
-- forked,
-- re-implemented as a competing system,
-- used for commercial services without explicit authorization.
+## Public visibility does not grant unrestricted rights
 
-## 3. Operational Method
-The evaluation flow, incentive analysis, and meta-learning processes
-are subject to patent protection (pending).
+HUB_Optimus is developed in a publicly visible repository with restricted
+rights. Public visibility, cloning capability, contribution access, a commit,
+a pull request, employment, technical collaboration, or acknowledgement does
+not by itself grant:
 
-Unauthorized commercial use, derivative systems, or rebranding
-constitute infringement.
+- an unrestricted license;
+- commercial authorization;
+- permission to rebrand HUB_Optimus;
+- permission to create a competing derivative system;
+- ownership, co-ownership, equity, control, or constitutional authority;
+- an implied joint venture, partnership, agency, or representation right.
 
-## 4. Documentation & Scenarios
-Scenarios and schemas may be used for educational and research purposes
-under CC BY-NC-ND unless otherwise stated.
+Use and contribution are governed by this notice, the Founder Ownership and
+Authority Charter, repository contribution terms, and any separate written
+agreement expressly approved by Benjamin Gerrit Hoff.
 
-## 5. Trademark
-HUB_Optimus™ is a protected identifier.
-Use of the name implies adherence to Kernel principles.
-Unauthorized branding is prohibited.
+## Protected project layers
 
-## 6. Enforcement
-Violation of these terms may result in loss of usage rights and legal action.
+This repository contains materials with different protection and use boundaries:
 
-— HUB_Optimus Governance
+- **Constitutional and ownership layer** — founder identity, authority,
+  governance, source-of-truth, and owner identity records;
+- **Immutable Kernel** — protected principles and constitutional technical core;
+- **Operational Method** — restricted evaluation, governance, signal,
+  incentive-analysis, and meta-learning methods;
+- **Reference Documentation** — limited public reference use;
+- **Examples and Scenarios** — non-commercial or otherwise specifically stated
+  use.
+
+Files designated as Kernel or constitutional governance may be read, referenced,
+and cited subject to applicable law and this notice. They may not be modified,
+commercialized, rebranded, or used to represent an alternative HUB_Optimus
+authority without explicit authorization.
+
+## Contributions
+
+Contribution credit does not create ownership, constitutional authority,
+repository-administration authority, or an economic participation right in
+HUB_Optimus.
+
+Contributors must possess the rights necessary to submit their work. The legal
+status of third-party pre-existing material and contributor-created material is
+not retroactively extinguished by this notice. Future contributions may require
+separate license, assignment, contributor, employment, or services terms before
+integration.
+
+## Collaboration and joint ventures
+
+HUB_Optimus may collaborate or form a joint venture with any suitable party only
+through an explicit written agreement approved by Benjamin Gerrit Hoff on fair,
+transparent, reciprocal, and clearly scoped terms.
+
+No informal communication, access grant, issue, commit, pull request, meeting,
+or service relationship creates an implied joint venture or transfer of rights.
+
+## Name and branding
+
+`HUB_Optimus` and `HUB_Optimus™` are claimed project identifiers. Use of the
+name, marks, visual identity, or branding does not imply endorsement,
+authorization, ownership, or adherence to the Kernel unless confirmed in writing
+by Benjamin Gerrit Hoff. Registration status and formal trademark protection
+are governed by external legal records, not by repository wording alone.
+
+## Third-party boundary
+
+This notice does not claim ownership of Microsoft, GitHub, third-party
+platforms, open-source dependencies, licensed components, or third-party
+pre-existing intellectual property. Their respective terms and rights remain
+applicable.
+
+## Enforcement and evidence
+
+Unauthorized commercial use, misrepresentation of ownership, impersonation,
+rebranding, or infringement may result in revocation of permission and legal
+action where available.
+
+Repository history provides evidentiary provenance but does not replace formal
+copyright, trademark, patent, contractual, corporate, notarial, or identity
+records.
+
+— HUB_Optimus Governance under the final human authority of Benjamin Gerrit Hoff

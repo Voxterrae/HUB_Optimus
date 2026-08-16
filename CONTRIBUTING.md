@@ -2,199 +2,162 @@
 
 Thank you for your interest in contributing to HUB_Optimus.
 
-HUB_Optimus is a publicly visible repository with restricted rights; contribution
-and use are governed by [IP_NOTICE.md](IP_NOTICE.md).
-Contribution is structured. The Kernel is protected.
+HUB_Optimus is a publicly visible repository with restricted rights. Public
+visibility and contribution access do not create ownership, commercial rights,
+repository authority, or an implied joint venture.
 
----
+Before contributing, read:
 
-## 1) Contribution philosophy
+1. [`IP_NOTICE.md`](IP_NOTICE.md)
+2. [`docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md`](docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md)
+3. [`AGENTS.md`](AGENTS.md), when using an AI or coding agent
+4. the relevant issue or RFC
 
-### What we value
-- clarity over volume,
-- structural reasoning over rhetoric,
-- prevention over escalation,
-- integrity and coherence over credentials,
-- verifiable improvement over visibility.
+## Founder and review authority
 
-### What we do not accept
-- changes that weaken Kernel integrity protections,
-- narrative manipulation or propaganda,
-- personal scapegoating as analysis,
-- short-term “wins” presented as success while increasing long-term instability,
-- attempts to introduce coercive enforcement into HUB_Optimus.
+Benjamin Gerrit Hoff is the founder, architect, creator, project owner, and
+final human authority of HUB_Optimus. `@Voxterrae`, immutable GitHub user ID
+`249308740`, is the repository identity used under that authority.
 
----
+Every repository path is assigned to `@Voxterrae` in `.github/CODEOWNERS`.
+Contributors may propose changes, but no contribution modifies `main` without
+owner-controlled review and merge.
 
-## 2) Repository structure (how to contribute safely)
+A contribution, acknowledgement, technical role, access grant, commit, or pull
+request does not create:
 
-### `legacy/`
-Historical v0 materials preserved for transparency.
-- **Do not rewrite or “modernize”** legacy documents.
-- Corrections should be added as v1 notes, not retroactively edited.
+- ownership or co-ownership;
+- constitutional or repository-administration authority;
+- a permanent CODEOWNER or Write-access entitlement;
+- equity, agency, partnership, or an implied joint venture;
+- an unrestricted or commercial license.
 
-### `v1_core/`
-The active Kernel and simulator.
-- Changes here require higher scrutiny and must preserve meaning and structure.
+## Contribution philosophy
 
----
+We value:
 
-## 2.1) Contributor zones
+- clarity over volume;
+- structural reasoning over rhetoric;
+- prevention over escalation;
+- integrity and coherence over credentials;
+- verifiable improvement over visibility;
+- small, reversible changes with explicit evidence.
 
-### Lower-friction zones (contributors welcome, no mandatory review gate)
+We do not accept:
 
-| Path | What lives here |
-|---|---|
-| `docs/` (non-governance) | Onboarding guides, reading paths, translations |
-| `tools/` | Maintenance scripts, auditing utilities |
-| `tests/` | Regression tests, smoke tests |
-| `examples/` | Example scenarios and usage samples |
-| `legacy/` | Historical v0 materials (read-only — see above) |
+- changes that weaken founder, ownership, Kernel, or governance protections;
+- attempts to bypass owner review or impersonate the owner;
+- narrative manipulation or propaganda;
+- personal scapegoating as analysis;
+- short-term wins presented as success while increasing long-term instability;
+- coercive enforcement presented as HUB_Optimus authority;
+- credentials, secrets, personal data, or private agreements committed to the
+  public repository.
 
-### Protected zones (require maintainer review via CODEOWNERS)
+## Repository zones
 
-| Path | Why it's protected |
-|---|---|
-| `v1_core/languages/` | Kernel specs — canonical (`es`) and parity (`en`) |
-| `docs/governance/` | Charter, consensus process, trust layer |
-| `.github/` | CI, issue forms, PR template, CODEOWNERS |
-| `scenario.schema.json` | Runtime contract — changes break benchmarks |
-| `run_scenario.py`, `hub_optimus_simulator.py` | Simulator core |
-| `benchmarks/` | Deterministic output contract |
+### Historical material
 
-### How to pick up an issue
+`legacy/` preserves historical and exploratory material.
 
-1. Find an issue labelled `good first issue` or in an open zone.
-2. Comment on the issue to signal intent.
-3. Wait for informal assignment (to avoid duplicate work).
-4. Create a branch: `feat/<short-name>` or `chore/<short-name>`.
-5. Open a focused PR linked to the issue (`Related to #N`).
+- Do not rewrite or modernize legacy documents retroactively.
+- Add corrections as current notes with explicit provenance.
 
----
+### Active Kernel and runtime
 
-## 3) Contribution types
+`v1_core/`, runtime source, schemas, benchmarks, governance, CI, and owner-
+authority files are high-scrutiny surfaces.
 
-### A) Documentation improvements (low risk)
-Examples:
-- typo fixes,
-- formatting,
-- readability improvements (without meaning drift).
+All paths require owner review. The distinction between lower-risk and higher-
+risk work affects review depth, not ownership or final authorization.
 
-### B) Scenario contributions (recommended)
-Add new scenarios under:
-- `v1_core/workflow/`
+### Lower-risk proposals
 
-Use the canonical template:
-- [v1_core/workflow/04_scenario_template.md](v1_core/workflow/04_scenario_template.md)
+Examples include:
 
-Every scenario must include:
-- trigger, structural context, incentive analysis,
-- systemic evaluation, historical contrast,
-- Kernel coherence check, final classification,
-- memory integration notes.
+- non-governance documentation;
+- translations that preserve meaning;
+- tests and examples;
+- maintenance tooling that does not change runtime or authority.
 
-### C) Meta-learning updates (medium risk)
-Updates to:
-- [v1_core/workflow/05_meta_learning.md](v1_core/workflow/05_meta_learning.md)
+### High-risk proposals
 
-Must reference:
-- which scenario(s) justify the new rule,
-- what failure/success pattern it prevents or reinforces.
+Examples include:
 
-### D) Kernel changes (high risk)
-Files like:
-- [v1_core/languages/es/01_base_declaracion.md](v1_core/languages/es/01_base_declaracion.md) (canonical)
-- [v1_core/languages/es/02_arquitectura_base.md](v1_core/languages/es/02_arquitectura_base.md) (canonical)
-- [v1_core/languages/es/03_flujo_operativo.md](v1_core/languages/es/03_flujo_operativo.md) (canonical)
-- [v1_core/languages/en/01_base_declaracion.md](v1_core/languages/en/01_base_declaracion.md) (parity)
-- [v1_core/languages/en/02_arquitectura_base.md](v1_core/languages/en/02_arquitectura_base.md) (parity)
-- [v1_core/languages/en/03_flujo_operativo.md](v1_core/languages/en/03_flujo_operativo.md) (parity)
+- founder, ownership, authority, licensing, or repository-control changes;
+- Kernel or canonical-language changes;
+- runtime, schema, benchmark, deployment, authentication, CI, or security
+  changes;
+- changes to `.github/`, CODEOWNERS, ruleset expectations, or guard workflows.
 
-Kernel changes require:
-- explicit justification,
-- impact analysis,
-- integrity-first review,
-- synchronized language updates.
+Founder and ownership clauses may not be proposed by a non-owner identity.
 
----
+## How to propose work
 
-## 4) Language policy (single core, multiple languages)
+1. Find or open a scoped issue.
+2. Comment to make intent visible.
+3. Create a focused branch.
+4. Make one small, reversible change.
+5. Open a pull request using `Related to #N`.
+6. Disclose affected files, validation, risks, and rights provenance.
+7. Wait for owner review; do not represent an unmerged proposal as current
+   HUB_Optimus state.
 
-- Folder structure and filenames must remain consistent across languages.
-- `docs/context/STATUS.md` is the source-of-truth when repository docs conflict.
-- `v1_core/languages/es/` is canonical.
-- `v1_core/languages/en/` is parity reference.
-- Translations must preserve meaning; do not introduce conceptual drift.
+## Required pull-request conditions
 
----
+Before merge:
 
-## 5) How to propose changes (workflow)
+- the issue reference must match the actual work;
+- the PR must have one objective;
+- the description must match the diff;
+- CI and required guards must pass;
+- CODEOWNER review must be satisfied when enforced by GitHub Settings;
+- only Benjamin Gerrit Hoff may give final authorization through `@Voxterrae`;
+- constitutional files must pass the Founder Authority Guard;
+- runtime, schema, benchmark, governance, CI, and security changes require
+  explicit risk analysis;
+- translations must preserve canonical meaning.
 
-1. Create a new branch:
-   - `feat/<short-name>` or `chore/<short-name>`
-2. Make a focused change:
-   - one objective per PR
-3. Open a Pull Request with:
-   - clear summary,
-   - rationale,
-   - affected files,
-   - scenario links (if applicable),
-   - risks and mitigations (if kernel-adjacent).
+Use `Related to #N`, not automatic-closing keywords, unless the owner explicitly
+chooses closure at merge.
 
-### PR merge requirements
+## Contribution rights and provenance
 
-Before a PR can be merged, all of the following must be true:
+By submitting work, a contributor represents that they have the right to submit
+it and accurately disclose third-party material.
 
-- **Correct issue reference:** The PR must reference the correct issue. Double-check that the referenced issue matches the actual work done.
-- **Use `Related to #N`, not `Closes #N`:** Contributors should link issues with `Related to #N`. Only maintainers close issues at merge time. Keywords like `Closes`, `Fixes`, or `Resolves` auto-close the referenced issue, which can accidentally close tracking issues or ledgers.
-- **CI must pass:** All CI checks (pytest, benchmarks, kernel guard, link check) must be green.
-- **Scope limited to one issue:** Each PR should address a single issue or objective. Do not bundle unrelated changes.
-- **Description matches diff:** The files listed in the PR description must match the files actually changed.
-- **Runtime changes require review:** Any PR that touches the simulator, schema, benchmarks, or CI configuration requires explicit maintainer review.
+Submission alone does not create a joint venture or transfer HUB_Optimus
+ownership. It also does not retroactively extinguish rights that may exist in a
+contributor's original work. Where necessary, integration may be conditioned on
+a separate contributor, license, assignment, employment, or services agreement
+approved by Benjamin Gerrit Hoff.
 
----
+Until such terms are explicit, do not assume that public visibility equals an
+OSI open-source license or unrestricted commercial permission.
 
-## 6) Integrity-first review
+## Language policy
 
-Contributions are reviewed for:
-- coherence with Layer 0 principles,
-- systemic framing (not personal blame),
-- incentive awareness,
-- prevention posture,
-- clarity and traceability.
+- `docs/context/STATUS.md` controls canonical-language and parity policy.
+- `v1_core/languages/es/` is canonical for v1 where the status record says so.
+- English is the parity reference.
+- Translations must preserve meaning and must not alter founder, ownership, or
+  authority clauses.
 
-Repeated coherent contributions may be granted expanded review rights over time.
-No one is granted Kernel influence by title alone.
+## Security and sensitive information
 
----
+Do not upload:
 
-## 7) Security and sensitive information
+- passwords, tokens, API keys, private keys, or signing secrets;
+- personal, banking, medical, or private contractual data;
+- production configuration that exposes systems or customers.
 
-**Do not upload:**
-- personal data,
-- banking or financial documents,
-- credentials, API keys, passwords,
-- private agreements.
+Report accidental disclosure immediately. Deleting the visible file alone may
+not remove it from Git history.
 
-If sensitive data is accidentally committed:
-- report immediately,
-- do not “fix by deleting” only; history rewriting may be required.
-
----
-
-## 8) Code of conduct (minimal)
+## Conduct
 
 - Be respectful and precise.
 - Disagree with ideas, not people.
 - Keep discussions focused on system improvement.
-
----
-
-## 9) License
-Contributions are accepted for review and possible inclusion under the rights posture
-defined in [IP_NOTICE.md](IP_NOTICE.md).
-
-Submitting a contribution does not create an unrestricted license, authorize commercial
-use, permit competing derivative systems, or imply adoption of an OSI-compatible
-open-source license. Any future licensing change must be explicit in repository
-documentation.
+- Do not claim authority, identity, ownership, or endorsement that has not been
+  explicitly granted.
