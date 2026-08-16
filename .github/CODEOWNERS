@@ -1,42 +1,37 @@
 # CODEOWNERS — HUB_Optimus
-# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Constitutional owner authority: docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md
+#
+# Benjamin Gerrit Hoff is the founder, architect, creator, project owner, and
+# final human authority. @Voxterrae is the repository identity used under that
+# authority. CODEOWNERS expresses review responsibility; it does not by itself
+# grant legal ownership or remove repository permissions configured in Settings.
 
-# ───── Protected zones (require maintainer review) ─────
+# Every repository path requires owner review.
+* @Voxterrae
 
-# Kernel (canonical + parity)
-v1_core/languages/          @Voxterrae
-v1_core/languages/es/       @Voxterrae
-v1_core/languages/en/       @Voxterrae
+# Constitutional and governance surfaces are repeated for visibility.
+docs/governance/                                      @Voxterrae
+config/governance/                                    @Voxterrae
+docs/context/OWNER_AUTHORITY_HANDOFF.md               @Voxterrae
+docs/context/SOURCE_OF_TRUTH.md                       @Voxterrae
+.github/                                               @Voxterrae
+AGENTS.md                                              @Voxterrae
+ACKNOWLEDGEMENTS.md                                    @Voxterrae
+CONTRIBUTING.md                                        @Voxterrae
+IP_NOTICE.md                                           @Voxterrae
+KERNEL_CHARTER.md                                      @Voxterrae
+KERNEL_CHARTER_EN.md                                   @Voxterrae
+README.md                                              @Voxterrae
 
-# Governance documents
-docs/governance/            @Voxterrae
-
-# CI and repo infrastructure
-.github/                    @Voxterrae
-tools/kernel_guard.py       @Voxterrae
-
-# Project root configs
-CONTRIBUTING.md             @Voxterrae
-README.md                   @Voxterrae
-scenario.schema.json        @Voxterrae
-
-# ───── Reviewed zones (maintainer notified) ─────
-
-# Simulator core
-hub_optimus_simulator.py    @Voxterrae
-run_scenario.py             @Voxterrae
-hub_optimus/                @Voxterrae
-
-# Scoped technical ownership — Interface & Semantic Engine
-semantic_engine/                         @Voxterrae @itteamrod
-tests/semantic_engine/                   @Voxterrae @itteamrod
-examples/semantic_engine/                @Voxterrae @itteamrod
-docs/architecture/semantic_engine_cli.md @Voxterrae @itteamrod
-site/                                    @Voxterrae @itteamrod
-
-# Benchmarks (deterministic contract)
-benchmarks/                 @Voxterrae
-
-# ───── Open zones (contributors welcome) ─────
-# No CODEOWNERS entry = no mandatory review gate.
-# Open zones: docs/ (non-governance), tools/, tests/, examples/, legacy/
+# Runtime, schema, canonical content, tests, site, and operational tooling.
+v1_core/                                               @Voxterrae
+hub_optimus/                                           @Voxterrae
+semantic_engine/                                       @Voxterrae
+site/                                                  @Voxterrae
+benchmarks/                                            @Voxterrae
+tests/                                                 @Voxterrae
+tools/                                                 @Voxterrae
+examples/                                              @Voxterrae
+scenario.schema.json                                   @Voxterrae
+hub_optimus_simulator.py                               @Voxterrae
+run_scenario.py                                        @Voxterrae
