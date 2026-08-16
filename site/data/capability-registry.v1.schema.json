@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huboptimus.dev/data/capability-registry.v1.schema.json",
+  "title": "HUB_Optimus Public Capability Registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "registry_id",
+    "registry_mode",
+    "reviewed_at",
+    "baseline",
+    "components"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "registry_id": {
+      "const": "hub_optimus.public_capabilities.v1"
+    },
+    "registry_mode": {
+      "const": "human-reviewed-static"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "baseline": {
+      "$ref": "#/$defs/baseline"
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/component"
+      }
+    }
+  },
+  "$defs": {
+    "sha40": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_repository",
+        "reviewed_main_sha",
+        "public_evidence_sha",
+        "github_pages",
+        "sites_mirror"
+      ],
+      "properties": {
+        "canonical_repository": {
+          "const": "Voxterrae/HUB_Optimus"
+        },
+        "reviewed_main_sha": {
+          "$ref": "#/$defs/sha40"
+        },
+        "public_evidence_sha": {
+          "$ref": "#/$defs/sha40"
+        },
+        "github_pages": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "public_url",
+            "workflow_path",
+            "artifact_path",
+            "latest_verified_run_id",
+            "latest_verified_source_sha",
+            "latest_verified_conclusion",
+            "portfolio_generation"
+          ],
+          "properties": {
+            "public_url": {
+              "const": "https://huboptimus.dev/"
+            },
+            "workflow_path": {
+              "const": ".github/workflows/pages.yml"
+            },
+            "artifact_path": {
+              "const": "site"
+            },
+            "latest_verified_run_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "latest_verified_source_sha": {
+              "$ref": "#/$defs/sha40"
+            },
+            "latest_verified_conclusion": {
+              "enum": [
+                "success",
+                "failure",
+                "cancelled",
+                "unknown"
+              ]
+            },
+            "portfolio_generation": {
+              "enum": [
+                "manual",
+                "registry-derived"
+              ]
+            }
+          }
+        },
+        "sites_mirror": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "authoritative",
+            "visibility",
+            "synchronization",
+            "last_verified_version",
+            "last_verified_source_sha",
+            "current_with_reviewed_main",
+            "tracking_issue"
+          ],
+          "properties": {
+            "authoritative": {
+              "const": false
+            },
+            "visibility": {
+              "enum": [
+                "owner-only",
+                "restricted",
+                "public"
+              ]
+            },
+            "synchronization": {
+              "enum": [
+                "manual-deterministic",
+                "automatic-reviewed-merge"
+              ]
+            },
+            "last_verified_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "last_verified_source_sha": {
+              "$ref": "#/$defs/sha40"
+            },
+            "current_with_reviewed_main": {
+              "type": "boolean"
+            },
+            "tracking_issue": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/issues/[0-9]+$"
+            }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "ref",
+        "url"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "commit-path",
+            "pull-request",
+            "issue"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/(blob|tree|pull|issues)/"
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "display_name",
+        "lifecycle_state",
+        "source_status",
+        "public_section",
+        "publicly_listed",
+        "released_public_artifact",
+        "public_runtime_deployed",
+        "production_deployed",
+        "production_writes_executed",
+        "live_external_transport_enabled",
+        "evidence",
+        "claim_boundary"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "lifecycle_state": {
+          "enum": [
+            "active-methodology",
+            "working-deterministic-prototype",
+            "early-implementation",
+            "browser-prototype",
+            "implementation-present-deployment-unverified",
+            "experimental-tooling",
+            "active-ratified-protocol",
+            "draft",
+            "issue-only"
+          ]
+        },
+        "source_status": {
+          "enum": [
+            "merged",
+            "draft-pr",
+            "draft-pr-stack",
+            "open-issue"
+          ]
+        },
+        "public_section": {
+          "enum": [
+            "what-exists-today",
+            "in-development",
+            "not-publicly-listed"
+          ]
+        },
+        "publicly_listed": {
+          "type": "boolean"
+        },
+        "released_public_artifact": {
+          "type": "boolean"
+        },
+        "public_runtime_deployed": {
+          "type": "boolean"
+        },
+        "production_deployed": {
+          "type": "boolean"
+        },
+        "production_writes_executed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "live_external_transport_enabled": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "claim_boundary": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 500
+        }
+      }
+    }
+  }
+}
