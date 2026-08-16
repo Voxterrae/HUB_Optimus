@@ -1,0 +1,263 @@
+{
+  "$schema": "./capability-registry.v1.schema.json",
+  "schema_version": "1.0.0",
+  "registry_id": "hub_optimus.public_capabilities.v1",
+  "registry_mode": "human-reviewed-static",
+  "reviewed_at": "2026-08-16",
+  "baseline": {
+    "canonical_repository": "Voxterrae/HUB_Optimus",
+    "reviewed_main_sha": "30e985226347b4bc59b0e187b96633a09647ca42",
+    "public_evidence_sha": "8426b08e5f88b650c4d79e41d3ce3afd7d42746b",
+    "github_pages": {
+      "public_url": "https://huboptimus.dev/",
+      "workflow_path": ".github/workflows/pages.yml",
+      "artifact_path": "site",
+      "latest_verified_run_id": 31957372253,
+      "latest_verified_source_sha": "30e985226347b4bc59b0e187b96633a09647ca42",
+      "latest_verified_conclusion": "success",
+      "portfolio_generation": "manual"
+    },
+    "sites_mirror": {
+      "authoritative": false,
+      "visibility": "owner-only",
+      "synchronization": "manual-deterministic",
+      "last_verified_version": 8,
+      "last_verified_source_sha": "b64203fc8c784fd50053872767b179d97f451cc1",
+      "current_with_reviewed_main": false,
+      "tracking_issue": "https://github.com/Voxterrae/HUB_Optimus/issues/1809"
+    }
+  },
+  "components": [
+    {
+      "id": "core",
+      "display_name": "HUB_Optimus Core",
+      "lifecycle_state": "active-methodology",
+      "source_status": "merged",
+      "public_section": "what-exists-today",
+      "publicly_listed": true,
+      "released_public_artifact": true,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "8426b08e5f88b650c4d79e41d3ce3afd7d42746b",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/v1_core/languages/es"
+        }
+      ],
+      "claim_boundary": "Versioned methodology and workflow; not a deployed autonomous authority or decision maker."
+    },
+    {
+      "id": "simulator",
+      "display_name": "Deterministic Scenario Simulator",
+      "lifecycle_state": "working-deterministic-prototype",
+      "source_status": "merged",
+      "public_section": "what-exists-today",
+      "publicly_listed": true,
+      "released_public_artifact": true,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "8426b08e5f88b650c4d79e41d3ce3afd7d42746b",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/SIMULATION_README.md"
+        }
+      ],
+      "claim_boundary": "Deterministic repository prototype; no claim of live institutional or production execution."
+    },
+    {
+      "id": "semantic-engine",
+      "display_name": "Semantic Engine Contracts and CLI",
+      "lifecycle_state": "early-implementation",
+      "source_status": "merged",
+      "public_section": "what-exists-today",
+      "publicly_listed": true,
+      "released_public_artifact": true,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "8426b08e5f88b650c4d79e41d3ce3afd7d42746b",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/semantic_engine"
+        }
+      ],
+      "claim_boundary": "Local contracts and CLI; it does not establish a public hosted engine or verify truth."
+    },
+    {
+      "id": "operator",
+      "display_name": "HUB_Optimus Operator",
+      "lifecycle_state": "browser-prototype",
+      "source_status": "merged",
+      "public_section": "what-exists-today",
+      "publicly_listed": true,
+      "released_public_artifact": true,
+      "public_runtime_deployed": true,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "8426b08e5f88b650c4d79e41d3ce3afd7d42746b",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/site/operator"
+        }
+      ],
+      "claim_boundary": "Public browser-side prototype; local drafts are not verified evidence and no private runtime is implied."
+    },
+    {
+      "id": "controlled-url-intake",
+      "display_name": "Controlled URL Intake",
+      "lifecycle_state": "implementation-present-deployment-unverified",
+      "source_status": "merged",
+      "public_section": "what-exists-today",
+      "publicly_listed": true,
+      "released_public_artifact": true,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "8426b08e5f88b650c4d79e41d3ce3afd7d42746b",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/docs/rfc/operator_controlled_url_intake.md"
+        }
+      ],
+      "claim_boundary": "Repository implementation and tests exist; no public authenticated URL-retrieval service is established."
+    },
+    {
+      "id": "research",
+      "display_name": "Scenario and Narrative Research",
+      "lifecycle_state": "experimental-tooling",
+      "source_status": "merged",
+      "public_section": "what-exists-today",
+      "publicly_listed": true,
+      "released_public_artifact": true,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "8426b08e5f88b650c4d79e41d3ce3afd7d42746b",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/docs/lab_state.md"
+        }
+      ],
+      "claim_boundary": "Experimental repository tooling; not a promoted benchmark, production service or autonomous research authority."
+    },
+    {
+      "id": "governance-intelligence",
+      "display_name": "Governance Intelligence",
+      "lifecycle_state": "active-ratified-protocol",
+      "source_status": "merged",
+      "public_section": "what-exists-today",
+      "publicly_listed": true,
+      "released_public_artifact": true,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "8426b08e5f88b650c4d79e41d3ce3afd7d42746b",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/docs/governance/GOVERNANCE_INTELLIGENCE.md"
+        }
+      ],
+      "claim_boundary": "Versioned human-governance protocol; it does not create automatic legal, political or technical authority."
+    },
+    {
+      "id": "admin-gateway",
+      "display_name": "Optimus Admin Gateway",
+      "lifecycle_state": "draft",
+      "source_status": "draft-pr-stack",
+      "public_section": "in-development",
+      "publicly_listed": false,
+      "released_public_artifact": false,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "pull-request",
+          "ref": "1870-1876",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1873"
+        }
+      ],
+      "claim_boundary": "Draft tenant-neutral stack; historical private Sandbox recovery evidence does not authorize production deployment, connector activation or further tenant mutation."
+    },
+    {
+      "id": "evidence-lab",
+      "display_name": "Optimus Evidence Lab",
+      "lifecycle_state": "draft",
+      "source_status": "draft-pr",
+      "public_section": "in-development",
+      "publicly_listed": false,
+      "released_public_artifact": false,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "pull-request",
+          "ref": "1879",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1879"
+        }
+      ],
+      "claim_boundary": "Draft offline Dataverse package; no production deployment, public runtime or business-data seed is claimed."
+    },
+    {
+      "id": "connect-xai-x",
+      "display_name": "HUB_Optimus Connect — xAI and X Foundation",
+      "lifecycle_state": "draft",
+      "source_status": "draft-pr",
+      "public_section": "in-development",
+      "publicly_listed": false,
+      "released_public_artifact": false,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "pull-request",
+          "ref": "1877",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1877"
+        }
+      ],
+      "claim_boundary": "Draft provider boundary only; no credentials, live calls, automatic publication, partnership claim or external transport is enabled."
+    },
+    {
+      "id": "global-graph",
+      "display_name": "Optimus Global Graph",
+      "lifecycle_state": "issue-only",
+      "source_status": "open-issue",
+      "public_section": "in-development",
+      "publicly_listed": false,
+      "released_public_artifact": false,
+      "public_runtime_deployed": false,
+      "production_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "issue",
+          "ref": "1880",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/issues/1880"
+        }
+      ],
+      "claim_boundary": "Governed foundation issue only; no implementation, person-level graph, public globe integration, API, Dataverse mutation or Sites deployment exists under this record."
+    }
+  ]
+}
