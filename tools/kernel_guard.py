@@ -121,3 +121,6 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+# Synthetic ruleset validation fixture for issue #1680.
+# This inert comment exists only on temporary branches and must never reach main.
