@@ -37,6 +37,7 @@
     "components": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/component"
       }
@@ -47,12 +48,16 @@
       "type": "string",
       "pattern": "^[0-9a-f]{40}$"
     },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
     "baseline": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "canonical_repository",
-        "reviewed_main_sha",
+        "source_baseline_sha",
         "public_evidence_sha",
         "github_pages",
         "sites_mirror"
@@ -61,7 +66,7 @@
         "canonical_repository": {
           "const": "Voxterrae/HUB_Optimus"
         },
-        "reviewed_main_sha": {
+        "source_baseline_sha": {
           "$ref": "#/$defs/sha40"
         },
         "public_evidence_sha": {
@@ -71,15 +76,20 @@
           "type": "object",
           "additionalProperties": false,
           "required": [
+            "observed_at",
             "public_url",
             "workflow_path",
             "artifact_path",
-            "latest_verified_run_id",
-            "latest_verified_source_sha",
-            "latest_verified_conclusion",
-            "portfolio_generation"
+            "observed_run_id",
+            "observed_source_sha",
+            "observed_conclusion",
+            "portfolio_generation",
+            "merge_path_triggers_pages"
           ],
           "properties": {
+            "observed_at": {
+              "$ref": "#/$defs/date"
+            },
             "public_url": {
               "const": "https://huboptimus.dev/"
             },
@@ -89,14 +99,14 @@
             "artifact_path": {
               "const": "site"
             },
-            "latest_verified_run_id": {
+            "observed_run_id": {
               "type": "integer",
               "minimum": 1
             },
-            "latest_verified_source_sha": {
+            "observed_source_sha": {
               "$ref": "#/$defs/sha40"
             },
-            "latest_verified_conclusion": {
+            "observed_conclusion": {
               "enum": [
                 "success",
                 "failure",
@@ -109,6 +119,9 @@
                 "manual",
                 "registry-derived"
               ]
+            },
+            "merge_path_triggers_pages": {
+              "type": "boolean"
             }
           }
         },
@@ -116,15 +129,19 @@
           "type": "object",
           "additionalProperties": false,
           "required": [
+            "observed_at",
             "authoritative",
             "visibility",
             "synchronization",
-            "last_verified_version",
-            "last_verified_source_sha",
-            "current_with_reviewed_main",
+            "observed_version",
+            "observed_source_sha",
+            "matches_source_baseline",
             "tracking_issue"
           ],
           "properties": {
+            "observed_at": {
+              "$ref": "#/$defs/date"
+            },
             "authoritative": {
               "const": false
             },
@@ -141,20 +158,20 @@
                 "automatic-reviewed-merge"
               ]
             },
-            "last_verified_version": {
+            "observed_version": {
               "type": "integer",
               "minimum": 1
             },
-            "last_verified_source_sha": {
+            "observed_source_sha": {
               "$ref": "#/$defs/sha40"
             },
-            "current_with_reviewed_main": {
+            "matches_source_baseline": {
               "type": "boolean"
             },
             "tracking_issue": {
               "type": "string",
               "format": "uri",
-              "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/issues/[0-9]+$"
+              "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/issues/[1-9][0-9]*$"
             }
           }
         }
@@ -183,10 +200,77 @@
         },
         "url": {
           "type": "string",
-          "format": "uri",
-          "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/(blob|tree|pull|issues)/"
+          "format": "uri"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "commit-path"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ref": {
+                "$ref": "#/$defs/sha40"
+              },
+              "url": {
+                "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/(blob|tree)/[0-9a-f]{40}/.+"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "pull-request"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ref": {
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "url": {
+                "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/pull/[1-9][0-9]*$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "issue"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ref": {
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "url": {
+                "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/issues/[1-9][0-9]*$"
+              }
+            }
+          }
+        }
+      ]
     },
     "component": {
       "type": "object",
@@ -198,9 +282,9 @@
         "source_status",
         "public_section",
         "publicly_listed",
-        "released_public_artifact",
-        "public_runtime_deployed",
-        "production_deployed",
+        "public_static_surface_available",
+        "public_browser_runtime_available",
+        "production_service_deployed",
         "production_writes_executed",
         "live_external_transport_enabled",
         "evidence",
@@ -248,13 +332,13 @@
         "publicly_listed": {
           "type": "boolean"
         },
-        "released_public_artifact": {
+        "public_static_surface_available": {
           "type": "boolean"
         },
-        "public_runtime_deployed": {
+        "public_browser_runtime_available": {
           "type": "boolean"
         },
-        "production_deployed": {
+        "production_service_deployed": {
           "type": "boolean"
         },
         "production_writes_executed": {
@@ -267,6 +351,7 @@
         "evidence": {
           "type": "array",
           "minItems": 1,
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/evidence"
           }
@@ -276,7 +361,217 @@
           "minLength": 20,
           "maxLength": 500
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_status": {
+                "enum": [
+                  "draft-pr",
+                  "draft-pr-stack"
+                ]
+              }
+            },
+            "required": [
+              "source_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "lifecycle_state": {
+                "const": "draft"
+              },
+              "public_section": {
+                "const": "in-development"
+              },
+              "public_browser_runtime_available": {
+                "const": false
+              },
+              "production_service_deployed": {
+                "const": false
+              },
+              "production_writes_executed": {
+                "const": 0
+              },
+              "live_external_transport_enabled": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_status": {
+                "const": "open-issue"
+              }
+            },
+            "required": [
+              "source_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "lifecycle_state": {
+                "const": "issue-only"
+              },
+              "public_section": {
+                "const": "in-development"
+              },
+              "public_browser_runtime_available": {
+                "const": false
+              },
+              "production_service_deployed": {
+                "const": false
+              },
+              "production_writes_executed": {
+                "const": 0
+              },
+              "live_external_transport_enabled": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_status": {
+                "const": "merged"
+              }
+            },
+            "required": [
+              "source_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "lifecycle_state": {
+                "not": {
+                  "enum": [
+                    "draft",
+                    "issue-only"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "public_section": {
+                "const": "what-exists-today"
+              }
+            },
+            "required": [
+              "public_section"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_status": {
+                "const": "merged"
+              },
+              "publicly_listed": {
+                "const": true
+              },
+              "public_static_surface_available": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "public_section": {
+                "const": "not-publicly-listed"
+              }
+            },
+            "required": [
+              "public_section"
+            ]
+          },
+          "then": {
+            "properties": {
+              "publicly_listed": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publicly_listed": {
+                "const": true
+              }
+            },
+            "required": [
+              "publicly_listed"
+            ]
+          },
+          "then": {
+            "properties": {
+              "public_section": {
+                "enum": [
+                  "what-exists-today",
+                  "in-development"
+                ]
+              },
+              "public_static_surface_available": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "public_browser_runtime_available": {
+                "const": true
+              }
+            },
+            "required": [
+              "public_browser_runtime_available"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_status": {
+                "const": "merged"
+              },
+              "publicly_listed": {
+                "const": true
+              },
+              "public_static_surface_available": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "production_service_deployed": {
+                "const": true
+              }
+            },
+            "required": [
+              "production_service_deployed"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_status": {
+                "const": "merged"
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }
