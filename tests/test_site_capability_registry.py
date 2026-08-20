@@ -1,7 +1,11 @@
+import copy
 import json
 import re
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
+from urllib.parse import urlsplit
+
+from jsonschema import Draft202012Validator, FormatChecker
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,14 +13,23 @@ REGISTRY_PATH = ROOT / "site" / "data" / "capability-registry.v1.json"
 SCHEMA_PATH = ROOT / "site" / "data" / "capability-registry.v1.schema.json"
 INDEX_PATH = ROOT / "site" / "index.html"
 DOCUMENT_ROUTES_PATH = ROOT / "site" / "i18n" / "document-routes.v1.js"
+PAGES_WORKFLOW_PATH = ROOT / ".github" / "workflows" / "pages.yml"
 
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
-GITHUB_EVIDENCE = re.compile(
-    r"^https://github\.com/Voxterrae/HUB_Optimus/(?:blob|tree|pull|issues)/"
+COMMIT_PATH_URL = re.compile(
+    r"^https://github\.com/Voxterrae/HUB_Optimus/(?:blob|tree)/"
+    r"(?P<ref>[0-9a-f]{40})/.+"
+)
+PULL_REQUEST_URL = re.compile(
+    r"^https://github\.com/Voxterrae/HUB_Optimus/pull/(?P<ref>[1-9][0-9]*)$"
+)
+ISSUE_URL = re.compile(
+    r"^https://github\.com/Voxterrae/HUB_Optimus/issues/(?P<ref>[1-9][0-9]*)$"
 )
 EMAIL = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
 UUID = re.compile(
-    r"\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b",
+    r"\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-"
+    r"[89ab][0-9a-f]{3}-[0-9a-f]{12}\b",
     re.IGNORECASE,
 )
 
@@ -36,6 +49,7 @@ IN_DEVELOPMENT_COMPONENTS = {
     "connect-xai-x",
     "global-graph",
 }
+ADMIN_GATEWAY_STACK = {"1870", "1871", "1872", "1873", "1875", "1876"}
 ALLOWED_LIFECYCLE_STATES = {
     "active-methodology",
     "working-deterministic-prototype",
@@ -93,37 +107,72 @@ def walk_keys(value):
             yield from walk_keys(child)
 
 
-def test_registry_and_schema_are_parseable_versioned_json():
+def schema_errors(registry, schema):
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    return sorted(validator.iter_errors(registry), key=lambda error: list(error.path))
+
+
+def test_registry_is_valid_against_checked_draft_2020_12_schema():
     registry = load_registry()
     schema = load_schema()
 
+    Draft202012Validator.check_schema(schema)
+    errors = schema_errors(registry, schema)
+
+    assert not errors, "\n".join(
+        f"{'/'.join(map(str, error.absolute_path))}: {error.message}"
+        for error in errors
+    )
     assert registry["$schema"] == "./capability-registry.v1.schema.json"
     assert registry["schema_version"] == "1.0.0"
     assert registry["registry_id"] == "hub_optimus.public_capabilities.v1"
     assert registry["registry_mode"] == "human-reviewed-static"
     assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
-    assert schema["$id"] == "https://huboptimus.dev/data/capability-registry.v1.schema.json"
+    assert schema["$id"] == (
+        "https://huboptimus.dev/data/capability-registry.v1.schema.json"
+    )
 
 
-def test_registry_baseline_is_explicit_and_sites_is_not_claimed_current():
+def test_baseline_is_a_dated_observation_not_a_self_referential_main_claim():
     registry = load_registry()
     baseline = registry["baseline"]
     pages = baseline["github_pages"]
     sites = baseline["sites_mirror"]
 
-    date.fromisoformat(registry["reviewed_at"])
+    reviewed_at = date.fromisoformat(registry["reviewed_at"])
+    assert reviewed_at <= date.today() + timedelta(days=1)
+
     assert baseline["canonical_repository"] == "Voxterrae/HUB_Optimus"
-    assert SHA40.fullmatch(baseline["reviewed_main_sha"])
+    assert SHA40.fullmatch(baseline["source_baseline_sha"])
     assert SHA40.fullmatch(baseline["public_evidence_sha"])
+    assert "reviewed_main_sha" not in baseline
+
+    date.fromisoformat(pages["observed_at"])
     assert pages["artifact_path"] == "site"
     assert pages["workflow_path"] == ".github/workflows/pages.yml"
     assert pages["portfolio_generation"] == "manual"
-    assert pages["latest_verified_conclusion"] == "success"
-    assert pages["latest_verified_source_sha"] == baseline["reviewed_main_sha"]
+    assert pages["observed_conclusion"] == "success"
+    assert pages["observed_source_sha"] == baseline["source_baseline_sha"]
+    assert pages["merge_path_triggers_pages"] is True
+    assert not any(key.startswith("latest_") for key in pages)
+
+    date.fromisoformat(sites["observed_at"])
     assert sites["authoritative"] is False
     assert sites["synchronization"] == "manual-deterministic"
-    assert sites["current_with_reviewed_main"] is False
-    assert sites["last_verified_source_sha"] != baseline["reviewed_main_sha"]
+    assert sites["matches_source_baseline"] is False
+    assert sites["observed_source_sha"] != baseline["source_baseline_sha"]
+    assert not any(key.startswith("current_") for key in sites)
+
+
+def test_pages_side_effect_is_explicitly_bound_to_the_real_workflow():
+    registry = load_registry()
+    pages = registry["baseline"]["github_pages"]
+    workflow = PAGES_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    assert pages["merge_path_triggers_pages"] is True
+    assert '- "site/**"' in workflow
+    assert '- "docs/**"' in workflow
+    assert "path: site" in workflow
 
 
 def test_public_evidence_sha_matches_document_route_resolver():
@@ -156,7 +205,49 @@ def test_registry_contains_exact_current_and_development_component_sets():
     assert not (markup_components & IN_DEVELOPMENT_COMPONENTS)
 
 
-def test_component_states_and_evidence_are_bounded():
+def test_evidence_type_ref_and_url_identity_are_exact_and_unique():
+    registry = load_registry()
+    seen = set()
+
+    patterns = {
+        "commit-path": COMMIT_PATH_URL,
+        "pull-request": PULL_REQUEST_URL,
+        "issue": ISSUE_URL,
+    }
+
+    for component in registry["components"]:
+        for evidence in component["evidence"]:
+            identity = (evidence["type"], evidence["ref"], evidence["url"])
+            assert identity not in seen, identity
+            seen.add(identity)
+
+            match = patterns[evidence["type"]].fullmatch(evidence["url"])
+            assert match, evidence
+            assert match.group("ref") == evidence["ref"], evidence
+
+            parsed = urlsplit(evidence["url"])
+            assert parsed.scheme == "https"
+            assert parsed.netloc == "github.com"
+            assert not parsed.query
+            assert not parsed.fragment
+
+
+def test_admin_gateway_stack_lists_only_exact_open_pull_requests():
+    registry = load_registry()
+    admin_gateway = component_map(registry)["admin-gateway"]
+
+    refs = {evidence["ref"] for evidence in admin_gateway["evidence"]}
+    urls = {evidence["url"] for evidence in admin_gateway["evidence"]}
+
+    assert refs == ADMIN_GATEWAY_STACK
+    assert urls == {
+        f"https://github.com/Voxterrae/HUB_Optimus/pull/{number}"
+        for number in ADMIN_GATEWAY_STACK
+    }
+    assert "1874" not in refs
+
+
+def test_component_states_and_present_claims_are_bounded():
     registry = load_registry()
 
     for component in registry["components"]:
@@ -165,10 +256,6 @@ def test_component_states_and_evidence_are_bounded():
         assert component["claim_boundary"].strip()
         assert component["evidence"]
 
-        for evidence in component["evidence"]:
-            assert GITHUB_EVIDENCE.match(evidence["url"]), evidence
-            assert evidence["ref"].strip()
-
         if component["source_status"] == "merged":
             assert component["lifecycle_state"] not in {"draft", "issue-only"}
         elif component["source_status"] == "open-issue":
@@ -176,21 +263,14 @@ def test_component_states_and_evidence_are_bounded():
         else:
             assert component["lifecycle_state"] == "draft"
 
-
-def test_non_merged_work_cannot_claim_release_deployment_or_transport():
-    registry = load_registry()
-
-    for component in registry["components"]:
-        if component["source_status"] not in NON_MERGED_SOURCE_STATUSES:
-            continue
-
-        assert component["public_section"] == "in-development"
-        assert component["publicly_listed"] is False
-        assert component["released_public_artifact"] is False
-        assert component["public_runtime_deployed"] is False
-        assert component["production_deployed"] is False
-        assert component["production_writes_executed"] == 0
-        assert component["live_external_transport_enabled"] is False
+        if component["source_status"] in NON_MERGED_SOURCE_STATUSES:
+            assert component["public_section"] == "in-development"
+            assert component["publicly_listed"] is False
+            assert component["public_static_surface_available"] is False
+            assert component["public_browser_runtime_available"] is False
+            assert component["production_service_deployed"] is False
+            assert component["production_writes_executed"] == 0
+            assert component["live_external_transport_enabled"] is False
 
 
 def test_current_public_components_are_merged_and_truthfully_listed():
@@ -202,13 +282,43 @@ def test_current_public_components_are_merged_and_truthfully_listed():
         assert component["source_status"] == "merged"
         assert component["public_section"] == "what-exists-today"
         assert component["publicly_listed"] is True
-        assert component["released_public_artifact"] is True
+        assert component["public_static_surface_available"] is True
 
-    assert components["operator"]["public_runtime_deployed"] is True
+    assert components["operator"]["public_browser_runtime_available"] is True
     assert all(
-        component["production_deployed"] is False
+        component["production_service_deployed"] is False
         for component in components.values()
     )
+
+
+def test_schema_rejects_non_merged_release_transport_and_write_overclaims():
+    registry = load_registry()
+    schema = load_schema()
+
+    for component_id, field, value in (
+        ("evidence-lab", "public_browser_runtime_available", True),
+        ("connect-xai-x", "live_external_transport_enabled", True),
+        ("admin-gateway", "production_service_deployed", True),
+        ("global-graph", "production_writes_executed", 1),
+    ):
+        mutated = copy.deepcopy(registry)
+        component_map(mutated)[component_id][field] = value
+        assert schema_errors(mutated, schema), (component_id, field)
+
+
+def test_schema_rejects_lifecycle_and_public_section_promotion_without_source_change():
+    registry = load_registry()
+    schema = load_schema()
+
+    mutated_issue = copy.deepcopy(registry)
+    component_map(mutated_issue)["global-graph"]["lifecycle_state"] = "draft"
+    assert schema_errors(mutated_issue, schema)
+
+    mutated_draft = copy.deepcopy(registry)
+    component_map(mutated_draft)["evidence-lab"]["public_section"] = "what-exists-today"
+    component_map(mutated_draft)["evidence-lab"]["public_static_surface_available"] = True
+    component_map(mutated_draft)["evidence-lab"]["publicly_listed"] = True
+    assert schema_errors(mutated_draft, schema)
 
 
 def test_registry_contains_no_private_identifiers_or_secret_fields():
@@ -221,13 +331,15 @@ def test_registry_contains_no_private_identifiers_or_secret_fields():
     assert not UUID.search(serialized)
 
 
-def test_schema_enumerates_the_registry_state_contract():
+def test_schema_contains_cross_field_fail_closed_rules():
     schema = load_schema()
-    component_properties = schema["$defs"]["component"]["properties"]
+    component = schema["$defs"]["component"]
+    properties = component["properties"]
 
-    assert set(component_properties["lifecycle_state"]["enum"]) == ALLOWED_LIFECYCLE_STATES
-    assert set(component_properties["source_status"]["enum"]) == ALLOWED_SOURCE_STATUSES
-    assert component_properties["production_writes_executed"]["minimum"] == 0
+    assert set(properties["lifecycle_state"]["enum"]) == ALLOWED_LIFECYCLE_STATES
+    assert set(properties["source_status"]["enum"]) == ALLOWED_SOURCE_STATUSES
+    assert properties["production_writes_executed"]["minimum"] == 0
+    assert len(component["allOf"]) >= 8
     assert schema["$defs"]["baseline"]["properties"]["sites_mirror"]["properties"][
         "authoritative"
     ]["const"] is False
