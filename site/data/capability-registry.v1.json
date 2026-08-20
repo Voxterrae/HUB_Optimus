@@ -3,27 +3,30 @@
   "schema_version": "1.0.0",
   "registry_id": "hub_optimus.public_capabilities.v1",
   "registry_mode": "human-reviewed-static",
-  "reviewed_at": "2026-08-16",
+  "reviewed_at": "2026-08-21",
   "baseline": {
     "canonical_repository": "Voxterrae/HUB_Optimus",
-    "reviewed_main_sha": "30e985226347b4bc59b0e187b96633a09647ca42",
+    "source_baseline_sha": "30e985226347b4bc59b0e187b96633a09647ca42",
     "public_evidence_sha": "8426b08e5f88b650c4d79e41d3ce3afd7d42746b",
     "github_pages": {
+      "observed_at": "2026-08-16",
       "public_url": "https://huboptimus.dev/",
       "workflow_path": ".github/workflows/pages.yml",
       "artifact_path": "site",
-      "latest_verified_run_id": 31957372253,
-      "latest_verified_source_sha": "30e985226347b4bc59b0e187b96633a09647ca42",
-      "latest_verified_conclusion": "success",
-      "portfolio_generation": "manual"
+      "observed_run_id": 31957372253,
+      "observed_source_sha": "30e985226347b4bc59b0e187b96633a09647ca42",
+      "observed_conclusion": "success",
+      "portfolio_generation": "manual",
+      "merge_path_triggers_pages": true
     },
     "sites_mirror": {
+      "observed_at": "2026-07-30",
       "authoritative": false,
       "visibility": "owner-only",
       "synchronization": "manual-deterministic",
-      "last_verified_version": 8,
-      "last_verified_source_sha": "b64203fc8c784fd50053872767b179d97f451cc1",
-      "current_with_reviewed_main": false,
+      "observed_version": 8,
+      "observed_source_sha": "b64203fc8c784fd50053872767b179d97f451cc1",
+      "matches_source_baseline": false,
       "tracking_issue": "https://github.com/Voxterrae/HUB_Optimus/issues/1809"
     }
   },
@@ -35,9 +38,9 @@
       "source_status": "merged",
       "public_section": "what-exists-today",
       "publicly_listed": true,
-      "released_public_artifact": true,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
@@ -56,9 +59,9 @@
       "source_status": "merged",
       "public_section": "what-exists-today",
       "publicly_listed": true,
-      "released_public_artifact": true,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
@@ -77,9 +80,9 @@
       "source_status": "merged",
       "public_section": "what-exists-today",
       "publicly_listed": true,
-      "released_public_artifact": true,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
@@ -98,9 +101,9 @@
       "source_status": "merged",
       "public_section": "what-exists-today",
       "publicly_listed": true,
-      "released_public_artifact": true,
-      "public_runtime_deployed": true,
-      "production_deployed": false,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": true,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
@@ -119,9 +122,9 @@
       "source_status": "merged",
       "public_section": "what-exists-today",
       "publicly_listed": true,
-      "released_public_artifact": true,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
@@ -140,9 +143,9 @@
       "source_status": "merged",
       "public_section": "what-exists-today",
       "publicly_listed": true,
-      "released_public_artifact": true,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
@@ -161,9 +164,9 @@
       "source_status": "merged",
       "public_section": "what-exists-today",
       "publicly_listed": true,
-      "released_public_artifact": true,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
@@ -182,9 +185,9 @@
       "source_status": "merged",
       "public_section": "what-exists-today",
       "publicly_listed": true,
-      "released_public_artifact": true,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
@@ -203,16 +206,41 @@
       "source_status": "draft-pr-stack",
       "public_section": "in-development",
       "publicly_listed": false,
-      "released_public_artifact": false,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": false,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
         {
           "type": "pull-request",
-          "ref": "1870-1876",
+          "ref": "1870",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1870"
+        },
+        {
+          "type": "pull-request",
+          "ref": "1871",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1871"
+        },
+        {
+          "type": "pull-request",
+          "ref": "1872",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1872"
+        },
+        {
+          "type": "pull-request",
+          "ref": "1873",
           "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1873"
+        },
+        {
+          "type": "pull-request",
+          "ref": "1875",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1875"
+        },
+        {
+          "type": "pull-request",
+          "ref": "1876",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1876"
         }
       ],
       "claim_boundary": "Draft tenant-neutral stack; historical private Sandbox recovery evidence does not authorize production deployment, connector activation or further tenant mutation."
@@ -224,9 +252,9 @@
       "source_status": "draft-pr",
       "public_section": "in-development",
       "publicly_listed": false,
-      "released_public_artifact": false,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": false,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
@@ -245,9 +273,9 @@
       "source_status": "draft-pr",
       "public_section": "in-development",
       "publicly_listed": false,
-      "released_public_artifact": false,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": false,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
@@ -266,9 +294,9 @@
       "source_status": "open-issue",
       "public_section": "in-development",
       "publicly_listed": false,
-      "released_public_artifact": false,
-      "public_runtime_deployed": false,
-      "production_deployed": false,
+      "public_static_surface_available": false,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
