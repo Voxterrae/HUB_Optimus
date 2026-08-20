@@ -2,6 +2,7 @@ import copy
 import json
 import re
 from datetime import date, timedelta
+from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -85,6 +86,25 @@ FORBIDDEN_FIELD_NAMES = {
 }
 
 
+class PortfolioStatusParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.statuses = {}
+
+    def handle_starttag(self, tag, attributes):
+        attrs = dict(attributes)
+        component_id = attrs.get("data-portfolio-component")
+        if not component_id:
+            return
+
+        status = attrs.get("data-status")
+        assert status, f"public component {component_id!r} must declare data-status"
+        assert component_id not in self.statuses, (
+            f"duplicate public component status for {component_id!r}"
+        )
+        self.statuses[component_id] = status
+
+
 def load_registry():
     return json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
 
@@ -95,6 +115,12 @@ def load_schema():
 
 def component_map(registry):
     return {component["id"]: component for component in registry["components"]}
+
+
+def parse_public_component_statuses():
+    parser = PortfolioStatusParser()
+    parser.feed(INDEX_PATH.read_text(encoding="utf-8"))
+    return parser.statuses
 
 
 def walk_keys(value):
@@ -139,15 +165,21 @@ def test_baseline_is_a_dated_observation_not_a_self_referential_main_claim():
     pages = baseline["github_pages"]
     sites = baseline["sites_mirror"]
 
+    current_date_boundary = date.today() + timedelta(days=1)
     reviewed_at = date.fromisoformat(registry["reviewed_at"])
-    assert reviewed_at <= date.today() + timedelta(days=1)
+    pages_observed_at = date.fromisoformat(pages["observed_at"])
+    sites_observed_at = date.fromisoformat(sites["observed_at"])
+
+    assert reviewed_at <= current_date_boundary
+    for observed_at in (pages_observed_at, sites_observed_at):
+        assert observed_at <= reviewed_at
+        assert observed_at <= current_date_boundary
 
     assert baseline["canonical_repository"] == "Voxterrae/HUB_Optimus"
     assert SHA40.fullmatch(baseline["source_baseline_sha"])
     assert SHA40.fullmatch(baseline["public_evidence_sha"])
     assert "reviewed_main_sha" not in baseline
 
-    date.fromisoformat(pages["observed_at"])
     assert pages["artifact_path"] == "site"
     assert pages["workflow_path"] == ".github/workflows/pages.yml"
     assert pages["portfolio_generation"] == "manual"
@@ -156,7 +188,6 @@ def test_baseline_is_a_dated_observation_not_a_self_referential_main_claim():
     assert pages["merge_path_triggers_pages"] is True
     assert not any(key.startswith("latest_") for key in pages)
 
-    date.fromisoformat(sites["observed_at"])
     assert sites["authoritative"] is False
     assert sites["synchronization"] == "manual-deterministic"
     assert sites["matches_source_baseline"] is False
@@ -191,22 +222,25 @@ def test_registry_contains_exact_current_and_development_component_sets():
     assert len(components) == len(registry["components"]), "component IDs must be unique"
     assert set(components) == PUBLIC_COMPONENTS | IN_DEVELOPMENT_COMPONENTS
 
-    public_markup = INDEX_PATH.read_text(encoding="utf-8")
-    markup_components = set(
-        re.findall(r'data-portfolio-component="([a-z0-9-]+)"', public_markup)
-    )
+    markup_statuses = parse_public_component_statuses()
+    expected_public_statuses = {
+        component_id: components[component_id]["lifecycle_state"]
+        for component_id in PUBLIC_COMPONENTS
+    }
 
-    assert markup_components == PUBLIC_COMPONENTS
+    assert set(markup_statuses) == PUBLIC_COMPONENTS
+    assert markup_statuses == expected_public_statuses
     assert {
         component["id"]
         for component in registry["components"]
         if component["public_section"] == "what-exists-today"
     } == PUBLIC_COMPONENTS
-    assert not (markup_components & IN_DEVELOPMENT_COMPONENTS)
+    assert not (set(markup_statuses) & IN_DEVELOPMENT_COMPONENTS)
 
 
 def test_evidence_type_ref_and_url_identity_are_exact_and_unique():
     registry = load_registry()
+    public_evidence_sha = registry["baseline"]["public_evidence_sha"]
     seen = set()
 
     patterns = {
@@ -224,6 +258,8 @@ def test_evidence_type_ref_and_url_identity_are_exact_and_unique():
             match = patterns[evidence["type"]].fullmatch(evidence["url"])
             assert match, evidence
             assert match.group("ref") == evidence["ref"], evidence
+            if evidence["type"] == "commit-path":
+                assert evidence["ref"] == public_evidence_sha, evidence
 
             parsed = urlsplit(evidence["url"])
             assert parsed.scheme == "https"
