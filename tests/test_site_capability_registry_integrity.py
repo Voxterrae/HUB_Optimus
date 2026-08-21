@@ -159,7 +159,8 @@ def test_ai_handoff_records_the_registry_flow_and_outstanding_slices():
         "site/data/capability-registry.v1.json",
         "GitHub Pages",
         "visible presentation",
-        "Sites synchronization",
+        "protected Sites mirror",
+        "must be synchronized only after",
     }
     missing = sorted(marker for marker in required_markers if marker not in handoff)
     assert not missing, f"AI handoff is missing registry markers: {missing}"
