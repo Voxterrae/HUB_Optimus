@@ -28,3 +28,31 @@ root membership is classified as orphan metadata and fails closed.
 
 Rollback is reverse journal order, exact-journal-bound, zero-row-gated, one
 publication maximum, no retry, and no automatic rollback.
+
+## Global-choice metadata lookup
+
+Dataverse does not support `$filter` on the `GlobalOptionSetDefinitions`
+collection. The applicator retrieves a global choice through its metadata
+alternate key instead:
+
+```text
+GlobalOptionSetDefinitions(Name='<escaped-name>')
+```
+
+Single quotes inside the OData string literal are doubled. A `404` is treated
+as an absent choice during idempotent discovery; other HTTP failures, including
+`405`, fail closed. After a successful `POST`, the applicator waits for the
+created choice to become visible through the same alternate-key path before
+recording its metadata ID. Rollback remains bound to the exact metadata-ID
+delete path stored in the journal.
+
+## Sanitized prewrite finding
+
+The governed LCDH-OS DEV run `20260821T113235Z` stopped before the first
+metadata write because the previous implementation used an unsupported
+collection `$filter` for `GlobalOptionSetDefinitions`. The private result is
+classified as `FAILED_PREWRITE_UNSUPPORTED_GLOBAL_OPTIONSET_FILTER`: zero
+created components, zero reused components, final direct component count zero,
+zero rows, zero publications, no rollback required, and the consumed
+authorization is not reusable. No private tenant identifiers or evidence paths
+are stored in this repository.

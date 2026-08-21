@@ -129,6 +129,14 @@ def normalize_environment_url(value: str) -> str:
     return urllib.parse.urlunsplit(("https", f"{host}{port}", "/", "", ""))
 
 
+def odata_string_literal(value: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ApplicatorError("OData string literal must be a non-empty string.")
+    if CONTROL_CHARACTER.search(value):
+        raise ApplicatorError("OData string literal contains a control character.")
+    return value.replace("'", "''")
+
+
 def encode_odata_relative_path(path: str) -> str:
     if not isinstance(path, str) or not path:
         raise ApplicatorError("Dataverse request path must be a non-empty string.")
@@ -602,6 +610,22 @@ class SchemaApplicator:
             return body
         raise ApplicatorError(f"Unexpected response shape: {path}")
 
+    def wait_for_single(
+        self,
+        path: str,
+        *,
+        description: str,
+        timeout_seconds: float = 90,
+        interval_seconds: float = 2,
+    ) -> dict[str, Any]:
+        deadline = time.monotonic() + timeout_seconds
+        while time.monotonic() < deadline:
+            item = self.query_single(path, optional=True)
+            if item is not None:
+                return item
+            time.sleep(interval_seconds)
+        raise ApplicatorError(f"Timed out waiting for {description}.")
+
     def solution_component_records(self, metadata_id: str, component_type: int) -> list[dict[str, Any]]:
         if self.solution_id is None:
             raise ApplicatorError("Solution ID unavailable.")
@@ -722,9 +746,10 @@ class SchemaApplicator:
         self.journal.check("Target solution boundary", "PASS", {"directComponents": count})
 
     def choice_query(self, name: str) -> str:
+        literal = odata_string_literal(name)
         return (
-            "GlobalOptionSetDefinitions?$select=MetadataId,Name,IsGlobal,OptionSetType&$top=2"
-            f"&$filter=Name eq '{name}'"
+            f"GlobalOptionSetDefinitions(Name='{literal}')"
+            "?$select=MetadataId,Name,IsGlobal,OptionSetType"
         )
 
     def table_query(self, name: str) -> str:
@@ -756,7 +781,8 @@ class SchemaApplicator:
     def ensure_choices(self) -> None:
         for choice in self.contract["globalChoices"]:
             name = choice["logicalName"]
-            existing = self.query_single(self.choice_query(name))
+            query_path = self.choice_query(name)
+            existing = self.query_single(query_path, optional=True)
             if existing is None:
                 if not self.apply:
                     raise ApplicatorError(f"Dry-run discovered missing global choice: {name}")
@@ -766,10 +792,20 @@ class SchemaApplicator:
                     body=global_choice_payload(choice),
                     solution_component=True,
                 )
-                metadata_id = parse_entity_id(response.headers)
-                if not metadata_id:
-                    created = self.query_single(self.choice_query(name))
-                    metadata_id = str((created or {}).get("MetadataId", "")).lower()
+                response_metadata_id = parse_entity_id(response.headers)
+                created = self.wait_for_single(
+                    query_path,
+                    description=f"global choice {name}",
+                )
+                metadata_id = str(created.get("MetadataId", "")).lower()
+                if (
+                    response_metadata_id
+                    and metadata_id
+                    and response_metadata_id != metadata_id
+                ):
+                    raise ApplicatorError(
+                        f"Created global choice metadata ID mismatch: {name}"
+                    )
                 if not SAFE_GUID.fullmatch(metadata_id or ""):
                     raise ApplicatorError(f"Could not resolve created global choice: {name}")
                 self.journal.created({

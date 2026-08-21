@@ -97,6 +97,22 @@ class RollbackTests(unittest.TestCase):
                 MODULE.rollback_from_journal(transport, journal, directory / "out")
             self.assertEqual(transport.deletes, [])
 
+
+    def test_global_choice_rollback_requires_metadata_id_path(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            journal = self.make_journal(directory)
+            value = json.loads(journal.read_text())
+            value["created"] = [value["created"][0]]
+            value["created"][0]["deletePath"] = (
+                "GlobalOptionSetDefinitions(Name='opt_testchoice')"
+            )
+            journal.write_text(json.dumps(value))
+            transport = RollbackTransport()
+            with self.assertRaises(MODULE.ApplicatorError):
+                MODULE.rollback_from_journal(transport, journal, directory / "out")
+            self.assertEqual(transport.deletes, [])
+
     def test_unsafe_journal_kind_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)

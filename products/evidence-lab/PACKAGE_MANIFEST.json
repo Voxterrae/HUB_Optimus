@@ -11,13 +11,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 2533,
-      "sha256": "f559e798b94408acbc94330ddf8aa629db69e00eeaba8b56364d0e377a490fd4"
+      "bytes": 3404,
+      "sha256": "f8a0af958fd9c4adc7b341f0b111899ab8b42f17b0772c6b5d4e09bb414f149a"
     },
     {
       "path": "VALIDATION_RESULTS.txt",
-      "bytes": 5003,
-      "sha256": "a8f574c697e30e83c309c4deb615f4607a9fc83e1fefee144964e7eb47a6dc37"
+      "bytes": 5810,
+      "sha256": "833eeab0df64e13cb65f017080131f87025a4d8716408bbe2703c2032aca564d"
     },
     {
       "path": "contract/optimus-evidence-lab.dataverse.json",
@@ -51,8 +51,8 @@
     },
     {
       "path": "docs/APPLICATOR.md",
-      "bytes": 1098,
-      "sha256": "966c8dbd72bd0d269330b4ae40cb31931ff473cd2a3ff1085660e5de82fd244b"
+      "bytes": 2372,
+      "sha256": "db21040ee0c1b909536048f9fd6e0551be84dd9ab951324ee1b697e499d7061b"
     },
     {
       "path": "docs/MODEL.md",
@@ -91,8 +91,8 @@
     },
     {
       "path": "scripts/apply-dataverse-schema.py",
-      "bytes": 54465,
-      "sha256": "3a8242bbba60dd8d87c36b4ed244d7386912888c7e8ae8338a10fc2850309d9a"
+      "bytes": 55770,
+      "sha256": "1a4a699788405dfc4aee0cf855602ab8e5eb60ee7d9ce6fe60f3eafac1596afe"
     },
     {
       "path": "scripts/build_artifacts.py",
@@ -136,13 +136,13 @@
     },
     {
       "path": "tests/test_schema_applicator.py",
-      "bytes": 4078,
-      "sha256": "7fb6adbeb07ccc6812c10441e4fa4a90a3c79f25fceee72eb0383ab2cfcb850e"
+      "bytes": 9790,
+      "sha256": "89e515dfc99ac0183ff677bfb46fd1326f5811a4887425010735b9e728eef879"
     },
     {
       "path": "tests/test_schema_rollback.py",
-      "bytes": 4658,
-      "sha256": "29437ec13ebd8e00f29f411a5d8a25128d2c5a038eebed3f96dcfbd860c95083"
+      "bytes": 5394,
+      "sha256": "01d5d2186a45a6aaedbaaab8699ceab7960f778e34a6f63c5a925086806f033a"
     },
     {
       "path": "tests/test_seed.py",

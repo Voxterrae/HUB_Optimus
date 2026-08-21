@@ -107,3 +107,28 @@ Rows:           0
 Columns, lookups, alternate keys, and relationships may be direct components or
 effectively included through a table root whose `RootComponentBehavior` is `0`.
 Real orphan metadata is rejected.
+
+## Prewrite OData correction
+
+A governed LCDH-OS DEV attempt stopped before any metadata write when
+Dataverse rejected `$filter` on the `GlobalOptionSetDefinitions` collection.
+The applicator now retrieves global choices by the supported `Name` alternate
+key, escapes OData string literals, treats only `404` as absence, fails closed
+on `405`, waits for post-create propagation, and keeps rollback deletion bound
+to the exact metadata ID in the journal.
+
+Sanitized outcome of run `20260821T113235Z`:
+
+```text
+Classification:       FAILED_PREWRITE_UNSUPPORTED_GLOBAL_OPTIONSET_FILTER
+Created components:   0
+Reused components:    0
+Direct components:    0
+Rows:                 0
+Publications:         0
+Rollback required:    no
+Authorization reuse: no
+```
+
+No new `APPLY_METADATA`, `ROLLBACK_METADATA`, seed, merge, or deployment is
+performed by this source correction.

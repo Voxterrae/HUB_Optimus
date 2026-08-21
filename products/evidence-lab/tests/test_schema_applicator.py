@@ -24,13 +24,37 @@ class FakeTransport:
     def add(self, method, path, response):
         self.responses[(method, path)] = response
 
+    def add_sequence(self, method, path, *responses):
+        self.responses[(method, path)] = list(responses)
+
     def request(self, method, path, *, body=None, headers=None):
         self.calls.append((method, path, body, headers or {}))
         key = (method, path)
         if key not in self.responses:
             return MODULE.Response(404, {}, None)
         response = self.responses[key]
+        if isinstance(response, list):
+            if not response:
+                raise AssertionError(f"No fake response remains for {method} {path}")
+            response = response.pop(0)
         return response() if callable(response) else response
+
+
+class MembershipFreeApplicator(MODULE.SchemaApplicator):
+    def require_effective_membership(
+        self,
+        metadata_id,
+        kind,
+        description,
+        *,
+        parent_tables=(),
+    ):
+        return {
+            "metadataId": metadata_id,
+            "kind": kind,
+            "description": description,
+            "mode": "DIRECT_SOLUTION_COMPONENT",
+        }
 
 
 class ApplicatorTests(unittest.TestCase):
@@ -60,6 +84,114 @@ class ApplicatorTests(unittest.TestCase):
         ):
             with self.assertRaises(MODULE.ApplicatorError):
                 MODULE.encode_odata_relative_path(value)
+
+
+    def test_global_choice_lookup_uses_alternate_key_and_escapes_literal(self):
+        with tempfile.TemporaryDirectory() as temp:
+            transport = FakeTransport()
+            journal = MODULE.EvidenceJournal(Path(temp), mode="TEST", target={})
+            applicator = MODULE.SchemaApplicator({}, {}, transport, journal, apply=False)
+            path = applicator.choice_query("opt_o'brien")
+            self.assertEqual(
+                path,
+                "GlobalOptionSetDefinitions(Name='opt_o''brien')"
+                "?$select=MetadataId,Name,IsGlobal,OptionSetType",
+            )
+            self.assertNotIn("$filter", path)
+
+    def test_optional_global_choice_lookup_treats_404_as_absent(self):
+        with tempfile.TemporaryDirectory() as temp:
+            transport = FakeTransport()
+            journal = MODULE.EvidenceJournal(Path(temp), mode="TEST", target={})
+            applicator = MODULE.SchemaApplicator({}, {}, transport, journal, apply=False)
+            path = applicator.choice_query("opt_missing")
+            self.assertIsNone(applicator.query_single(path, optional=True))
+
+    def test_global_choice_lookup_fails_closed_on_405(self):
+        with tempfile.TemporaryDirectory() as temp:
+            transport = FakeTransport()
+            journal = MODULE.EvidenceJournal(Path(temp), mode="TEST", target={})
+            applicator = MODULE.SchemaApplicator({}, {}, transport, journal, apply=False)
+            path = applicator.choice_query("opt_bad")
+            transport.add(
+                "GET",
+                path,
+                MODULE.Response(405, {}, {"error": {"message": "$filter is not supported"}}),
+            )
+            with self.assertRaises(MODULE.ApplicatorError):
+                applicator.query_single(path, optional=True)
+
+    def test_wait_for_global_choice_retries_404_until_visible(self):
+        with tempfile.TemporaryDirectory() as temp:
+            transport = FakeTransport()
+            journal = MODULE.EvidenceJournal(Path(temp), mode="TEST", target={})
+            applicator = MODULE.SchemaApplicator({}, {}, transport, journal, apply=False)
+            path = applicator.choice_query("opt_eventual")
+            transport.add_sequence(
+                "GET",
+                path,
+                MODULE.Response(404, {}, None),
+                MODULE.Response(404, {}, None),
+                MODULE.Response(200, {}, {
+                    "MetadataId": "00000000-0000-4000-8000-000000000001",
+                    "Name": "opt_eventual",
+                }),
+            )
+            result = applicator.wait_for_single(
+                path,
+                description="global choice opt_eventual",
+                timeout_seconds=1,
+                interval_seconds=0,
+            )
+            self.assertEqual(result["Name"], "opt_eventual")
+            self.assertEqual(
+                len([call for call in transport.calls if call[:2] == ("GET", path)]),
+                3,
+            )
+
+    def test_global_choice_apply_is_idempotent_after_propagation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            metadata_id = "00000000-0000-4000-8000-000000000001"
+            choice = {
+                "logicalName": "opt_testchoice",
+                "displayName": "Test Choice",
+                "description": "Test Choice",
+                "options": [{"value": 884830000, "label": "One"}],
+            }
+            contract = {"globalChoices": [choice]}
+            transport = FakeTransport()
+            journal = MODULE.EvidenceJournal(Path(temp), mode="TEST", target={})
+            applicator = MembershipFreeApplicator(contract, {}, transport, journal, apply=True)
+            path = applicator.choice_query("opt_testchoice")
+            existing = {
+                "MetadataId": metadata_id,
+                "Name": "opt_testchoice",
+                "IsGlobal": True,
+                "OptionSetType": "Picklist",
+            }
+            transport.add_sequence(
+                "GET", path,
+                MODULE.Response(404, {}, None),
+                MODULE.Response(200, {}, existing),
+                MODULE.Response(200, {}, existing),
+            )
+            transport.add(
+                "POST",
+                "GlobalOptionSetDefinitions",
+                MODULE.Response(204, {
+                    "OData-EntityId": (
+                        "https://example.crm4.dynamics.com/api/data/v9.2/"
+                        f"GlobalOptionSetDefinitions({metadata_id})"
+                    )
+                }, None),
+            )
+            applicator.ensure_choices()
+            applicator.ensure_choices()
+            posts = [call for call in transport.calls if call[0] == "POST" and call[1] == "GlobalOptionSetDefinitions"]
+            self.assertEqual(len(posts), 1)
+            self.assertEqual(len(journal.data["created"]), 1)
+            self.assertEqual(len(journal.data["reused"]), 1)
+            self.assertEqual(applicator.choice_ids["opt_testchoice"], metadata_id)
 
     def test_payload_counts_and_types(self):
         contract, _ = MODULE.load_public_artifacts()
