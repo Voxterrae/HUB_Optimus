@@ -12,6 +12,7 @@ PUBLIC_ROUTES = {
     "/": SITE / "index.html",
     "/404.html": SITE / "404.html",
     "/operator/": SITE / "operator" / "index.html",
+    "/obsidian-HUB_Optimus/": SITE / "obsidian-HUB_Optimus" / "index.html",
 }
 
 
@@ -157,12 +158,12 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
         for tag, attribute, reference in parse_document(path).references:
             if tag != "a" or attribute != "href":
                 continue
-            assert "/blob/main/" not in reference
-            assert "/tree/main/" not in reference
             match = evidence_pattern.match(reference)
             if not match:
                 continue
 
+            assert "/blob/main/" not in reference
+            assert "/tree/main/" not in reference
             repository_path = ROOT / unquote(match.group("path"))
             assert match.group("ref") == EVIDENCE_REF, reference
             if match.group("kind") == "blob":
@@ -179,6 +180,8 @@ def test_live_external_navigation_targets_are_explicit_and_network_free_in_pytes
         "https://github.com/Voxterrae/HUB_Optimus",
         "https://github.com/Voxterrae/HUB_Optimus/issues",
         "https://github.com/Voxterrae/HUB-Optimus-labs",
+        "https://github.com/Voxterrae/HUB_Optimus/issues/1901",
+        "https://github.com/Voxterrae/HUB_Optimus/tree/main/obsidian-HUB_Optimus",
     }
     external_navigation = set()
 
