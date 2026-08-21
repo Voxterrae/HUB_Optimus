@@ -86,3 +86,24 @@ PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -v
 This package has not created a solution, metadata or rows. It has not touched
 production, merged a branch or deployed anything. A separate private, read-only
 LCDH-OS DEV inspection runner is supplied outside this tenant-neutral package.
+
+
+## Governed metadata applicator
+
+The draft package now includes an idempotent metadata applicator and an exact
+rollback-by-journal plan. The applicator is bound to baseline B0 and remains
+non-applying unless a private, time-limited authorization is supplied outside
+the repository.
+
+Expected post-apply direct solution components:
+
+```text
+Global choices: 6
+Table roots:    5 (RootComponentBehavior=0)
+Total direct:  11
+Rows:           0
+```
+
+Columns, lookups, alternate keys, and relationships may be direct components or
+effectively included through a table root whose `RootComponentBehavior` is `0`.
+Real orphan metadata is rejected.

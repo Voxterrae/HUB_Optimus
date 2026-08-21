@@ -19,9 +19,15 @@ GUID_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+SYNTHETIC_GUIDS = {
+    f"00000000-0000-4000-8000-{value:012d}"
+    for value in range(0, 400)
+}
+ALLOWED_PUBLIC_HOSTS = {"example.crm4.dynamics.com"}
+
 
 class PublicBoundaryTests(unittest.TestCase):
-    def test_package_contains_no_tenant_identifiers(self):
+    def test_package_contains_no_private_tenant_identifiers(self):
         for path in ROOT.rglob("*"):
             if (
                 not path.is_file()
@@ -32,21 +38,18 @@ class PublicBoundaryTests(unittest.TestCase):
                 continue
 
             text = path.read_text(encoding="utf-8")
-            self.assertEqual(
-                EMAIL_PATTERN.findall(text),
-                [],
+            emails = set(EMAIL_PATTERN.findall(text))
+            self.assertTrue(
+                emails <= {"GlobalOptionSet@odata.bind"},
                 path.relative_to(ROOT),
             )
-            self.assertEqual(
-                DATAVERSE_HOST_PATTERN.findall(text),
-                [],
-                path.relative_to(ROOT),
-            )
-            self.assertEqual(
-                GUID_PATTERN.findall(text),
-                [],
-                path.relative_to(ROOT),
-            )
+            hosts = {
+                match.split("//", 1)[1].lower()
+                for match in DATAVERSE_HOST_PATTERN.findall(text)
+            }
+            self.assertTrue(hosts <= ALLOWED_PUBLIC_HOSTS, path.relative_to(ROOT))
+            guids = {value.lower() for value in GUID_PATTERN.findall(text)}
+            self.assertTrue(guids <= SYNTHETIC_GUIDS, path.relative_to(ROOT))
 
 
 if __name__ == "__main__":

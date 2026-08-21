@@ -1,6 +1,5 @@
-OPTIMUS EVIDENCE LAB — OFFLINE VALIDATION
+OPTIMUS EVIDENCE LAB — APPLICATOR VALIDATION
 Status: PASS
-Tests: 24
 
 test_alternate_keys_reference_existing_columns (test_contract.ContractTests.test_alternate_keys_reference_existing_columns) ... ok
 test_choice_values_are_unique_and_in_range (test_contract.ContractTests.test_choice_values_are_unique_and_in_range) ... ok
@@ -11,12 +10,29 @@ test_observation_is_aggregate_only (test_contract.ContractTests.test_observation
 test_relationships_are_restrictive (test_contract.ContractTests.test_relationships_are_restrictive) ... ok
 test_solution_identity (test_contract.ContractTests.test_solution_identity) ... ok
 test_table_names (test_contract.ContractTests.test_table_names) ... ok
-test_manifest_matches_package (test_manifest.ManifestTests.test_manifest_matches_package) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.001s
+
+OK
+
 test_schema_counts (test_plan.PlanTests.test_schema_counts) ... ok
 test_schema_hash_binding (test_plan.PlanTests.test_schema_hash_binding) ... ok
 test_seed_hash_binding_and_counts (test_plan.PlanTests.test_seed_hash_binding_and_counts) ... ok
 test_zero_write_dry_run (test_plan.PlanTests.test_zero_write_dry_run) ... ok
-test_package_contains_no_tenant_identifiers (test_public_boundary.PublicBoundaryTests.test_package_contains_no_tenant_identifiers) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+OK
+
+test_package_contains_no_private_tenant_identifiers (test_public_boundary.PublicBoundaryTests.test_package_contains_no_private_tenant_identifiers) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.024s
+
+OK
+
 test_aggregate_and_no_personal_data (test_seed.SeedTests.test_aggregate_and_no_personal_data) ... ok
 test_all_lookups_resolve (test_seed.SeedTests.test_all_lookups_resolve) ... ok
 test_alternate_keys_are_unique (test_seed.SeedTests.test_alternate_keys_are_unique) ... ok
@@ -28,6 +44,45 @@ test_six_global_observations (test_seed.SeedTests.test_six_global_observations) 
 test_source_rows_match_corpus (test_seed.SeedTests.test_source_rows_match_corpus) ... ok
 
 ----------------------------------------------------------------------
-Ran 24 tests in 0.015s
+Ran 9 tests in 0.002s
+
+OK
+
+test_column_payloads_bind_global_choices (test_schema_applicator.ApplicatorTests.test_column_payloads_bind_global_choices) ... ok
+test_odata_encoding_preserves_odata_and_encodes_spaces (test_schema_applicator.ApplicatorTests.test_odata_encoding_preserves_odata_and_encodes_spaces) ... ok
+test_odata_rejects_absolute_urls_control_chars_and_traversal (test_schema_applicator.ApplicatorTests.test_odata_rejects_absolute_urls_control_chars_and_traversal) ... ok
+test_offline_review_is_bound_and_zero_write (test_schema_applicator.ApplicatorTests.test_offline_review_is_bound_and_zero_write) ... ok
+test_payload_counts_and_types (test_schema_applicator.ApplicatorTests.test_payload_counts_and_types) ... ok
+test_relationship_delete_is_restrictive (test_schema_applicator.ApplicatorTests.test_relationship_delete_is_restrictive) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.003s
+
+OK
+
+test_direct_membership_is_accepted (test_effective_membership.MembershipTests.test_direct_membership_is_accepted) ... ok
+test_missing_root_rejects_real_orphan (test_effective_membership.MembershipTests.test_missing_root_rejects_real_orphan) ... ok
+test_nonzero_root_behavior_does_not_include_subcomponent (test_effective_membership.MembershipTests.test_nonzero_root_behavior_does_not_include_subcomponent) ... ok
+test_table_root_behavior_zero_includes_subcomponent (test_effective_membership.MembershipTests.test_table_root_behavior_zero_includes_subcomponent) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.004s
+
+OK
+
+test_reverse_journal_order_and_single_publication (test_schema_rollback.RollbackTests.test_reverse_journal_order_and_single_publication) ... ok
+test_rows_block_rollback_before_delete (test_schema_rollback.RollbackTests.test_rows_block_rollback_before_delete) ... ok
+test_unsafe_journal_kind_is_rejected (test_schema_rollback.RollbackTests.test_unsafe_journal_kind_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.003s
+
+OK
+
+test_rollback_plan_is_zero_row_and_no_retry (test_baseline_b0_and_rollback_plan.BaselineB0Tests.test_rollback_plan_is_zero_row_and_no_retry) ... ok
+test_sanitized_b0_binding (test_baseline_b0_and_rollback_plan.BaselineB0Tests.test_sanitized_b0_binding) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
 
 OK

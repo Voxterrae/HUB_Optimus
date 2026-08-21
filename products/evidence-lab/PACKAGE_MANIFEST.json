@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "package": "OptimusEvidenceLab",
   "version": "0.1.0.0",
-  "fileCount": 18,
+  "fileCount": 29,
   "files": [
     {
       "path": "OFFLINE_DRY_RUN_RESULT.json",
@@ -11,18 +11,48 @@
     },
     {
       "path": "README.md",
-      "bytes": 1894,
-      "sha256": "32551221e1528427407d4ce01b02fa4d4dac76c99945632b31ee35a958739c48"
+      "bytes": 2533,
+      "sha256": "f559e798b94408acbc94330ddf8aa629db69e00eeaba8b56364d0e377a490fd4"
     },
     {
       "path": "VALIDATION_RESULTS.txt",
-      "bytes": 2358,
-      "sha256": "d66ae34d64c4555a99de0c184a2cadf9bf8a80d64831d20495167dec0953c1c1"
+      "bytes": 5003,
+      "sha256": "a8f574c697e30e83c309c4deb615f4607a9fc83e1fefee144964e7eb47a6dc37"
     },
     {
       "path": "contract/optimus-evidence-lab.dataverse.json",
       "bytes": 29138,
       "sha256": "d2b5e789ae7981138df94f49f621d50d1b90adc3f7900b77c6d8a46a73390a5b"
+    },
+    {
+      "path": "dataverse/apply/authorization.template.json",
+      "bytes": 1078,
+      "sha256": "3c6d311d3ad775b90a7149d97c79e8c907dce98bf2f9fb8099de737810dbb978"
+    },
+    {
+      "path": "dataverse/apply/rollback-authorization.template.json",
+      "bytes": 1204,
+      "sha256": "9c6228c7dc6e2cb7a7e6143888563a4dbc5d5647ddf784b5dc6309248129d7b6"
+    },
+    {
+      "path": "dataverse/baselines/B0.json",
+      "bytes": 708,
+      "sha256": "dc6c01c51f298972e898335f23c0b98be0cb3befece5cde113f5af1c4263590b"
+    },
+    {
+      "path": "dataverse/pac/Invoke-OptimusEvidenceLabSchema.ps1",
+      "bytes": 5229,
+      "sha256": "274f738c4ffca523a49526ddac6fc6e7ff2f650f7b2334c9d133ae407d3b7e59"
+    },
+    {
+      "path": "dataverse/rollback/rollback-plan.template.json",
+      "bytes": 1312,
+      "sha256": "6a308e0c0cc598153f542b090cf41ec1975163d3af6c555a013432052be6b0bf"
+    },
+    {
+      "path": "docs/APPLICATOR.md",
+      "bytes": 1098,
+      "sha256": "966c8dbd72bd0d269330b4ae40cb31931ff473cd2a3ff1085660e5de82fd244b"
     },
     {
       "path": "docs/MODEL.md",
@@ -31,8 +61,8 @@
     },
     {
       "path": "docs/RUNBOOK.md",
-      "bytes": 903,
-      "sha256": "b084d662b48f687c6f6eea31ad4141ec3b076b4d7caa0d74ba5e215c64e0e27a"
+      "bytes": 1575,
+      "sha256": "b87cf52c69de4dd9e037d07d6207914acaea9989f31e830ceb2005e53ba2b2fe"
     },
     {
       "path": "docs/SEED.md",
@@ -60,6 +90,11 @@
       "sha256": "7d72504b36e7eb9e7da9c93822799e8713ccded434735482dcc9c8faca3d0054"
     },
     {
+      "path": "scripts/apply-dataverse-schema.py",
+      "bytes": 54465,
+      "sha256": "3a8242bbba60dd8d87c36b4ed244d7386912888c7e8ae8338a10fc2850309d9a"
+    },
+    {
       "path": "scripts/build_artifacts.py",
       "bytes": 10526,
       "sha256": "239bbf9fad49de2022f2d9882cf685c8cc819cc5702e8bbb5137d9e8a6c74a6f"
@@ -70,9 +105,19 @@
       "sha256": "ff006662d61bd58f9fd54ecfb93120b796a4ae4e1a3573ff20f667c050385aa5"
     },
     {
+      "path": "tests/test_baseline_b0_and_rollback_plan.py",
+      "bytes": 1342,
+      "sha256": "76ff6f9b3ce2c0cb2c2037e180fcf33c933096a8589b57f2bbf290da1e154d65"
+    },
+    {
       "path": "tests/test_contract.py",
       "bytes": 4247,
       "sha256": "9a15758a0fe34349cd8f2d7e4e5ad41b8956fe3a2bebf343faf8c9133365e453"
+    },
+    {
+      "path": "tests/test_effective_membership.py",
+      "bytes": 3209,
+      "sha256": "a4159b2d12157b0c9aa6a4446d39a42f623d57d557d134618afbf3f9bc10b2df"
     },
     {
       "path": "tests/test_manifest.py",
@@ -86,8 +131,18 @@
     },
     {
       "path": "tests/test_public_boundary.py",
-      "bytes": 1370,
-      "sha256": "a0af87115ac5ae5d5d650f2306d925849cf3f6239241809e5e557426ed6d98d8"
+      "bytes": 1656,
+      "sha256": "91afd8e8b5866a9cd38b53cdb4543b02f3df421a4c2f445e248a339286320958"
+    },
+    {
+      "path": "tests/test_schema_applicator.py",
+      "bytes": 4078,
+      "sha256": "7fb6adbeb07ccc6812c10441e4fa4a90a3c79f25fceee72eb0383ab2cfcb850e"
+    },
+    {
+      "path": "tests/test_schema_rollback.py",
+      "bytes": 4658,
+      "sha256": "29437ec13ebd8e00f29f411a5d8a25128d2c5a038eebed3f96dcfbd860c95083"
     },
     {
       "path": "tests/test_seed.py",
