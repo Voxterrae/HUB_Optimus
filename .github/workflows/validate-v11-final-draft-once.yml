@@ -1,0 +1,408 @@
+name: Validate final Project Intelligence v1.1 Draft head once
+
+on:
+  push:
+    branches:
+      - qa/1912-v11-final-validation
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: validate-v11-final-draft-once
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: validate-v11-final-draft
+    if: github.repository == 'Voxterrae/HUB_Optimus'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Resolve exact open Draft head
+        id: resolve
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/pulls/1913",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              pull = json.load(response)
+
+          if pull.get("state") != "open" or pull.get("merged") is not False:
+              raise SystemExit("PR #1913 must remain open and unmerged")
+          if pull.get("draft") is not True:
+              raise SystemExit("PR #1913 must remain Draft during v1.1 validation")
+          if (pull.get("head") or {}).get("ref") != "feat/obsidian-project-intelligence-v1.1":
+              raise SystemExit("Unexpected PR #1913 head branch")
+          if (pull.get("base") or {}).get("ref") != "feat/obsidian-project-intelligence":
+              raise SystemExit("Unexpected PR #1913 stacked base branch")
+
+          head_sha = (pull.get("head") or {}).get("sha")
+          base_sha = (pull.get("base") or {}).get("sha")
+          if not isinstance(head_sha, str) or len(head_sha) != 40:
+              raise SystemExit("Invalid PR head SHA")
+          if not isinstance(base_sha, str) or len(base_sha) != 40:
+              raise SystemExit("Invalid PR base SHA")
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write(f"PR_HEAD_SHA={head_sha}\n")
+              env_file.write(f"PR_BASE_SHA={base_sha}\n")
+          print(f"PR_HEAD_SHA={head_sha}")
+          print(f"PR_BASE_SHA={base_sha}")
+          PY
+
+      - name: Record final validation start
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          body = (
+              "## Final v1.1 Draft validation started\n\n"
+              f"- exact PR head: `{os.environ['PR_HEAD_SHA']}`\n"
+              f"- stacked base: `{os.environ['PR_BASE_SHA']}`\n"
+              f"- workflow run: {os.environ['RUN_URL']}\n"
+              "- scope: full tests, deterministic inventory check, graph-byte stability and artifact packaging\n"
+              "- merge/deployment: none\n"
+          )
+          for endpoint in (
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1912/comments",
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1913/comments",
+          ):
+              request = urllib.request.Request(
+                  endpoint,
+                  data=json.dumps({"body": body}).encode("utf-8"),
+                  method="POST",
+                  headers={
+                      "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                      "Content-Type": "application/json",
+                  },
+              )
+              with urllib.request.urlopen(request, timeout=30):
+                  pass
+          PY
+
+      - name: Checkout exact Draft head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.PR_HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact scope and generated evidence
+        id: identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PR_HEAD_SHA"
+          HEAD_TREE="$(git rev-parse 'HEAD^{tree}')"
+          echo "HEAD_TREE=$HEAD_TREE" >> "$GITHUB_ENV"
+          test -f site/obsidian-HUB_Optimus/app-v11.js
+          test -f site/obsidian-HUB_Optimus/styles-v11.css
+          test -f site/obsidian-HUB_Optimus/system.learning.json
+          test -f site/obsidian-HUB_Optimus/system.inventory.json
+          test -f site/obsidian-HUB_Optimus/system.delta.json
+          test -f tools/project_intelligence/repository_intelligence.py
+          test -f tests/test_project_intelligence_repository_learning.py
+          test -f "obsidian-HUB_Optimus/98_META/Deterministic Repository Inventory.md"
+          test -f "obsidian-HUB_Optimus/98_META/Model Delta and Drift.md"
+          git diff --quiet 3f57ac105bb5251ed2204813b07a414067180eaa..HEAD -- \
+            site/obsidian-HUB_Optimus/index.html \
+            site/obsidian-HUB_Optimus/app-v11.js \
+            site/obsidian-HUB_Optimus/styles-v11.css \
+            site/obsidian-HUB_Optimus/app.js \
+            site/obsidian-HUB_Optimus/app-graph.js
+          echo "graph_bytes_unchanged_from_mobile_qa=pass"
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install validation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Run deterministic and complete validation
+        id: tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/check_mojibake.py .
+          python tools/check_narrative_consistency.py \
+            --input datasets/ai_risk_narratives/seed_claims.json \
+            --schema datasets/ai_risk_narratives/claim_record.schema.json \
+            --report "$RUNNER_TEMP/narrative_consistency.json"
+          python - <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          inventory = json.loads(
+              Path("site/obsidian-HUB_Optimus/system.inventory.json").read_text(encoding="utf-8")
+          )
+          delta = json.loads(
+              Path("site/obsidian-HUB_Optimus/system.delta.json").read_text(encoding="utf-8")
+          )
+          command = [
+              sys.executable,
+              "tools/project_intelligence/repository_intelligence.py",
+              "check",
+              "--base",
+              delta["analysis"]["base_commit"],
+              "--head",
+              inventory["analysis"]["commit"],
+              "--inventory-output",
+              "site/obsidian-HUB_Optimus/system.inventory.json",
+              "--delta-output",
+              "site/obsidian-HUB_Optimus/system.delta.json",
+          ]
+          subprocess.run(command, check=True)
+          PY
+          node --check site/obsidian-HUB_Optimus/app-graph.js
+          node --check site/obsidian-HUB_Optimus/app.js
+          node --check site/obsidian-HUB_Optimus/app-v11.js
+          python -m pytest -q | tee "$RUNNER_TEMP/pytest.txt"
+          git diff --check
+
+      - name: Build exact validation receipt
+        id: receipt
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          inventory = json.loads(Path("site/obsidian-HUB_Optimus/system.inventory.json").read_text(encoding="utf-8"))
+          delta = json.loads(Path("site/obsidian-HUB_Optimus/system.delta.json").read_text(encoding="utf-8"))
+          learning = json.loads(Path("site/obsidian-HUB_Optimus/system.learning.json").read_text(encoding="utf-8"))
+          pytest_output = (Path(os.environ["RUNNER_TEMP"]) / "pytest.txt").read_text(
+              encoding="utf-8", errors="replace"
+          ).strip().splitlines()
+          pytest_summary = pytest_output[-1] if pytest_output else "pytest summary unavailable"
+
+          hashed_paths = [
+              "site/obsidian-HUB_Optimus/index.html",
+              "site/obsidian-HUB_Optimus/app-v11.js",
+              "site/obsidian-HUB_Optimus/styles-v11.css",
+              "site/obsidian-HUB_Optimus/system.learning.json",
+              "site/obsidian-HUB_Optimus/system.inventory.json",
+              "site/obsidian-HUB_Optimus/system.delta.json",
+          ]
+          hashes = {}
+          for relative in hashed_paths:
+              hashes[relative] = hashlib.sha256(Path(relative).read_bytes()).hexdigest()
+
+          capabilities = {
+              item["id"]: item["status"]
+              for item in learning.get("capabilities", [])
+              if item.get("id") in {
+                  "graph-node-search",
+                  "graph-impact-focus",
+                  "graph-viewport",
+                  "relation-evidence",
+                  "repository-domain-inventory",
+                  "source-model-coverage",
+                  "model-drift-detection",
+                  "incremental-model-delta",
+              }
+          }
+          receipt = {
+              "schema_version": "hub-optimus-v11-validation-receipt.v1",
+              "pr": 1913,
+              "head_commit": os.environ["PR_HEAD_SHA"],
+              "head_tree": os.environ["HEAD_TREE"],
+              "stacked_base_commit": os.environ["PR_BASE_SHA"],
+              "inventory_basis_commit": inventory["analysis"]["commit"],
+              "inventory_basis_tree": inventory["analysis"]["tree"],
+              "pytest": pytest_summary,
+              "graph_bytes_unchanged_from_mobile_qa_commit": "3f57ac105bb5251ed2204813b07a414067180eaa",
+              "inventory_summary": inventory["summary"],
+              "delta_summary": delta["summary"],
+              "capabilities": capabilities,
+              "sha256": hashes,
+              "merge": "not-performed",
+              "deployment": "not-performed",
+          }
+          receipt_path = Path(os.environ["RUNNER_TEMP"]) / "v11-final-validation-receipt.json"
+          receipt_path.write_text(
+              json.dumps(receipt, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(receipt, ensure_ascii=False, sort_keys=True, indent=2))
+          PY
+
+      - name: Package exact browser and learning surface
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          name: v11-final-draft-surface
+          path: site/obsidian-HUB_Optimus
+
+      - name: Publish final receipt and update Draft PR status
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import re
+          import urllib.request
+
+          receipt_path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "v11-final-validation-receipt.json"
+          receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+          inv = receipt["inventory_summary"]
+          delta = receipt["delta_summary"]
+          body = (
+              "## Final v1.1 Draft validation PASS\n\n"
+              f"- exact head: `{receipt['head_commit']}`\n"
+              f"- exact tree: `{receipt['head_tree']}`\n"
+              f"- stacked base: `{receipt['stacked_base_commit']}`\n"
+              f"- workflow run: {os.environ['RUN_URL']}\n"
+              f"- tests: `{receipt['pytest']}`\n"
+              "- graph bytes unchanged from mobile/browser QA commit: `PASS`\n"
+              "- deterministic inventory reproduction: `PASS`\n"
+              "- JavaScript syntax: `PASS`\n"
+              "- encoding and narrative consistency: `PASS`\n"
+              "- merge: `not performed`\n"
+              "- deployment: `not performed`\n\n"
+              "### Whole-system intelligence\n\n"
+              f"- inventoried Git files: `{inv['files']}`\n"
+              f"- modeled files: `{inv['modeled_files']}`\n"
+              f"- architecture-relevant files: `{inv['architecture_files']}`\n"
+              f"- modeled architecture files: `{inv['modeled_architecture_files']}`\n"
+              f"- source references: `{inv['source_references']}`\n"
+              f"- unresolved source references: `{inv['unresolved_source_references']}`\n"
+              f"- changed paths from semantic baseline: `{delta['changed_paths']}`\n"
+              f"- affected model objects: `{delta['affected_model_objects']}`\n"
+              f"- unmodeled change review candidates: `{delta['unmodeled_architecture_review_candidates']}`\n\n"
+              "The inventory and delta are review evidence. They do not mutate semantic facts or certify mutable external state."
+          )
+          headers = {
+              "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+              "Accept": "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2022-11-28",
+              "Content-Type": "application/json",
+          }
+          for endpoint in (
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1912/comments",
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1913/comments",
+          ):
+              request = urllib.request.Request(
+                  endpoint,
+                  data=json.dumps({"body": body}).encode("utf-8"),
+                  method="POST",
+                  headers=headers,
+              )
+              with urllib.request.urlopen(request, timeout=30):
+                  pass
+
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/pulls/1913",
+              headers=headers,
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              pull = json.load(response)
+          current_body = pull.get("body") or ""
+          marker_start = "<!-- v11-final-status:start -->"
+          marker_end = "<!-- v11-final-status:end -->"
+          status_block = (
+              f"{marker_start}\n"
+              "## Current validated v1.1 state\n\n"
+              f"- Draft head: `{receipt['head_commit']}`\n"
+              f"- Draft tree: `{receipt['head_tree']}`\n"
+              f"- Tests: `{receipt['pytest']}`\n"
+              "- Hosted final validation: `PASS`\n"
+              "- Browser/mobile graph QA: `PASS`; graph bytes unchanged after QA fix\n"
+              "- Deterministic repository inventory: `IMPLEMENTED`\n"
+              "- Source-model coverage: `IMPLEMENTED`\n"
+              "- Drift/change-impact detection: `IMPLEMENTED`\n"
+              "- Automatic semantic-model mutation: `NOT IMPLEMENTED`\n"
+              "- Merge: `NOT PERFORMED`\n"
+              "- Deployment: `NOT PERFORMED`\n"
+              f"- Evidence run: {os.environ['RUN_URL']}\n"
+              f"{marker_end}"
+          )
+          pattern = re.compile(
+              re.escape(marker_start) + r".*?" + re.escape(marker_end),
+              re.DOTALL,
+          )
+          if pattern.search(current_body):
+              updated_body = pattern.sub(status_block, current_body)
+          else:
+              updated_body = current_body.rstrip() + "\n\n" + status_block + "\n"
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/pulls/1913",
+              data=json.dumps({"body": updated_body}).encode("utf-8"),
+              method="PATCH",
+              headers=headers,
+          )
+          with urllib.request.urlopen(request, timeout=30):
+              pass
+          PY
+
+      - name: Record failure receipt
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          body = (
+              "## Final v1.1 Draft validation FAILED\n\n"
+              f"- exact head: `{os.environ.get('PR_HEAD_SHA', '')}`\n"
+              f"- workflow run: {os.environ['RUN_URL']}\n"
+              "- merge/deployment: not performed\n"
+              "- disposition: keep PR #1913 Draft and inspect the failed step\n"
+          )
+          headers = {
+              "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+              "Accept": "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2022-11-28",
+              "Content-Type": "application/json",
+          }
+          for endpoint in (
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1912/comments",
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1913/comments",
+          ):
+              request = urllib.request.Request(
+                  endpoint,
+                  data=json.dumps({"body": body}).encode("utf-8"),
+                  method="POST",
+                  headers=headers,
+              )
+              with urllib.request.urlopen(request, timeout=30):
+                  pass
+          PY
