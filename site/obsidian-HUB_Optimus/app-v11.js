@@ -142,13 +142,20 @@
     return neighbours;
   }
 
+  function currentViewNodeIds() {
+    const view = hub.state.model?.views?.[hub.state.mode];
+    return new Set(Array.isArray(view?.nodes) ? view.nodes : []);
+  }
+
   function focusSet() {
     const selected = hub.state.selectedNodeId;
     if (!selected || addonState.scope === "all") return null;
-    if (addonState.scope === "direct") return directNeighbours(selected);
-    if (addonState.scope === "upstream") return reachable(selected, "reverse");
-    if (addonState.scope === "downstream") return reachable(selected, "forward");
-    return null;
+    let reachableNodes = new Set([selected]);
+    if (addonState.scope === "direct") reachableNodes = directNeighbours(selected);
+    if (addonState.scope === "upstream") reachableNodes = reachable(selected, "reverse");
+    if (addonState.scope === "downstream") reachableNodes = reachable(selected, "forward");
+    const visibleNodes = currentViewNodeIds();
+    return new Set([...reachableNodes].filter((nodeId) => visibleNodes.has(nodeId)));
   }
 
   function relationIsFocused(relation, focusedNodes) {
@@ -203,7 +210,7 @@
     const summary = document.getElementById("graph-focus-summary");
     const selectedNode = modelNodes.get(selected);
     if (summary) {
-      const nodeCount = focusedNodes ? focusedNodes.size : allNodes().length;
+      const nodeCount = focusedNodes ? focusedNodes.size : currentViewNodeIds().size;
       summary.textContent = selectedNode
         ? `${selectedNode.name} · ${addonState.scope} · ${nodeCount} nodos · ${focusedRelations.length} relaciones visibles`
         : "Selecciona un nodo para analizar su impacto.";

@@ -42,6 +42,7 @@
 .graph-control-group input,
 .graph-control-group select {
   min-width: 0;
+  font: inherit;
   padding: 0.55rem 0.7rem;
 }
 
