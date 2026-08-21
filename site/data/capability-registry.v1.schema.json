@@ -404,6 +404,64 @@
           "if": {
             "properties": {
               "source_status": {
+                "const": "draft-pr"
+              }
+            },
+            "required": [
+              "source_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "minItems": 1,
+                "items": {
+                  "properties": {
+                    "type": {
+                      "const": "pull-request"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_status": {
+                "const": "draft-pr-stack"
+              }
+            },
+            "required": [
+              "source_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "minItems": 2,
+                "items": {
+                  "properties": {
+                    "type": {
+                      "const": "pull-request"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_status": {
                 "const": "open-issue"
               }
             },
@@ -430,6 +488,18 @@
               },
               "live_external_transport_enabled": {
                 "const": false
+              },
+              "evidence": {
+                "items": {
+                  "properties": {
+                    "type": {
+                      "const": "issue"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
               }
             }
           }
@@ -452,6 +522,18 @@
                   "enum": [
                     "draft",
                     "issue-only"
+                  ]
+                }
+              },
+              "evidence": {
+                "items": {
+                  "properties": {
+                    "type": {
+                      "const": "commit-path"
+                    }
+                  },
+                  "required": [
+                    "type"
                   ]
                 }
               }
