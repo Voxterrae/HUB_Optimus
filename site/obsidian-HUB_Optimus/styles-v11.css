@@ -78,6 +78,8 @@
 
 .graph-focus-status {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   gap: 0.55rem;
   margin: 0 0 1rem;
   padding: 0.7rem 0.9rem;
@@ -97,6 +99,8 @@
 
 .graph-relation-inspector {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   flex-wrap: wrap;
   gap: 0.4rem;
   align-items: center;
@@ -112,6 +116,7 @@
 }
 
 .graph-relation-chip {
+  min-width: 0;
   max-width: 100%;
   padding: 0.3rem 0.48rem;
   overflow: hidden;

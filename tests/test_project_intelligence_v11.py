@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 
@@ -132,6 +133,20 @@ def test_v11_graph_interaction_contracts():
         "@media (prefers-reduced-motion: reduce)",
     ):
         assert selector in styles
+
+    # Flex items with unbroken relation labels must be allowed to shrink on mobile.
+    for selector in (
+        ".graph-focus-status",
+        ".graph-relation-inspector",
+        ".graph-relation-chip",
+    ):
+        block = re.search(
+            rf"{re.escape(selector)}\s*\{{(?P<body>[^}}]*)\}}",
+            styles,
+            re.DOTALL,
+        )
+        assert block, selector
+        assert re.search(r"min-width\s*:\s*0\s*;", block.group("body")), selector
 
 
 def test_v11_obsidian_notes_define_graph_and_learning_boundaries():
