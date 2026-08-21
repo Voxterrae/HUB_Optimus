@@ -68,7 +68,7 @@ def decision() -> types.SimpleNamespace:
 class FakeClient:
     pull_responses: list[dict[str, Any]] = []
     create_failure_at: int | None = None
-    finalize_failure_ids: set[int] = set()
+    finalize_failures_remaining: dict[int, int] = {}
     instances: list["FakeClient"] = []
 
     def __init__(self, token: str, full_name: str) -> None:
@@ -114,7 +114,9 @@ class FakeClient:
             return {"id": check_id}
         if path.startswith("check-runs/") and method == "PATCH":
             check_id = int(path.rsplit("/", 1)[1])
-            if check_id in type(self).finalize_failure_ids:
+            failures_remaining = type(self).finalize_failures_remaining.get(check_id, 0)
+            if failures_remaining:
+                type(self).finalize_failures_remaining[check_id] = failures_remaining - 1
                 raise WORKFLOW.WorkflowError(f"cannot finalize check {check_id}")
             assert payload is not None
             self.finalized_checks.append((check_id, payload["conclusion"]))
@@ -150,7 +152,7 @@ class FakeClient:
 def reset_fake_client() -> None:
     FakeClient.pull_responses = []
     FakeClient.create_failure_at = None
-    FakeClient.finalize_failure_ids = set()
+    FakeClient.finalize_failures_remaining = {}
     FakeClient.instances = []
 
 
@@ -190,6 +192,10 @@ def configure(
 
 def conclusions(client: FakeClient) -> list[str]:
     return [value for _, value in client.finalized_checks]
+
+
+def latest_conclusions(client: FakeClient) -> dict[int, str]:
+    return {check_id: value for check_id, value in client.finalized_checks}
 
 
 def test_success_is_published_on_head_and_live_merge_candidate(
@@ -270,15 +276,32 @@ def test_second_check_creation_failure_marks_first_check_failed(
     assert conclusions(client) == ["failure"]
 
 
-def test_any_check_finalization_failure_returns_nonzero(
+def test_merge_check_finalization_failure_revokes_head_success(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
 ) -> None:
-    FakeClient.finalize_failure_ids = {102}
+    FakeClient.finalize_failures_remaining = {102: 2}
     configure(monkeypatch, tmp_path)
 
     assert WORKFLOW.run() == 1
-    assert FakeClient.instances[0].finalized_checks == [(101, "success")]
+    client = FakeClient.instances[0]
+    assert client.finalized_checks == [(101, "success"), (101, "failure")]
+    assert latest_conclusions(client) == {101: "failure"}
+    assert (102, "success") not in client.finalized_checks
+
+
+def test_head_finalization_failure_never_publishes_merge_candidate_success(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
+    FakeClient.finalize_failures_remaining = {101: 1}
+    configure(monkeypatch, tmp_path)
+
+    assert WORKFLOW.run() == 1
+    client = FakeClient.instances[0]
+    assert client.finalized_checks == [(101, "failure"), (102, "failure")]
+    assert latest_conclusions(client) == {101: "failure", 102: "failure"}
+    assert (102, "success") not in client.finalized_checks
 
 
 def test_semantic_evidence_change_before_finalization_fails_closed(

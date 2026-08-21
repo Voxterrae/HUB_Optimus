@@ -494,7 +494,29 @@ def finalize_created_checks(
             )
         except (OSError, WorkflowError, urllib.error.URLError) as exc:
             errors.append(f"cannot finalize {label} check {check_run_id}: {exc}")
-    return errors
+            break
+
+    if not errors:
+        return []
+
+    failure_summary = (
+        "FOUNDER_AUTHORITY_GUARD: FAIL: check publication failed; "
+        "no created check may retain a successful conclusion.\n"
+        + "\n".join(errors)
+    )
+    revocation_errors: list[str] = []
+    for label, check_run_id in checks:
+        try:
+            client.finalize_check(
+                check_run_id,
+                success=False,
+                summary=f"target={label}\n{failure_summary}",
+            )
+        except (OSError, WorkflowError, urllib.error.URLError) as exc:
+            revocation_errors.append(
+                f"cannot fail-close {label} check {check_run_id}: {exc}"
+            )
+    return [*errors, *revocation_errors]
 
 
 def run() -> int:
