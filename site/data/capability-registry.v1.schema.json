@@ -1,0 +1,659 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huboptimus.dev/data/capability-registry.v1.schema.json",
+  "title": "HUB_Optimus Public Capability Registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "registry_id",
+    "registry_mode",
+    "reviewed_at",
+    "baseline",
+    "components"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "registry_id": {
+      "const": "hub_optimus.public_capabilities.v1"
+    },
+    "registry_mode": {
+      "const": "human-reviewed-static"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "baseline": {
+      "$ref": "#/$defs/baseline"
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/component"
+      }
+    }
+  },
+  "$defs": {
+    "sha40": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_repository",
+        "source_baseline_sha",
+        "public_evidence_sha",
+        "github_pages",
+        "sites_mirror"
+      ],
+      "properties": {
+        "canonical_repository": {
+          "const": "Voxterrae/HUB_Optimus"
+        },
+        "source_baseline_sha": {
+          "$ref": "#/$defs/sha40"
+        },
+        "public_evidence_sha": {
+          "$ref": "#/$defs/sha40"
+        },
+        "github_pages": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "observed_at",
+            "public_url",
+            "workflow_path",
+            "artifact_path",
+            "observed_run_id",
+            "observed_source_sha",
+            "observed_conclusion",
+            "portfolio_generation",
+            "merge_path_triggers_pages"
+          ],
+          "properties": {
+            "observed_at": {
+              "$ref": "#/$defs/date"
+            },
+            "public_url": {
+              "const": "https://huboptimus.dev/"
+            },
+            "workflow_path": {
+              "const": ".github/workflows/pages.yml"
+            },
+            "artifact_path": {
+              "const": "site"
+            },
+            "observed_run_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "observed_source_sha": {
+              "$ref": "#/$defs/sha40"
+            },
+            "observed_conclusion": {
+              "enum": [
+                "success",
+                "failure",
+                "cancelled",
+                "unknown"
+              ]
+            },
+            "portfolio_generation": {
+              "enum": [
+                "manual",
+                "registry-derived"
+              ]
+            },
+            "merge_path_triggers_pages": {
+              "type": "boolean"
+            }
+          }
+        },
+        "sites_mirror": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "observed_at",
+            "authoritative",
+            "visibility",
+            "synchronization",
+            "observed_version",
+            "observed_source_sha",
+            "matches_source_baseline",
+            "tracking_issue"
+          ],
+          "properties": {
+            "observed_at": {
+              "$ref": "#/$defs/date"
+            },
+            "authoritative": {
+              "const": false
+            },
+            "visibility": {
+              "enum": [
+                "owner-only",
+                "restricted",
+                "public"
+              ]
+            },
+            "synchronization": {
+              "enum": [
+                "manual-deterministic",
+                "automatic-reviewed-merge"
+              ]
+            },
+            "observed_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "observed_source_sha": {
+              "$ref": "#/$defs/sha40"
+            },
+            "matches_source_baseline": {
+              "type": "boolean"
+            },
+            "tracking_issue": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/issues/[1-9][0-9]*$"
+            }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "ref",
+        "url"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "commit-path",
+            "pull-request",
+            "issue"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "commit-path"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ref": {
+                "$ref": "#/$defs/sha40"
+              },
+              "url": {
+                "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/(blob|tree)/[0-9a-f]{40}/.+"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "pull-request"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ref": {
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "url": {
+                "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/pull/[1-9][0-9]*$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "issue"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ref": {
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "url": {
+                "pattern": "^https://github\\.com/Voxterrae/HUB_Optimus/issues/[1-9][0-9]*$"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "display_name",
+        "lifecycle_state",
+        "source_status",
+        "public_section",
+        "publicly_listed",
+        "public_static_surface_available",
+        "public_browser_runtime_available",
+        "production_service_deployed",
+        "production_writes_executed",
+        "live_external_transport_enabled",
+        "evidence",
+        "claim_boundary"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "lifecycle_state": {
+          "enum": [
+            "active-methodology",
+            "working-deterministic-prototype",
+            "early-implementation",
+            "browser-prototype",
+            "implementation-present-deployment-unverified",
+            "experimental-tooling",
+            "active-ratified-protocol",
+            "official-empty-incubation",
+            "draft",
+            "issue-only"
+          ]
+        },
+        "source_status": {
+          "enum": [
+            "merged",
+            "draft-pr",
+            "draft-pr-stack",
+            "open-issue"
+          ]
+        },
+        "public_section": {
+          "enum": [
+            "what-exists-today",
+            "in-development",
+            "not-publicly-listed"
+          ]
+        },
+        "publicly_listed": {
+          "type": "boolean"
+        },
+        "public_static_surface_available": {
+          "type": "boolean"
+        },
+        "public_browser_runtime_available": {
+          "type": "boolean"
+        },
+        "production_service_deployed": {
+          "type": "boolean"
+        },
+        "production_writes_executed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "live_external_transport_enabled": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "claim_boundary": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 500
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_status": {
+                "enum": [
+                  "draft-pr",
+                  "draft-pr-stack"
+                ]
+              }
+            },
+            "required": [
+              "source_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "lifecycle_state": {
+                "const": "draft"
+              },
+              "public_section": {
+                "const": "in-development"
+              },
+              "public_browser_runtime_available": {
+                "const": false
+              },
+              "production_service_deployed": {
+                "const": false
+              },
+              "production_writes_executed": {
+                "const": 0
+              },
+              "live_external_transport_enabled": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_status": {
+                "const": "draft-pr"
+              }
+            },
+            "required": [
+              "source_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "minItems": 1,
+                "items": {
+                  "properties": {
+                    "type": {
+                      "const": "pull-request"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_status": {
+                "const": "draft-pr-stack"
+              }
+            },
+            "required": [
+              "source_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "minItems": 2,
+                "items": {
+                  "properties": {
+                    "type": {
+                      "const": "pull-request"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_status": {
+                "const": "open-issue"
+              }
+            },
+            "required": [
+              "source_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "lifecycle_state": {
+                "const": "issue-only"
+              },
+              "public_section": {
+                "const": "in-development"
+              },
+              "public_browser_runtime_available": {
+                "const": false
+              },
+              "production_service_deployed": {
+                "const": false
+              },
+              "production_writes_executed": {
+                "const": 0
+              },
+              "live_external_transport_enabled": {
+                "const": false
+              },
+              "evidence": {
+                "items": {
+                  "properties": {
+                    "type": {
+                      "const": "issue"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_status": {
+                "const": "merged"
+              }
+            },
+            "required": [
+              "source_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "lifecycle_state": {
+                "not": {
+                  "enum": [
+                    "draft",
+                    "issue-only"
+                  ]
+                }
+              },
+              "evidence": {
+                "items": {
+                  "properties": {
+                    "type": {
+                      "const": "commit-path"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "public_section": {
+                "const": "what-exists-today"
+              }
+            },
+            "required": [
+              "public_section"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_status": {
+                "const": "merged"
+              },
+              "publicly_listed": {
+                "const": true
+              },
+              "public_static_surface_available": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "public_section": {
+                "const": "not-publicly-listed"
+              }
+            },
+            "required": [
+              "public_section"
+            ]
+          },
+          "then": {
+            "properties": {
+              "publicly_listed": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publicly_listed": {
+                "const": true
+              }
+            },
+            "required": [
+              "publicly_listed"
+            ]
+          },
+          "then": {
+            "properties": {
+              "public_section": {
+                "enum": [
+                  "what-exists-today",
+                  "in-development"
+                ]
+              },
+              "public_static_surface_available": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "public_browser_runtime_available": {
+                "const": true
+              }
+            },
+            "required": [
+              "public_browser_runtime_available"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_status": {
+                "const": "merged"
+              },
+              "publicly_listed": {
+                "const": true
+              },
+              "public_static_surface_available": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "production_service_deployed": {
+                "const": true
+              }
+            },
+            "required": [
+              "production_service_deployed"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_status": {
+                "const": "merged"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

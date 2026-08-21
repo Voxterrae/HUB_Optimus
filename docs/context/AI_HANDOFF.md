@@ -101,6 +101,47 @@ protected `main` and the later ruleset decision requires the head-bound check.
 Issue `#1881` is the current owner-facing reorganization ledger. Its execution
 order and safety gates remain controlling for the open pull-request portfolio.
 
+## Public surface capability registry boundary
+
+Issue `#1888` governs reconciliation between the canonical repository, the
+public GitHub Pages artifact, and the protected Sites mirror. Pull request
+`#1889` is the foundation record for the human-reviewed capability registry and
+its validation contract. The current merge, deployment, and receipt state must
+always be read from the exact issue, pull request, commit, checks, and Pages run;
+this handoff does not turn a draft or proposed SHA into merged evidence.
+
+The foundation paths are:
+
+- `site/data/capability-registry.v1.json`;
+- `site/data/capability-registry.v1.schema.json`;
+- `docs/architecture/public_surface_sync.md`;
+- the focused registry tests.
+
+The registry separates a public static surface, a public browser runtime, a
+production service, production writes, and live external transport. It must keep
+merged evidence distinct from draft pull requests, draft stacks, and issue-only
+work. Evidence type, reference, immutable commit, repository path, and URL must
+remain mutually consistent and testable.
+
+The existing Pages workflow is triggered by changes under `site/**` and
+`docs/**`, but deploys the exact `site/` artifact. Therefore any merge of the
+foundation requires an explicit owner decision that covers the resulting Pages
+deployment and a post-merge receipt for the merged commit, tree, workflow run,
+and public registry/schema resources.
+
+Outstanding slices remain separate:
+
+1. the visible presentation must consume the reviewed registry through its own
+   scoped pull request and must not present draft or issue-only work as live;
+2. the protected Sites mirror must be synchronized only after the canonical
+   presentation change is reviewed, merged, deployed, and bound to an exact SHA;
+3. Sites publication, access changes, tenant mutation, external transport, and
+   production-service writes require their own explicit owner authorization.
+
+Until those slices have exact repository and platform evidence, future operators
+must continue to describe GitHub Pages as the canonical public static surface
+and Sites as a non-authoritative, separately synchronized mirror.
+
 ## Historical handoff archive
 
 The previous broad handoff is preserved byte-for-byte at
