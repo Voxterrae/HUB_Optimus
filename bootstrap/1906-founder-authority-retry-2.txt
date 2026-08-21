@@ -1,0 +1,1 @@
+Retry the one-time, exact-candidate Founder Authority attestation after GitHub regenerated PR #1907's live test merge commit.
