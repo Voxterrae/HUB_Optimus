@@ -28,11 +28,12 @@ jobs:
           import urllib.request
 
           body = (
-              "## v1.1 exact browser artifact packaging started\n\n"
+              "## Corrected v1.1 browser artifact packaging started\n\n"
               f"- workflow source: `{os.environ['SOURCE_SHA']}`\n"
               f"- workflow run: {os.environ['RUN_URL']}\n"
-              "- exact Draft head: `f9ce7978cdc38a05aa08c90a996cdab790589248`\n"
-              "- artifact: `v11-browser-surface`\n"
+              "- exact Draft head: `3f57ac105bb5251ed2204813b07a414067180eaa`\n"
+              "- exact tree: `88f67c24a8384f85ff75dd04fc22acf438e56be8`\n"
+              "- artifact: `v11-browser-surface-mobile-safe`\n"
           )
           request = urllib.request.Request(
               "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1912/comments",
@@ -49,10 +50,10 @@ jobs:
               pass
           PY
 
-      - name: Checkout exact v1.1 Draft head
+      - name: Checkout exact corrected v1.1 Draft head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: f9ce7978cdc38a05aa08c90a996cdab790589248
+          ref: 3f57ac105bb5251ed2204813b07a414067180eaa
           fetch-depth: 1
           persist-credentials: false
 
@@ -60,15 +61,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "f9ce7978cdc38a05aa08c90a996cdab790589248"
-          test "$(git rev-parse 'HEAD^{tree}')" = "8825e680e00670050a285e3cee40a37a6af65fa2"
+          test "$(git rev-parse HEAD)" = "3f57ac105bb5251ed2204813b07a414067180eaa"
+          test "$(git rev-parse 'HEAD^{tree}')" = "88f67c24a8384f85ff75dd04fc22acf438e56be8"
           test -f site/obsidian-HUB_Optimus/index.html
           test -f site/obsidian-HUB_Optimus/app-v11.js
           test -f site/obsidian-HUB_Optimus/styles-v11.css
           test -f site/obsidian-HUB_Optimus/system.learning.json
+          grep -Fq 'min-width: 0' site/obsidian-HUB_Optimus/styles-v11.css
+          python -m json.tool site/obsidian-HUB_Optimus/system.learning.json >/dev/null
+          node --check site/obsidian-HUB_Optimus/app-v11.js
 
-      - name: Upload exact browser surface
+      - name: Upload exact corrected browser surface
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          name: v11-browser-surface
+          name: v11-browser-surface-mobile-safe
           path: site/obsidian-HUB_Optimus
