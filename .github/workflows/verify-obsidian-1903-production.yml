@@ -33,6 +33,7 @@ jobs:
               f"- verification source: `{os.environ['SOURCE_SHA']}`\n"
               f"- workflow run: {os.environ['RUN_URL']}\n"
               "- routes: `/`, `/operator/`, `/obsidian-HUB_Optimus/`\n"
+              "- expected artifact: `9c7b5d81b2cf85d349b1ca141d559a75067a9b14`\n"
           )
           request = urllib.request.Request(
               "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1901/comments",
@@ -49,13 +50,23 @@ jobs:
               pass
           PY
 
-      - name: Verify live HTTP routes, assets and model
+      - name: Checkout exact reviewed artifact for byte comparison
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 9c7b5d81b2cf85d349b1ca141d559a75067a9b14
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify live HTTP routes, assets, bytes and model
         id: routes
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/obsidian-production"
-          cd "$RUNNER_TEMP/obsidian-production"
+          work="$RUNNER_TEMP/obsidian-production"
+          mkdir -p "$work"
+          : > "$work/verification.txt"
+          cd "$work"
 
           fetch() {
             local url="$1"
@@ -68,26 +79,26 @@ jobs:
                 --output "$output" --write-out '%{http_code}' \
                 "$url" || true)"
               if [ "$code" = "200" ]; then
-                printf '%s HTTP %s\n' "$label" "$code"
+                printf '%s=200\n' "$label" | tee -a verification.txt
                 return 0
               fi
-              printf '%s attempt %s returned HTTP %s\n' "$label" "$attempt" "${code:-curl-error}"
+              printf '%s attempt %s returned HTTP %s\n' "$label" "$attempt" "${code:-curl-error}" | tee -a verification.txt
               sleep 3
             done
-            printf '%s failed after retries\n' "$label" >&2
+            printf '%s=failed\n' "$label" | tee -a verification.txt >&2
             return 1
           }
 
           fetch "https://huboptimus.dev/?verify=9c7b5d81" root.html root
           fetch "https://huboptimus.dev/operator/?verify=9c7b5d81" operator.html operator
           fetch "https://huboptimus.dev/obsidian-HUB_Optimus/?verify=9c7b5d81" obsidian.html obsidian
-          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/system.json?verify=9c7b5d81" system.json system-json
-          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/system.runtime.json?verify=9c7b5d81" system.runtime.json runtime-json
-          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/styles.css?verify=9c7b5d81" styles.css styles
-          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/styles-explorer.css?verify=9c7b5d81" styles-explorer.css explorer-styles
-          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/styles-content.css?verify=9c7b5d81" styles-content.css content-styles
-          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/app.js?verify=9c7b5d81" app.js app-js
-          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/app-graph.js?verify=9c7b5d81" app-graph.js graph-js
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/system.json?verify=9c7b5d81" system.json system_json
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/system.runtime.json?verify=9c7b5d81" system.runtime.json runtime_json
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/styles.css?verify=9c7b5d81" styles.css styles_css
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/styles-explorer.css?verify=9c7b5d81" styles-explorer.css explorer_css
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/styles-content.css?verify=9c7b5d81" styles-content.css content_css
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/app.js?verify=9c7b5d81" app.js app_js
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/app-graph.js?verify=9c7b5d81" app-graph.js graph_js
 
           grep -Fq '<title>HUB_Optimus' root.html
           grep -Fq 'HUB_Optimus Operator' operator.html
@@ -97,6 +108,19 @@ jobs:
           grep -Fq './app-graph.js' obsidian.html
           grep -Fq './app.js' obsidian.html
           grep -Fq '30e985226347b4bc59b0e187b96633a09647ca42' obsidian.html
+          echo 'html_contract=pass' | tee -a verification.txt
+
+          cmp root.html "$GITHUB_WORKSPACE/site/index.html"
+          cmp operator.html "$GITHUB_WORKSPACE/site/operator/index.html"
+          cmp obsidian.html "$GITHUB_WORKSPACE/site/obsidian-HUB_Optimus/index.html"
+          cmp system.json "$GITHUB_WORKSPACE/site/obsidian-HUB_Optimus/system.json"
+          cmp system.runtime.json "$GITHUB_WORKSPACE/site/obsidian-HUB_Optimus/system.runtime.json"
+          cmp styles.css "$GITHUB_WORKSPACE/site/obsidian-HUB_Optimus/styles.css"
+          cmp styles-explorer.css "$GITHUB_WORKSPACE/site/obsidian-HUB_Optimus/styles-explorer.css"
+          cmp styles-content.css "$GITHUB_WORKSPACE/site/obsidian-HUB_Optimus/styles-content.css"
+          cmp app.js "$GITHUB_WORKSPACE/site/obsidian-HUB_Optimus/app.js"
+          cmp app-graph.js "$GITHUB_WORKSPACE/site/obsidian-HUB_Optimus/app-graph.js"
+          echo 'served_bytes_match_exact_commit=pass' | tee -a verification.txt
 
           python - <<'PY'
           import json
@@ -104,32 +128,31 @@ jobs:
 
           system = json.loads(Path('system.json').read_text(encoding='utf-8'))
           runtime = json.loads(Path('system.runtime.json').read_text(encoding='utf-8'))
-          assert system.get('project', {}).get('repository') == 'Voxterrae/HUB_Optimus'
+          assert system.get('analysis', {}).get('repository') == 'Voxterrae/HUB_Optimus'
+          assert system.get('analysis', {}).get('commit') == '30e985226347b4bc59b0e187b96633a09647ca42'
           assert len(system.get('components', [])) == 16
-          assert len(system.get('interfaces', [])) == 7
-          assert len(system.get('entities', [])) == 13
+          assert len(runtime.get('interfaces', [])) == 7
+          assert len(runtime.get('entities', [])) == 13
           assert len(system.get('relations', [])) == 25
-          assert runtime
-          print('system-model counts: components=16 interfaces=7 entities=13 relations=25')
+          assert len(runtime.get('risks', [])) == 8
+          routes = runtime.get('deployment', [])[0].get('routes', [])
+          assert routes == ['/', '/operator/', '/obsidian-HUB_Optimus/']
+          print('model_counts=16/7/13/25')
+          print('risks=8')
+          print('declared_routes=/,/operator/,/obsidian-HUB_Optimus/')
           PY
+          echo 'model_contract=pass' | tee -a verification.txt
+          echo 'model_counts=16/7/13/25' | tee -a verification.txt
+          echo 'risks=8' | tee -a verification.txt
 
           node --check app.js
           node --check app-graph.js
           test -s styles.css
           test -s styles-explorer.css
           test -s styles-content.css
-
-          {
-            echo 'root=200'
-            echo 'operator=200'
-            echo 'obsidian=200'
-            echo 'system_json=200'
-            echo 'runtime_json=200'
-            echo 'css_assets=200'
-            echo 'javascript_assets=200'
-            echo 'javascript_syntax=pass'
-            echo 'model_counts=16/7/13/25'
-          } | tee verification.txt
+          echo 'javascript_syntax=pass' | tee -a verification.txt
+          echo 'css_assets_nonempty=pass' | tee -a verification.txt
+          echo 'production_verification=pass' | tee -a verification.txt
 
       - name: Record production verification result
         if: always()
@@ -137,6 +160,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SOURCE_SHA: ${{ github.sha }}
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
           ROUTES_OUTCOME: ${{ steps.routes.outcome }}
         run: |
           python - <<'PY'
@@ -147,15 +171,16 @@ jobs:
 
           path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'obsidian-production' / 'verification.txt'
           evidence = path.read_text(encoding='utf-8', errors='replace') if path.exists() else '[verification evidence unavailable]'
-          outcome = os.environ.get('ROUTES_OUTCOME', '')
           body = (
               "## Obsidian production verification result\n\n"
               f"- verification source: `{os.environ['SOURCE_SHA']}`\n"
               f"- workflow run: {os.environ['RUN_URL']}\n"
-              f"- route and asset verification: `{outcome}`\n"
+              f"- exact artifact checkout: `{os.environ.get('CHECKOUT_OUTCOME', '')}`\n"
+              f"- route, byte and asset verification: `{os.environ.get('ROUTES_OUTCOME', '')}`\n"
               "- public route: https://huboptimus.dev/obsidian-HUB_Optimus/\n"
               "- existing root: https://huboptimus.dev/\n"
-              "- existing Operator: https://huboptimus.dev/operator/\n\n"
+              "- existing Operator: https://huboptimus.dev/operator/\n"
+              "- expected artifact: `9c7b5d81b2cf85d349b1ca141d559a75067a9b14`\n\n"
               "```text\n"
               f"{evidence}\n"
               "```\n"
