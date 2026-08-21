@@ -17,7 +17,10 @@ control, assignment, collaboration, or joint ventures, read:
 4. `docs/context/SOURCE_OF_TRUTH.md`
 5. the active governance issue and pull request
 
-The proposal recorded by issue `#1861` and draft PR `#1862` identifies:
+The authority model recorded by issue `#1861` was ratified through PR `#1862`
+and squash-merged into `main` as verified commit
+`30e985226347b4bc59b0e187b96633a09647ca42`, with constitutional tree
+`fabb9da1fdb6979df0bc764017752f118088e69f`. It establishes:
 
 - **Benjamin Gerrit Hoff** as founder, architect, creator, project owner, and
   final human authority of HUB_Optimus;
@@ -26,33 +29,59 @@ The proposal recorded by issue `#1861` and draft PR `#1862` identifies:
 - HUB_Optimus as the foundational tool and technological parent platform through
   which Benjamin Gerrit Hoff develops LCDH-OS and the wider ecosystem.
 
-This proposal is not ratified merely because it appears on a branch. Draft PR
-`#1862` must remain unmerged until its reviewed final tree is recreated in
-verified owner-authored history and all protected review gates are satisfied.
+The former Draft status of PR `#1862` is historical. The ratified authority
+records and Founder Authority Guard now exist on protected `main`.
 
 ## CODEOWNERS and review policy
 
-`@Voxterrae` is the sole proposed repository-wide CODEOWNER. CODEOWNERS records
-review responsibility and owner authority; it does not itself grant legal
-ownership or mutate GitHub permissions.
+`@Voxterrae` is the sole repository-wide CODEOWNER. CODEOWNERS records review
+responsibility and owner authority; it does not itself grant legal ownership or
+mutate GitHub permissions.
 
-Native CODEOWNER approval must not be configured as a required gate while the
-sole CODEOWNER is also the author of owner-created pull requests, because an
-author cannot provide the required approval to their own pull request. The
-approved policy for this proposal is instead:
+Native CODEOWNER approval is intentionally not configured as a required gate
+while the sole CODEOWNER is also the author of owner-created pull requests,
+because an author cannot provide the required approval to their own pull request.
+Ratified Option A instead requires:
 
-- protected-path pull requests and every commit in them must be owner-authored;
-- all commits must be verified;
-- non-owner general contributions require an explicit `@Voxterrae` approval
+- protected-path pull requests and every commit in them to be owner-authored;
+- all commits to be verified;
+- non-owner general contributions to receive explicit `@Voxterrae` approval
   bound to the current head;
-- comment-only reviews do not revoke an existing approval, while a later
+- comment-only reviews not to revoke an existing approval, while a later
   change-request or dismissal does;
-- all required checks and conversations must be complete before merge;
-- force-push and deletion protections remain in place.
+- all required checks and conversations to be complete before merge;
+- force-push and deletion protections to remain in place.
 
-Live rulesets and collaborator permissions are repository settings. This draft
-changes neither. They require a separate authenticated owner action and fresh
-audit evidence.
+## Verified live GitHub protection state
+
+The authenticated consolidation and postflight recorded through issue `#1680`
+and its preserved evidence established:
+
+- ruleset `11665521` — `Protect main - owner governed` — as the only active
+  repository ruleset applying to `main`;
+- legacy ruleset `11637867` as exported and deleted;
+- no bypass actors;
+- native required approvals `0` and native CODEOWNER review disabled under
+  Option A;
+- required review-thread resolution;
+- squash-only merge;
+- required signatures, linear history, deletion protection, and
+  non-fast-forward protection;
+- strict required checks bound to GitHub Actions `integration_id=15368`:
+
+```text
+founder-authority
+founder-authority-bootstrap
+pytest
+PowerShell tooling
+guard
+Risk classification
+lychee
+```
+
+GitHub Settings and collaborator permissions remain mutable platform state. This
+handoff records verified evidence but does not itself grant or revoke access,
+change rulesets, or replace a fresh audit after onboarding or settings changes.
 
 ## Technical contributor boundary
 
@@ -68,7 +97,7 @@ owner decisions recorded through the governed repository process.
 
 ## Founder Authority Guard boundary
 
-The proposed Founder Authority Guard executes trusted policy from the protected
+The active Founder Authority Guard executes trusted policy from the protected
 base and fails closed. For protected changes it checks:
 
 - repository owner login and immutable numeric user ID;
@@ -82,9 +111,9 @@ base and fails closed. For protected changes it checks:
   exact fingerprint is pinned in the owner identity manifest.
 
 The workflow creates the `founder-authority` check directly on the exact pull
-request head SHA. A missing, pending, cancelled, or failed check is not approval.
-The workflow cannot become active policy until its reviewed code exists on
-protected `main` and the later ruleset decision requires the head-bound check.
+request head SHA. Ruleset `11665521` requires both `founder-authority` and
+`founder-authority-bootstrap`. A missing, pending, cancelled, skipped, or failed
+required check is not approval.
 
 ## Operating discipline
 
