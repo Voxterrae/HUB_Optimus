@@ -56,16 +56,56 @@ transparent, reciprocal, and clearly scoped terms. No implied joint venture or
 ownership interest arises from access, contribution, employment, conversation,
 or technical work.
 
-## Known live-settings gaps at ratification
+## Historical ratification snapshot
 
-At the issue-`#1861` audit point:
+At the issue-`#1861` audit point, before PR `#1862` and the later ruleset
+consolidation were completed, repository evidence recorded:
 
-- one non-owner collaborator was visible with repository `Write` permission;
-- two active overlapping `main` rulesets existed;
-- the rulesets required pull requests and signatures but required zero approving
-  reviews and did not enforce CODEOWNER review.
+- one non-owner collaborator as visible with repository `Write` permission;
+- two active overlapping `main` rulesets;
+- pull-request and signature requirements with zero approving reviews and no
+  native CODEOWNER-review enforcement.
 
-Repository documentation cannot remove a collaborator or change GitHub Settings.
-Those settings must be corrected through the authenticated repository owner
-interface and then re-audited. Until then, the desired governance state is not
-the same as fully enforced live state.
+This is preserved as a historical snapshot of the ratification context, not as a
+claim about current GitHub Settings or current collaborator permissions.
+Documentation cannot grant, revoke, or prove mutable repository access; live
+permissions must be re-audited after onboarding or settings changes.
+
+## Verified live state after ratification
+
+PR `#1862` was squash-merged into `main` as verified commit
+`30e985226347b4bc59b0e187b96633a09647ca42`, with constitutional tree
+`fabb9da1fdb6979df0bc764017752f118088e69f`.
+
+The owner-validated GitHub protection state recorded through issues `#1680`,
+`#1681`, `#1682`, and `#1683` is:
+
+- `@Voxterrae` remains the sole repository-wide CODEOWNER;
+- native required approvals are `0` and native CODEOWNER review is disabled
+  intentionally under ratified Option A;
+- ruleset `11665521` — `Protect main - owner governed` — is the only active
+  repository ruleset applying to `main`;
+- legacy ruleset `11637867` was exported and deleted;
+- `bypass_actors` is empty;
+- review-thread resolution is required;
+- squash is the only allowed merge method;
+- verified signatures, linear history, deletion protection, and
+  non-fast-forward protection are required;
+- all seven required contexts are bound to GitHub Actions
+  `integration_id=15368`:
+
+```text
+founder-authority
+founder-authority-bootstrap
+pytest
+PowerShell tooling
+guard
+Risk classification
+lychee
+```
+
+These live settings remain mutable platform state. Any future change requires a
+visible owner-authorized governance issue, exact scope, preflight evidence,
+rollback boundaries, and postflight verification. This handoff records the
+verified state; it does not itself modify GitHub Settings, permissions,
+workflows, CODEOWNERS, deployments, releases, or external rights.
