@@ -1,0 +1,154 @@
+name: Deploy exact Obsidian Project Intelligence artifact
+
+on:
+  push:
+    branches:
+      - deploy/1903-obsidian-pages-exact
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  issues: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy-exact-obsidian-artifact
+    if: github.repository == 'Voxterrae/HUB_Optimus'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Record deployment start
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          body = (
+              "## Exact Obsidian Pages deployment started\n\n"
+              f"- workflow source: `{os.environ['SOURCE_SHA']}`\n"
+              f"- deployment run: {os.environ['RUN_URL']}\n"
+              "- artifact commit: `9c7b5d81b2cf85d349b1ca141d559a75067a9b14`\n"
+              "- reviewed tree: `05bdc116e526c02e5db33995513350fb20cb5297`\n"
+              "- repository `main` and core/runtime remain unchanged\n"
+          )
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1901/comments",
+              data=json.dumps({"body": body}).encode("utf-8"),
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30):
+              pass
+          PY
+
+      - name: Checkout exact reviewed Project Intelligence commit
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 9c7b5d81b2cf85d349b1ca141d559a75067a9b14
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Verify immutable artifact identity and routes
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9c7b5d81b2cf85d349b1ca141d559a75067a9b14"
+          test "$(git rev-parse 'HEAD^{tree}')" = "05bdc116e526c02e5db33995513350fb20cb5297"
+          test -f site/index.html
+          test -f site/operator/index.html
+          test -f site/obsidian-HUB_Optimus/index.html
+          test -f site/obsidian-HUB_Optimus/styles.css
+          test -f site/obsidian-HUB_Optimus/styles-explorer.css
+          test -f site/obsidian-HUB_Optimus/styles-content.css
+          test -f site/obsidian-HUB_Optimus/app.js
+          test -f site/obsidian-HUB_Optimus/app-graph.js
+          test -f site/obsidian-HUB_Optimus/system.json
+          test -f site/obsidian-HUB_Optimus/system.runtime.json
+          python -m json.tool site/obsidian-HUB_Optimus/system.json >/dev/null
+          python -m json.tool site/obsidian-HUB_Optimus/system.runtime.json >/dev/null
+          node --check site/obsidian-HUB_Optimus/app.js
+          node --check site/obsidian-HUB_Optimus/app-graph.js
+          printf 'artifact_sha=%s\n' "$(git rev-parse HEAD)"
+          printf 'artifact_tree=%s\n' "$(git rev-parse 'HEAD^{tree}')"
+
+      - name: Configure GitHub Pages
+        id: configure
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Upload exact site artifact
+        id: upload
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+
+      - name: Record deployment result
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
+          CONFIGURE_OUTCOME: ${{ steps.configure.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+          DEPLOY_OUTCOME: ${{ steps.deployment.outcome }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          page_url = os.environ.get("PAGE_URL", "")
+          body = (
+              "## Exact Obsidian Pages deployment result\n\n"
+              f"- workflow source: `{os.environ['SOURCE_SHA']}`\n"
+              f"- deployment run: {os.environ['RUN_URL']}\n"
+              f"- checkout: `{os.environ.get('CHECKOUT_OUTCOME', '')}`\n"
+              f"- immutable artifact verification: `{os.environ.get('VERIFY_OUTCOME', '')}`\n"
+              f"- Pages configuration: `{os.environ.get('CONFIGURE_OUTCOME', '')}`\n"
+              f"- artifact upload: `{os.environ.get('UPLOAD_OUTCOME', '')}`\n"
+              f"- Pages deployment: `{os.environ.get('DEPLOY_OUTCOME', '')}`\n"
+              f"- Pages URL: {page_url or '[not returned]'}\n"
+              "- artifact commit: `9c7b5d81b2cf85d349b1ca141d559a75067a9b14`\n"
+              "- reviewed tree: `05bdc116e526c02e5db33995513350fb20cb5297`\n"
+          )
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1901/comments",
+              data=json.dumps({"body": body}).encode("utf-8"),
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30):
+              pass
+          PY
