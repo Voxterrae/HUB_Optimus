@@ -1,0 +1,40 @@
+name: Package exact v1.1 browser QA artifact
+
+on:
+  push:
+    branches:
+      - qa/1912-v11-browser-artifact
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: package-v11-browser-artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact v1.1 Draft head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: f9ce7978cdc38a05aa08c90a996cdab790589248
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify exact artifact identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "f9ce7978cdc38a05aa08c90a996cdab790589248"
+          test "$(git rev-parse 'HEAD^{tree}')" = "8825e680e00670050a285e3cee40a37a6af65fa2"
+          test -f site/obsidian-HUB_Optimus/index.html
+          test -f site/obsidian-HUB_Optimus/app-v11.js
+          test -f site/obsidian-HUB_Optimus/styles-v11.css
+          test -f site/obsidian-HUB_Optimus/system.learning.json
+
+      - name: Upload exact browser surface
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          name: v11-browser-surface
+          path: site/obsidian-HUB_Optimus
