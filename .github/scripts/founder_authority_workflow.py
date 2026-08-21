@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Trusted-base GitHub Actions adapter for the Founder Authority Guard.
 
-This module is executed only after the workflow checks out the protected base
-commit. It creates a check run on the exact pull-request head, collects immutable
-GitHub evidence, evaluates the repository policy, and finalizes that same check.
-A collection, validation, or finalization failure leaves no successful head-bound
-check and therefore fails closed.
+This module executes only after the workflow checks out the protected base
+commit. It evaluates immutable pull-request evidence and publishes the same
+fail-closed result on both the exact pull-request head and GitHub's live test
+merge commit. Success is published only while the head, base, merge candidate,
+and semantic evidence remain unchanged.
 """
 
 from __future__ import annotations
@@ -52,6 +52,13 @@ def require_int(value: Any, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
         raise WorkflowError(f"{label} must be a positive integer")
     return value
+
+
+def require_sha(value: Any, label: str) -> str:
+    sha = require_string(value, label).lower()
+    if len(sha) != 40 or any(ch not in "0123456789abcdef" for ch in sha):
+        raise WorkflowError(f"{label} must be a 40-character hexadecimal SHA")
+    return sha
 
 
 class GitHubClient:
@@ -133,27 +140,27 @@ class GitHubClient:
             )
         return require_mapping(result.get("data"), "GitHub GraphQL data")
 
-    def create_head_check(self, head_sha: str) -> int:
+    def create_check(self, target_sha: str, *, target_label: str) -> int:
         check = self.repository_request(
             "check-runs",
             method="POST",
             payload={
                 "name": CHECK_NAME,
-                "head_sha": head_sha,
+                "head_sha": target_sha,
                 "status": "in_progress",
                 "output": {
                     "title": "Founder Authority Guard",
                     "summary": (
-                        "Trusted-base validation is running for this exact "
-                        "pull-request head."
+                        "Trusted-base validation is running for the "
+                        f"{target_label}."
                     ),
                 },
             },
         )
-        check = require_mapping(check, "created check run")
-        return require_int(check.get("id"), "created check-run ID")
+        check = require_mapping(check, f"created {target_label} check run")
+        return require_int(check.get("id"), f"created {target_label} check-run ID")
 
-    def finalize_head_check(
+    def finalize_check(
         self,
         check_run_id: int,
         *,
@@ -403,35 +410,190 @@ def load_event() -> dict[str, Any]:
         raise WorkflowError(f"cannot load GitHub event: {exc}") from exc
 
 
+def live_pull_snapshot(
+    client: GitHubClient,
+    pull_number: int,
+    *,
+    expected_head_sha: str,
+    expected_base_sha: str,
+    expected_merge_sha: str | None = None,
+) -> dict[str, Any]:
+    pull = require_mapping(
+        client.repository_request(f"pulls/{pull_number}"),
+        f"live pull request #{pull_number}",
+    )
+    if pull.get("state") != "open" or pull.get("merged") is not False:
+        raise WorkflowError("pull request must remain open and unmerged")
+
+    head = require_mapping(pull.get("head"), "live pull-request head")
+    base = require_mapping(pull.get("base"), "live pull-request base")
+    head_sha = require_sha(head.get("sha"), "live pull-request head SHA")
+    base_sha = require_sha(base.get("sha"), "live pull-request base SHA")
+    merge_sha = require_sha(
+        pull.get("merge_commit_sha"), "live test merge commit SHA"
+    )
+
+    if head_sha != expected_head_sha:
+        raise WorkflowError(
+            f"pull-request head changed: expected {expected_head_sha}, got {head_sha}"
+        )
+    if base_sha != expected_base_sha:
+        raise WorkflowError(
+            f"pull-request base changed: expected {expected_base_sha}, got {base_sha}"
+        )
+    if expected_merge_sha is not None and merge_sha != expected_merge_sha:
+        raise WorkflowError(
+            f"test merge commit changed: expected {expected_merge_sha}, got {merge_sha}"
+        )
+    if merge_sha in {head_sha, base_sha}:
+        raise WorkflowError("test merge commit must differ from head and base")
+
+    merge_commit = require_mapping(
+        client.repository_request(f"commits/{merge_sha}"),
+        "live test merge commit",
+    )
+    parents = merge_commit.get("parents")
+    if not isinstance(parents, list):
+        raise WorkflowError("live test merge commit parents must be an array")
+    parent_shas = [
+        require_sha(item.get("sha"), "test merge parent SHA")
+        for item in parents
+        if isinstance(item, dict)
+    ]
+    if parent_shas != [base_sha, head_sha]:
+        raise WorkflowError(
+            "test merge commit parents do not match the live base and head"
+        )
+
+    return {
+        "pull": pull,
+        "head_sha": head_sha,
+        "base_sha": base_sha,
+        "merge_sha": merge_sha,
+    }
+
+
+def semantic_fingerprint(value: dict[str, Any]) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def finalize_created_checks(
+    client: GitHubClient,
+    checks: list[tuple[str, int]],
+    *,
+    success: bool,
+    summary: str,
+) -> list[str]:
+    errors: list[str] = []
+    for label, check_run_id in checks:
+        try:
+            client.finalize_check(
+                check_run_id,
+                success=success,
+                summary=f"target={label}\n{summary}",
+            )
+        except (OSError, WorkflowError, urllib.error.URLError) as exc:
+            errors.append(f"cannot finalize {label} check {check_run_id}: {exc}")
+    return errors
+
+
 def run() -> int:
     event = load_event()
     repository = require_mapping(event.get("repository"), "repository payload")
-    pull = require_mapping(event.get("pull_request"), "pull_request payload")
+    event_pull = require_mapping(event.get("pull_request"), "pull_request payload")
     full_name = require_string(repository.get("full_name"), "repository full name")
-    head = require_mapping(pull.get("head"), "pull request head")
-    head_sha = require_string(head.get("sha"), "pull request head SHA")
-    if len(head_sha) != 40:
-        raise WorkflowError("pull request head SHA must contain 40 characters")
+    pull_number = require_int(event_pull.get("number"), "pull request number")
+    event_head = require_mapping(event_pull.get("head"), "event pull-request head")
+    event_base = require_mapping(event_pull.get("base"), "event pull-request base")
+    expected_head_sha = require_sha(
+        event_head.get("sha"), "event pull-request head SHA"
+    )
+    expected_base_sha = require_sha(
+        event_base.get("sha"), "event pull-request base SHA"
+    )
 
     client = GitHubClient(os.environ.get("GITHUB_TOKEN", ""), full_name)
-    check_run_id = client.create_head_check(head_sha)
+    checks: list[tuple[str, int]] = []
     success = False
     summary = "Founder Authority Guard failed before producing a result."
 
     try:
+        initial = live_pull_snapshot(
+            client,
+            pull_number,
+            expected_head_sha=expected_head_sha,
+            expected_base_sha=expected_base_sha,
+        )
+        checks.append(
+            (
+                "exact pull-request head",
+                client.create_check(
+                    initial["head_sha"], target_label="exact pull-request head"
+                ),
+            )
+        )
+        checks.append(
+            (
+                "live test merge commit",
+                client.create_check(
+                    initial["merge_sha"], target_label="live test merge commit"
+                ),
+            )
+        )
+
         manifest = require_mapping(
             json.loads(MANIFEST_PATH.read_text(encoding="utf-8")),
             "owner identity manifest",
         )
-        evidence = collect_evidence(client, event, manifest)
+        evaluation_event = dict(event)
+        evaluation_event["pull_request"] = initial["pull"]
+        evidence = collect_evidence(client, evaluation_event, manifest)
+        evidence["evaluation_targets"] = {
+            "head_sha": initial["head_sha"],
+            "base_sha": initial["base_sha"],
+            "merge_commit_sha": initial["merge_sha"],
+        }
         EVIDENCE_PATH.write_text(
             json.dumps(evidence, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         EVIDENCE_PATH.chmod(0o600)
+
         owner = load_owner_identity(MANIFEST_PATH)
         decision = evaluate(evidence, manifest, owner)
         summary = decision_summary(decision)
+
+        before_finalize = live_pull_snapshot(
+            client,
+            pull_number,
+            expected_head_sha=initial["head_sha"],
+            expected_base_sha=initial["base_sha"],
+            expected_merge_sha=initial["merge_sha"],
+        )
+        verification_event = dict(event)
+        verification_event["pull_request"] = before_finalize["pull"]
+        verification_evidence = collect_evidence(
+            client, verification_event, manifest
+        )
+        verification_evidence["evaluation_targets"] = evidence["evaluation_targets"]
+        if semantic_fingerprint(verification_evidence) != semantic_fingerprint(evidence):
+            raise WorkflowError(
+                "semantic evidence changed after evaluation and before finalization"
+            )
+
+        live_pull_snapshot(
+            client,
+            pull_number,
+            expected_head_sha=initial["head_sha"],
+            expected_base_sha=initial["base_sha"],
+            expected_merge_sha=initial["merge_sha"],
+        )
+        summary = (
+            f"{summary}\n"
+            f"head_sha={initial['head_sha']}\n"
+            f"base_sha={initial['base_sha']}\n"
+            f"merge_commit_sha={initial['merge_sha']}"
+        )
         success = True
     except (
         OSError,
@@ -441,12 +603,16 @@ def run() -> int:
         urllib.error.URLError,
     ) as exc:
         summary = f"FOUNDER_AUTHORITY_GUARD: FAIL: {exc}"
-    finally:
-        client.finalize_head_check(
-            check_run_id,
-            success=success,
-            summary=summary,
-        )
+
+    finalization_errors = finalize_created_checks(
+        client,
+        checks,
+        success=success,
+        summary=summary,
+    )
+    if finalization_errors:
+        success = False
+        summary = f"{summary}\n" + "\n".join(finalization_errors)
 
     print(summary, file=sys.stdout if success else sys.stderr)
     return 0 if success else 1
