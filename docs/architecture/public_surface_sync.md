@@ -78,7 +78,7 @@ Its Draft 2020-12 JSON Schema lives beside it. Each component records:
 
 The registry is intentionally static and human-reviewed in v1. A future generator may consume it, but no generator may infer product state directly from labels, titles, mergeability, check status, branch names, or chat instructions.
 
-The schema must independently reject invalid cross-field combinations. Repository tests supplement the schema by binding evidence references to their exact commit, pull-request, or issue URL.
+The schema must independently reject invalid cross-field combinations. Repository tests supplement the schema by binding source status to evidence type, binding references to exact commit, pull-request, or issue URLs, and proving that every commit-path target exists at the declared immutable Git object type.
 
 ## Presentation rules
 
@@ -132,6 +132,8 @@ Consequences:
 - current product status must be changed through a reviewed site/registry change;
 - draft branches and pull requests must never deploy to the canonical public domain through this path.
 
+The validation contract parses the workflow structure and compares the upload step's exact `with.path` value with the registry's declared artifact path. A substring, comment, or similarly named directory is not sufficient evidence.
+
 Because this foundation PR changes both `site/**` and `docs/**`, merging it will trigger GitHub Pages. The future owner merge decision must explicitly acknowledge and authorize that deployment consequence. The resulting run must be validated and recorded before the work proceeds. Until that separate decision exists, the PR remains draft and no deployment is authorized.
 
 ## Protected Sites mirror boundary
@@ -161,13 +163,17 @@ Repository checks for this boundary must fail when:
 - a public portfolio component has no registry entry;
 - component IDs or evidence records are duplicated;
 - evidence type, reference, and URL identity do not agree;
+- a component's source status does not match every evidence type it carries;
+- a commit-path target is absent at its declared immutable commit or has the wrong blob/tree type;
 - a draft or issue-only component claims a public browser runtime, production deployment, production writes, or live external transport;
 - an in-development component is silently placed under **What exists today**;
 - the registry evidence SHA differs from the site document-route evidence SHA;
+- the Pages workflow's parsed upload artifact path differs from the registry declaration;
 - the protected Sites observation is described as matching when its recorded source differs from the source baseline;
 - an observed pre-merge SHA or run is represented as the future merged SHA or post-merge receipt;
 - evidence leaves the canonical GitHub repository;
-- private identifiers or secret-like fields enter the registry.
+- private identifiers or secret-like fields enter the registry;
+- the controlling AI handoff omits the registry flow or its outstanding presentation and Sites slices.
 
 ## Update procedure
 
@@ -175,15 +181,17 @@ Repository checks for this boundary must fail when:
 2. Inspect the exact merged, draft, and issue evidence.
 3. Update the registry on a dedicated branch.
 4. Validate the schema itself and validate the registry against it with format checking.
-5. Bind every evidence type, reference, and URL to the same identity.
-6. Update public markup only when the desired presentation change is explicitly in scope.
-7. Run registry, public-portfolio, link, locale, accessibility-proxy, encoding, and repository tests.
-8. Review wording for deployment and authorization overclaim.
-9. Reconstruct the exact approved tree through the verified owner-signing boundary.
-10. Merge only after the owner decision explicitly covers the Pages side effect.
-11. Confirm the GitHub Pages artifact, source SHA, run, and public files.
-12. Synchronize Sites separately from the exact merged tree.
-13. Record provenance and QA without overwriting historical evidence.
+5. Bind source status, evidence type, reference, URL, immutable commit, repository path, and Git object type.
+6. Parse the Pages workflow and compare its exact upload artifact path with the registry declaration.
+7. Update public markup only when the desired presentation change is explicitly in scope.
+8. Update `docs/context/AI_HANDOFF.md` when the change affects the operational flow or outstanding slices.
+9. Run registry, public-portfolio, link, locale, accessibility-proxy, encoding, and repository tests.
+10. Review wording for deployment and authorization overclaim.
+11. Reconstruct the exact approved tree through the verified owner-signing boundary.
+12. Merge only after the owner decision explicitly covers the Pages side effect.
+13. Confirm the GitHub Pages artifact, source SHA, run, and public files.
+14. Synchronize Sites separately from the exact merged tree.
+15. Record provenance and QA without overwriting historical evidence.
 
 ## Rollback
 
@@ -193,6 +201,6 @@ After a canonical merge, revert the exact site/registry commit through a reviewe
 
 ## Foundation-slice limitation
 
-The first PR under #1888 adds the registry, schema, documentation, and validation only. It does not modify `site/index.html`, translations, styles, JavaScript, the Pages workflow, the protected Sites project, or any runtime. The visible portfolio remains unchanged until a separate reviewed presentation slice consumes the registry.
+The first PR under #1888 adds the registry, schema, architecture documentation, focused validation, and the operational AI handoff update required to inherit this flow. It does not modify `site/index.html`, translations, styles, JavaScript, the Pages workflow, the protected Sites project, or any runtime. The visible portfolio remains unchanged until a separate reviewed presentation slice consumes the registry.
 
 The registry and schema are nevertheless public files under `site/data/` after an authorized merge. That non-visible deployment is an explicit effect, not an implication that the presentation update or Sites synchronization has already occurred.
