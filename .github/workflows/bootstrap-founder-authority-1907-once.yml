@@ -1,0 +1,108 @@
+name: Bootstrap founder authority for PR 1907
+
+on:
+  push:
+    branches:
+      - bootstrap/1906-founder-authority-1907-once
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  checks: write
+
+concurrency:
+  group: bootstrap-founder-authority-1907-once
+  cancel-in-progress: false
+
+jobs:
+  attest:
+    name: bootstrap-founder-authority-1907-once
+    if: github.repository == 'Voxterrae/HUB_Optimus'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact verified PR 1907 candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: bc686df913f04906593abad67a1ae5e6760baf28
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Verify pinned candidate identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "bc686df913f04906593abad67a1ae5e6760baf28"
+          test "$(git rev-parse 'HEAD^{tree}')" = "21dac8069fb689bbeb6cdbe62342e70082ece955"
+          test "$(git rev-parse HEAD^)" = "30e985226347b4bc59b0e187b96633a09647ca42"
+
+      - name: Build exact live pull-request event
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import os
+          import pathlib
+          import urllib.request
+
+          repo = "Voxterrae/HUB_Optimus"
+          pr_number = 1907
+          expected_head = "bc686df913f04906593abad67a1ae5e6760baf28"
+          expected_base = "30e985226347b4bc59b0e187b96633a09647ca42"
+
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{repo}/pulls/{pr_number}",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              pull = json.load(response)
+
+          if pull.get("state") != "open" or pull.get("merged") is not False:
+              raise SystemExit("PR #1907 must remain open and unmerged")
+          if (pull.get("head") or {}).get("sha") != expected_head:
+              raise SystemExit("PR #1907 head changed")
+          if (pull.get("base") or {}).get("sha") != expected_base:
+              raise SystemExit("PR #1907 base changed")
+
+          merge_sha = pull.get("merge_commit_sha")
+          if not isinstance(merge_sha, str) or len(merge_sha) != 40:
+              raise SystemExit("PR #1907 live test merge commit is unavailable")
+
+          base_repo = (pull.get("base") or {}).get("repo") or {}
+          event = {
+              "repository": {
+                  "full_name": base_repo.get("full_name"),
+                  "id": base_repo.get("id"),
+                  "owner": base_repo.get("owner"),
+              },
+              "pull_request": pull,
+          }
+          event_path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "pr-1907-event.json"
+          event_path.write_text(
+              json.dumps(event, ensure_ascii=False) + "\n", encoding="utf-8"
+          )
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write(f"FOUNDER_EVENT_PATH={event_path}\n")
+          print(f"live_merge_candidate={merge_sha}")
+          PY
+
+      - name: Publish corrected fail-closed founder authority result
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PYTHONPATH: .
+        run: |
+          set -euo pipefail
+          GITHUB_EVENT_PATH="$FOUNDER_EVENT_PATH" \
+            python .github/scripts/founder_authority_workflow.py
