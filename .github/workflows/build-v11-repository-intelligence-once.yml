@@ -1,0 +1,1383 @@
+name: Build v1.1 deterministic repository intelligence once
+
+on:
+  push:
+    branches:
+      - automation/1912-deep-system-learning-v1
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: build-v11-repository-intelligence-once
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build-v11-repository-intelligence
+    if: github.repository == 'Voxterrae/HUB_Optimus'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Record build start
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          body = (
+              "## Deep whole-system learning build started\n\n"
+              f"- workflow source: `{os.environ['SOURCE_SHA']}`\n"
+              f"- workflow run: {os.environ['RUN_URL']}\n"
+              "- target branch: `feat/obsidian-project-intelligence-v1.1`\n"
+              "- required starting head: `3f57ac105bb5251ed2204813b07a414067180eaa`\n"
+              "- scope: deterministic Git inventory, model coverage, drift and commit delta\n"
+              "- production deployment: none\n"
+          )
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1912/comments",
+              data=json.dumps({"body": body}).encode("utf-8"),
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30):
+              pass
+          PY
+
+      - name: Checkout exact v1.1 Draft branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feat/obsidian-project-intelligence-v1.1
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Verify starting identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "3f57ac105bb5251ed2204813b07a414067180eaa"
+          test "$(git rev-parse 'HEAD^{tree}')" = "88f67c24a8384f85ff75dd04fc22acf438e56be8"
+          test -z "$(git status --short)"
+
+      - name: Write deterministic repository intelligence implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tools/project_intelligence tests \
+            obsidian-HUB_Optimus/98_META site/obsidian-HUB_Optimus
+
+          cat > tools/project_intelligence/__init__.py <<'PY'
+          """Deterministic, evidence-bound repository intelligence tooling."""
+          PY
+
+          cat > tools/project_intelligence/repository_intelligence.py <<'PY'
+          #!/usr/bin/env python3
+          """Build deterministic repository inventory and model-delta artifacts.
+
+          The tool reads Git objects and the reviewed Project Intelligence JSON model.
+          It never edits architectural facts automatically. Outputs are review inputs,
+          not truth adjudication, runtime telemetry, or evidence of mutable external state.
+          """
+
+          from __future__ import annotations
+
+          import argparse
+          import json
+          import subprocess
+          import sys
+          from collections import Counter, defaultdict
+          from pathlib import Path, PurePosixPath
+          from typing import Any, Iterable
+
+
+          ROOT = Path(__file__).resolve().parents[2]
+          ROUTE = ROOT / "site" / "obsidian-HUB_Optimus"
+          DEFAULT_MODEL = ROUTE / "system.json"
+          DEFAULT_RUNTIME = ROUTE / "system.runtime.json"
+          DEFAULT_INVENTORY = ROUTE / "system.inventory.json"
+          DEFAULT_DELTA = ROUTE / "system.delta.json"
+          REPOSITORY = "Voxterrae/HUB_Optimus"
+          GENERATED_PATHS = {
+              "site/obsidian-HUB_Optimus/system.inventory.json",
+              "site/obsidian-HUB_Optimus/system.delta.json",
+          }
+          ARCHITECTURE_DOMAINS = {
+              "project-intelligence",
+              "governance",
+              "governance-automation",
+              "frontend",
+              "semantic-engine",
+              "simulation-runtime",
+              "contracts",
+              "methodology",
+              "operations",
+              "testing",
+              "benchmarking",
+              "tooling",
+              "data",
+          }
+          ROOT_GOVERNANCE_FILES = {
+              "AGENTS.md",
+              "CONTRIBUTING.md",
+              "INTEGRITY_SCORING_SYSTEM.md",
+              "INTEGRITY_SCORING_SYSTEM_EN.md",
+              "IP_NOTICE.md",
+              "KERNEL_CHARTER.md",
+              "KERNEL_CHARTER_EN.md",
+              "SECURITY.md",
+              "TECHNICAL_MANIFESTO.md",
+          }
+
+
+          class IntelligenceError(RuntimeError):
+              """Raised when deterministic evidence cannot be collected."""
+
+
+          def git(*arguments: str, binary: bool = False) -> str | bytes:
+              completed = subprocess.run(
+                  ["git", "-C", str(ROOT), *arguments],
+                  check=False,
+                  capture_output=True,
+              )
+              if completed.returncode != 0:
+                  stderr = completed.stderr.decode("utf-8", errors="replace").strip()
+                  raise IntelligenceError(
+                      f"git {' '.join(arguments)} failed ({completed.returncode}): {stderr}"
+                  )
+              if binary:
+                  return completed.stdout
+              return completed.stdout.decode("utf-8", errors="strict").strip()
+
+
+          def canonical_json(value: Any) -> str:
+              return json.dumps(
+                  value,
+                  ensure_ascii=False,
+                  sort_keys=True,
+                  indent=2,
+              ) + "\n"
+
+
+          def write_json(path: Path, value: Any) -> None:
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_text(canonical_json(value), encoding="utf-8")
+
+
+          def resolve_path(value: str | Path) -> Path:
+              path = Path(value)
+              return path if path.is_absolute() else ROOT / path
+
+
+          def resolve_commit(ref: str) -> str:
+              commit = str(git("rev-parse", "--verify", f"{ref}^{{commit}}"))
+              if len(commit) != 40:
+                  raise IntelligenceError(f"Unexpected commit identity for {ref!r}: {commit!r}")
+              return commit
+
+
+          def commit_tree(commit: str) -> str:
+              tree = str(git("rev-parse", f"{commit}^{{tree}}"))
+              if len(tree) != 40:
+                  raise IntelligenceError(f"Unexpected tree identity for {commit!r}: {tree!r}")
+              return tree
+
+
+          def commit_time(commit: str) -> str:
+              return str(git("show", "-s", "--format=%cI", commit))
+
+
+          def normalize_repository_path(path: str) -> str:
+              normalized = PurePosixPath(path.strip().strip("/")).as_posix()
+              if normalized in {"", "."}:
+                  raise IntelligenceError(f"Invalid empty repository path: {path!r}")
+              if normalized.startswith("../") or "/../" in normalized:
+                  raise IntelligenceError(f"Unsafe repository path: {path!r}")
+              return normalized
+
+
+          def classify_domain(path: str) -> str:
+              if (
+                  path.startswith("site/obsidian-HUB_Optimus/")
+                  or path.startswith("obsidian-HUB_Optimus/")
+                  or path.startswith("tools/project_intelligence/")
+                  or path.startswith("tests/test_project_intelligence")
+              ):
+                  return "project-intelligence"
+              if path.startswith(".github/workflows/") or path.startswith(".github/scripts/"):
+                  return "governance-automation"
+              if (
+                  path.startswith("docs/governance/")
+                  or path.startswith("config/governance/")
+                  or path == ".github/CODEOWNERS"
+                  or path in ROOT_GOVERNANCE_FILES
+              ):
+                  return "governance"
+              if path.startswith("site/"):
+                  return "frontend"
+              if path.startswith("semantic_engine/"):
+                  return "semantic-engine"
+              if path.startswith("ops/"):
+                  return "operations"
+              if path.startswith("tests/"):
+                  return "testing"
+              if path.startswith("benchmarks/"):
+                  return "benchmarking"
+              if path.startswith("tools/"):
+                  return "tooling"
+              if path.startswith("datasets/") or path.startswith("data/"):
+                  return "data"
+              if path.startswith("v1_core/"):
+                  return "methodology"
+              if path.startswith("docs/"):
+                  return "documentation"
+              if path.endswith(".schema.json"):
+                  return "contracts"
+              if "/" not in path and path.endswith(".py"):
+                  return "simulation-runtime"
+              return "repository-support"
+
+
+          def extension_for(path: str) -> str:
+              name = PurePosixPath(path).name
+              if name.endswith(".schema.json"):
+                  return ".schema.json"
+              suffix = PurePosixPath(path).suffix.lower()
+              return suffix or "[none]"
+
+
+          def list_tree(ref: str) -> list[dict[str, Any]]:
+              raw = git("ls-tree", "-r", "-z", "--long", ref, binary=True)
+              assert isinstance(raw, bytes)
+              records: list[dict[str, Any]] = []
+              for entry in raw.split(b"\0"):
+                  if not entry:
+                      continue
+                  header, raw_path = entry.split(b"\t", 1)
+                  mode, object_type, object_sha, raw_size = header.decode("ascii").split()
+                  path = normalize_repository_path(raw_path.decode("utf-8"))
+                  if object_type != "blob" or path in GENERATED_PATHS:
+                      continue
+                  size = 0 if raw_size == "-" else int(raw_size)
+                  domain = classify_domain(path)
+                  records.append(
+                      {
+                          "path": path,
+                          "mode": mode,
+                          "blob_sha": object_sha,
+                          "size_bytes": size,
+                          "extension": extension_for(path),
+                          "domain": domain,
+                          "architecture_relevant": domain in ARCHITECTURE_DOMAINS,
+                          "domain_confidence": "INFERRED",
+                      }
+                  )
+              records.sort(key=lambda item: item["path"])
+              return records
+
+
+          def load_model(model_path: Path, runtime_path: Path) -> dict[str, Any]:
+              core = json.loads(model_path.read_text(encoding="utf-8"))
+              runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+              return {**core, **runtime}
+
+
+          def model_objects(model: dict[str, Any]) -> list[dict[str, Any]]:
+              result: list[dict[str, Any]] = []
+              for section in (
+                  "components",
+                  "external_systems",
+                  "dependencies",
+                  "interfaces",
+                  "entities",
+                  "deployment",
+              ):
+                  for item in model.get(section, []):
+                      item_id = str(item.get("id", "")).strip()
+                      if not item_id:
+                          continue
+                      result.append(
+                          {
+                              "key": f"{section}:{item_id}",
+                              "section": section,
+                              "id": item_id,
+                              "name": item.get("name", item_id),
+                              "status": item.get("status", "unknown"),
+                              "confidence": item.get("confidence", "UNKNOWN"),
+                              "source": sorted(
+                                  {
+                                      normalize_repository_path(source)
+                                      for source in item.get("source", [])
+                                      if isinstance(source, str) and source.strip()
+                                  }
+                              ),
+                          }
+                      )
+              result.sort(key=lambda item: item["key"])
+              return result
+
+
+          def files_for_reference(reference: str, file_paths: set[str]) -> tuple[str, list[str]]:
+              if reference in file_paths:
+                  return "exact", [reference]
+              prefix = reference.rstrip("/") + "/"
+              matches = sorted(path for path in file_paths if path.startswith(prefix))
+              if matches:
+                  return "prefix", matches
+              return "unresolved", []
+
+
+          def build_source_index(
+              objects: list[dict[str, Any]],
+              files: list[dict[str, Any]],
+          ) -> tuple[list[dict[str, Any]], dict[str, set[str]], dict[str, set[str]]]:
+              file_paths = {item["path"] for item in files}
+              reference_to_objects: dict[str, set[str]] = defaultdict(set)
+              for item in objects:
+                  for reference in item["source"]:
+                      reference_to_objects[reference].add(item["key"])
+
+              file_to_objects: dict[str, set[str]] = defaultdict(set)
+              source_records: list[dict[str, Any]] = []
+              for reference in sorted(reference_to_objects):
+                  match_type, matched_files = files_for_reference(reference, file_paths)
+                  object_keys = sorted(reference_to_objects[reference])
+                  for path in matched_files:
+                      file_to_objects[path].update(object_keys)
+                  source_records.append(
+                      {
+                          "path": reference,
+                          "match_type": match_type,
+                          "matched_files": matched_files,
+                          "model_objects": object_keys,
+                          "confidence": "CONFIRMED" if matched_files else "UNKNOWN",
+                      }
+                  )
+              return source_records, file_to_objects, reference_to_objects
+
+
+          def ratio(numerator: int, denominator: int) -> float:
+              return round(numerator / denominator, 6) if denominator else 0.0
+
+
+          def summarize_domains(files: list[dict[str, Any]]) -> list[dict[str, Any]]:
+              buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
+              for item in files:
+                  buckets[item["domain"]].append(item)
+              result = []
+              for domain in sorted(buckets):
+                  records = buckets[domain]
+                  modeled = sum(bool(item.get("modeled_by")) for item in records)
+                  result.append(
+                      {
+                          "domain": domain,
+                          "files": len(records),
+                          "bytes": sum(item["size_bytes"] for item in records),
+                          "modeled_files": modeled,
+                          "coverage_ratio": ratio(modeled, len(records)),
+                          "architecture_relevant": domain in ARCHITECTURE_DOMAINS,
+                          "classification_confidence": "INFERRED",
+                      }
+                  )
+              return result
+
+
+          def build_inventory(
+              head_ref: str,
+              model_path: Path,
+              runtime_path: Path,
+          ) -> tuple[dict[str, Any], dict[str, Any]]:
+              head_commit = resolve_commit(head_ref)
+              model = load_model(model_path, runtime_path)
+              objects = model_objects(model)
+              files = list_tree(head_commit)
+              source_records, file_to_objects, reference_to_objects = build_source_index(objects, files)
+
+              for item in files:
+                  item["modeled_by"] = sorted(file_to_objects.get(item["path"], set()))
+
+              modeled_files = [item for item in files if item["modeled_by"]]
+              architecture_files = [item for item in files if item["architecture_relevant"]]
+              modeled_architecture_files = [item for item in architecture_files if item["modeled_by"]]
+              unresolved = [item for item in source_records if item["match_type"] == "unresolved"]
+              unmodeled_candidates = [
+                  {
+                      "path": item["path"],
+                      "domain": item["domain"],
+                      "blob_sha": item["blob_sha"],
+                      "reason": "Architecture-relevant Git file has no current model source reference.",
+                      "confidence": "INFERRED",
+                      "review_state": "candidate",
+                  }
+                  for item in architecture_files
+                  if not item["modeled_by"]
+              ]
+
+              top_level = Counter(
+                  path.split("/", 1)[0] if "/" in path else "[root]"
+                  for path in (item["path"] for item in files)
+              )
+              extensions = Counter(item["extension"] for item in files)
+              model_snapshot = {
+                  "components": len(model.get("components", [])),
+                  "interfaces": len(model.get("interfaces", [])),
+                  "entities": len(model.get("entities", [])),
+                  "relations": len(model.get("relations", [])),
+                  "risks": len(model.get("risks", [])),
+              }
+
+              inventory = {
+                  "schema_version": "hub-optimus-repository-inventory.v1.1",
+                  "analysis": {
+                      "repository": REPOSITORY,
+                      "commit": head_commit,
+                      "tree": commit_tree(head_commit),
+                      "commit_time_utc": commit_time(head_commit),
+                      "semantic_baseline_commit": model.get("analysis", {}).get("commit"),
+                      "semantic_baseline_tree": model.get("analysis", {}).get("tree"),
+                      "generator": "tools/project_intelligence/repository_intelligence.py",
+                      "evidence_kind": "git-tree",
+                      "confidence": "CONFIRMED",
+                      "boundary": (
+                          "Git inventory and model-reference coverage are confirmed for the pinned commit. "
+                          "Domain classification and unmodeled-surface relevance are reviewable inferences. "
+                          "Mutable external state remains UNKNOWN."
+                      ),
+                  },
+                  "summary": {
+                      "files": len(files),
+                      "bytes": sum(item["size_bytes"] for item in files),
+                      "directories": len(
+                          {
+                              str(PurePosixPath(item["path"]).parent)
+                              for item in files
+                              if str(PurePosixPath(item["path"]).parent) != "."
+                          }
+                      ),
+                      "modeled_files": len(modeled_files),
+                      "modeled_file_ratio": ratio(len(modeled_files), len(files)),
+                      "architecture_files": len(architecture_files),
+                      "modeled_architecture_files": len(modeled_architecture_files),
+                      "architecture_coverage_ratio": ratio(
+                          len(modeled_architecture_files), len(architecture_files)
+                      ),
+                      "source_references": len(source_records),
+                      "resolved_source_references": len(source_records) - len(unresolved),
+                      "unresolved_source_references": len(unresolved),
+                      "unmodeled_architecture_candidates": len(unmodeled_candidates),
+                  },
+                  "model_snapshot": model_snapshot,
+                  "domains": summarize_domains(files),
+                  "top_level": [
+                      {"name": name, "files": count}
+                      for name, count in sorted(top_level.items())
+                  ],
+                  "extensions": [
+                      {"extension": extension, "files": count}
+                      for extension, count in sorted(extensions.items())
+                  ],
+                  "model_objects": objects,
+                  "source_references": source_records,
+                  "unresolved_source_references": unresolved,
+                  "unmodeled_architecture_candidates": unmodeled_candidates,
+                  "files": files,
+                  "exclusions": sorted(GENERATED_PATHS),
+                  "external_state": {
+                      "status": "unknown",
+                      "confidence": "UNKNOWN",
+                      "objects": [
+                          "repository rulesets",
+                          "GitHub Pages runtime",
+                          "DNS",
+                          "TLS",
+                          "EC2",
+                          "Nginx",
+                      ],
+                      "reason": "A Git tree cannot certify mutable external state.",
+                  },
+              }
+              context = {
+                  "model": model,
+                  "objects": objects,
+                  "source_records": source_records,
+                  "file_to_objects": file_to_objects,
+                  "reference_to_objects": reference_to_objects,
+                  "files": files,
+              }
+              return inventory, context
+
+
+          def parse_diff(base_commit: str, head_commit: str) -> list[dict[str, Any]]:
+              raw = git(
+                  "diff",
+                  "--name-status",
+                  "-z",
+                  f"{base_commit}..{head_commit}",
+                  binary=True,
+              )
+              assert isinstance(raw, bytes)
+              tokens = [token.decode("utf-8") for token in raw.split(b"\0") if token]
+              changes: list[dict[str, Any]] = []
+              index = 0
+              while index < len(tokens):
+                  status_token = tokens[index]
+                  index += 1
+                  code = status_token[0]
+                  if code in {"R", "C"}:
+                      old_path = normalize_repository_path(tokens[index])
+                      new_path = normalize_repository_path(tokens[index + 1])
+                      index += 2
+                      path = new_path
+                  else:
+                      old_path = None
+                      path = normalize_repository_path(tokens[index])
+                      index += 1
+                  changes.append(
+                      {
+                          "status": status_token,
+                          "kind": {
+                              "A": "added",
+                              "M": "modified",
+                              "D": "deleted",
+                              "R": "renamed",
+                              "C": "copied",
+                              "T": "type-changed",
+                          }.get(code, "other"),
+                          "path": path,
+                          "old_path": old_path,
+                      }
+                  )
+              changes.sort(key=lambda item: (item["path"], item["status"]))
+              return changes
+
+
+          def object_keys_for_path(
+              path: str,
+              source_records: Iterable[dict[str, Any]],
+          ) -> set[str]:
+              result: set[str] = set()
+              for record in source_records:
+                  reference = record["path"].rstrip("/")
+                  if path == reference or path.startswith(reference + "/"):
+                      result.update(record["model_objects"])
+              return result
+
+
+          def graph_reachable(
+              model: dict[str, Any],
+              seeds: set[str],
+              reverse: bool,
+          ) -> set[str]:
+              adjacency: dict[str, set[str]] = defaultdict(set)
+              for relation in model.get("relations", []):
+                  source = relation.get("to") if reverse else relation.get("from")
+                  target = relation.get("from") if reverse else relation.get("to")
+                  if isinstance(source, str) and isinstance(target, str):
+                      adjacency[source].add(target)
+              visited = set(seeds)
+              queue = sorted(seeds)
+              while queue:
+                  current = queue.pop(0)
+                  for target in sorted(adjacency.get(current, set())):
+                      if target in visited:
+                          continue
+                      visited.add(target)
+                      queue.append(target)
+              return visited
+
+
+          def build_delta(
+              base_ref: str,
+              head_ref: str,
+              inventory: dict[str, Any],
+              context: dict[str, Any],
+          ) -> dict[str, Any]:
+              base_commit = resolve_commit(base_ref)
+              head_commit = inventory["analysis"]["commit"]
+              files_by_path = {item["path"]: item for item in context["files"]}
+              source_records = context["source_records"]
+              object_lookup = {item["key"]: item for item in context["objects"]}
+              changes = parse_diff(base_commit, head_commit)
+              affected: dict[str, set[str]] = defaultdict(set)
+
+              for change in changes:
+                  path = change["path"]
+                  object_keys = object_keys_for_path(path, source_records)
+                  if change.get("old_path"):
+                      object_keys.update(object_keys_for_path(change["old_path"], source_records))
+                  for key in object_keys:
+                      affected[key].add(path)
+                  head_record = files_by_path.get(path)
+                  change["domain"] = (
+                      head_record["domain"] if head_record else classify_domain(path)
+                  )
+                  change["architecture_relevant"] = (
+                      change["domain"] in ARCHITECTURE_DOMAINS
+                  )
+                  change["modeled_by"] = sorted(object_keys)
+                  change["head_blob_sha"] = head_record["blob_sha"] if head_record else None
+                  change["confidence"] = "CONFIRMED"
+
+              affected_objects = []
+              for key in sorted(affected):
+                  metadata = object_lookup.get(key, {})
+                  affected_objects.append(
+                      {
+                          "key": key,
+                          "section": metadata.get("section"),
+                          "id": metadata.get("id"),
+                          "name": metadata.get("name", key),
+                          "changed_paths": sorted(affected[key]),
+                          "review_state": "requires-review",
+                          "confidence": "CONFIRMED",
+                      }
+                  )
+
+              node_sections = {"components", "external_systems", "dependencies"}
+              seed_nodes = {
+                  item["id"]
+                  for item in affected_objects
+                  if item.get("section") in node_sections and item.get("id")
+              }
+              direct = set(seed_nodes)
+              for relation in context["model"].get("relations", []):
+                  source = relation.get("from")
+                  target = relation.get("to")
+                  if source in seed_nodes and isinstance(target, str):
+                      direct.add(target)
+                  if target in seed_nodes and isinstance(source, str):
+                      direct.add(source)
+              upstream = graph_reachable(context["model"], seed_nodes, reverse=True)
+              downstream = graph_reachable(context["model"], seed_nodes, reverse=False)
+
+              kind_counts = Counter(change["kind"] for change in changes)
+              domain_counts = Counter(change["domain"] for change in changes)
+              changed_modeled = [change for change in changes if change["modeled_by"]]
+              review_candidates = [
+                  change
+                  for change in changes
+                  if change["architecture_relevant"] and not change["modeled_by"]
+              ]
+
+              return {
+                  "schema_version": "hub-optimus-model-delta.v1.1",
+                  "analysis": {
+                      "repository": REPOSITORY,
+                      "base_commit": base_commit,
+                      "base_tree": commit_tree(base_commit),
+                      "head_commit": head_commit,
+                      "head_tree": inventory["analysis"]["tree"],
+                      "head_commit_time_utc": inventory["analysis"]["commit_time_utc"],
+                      "generator": "tools/project_intelligence/repository_intelligence.py",
+                      "confidence": "CONFIRMED",
+                      "boundary": (
+                          "Changed paths and source-reference intersections are deterministic. "
+                          "Affected facts are review candidates; the tool never mutates the semantic model."
+                      ),
+                  },
+                  "summary": {
+                      "changed_paths": len(changes),
+                      "added": kind_counts["added"],
+                      "modified": kind_counts["modified"],
+                      "deleted": kind_counts["deleted"],
+                      "renamed": kind_counts["renamed"],
+                      "changed_modeled_paths": len(changed_modeled),
+                      "unmodeled_architecture_review_candidates": len(review_candidates),
+                      "affected_model_objects": len(affected_objects),
+                      "seed_graph_nodes": len(seed_nodes),
+                      "review_required": bool(affected_objects or review_candidates),
+                  },
+                  "domains": [
+                      {"domain": domain, "changed_paths": count}
+                      for domain, count in sorted(domain_counts.items())
+                  ],
+                  "affected_model_objects": affected_objects,
+                  "graph_impact": {
+                      "seed_nodes": sorted(seed_nodes),
+                      "direct": sorted(direct),
+                      "upstream": sorted(upstream),
+                      "downstream": sorted(downstream),
+                      "confidence": "INFERRED",
+                      "reason": "Reachability is derived only from existing typed model relations.",
+                  },
+                  "stale_candidates": [
+                      {
+                          "model_object": item["key"],
+                          "name": item["name"],
+                          "changed_paths": item["changed_paths"],
+                          "status": "candidate",
+                          "confidence": "INFERRED",
+                          "reason": "At least one source-bound path changed after the semantic baseline.",
+                      }
+                      for item in affected_objects
+                  ],
+                  "unmodeled_architecture_review_candidates": review_candidates,
+                  "changes": changes,
+                  "model_mutation": {
+                      "status": "not-performed",
+                      "confidence": "CONFIRMED",
+                      "reason": "Human review is required before any Project Intelligence fact changes.",
+                  },
+                  "external_state": {
+                      "status": "unknown",
+                      "confidence": "UNKNOWN",
+                      "reason": "Git delta cannot certify mutable deployment or infrastructure state.",
+                  },
+              }
+
+
+          def create_artifacts(
+              base_ref: str,
+              head_ref: str,
+              model_path: Path,
+              runtime_path: Path,
+          ) -> tuple[dict[str, Any], dict[str, Any]]:
+              inventory, context = build_inventory(head_ref, model_path, runtime_path)
+              delta = build_delta(base_ref, head_ref, inventory, context)
+              return inventory, delta
+
+
+          def add_common_arguments(parser: argparse.ArgumentParser) -> None:
+              parser.add_argument("--base", required=True, help="Semantic baseline Git ref")
+              parser.add_argument("--head", default="HEAD", help="Inventory target Git ref")
+              parser.add_argument("--model", default=str(DEFAULT_MODEL.relative_to(ROOT)))
+              parser.add_argument("--runtime", default=str(DEFAULT_RUNTIME.relative_to(ROOT)))
+              parser.add_argument(
+                  "--inventory-output",
+                  default=str(DEFAULT_INVENTORY.relative_to(ROOT)),
+              )
+              parser.add_argument(
+                  "--delta-output",
+                  default=str(DEFAULT_DELTA.relative_to(ROOT)),
+              )
+
+
+          def main(argv: list[str] | None = None) -> int:
+              parser = argparse.ArgumentParser(description=__doc__)
+              commands = parser.add_subparsers(dest="command", required=True)
+              build_parser = commands.add_parser("build", help="Write deterministic artifacts")
+              check_parser = commands.add_parser("check", help="Verify committed artifacts")
+              add_common_arguments(build_parser)
+              add_common_arguments(check_parser)
+              args = parser.parse_args(argv)
+
+              model_path = resolve_path(args.model)
+              runtime_path = resolve_path(args.runtime)
+              inventory_output = resolve_path(args.inventory_output)
+              delta_output = resolve_path(args.delta_output)
+              inventory, delta = create_artifacts(
+                  args.base,
+                  args.head,
+                  model_path,
+                  runtime_path,
+              )
+
+              if args.command == "build":
+                  write_json(inventory_output, inventory)
+                  write_json(delta_output, delta)
+                  print(
+                      canonical_json(
+                          {
+                              "inventory_commit": inventory["analysis"]["commit"],
+                              "inventory_tree": inventory["analysis"]["tree"],
+                              "files": inventory["summary"]["files"],
+                              "modeled_files": inventory["summary"]["modeled_files"],
+                              "changed_paths": delta["summary"]["changed_paths"],
+                              "affected_model_objects": delta["summary"]["affected_model_objects"],
+                          }
+                      ).strip()
+                  )
+                  return 0
+
+              expected_inventory = json.loads(inventory_output.read_text(encoding="utf-8"))
+              expected_delta = json.loads(delta_output.read_text(encoding="utf-8"))
+              failures = []
+              if expected_inventory != inventory:
+                  failures.append(str(inventory_output.relative_to(ROOT)))
+              if expected_delta != delta:
+                  failures.append(str(delta_output.relative_to(ROOT)))
+              if failures:
+                  print("Stale deterministic artifacts: " + ", ".join(failures), file=sys.stderr)
+                  return 1
+              print("Repository intelligence artifacts are deterministic and current.")
+              return 0
+
+
+          if __name__ == "__main__":
+              raise SystemExit(main())
+          PY
+          chmod +x tools/project_intelligence/repository_intelligence.py
+
+          cat > tests/test_project_intelligence_repository_learning.py <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+
+          ROOT = Path(__file__).resolve().parents[1]
+          ROUTE = ROOT / "site" / "obsidian-HUB_Optimus"
+          TOOL = ROOT / "tools" / "project_intelligence" / "repository_intelligence.py"
+          INVENTORY = ROUTE / "system.inventory.json"
+          DELTA = ROUTE / "system.delta.json"
+          LEARNING = ROUTE / "system.learning.json"
+          BASELINE_COMMIT = "30e985226347b4bc59b0e187b96633a09647ca42"
+
+
+          def load(path):
+              return json.loads(path.read_text(encoding="utf-8"))
+
+
+          def test_repository_learning_artifacts_exist_and_are_bounded():
+              for path in (TOOL, INVENTORY, DELTA):
+                  assert path.exists(), path
+                  assert path.stat().st_size > 0
+
+              inventory = load(INVENTORY)
+              assert inventory["schema_version"] == "hub-optimus-repository-inventory.v1.1"
+              assert inventory["analysis"]["repository"] == "Voxterrae/HUB_Optimus"
+              assert inventory["analysis"]["semantic_baseline_commit"] == BASELINE_COMMIT
+              assert inventory["analysis"]["confidence"] == "CONFIRMED"
+              assert "Mutable external state remains UNKNOWN" in inventory["analysis"]["boundary"]
+              assert inventory["external_state"]["confidence"] == "UNKNOWN"
+              assert inventory["summary"]["files"] > 100
+              assert inventory["summary"]["architecture_files"] > 0
+              assert 0 <= inventory["summary"]["architecture_coverage_ratio"] <= 1
+
+
+          def test_inventory_files_are_unique_sorted_and_git_bound():
+              inventory = load(INVENTORY)
+              files = inventory["files"]
+              paths = [item["path"] for item in files]
+              assert paths == sorted(paths)
+              assert len(paths) == len(set(paths))
+              assert not ({
+                  "site/obsidian-HUB_Optimus/system.inventory.json",
+                  "site/obsidian-HUB_Optimus/system.delta.json",
+              } & set(paths))
+              for item in files:
+                  assert len(item["blob_sha"]) == 40
+                  assert item["size_bytes"] >= 0
+                  assert item["domain"]
+                  assert item["domain_confidence"] == "INFERRED"
+                  assert item["modeled_by"] == sorted(set(item["modeled_by"]))
+
+
+          def test_source_coverage_and_unmodeled_candidates_are_reviewable():
+              inventory = load(INVENTORY)
+              source_records = inventory["source_references"]
+              assert source_records
+              keys = {item["key"] for item in inventory["model_objects"]}
+              for record in source_records:
+                  assert record["match_type"] in {"exact", "prefix", "unresolved"}
+                  assert set(record["model_objects"]) <= keys
+                  if record["matched_files"]:
+                      assert record["confidence"] == "CONFIRMED"
+                  else:
+                      assert record["confidence"] == "UNKNOWN"
+              for candidate in inventory["unmodeled_architecture_candidates"]:
+                  assert candidate["confidence"] == "INFERRED"
+                  assert candidate["review_state"] == "candidate"
+                  assert "no current model source reference" in candidate["reason"]
+
+
+          def test_delta_detects_changes_without_mutating_model():
+              delta = load(DELTA)
+              assert delta["schema_version"] == "hub-optimus-model-delta.v1.1"
+              assert delta["analysis"]["base_commit"] == BASELINE_COMMIT
+              assert delta["analysis"]["head_commit"] == load(INVENTORY)["analysis"]["commit"]
+              assert delta["summary"]["changed_paths"] > 0
+              assert delta["summary"]["review_required"] is True
+              assert delta["model_mutation"]["status"] == "not-performed"
+              assert delta["external_state"]["confidence"] == "UNKNOWN"
+              paths = [item["path"] for item in delta["changes"]]
+              assert paths == sorted(paths)
+              assert "site/obsidian-HUB_Optimus/app-v11.js" in paths
+              graph = delta["graph_impact"]
+              for key in ("seed_nodes", "direct", "upstream", "downstream"):
+                  assert graph[key] == sorted(set(graph[key]))
+
+
+          def test_learning_contract_records_implemented_inventory_and_delta():
+              learning = load(LEARNING)
+              inventory_contract = learning["coverage"]["repository_inventory"]
+              assert inventory_contract["status"] == "active"
+              assert inventory_contract["confidence"] == "CONFIRMED"
+              assert {
+                  "site/obsidian-HUB_Optimus/system.inventory.json",
+                  "site/obsidian-HUB_Optimus/system.delta.json",
+              } <= set(inventory_contract["artifacts"])
+              capabilities = {item["id"]: item for item in learning["capabilities"]}
+              assert capabilities["repository-domain-inventory"]["status"] == "active"
+              assert capabilities["source-model-coverage"]["status"] == "active"
+              assert capabilities["model-drift-detection"]["status"] == "active"
+              assert capabilities["incremental-model-delta"]["status"] == "partial"
+
+
+          def test_committed_snapshots_reproduce_from_their_pinned_basis(tmp_path):
+              inventory = load(INVENTORY)
+              delta = load(DELTA)
+              generated_inventory = tmp_path / "inventory.json"
+              generated_delta = tmp_path / "delta.json"
+              subprocess.run(
+                  [
+                      sys.executable,
+                      str(TOOL),
+                      "build",
+                      "--base",
+                      delta["analysis"]["base_commit"],
+                      "--head",
+                      inventory["analysis"]["commit"],
+                      "--inventory-output",
+                      str(generated_inventory),
+                      "--delta-output",
+                      str(generated_delta),
+                  ],
+                  cwd=ROOT,
+                  check=True,
+                  capture_output=True,
+                  text=True,
+              )
+              assert load(generated_inventory) == inventory
+              assert load(generated_delta) == delta
+          PY
+
+          cat > "obsidian-HUB_Optimus/98_META/Deterministic Repository Inventory.md" <<'MD'
+          ---
+          type: meta
+          status: active
+          layer: project-intelligence
+          criticality: high
+          source:
+            - tools/project_intelligence/repository_intelligence.py
+            - site/obsidian-HUB_Optimus/system.inventory.json
+          tags:
+            - inventory
+            - provenance
+            - coverage
+          baseline_commit: 30e985226347b4bc59b0e187b96633a09647ca42
+          v1_candidate_commit: 9c7b5d81b2cf85d349b1ca141d559a75067a9b14
+          ---
+
+          # Deterministic Repository Inventory
+
+          ## Purpose
+
+          v1.1 inventories the complete Git tree of a pinned commit and maps existing Project Intelligence source references onto real files. It is a deterministic evidence collector for [[Whole-System Learning]], not an autonomous architecture judge.
+
+          ## Confirmed output
+
+          `system.inventory.json` records:
+
+          - exact commit, tree and commit timestamp;
+          - every non-generated Git blob, mode, object identity and byte size;
+          - deterministic top-level, extension and domain summaries;
+          - exact or prefix resolution of model source references;
+          - source-to-model-object links;
+          - domain-level coverage;
+          - architecture-relevant files without a current source reference as review candidates.
+
+          ## Epistemic boundary
+
+          File existence, Git identity and source-reference matches are `CONFIRMED` for the pinned commit. Domain classification and architectural relevance are `INFERRED`. Rulesets, Pages runtime, DNS, TLS, EC2 and Nginx remain `UNKNOWN` until directly inspected.
+
+          An unmodelled candidate is not automatically a missing component. It is a prompt for human review.
+
+          ## Deterministic regeneration
+
+          ```text
+          python tools/project_intelligence/repository_intelligence.py build \
+            --base 30e985226347b4bc59b0e187b96633a09647ca42 \
+            --head <reviewed-implementation-commit>
+          ```
+
+          The generated inventory and delta files are excluded from their own inventory to avoid self-reference. The committed snapshots identify the exact implementation commit from which they were generated.
+
+          ## Related
+
+          - [[Repository Coverage]]
+          - [[Model Delta and Drift]]
+          - [[Source Map]]
+          - [[Evidence Index]]
+          - [[Update Protocol]]
+          MD
+
+          cat > "obsidian-HUB_Optimus/98_META/Model Delta and Drift.md" <<'MD'
+          ---
+          type: meta
+          status: partial
+          layer: project-intelligence
+          criticality: high
+          source:
+            - tools/project_intelligence/repository_intelligence.py
+            - site/obsidian-HUB_Optimus/system.delta.json
+          tags:
+            - delta
+            - drift
+            - impact
+            - review
+          baseline_commit: 30e985226347b4bc59b0e187b96633a09647ca42
+          v1_candidate_commit: 9c7b5d81b2cf85d349b1ca141d559a75067a9b14
+          ---
+
+          # Model Delta and Drift
+
+          ## Purpose
+
+          `system.delta.json` compares a pinned semantic baseline with a reviewed implementation commit. It connects changed Git paths to current model source references and derives review scope from the typed relations already documented by [[Architecture Overview]].
+
+          ## Active capabilities
+
+          - deterministic added, modified, deleted and renamed path inventory;
+          - changed-domain summary;
+          - changed-path to model-object intersection;
+          - stale-candidate register for source-bound objects;
+          - direct, upstream and downstream graph impact derived from existing relations;
+          - unmodelled architecture-relevant changes listed as review candidates.
+
+          ## Partial boundary
+
+          Detection is implemented. Automatic semantic-model mutation is not. A changed source path does not prove that the corresponding architectural fact changed, and the tool records `requires-review` rather than silently rewriting JSON or Obsidian notes.
+
+          Incremental note and graph regeneration remains planned and must preserve the discrepancy history defined by [[Update Protocol]].
+
+          ## External state
+
+          Git deltas cannot certify mutable repository settings, production deployment, DNS, TLS, EC2 or Nginx. Those claims remain `UNKNOWN` unless directly inspected.
+
+          ## Related
+
+          - [[Whole-System Learning]]
+          - [[Deterministic Repository Inventory]]
+          - [[Repository Coverage]]
+          - [[Dependency Graph]]
+          - [[Risk Register]]
+          MD
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          route = Path("site/obsidian-HUB_Optimus")
+          learning_path = route / "system.learning.json"
+          learning = json.loads(learning_path.read_text(encoding="utf-8"))
+
+          inventory_contract = learning.setdefault("coverage", {}).setdefault(
+              "repository_inventory", {}
+          )
+          inventory_contract.update(
+              {
+                  "status": "active",
+                  "confidence": "CONFIRMED",
+                  "description": (
+                      "Deterministic Git-tree inventory, source-model coverage and review-only "
+                      "unmodeled-surface candidates are generated for a pinned commit."
+                  ),
+                  "artifacts": [
+                      "site/obsidian-HUB_Optimus/system.inventory.json",
+                      "site/obsidian-HUB_Optimus/system.delta.json",
+                  ],
+                  "generator": "tools/project_intelligence/repository_intelligence.py",
+                  "boundary": (
+                      "Inventory does not prove semantic completeness or mutable external state."
+                  ),
+              }
+          )
+
+          capabilities = learning.setdefault("capabilities", [])
+          by_id = {item.get("id"): item for item in capabilities}
+
+          def upsert(identifier, *, name, status, confidence, purpose, evidence, boundary):
+              item = by_id.get(identifier)
+              if item is None:
+                  item = {"id": identifier}
+                  capabilities.append(item)
+                  by_id[identifier] = item
+              item.update(
+                  {
+                      "name": name,
+                      "status": status,
+                      "confidence": confidence,
+                      "purpose": purpose,
+                      "evidence": evidence,
+                      "boundary": boundary,
+                  }
+              )
+
+          upsert(
+              "repository-domain-inventory",
+              name="Deterministic repository domain inventory",
+              status="active",
+              confidence="CONFIRMED",
+              purpose="Inventory every non-generated Git blob and classify it into reviewable domains.",
+              evidence=[
+                  "tools/project_intelligence/repository_intelligence.py",
+                  "site/obsidian-HUB_Optimus/system.inventory.json",
+                  "tests/test_project_intelligence_repository_learning.py",
+              ],
+              boundary="Domain and relevance classifications remain INFERRED review aids.",
+          )
+          upsert(
+              "source-model-coverage",
+              name="Source-to-model coverage",
+              status="active",
+              confidence="CONFIRMED",
+              purpose="Resolve model source references to exact files or deterministic directory prefixes.",
+              evidence=[
+                  "site/obsidian-HUB_Optimus/system.inventory.json",
+                  "site/obsidian-HUB_Optimus/system.json",
+                  "site/obsidian-HUB_Optimus/system.runtime.json",
+              ],
+              boundary="Coverage of source references is not proof of complete architecture coverage.",
+          )
+          upsert(
+              "model-drift-detection",
+              name="Model drift candidate detection",
+              status="active",
+              confidence="CONFIRMED",
+              purpose="Identify source-bound model objects affected by changed Git paths.",
+              evidence=[
+                  "tools/project_intelligence/repository_intelligence.py",
+                  "site/obsidian-HUB_Optimus/system.delta.json",
+              ],
+              boundary="Affected objects require review; no semantic fact is changed automatically.",
+          )
+          upsert(
+              "incremental-model-delta",
+              name="Incremental model delta",
+              status="partial",
+              confidence="CONFIRMED",
+              purpose="Produce deterministic changed-path, affected-object and graph-impact review scope.",
+              evidence=[
+                  "site/obsidian-HUB_Optimus/system.delta.json",
+                  "tests/test_project_intelligence_repository_learning.py",
+              ],
+              boundary="Automatic regeneration of model facts, notes and views remains planned.",
+          )
+          capabilities.sort(key=lambda item: item.get("id", ""))
+          learning["artifacts"] = sorted(
+              set(
+                  learning.get("artifacts", [])
+                  + [
+                      "site/obsidian-HUB_Optimus/system.inventory.json",
+                      "site/obsidian-HUB_Optimus/system.delta.json",
+                  ]
+              )
+          )
+          learning_path.write_text(
+              json.dumps(learning, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          whole_path = Path("obsidian-HUB_Optimus/98_META/Whole-System Learning.md")
+          whole = whole_path.read_text(encoding="utf-8")
+          whole = whole.replace("### Planned", "### Implemented and planned", 1)
+          replacements = {
+              "- deterministic recursive repository inventory;":
+                  "- deterministic recursive repository inventory (`active`);",
+              "- unmodelled-surface report;":
+                  "- unmodelled-surface candidate report (`active`, review-only);",
+              "- source → component → interface → entity → test → deployment coverage;":
+                  "- source-to-model coverage (`active`) and deeper test/deployment linkage (`planned`);",
+              "- documentation-drift delta;":
+                  "- documentation and model-drift candidate delta (`active`, review-only);",
+              "- change-impact report tied to Git commits;":
+                  "- change-impact report tied to Git commits (`active`);",
+          }
+          for old, new in replacements.items():
+              if old not in whole:
+                  raise SystemExit(f"Whole-System Learning anchor missing: {old}")
+              whole = whole.replace(old, new, 1)
+          whole = whole.replace(
+              "Planned capabilities remain labelled `planned`; they are not presented as implemented.",
+              "Planned capabilities remain labelled `planned`; implemented inventory, coverage and drift detection are identified separately and do not imply autonomous model mutation.",
+              1,
+          )
+          whole_path.write_text(whole, encoding="utf-8")
+
+          coverage_path = Path("obsidian-HUB_Optimus/98_META/Repository Coverage.md")
+          coverage = coverage_path.read_text(encoding="utf-8")
+          old = (
+              "The current model does not claim complete machine-measured coverage of every repository file. "
+              "A deterministic recursive inventory and an unmodelled-surface report are `planned` for v1.1."
+          )
+          new = (
+              "The current model does not claim complete machine-measured coverage of every repository fact. "
+              "v1.1 now generates a deterministic recursive Git-tree inventory and an unmodelled-surface "
+              "candidate report; both are review instruments rather than automatic architecture truth."
+          )
+          if old not in coverage:
+              raise SystemExit("Repository Coverage anchor missing")
+          coverage = coverage.replace(old, new, 1)
+          coverage += (
+              "\n\n## Deterministic inventory artifacts\n\n"
+              "- `system.inventory.json` records Git objects, domains and source-model coverage.\n"
+              "- `system.delta.json` records changed paths, affected model objects and review scope.\n"
+              "- [[Deterministic Repository Inventory]] defines the evidence boundary.\n"
+              "- [[Model Delta and Drift]] defines the non-mutating review protocol.\n"
+          )
+          coverage_path.write_text(coverage, encoding="utf-8")
+
+          test_path = Path("tests/test_project_intelligence_v11.py")
+          tests = test_path.read_text(encoding="utf-8")
+          old_test = '''def test_v11_does_not_claim_planned_inventory_is_complete():
+              model = load_learning_model()
+              repository_inventory = model["coverage"]["repository_inventory"]
+              assert repository_inventory["status"] == "planned"
+              assert "not represented as complete" in repository_inventory["description"]
+
+              whole_system = (VAULT / "98_META" / "Whole-System Learning.md").read_text(
+                  encoding="utf-8"
+              )
+              assert "Planned capabilities remain labelled `planned`" in whole_system
+          '''
+          new_test = '''def test_v11_repository_inventory_is_implemented_without_overclaiming():
+              model = load_learning_model()
+              repository_inventory = model["coverage"]["repository_inventory"]
+              assert repository_inventory["status"] == "active"
+              assert repository_inventory["confidence"] == "CONFIRMED"
+              assert "does not prove semantic completeness" in repository_inventory["boundary"]
+
+              whole_system = (VAULT / "98_META" / "Whole-System Learning.md").read_text(
+                  encoding="utf-8"
+              )
+              assert "Planned capabilities remain labelled `planned`" in whole_system
+              assert "autonomous model mutation" in whole_system
+          '''
+          if old_test not in tests:
+              raise SystemExit("v1.1 inventory test anchor missing")
+          test_path.write_text(tests.replace(old_test, new_test, 1), encoding="utf-8")
+          PY
+
+      - name: Validate implementation before snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tools/project_intelligence/repository_intelligence.py
+          python tools/project_intelligence/repository_intelligence.py --help >/dev/null
+          python -m json.tool site/obsidian-HUB_Optimus/system.learning.json >/dev/null
+          python -m py_compile tests/test_project_intelligence_repository_learning.py
+          node --check site/obsidian-HUB_Optimus/app-v11.js
+          git diff --check
+
+      - name: Commit implementation basis
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "HUB_Optimus"
+          git config user.email "voxterraeoptimus@proton.me"
+          git add -- \
+            tools/project_intelligence/__init__.py \
+            tools/project_intelligence/repository_intelligence.py \
+            tests/test_project_intelligence_repository_learning.py \
+            tests/test_project_intelligence_v11.py \
+            site/obsidian-HUB_Optimus/system.learning.json \
+            "obsidian-HUB_Optimus/98_META/Whole-System Learning.md" \
+            "obsidian-HUB_Optimus/98_META/Repository Coverage.md" \
+            "obsidian-HUB_Optimus/98_META/Deterministic Repository Inventory.md" \
+            "obsidian-HUB_Optimus/98_META/Model Delta and Drift.md"
+          git commit -m "feat(project-intelligence): add deterministic whole-system inventory"
+          echo "IMPLEMENTATION_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "IMPLEMENTATION_TREE=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_ENV"
+
+      - name: Generate deterministic inventory and delta snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/project_intelligence/repository_intelligence.py build \
+            --base 30e985226347b4bc59b0e187b96633a09647ca42 \
+            --head "$IMPLEMENTATION_SHA" \
+            --inventory-output site/obsidian-HUB_Optimus/system.inventory.json \
+            --delta-output site/obsidian-HUB_Optimus/system.delta.json \
+            | tee "$RUNNER_TEMP/repository-intelligence-summary.json"
+          python tools/project_intelligence/repository_intelligence.py check \
+            --base 30e985226347b4bc59b0e187b96633a09647ca42 \
+            --head "$IMPLEMENTATION_SHA" \
+            --inventory-output site/obsidian-HUB_Optimus/system.inventory.json \
+            --delta-output site/obsidian-HUB_Optimus/system.delta.json
+          python -m json.tool site/obsidian-HUB_Optimus/system.inventory.json >/dev/null
+          python -m json.tool site/obsidian-HUB_Optimus/system.delta.json >/dev/null
+
+      - name: Run focused and regression validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pytest -q \
+            tests/test_project_intelligence_repository_learning.py \
+            tests/test_project_intelligence_v11.py \
+            tests/test_project_intelligence_site.py
+          git diff --check
+
+      - name: Commit generated evidence and push Draft branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- \
+            site/obsidian-HUB_Optimus/system.inventory.json \
+            site/obsidian-HUB_Optimus/system.delta.json
+          git commit -m "chore(project-intelligence): record deterministic repository snapshot"
+          FINAL_SHA="$(git rev-parse HEAD)"
+          FINAL_TREE="$(git rev-parse 'HEAD^{tree}')"
+          echo "FINAL_SHA=$FINAL_SHA" >> "$GITHUB_ENV"
+          echo "FINAL_TREE=$FINAL_TREE" >> "$GITHUB_ENV"
+          git push origin HEAD:feat/obsidian-project-intelligence-v1.1
+
+      - name: Record build result
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+          IMPLEMENTATION_SHA: ${{ env.IMPLEMENTATION_SHA }}
+          IMPLEMENTATION_TREE: ${{ env.IMPLEMENTATION_TREE }}
+          FINAL_SHA: ${{ env.FINAL_SHA }}
+          FINAL_TREE: ${{ env.FINAL_TREE }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import urllib.request
+
+          summary_path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "repository-intelligence-summary.json"
+          summary = summary_path.read_text(encoding="utf-8", errors="replace") if summary_path.exists() else "[summary unavailable]"
+          body = (
+              "## Deep whole-system learning build result\n\n"
+              f"- workflow source: `{os.environ['SOURCE_SHA']}`\n"
+              f"- workflow run: {os.environ['RUN_URL']}\n"
+              f"- job status: `{os.environ.get('JOB_STATUS', '')}`\n"
+              f"- implementation basis: `{os.environ.get('IMPLEMENTATION_SHA', '')}`\n"
+              f"- implementation tree: `{os.environ.get('IMPLEMENTATION_TREE', '')}`\n"
+              f"- final Draft head: `{os.environ.get('FINAL_SHA', '')}`\n"
+              f"- final Draft tree: `{os.environ.get('FINAL_TREE', '')}`\n"
+              "- production deployment: `none`\n\n"
+              "```json\n"
+              f"{summary}\n"
+              "```\n"
+          )
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1912/comments",
+              data=json.dumps({"body": body}).encode("utf-8"),
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30):
+              pass
+          PY
