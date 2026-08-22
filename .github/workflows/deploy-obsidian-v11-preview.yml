@@ -1,0 +1,260 @@
+name: Deploy isolated Obsidian v1.1 preview
+
+on:
+  push:
+    branches:
+      - deploy/1912-obsidian-v1.1-preview
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  issues: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy-isolated-v11-preview
+    if: github.repository == 'Voxterrae/HUB_Optimus'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Record preview deployment start
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          body = (
+              "## Isolated v1.1 URL preview deployment started\n\n"
+              f"- workflow source: `{os.environ['SOURCE_SHA']}`\n"
+              f"- deployment run: {os.environ['RUN_URL']}\n"
+              "- preserved public v1.0: `9c7b5d81b2cf85d349b1ca141d559a75067a9b14`\n"
+              "- preview v1.1: `29f643ec5403930ba628f8836f69b9ebc35b1cf2`\n"
+              "- preview route: https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/\n"
+              "- repository `main`, core/runtime and `/operator/` source remain unchanged\n"
+          )
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1912/comments",
+              data=json.dumps({"body": body}).encode("utf-8"),
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30):
+              pass
+          PY
+
+      - name: Checkout exact public v1.0 artifact
+        id: checkout_v10
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 9c7b5d81b2cf85d349b1ca141d559a75067a9b14
+          path: release-v10
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout exact v1.1 Draft artifact
+        id: checkout_v11
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 29f643ec5403930ba628f8836f69b9ebc35b1cf2
+          path: candidate-v11
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Build isolated preview artifact
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test "$(git -C release-v10 rev-parse HEAD)" = "9c7b5d81b2cf85d349b1ca141d559a75067a9b14"
+          test "$(git -C release-v10 rev-parse 'HEAD^{tree}')" = "05bdc116e526c02e5db33995513350fb20cb5297"
+          test "$(git -C candidate-v11 rev-parse HEAD)" = "29f643ec5403930ba628f8836f69b9ebc35b1cf2"
+          test "$(git -C candidate-v11 rev-parse 'HEAD^{tree}')" = "3de56d28896e9ca08371c689d7d2611e2d9fcf83"
+
+          test -f release-v10/site/index.html
+          test -f release-v10/site/operator/index.html
+          test -f release-v10/site/obsidian-HUB_Optimus/index.html
+
+          preview="release-v10/site/obsidian-HUB_Optimus-v1.1"
+          rm -rf "$preview"
+          cp -a candidate-v11/site/obsidian-HUB_Optimus "$preview"
+
+          test -f "$preview/index.html"
+          test -f "$preview/app-graph.js"
+          test -f "$preview/app.js"
+          test -f "$preview/app-v11.js"
+          test -f "$preview/styles.css"
+          test -f "$preview/styles-explorer.css"
+          test -f "$preview/styles-content.css"
+          test -f "$preview/styles-v11.css"
+          test -f "$preview/system.json"
+          test -f "$preview/system.runtime.json"
+          test -f "$preview/system.learning.json"
+          test -f "$preview/system.inventory.json"
+          test -f "$preview/system.delta.json"
+
+          grep -Fq './styles-v11.css' "$preview/index.html"
+          grep -Fq './app-v11.js' "$preview/index.html"
+          python -m json.tool "$preview/system.json" >/dev/null
+          python -m json.tool "$preview/system.runtime.json" >/dev/null
+          python -m json.tool "$preview/system.learning.json" >/dev/null
+          python -m json.tool "$preview/system.inventory.json" >/dev/null
+          python -m json.tool "$preview/system.delta.json" >/dev/null
+          node --check "$preview/app-graph.js"
+          node --check "$preview/app.js"
+          node --check "$preview/app-v11.js"
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = {
+              "route": "/obsidian-HUB_Optimus-v1.1/",
+              "status": "preview",
+              "public_v1_commit": "9c7b5d81b2cf85d349b1ca141d559a75067a9b14",
+              "public_v1_tree": "05bdc116e526c02e5db33995513350fb20cb5297",
+              "v1_1_commit": "29f643ec5403930ba628f8836f69b9ebc35b1cf2",
+              "v1_1_tree": "3de56d28896e9ca08371c689d7d2611e2d9fcf83",
+              "boundary": "Preview deployment only; no merge, core/runtime change or replacement of the v1.0 route.",
+          }
+          path = Path("release-v10/site/obsidian-HUB_Optimus-v1.1/preview-receipt.json")
+          path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          PY
+
+          echo "preview_path=$preview" >> "$GITHUB_OUTPUT"
+
+      - name: Configure GitHub Pages
+        id: configure
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Upload combined v1.0 plus isolated v1.1 preview
+        id: upload
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: release-v10/site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+
+      - name: Verify public routes and exact preview bytes
+        id: verify_public
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/v11-preview-verification"
+          mkdir -p "$work"
+          cd "$work"
+
+          fetch() {
+            local url="$1"
+            local output="$2"
+            local label="$3"
+            local code=""
+            for attempt in $(seq 1 20); do
+              code="$(curl --location --silent --show-error \
+                --connect-timeout 15 --max-time 45 \
+                --output "$output" --write-out '%{http_code}' \
+                "$url" || true)"
+              if [ "$code" = "200" ]; then
+                printf '%s=200\n' "$label"
+                return 0
+              fi
+              printf '%s attempt %s returned HTTP %s\n' "$label" "$attempt" "${code:-curl-error}"
+              sleep 4
+            done
+            return 1
+          }
+
+          fetch "https://huboptimus.dev/?preview=1912" root.html root
+          fetch "https://huboptimus.dev/operator/?preview=1912" operator.html operator
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/?preview=1912" v10.html obsidian_v10
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/?preview=1912" v11.html obsidian_v11
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/app-v11.js?preview=1912" app-v11.js app_v11
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/styles-v11.css?preview=1912" styles-v11.css styles_v11
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/system.learning.json?preview=1912" system.learning.json learning
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/system.inventory.json?preview=1912" system.inventory.json inventory
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/system.delta.json?preview=1912" system.delta.json delta
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/preview-receipt.json?preview=1912" preview-receipt.json receipt
+
+          grep -Fq 'HUB_Optimus Operator' operator.html
+          grep -Fq '<title>HUB_Optimus · Project Intelligence</title>' v10.html
+          grep -Fq './styles-v11.css' v11.html
+          grep -Fq './app-v11.js' v11.html
+          cmp v11.html "$GITHUB_WORKSPACE/candidate-v11/site/obsidian-HUB_Optimus/index.html"
+          cmp app-v11.js "$GITHUB_WORKSPACE/candidate-v11/site/obsidian-HUB_Optimus/app-v11.js"
+          cmp styles-v11.css "$GITHUB_WORKSPACE/candidate-v11/site/obsidian-HUB_Optimus/styles-v11.css"
+          cmp system.learning.json "$GITHUB_WORKSPACE/candidate-v11/site/obsidian-HUB_Optimus/system.learning.json"
+          cmp system.inventory.json "$GITHUB_WORKSPACE/candidate-v11/site/obsidian-HUB_Optimus/system.inventory.json"
+          cmp system.delta.json "$GITHUB_WORKSPACE/candidate-v11/site/obsidian-HUB_Optimus/system.delta.json"
+          python -m json.tool preview-receipt.json >/dev/null
+          echo "preview_verification=pass"
+
+      - name: Record preview deployment result
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+          CHECKOUT_V10: ${{ steps.checkout_v10.outcome }}
+          CHECKOUT_V11: ${{ steps.checkout_v11.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          CONFIGURE_OUTCOME: ${{ steps.configure.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+          DEPLOY_OUTCOME: ${{ steps.deployment.outcome }}
+          VERIFY_OUTCOME: ${{ steps.verify_public.outcome }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          body = (
+              "## Isolated v1.1 URL preview deployment result\n\n"
+              f"- workflow source: `{os.environ['SOURCE_SHA']}`\n"
+              f"- deployment run: {os.environ['RUN_URL']}\n"
+              f"- v1.0 checkout: `{os.environ.get('CHECKOUT_V10', '')}`\n"
+              f"- v1.1 checkout: `{os.environ.get('CHECKOUT_V11', '')}`\n"
+              f"- preview build: `{os.environ.get('BUILD_OUTCOME', '')}`\n"
+              f"- Pages configuration: `{os.environ.get('CONFIGURE_OUTCOME', '')}`\n"
+              f"- artifact upload: `{os.environ.get('UPLOAD_OUTCOME', '')}`\n"
+              f"- Pages deployment: `{os.environ.get('DEPLOY_OUTCOME', '')}`\n"
+              f"- public verification: `{os.environ.get('VERIFY_OUTCOME', '')}`\n"
+              "- v1.0: https://huboptimus.dev/obsidian-HUB_Optimus/\n"
+              "- v1.1 preview: https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/\n"
+              "- merge: none; core/runtime and `/operator/` source unchanged\n"
+          )
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1912/comments",
+              data=json.dumps({"body": body}).encode("utf-8"),
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30):
+              pass
+          PY
