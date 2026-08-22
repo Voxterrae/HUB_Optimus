@@ -1,0 +1,80 @@
+name: Generate exact v1.1 repository-learning artifacts
+
+on:
+  push:
+    branches:
+      - qa/1912-generate-learning-artifacts
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: generate-v11-learning-artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact v1.1 learner head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 4a6201821bd1223a9dbd44b04a8c5e65eab4f787
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify pinned source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "4a6201821bd1223a9dbd44b04a8c5e65eab4f787"
+          test "$(git rev-parse 'HEAD^{tree}')" = "961463e2c8c68634b70bf3b029f6a42f975b2e70"
+
+      - name: Generate deterministic inventory and delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/project_intelligence/repository_intelligence.py \
+            --root . \
+            --current 4a6201821bd1223a9dbd44b04a8c5e65eab4f787
+          python tools/project_intelligence/repository_intelligence.py \
+            --root . \
+            --current 4a6201821bd1223a9dbd44b04a8c5e65eab4f787 \
+            --check
+
+      - name: Validate generated contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          route = Path("site/obsidian-HUB_Optimus")
+          inventory = json.loads((route / "system.inventory.json").read_text(encoding="utf-8"))
+          delta = json.loads((route / "system.delta.json").read_text(encoding="utf-8"))
+
+          assert inventory["schema_version"] == "hub-optimus-project-intelligence.inventory.v1.1"
+          assert inventory["repository"]["commit"] == "4a6201821bd1223a9dbd44b04a8c5e65eab4f787"
+          assert inventory["repository"]["tree"] == "961463e2c8c68634b70bf3b029f6a42f975b2e70"
+          assert inventory["summary"]["tracked_files"] > 0
+          assert inventory["summary"]["mapped_files"] > 0
+          assert delta["schema_version"] == "hub-optimus-project-intelligence.delta.v1.1"
+          assert delta["comparison"]["to_commit"] == inventory["repository"]["commit"]
+          assert delta["summary"]["changed_paths"] > 0
+          assert delta["review_boundary"]["automatic_fact_updates"] is False
+
+          summary = {
+              "inventory": inventory["summary"],
+              "delta": delta["summary"],
+          }
+          print(json.dumps(summary, indent=2, ensure_ascii=False))
+          with open(Path.cwd() / "learning-summary.json", "w", encoding="utf-8") as handle:
+              json.dump(summary, handle, ensure_ascii=False, sort_keys=True, indent=2)
+              handle.write("\n")
+          PY
+
+      - name: Upload exact generated browser surface
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          name: v11-generated-learning-artifacts
+          path: site/obsidian-HUB_Optimus
