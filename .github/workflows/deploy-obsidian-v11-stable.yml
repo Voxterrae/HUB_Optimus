@@ -1,0 +1,350 @@
+name: Deploy Obsidian Project Intelligence v1.1 stable
+
+on:
+  push:
+    branches:
+      - deploy/1912-obsidian-v1.1-stable
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  issues: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy-v11-stable-with-v10-rollback
+    if: github.repository == 'Voxterrae/HUB_Optimus'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Record stable promotion start
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          body = (
+              "## Obsidian v1.1 stable promotion started\n\n"
+              f"- workflow source: `{os.environ['SOURCE_SHA']}`\n"
+              f"- deployment run: {os.environ['RUN_URL']}\n"
+              "- stable candidate: `29f643ec5403930ba628f8836f69b9ebc35b1cf2`\n"
+              "- stable candidate tree: `3de56d28896e9ca08371c689d7d2611e2d9fcf83`\n"
+              "- rollback artifact: `9c7b5d81b2cf85d349b1ca141d559a75067a9b14`\n"
+              "- target stable route: https://huboptimus.dev/obsidian-HUB_Optimus/\n"
+              "- retained rollback route: https://huboptimus.dev/obsidian-HUB_Optimus-v1.0/\n"
+              "- repository `main`, core/runtime and `/operator/` source remain unchanged\n"
+          )
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1912/comments",
+              data=json.dumps({"body": body}).encode("utf-8"),
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30):
+              pass
+          PY
+
+      - name: Checkout exact v1.0 rollback artifact
+        id: checkout_v10
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 9c7b5d81b2cf85d349b1ca141d559a75067a9b14
+          path: release-v10
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout exact v1.1 stable candidate
+        id: checkout_v11
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 29f643ec5403930ba628f8836f69b9ebc35b1cf2
+          path: release-v11
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Build stable artifact with rollback route
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          v10_commit="9c7b5d81b2cf85d349b1ca141d559a75067a9b14"
+          v10_tree="05bdc116e526c02e5db33995513350fb20cb5297"
+          v11_commit="29f643ec5403930ba628f8836f69b9ebc35b1cf2"
+          v11_tree="3de56d28896e9ca08371c689d7d2611e2d9fcf83"
+
+          test "$(git -C release-v10 rev-parse HEAD)" = "$v10_commit"
+          test "$(git -C release-v10 rev-parse 'HEAD^{tree}')" = "$v10_tree"
+          test "$(git -C release-v11 rev-parse HEAD)" = "$v11_commit"
+          test "$(git -C release-v11 rev-parse 'HEAD^{tree}')" = "$v11_tree"
+
+          test -f release-v10/site/index.html
+          test -f release-v10/site/operator/index.html
+          test -f release-v10/site/obsidian-HUB_Optimus/index.html
+          test -f release-v11/site/obsidian-HUB_Optimus/index.html
+
+          stable="release-v10/site/obsidian-HUB_Optimus"
+          rollback="release-v10/site/obsidian-HUB_Optimus-v1.0"
+          alias="release-v10/site/obsidian-HUB_Optimus-v1.1"
+
+          rm -rf "$rollback" "$alias"
+          cp -a "$stable" "$rollback"
+          rm -rf "$stable"
+          cp -a release-v11/site/obsidian-HUB_Optimus "$stable"
+          cp -a "$stable" "$alias"
+
+          for target in "$stable" "$alias"; do
+            test -f "$target/index.html"
+            test -f "$target/app-graph.js"
+            test -f "$target/app.js"
+            test -f "$target/app-v11.js"
+            test -f "$target/styles.css"
+            test -f "$target/styles-explorer.css"
+            test -f "$target/styles-content.css"
+            test -f "$target/styles-v11.css"
+            test -f "$target/system.json"
+            test -f "$target/system.runtime.json"
+            test -f "$target/system.learning.json"
+            test -f "$target/system.inventory.json"
+            test -f "$target/system.delta.json"
+            grep -Fq './styles-v11.css' "$target/index.html"
+            grep -Fq './app-v11.js' "$target/index.html"
+            python -m json.tool "$target/system.json" >/dev/null
+            python -m json.tool "$target/system.runtime.json" >/dev/null
+            python -m json.tool "$target/system.learning.json" >/dev/null
+            python -m json.tool "$target/system.inventory.json" >/dev/null
+            python -m json.tool "$target/system.delta.json" >/dev/null
+            node --check "$target/app-graph.js"
+            node --check "$target/app.js"
+            node --check "$target/app-v11.js"
+          done
+
+          test -f "$rollback/index.html"
+          test -f "$rollback/app-graph.js"
+          test -f "$rollback/app.js"
+          test -f "$rollback/system.json"
+          test -f "$rollback/system.runtime.json"
+          node --check "$rollback/app-graph.js"
+          node --check "$rollback/app.js"
+          python -m json.tool "$rollback/system.json" >/dev/null
+          python -m json.tool "$rollback/system.runtime.json" >/dev/null
+
+          cmp "$stable/index.html" release-v11/site/obsidian-HUB_Optimus/index.html
+          cmp "$stable/app-v11.js" release-v11/site/obsidian-HUB_Optimus/app-v11.js
+          cmp "$stable/styles-v11.css" release-v11/site/obsidian-HUB_Optimus/styles-v11.css
+          cmp "$stable/system.learning.json" release-v11/site/obsidian-HUB_Optimus/system.learning.json
+          cmp "$stable/system.inventory.json" release-v11/site/obsidian-HUB_Optimus/system.inventory.json
+          cmp "$stable/system.delta.json" release-v11/site/obsidian-HUB_Optimus/system.delta.json
+          cmp "$alias/index.html" release-v11/site/obsidian-HUB_Optimus/index.html
+          cmp "$rollback/index.html" release-v10/site/obsidian-HUB_Optimus-v1.0/index.html
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          stable = {
+              "channel": "stable",
+              "version": "1.1",
+              "route": "/obsidian-HUB_Optimus/",
+              "commit": "29f643ec5403930ba628f8836f69b9ebc35b1cf2",
+              "tree": "3de56d28896e9ca08371c689d7d2611e2d9fcf83",
+              "rollback_route": "/obsidian-HUB_Optimus-v1.0/",
+              "rollback_commit": "9c7b5d81b2cf85d349b1ca141d559a75067a9b14",
+              "boundary": "Public stable-channel promotion; repository main and executable core remain unchanged.",
+          }
+          rollback = {
+              "channel": "archived-stable",
+              "version": "1.0",
+              "route": "/obsidian-HUB_Optimus-v1.0/",
+              "commit": "9c7b5d81b2cf85d349b1ca141d559a75067a9b14",
+              "tree": "05bdc116e526c02e5db33995513350fb20cb5297",
+              "replacement_route": "/obsidian-HUB_Optimus/",
+          }
+          alias = dict(stable)
+          alias["channel"] = "stable-alias"
+          alias["route"] = "/obsidian-HUB_Optimus-v1.1/"
+
+          payloads = (
+              (Path("release-v10/site/obsidian-HUB_Optimus/release-receipt.json"), stable),
+              (Path("release-v10/site/obsidian-HUB_Optimus-v1.0/release-receipt.json"), rollback),
+              (Path("release-v10/site/obsidian-HUB_Optimus-v1.1/release-receipt.json"), alias),
+          )
+          for path, payload in payloads:
+              path.write_text(
+                  json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                  encoding="utf-8",
+              )
+          PY
+
+          echo "stable_path=$stable" >> "$GITHUB_OUTPUT"
+          echo "rollback_path=$rollback" >> "$GITHUB_OUTPUT"
+
+      - name: Configure GitHub Pages
+        id: configure
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Upload v1.1 stable site with v1.0 rollback
+        id: upload
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: release-v10/site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+
+      - name: Verify stable routes and exact bytes
+        id: verify_public
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/v11-stable-verification"
+          mkdir -p "$work"
+          cd "$work"
+
+          fetch() {
+            local url="$1"
+            local output="$2"
+            local label="$3"
+            local code=""
+            for attempt in $(seq 1 20); do
+              code="$(curl --location --silent --show-error \
+                --connect-timeout 15 --max-time 45 \
+                --output "$output" --write-out '%{http_code}' \
+                "$url" || true)"
+              if [ "$code" = "200" ]; then
+                printf '%s=200\n' "$label"
+                return 0
+              fi
+              printf '%s attempt %s returned HTTP %s\n' "$label" "$attempt" "${code:-curl-error}"
+              sleep 4
+            done
+            return 1
+          }
+
+          query="stable=1912-${GITHUB_RUN_ID}"
+          fetch "https://huboptimus.dev/?$query" root.html root
+          fetch "https://huboptimus.dev/operator/?$query" operator.html operator
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/?$query" stable.html obsidian_stable
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/app-v11.js?$query" app-v11.js app_v11
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/styles-v11.css?$query" styles-v11.css styles_v11
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/system.learning.json?$query" learning.json learning
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/system.inventory.json?$query" inventory.json inventory
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/system.delta.json?$query" delta.json delta
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus/release-receipt.json?$query" stable-receipt.json stable_receipt
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus-v1.0/?$query" archived-v10.html archived_v10
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus-v1.0/release-receipt.json?$query" rollback-receipt.json rollback_receipt
+          fetch "https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/?$query" alias-v11.html alias_v11
+
+          grep -Fq 'HUB_Optimus Operator' operator.html
+          grep -Fq './styles-v11.css' stable.html
+          grep -Fq './app-v11.js' stable.html
+          grep -Fq '<title>HUB_Optimus · Project Intelligence</title>' archived-v10.html
+
+          cmp stable.html "$GITHUB_WORKSPACE/release-v11/site/obsidian-HUB_Optimus/index.html"
+          cmp app-v11.js "$GITHUB_WORKSPACE/release-v11/site/obsidian-HUB_Optimus/app-v11.js"
+          cmp styles-v11.css "$GITHUB_WORKSPACE/release-v11/site/obsidian-HUB_Optimus/styles-v11.css"
+          cmp learning.json "$GITHUB_WORKSPACE/release-v11/site/obsidian-HUB_Optimus/system.learning.json"
+          cmp inventory.json "$GITHUB_WORKSPACE/release-v11/site/obsidian-HUB_Optimus/system.inventory.json"
+          cmp delta.json "$GITHUB_WORKSPACE/release-v11/site/obsidian-HUB_Optimus/system.delta.json"
+          cmp archived-v10.html "$GITHUB_WORKSPACE/release-v10/site/obsidian-HUB_Optimus-v1.0/index.html"
+          cmp alias-v11.html "$GITHUB_WORKSPACE/release-v11/site/obsidian-HUB_Optimus/index.html"
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          stable = json.loads(Path("stable-receipt.json").read_text(encoding="utf-8"))
+          rollback = json.loads(Path("rollback-receipt.json").read_text(encoding="utf-8"))
+          assert stable["channel"] == "stable"
+          assert stable["version"] == "1.1"
+          assert stable["commit"] == "29f643ec5403930ba628f8836f69b9ebc35b1cf2"
+          assert stable["rollback_route"] == "/obsidian-HUB_Optimus-v1.0/"
+          assert rollback["version"] == "1.0"
+          assert rollback["commit"] == "9c7b5d81b2cf85d349b1ca141d559a75067a9b14"
+          PY
+
+          echo "stable_verification=pass"
+
+      - name: Record stable promotion result
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+          CHECKOUT_V10: ${{ steps.checkout_v10.outcome }}
+          CHECKOUT_V11: ${{ steps.checkout_v11.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          CONFIGURE_OUTCOME: ${{ steps.configure.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+          DEPLOY_OUTCOME: ${{ steps.deployment.outcome }}
+          VERIFY_OUTCOME: ${{ steps.verify_public.outcome }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          success = all(
+              os.environ.get(name) == "success"
+              for name in (
+                  "CHECKOUT_V10",
+                  "CHECKOUT_V11",
+                  "BUILD_OUTCOME",
+                  "CONFIGURE_OUTCOME",
+                  "UPLOAD_OUTCOME",
+                  "DEPLOY_OUTCOME",
+                  "VERIFY_OUTCOME",
+              )
+          )
+          heading = "STABLE" if success else "FAILED"
+          body = (
+              f"## Obsidian v1.1 stable promotion {heading}\n\n"
+              f"- workflow source: `{os.environ['SOURCE_SHA']}`\n"
+              f"- deployment run: {os.environ['RUN_URL']}\n"
+              f"- v1.0 rollback checkout: `{os.environ.get('CHECKOUT_V10', '')}`\n"
+              f"- v1.1 checkout: `{os.environ.get('CHECKOUT_V11', '')}`\n"
+              f"- stable artifact build: `{os.environ.get('BUILD_OUTCOME', '')}`\n"
+              f"- Pages configuration: `{os.environ.get('CONFIGURE_OUTCOME', '')}`\n"
+              f"- artifact upload: `{os.environ.get('UPLOAD_OUTCOME', '')}`\n"
+              f"- Pages deployment: `{os.environ.get('DEPLOY_OUTCOME', '')}`\n"
+              f"- public exact-byte verification: `{os.environ.get('VERIFY_OUTCOME', '')}`\n"
+              "- stable v1.1: https://huboptimus.dev/obsidian-HUB_Optimus/\n"
+              "- archived v1.0 rollback: https://huboptimus.dev/obsidian-HUB_Optimus-v1.0/\n"
+              "- v1.1 versioned alias: https://huboptimus.dev/obsidian-HUB_Optimus-v1.1/\n"
+              "- repository `main`, core/runtime and `/operator/` source unchanged\n"
+          )
+          request = urllib.request.Request(
+              "https://api.github.com/repos/Voxterrae/HUB_Optimus/issues/1912/comments",
+              data=json.dumps({"body": body}).encode("utf-8"),
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30):
+              pass
+          PY
