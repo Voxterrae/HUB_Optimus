@@ -1,0 +1,1687 @@
+{
+  "changed_domains": [
+    {
+      "changed_paths": 1,
+      "id": "documentation"
+    },
+    {
+      "changed_paths": 78,
+      "id": "project-intelligence"
+    },
+    {
+      "changed_paths": 1,
+      "id": "tests"
+    }
+  ],
+  "changes": [
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": "69bbe861b6cddab1e74cf99fe4b46aa7a07b6d6a",
+      "current_git_object": "e5de4e486d7335db4b55c82f6a852447fa265789",
+      "domain": "documentation",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "docs/context/AI_HANDOFF.md",
+      "review_state": "requires-review",
+      "status": "M"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "c5a7fe0b4a3dfaaa1bd2699d1c7dfcd53301d648",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/00_HOME/Architecture Map.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "45ea5faf87de6403b3f24c24a9963e64c5c0ad31",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/00_HOME/Current State.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "54c89c8fb66031df7b9c6eb7f3fc86f054339426",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/00_HOME/Home.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "dc37f8eaa0af1e44913dc5ddb2bf2d5a3ccade16",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/00_HOME/Navigation.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "378a022c134e179ac5caff04e4be7db2a66455ef",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/00_HOME/System Dashboard.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "2d1bf40d4be71b507227cbd00e284bf271490991",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/01_PROJECT/Capabilities.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "0e540349d119d407fefb49e0cc5075aa33523516",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/01_PROJECT/Glossary.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "5cf7acd7dbf5ab9ce4c36ff5649af1b589eb715f",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/01_PROJECT/Limitations.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "edc530f2e668864e2554512d91daeb1a22441634",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/01_PROJECT/Project Overview.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "81bc723e8247af5dbd3c62b073df8bdf3e89d27d",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/Architecture Data Flow.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "6921bab73d6817e672401cf479ace9b7f65e24ae",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/Architecture Overview.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "95ec10dfcaa80e99751d8b35994890608b42d782",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/Dependency Graph.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "d9b64a569d8f8f9450372008843aa71c3703c9a9",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/Graph Intelligence v1.1.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "e4cde01eea6d0878fa44191f8adf8073eb5b51f9",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/Runtime Architecture.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "3334caa28062d92549fcf573152e7d8f5fc18bae",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/System Context.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "30161dc4df099b772731dc597273bffc7d05c7c1",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Canonical v1 Methodology.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "47afc36a4d3bc4ac3b22e3a81174771a686fb91f",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Controlled URL Intake.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "fb14172077443060108def91ed7073b901afd5a4",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/EC2 Core Runner and Run Registry.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "1b5e3c8808ba9c9d314b2ebb2dde9641bec39bb6",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/EC2 Release Operations.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "cea670f34a19b74cc1846c8d053906239c834bf2",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/GitHub Pages Pipeline.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "5c514954bf78f6bc8ad09fed3d31dc5ccf8aa1f3",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Governance Guardrails.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "2f5a5b5a492a6ac959addbc659407be1a544c8de",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Local Control Prototype.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "507619f49872bbecc69f0f4145944c00c6ff7546",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Local HTTP API.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "49d873c2fd4e43ab242c5abbf7151977491207f9",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Operator Learning Store.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "19024de42590d384ecf4e61bae0146dcaaecd352",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Operator PWA.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "52102f26a34c95126fe7d50f98614f46b0c58e03",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Public Static Site.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "bf38fe499e59f72cfc0f36838aab45b39738e995",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Round-based Simulator.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "c0f38c7846cd146e17d82036aef725b536133932",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Scenario Contract and Loader.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "54149987d33f382b03b7327126243ec9cef4556a",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Scenario Laboratory and Datasets.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "c4a5941199d4d9d010e36168c21859e0eb5bad9f",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Semantic Engine Contracts and CLI.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "c7dbc53381f91b41fb9d71ec1586a60d19d95f24",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Tests and Quality Gates.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "4deee2c25ff7c447593adc314571cacc80eb839f",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/04_APIS/GET health.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "30863a42f37f52e56041a0f7d09c7bf98c2447b3",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/04_APIS/GET status.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "2262a1a9104dac8040a831b48f14b7affbb7071c",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/04_APIS/Interface Catalogue.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "3682a54d5217444995efa14dcee6c9aa720e76b5",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/04_APIS/POST analyze.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "682450df20b38cfbf5c62b87af890a91f4690f51",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/04_APIS/POST intake url.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "46d56347fd9aabe96f299962de69daec1d5f36e7",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/04_APIS/Scenario CLI.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "78d7d7d75c404cba8d164291756ba50444fbf098",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/04_APIS/Semantic Engine CLI.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "567f093a9bf263acffa830c32853e93b462ca359",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/04_APIS/hub-core CLI.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "5e3856f7c9b5eaa3293059e062cc8b9638104d44",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/05_DATA/Data Architecture.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "e1001428428a736a8c9b15a4de2176fa22baf0ec",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/05_DATA/Operational Records.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "ce404c2866bd4e001e5d9ea5e439f093547ba6bf",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/05_DATA/Operator Learning Data.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "41b47dc4a7f233cfe6236567eb3a4410df714fb3",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/05_DATA/Scenario Data Model.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "3b010980a8433c12eee162d3661a2814e3408feb",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/05_DATA/Semantic Data Model.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "827fb1a115c1bff882c328666f80570b69cbf4a4",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/06_FRONTEND/Frontend Architecture.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "4607c6935858bdc949e95c83c150fd679e6cca3c",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/07_BACKEND/Backend Architecture.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "230a6b0a422b4d800b518fac4bff1ddead3422c2",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/08_INFRASTRUCTURE/Infrastructure Boundary.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "735dcde61f7ec1faeb1069e463fa23a1c867a35a",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/09_SECURITY/Security Boundaries.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "33d4862aaad23869749c330cf6c8100c6b199e3b",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/10_OPERATIONS/Operations Guide.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "9057d2df6228df46aac20f4ccb9d3deca52129a9",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/11_TESTING/Testing Strategy.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "ab711d9257a77d2c922c5640b90df6be979f6dec",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/12_DEPLOYMENT/Deployment Architecture.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "0680e064e4cc2faebac27cc837e6abd6549aa9c2",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/13_DECISIONS/Decision Record Map.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "2f8ca7344c60d15ebe28211d6f2bccd83d65f4c1",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/14_DEPENDENCIES/Dependencies.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "58f3a222126aabccb5a47bb34b3f3c3349d87008",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/15_RISKS/Risk Register.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "9364e582abeedb5cef038b935162e41cc44e4ae4",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/16_CHANGELOG/Repository Evolution.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "da168d8e189bce13ee6342d550a60b9c559b7b80",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/17_REFERENCE/Evidence Index.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "e4d137e47a00100e8967fc79887ed4205fa970fc",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/18_SOURCE_MAP/Source Map.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "f5c796cb74a7d0c2a837a3e5d10503df742f9b9d",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/98_META/Documentation Standard.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "00bf6885631218fef1e8efb0dad23849bae39c73",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/98_META/Repository Analysis.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "373b5a85c9f63f5cc9daa3ab5e8e63944911f245",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/98_META/Repository Coverage.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "3609b69575a32c14e1221244c03ca51ab46c1fbc",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/98_META/Status Definitions.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "62ab053ece06d7cba7641e9366451775b092617f",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/98_META/Tags.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "8150b2e2c08dc773441a85c9c0fb138082534b09",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/98_META/Update Protocol.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "375c3671ae34778caa51e0e8ba00fb06ab615781",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "obsidian-HUB_Optimus/98_META/Whole-System Learning.md",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "0b1d7116ceaf435e88d9dce5e462b44f9d36af1a",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/app-graph.js",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "e101f47653699562464aa962bf5810e54a6e3c5c",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/app-v11.js",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "fa7bd227aa9cedd59abbded030e411a85e328885",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/app.js",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "a3d2098379f45f3115ce0ed2d98be35bdbc11f8e",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/index.html",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "d443d3c1e53614bbfbd086d1a349b5d62f581605",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/styles-content.css",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "84bdd322bd7eea10cb506d83e87fa7b292441f77",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/styles-explorer.css",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "a7ac72e89a1176f352b85c96a7b9994fa55038fc",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/styles-v11.css",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "b778f182c07161732e3ddb1079e0d39631a95a70",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/styles.css",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "eb3276d1fd55fa91d503498f555dca8b52897b6f",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/system.json",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "d84cf237aab44f03f1446f9a7a0331713801c485",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/system.learning.json",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "f8d4261121bd749fd40a315b3cb48287d3b0ac8d",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "dependencies:dep-browser-apis",
+        "deployment:github-pages-deployment"
+      ],
+      "old_path": null,
+      "path": "site/obsidian-HUB_Optimus/system.runtime.json",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "1e5852d1afc830a40bf4d60b012e25cd73eeda0f",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "components:quality-gates"
+      ],
+      "old_path": null,
+      "path": "tests/test_project_intelligence_site.py",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "9a85b1d776b5f410cca25f5e23e83b07fe758f4c",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "components:quality-gates"
+      ],
+      "old_path": null,
+      "path": "tests/test_project_intelligence_v11.py",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": "cf297d4366063f61c18d3a5c3571e3a6650f7400",
+      "current_git_object": "b0b70f675cabc74345723b3e47f6d13e001aa0cd",
+      "domain": "tests",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [
+        "components:quality-gates"
+      ],
+      "old_path": null,
+      "path": "tests/test_public_site_links_and_contrast.py",
+      "review_state": "requires-review",
+      "status": "M"
+    },
+    {
+      "architecture_candidate": true,
+      "baseline_git_object": null,
+      "current_git_object": "c5b3aa69b8c55b7090712ae613da7164840a7095",
+      "domain": "project-intelligence",
+      "domain_confidence": "CONFIRMED",
+      "model_objects": [],
+      "old_path": null,
+      "path": "tools/project_intelligence/repository_intelligence.py",
+      "review_state": "requires-review",
+      "status": "A"
+    }
+  ],
+  "comparison": {
+    "commit_distance": 5,
+    "from_commit": "30e985226347b4bc59b0e187b96633a09647ca42",
+    "from_tree": "fabb9da1fdb6979df0bc764017752f118088e69f",
+    "to_commit": "4a6201821bd1223a9dbd44b04a8c5e65eab4f787",
+    "to_commit_time": "2026-08-22T10:38:08+02:00",
+    "to_tree": "961463e2c8c68634b70bf3b029f6a42f975b2e70"
+  },
+  "drift_candidates": [
+    {
+      "claim": "The repository commit analyzed by the semantic model differs from the current analyzed commit.",
+      "confidence": "CONFIRMED",
+      "evidence": [
+        "30e985226347b4bc59b0e187b96633a09647ca42",
+        "4a6201821bd1223a9dbd44b04a8c5e65eab4f787"
+      ],
+      "id": "semantic-baseline-behind-current-tree",
+      "kind": "freshness",
+      "review_state": "requires-review",
+      "status": "active"
+    },
+    {
+      "claim": "Architecture-relevant changed paths exist without an explicit model source mapping.",
+      "confidence": "INFERRED",
+      "evidence": [
+        "docs/context/AI_HANDOFF.md",
+        "obsidian-HUB_Optimus/00_HOME/Architecture Map.md",
+        "obsidian-HUB_Optimus/00_HOME/Current State.md",
+        "obsidian-HUB_Optimus/00_HOME/Home.md",
+        "obsidian-HUB_Optimus/00_HOME/Navigation.md",
+        "obsidian-HUB_Optimus/00_HOME/System Dashboard.md",
+        "obsidian-HUB_Optimus/01_PROJECT/Capabilities.md",
+        "obsidian-HUB_Optimus/01_PROJECT/Glossary.md",
+        "obsidian-HUB_Optimus/01_PROJECT/Limitations.md",
+        "obsidian-HUB_Optimus/01_PROJECT/Project Overview.md",
+        "obsidian-HUB_Optimus/02_ARCHITECTURE/Architecture Data Flow.md",
+        "obsidian-HUB_Optimus/02_ARCHITECTURE/Architecture Overview.md",
+        "obsidian-HUB_Optimus/02_ARCHITECTURE/Dependency Graph.md",
+        "obsidian-HUB_Optimus/02_ARCHITECTURE/Graph Intelligence v1.1.md",
+        "obsidian-HUB_Optimus/02_ARCHITECTURE/Runtime Architecture.md",
+        "obsidian-HUB_Optimus/02_ARCHITECTURE/System Context.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Canonical v1 Methodology.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Controlled URL Intake.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/EC2 Core Runner and Run Registry.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/EC2 Release Operations.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/GitHub Pages Pipeline.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Governance Guardrails.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Local Control Prototype.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Local HTTP API.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Operator Learning Store.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Operator PWA.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Public Static Site.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Round-based Simulator.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Scenario Contract and Loader.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Scenario Laboratory and Datasets.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Semantic Engine Contracts and CLI.md",
+        "obsidian-HUB_Optimus/03_COMPONENTS/Tests and Quality Gates.md",
+        "obsidian-HUB_Optimus/04_APIS/GET health.md",
+        "obsidian-HUB_Optimus/04_APIS/GET status.md",
+        "obsidian-HUB_Optimus/04_APIS/Interface Catalogue.md",
+        "obsidian-HUB_Optimus/04_APIS/POST analyze.md",
+        "obsidian-HUB_Optimus/04_APIS/POST intake url.md",
+        "obsidian-HUB_Optimus/04_APIS/Scenario CLI.md",
+        "obsidian-HUB_Optimus/04_APIS/Semantic Engine CLI.md",
+        "obsidian-HUB_Optimus/04_APIS/hub-core CLI.md",
+        "obsidian-HUB_Optimus/05_DATA/Data Architecture.md",
+        "obsidian-HUB_Optimus/05_DATA/Operational Records.md",
+        "obsidian-HUB_Optimus/05_DATA/Operator Learning Data.md",
+        "obsidian-HUB_Optimus/05_DATA/Scenario Data Model.md",
+        "obsidian-HUB_Optimus/05_DATA/Semantic Data Model.md",
+        "obsidian-HUB_Optimus/06_FRONTEND/Frontend Architecture.md",
+        "obsidian-HUB_Optimus/07_BACKEND/Backend Architecture.md",
+        "obsidian-HUB_Optimus/08_INFRASTRUCTURE/Infrastructure Boundary.md",
+        "obsidian-HUB_Optimus/09_SECURITY/Security Boundaries.md",
+        "obsidian-HUB_Optimus/10_OPERATIONS/Operations Guide.md",
+        "obsidian-HUB_Optimus/11_TESTING/Testing Strategy.md",
+        "obsidian-HUB_Optimus/12_DEPLOYMENT/Deployment Architecture.md",
+        "obsidian-HUB_Optimus/13_DECISIONS/Decision Record Map.md",
+        "obsidian-HUB_Optimus/14_DEPENDENCIES/Dependencies.md",
+        "obsidian-HUB_Optimus/15_RISKS/Risk Register.md",
+        "obsidian-HUB_Optimus/16_CHANGELOG/Repository Evolution.md",
+        "obsidian-HUB_Optimus/17_REFERENCE/Evidence Index.md",
+        "obsidian-HUB_Optimus/18_SOURCE_MAP/Source Map.md",
+        "obsidian-HUB_Optimus/98_META/Documentation Standard.md",
+        "obsidian-HUB_Optimus/98_META/Repository Analysis.md",
+        "obsidian-HUB_Optimus/98_META/Repository Coverage.md",
+        "obsidian-HUB_Optimus/98_META/Status Definitions.md",
+        "obsidian-HUB_Optimus/98_META/Tags.md",
+        "obsidian-HUB_Optimus/98_META/Update Protocol.md",
+        "obsidian-HUB_Optimus/98_META/Whole-System Learning.md",
+        "tools/project_intelligence/repository_intelligence.py"
+      ],
+      "id": "changed-unmodelled-architecture-candidates",
+      "kind": "coverage-drift",
+      "review_state": "requires-review",
+      "status": "partial"
+    }
+  ],
+  "generation": {
+    "boundary": "The delta identifies changed evidence and impact candidates. It does not automatically rewrite architectural facts or certify mutable external state.",
+    "deterministic": true,
+    "generator": "tools/project_intelligence/repository_intelligence.py"
+  },
+  "impact": {
+    "direct_nodes": [
+      "dep-browser-apis",
+      "quality-gates"
+    ],
+    "downstream_nodes": [
+      "github",
+      "github-pages",
+      "learning-store",
+      "operator",
+      "pages-pipeline",
+      "public-site",
+      "semantic-engine"
+    ],
+    "upstream_nodes": []
+  },
+  "repository": "Voxterrae/HUB_Optimus",
+  "review_boundary": {
+    "automatic_fact_updates": false,
+    "human_review_required": true,
+    "live_external_state": "UNKNOWN",
+    "next_step": "Review changed evidence, resolve coverage and drift candidates, then update only affected JSON facts, Obsidian notes, views and tests."
+  },
+  "schema_version": "hub-optimus-project-intelligence.delta.v1.1",
+  "summary": {
+    "added": 78,
+    "changed_domains": 3,
+    "changed_paths": 80,
+    "deleted": 0,
+    "directly_impacted_nodes": 2,
+    "downstream_nodes": 7,
+    "drift_candidates": 2,
+    "modified": 2,
+    "renamed_or_copied": 0,
+    "unmodelled_architecture_changes": 66,
+    "upstream_nodes": 0
+  },
+  "unmodelled_architecture_changes": [
+    {
+      "confidence": "INFERRED",
+      "domain": "documentation",
+      "path": "docs/context/AI_HANDOFF.md",
+      "reason": "suffix:.md",
+      "review_state": "requires-review",
+      "status": "M"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/00_HOME/Architecture Map.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/00_HOME/Current State.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/00_HOME/Home.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/00_HOME/Navigation.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/00_HOME/System Dashboard.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/01_PROJECT/Capabilities.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/01_PROJECT/Glossary.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/01_PROJECT/Limitations.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/01_PROJECT/Project Overview.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/Architecture Data Flow.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/Architecture Overview.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/Dependency Graph.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/Graph Intelligence v1.1.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/Runtime Architecture.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/02_ARCHITECTURE/System Context.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Canonical v1 Methodology.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Controlled URL Intake.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/EC2 Core Runner and Run Registry.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/EC2 Release Operations.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/GitHub Pages Pipeline.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Governance Guardrails.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Local Control Prototype.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Local HTTP API.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Operator Learning Store.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Operator PWA.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Public Static Site.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Round-based Simulator.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Scenario Contract and Loader.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Scenario Laboratory and Datasets.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Semantic Engine Contracts and CLI.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/03_COMPONENTS/Tests and Quality Gates.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/04_APIS/GET health.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/04_APIS/GET status.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/04_APIS/Interface Catalogue.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/04_APIS/POST analyze.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/04_APIS/POST intake url.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/04_APIS/Scenario CLI.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/04_APIS/Semantic Engine CLI.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/04_APIS/hub-core CLI.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/05_DATA/Data Architecture.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/05_DATA/Operational Records.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/05_DATA/Operator Learning Data.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/05_DATA/Scenario Data Model.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/05_DATA/Semantic Data Model.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/06_FRONTEND/Frontend Architecture.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/07_BACKEND/Backend Architecture.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/08_INFRASTRUCTURE/Infrastructure Boundary.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/09_SECURITY/Security Boundaries.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/10_OPERATIONS/Operations Guide.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/11_TESTING/Testing Strategy.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/12_DEPLOYMENT/Deployment Architecture.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/13_DECISIONS/Decision Record Map.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/14_DEPENDENCIES/Dependencies.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/15_RISKS/Risk Register.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/16_CHANGELOG/Repository Evolution.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/17_REFERENCE/Evidence Index.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/18_SOURCE_MAP/Source Map.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/98_META/Documentation Standard.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/98_META/Repository Analysis.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/98_META/Repository Coverage.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/98_META/Status Definitions.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/98_META/Tags.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/98_META/Update Protocol.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "obsidian-HUB_Optimus/98_META/Whole-System Learning.md",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    },
+    {
+      "confidence": "INFERRED",
+      "domain": "project-intelligence",
+      "path": "tools/project_intelligence/repository_intelligence.py",
+      "reason": "domain:project-intelligence",
+      "review_state": "requires-review",
+      "status": "A"
+    }
+  ]
+}
