@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "corpus": "HIV_AIDS_Global_Master_2026.xlsx",
+  "cutoffDate": "2026-08-14",
+  "dataYear": 2025,
+  "sourceRowsUsed": [
+    {
+      "sourceKey": "UNM49_CURRENT",
+      "sheet": "Sources",
+      "sha256": "748f6ff7380c8a50ea9448f068b79e3a1ee31be63207249e8cc89bf1eb969d11"
+    },
+    {
+      "sourceKey": "UNAIDS_FACTS_2026",
+      "sheet": "Sources",
+      "sha256": null
+    }
+  ],
+  "observationSheet": "Global_2025",
+  "observations": [
+    "People living with HIV",
+    "New HIV acquisitions",
+    "AIDS-related deaths",
+    "People receiving antiretroviral therapy",
+    "Cumulative HIV acquisitions since the beginning",
+    "Cumulative AIDS-related deaths"
+  ],
+  "unsupportedFieldsLeftNull": [
+    "UNAIDS_FACTS_2026 source SHA-256",
+    "UNAIDS_FACTS_2026 publication date"
+  ]
+}

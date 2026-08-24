@@ -1,0 +1,153 @@
+{
+  "schemaVersion": "1.0",
+  "package": "OptimusEvidenceLab",
+  "version": "0.1.0.0",
+  "fileCount": 29,
+  "files": [
+    {
+      "path": "OFFLINE_DRY_RUN_RESULT.json",
+      "bytes": 1128,
+      "sha256": "e6122dbef91ba32ebc46106083b5ac82a49c53221a6d60f4dba2cd37668f5021"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3404,
+      "sha256": "f8a0af958fd9c4adc7b341f0b111899ab8b42f17b0772c6b5d4e09bb414f149a"
+    },
+    {
+      "path": "VALIDATION_RESULTS.txt",
+      "bytes": 5810,
+      "sha256": "833eeab0df64e13cb65f017080131f87025a4d8716408bbe2703c2032aca564d"
+    },
+    {
+      "path": "contract/optimus-evidence-lab.dataverse.json",
+      "bytes": 29138,
+      "sha256": "d2b5e789ae7981138df94f49f621d50d1b90adc3f7900b77c6d8a46a73390a5b"
+    },
+    {
+      "path": "dataverse/apply/authorization.template.json",
+      "bytes": 1078,
+      "sha256": "3c6d311d3ad775b90a7149d97c79e8c907dce98bf2f9fb8099de737810dbb978"
+    },
+    {
+      "path": "dataverse/apply/rollback-authorization.template.json",
+      "bytes": 1204,
+      "sha256": "9c6228c7dc6e2cb7a7e6143888563a4dbc5d5647ddf784b5dc6309248129d7b6"
+    },
+    {
+      "path": "dataverse/baselines/B0.json",
+      "bytes": 708,
+      "sha256": "dc6c01c51f298972e898335f23c0b98be0cb3befece5cde113f5af1c4263590b"
+    },
+    {
+      "path": "dataverse/pac/Invoke-OptimusEvidenceLabSchema.ps1",
+      "bytes": 5229,
+      "sha256": "274f738c4ffca523a49526ddac6fc6e7ff2f650f7b2334c9d133ae407d3b7e59"
+    },
+    {
+      "path": "dataverse/rollback/rollback-plan.template.json",
+      "bytes": 1312,
+      "sha256": "6a308e0c0cc598153f542b090cf41ec1975163d3af6c555a013432052be6b0bf"
+    },
+    {
+      "path": "docs/APPLICATOR.md",
+      "bytes": 2372,
+      "sha256": "db21040ee0c1b909536048f9fd6e0551be84dd9ab951324ee1b697e499d7061b"
+    },
+    {
+      "path": "docs/MODEL.md",
+      "bytes": 1028,
+      "sha256": "e86b262f2a8bb67dfdd4231962f260d79a46b1044fe28bc4da8aa1cd25d1de4b"
+    },
+    {
+      "path": "docs/RUNBOOK.md",
+      "bytes": 1575,
+      "sha256": "b87cf52c69de4dd9e037d07d6207914acaea9989f31e830ceb2005e53ba2b2fe"
+    },
+    {
+      "path": "docs/SEED.md",
+      "bytes": 739,
+      "sha256": "c3c23f11614916336dae2c928db56388bad3af487cbea0ae28bb33efc86ae0eb"
+    },
+    {
+      "path": "docs/SOURCE_BASIS.json",
+      "bytes": 816,
+      "sha256": "15d36122466cdaff456d2efe837f4b0dd0fd6ca83f7b85a476fdbc383aa79360"
+    },
+    {
+      "path": "plans/hiv-global-2026.seed-plan.json",
+      "bytes": 19865,
+      "sha256": "2ec92c477361bb82cae794135b97c193bb7711de4416191a93fc87f4086a7d23"
+    },
+    {
+      "path": "plans/optimus-evidence-lab.dry-run.json",
+      "bytes": 1562,
+      "sha256": "4741d2ca25a649e853cd46bffd3d9dbbd4b79429e36d0e28f134bfe8f2c89231"
+    },
+    {
+      "path": "plans/optimus-evidence-lab.schema-plan.json",
+      "bytes": 13204,
+      "sha256": "7d72504b36e7eb9e7da9c93822799e8713ccded434735482dcc9c8faca3d0054"
+    },
+    {
+      "path": "scripts/apply-dataverse-schema.py",
+      "bytes": 55770,
+      "sha256": "1a4a699788405dfc4aee0cf855602ab8e5eb60ee7d9ce6fe60f3eafac1596afe"
+    },
+    {
+      "path": "scripts/build_artifacts.py",
+      "bytes": 10526,
+      "sha256": "239bbf9fad49de2022f2d9882cf685c8cc819cc5702e8bbb5137d9e8a6c74a6f"
+    },
+    {
+      "path": "seed/hiv-global-2026.seed.json",
+      "bytes": 16989,
+      "sha256": "ff006662d61bd58f9fd54ecfb93120b796a4ae4e1a3573ff20f667c050385aa5"
+    },
+    {
+      "path": "tests/test_baseline_b0_and_rollback_plan.py",
+      "bytes": 1342,
+      "sha256": "76ff6f9b3ce2c0cb2c2037e180fcf33c933096a8589b57f2bbf290da1e154d65"
+    },
+    {
+      "path": "tests/test_contract.py",
+      "bytes": 4247,
+      "sha256": "9a15758a0fe34349cd8f2d7e4e5ad41b8956fe3a2bebf343faf8c9133365e453"
+    },
+    {
+      "path": "tests/test_effective_membership.py",
+      "bytes": 3209,
+      "sha256": "a4159b2d12157b0c9aa6a4446d39a42f623d57d557d134618afbf3f9bc10b2df"
+    },
+    {
+      "path": "tests/test_manifest.py",
+      "bytes": 1156,
+      "sha256": "036f158ddb9ee619ae9acd3092254689815832e6d97f70fce44bd606ef386474"
+    },
+    {
+      "path": "tests/test_plan.py",
+      "bytes": 2925,
+      "sha256": "ae3df3b4d44d84cecd509ee9e08bbc3929206707da9218a46febf01aa9f76c15"
+    },
+    {
+      "path": "tests/test_public_boundary.py",
+      "bytes": 1656,
+      "sha256": "91afd8e8b5866a9cd38b53cdb4543b02f3df421a4c2f445e248a339286320958"
+    },
+    {
+      "path": "tests/test_schema_applicator.py",
+      "bytes": 9790,
+      "sha256": "89e515dfc99ac0183ff677bfb46fd1326f5811a4887425010735b9e728eef879"
+    },
+    {
+      "path": "tests/test_schema_rollback.py",
+      "bytes": 5394,
+      "sha256": "01d5d2186a45a6aaedbaaab8699ceab7960f778e34a6f63c5a925086806f033a"
+    },
+    {
+      "path": "tests/test_seed.py",
+      "bytes": 5087,
+      "sha256": "a49830230622896d61de4dbcf3b1fff7e6b852d2773b5704691a1bfbb1e15507"
+    }
+  ]
+}
