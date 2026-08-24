@@ -1,0 +1,313 @@
+{
+  "schema_version": "0.2",
+  "status": "OWNER_DECISION_RECORDED_PR_PROPOSED",
+  "authority_issue": 1863,
+  "supersedes": "config/business/commercial_policy.v0.1.json",
+  "owner": "Benjamin Gerrit Hoff",
+  "project": "HUB_Optimus",
+  "currency": "EUR",
+  "prices_exclude_applicable_taxes": true,
+  "commercial_posture": {
+    "selective_inbound_first": true,
+    "chase_clients_with_free_bespoke_work": false,
+    "free_qualification_once": true,
+    "free_qualification_maximum_minutes": 30,
+    "free_bespoke_deliverables": false,
+    "paid_commercial_and_public_sector_poc": true,
+    "evidence_first_credibility": true
+  },
+  "professional_services": {
+    "minimum_engagement_eur": {
+      "general_commercial": 15000,
+      "enterprise_public": 50000
+    },
+    "diagnostic_architecture_eur": {
+      "business": {
+        "minimum": 20000,
+        "maximum": 60000
+      },
+      "enterprise_public": {
+        "minimum": 60000,
+        "maximum": 180000
+      }
+    },
+    "audit_eur": {
+      "business": {
+        "minimum": 30000,
+        "maximum": 100000
+      },
+      "enterprise_public": {
+        "minimum": 100000,
+        "maximum": 300000
+      }
+    },
+    "proof_of_value_eur": {
+      "business": {
+        "minimum": 75000,
+        "maximum": 250000
+      },
+      "enterprise_public": {
+        "minimum": 250000,
+        "maximum": 750000
+      }
+    },
+    "implementation_eur": {
+      "business": {
+        "minimum": 200000,
+        "maximum": 750000
+      },
+      "enterprise_public": {
+        "minimum": 750000,
+        "maximum": 3000000,
+        "open_ended_above_maximum": true
+      }
+    },
+    "strategic_transformation_eur": {
+      "minimum": 1500000,
+      "maximum": 10000000,
+      "open_ended_above_maximum": true
+    },
+    "bespoke_rfp_tender_eur": {
+      "minimum": 25000,
+      "maximum": 75000
+    },
+    "day_rates_eur": {
+      "founder_chief_architect": 4000,
+      "principal_specialist": 2500,
+      "senior_engineering_integration": 1800,
+      "executive_workshop": {
+        "minimum": 15000,
+        "maximum": 35000
+      }
+    },
+    "urgent_priority_multiplier": {
+      "minimum": 1.5,
+      "maximum": 2.0
+    }
+  },
+  "platform_canon_annual_eur": {
+    "core_business": 60000,
+    "enterprise": 180000,
+    "strategic_regulated_public": 360000,
+    "sovereign_oem_mission_critical_minimum": 750000,
+    "minimum_term_months": 12,
+    "default_enterprise_public_term_months": 36,
+    "prepaid": true,
+    "does_not_transfer_core_ip": true
+  },
+  "applications": {
+    "standard_module_annual_eur": {
+      "minimum": 18000,
+      "maximum": 60000
+    },
+    "advanced_ai_evidence_decision_module_annual_eur": {
+      "minimum": 60000,
+      "maximum": 180000
+    },
+    "custom_application_build_eur": {
+      "minimum": 100000,
+      "maximum": 400000
+    },
+    "custom_application_open_ended_above_maximum": true,
+    "annual_maintenance_percent_of_build": {
+      "minimum": 20,
+      "maximum": 30
+    },
+    "additional_internal_user_eur_per_month": 75,
+    "external_active_user_eur_per_month": {
+      "first_1000": 10,
+      "from_1001_to_10000": 5,
+      "above_10000": "CUSTOM"
+    },
+    "platform_canon_still_required": true
+  },
+  "connectors": {
+    "standard": {
+      "activation_eur": 7500,
+      "annual_license_eur": 12000
+    },
+    "premium_sensitive_regulated": {
+      "activation_eur": {
+        "minimum": 25000,
+        "maximum": 75000
+      },
+      "annual_license_eur": {
+        "minimum": 36000,
+        "maximum": 90000
+      }
+    },
+    "custom": {
+      "build_eur": {
+        "minimum": 75000,
+        "maximum": 250000
+      },
+      "open_ended_above_maximum": true,
+      "annual_maintenance_percent_of_build": 25,
+      "annual_maintenance_minimum_eur": 24000
+    },
+    "connector_is_separate_licensed_product_boundary": true
+  },
+  "api_and_usage": {
+    "standard_api_packages": {
+      "base": {
+        "annual_eur": 30000,
+        "included_requests": 1000000
+      },
+      "enterprise": {
+        "annual_eur": 90000,
+        "included_requests": 10000000
+      },
+      "strategic": {
+        "annual_eur": 240000,
+        "included_requests": 50000000
+      }
+    },
+    "overage_eur_per_10000_requests": 15,
+    "uncommitted_overage_premium_percent": 25,
+    "hub_unit_weights": {
+      "light_read_metadata": 1,
+      "write_governed_transaction": 5,
+      "connector_action": 10,
+      "ai_evidence_run": {
+        "minimum": 50,
+        "maximum": 500
+      },
+      "high_trust_decision_package": "CUSTOM"
+    },
+    "hub_unit_commitments_annual_eur": {
+      "1000000": 30000,
+      "5000000": 120000,
+      "20000000": 360000
+    },
+    "byok_removes_platform_charges": false,
+    "managed_third_party_consumption_margin_percent": {
+      "minimum": 20,
+      "maximum": 30
+    }
+  },
+  "embedded_iframe_sdk_oem": {
+    "embedded_activation_eur": 40000,
+    "embedded_per_brand_legal_tenant_annual_eur": 60000,
+    "enterprise_embedded_setup_eur": 100000,
+    "enterprise_embedded_annual_eur": 180000,
+    "white_label_activation_eur": 150000,
+    "white_label_recurring_uplift_percent": 50,
+    "downstream_tenant_annual_eur": {
+      "minimum": 15000,
+      "maximum": 60000
+    },
+    "oem_resale": {
+      "annual_minimum_guarantee_eur": 300000,
+      "revenue_share_percent_of_net_downstream_software": 15,
+      "commercial_rule": "GREATER_OF_MINIMUM_GUARANTEE_OR_REVENUE_SHARE"
+    },
+    "ownership_transfered_by_embedding": false,
+    "source_code_included_by_default": false,
+    "exclusivity_included_by_default": false
+  },
+  "environments": {
+    "additional_nonproduction_annual_eur": 12000,
+    "additional_production_annual_eur": 36000,
+    "dedicated_isolated_eu_tenant_annual_eur": 90000,
+    "sovereign_on_premises_setup_minimum_eur": 250000,
+    "sovereign_on_premises_operation_annual_minimum_eur": 180000,
+    "cloud_and_third_party_costs_separate": true
+  },
+  "support": {
+    "standard": {
+      "included_for_agreed_scope": true,
+      "service_window": "8x5"
+    },
+    "premium": {
+      "percent_of_annual_software": 15,
+      "minimum_annual_eur": 36000,
+      "target_p1_response_hours": 4
+    },
+    "mission_critical": {
+      "percent_of_annual_software": 25,
+      "minimum_annual_eur": 150000,
+      "service_window": "24x7",
+      "target_p1_response_hours": 1
+    },
+    "dedicated_technical_account_manager_annual_eur": 90000,
+    "response_target_is_resolution_guarantee": false
+  },
+  "channel_and_distribution": {
+    "direct_enterprise_preferred": true,
+    "microsoft_marketplace_minimum_gross_up_percent": 3.5,
+    "merchant_of_record_minimum_gross_up_percent": 6,
+    "reseller_margin_percent": {
+      "minimum": 20,
+      "maximum": 35
+    },
+    "reseller_margin_requires_defined_funded_duties": true,
+    "double_discount_allowed_by_default": false
+  },
+  "procurement_and_payment": {
+    "vendor_activation_retainer_eur": 10000,
+    "retainer_credit_window_days": 30,
+    "standard_admin_hours_included": 2,
+    "additional_procurement_support_eur_per_hour": 500,
+    "additional_procurement_support_minimum_eur": 5000,
+    "work_start_conditions": [
+      "SIGNED_CONTRACT_OR_BINDING_ORDER",
+      "COMPLETE_PROCUREMENT_AND_BILLING_PACK",
+      "CLEARED_INITIAL_PAYMENT"
+    ],
+    "customer_must_provide": [
+      "LEGAL_ENTITY",
+      "REGISTRATION_NUMBER",
+      "VALID_VAT_OR_EQUIVALENT_TAX_NUMBER",
+      "PURCHASE_ORDER_OR_BUDGET_AUTHORIZATION",
+      "BILLING_AND_EINVOICE_INSTRUCTIONS",
+      "COMMERCIAL_OWNER",
+      "ACCOUNTS_PAYABLE_OWNER",
+      "WITHHOLDING_OR_EXEMPTION_DOCUMENTS_WHERE_RELEVANT",
+      "REAL_BENEFICIARY_AND_SOURCE_OF_FUNDS"
+    ],
+    "annual_software_prepaid": true,
+    "usage_overage_may_be_monthly_in_arrears": true,
+    "quotation_validity_days": 15,
+    "customer_internal_bureaucracy_included_for_free": false
+  },
+  "clean_money": {
+    "approved_channels": [
+      "VERIFIED_BANK_TRANSFER",
+      "APPROVED_MERCHANT_OF_RECORD",
+      "APPROVED_ENTERPRISE_MARKETPLACE",
+      "OTHER_REGULATED_OWNER_APPROVED_CHANNEL"
+    ],
+    "prohibited_channels": [
+      "CASH",
+      "ANONYMOUS_CRYPTOCURRENCY",
+      "GIFT_CARDS",
+      "PERSONAL_ACCOUNTS",
+      "UNVERIFIED_THIRD_PARTY_PAYER",
+      "CONTROL_EVASION_SPLIT_PAYMENT"
+    ],
+    "kyc_aml_sanctions_source_of_funds_checks_allowed": true,
+    "customer_bears_bank_fx_intermediary_fees": true,
+    "withholding_gross_up_where_legally_permitted": true,
+    "official_withholding_certificate_required": true,
+    "customer_funds_unusual_local_tax_or_registration_work": true,
+    "hub_optimus_retains_own_nontransferable_legal_tax_duties": true
+  },
+  "common_good": {
+    "professional_fee_to_approved_beneficiary_eur": 0,
+    "direct_third_party_costs": "AT_COST_NO_MARGIN",
+    "profit_from_suffering_allowed": false,
+    "percentage_of_donations_allowed": false,
+    "beneficiary_data_exploitation_allowed": false,
+    "hidden_commercial_beneficiary_allowed": false,
+    "public_institution_free_by_default": false,
+    "core_ip_transferred": false,
+    "unlimited_support_included": false,
+    "initial_reserve_percent_of_collected_net_commercial_service_revenue": 5
+  },
+  "exceptions": {
+    "owner_only": true,
+    "must_be_written": true,
+    "must_define_scope_duration_consideration_risk_and_precedent": true,
+    "creates_precedent_by_default": false
+  }
+}

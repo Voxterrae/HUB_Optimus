@@ -1,0 +1,173 @@
+{
+  "schema_version": "0.1",
+  "status": "OWNER_DECISION_RECORDED_PR_PROPOSED",
+  "authority_issue": 1863,
+  "owner": "Benjamin Gerrit Hoff",
+  "project": "HUB_Optimus",
+  "currency": "EUR",
+  "prices_exclude_applicable_taxes": true,
+  "core_principle": "Charge organizations for capability and institutional value; never profit from human or animal suffering.",
+  "qualification": {
+    "free_once": true,
+    "maximum_minutes": 30,
+    "bespoke_deliverables_allowed": false,
+    "custom_architecture_allowed": false,
+    "custom_code_allowed": false,
+    "custom_report_allowed": false
+  },
+  "customer_classes": {
+    "commercial_company": {
+      "paid_by_default": true,
+      "free_custom_poc_allowed": false
+    },
+    "enterprise": {
+      "paid_by_default": true,
+      "free_custom_poc_allowed": false,
+      "minimum_engagement_eur": 10000
+    },
+    "public_institution": {
+      "paid_by_default": true,
+      "free_custom_poc_allowed": false,
+      "minimum_engagement_eur": 10000,
+      "humanitarian_waiver_requires_owner_decision": true
+    },
+    "qualifying_public_benefit": {
+      "professional_fee_eur": 0,
+      "direct_third_party_costs": "AT_COST_NO_MARGIN",
+      "noncommercial_use_only": true,
+      "nontransferable": true,
+      "core_ip_transferred": false,
+      "unlimited_support_included": false,
+      "eligibility_requires_written_review": true
+    }
+  },
+  "minimum_engagements_eur": {
+    "sme": 3000,
+    "enterprise": 10000,
+    "public_institution": 10000
+  },
+  "price_book": {
+    "sme_diagnostic": {
+      "minimum": 3000,
+      "maximum": 7500
+    },
+    "enterprise_public_diagnostic": {
+      "minimum": 10000,
+      "maximum": 25000
+    },
+    "sme_audit": {
+      "minimum": 7500,
+      "maximum": 25000
+    },
+    "enterprise_public_audit": {
+      "minimum": 25000,
+      "maximum": 75000
+    },
+    "sme_pilot": {
+      "minimum": 15000,
+      "maximum": 45000
+    },
+    "enterprise_public_pilot": {
+      "minimum": 50000,
+      "maximum": 150000
+    },
+    "sme_implementation": {
+      "minimum": 30000,
+      "maximum": 120000
+    },
+    "enterprise_public_implementation": {
+      "minimum": 120000,
+      "maximum": 500000,
+      "open_ended_above_maximum": true
+    },
+    "sme_monthly_managed": {
+      "minimum": 2500,
+      "maximum": 10000
+    },
+    "enterprise_public_monthly_managed": {
+      "minimum": 10000,
+      "maximum": 50000,
+      "open_ended_above_maximum": true
+    },
+    "founder_architecture_day_rate": 2500,
+    "engineering_integration_day_rate": 1500,
+    "workshop_day": {
+      "minimum": 5000,
+      "maximum": 12000
+    },
+    "urgent_multiplier": 1.5
+  },
+  "payment_terms": {
+    "diagnostic_at_or_below_10000": "100_PERCENT_BEFORE_START",
+    "larger_diagnostic": [
+      60,
+      40
+    ],
+    "pilot": [
+      50,
+      30,
+      20
+    ],
+    "implementation_above_45000": [
+      40,
+      30,
+      20,
+      10
+    ],
+    "recurring": "IN_ADVANCE",
+    "quotation_validity_days": 15,
+    "approved_expenses": "AT_COST"
+  },
+  "discount_policy": {
+    "reduce_scope_before_value": true,
+    "maximum_without_explicit_owner_decision_percent": 15,
+    "annual_prepayment_maximum_discount_percent": 10,
+    "exposure_is_consideration": false,
+    "prestige_is_consideration": false,
+    "unspecified_future_work_is_consideration": false
+  },
+  "ip_boundary": {
+    "customer_keeps_customer_data": true,
+    "hub_optimus_keeps_core_platform": true,
+    "hub_optimus_keeps_reusable_methods_and_connectors": true,
+    "source_code_transfer_by_default": false,
+    "white_label_by_default": false,
+    "resale_rights_by_default": false,
+    "exclusivity_by_default": false,
+    "joint_venture_implied": false
+  },
+  "common_good": {
+    "program_name": "HUB_Optimus Common Good",
+    "eligible_domains": [
+      "human_welfare",
+      "animal_welfare",
+      "humanitarian_protection",
+      "essential_rights",
+      "prevention_of_suffering",
+      "approved_common_good"
+    ],
+    "initial_reserve_percent_of_collected_net_commercial_service_revenue": 5,
+    "equivalent_delivery_capacity_allowed": true,
+    "owner_may_increase_commitment": true,
+    "publicity_required_as_payment": false,
+    "percentage_of_donations_allowed": false,
+    "profit_based_on_suffering_allowed": false,
+    "beneficiary_data_sale_allowed": false,
+    "hidden_commercial_beneficiary_allowed": false,
+    "public_institutions_eligible_by_default": false
+  },
+  "joint_venture": {
+    "requires_written_owner_approved_agreement": true,
+    "fair_transparent_reciprocal_terms_required": true,
+    "funded_current_delivery_by_default": true,
+    "pure_equity_replaces_cash_by_default": false,
+    "pure_future_revenue_replaces_cash_by_default": false,
+    "core_ownership_transferred_by_default": false
+  },
+  "exceptions": {
+    "owner_only": true,
+    "must_be_written": true,
+    "must_define_scope_duration_consideration_and_risk": true,
+    "creates_precedent_by_default": false
+  }
+}
