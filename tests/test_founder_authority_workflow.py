@@ -65,6 +65,27 @@ def decision() -> types.SimpleNamespace:
     )
 
 
+def check_response(
+    *,
+    app_id: int = 4242,
+    app_slug: str = "founder-authority",
+    head_sha: str = HEAD_SHA,
+    external_id: str | None = None,
+    status: str = "in_progress",
+    conclusion: str | None = None,
+) -> dict[str, object]:
+    return {
+        "id": 101,
+        "name": "founder-authority",
+        "head_sha": head_sha,
+        "external_id": external_id
+        or f"founder-authority:v1:pull-request head:{head_sha}",
+        "status": status,
+        "conclusion": conclusion,
+        "app": {"id": app_id, "slug": app_slug},
+    }
+
+
 class FakeClient:
     pull_responses: list[dict[str, Any]] = []
     create_failure_at: int | None = None
@@ -192,6 +213,207 @@ def configure(
 
 def conclusions(client: FakeClient) -> list[str]:
     return [value for _, value in client.finalized_checks]
+
+
+def test_github_client_requires_exact_check_publisher_app(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", "4242")
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", "founder-authority")
+    client = WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
+
+    def wrong_app_check(*args: object, **kwargs: object) -> dict[str, object]:
+        return check_response(app_id=15368, app_slug="github-actions")
+
+    monkeypatch.setattr(client, "repository_request", wrong_app_check)
+
+    with pytest.raises(WORKFLOW.WorkflowError, match="expected 4242"):
+        client.create_check(HEAD_SHA, target_label="pull-request head")
+
+
+def test_github_client_accepts_exact_check_publisher_app(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", "4242")
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", "founder-authority")
+    client = WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
+
+    requests: list[dict[str, object]] = []
+
+    def exact_app_check(*args: object, **kwargs: object) -> dict[str, object]:
+        requests.append(kwargs)
+        return check_response()
+
+    monkeypatch.setattr(client, "repository_request", exact_app_check)
+
+    assert client.create_check(HEAD_SHA, target_label="pull-request head") == 101
+    payload = requests[0]["payload"]
+    assert isinstance(payload, dict)
+    assert payload["external_id"] == (
+        f"founder-authority:v1:pull-request head:{HEAD_SHA}"
+    )
+
+
+@pytest.mark.parametrize("value", ["", "0", "-1", "12.3", "abc"])
+def test_github_client_rejects_invalid_expected_app_id(
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", value)
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", "founder-authority")
+    with pytest.raises(
+        WORKFLOW.WorkflowError,
+        match="FOUNDER_AUTHORITY_EXPECTED_APP_ID must be a positive decimal integer",
+    ):
+        WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
+
+
+def test_github_client_rejects_wrong_check_target(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", "4242")
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", "founder-authority")
+    client = WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
+
+    def wrong_target_check(*args: object, **kwargs: object) -> dict[str, object]:
+        return check_response(head_sha=OTHER_HEAD_SHA)
+
+    monkeypatch.setattr(client, "repository_request", wrong_target_check)
+
+    with pytest.raises(WORKFLOW.WorkflowError, match="targets"):
+        client.create_check(HEAD_SHA, target_label="pull-request head")
+
+
+def test_github_client_without_publisher_env_preserves_legacy_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", raising=False)
+    monkeypatch.delenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", raising=False)
+    client = WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
+    requests: list[tuple[str, str, dict[str, object] | None]] = []
+
+    def legacy_responses(
+        path: str,
+        *,
+        method: str = "GET",
+        payload: dict[str, object] | None = None,
+    ) -> object:
+        requests.append((method, path, payload))
+        if method == "POST":
+            return {"id": 101}
+        return None
+
+    monkeypatch.setattr(client, "repository_request", legacy_responses)
+
+    assert client.strict_check_publisher is False
+    assert client.expected_check_app_id is None
+    assert client.expected_check_app_slug is None
+    check_run_id = client.create_check(HEAD_SHA, target_label="pull-request head")
+    client.finalize_check(check_run_id, success=True, summary="passed")
+
+    create_payload = requests[0][2]
+    assert isinstance(create_payload, dict)
+    assert "external_id" not in create_payload
+    assert requests[1][0:2] == ("PATCH", "check-runs/101")
+
+
+@pytest.mark.parametrize(
+    ("app_id", "app_slug"),
+    [("4242", None), (None, "founder-authority")],
+)
+def test_github_client_rejects_partial_strict_publisher_configuration(
+    monkeypatch: pytest.MonkeyPatch,
+    app_id: str | None,
+    app_slug: str | None,
+) -> None:
+    if app_id is None:
+        monkeypatch.delenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", raising=False)
+    else:
+        monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", app_id)
+    if app_slug is None:
+        monkeypatch.delenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", raising=False)
+    else:
+        monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", app_slug)
+
+    with pytest.raises(WORKFLOW.WorkflowError, match="must be set together"):
+        WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
+
+
+def test_invalid_created_check_is_failed_closed_when_id_is_known(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", "4242")
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", "founder-authority")
+    client = WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
+    requests: list[tuple[str, str]] = []
+
+    def invalid_then_cleanup(
+        path: str,
+        *,
+        method: str = "GET",
+        payload: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        requests.append((method, path))
+        if method == "POST":
+            return check_response(external_id="unexpected")
+        assert method == "PATCH" and path == "check-runs/101"
+        return {"id": 101, "status": "completed", "conclusion": "failure"}
+
+    monkeypatch.setattr(client, "repository_request", invalid_then_cleanup)
+
+    with pytest.raises(WORKFLOW.WorkflowError, match="unexpected external ID"):
+        client.create_check(HEAD_SHA, target_label="pull-request head")
+    assert requests == [("POST", "check-runs"), ("PATCH", "check-runs/101")]
+
+
+def test_finalize_check_validates_full_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", "4242")
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", "founder-authority")
+    client = WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
+
+    def exact_responses(
+        path: str,
+        *,
+        method: str = "GET",
+        payload: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        if method == "POST":
+            return check_response()
+        assert payload is not None
+        return check_response(
+            status="completed",
+            conclusion=str(payload["conclusion"]),
+        )
+
+    monkeypatch.setattr(client, "repository_request", exact_responses)
+
+    check_run_id = client.create_check(HEAD_SHA, target_label="pull-request head")
+    client.finalize_check(check_run_id, success=True, summary="passed")
+
+
+def test_finalize_check_rejects_unexpected_conclusion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", "4242")
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", "founder-authority")
+    client = WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
+
+    def wrong_final_conclusion(
+        path: str,
+        *,
+        method: str = "GET",
+        payload: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        if method == "POST":
+            return check_response()
+        return check_response(status="completed", conclusion="neutral")
+
+    monkeypatch.setattr(client, "repository_request", wrong_final_conclusion)
+    check_run_id = client.create_check(HEAD_SHA, target_label="pull-request head")
+
+    with pytest.raises(WORKFLOW.WorkflowError, match="expected 'success'"):
+        client.finalize_check(check_run_id, success=True, summary="passed")
 
 
 def latest_conclusions(client: FakeClient) -> dict[int, str]:

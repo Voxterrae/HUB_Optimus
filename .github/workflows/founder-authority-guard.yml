@@ -38,3 +38,70 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           PYTHONPATH: .
         run: python .github/scripts/founder_authority_workflow.py
+
+  founder-authority-app-canary:
+    name: founder-authority-app-canary
+    if: github.event.pull_request.base.ref == 'main'
+    continue-on-error: true
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout trusted base policy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Create repository-scoped founder-authority App token
+        id: founder-authority-app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.FOUNDER_AUTHORITY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FOUNDER_AUTHORITY_APP_PRIVATE_KEY }}
+          permission-checks: write
+          permission-contents: read
+          permission-issues: read
+          permission-pull-requests: read
+
+      - name: Verify exact founder-authority App installation
+        shell: bash
+        env:
+          ACTUAL_APP_SLUG: ${{ steps.founder-authority-app-token.outputs.app-slug }}
+          EXPECTED_APP_ID: ${{ vars.FOUNDER_AUTHORITY_APP_ID }}
+          EXPECTED_APP_SLUG: ${{ vars.FOUNDER_AUTHORITY_APP_SLUG }}
+          ACTUAL_INSTALLATION_ID: ${{ steps.founder-authority-app-token.outputs.installation-id }}
+          EXPECTED_INSTALLATION_ID: ${{ vars.FOUNDER_AUTHORITY_APP_INSTALLATION_ID }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${EXPECTED_APP_ID}" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::FOUNDER_AUTHORITY_APP_ID must be a positive decimal integer."
+            exit 1
+          fi
+          if [ -z "${EXPECTED_APP_SLUG}" ] || [ "${ACTUAL_APP_SLUG}" != "${EXPECTED_APP_SLUG}" ]; then
+            echo "::error::Unexpected founder-authority GitHub App slug."
+            exit 1
+          fi
+          if [[ ! "${EXPECTED_INSTALLATION_ID}" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::FOUNDER_AUTHORITY_APP_INSTALLATION_ID must be a positive decimal integer."
+            exit 1
+          fi
+          if [ "${ACTUAL_INSTALLATION_ID}" != "${EXPECTED_INSTALLATION_ID}" ]; then
+            echo "::error::Unexpected founder-authority GitHub App installation."
+            exit 1
+          fi
+
+      # Shadow-only during migration. This job is deliberately non-required and
+      # tolerant of failure until the App has emitted a recent, verified check
+      # and the ruleset source is switched in a later protected change.
+      - name: Validate with dedicated founder-authority App canary
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ steps.founder-authority-app-token.outputs.token }}
+          FOUNDER_AUTHORITY_EXPECTED_APP_ID: ${{ vars.FOUNDER_AUTHORITY_APP_ID }}
+          FOUNDER_AUTHORITY_EXPECTED_APP_SLUG: ${{ vars.FOUNDER_AUTHORITY_APP_SLUG }}
+          PYTHONPATH: .
+        run: python .github/scripts/founder_authority_workflow.py
