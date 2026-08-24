@@ -101,6 +101,37 @@ protected `main` and the later ruleset decision requires the head-bound check.
 Issue `#1881` is the current owner-facing reorganization ledger. Its execution
 order and safety gates remain controlling for the open pull-request portfolio.
 
+## Project intelligence surface
+
+Governance issue `#1901` and PR `#1903` define a new repository-intelligence
+surface without expanding the executable runtime or changing `/operator/`.
+Future operators must treat these artifacts as one synchronized snapshot:
+
+- analysis baseline: `main@30e985226347b4bc59b0e187b96633a09647ca42`,
+  tree `fabb9da1fdb6979df0bc764017752f118088e69f`;
+- knowledge graph: `obsidian-HUB_Optimus/`;
+- structured browser model: `site/obsidian-HUB_Optimus/system.json` plus declared
+  fragments;
+- static Pages route: `/obsidian-HUB_Optimus/`;
+- update contract: `obsidian-HUB_Optimus/98_META/Update Protocol.md`;
+- focused validation: `python -m pytest -q
+  tests/test_project_intelligence_site.py`;
+- public-route validation: `python -m pytest -q
+  tests/test_public_site_links_and_contrast.py`;
+- JavaScript syntax validation: `node --check
+  site/obsidian-HUB_Optimus/app-graph.js` and `node --check
+  site/obsidian-HUB_Optimus/app.js`.
+
+The Obsidian notes and browser explorer must remain derived from the same model
+and preserve `CONFIRMED`, `INFERRED`, and `UNKNOWN` distinctions. A future
+architecture-relevant change requires a model delta, affected-note updates,
+web-model synchronization, focused tests, and normal protected review.
+
+Until the exact reviewed PR is merged and the Pages workflow plus served URLs
+are inspected, source presence proves neither production publication nor the
+live state of `/`, `/operator/`, or `/obsidian-HUB_Optimus/`. Repository state,
+Pages deployment state, and externally served bytes remain separate claims.
+
 ## Historical handoff archive
 
 The previous broad handoff is preserved byte-for-byte at
