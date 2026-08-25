@@ -9,7 +9,10 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "check": "npm run verify:lambda-build && npm run build && npm test -- --runInBand",
+    "cdk": "cdk",
+    "predeploy:check": "node --require ts-node/register scripts/predeploy-check.ts",
+    "verify:lambda-build": "node --require ts-node/register scripts/verify-lambda-build.ts"
   },
   "devDependencies": {
     "@types/jest": "^30",

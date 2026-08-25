@@ -1,95 +1,128 @@
-# HUB_Optimus Operator URL intake candidate
+# HUB_Optimus controlled URL intake design
 
-Status: local, offline CDK candidate. It has not been deployed and does not
-change AWS, GitHub, DNS, `api.huboptimus.dev`, or the public Pages feature flag.
+Status: local review candidate. No AWS, DNS, GitHub Pages, or public feature
+state has been changed.
 
-## Contract and access boundary
+## Authentication and activation boundary
 
-- Route: `POST /intake/url`.
+- Route: authenticated `POST /intake/url` only.
 - Body: exactly one JSON member, `{ "url": "https://…" }`.
-- Success and application-error payloads follow
-  `ops/ec2/controlled_url_intake.v1.schema.json`.
-- API Gateway requires a Cognito JWT. There is no anonymous intake route.
-- The Cognito client is public (no client secret) and enables only OAuth
-  authorization-code flow. The browser must use S256 PKCE; implicit flow is
-  disabled. Public verified-email signup is enabled only when CDK context
-  `publicPilotEnabled=true` is supplied explicitly; otherwise users are
-  administrator-invited only.
-- Access and ID tokens expire after 15 minutes. Refresh tokens expire after one
-  day.
-- CORS permits only `https://huboptimus.dev`. CORS is a browser control, not an
-  authentication mechanism.
+- API Gateway validates the Cognito issuer and web-client audience, then
+  requires the exact custom scope `operator/intake`.
+- Lambda independently requires `token_use=access`, the exact Cognito
+  `client_id`, the exact whitespace-delimited scope, and a non-empty `sub`.
+- The browser client has no secret and supports only OAuth authorization-code
+  flow. Implicit, SRP, password, admin-password, and custom auth are disabled.
+- The PKCE helper generates 32 random bytes each for verifier, state, and nonce,
+  uses S256, consumes a transaction once, and expires it after ten minutes.
+- Only the pending verifier/state/nonce transaction enters `sessionStorage`.
+  The access token remains in memory. The ID token is decoded for nonce/client
+  consistency and then discarded; any returned refresh token is ignored. No
+  token may enter local storage, logs, URLs, Cache Storage, or rendered HTML.
+- Browser-side JWT decoding is a local consistency gate, not signature
+  verification or authorization. API Gateway remains the cryptographic trust
+  boundary.
+- Access and ID tokens expire after 15 minutes. The unused refresh token expires
+  after one hour and is never persisted by the browser helper.
+- Cognito requires software-token MFA. Self-signup is always disabled in this
+  candidate; one administrator-created user is the maximum private-smoke
+  population.
+- The user pool is pinned to the Cognito Lite plan; paid Plus threat-protection
+  features and SMS MFA are not enabled.
 
-CloudFormation requires a unique `OperatorAuthDomainPrefix`. Callback and
-logout parameters default to `https://huboptimus.dev/operator/` and are
-constrained to the `huboptimus.dev` origin.
+The callback and logout values are fixed by CloudFormation validation to
+`https://huboptimus.dev/operator/`. The stack outputs the raw API invoke URL,
+JWT issuer, web client ID, Hosted UI base URL, callback, and logout value. A
+separate static runtime configuration must consume those outputs before a
+private browser test can run. That configuration contains identifiers and
+endpoints only—never credentials or tokens.
 
-The stack outputs the raw API invoke URL, JWT issuer, web client ID, Hosted UI
-base URL, callback URL, and logout URL. These values are the frontend runtime
-configuration required before controlled intake can be enabled.
+The checked-in static configuration is disabled and empty. The service worker
+never precaches or falls back to an older runtime configuration: if the
+network-only config request fails, authentication stays disabled. OAuth
+callback query values are scrubbed before local external scripts execute; a
+callback navigation's request and response are never written to Cache Storage.
+Login also requires an exact version response from the active `v0-28` worker,
+so the older worker cannot initiate a callback during rollout.
 
-## Capacity and cost controls
+Service execution and account creation are deliberately separate. The default
+`serviceEnabled=false` sets Lambda reserved concurrency to zero. A private
+smoke uses `serviceEnabled=true` and `publicSignupEnabled=false`. Any attempt to
+set public signup true fails synthesis. Public access requires a future,
+separately reviewed change.
 
-- DynamoDB atomically permits three attempts per authenticated `sub` per UTC
-  day. Keys contain a subject hash plus UTC date, not the raw Cognito subject;
-  TTL removes stale windows asynchronously.
-- API Gateway applies a global rate of 0.5 requests/second with burst 2.
-- Lambda uses ARM64, 128 MiB, ten-second execution timeout and an eight-second
-  end-to-end remote-fetch budget. Reserved concurrency defaults to 0. Explicit
-  `publicPilotEnabled=true` raises it to 1 and simultaneously enables public
-  email signup.
-- DynamoDB is on-demand. There is no VPC, NAT gateway, SQS queue, EC2 instance,
-  or always-on database.
-- Application and API access logs retain seven days. They contain request IDs,
-  route/status metrics, URL fingerprints, sizes, and error codes only—not page
-  content, complete URLs, JWT subjects, or request bodies.
-- Deployment requires `CostAlertEmail`; there is no default. A separate tagged
-  $10/month pilot budget sends actual-spend alerts at 50%, 80% and 100% plus a
-  100% forecast alert. A tagged Cost Anomaly Detection subscription is also
-  always wired to that address. Budget accounting excludes credits and refunds
-  so promotional balances cannot hide gross pilot consumption. The
-  `costTag-project` cost-allocation tag must be activated in Billing for
-  tag-scoped reports.
+## Capacity, privacy, and cost controls
 
-This architecture should have little or no idle infrastructure consumption;
-API Gateway, Lambda, DynamoDB, Cognito and CloudWatch usage remain region- and
-traffic-dependent. AWS Budgets and anomaly alerts notify—they do not hard-stop
-spend. The stage throttle, per-subject quota and reserved concurrency are the
-enforced capacity bounds. The $10 pilot budget is separate from any wider
-account-level budget.
+- API Gateway throttles globally at `0.2` requests/second with burst `2`, so a
+  browser's CORS preflight and immediately following POST can complete as one
+  user action without increasing sustained throughput.
+- Lambda is ARM64, 128 MiB, ten-second execution timeout, eight-second fetch
+  budget, and reserved concurrency `0` or `1`.
+- DynamoDB atomically permits three attempts per subject and UTC day. Keys use
+  a SHA-256 subject hash plus date; raw Cognito subjects are not stored.
+- Requests retain at most 1,000,000 response bytes and 24,000 extracted
+  characters. Environment values above the compiled maxima fall back to safe
+  defaults.
+- Logs retain seven days. They contain request IDs, status/latency, truncated
+  URL fingerprints, byte counts, redirect counts, and safe error codes—not
+  request bodies, page text, complete URLs, JWTs, claims, subjects, or
+  origin-controlled content-type strings.
+- The unique allocation tag is
+  `HUBOptimusCostUnit=ControlledUrlIntake`.
+- The tagged workload budget is USD 10/month. The independent gross account
+  budget is USD 25/month. Both alert at 50%, 80%, and 100% actual spend and
+  100% forecast; credits and refunds are excluded from their cost view.
+- Cost Anomaly Detection is scoped to the unique workload tag and alerts at an
+  absolute USD 2 impact.
 
-## Fetch boundary
+Budgets notify; they do not stop spend. The account budget exists because a tag
+filter cannot detect untagged or mis-tagged consumption. AWS can take time to
+surface and activate a new user-defined allocation tag, so the runbook uses a
+disabled foundation phase before any private service activation.
 
-Every submitted URL and redirect hop is restricted to ASCII HTTP/HTTPS with a
+These are monitoring-only budgets, not paid budget actions, and AWS documents
+budget monitoring plus Cost Anomaly Detection as available without additional
+feature charges. Normal service usage, email delivery, logs, and data transfer
+can still incur charges; free-tier or credit eligibility must be verified on
+this specific account rather than assumed.
+
+## Controlled fetch boundary
+
+Every submitted URL and redirect is restricted to ASCII HTTP/HTTPS with a
 default port. Credentials, local/internal hostnames, private, loopback,
-link-local, multicast, reserved and known transition addresses are rejected.
-All DNS answers must be public. Connections use a validated numeric address,
-preserve Host/SNI, verify the connected peer, and do not use environment proxy
-settings. Redirect targets are revalidated and capped at three.
+link-local, multicast, documentation, benchmarking, reserved, and known
+transition IP ranges are rejected. The IPv6 policy follows the IANA
+special-purpose registry and fails closed outside ordinary global unicast.
 
-The shared fetch deadline is eight seconds. The handler retains at most
-1,000,000 response bytes and 24,000 extracted characters (plus a possible
-ellipsis), rejects transformed/compressed bodies, and accepts only
-`text/plain`, `text/html`, or `application/xhtml+xml`. It sends no cookies,
-authorization headers, browser state, or page subresource requests.
+All DNS answers must be public and at most sixteen distinct answers are
+accepted. A connection uses one validated numeric address, preserves the
+original Host and TLS SNI, disables socket reuse, and verifies the connected
+peer. Every redirect repeats validation; HTTPS-to-HTTP downgrade is rejected
+and the redirect limit is three. Rejected responses and redirect bodies are
+destroyed rather than drained.
 
-## Activation blockers and limitations
+The fetch sends no cookies, authorization headers, browser state, proxy
+settings, or subresource requests. Only identity-encoded `text/plain`,
+`text/html`, and `application/xhtml+xml` with unambiguous framing are accepted.
+Returned text is unreviewed candidate material, never verified evidence. A
+frontend must render title and text with `textContent`, never `innerHTML`.
 
-- Pages currently expects `https://api.huboptimus.dev` and keeps controlled URL
-  intake disabled. This candidate creates neither that custom domain nor DNS.
-- The synthesized default is deliberately non-serving: Lambda reserved
-  concurrency is zero and public signup is disabled. Enablement requires the
-  exact `publicPilotEnabled=true` context as a separate owner decision.
-- API Gateway 401 responses and the handler's 429 quota responses are transport
-  errors outside the v1 application schema. The frontend must map them to clear
-  sign-in and daily-limit states before its feature flag is enabled.
-- Public email signup can be abused by creating multiple accounts. Global API
-  throttling and Lambda concurrency bound backend capacity, but production may
-  still need CAPTCHA/risk controls or invitation policy.
-- Application SSRF checks reduce risk but do not replace an independently
-  governed egress firewall. DNS, public routing, certificate authorities and
-  the content served by a public host remain external trust dependencies.
-- Retrieved text is explicitly unreviewed and is not verified evidence.
-- This candidate relies on the AWS SDK v3 supplied by the managed Node.js 22
-  Lambda runtime for its single DynamoDB update; a canonical integration may
-  choose to bundle and pin that client.
+## Known limitations and non-goals
+
+- This stack creates no `api.huboptimus.dev` custom domain or DNS record.
+- The Lambda package currently relies on the AWS SDK v3 included in the managed
+  Node.js 22 runtime for one DynamoDB update. A production revision should
+  bundle and pin that client.
+- Unit tests cover policy, extraction, schema, claims, PKCE, pinning options,
+  peer matching, quotas, and synthesis. A real network-path canary is still
+  required to prove DNS, TLS/SNI, timeout, redirects, and response truncation in
+  the selected AWS environment.
+- Cognito is a provisional identity choice. Existing governance discussion also
+  records an Entra single-tenant direction; the owner must resolve that choice
+  before a durable or public deployment.
+- A local predeploy script can be bypassed. Deployment remains NO-GO until a
+  protected, single-path workflow binds approved SHA, account, region, role,
+  cost recipient, disabled signup, change-set review, and deployment in one
+  controlled execution.
+- Public signup, DNS/TLS publication, production release, merge, and AWS
+  mutation are outside this candidate's authorization.

@@ -1,5 +1,6 @@
 *.js
 !jest.config.js
+!lambda/url-ingest-handler.js
 *.d.ts
 node_modules
 *.js.map

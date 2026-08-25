@@ -1,32 +1,73 @@
-# Operator URL intake candidate status
+# HUB_Optimus Operator infrastructure candidate
 
-Status: **DRAFT / DISABLED / NOT DEPLOYED**  
-Issue: `#1917`  
-Prepared: 2026-08-24
+Status: **LOCAL / DISABLED / NOT DEPLOYED / PUBLIC NO-GO**  
+Prepared: 2026-08-25
 
-This package defines the serverless candidate but does not activate it. The
-default template has Lambda reserved concurrency `0` and administrator-only
-Cognito signup. No AWS, DNS, EC2, Pages feature flag or production state was
-changed while preparing it.
+The candidate defines a bounded authenticated implementation of
+`POST /intake/url`. It has not changed AWS account `904851777129`, DNS,
+`api.huboptimus.dev`, GitHub Pages, or the live Operator.
 
-## Verified locally
+## Closed locally
 
-- TypeScript compilation: passed.
-- Jest: 48/48 passed.
-- CDK synth with `publicPilotEnabled=false`: passed.
-- No EC2, VPC, NAT Gateway, load balancer, SQS, custom domain or DNS record.
+- Account and region are fixed to `904851777129` and `eu-west-1`.
+- Service enablement is separate from account creation.
+- Public signup is rejected; private smoke permits one invited MFA user.
+- Cognito uses authorization code + S256 PKCE, exact `operator/intake` scope,
+  short tokens, no client secret, and no direct password/SRP/custom flow.
+- API Gateway and Lambda independently validate access-token client and scope.
+- SSRF controls include IPv4/IPv6 special ranges, all-answer DNS validation,
+  numeric-address pinning, fresh sockets, peer verification, redirect
+  revalidation, HTTPS downgrade blocking, and bounded responses.
+- Workload and gross-account budgets cover tagged and untagged spend visibility.
+- The deployment role name, account, region, clean tree, exact SHA, and active
+  cost tag have phased read-only predeploy checks with no role-name override;
+  foundation omits only the not-yet-activatable tag gate.
+- CDK feature flags are explicitly pinned to current recommendations.
+- The Lambda JavaScript asset is compiled and present; a pre-build byte
+  comparison rejects stale output and synthesis fails if it is missing.
+- The companion browser integration defaults disabled, uses PKCE S256 and an
+  in-memory Bearer token, and never caches runtime enablement or OAuth callback
+  query values.
 
-## Required before activation
+## Local evidence
 
-1. Complete protected review and preserve verified commit provenance.
-2. Record AWS Credits plus EC2/VPC/EBS inventory.
-3. Confirm region, alert recipient and unique Cognito domain prefix.
-4. Bootstrap CDK and approve a least-privilege GitHub OIDC deployment role.
-5. Add reviewed DNS/TLS for `api.huboptimus.dev`.
-6. Implement browser PKCE/token lifecycle and explicit 401/429 states.
-7. Prove authenticated success, quota, SSRF/redirect negatives, log privacy,
-   cost alerts and rollback in an approved non-production environment.
-8. Only then consider exact context `publicPilotEnabled=true` and the separate
-   public Operator feature-flag change.
+- TypeScript build: passed.
+- Jest: 103/103 tests passed.
+- Companion Operator/i18n/PWA/wiki checks: 84/84 selected tests passed with
+  Node-backed browser/service-worker harnesses (pytest itself was unavailable
+  in this isolated environment).
+- Disabled synthesis: passed with `serviceEnabled=false` and signup false.
+- Private structural synthesis: passed with `serviceEnabled=true` and signup
+  false.
+- Public-signup synthesis: rejected as designed.
+- No AWS command, deployment, DNS change, merge, or public feature enablement
+  was performed.
+- The supplied Billing screenshot shows a USD 22.30 monthly forecast. If that
+  figure is current, only about USD 2.70 remains below the proposed USD 25 gross
+  account alert. Credit balance and expiry were not visible or verified.
 
-The AWS mutation block and stale EC2 boundary in `#1831` remain unchanged.
+## Remaining blockers before a private AWS canary
+
+1. Lift the active AWS mutation hold through the repository's owner-governed
+   process; issue #1917 by itself does not authorize deployment.
+2. Merge an owner-reviewed commit and provide its protected exact SHA; do not
+   deploy a pull-request head.
+3. Resolve the Cognito-versus-Entra identity decision.
+4. Review the trust and permissions of `HUBOptimusOperatorDeploy`, CDK bootstrap,
+   and CloudFormation execution roles; root is forbidden.
+5. Verify current gross spend, promotional-credit balance and expiry, alert
+   recipient, and remaining headroom below the USD 25 gross cap before creating
+   anything.
+6. Run a disabled foundation phase, wait for the unique allocation tag to
+   appear, activate it, and verify both budgets and alert delivery.
+7. Provide a protected non-bypassable deployment path that forces signup false,
+   binds the reviewed change set and SHA, and cannot switch profile or role
+   after validation.
+8. Publish the output-derived static runtime configuration through a separate
+   reviewed Pages change, still disabled until the invited-user window.
+9. Execute the positive and negative private smoke matrix, privacy review,
+   rollback, and post-test cost check.
+
+Until all nine gates pass, the correct decision is **NO-GO for AWS smoke**.
+Public signup, production, DNS publication, and general public URL intake remain
+**NO-GO** after that private canary as well.

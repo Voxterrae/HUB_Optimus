@@ -1,5 +1,5 @@
 {
-  "app": "node --require ts-node/register bin/hub-optimus-operator-infra.ts",
+  "app": "node_modules/.bin/ts-node --prefer-ts-exts bin/hub-optimus-operator-infra.ts",
   "watch": {
     "include": [
       "**"
@@ -17,6 +17,14 @@
     ]
   },
   "context": {
+    "@aws-cdk/aws-batch:defaultToAL2023": true,
+    "@aws-cdk/aws-cloudfront:defaultFunctionRuntimeV2_0": true,
+    "@aws-cdk/aws-eks:defaultToAL2023": true,
+    "@aws-cdk/aws-eks:useNativeOidcProvider": true,
+    "@aws-cdk/aws-elasticloadbalancingv2:usePostQuantumTlsPolicy": true,
+    "@aws-cdk/core:annotationsInValidationReport": true,
+    "@aws-cdk/core:defaultCrossStackReferences": "weak",
+    "@aws-cdk/core:validateAgainstDefaultRules": true,
     "@aws-cdk/aws-signer:signingProfileNamePassedToCfn": true,
     "@aws-cdk/aws-ecs-patterns:secGroupsDisablesImplicitOpenListener": true,
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
