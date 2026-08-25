@@ -218,6 +218,26 @@
       "note": "A local/private, single-URL prototype, browser fallback, and versioned application payload schema exist. This does not ratify the RFC, verify retrieved content, or prove a public deployment."
     },
     {
+      "id": "operator-atomic-claim-drafting",
+      "path": "docs/rfc/operator_atomic_claim_drafting.md",
+      "title": "Operator Human-Confirmed Atomic Claim Drafting",
+      "lifecycle": "Draft",
+      "proposal_issue": 1920,
+      "record_pr": null,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/operator_atomic_claim_drafting.md",
+        "site/operator/claim-decomposition.v1.js",
+        "site/operator/index.html",
+        "tests/test_operator_claim_decomposition.py",
+        "tests/test_operator_pwa_product_actions.py"
+      ],
+      "note": "Issue #1920 and this record define an unratified browser-local candidate: deterministic claim proposals, human editing, explicit confirmation, exact excerpt provenance, and fail-closed v2 preparation. They do not verify claims, establish an institutional ledger, change URL intake or AWS, prove public deployment, or authorize autonomous analysis."
+    },
+    {
       "id": "operator-local-learning-candidate",
       "path": "docs/rfc/operator_local_learning_candidate.md",
       "title": "Operator Local Learning Candidate",
