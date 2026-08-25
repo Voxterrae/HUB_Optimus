@@ -31,9 +31,18 @@ STORE_HARNESS = _load_store_harness()
 
 def _learning_ui_source():
     source = OPERATOR.read_text(encoding="utf-8")
-    return source.split("// OPERATOR_LOCAL_LEARNING_1836_START", 1)[1].split(
+    learning = source.split("// OPERATOR_LOCAL_LEARNING_1836_START", 1)[1].split(
         "// OPERATOR_LOCAL_LEARNING_1836_END", 1
     )[0]
+    return """
+const SOURCE_BOUND_NORMALIZER_VERSIONS = new Set([
+  "operator-source-bound-v1",
+  "operator-source-bound-v2"
+]);
+function isSourceBoundNormalizer(version) {
+  return SOURCE_BOUND_NORMALIZER_VERSIONS.has(String(version || ""));
+}
+""" + learning
 
 
 DOM_HARNESS = r"""
@@ -317,11 +326,13 @@ def test_learning_workspace_is_fifth_visible_localized_accessible_step():
 
 def test_learning_scripts_schema_and_offline_assets_are_versioned_in_order():
     source = OPERATOR.read_text(encoding="utf-8")
-    assert source.index("./i18n.v1.js") < source.index("./learning-candidate.v1.js")
+    assert source.index("./i18n.v1.js") < source.index("./claim-decomposition.v1.js")
+    assert source.index("./claim-decomposition.v1.js") < source.index("./learning-candidate.v1.js")
     assert source.index("./learning-candidate.v1.js") < source.index("./learning-store.v1.js")
     assert source.index("./learning-store.v1.js") < source.index("const $ =")
     service_worker = SW.read_text(encoding="utf-8")
-    assert 'hub-optimus-operator-v0-27' in service_worker
+    assert 'hub-optimus-operator-v0-28' in service_worker
+    assert '"./claim-decomposition.v1.js"' in service_worker
     for asset in (
         './learning-candidate.v1.js',
         './learning-store.v1.js',

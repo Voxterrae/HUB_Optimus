@@ -14,6 +14,7 @@ ICON = ROOT / "site" / "operator" / "icon.svg"
 LOCKUP = ROOT / "site" / "assets" / "brand" / "hub-optimus-logo-lockup.png"
 SW = ROOT / "site" / "operator" / "sw.js"
 OPERATOR_I18N = ROOT / "site" / "operator" / "i18n.v1.js"
+CLAIM_DECOMPOSITION = ROOT / "site" / "operator" / "claim-decomposition.v1.js"
 URL_INTAKE_SCHEMA = (
     ROOT / "ops" / "ec2" / "controlled_url_intake.v1.schema.json"
 )
@@ -152,6 +153,7 @@ context.globalThis = context;
 context.self = context;
 window.navigator.serviceWorker = undefined;
 vm.createContext(context);
+vm.runInContext(CLAIM_SOURCE, context, { filename: "claim-decomposition.v1.js" });
 vm.runInContext(SOURCE, context, { filename: "operator-inline.js" });
 
 async function submit(url, text) {
@@ -189,6 +191,16 @@ async function submit(url, text) {
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _named_function(html: str, name: str) -> str:
+    match = re.search(
+        rf"    function {re.escape(name)}\([^)]*\) \{{.*?\n    \}}",
+        html,
+        re.DOTALL,
+    )
+    assert match is not None, name
+    return match.group(0)
 
 
 def _operator_i18n_node_prelude() -> str:
@@ -256,7 +268,14 @@ def _source_bound_helpers(html: str) -> str:
         re.DOTALL,
     )
     assert match is not None
-    return match.group(1)
+    return (
+        _named_function(html, "isPlainRecord")
+        + _named_function(html, "hasOnlyRecordKeys")
+        + _named_function(html, "hasExactRecordKeys")
+        + _named_function(html, "sourceReferenceForIntake")
+        + "\n"
+        + match.group(1)
+    )
 
 
 def _controlled_intake_contract_helpers(html: str) -> str:
@@ -548,7 +567,9 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert 'id="product_analyze" type="submit"' in html
     assert 'id="product_source_preview"' in html
     assert 'id="product_confirm_source" type="checkbox"' in html
+    assert 'id="product_confirm_claims" type="checkbox"' in html
     assert '<script src="./i18n.v1.js"></script>' in html
+    assert '<script src="./claim-decomposition.v1.js"></script>' in html
     assert re.search(r'<script[^>]+src="https?://', html) is None
 
 
@@ -557,7 +578,11 @@ def test_full_public_operator_submit_never_fetches_a_supplied_url():
     html = _read(INDEX)
     scripts = re.findall(r"<script>(.*?)</script>", html, re.DOTALL)
     assert len(scripts) == 1
-    smoke = f"const SOURCE = {json.dumps(scripts[0])};\n{FULL_PAGE_HARNESS}"
+    smoke = (
+        f"const SOURCE = {json.dumps(scripts[0])};\n"
+        f"const CLAIM_SOURCE = {json.dumps(_read(CLAIM_DECOMPOSITION))};\n"
+        f"{FULL_PAGE_HARNESS}"
+    )
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
@@ -885,7 +910,7 @@ def test_operator_progress_is_immediate_and_only_network_intake_has_a_deadline()
     assert "const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;" in html
     assert 'new ControlledIntakeError("url_fetch_timeout", 504)' in html
     assert "return await Promise.race([request, deadline]);" in html
-    assert "hub-optimus-operator-v0-27" in sw
+    assert "hub-optimus-operator-v0-28" in sw
 
 
 def test_operator_draft_is_source_bound_and_conservative():
@@ -893,8 +918,9 @@ def test_operator_draft_is_source_bound_and_conservative():
     catalog = _read(OPERATOR_I18N)
 
     assert "operator-source-bound-v1" in html
+    assert "operator-source-bound-v2" in html
     assert '<bdi dir="ltr">review_profile=source-bound-v1</bdi>' not in html
-    assert 'normalizer_version: "operator-source-bound-v1"' in html
+    assert 'normalizer_version: "operator-source-bound-v2"' in html
     assert "source_text_fingerprint" in html
     assert 'type: "SUPPORTS_ATTRIBUTION"' in html
     assert 'support_scope: "attribution-only"' in html
@@ -937,24 +963,43 @@ if (!buildSpecificClaim(firstExcerpts[0]).includes("Alpha agency")) {
   throw new Error("claim is not bound to the first source");
 }
 const profile = buildSourceProfile(first, "news-article", "https://example.com/report");
+const claimSet = {
+  groups: profile.excerpts.map((excerpt, index) => ({
+    excerpt_id: excerpt.excerpt_id,
+    source_text_fingerprint: excerpt.source_text_fingerprint,
+    span_start: excerpt.span_start,
+    span_end: excerpt.span_end,
+    exact_excerpt: excerpt.text,
+    claims: index === 0 ? [
+      {draft_id: "claim-alpha", text: "Alpha agency published the revised procedure on Friday.", origin: "mechanical-proposal", source_quote_type: "exact"},
+      {draft_id: "claim-beta", text: "Independent records have not yet been reviewed.", origin: "mechanical-proposal", source_quote_type: "exact"}
+    ] : [
+      {draft_id: `claim-${index}`, text: excerpt.text, origin: "mechanical-proposal", source_quote_type: "exact"}
+    ]
+  })),
+  confirmation: {confirmation_sha256: "a".repeat(64)}
+};
 const records = buildSourceBoundRecords(profile, {
   sourceRef: "https://example.com/report",
   claimType: "external-report",
-  retrieved: true
+  retrieved: true,
+  claimSet
 });
-if (records.claims.length !== records.evidence.length || records.claims.length !== records.relationships.length) {
-  throw new Error("source-bound records are not one-to-one");
+if (records.claims.length !== 2 || records.evidence.length !== 1 || records.relationships.length !== 2) {
+  throw new Error("one excerpt did not retain two separately linked claims");
 }
-for (let index = 0; index < records.claims.length; index += 1) {
-  const claim = records.claims[index];
-  const evidence = records.evidence[index];
-  const relation = records.relationships[index];
-  if (!first.includes(evidence.text)) throw new Error("evidence is not exact source text");
-  if (evidence.supports_claim_ids[0] !== claim.claim_id) throw new Error("dangling claim support");
-  if (relation.from_ref !== evidence.evidence_id || relation.to_ref !== claim.claim_id) {
+const evidenceRecord = records.evidence[0];
+if (!first.includes(evidenceRecord.text)) throw new Error("evidence is not exact source text");
+for (const claim of records.claims) {
+  if (!evidenceRecord.supports_claim_ids.includes(claim.claim_id)) throw new Error("dangling claim support");
+  const relation = records.relationships.find((item) => item.to_ref === claim.claim_id);
+  if (!relation || relation.from_ref !== evidenceRecord.evidence_id) {
     throw new Error("dangling structural relationship");
   }
-  if (evidence.metadata.support_scope !== "attribution-only") {
+  if (claim.metadata.normalized_by !== "operator-source-bound-v2") {
+    throw new Error("claim did not use v2 provenance");
+  }
+  if (evidenceRecord.metadata.support_scope !== "attribution-only") {
     throw new Error("excerpt was promoted into corroboration");
   }
 }
@@ -966,6 +1011,223 @@ for (let index = 0; index < records.claims.length; index += 1) {
         text=True,
         capture_output=True,
         check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_v2_attestation_rejects_every_structural_tamper():
+    html = _read(INDEX)
+    smoke = (
+        _read(CLAIM_DECOMPOSITION)
+        + "\nconst claimDraftModel = globalThis.HUB_OPTIMUS_CLAIM_DECOMPOSITION_V1;\n"
+        + _operator_i18n_node_prelude()
+        + _source_bound_helpers(html)
+        + _named_function(html, "reconstructedSourceBoundV2ClaimSet")
+        + _named_function(html, "hasValidSourceBoundV2Attestation")
+        + r'''
+const clone = (value) => JSON.parse(JSON.stringify(value));
+const source = "The council approved the motion. Independent verification remains pending.";
+const canonical = canonicalSource(source);
+const excerpts = sourceExcerpts(canonical.text, canonical.fingerprint).map((excerpt) => ({
+  ...excerpt,
+  selection_origin: "human-confirmed"
+}));
+const proposed = claimDraftModel.proposeClaimSet(excerpts, {hashText: sha256Hex});
+const selectionSha256 = claimDraftModel.computeSelectionSha256(excerpts, {
+  hashText: sha256Hex,
+  requireHumanSelection: true
+});
+const confirmed = claimDraftModel.confirmClaimSet(proposed, {
+  hashText: sha256Hex,
+  expectedSourceFingerprint: canonical.fingerprint,
+  expectedSelectionSha256: selectionSha256
+});
+const profile = {
+  excerpts,
+  sourceFingerprint: canonical.fingerprint
+};
+const intakeRecord = {
+  version: "operator-intake-record-v1",
+  mode: "controlled-url",
+  original_url: "https://example.com/",
+  final_url: "https://example.com/"
+};
+const records = buildSourceBoundRecords(profile, {
+  sourceRef: "https://example.com/",
+  claimType: "external-report",
+  retrieved: true,
+  claimSet: confirmed
+});
+const recordProjectionSha256 = sourceBoundV2RecordProjectionSha256({
+  intakeRecord,
+  sourceTextFingerprint: canonical.fingerprint,
+  claims: records.claims,
+  evidence: records.evidence,
+  relationships: records.relationships
+});
+const payload = {
+  case_id: "case-v2-attestation",
+  core_version_ref: "main",
+  input_summary: "Human-confirmed source-bound claim draft",
+  claims: records.claims,
+  evidence: records.evidence,
+  metadata: {
+    intake_record: intakeRecord,
+    source_text_fingerprint: canonical.fingerprint,
+    normalizer_version: "operator-source-bound-v2",
+    relationships: records.relationships,
+    claim_drafting: {
+      schema_version: confirmed.schema_version,
+      selection_sha256: confirmed.confirmation.selection_sha256,
+      claim_set_sha256: confirmed.confirmation.claim_set_sha256,
+      confirmation_sha256: confirmed.confirmation.confirmation_sha256,
+      record_projection_sha256: recordProjectionSha256,
+      attestation_sha256: sourceBoundV2AttestationSha256(
+        confirmed.confirmation.confirmation_sha256,
+        recordProjectionSha256
+      ),
+      status: confirmed.confirmation.status,
+      coverage_scope: "all-human-selected-passages"
+    }
+  }
+};
+if (!hasValidSourceBoundV2Attestation(payload)) throw new Error("intact v2 attestation was rejected");
+
+const mutations = [
+  (item) => { item.claims[0].text += " altered"; },
+  (item) => { item.claims[0].claim_id = `claim-${"0".repeat(64)}`; },
+  (item) => { item.evidence[0].text += " altered"; },
+  (item) => { item.evidence[0].evidence_id = "evidence-999"; item.metadata.relationships[0].from_ref = "evidence-999"; },
+  (item) => { item.evidence[0].source_type = "operator-provided-excerpt"; },
+  (item) => { item.evidence[0].source_ref = "https://tampered.example"; item.claims[0].source_ref = "https://tampered.example"; },
+  (item) => {
+    item.metadata.intake_record.original_url = "https://tampered.example/";
+    item.metadata.intake_record.final_url = "https://tampered.example/";
+    item.evidence.forEach((record) => { record.source_ref = "https://tampered.example/"; });
+    item.claims.forEach((record) => { record.source_ref = "https://tampered.example/"; });
+  },
+  (item) => { item.evidence[0].metadata.selection_origin = "mechanical-proposal"; },
+  (item) => { item.claims[0].metadata.passage_scope = "partial-source-passage"; },
+  (item) => { item.evidence[0].metadata.intake_record_ref = "metadata.other"; },
+  (item) => { item.evidence[0].supports_claim_ids.pop(); },
+  (item) => { item.metadata.relationships[0].relationship_id = "relation-tampered"; },
+  (item) => { item.metadata.relationships[0].to_ref = `claim-${"f".repeat(64)}`; },
+  (item) => { item.metadata.claim_drafting.confirmation_sha256 = "0".repeat(64); }
+];
+for (const mutate of mutations) {
+  const tampered = clone(payload);
+  mutate(tampered);
+  if (hasValidSourceBoundV2Attestation(tampered)) {
+    throw new Error("tampered v2 payload retained a valid human attestation");
+  }
+}
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_v2_claim_state_and_learning_revision_survive_all_interface_languages():
+    html = _read(INDEX)
+    learning_model = ROOT / "site" / "operator" / "learning-candidate.v1.js"
+    smoke = (
+        _read(CLAIM_DECOMPOSITION)
+        + _read(learning_model)
+        + _operator_i18n_node_prelude()
+        + _source_bound_helpers(html)
+        + _named_function(html, "claimDraftDisplayType")
+        + _named_function(html, "renderClaimDraftGroups")
+        + r'''
+const claimDraftModel = globalThis.HUB_OPTIMUS_CLAIM_DECOMPOSITION_V1;
+const learningModel = globalThis.HUB_OPTIMUS_LEARNING_CANDIDATE_V1;
+const source = "The source attributes one decision to the council. A second review remains pending.";
+const canonical = canonicalSource(source);
+const excerpts = sourceExcerpts(canonical.text, canonical.fingerprint).map((excerpt) => ({
+  ...excerpt,
+  selection_origin: "human-confirmed"
+}));
+const proposed = claimDraftModel.proposeClaimSet(excerpts, {hashText: sha256Hex});
+proposed.groups[0].claims[0].text = "The source attributes a decision to the council.";
+proposed.groups[0].claims[0].origin = "human-edited";
+proposed.groups[0].claims[0].source_quote_type = "paraphrase";
+proposed.groups[0].claims[0].draft_id = claimDraftModel.computeDraftId({
+  source_text_fingerprint: canonical.fingerprint,
+  excerpt_id: proposed.groups[0].excerpt_id,
+  text: proposed.groups[0].claims[0].text
+}, {hashText: sha256Hex});
+const selectionSha256 = claimDraftModel.computeSelectionSha256(excerpts, {
+  hashText: sha256Hex,
+  requireHumanSelection: true
+});
+const confirmed = claimDraftModel.confirmClaimSet(proposed, {
+  hashText: sha256Hex,
+  expectedSourceFingerprint: canonical.fingerprint,
+  expectedSelectionSha256: selectionSha256
+});
+const records = buildSourceBoundRecords({excerpts}, {
+  sourceRef: "https://example.com",
+  claimType: "external-report",
+  retrieved: false,
+  claimSet: confirmed
+});
+const caseRecord = {
+  case_id: "case-language-stability",
+  core_version_ref: "main",
+  claims: records.claims.map((claim) => ({
+    claim_id: claim.claim_id,
+    text: claim.text,
+    source_ref: claim.source_ref
+  })),
+  evidence: records.evidence.map((item) => ({
+    evidence_id: item.evidence_id,
+    text: item.text,
+    source_ref: item.source_ref,
+    limitations: item.limitations
+  })),
+  relationships: records.relationships.map((item) => ({
+    type: item.type,
+    from_ref: item.from_ref,
+    to_ref: item.to_ref
+  })),
+  revision_sha256: "0".repeat(64)
+};
+caseRecord.revision_sha256 = learningModel.computeCaseRevision(caseRecord, {hashText: sha256Hex});
+const baseline = JSON.stringify({confirmed, records, revision: caseRecord.revision_sha256});
+let currentClaimDraftSet = confirmed;
+const groupContainer = {innerHTML: ""};
+function $(id) {
+  if (id === "product_claim_draft_groups") return groupContainer;
+  throw new Error(`unexpected DOM lookup: ${id}`);
+}
+function escapeHtml(value) { return String(value ?? ""); }
+
+for (const locale of operatorI18n.supportedLocales) {
+  activeOperatorLanguage = locale;
+  renderClaimDraftGroups();
+  if (!groupContainer.innerHTML.includes(opText("claimDraftExcerpt", {number: 1}))) {
+    throw new Error(`claim editor did not rerender in ${locale}`);
+  }
+  const validation = claimDraftModel.validateClaimSet(confirmed, {
+    hashText: sha256Hex,
+    requireConfirmed: true,
+    expectedSourceFingerprint: canonical.fingerprint,
+    expectedSelectionSha256: selectionSha256
+  });
+  if (!validation.valid) throw new Error(`confirmed set became invalid in ${locale}`);
+  const revision = learningModel.computeCaseRevision(caseRecord, {hashText: sha256Hex});
+  if (revision !== caseRecord.revision_sha256) throw new Error(`learning revision changed in ${locale}`);
+  if (JSON.stringify({confirmed, records, revision}) !== baseline) {
+    throw new Error(`canonical v2 state changed in ${locale}`);
+  }
+}
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1261,6 +1523,7 @@ let currentRetrievedSourceText = "";
 let currentRetrievedSourceUrl = "";
 let currentSourceSelectionState = null;
 let currentConfirmedSourceSelection = null;
+function clearClaimDrafting() {}
 '''
         + _source_selection_dom_helpers(html)
         + r'''
@@ -1330,6 +1593,7 @@ def test_payload_output_and_ephemeral_summary_all_require_the_confirmed_selectio
     memory = re.search(r"function buildMemoryRecord\(\) \{(.*?)\n    \}", html, re.DOTALL)
     assert normalized is not None and output is not None and memory is not None
     assert "confirmedSourceExcerptsFor(raw)" in normalized.group(1)
+    assert "confirmedClaimSetFor(confirmedExcerpts)" in normalized.group(1)
     assert "excerpts: confirmedExcerpts" in normalized.group(1)
     for block in (output.group(1), memory.group(1)):
         assert "confirmedSourceExcerptsFor(sourceText) || []" in block
@@ -1630,7 +1894,9 @@ const fields = {
   product_source_url: field(),
   product_source_selection: field(),
   product_confirm_source: field(),
-  product_source_preview: field()
+  product_source_preview: field(),
+  product_confirm_claims: field(),
+  product_claim_draft_groups: field({querySelector() { return null; }})
 };
 const $ = (id) => fields[id];
 let intakeState = {
@@ -1651,6 +1917,7 @@ let activeIntakeRequestToken = 0;
 let activeIntakeAbortController = null;
 let selectionMode = null;
 let confirmed = false;
+let claimsConfirmed = false;
 let outputCount = 0;
 let memoryCount = 0;
 let retrievalCount = 0;
@@ -1702,6 +1969,13 @@ function sourceSelectionSnapshotIsCurrent(raw, mode) {
 function confirmedSourceExcerptsFor() {
   return confirmed ? [{text: "exact confirmed passage"}] : null;
 }
+function confirmedClaimSetFor() {
+  return claimsConfirmed ? {confirmation: {status: "human-confirmed"}} : null;
+}
+function renderClaimDraftValidation() {
+  fields.product_confirm_claims.disabled = false;
+  return {valid: true};
+}
 function renderSourceSelectionValidation() {
   fields.product_confirm_source.disabled = false;
   return {ok: true, excerpts: [{text: "exact confirmed passage"}]};
@@ -1716,6 +1990,7 @@ function clearRetrievedSourcePreview() {
   currentRetrievedSourceUrl = "";
   selectionMode = null;
   confirmed = false;
+  claimsConfirmed = false;
   fields.product_source_preview.hidden = true;
 }
 function renderUrlIntakeFallback(url, error) {
@@ -1745,8 +2020,14 @@ async function readControlledUrlText(url, {signal} = {}) {
   confirmed = true;
   fields.product_confirm_source.checked = true;
   await runProductAnalyze();
+  if (retrievalCount !== 1 || outputCount || memoryCount || preparedDraftReady) {
+    throw new Error("URL passage confirmation did not stop at atomic-claim review");
+  }
+  claimsConfirmed = true;
+  fields.product_confirm_claims.checked = true;
+  await runProductAnalyze();
   if (retrievalCount !== 1 || outputCount !== 1 || memoryCount !== 1 || !preparedDraftReady) {
-    throw new Error("URL confirmation did not produce exactly one ephemeral draft");
+    throw new Error("URL claim confirmation did not produce exactly one ephemeral draft");
   }
 
   intakeState = {
@@ -1764,8 +2045,14 @@ async function readControlledUrlText(url, {signal} = {}) {
   confirmed = true;
   fields.product_confirm_source.checked = true;
   await runProductAnalyze();
+  if (outputCount !== 1 || memoryCount !== 1 || preparedDraftReady) {
+    throw new Error("text passage confirmation did not stop at atomic-claim review");
+  }
+  claimsConfirmed = true;
+  fields.product_confirm_claims.checked = true;
+  await runProductAnalyze();
   if (outputCount !== 2 || memoryCount !== 2 || !preparedDraftReady) {
-    throw new Error("text confirmation did not produce exactly one additional ephemeral draft");
+    throw new Error("text claim confirmation did not produce exactly one additional ephemeral draft");
   }
 
   controlledIntakeEnabled = false;
@@ -1793,8 +2080,14 @@ async function readControlledUrlText(url, {signal} = {}) {
   confirmed = true;
   fields.product_confirm_source.checked = true;
   await runProductAnalyze();
+  if (retrievalCount !== 1 || outputCount !== 2 || memoryCount !== 2 || preparedDraftReady) {
+    throw new Error("public URL plus pasted text did not stop at atomic-claim review");
+  }
+  claimsConfirmed = true;
+  fields.product_confirm_claims.checked = true;
+  await runProductAnalyze();
   if (retrievalCount !== 1 || outputCount !== 3 || memoryCount !== 3 || !preparedDraftReady) {
-    throw new Error("public URL plus pasted text did not produce one local draft");
+    throw new Error("public URL plus pasted text claims did not produce one local draft");
   }
 
   intakeState = {
@@ -1955,7 +2248,7 @@ def test_public_url_and_complete_text_stay_local_with_unverified_attribution():
     source_text = re.search(r'<textarea id="product_source_text"[^>]*>', html)
     assert source_text is not None
     assert "maxlength=" not in source_text.group(0)
-    assert 'sourceBoundDraftWasActive = currentCaseMetadata.normalizer_version === "operator-source-bound-v1"' in html
+    assert "sourceBoundDraftWasActive = isSourceBoundNormalizer(currentCaseMetadata.normalizer_version)" in html
     assert "claims = [];" in html
     assert "evidence = [];" in html
     assert 'data-op-i18n="msgDraftInvalidatedTitle"' in html
@@ -2562,8 +2855,11 @@ def test_every_case_edit_invalidates_sharing_and_share_counts_records():
     assert '$("result_input").addEventListener("input"' in html
     assert "claim_count: claimRecords.length" in html
     assert "evidence_count: evidenceRecords.length" in html
-    assert '...shareRecordLines("claim", "shareClaims", claimRecords, record.claim)' in html
-    assert '...shareRecordLines("evidence", "shareEvidence", evidenceRecords, record.evidence)' in html
+    assert 'shareRecordLines("claim", "shareClaims", claimRecords, record.claim)' in html
+    assert 'shareRecordLines("evidence", "shareEvidence", evidenceRecords, record.evidence)' in html
+    assert "sourceBoundV2ShareRecordLines" in html
+    assert "supports_claim_ids" in html
+    assert "claim_confirmation_sha256" in html
     assert 'pluralMessage("shareOmitted"' in html
 
 
@@ -2646,7 +2942,7 @@ def test_public_url_only_fallback_is_immediate_and_points_to_private_operator():
     assert "URL recorded locally only" in catalog
 
 
-def test_operator_install_assets_use_institutional_mark_and_cache_v027():
+def test_operator_install_assets_use_institutional_mark_and_cache_v028():
     icon = _read(ICON)
     sw = _read(SW)
 
@@ -2656,20 +2952,23 @@ def test_operator_install_assets_use_institutional_mark_and_cache_v027():
         icon,
         re.IGNORECASE,
     ) is None
-    assert "hub-optimus-operator-v0-27" in sw
+    assert "hub-optimus-operator-v0-28" in sw
     assert "./index.html" in sw
     assert "../assets/brand/hub-optimus-logo-lockup.png" in sw
     assert "./og.svg" in sw
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
-def test_operator_service_worker_refetches_v027_assets_and_deletes_v026():
+def test_operator_service_worker_refetches_v028_assets_and_deletes_older_versions():
     sw = _read(SW)
     smoke = r'''
 const vm = require("node:vm");
 const source = process.env.SW_SOURCE;
 const listeners = {};
-const cacheNames = new Set(["hub-optimus-operator-v0-26"]);
+const cacheNames = new Set([
+  "hub-optimus-operator-v0-26",
+  "hub-optimus-operator-v0-27"
+]);
 const installedRequests = [];
 const deleted = [];
 let skipWaitingCalls = 0;
@@ -2709,7 +3008,7 @@ vm.runInContext(source, context);
   let installWork;
   listeners.install({waitUntil(work) { installWork = work; }});
   await installWork;
-  if (!installedRequests.length) throw new Error("no v0-27 assets installed");
+  if (!installedRequests.length) throw new Error("no v0-28 assets installed");
   if (installedRequests.some((request) => request.cache !== "reload")) {
     throw new Error("an install request can reuse stale HTTP-cache bytes");
   }
@@ -2721,8 +3020,11 @@ vm.runInContext(source, context);
   if (!deleted.includes("hub-optimus-operator-v0-26")) {
     throw new Error("v0-26 cache was not deleted");
   }
-  if (!cacheNames.has("hub-optimus-operator-v0-27")) {
-    throw new Error("v0-27 cache was not retained");
+  if (!deleted.includes("hub-optimus-operator-v0-27")) {
+    throw new Error("v0-27 cache was not deleted");
+  }
+  if (!cacheNames.has("hub-optimus-operator-v0-28")) {
+    throw new Error("v0-28 cache was not retained");
   }
   if (claimCalls !== 1) throw new Error("updated worker did not claim clients");
 })().catch((error) => {
@@ -2893,6 +3195,7 @@ function pluralMessage(key, count) { return `${key}:${count}`; }
 function operationalSignalLabel(signal) { return signal; }
 function refreshFlow(rendered) { flowRendered = rendered; }
 function alert(message) { notices.push(message); }
+function hasValidSourceBoundV2Attestation() { return false; }
 function buildPayload() {
   return {
     case_id: "case-001",
@@ -2981,6 +3284,10 @@ const invalidCases = [
     ...validEnvelope.analysis_result,
     evidence: [{...validEnvelope.analysis_result.evidence[0], supports_claim_ids: ["claim-missing"]}]
   }},
+  {...validEnvelope, analysis_result: {
+    ...validEnvelope.analysis_result,
+    metadata: {normalizer_version: "operator-source-bound-v2"}
+  }},
   validEnvelope.analysis_result
 ];
 for (const invalid of invalidCases) {
@@ -3035,6 +3342,7 @@ if (renderResult() !== false || notices.at(-1) !== "advancedInvalidResultJson") 
     )
     assert parser is not None
     assert "error.message" not in parser.group(0)
+    assert "hasValidSourceBoundV2Attestation" in parser.group(0)
     assert 'alert(opText("advancedInvalidResultJson"));' in html
     assert 'advancedInvalidResultJson", { message:' not in html
 
