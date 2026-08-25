@@ -42,7 +42,7 @@ def test_wiki_declares_its_audited_boundary_and_live_state_authorities():
     assert "una URL sin texto no inicia ninguna petición" in operator
     assert "una URL con texto conserva la URL exacta" in operator
     assert "worker antiguo `v0-26`" in troubleshooting
-    assert "Operator público `v0-27`" in troubleshooting
+    assert "Operator público `v0-28`" in troubleshooting
 
 
 def test_wiki_publication_is_restricted_one_way_and_verified_for_drift():

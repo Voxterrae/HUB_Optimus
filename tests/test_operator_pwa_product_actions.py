@@ -13,6 +13,8 @@ INDEX = ROOT / "site" / "operator" / "index.html"
 ICON = ROOT / "site" / "operator" / "icon.svg"
 LOCKUP = ROOT / "site" / "assets" / "brand" / "hub-optimus-logo-lockup.png"
 SW = ROOT / "site" / "operator" / "sw.js"
+OPERATOR_AUTH = ROOT / "site" / "operator" / "auth.v1.js"
+OPERATOR_RUNTIME_CONFIG = ROOT / "site" / "operator" / "runtime-config.v1.js"
 OPERATOR_I18N = ROOT / "site" / "operator" / "i18n.v1.js"
 URL_INTAKE_SCHEMA = (
     ROOT / "ops" / "ec2" / "controlled_url_intake.v1.schema.json"
@@ -273,7 +275,16 @@ def _controlled_intake_contract_helpers(html: str) -> str:
         re.DOTALL,
     )
     assert unicode_helper is not None
-    return unicode_helper.group(0) + "\n" + match.group(1)
+    auth_stub = r'''
+globalThis.HUB_OPTIMUS_OPERATOR_AUTH ||= {
+  getAccessToken() { return "test-access-token"; },
+  getIntakeEndpoint() { return "https://api.huboptimus.dev/intake/url"; },
+  isEnabled() { return true; },
+  isAuthenticated() { return true; },
+  clearTokens() {}
+};
+'''
+    return auth_stub + unicode_helper.group(0) + "\n" + match.group(1)
 
 
 def _source_selection_dom_helpers(html: str) -> str:
@@ -552,12 +563,484 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert re.search(r'<script[^>]+src="https?://', html) is None
 
 
+def test_private_runtime_config_is_secret_free_and_disabled_by_default():
+    config = _read(OPERATOR_RUNTIME_CONFIG)
+    html = _read(INDEX)
+
+    assert 'enabled: false' in config
+    assert 'apiInvokeUrl: ""' in config
+    assert 'authorizationEndpoint: ""' in config
+    assert 'tokenEndpoint: ""' in config
+    assert 'logoutEndpoint: ""' in config
+    assert 'issuer: ""' in config
+    assert 'clientId: ""' in config
+    assert 'callbackUrl: "https://huboptimus.dev/operator/"' in config
+    assert 'logoutUrl: "https://huboptimus.dev/operator/"' in config
+    assert 'scope: "operator/intake"' in config
+    assert re.search(r"\bAKIA[0-9A-Z]{16}\b", config) is None
+    assert re.search(r"\bBearer\s+[A-Za-z0-9._~-]+", config) is None
+    assert '<script src="./runtime-config.v1.js"></script>' in html
+    assert '<script src="./auth.v1.js"></script>' in html
+    assert re.search(r'<script[^>]+src="https?://', html) is None
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_default_private_auth_initialization_never_fetches_or_persists():
+    runtime_config = _read(OPERATOR_RUNTIME_CONFIG)
+    auth = _read(OPERATOR_AUTH)
+    smoke = f"""
+const vm = require("node:vm");
+const {{webcrypto}} = require("node:crypto");
+const {{TextEncoder, TextDecoder}} = require("node:util");
+const stored = new Map();
+let fetches = 0;
+const context = {{
+  URL,
+  URLSearchParams,
+  TextEncoder,
+  TextDecoder,
+  Uint8Array,
+  crypto: webcrypto,
+  btoa: (value) => Buffer.from(value, "binary").toString("base64"),
+  atob: (value) => Buffer.from(value, "base64").toString("binary"),
+  sessionStorage: {{
+    getItem(key) {{ return stored.get(key) ?? null; }},
+    setItem(key, value) {{ stored.set(key, String(value)); }},
+    removeItem(key) {{ stored.delete(key); }}
+  }},
+  fetch: async () => {{ fetches += 1; throw new Error("disabled auth fetched"); }},
+  location: {{assign() {{ throw new Error("disabled auth navigated"); }}}}
+}};
+context.globalThis = context;
+vm.createContext(context);
+vm.runInContext({json.dumps(runtime_config)}, context);
+vm.runInContext({json.dumps(auth)}, context);
+(async () => {{
+  const state = await context.HUB_OPTIMUS_OPERATOR_AUTH.initialize();
+  if (state.state !== "disabled" || state.enabled || state.authenticated) throw new Error("default not disabled");
+  if (fetches !== 0) throw new Error("disabled auth fetched");
+  if (stored.size !== 0) throw new Error("disabled auth persisted state");
+  if (context.HUB_OPTIMUS_OPERATOR_AUTH.getAccessToken() !== null) throw new Error("disabled token exists");
+}})().catch((error) => {{ console.error(error); process.exitCode = 1; }});
+"""
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_private_auth_rejects_non_output_domains_before_any_fetch():
+    auth = _read(OPERATOR_AUTH)
+    smoke = f"""
+const vm = require("node:vm");
+const {{webcrypto}} = require("node:crypto");
+const {{TextEncoder, TextDecoder}} = require("node:util");
+const AUTH_SOURCE = {json.dumps(auth)};
+const BASE = {{
+  schemaVersion: "1.0",
+  enabled: true,
+  apiInvokeUrl: "https://abc123.execute-api.eu-west-1.amazonaws.com/",
+  authorizationEndpoint: "https://hub-optimus-private.auth.eu-west-1.amazoncognito.com/oauth2/authorize",
+  tokenEndpoint: "https://hub-optimus-private.auth.eu-west-1.amazoncognito.com/oauth2/token",
+  logoutEndpoint: "https://hub-optimus-private.auth.eu-west-1.amazoncognito.com/logout",
+  issuer: "https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_example",
+  clientId: "4exampleclientid9",
+  callbackUrl: "https://huboptimus.dev/operator/",
+  logoutUrl: "https://huboptimus.dev/operator/",
+  scope: "operator/intake"
+}};
+async function rejects(config) {{
+  let fetches = 0;
+  const context = {{
+    URL,
+    URLSearchParams,
+    TextEncoder,
+    TextDecoder,
+    Uint8Array,
+    crypto: webcrypto,
+    btoa: (value) => Buffer.from(value, "binary").toString("base64"),
+    atob: (value) => Buffer.from(value, "base64").toString("binary"),
+    sessionStorage: {{getItem() {{ return null; }}, setItem() {{}}, removeItem() {{}}}},
+    fetch: async () => {{ fetches += 1; throw new Error("must not fetch"); }},
+    location: {{assign() {{ throw new Error("must not navigate"); }}}},
+    HUB_OPTIMUS_OPERATOR_RUNTIME_CONFIG: Object.freeze(config)
+  }};
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(AUTH_SOURCE, context);
+  let code = null;
+  try {{ await context.HUB_OPTIMUS_OPERATOR_AUTH.initialize(); }}
+  catch (error) {{ code = error.code; }}
+  if (code !== "config_invalid") throw new Error(`unexpected config result: ${{code}}`);
+  if (fetches !== 0) throw new Error("invalid configuration fetched");
+}}
+(async () => {{
+  await rejects({{...BASE, apiInvokeUrl: "https://collector.example/"}});
+  await rejects({{
+    ...BASE,
+    authorizationEndpoint: "https://login.example/oauth2/authorize",
+    tokenEndpoint: "https://login.example/oauth2/token",
+    logoutEndpoint: "https://login.example/logout"
+  }});
+  await rejects({{...BASE, issuer: "https://issuer.example/eu-west-1_example"}});
+}})().catch((error) => {{ console.error(error); process.exitCode = 1; }});
+"""
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_mismatched_oauth_callback_consumes_pending_transaction_without_fetch():
+    auth = _read(OPERATOR_AUTH)
+    smoke = f"""
+const vm = require("node:vm");
+const {{webcrypto}} = require("node:crypto");
+const {{TextEncoder, TextDecoder}} = require("node:util");
+const key = "hub_optimus.operator.oauth.pending.v1";
+const config = {{
+  schemaVersion: "1.0",
+  enabled: true,
+  apiInvokeUrl: "https://abc123.execute-api.eu-west-1.amazonaws.com/",
+  authorizationEndpoint: "https://hub-optimus-private.auth.eu-west-1.amazoncognito.com/oauth2/authorize",
+  tokenEndpoint: "https://hub-optimus-private.auth.eu-west-1.amazoncognito.com/oauth2/token",
+  logoutEndpoint: "https://hub-optimus-private.auth.eu-west-1.amazoncognito.com/logout",
+  issuer: "https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_example",
+  clientId: "4exampleclientid9",
+  callbackUrl: "https://huboptimus.dev/operator/",
+  logoutUrl: "https://huboptimus.dev/operator/",
+  scope: "operator/intake"
+}};
+const values = new Map([[key, JSON.stringify({{
+  version: 1,
+  verifier: "a".repeat(43),
+  state: "b".repeat(43),
+  nonce: "c".repeat(43),
+  createdAt: Date.now(),
+  clientId: config.clientId,
+  callbackUrl: config.callbackUrl,
+  scope: config.scope
+}})]]);
+let fetches = 0;
+const context = {{
+  URL,
+  URLSearchParams,
+  TextEncoder,
+  TextDecoder,
+  Uint8Array,
+  crypto: webcrypto,
+  btoa: (value) => Buffer.from(value, "binary").toString("base64"),
+  atob: (value) => Buffer.from(value, "base64").toString("binary"),
+  sessionStorage: {{
+    getItem(name) {{ return values.get(name) ?? null; }},
+    setItem(name, value) {{ values.set(name, String(value)); }},
+    removeItem(name) {{ values.delete(name); }}
+  }},
+  fetch: async () => {{ fetches += 1; throw new Error("must not fetch"); }},
+  location: {{assign() {{}}}},
+  HUB_OPTIMUS_OPERATOR_RUNTIME_CONFIG: Object.freeze(config),
+  __HUB_OPTIMUS_OPERATOR_OAUTH_CALLBACK_V1__: Object.freeze({{
+    callbackUrl: config.callbackUrl,
+    code: Object.freeze(["one-time-code"]),
+    state: Object.freeze(["d".repeat(43)])
+  }})
+}};
+context.globalThis = context;
+vm.createContext(context);
+vm.runInContext({json.dumps(auth)}, context);
+(async () => {{
+  let code = null;
+  try {{ await context.HUB_OPTIMUS_OPERATOR_AUTH.initialize(); }}
+  catch (error) {{ code = error.code; }}
+  if (code !== "state_mismatch") throw new Error(`unexpected callback result: ${{code}}`);
+  if (values.size !== 0) throw new Error("mismatched callback retained transaction");
+  if (fetches !== 0) throw new Error("mismatched callback fetched");
+}})().catch((error) => {{ console.error(error); process.exitCode = 1; }});
+"""
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_oauth_callback_is_scrubbed_before_local_external_scripts_load():
+    html = _read(INDEX)
+    inline_scripts = re.findall(r"<script>(.*?)</script>", html, re.DOTALL)
+    assert inline_scripts
+    scrubber = inline_scripts[0]
+    scrubber_end = html.index("</script>", html.index("<script>"))
+    assert scrubber_end < html.index('<script src="./runtime-config.v1.js"></script>')
+
+    smoke = f"""
+const vm = require("node:vm");
+const context = {{
+  URL,
+  window: {{
+    location: {{
+      href: "https://huboptimus.dev/operator/?lang=es&code=secret-code&state=secret-state&error_description=private-detail"
+    }},
+    history: {{
+      replaceState(_state, _title, value) {{ context.replaced = value; }}
+    }}
+  }},
+  replaced: null
+}};
+context.globalThis = context;
+vm.createContext(context);
+vm.runInContext({json.dumps(scrubber)}, context);
+if (context.replaced !== "/operator/?lang=es") throw new Error(`callback not scrubbed: ${{context.replaced}}`);
+const snapshot = context.__HUB_OPTIMUS_OPERATOR_OAUTH_CALLBACK_V1__;
+if (snapshot.code[0] !== "secret-code" || snapshot.state[0] !== "secret-state") {{
+  throw new Error("callback snapshot missing");
+}}
+if (snapshot.callbackUrl !== "https://huboptimus.dev/operator/") throw new Error("callback URL missing");
+if (context.replaced.includes("secret")) throw new Error("secret callback material remains in history");
+"""
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_private_auth_uses_pkce_session_transaction_and_memory_only_tokens():
+    auth = _read(OPERATOR_AUTH)
+    smoke = f"""
+const vm = require("node:vm");
+const {{webcrypto}} = require("node:crypto");
+const {{TextEncoder, TextDecoder}} = require("node:util");
+const AUTH_SOURCE = {json.dumps(auth)};
+const CONFIG = {{
+  schemaVersion: "1.0",
+  enabled: true,
+  apiInvokeUrl: "https://abc123.execute-api.eu-west-1.amazonaws.com/",
+  authorizationEndpoint: "https://hub-optimus-private.auth.eu-west-1.amazoncognito.com/oauth2/authorize",
+  tokenEndpoint: "https://hub-optimus-private.auth.eu-west-1.amazoncognito.com/oauth2/token",
+  logoutEndpoint: "https://hub-optimus-private.auth.eu-west-1.amazoncognito.com/logout",
+  issuer: "https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_example",
+  clientId: "4exampleclientid9",
+  callbackUrl: "https://huboptimus.dev/operator/",
+  logoutUrl: "https://huboptimus.dev/operator/",
+  scope: "operator/intake"
+}};
+const values = new Map();
+const writes = [];
+const sessionStorage = {{
+  getItem(key) {{ return values.get(key) ?? null; }},
+  setItem(key, value) {{ values.set(key, String(value)); writes.push(String(value)); }},
+  removeItem(key) {{ values.delete(key); }}
+}};
+
+function contextFor(fetchImpl) {{
+  const context = {{
+    URL,
+    URLSearchParams,
+    TextEncoder,
+    TextDecoder,
+    Uint8Array,
+    Date,
+    Number,
+    String,
+    Error,
+    Promise,
+    crypto: webcrypto,
+    btoa: (value) => Buffer.from(value, "binary").toString("base64"),
+    atob: (value) => Buffer.from(value, "base64").toString("binary"),
+    sessionStorage,
+    fetch: fetchImpl,
+    assigned: null,
+    location: {{ assign(value) {{ context.assigned = value; }} }}
+  }};
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(`globalThis.HUB_OPTIMUS_OPERATOR_RUNTIME_CONFIG = Object.freeze(${{JSON.stringify(CONFIG)}});`, context);
+  return context;
+}}
+
+function jwt(payload) {{
+  const part = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
+  return `${{part({{alg: "RS256", typ: "JWT"}})}}.${{part(payload)}}.signature`;
+}}
+
+(async () => {{
+  const loginContext = contextFor(async () => {{ throw new Error("login must not fetch"); }});
+  vm.runInContext(AUTH_SOURCE, loginContext);
+  await loginContext.HUB_OPTIMUS_OPERATOR_AUTH.login();
+  const authorize = new URL(loginContext.assigned);
+  if (authorize.searchParams.get("code_challenge_method") !== "S256") throw new Error("S256 missing");
+  if (authorize.searchParams.get("scope") !== "openid email operator/intake") throw new Error("scope drift");
+  if (authorize.searchParams.get("redirect_uri") !== "https://huboptimus.dev/operator/") throw new Error("callback drift");
+  for (const field of ["state", "nonce", "code_challenge"]) {{
+    if (!/^[A-Za-z0-9_-]{{43}}$/.test(authorize.searchParams.get(field) || "")) throw new Error(`${{field}} invalid`);
+  }}
+  const transaction = JSON.parse(Array.from(values.values())[0]);
+  if (!/^[A-Za-z0-9_-]{{43}}$/.test(transaction.verifier)) throw new Error("verifier invalid");
+  if (writes.some((value) => value.includes("access_token") || value.includes("id_token"))) {{
+    throw new Error("token persisted during login");
+  }}
+
+  const now = Math.floor(Date.now() / 1000);
+  const idToken = jwt({{
+    token_use: "id", aud: CONFIG.clientId, iss: CONFIG.issuer,
+    sub: "private-user", exp: now + 600, nonce: transaction.nonce
+  }});
+  const accessToken = jwt({{
+    token_use: "access", client_id: CONFIG.clientId, iss: CONFIG.issuer,
+    sub: "private-user", exp: now + 600, scope: "openid email operator/intake"
+  }});
+  const requests = [];
+  const callbackContext = contextFor(async (url, options) => {{
+    requests.push({{url, options}});
+    return {{
+      ok: true,
+      status: 200,
+      async json() {{
+        return {{
+          access_token: accessToken,
+          id_token: idToken,
+          refresh_token: "ignored-refresh-token",
+          token_type: "Bearer",
+          expires_in: 600
+        }};
+      }}
+    }};
+  }});
+  vm.runInContext(
+    `globalThis.__HUB_OPTIMUS_OPERATOR_OAUTH_CALLBACK_V1__ = Object.freeze({{
+      callbackUrl: "https://huboptimus.dev/operator/",
+      code: Object.freeze(["one-time-code"]),
+      state: Object.freeze([${{JSON.stringify(transaction.state)}}])
+    }});`,
+    callbackContext
+  );
+  vm.runInContext(AUTH_SOURCE, callbackContext);
+  await callbackContext.HUB_OPTIMUS_OPERATOR_AUTH.initialize();
+  if (!callbackContext.HUB_OPTIMUS_OPERATOR_AUTH.isAuthenticated()) throw new Error("not authenticated");
+  if (callbackContext.HUB_OPTIMUS_OPERATOR_AUTH.getAccessToken() !== accessToken) throw new Error("access token mismatch");
+  if (callbackContext.HUB_OPTIMUS_OPERATOR_AUTH.getIntakeEndpoint() !== "https://abc123.execute-api.eu-west-1.amazonaws.com/intake/url") {{
+    throw new Error("raw API output not mapped to intake route");
+  }}
+  if (requests.length !== 1 || requests[0].url !== CONFIG.tokenEndpoint) throw new Error("unexpected fetch target");
+  const form = new URLSearchParams(requests[0].options.body);
+  if (form.get("code_verifier") !== transaction.verifier || form.get("code") !== "one-time-code") {{
+    throw new Error("authorization code exchange is not bound to verifier");
+  }}
+  if (requests[0].options.body.includes("client_secret")) throw new Error("public client sent a secret");
+  if (values.size !== 0) throw new Error("transaction not consumed");
+  if (writes.some((value) => value.includes(accessToken) || value.includes(idToken) || value.includes("ignored-refresh-token"))) {{
+    throw new Error("token persisted");
+  }}
+
+  callbackContext.HUB_OPTIMUS_OPERATOR_AUTH.logout();
+  const logout = new URL(callbackContext.assigned);
+  if (logout.origin + logout.pathname !== CONFIG.logoutEndpoint) throw new Error("logout endpoint drift");
+  if (logout.searchParams.get("logout_uri") !== "https://huboptimus.dev/operator/") throw new Error("logout URI drift");
+  if (callbackContext.HUB_OPTIMUS_OPERATOR_AUTH.getAccessToken() !== null) throw new Error("logout kept token");
+}})().catch((error) => {{ console.error(error); process.exitCode = 1; }});
+"""
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_controlled_intake_sends_bearer_only_to_configured_api_not_source_url():
+    contract = _controlled_intake_contract_helpers(_read(INDEX))
+    smoke = f"""
+const vm = require("node:vm");
+const SOURCE = {json.dumps(contract)};
+const requests = [];
+const RESPONSE_JSON = JSON.stringify({{
+  status: "ok",
+  intake_type: "controlled_url",
+  url: "https://source.example/article",
+  final_url: "https://source.example/article",
+  source_domain: "source.example",
+  retrieved_at_utc: "2026-08-25T00:00:00.000Z",
+  title: "Source title",
+  text: "<img src=x onerror=alert(1)> recovered as text",
+  content_type: "text/plain; charset=utf-8",
+  bytes_read: 51,
+  truncated: false,
+  redirects: [],
+  verification_status: "unreviewed",
+  learning_status: "candidate-source-not-verified",
+  extraction_notes: ["Controlled fetch."]
+}});
+const context = {{
+  URL,
+  AbortController,
+  setTimeout,
+  clearTimeout,
+  console,
+  requests,
+  RESPONSE_JSON,
+  HUB_OPTIMUS_OPERATOR_AUTH: {{
+    getAccessToken() {{ return "access-token-memory-only"; }},
+    getIntakeEndpoint() {{ return "https://abc123.execute-api.eu-west-1.amazonaws.com/intake/url"; }},
+    isEnabled() {{ return true; }},
+    isAuthenticated() {{ return true; }},
+    clearTokens() {{ throw new Error("unexpected token clear"); }}
+  }}
+}};
+context.globalThis = context;
+vm.createContext(context);
+vm.runInContext(`
+  globalThis.fetch = async (url, options) => {{
+    requests.push({{url, options}});
+    return {{ok: true, status: 200, async json() {{ return JSON.parse(RESPONSE_JSON); }}}};
+  }};
+`, context);
+vm.runInContext(SOURCE, context);
+(async () => {{
+  const sourceUrl = "https://source.example/article";
+  const result = await context.readControlledUrlText(sourceUrl);
+  if (!result.text.includes("recovered as text")) throw new Error("validated text missing");
+  if (requests.length !== 1) throw new Error("wrong request count");
+  if (requests[0].url !== "https://abc123.execute-api.eu-west-1.amazonaws.com/intake/url") {{
+    throw new Error(`wrong fetch target: ${{requests[0].url}}`);
+  }}
+  if (requests[0].url === sourceUrl) throw new Error("browser fetched source URL directly");
+  if (requests[0].options.headers.Authorization !== "Bearer access-token-memory-only") {{
+    throw new Error("Bearer access token missing");
+  }}
+  if (requests[0].options.credentials !== "omit" || requests[0].options.cache !== "no-store" || requests[0].options.redirect !== "error") {{
+    throw new Error("controlled intake request transport is not fail-closed");
+  }}
+  const body = JSON.parse(requests[0].options.body);
+  if (Object.keys(body).join(",") !== "url" || body.url !== sourceUrl) throw new Error("request body drift");
+}})().catch((error) => {{ console.error(error); process.exitCode = 1; }});
+"""
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+def test_retrieved_source_content_uses_text_content_not_inner_html():
+    html = _read(INDEX)
+
+    assert '$("product_source_preview_text").textContent = canonical.text;' in html
+    assert re.search(r"\.innerHTML\s*=\s*(?:intake|validatedPayload|canonical)\.text", html) is None
+    assert '"Authorization": `Bearer ${accessToken}`' in html
+    assert "fetch(sourceUrl" not in html
+    assert "fetch(url" not in html
+
+
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
 def test_full_public_operator_submit_never_fetches_a_supplied_url():
     html = _read(INDEX)
     scripts = re.findall(r"<script>(.*?)</script>", html, re.DOTALL)
-    assert len(scripts) == 1
-    smoke = f"const SOURCE = {json.dumps(scripts[0])};\n{FULL_PAGE_HARNESS}"
+    operator_scripts = [
+        script for script in scripts
+        if "OPERATOR_CONTROLLED_INTAKE_CONTRACT_START" in script
+    ]
+    assert len(operator_scripts) == 1
+    smoke = f"const SOURCE = {json.dumps(operator_scripts[0])};\n{FULL_PAGE_HARNESS}"
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
@@ -885,7 +1368,7 @@ def test_operator_progress_is_immediate_and_only_network_intake_has_a_deadline()
     assert "const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;" in html
     assert 'new ControlledIntakeError("url_fetch_timeout", 504)' in html
     assert "return await Promise.race([request, deadline]);" in html
-    assert "hub-optimus-operator-v0-27" in sw
+    assert "hub-optimus-operator-v0-28" in sw
 
 
 def test_operator_draft_is_source_bound_and_conservative():
@@ -2640,13 +3123,13 @@ def test_public_url_only_fallback_is_immediate_and_points_to_private_operator():
         'const PRIVATE_OPERATOR_LOGIN_URL = "https://api.huboptimus.dev/oauth2/start?'
         'rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F";' in html
     )
-    assert '${PRIVATE_OPERATOR_LOGIN_URL}' in html
+    assert '${privateOperatorLoginHref()}' in html
     assert "readControlledUrlText" in html
     assert "renderUrlIntakeFallback" in html
     assert "URL recorded locally only" in catalog
 
 
-def test_operator_install_assets_use_institutional_mark_and_cache_v027():
+def test_operator_install_assets_use_institutional_mark_and_cache_v028():
     icon = _read(ICON)
     sw = _read(SW)
 
@@ -2656,24 +3139,29 @@ def test_operator_install_assets_use_institutional_mark_and_cache_v027():
         icon,
         re.IGNORECASE,
     ) is None
-    assert "hub-optimus-operator-v0-27" in sw
+    assert "hub-optimus-operator-v0-28" in sw
     assert "./index.html" in sw
     assert "../assets/brand/hub-optimus-logo-lockup.png" in sw
     assert "./og.svg" in sw
+    assert '"./auth.v1.js"' in sw
+    static_assets = sw.split("];", 1)[0]
+    assert '"./runtime-config.v1.js"' not in static_assets
+    assert 'url.pathname.endsWith("/operator/runtime-config.v1.js")' in sw
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
-def test_operator_service_worker_refetches_v027_assets_and_deletes_v026():
+def test_operator_service_worker_refetches_v028_assets_and_deletes_v027():
     sw = _read(SW)
     smoke = r'''
 const vm = require("node:vm");
 const source = process.env.SW_SOURCE;
 const listeners = {};
-const cacheNames = new Set(["hub-optimus-operator-v0-26"]);
+const cacheNames = new Set(["hub-optimus-operator-v0-27"]);
 const installedRequests = [];
 const deleted = [];
 let skipWaitingCalls = 0;
 let claimCalls = 0;
+let versionReply = null;
 
 function cacheFor(name) {
   return {
@@ -2709,20 +3197,28 @@ vm.runInContext(source, context);
   let installWork;
   listeners.install({waitUntil(work) { installWork = work; }});
   await installWork;
-  if (!installedRequests.length) throw new Error("no v0-27 assets installed");
+  if (!installedRequests.length) throw new Error("no v0-28 assets installed");
   if (installedRequests.some((request) => request.cache !== "reload")) {
     throw new Error("an install request can reuse stale HTTP-cache bytes");
   }
   if (skipWaitingCalls !== 1) throw new Error("new worker did not skip waiting");
 
+  listeners.message({
+    data: {type: "HUB_OPTIMUS_OPERATOR_SW_VERSION_V1"},
+    ports: [{postMessage(value) { versionReply = value; }}]
+  });
+  if (versionReply?.version !== "hub-optimus-operator-v0-28") {
+    throw new Error("worker did not attest the active v0-28 protocol");
+  }
+
   let activateWork;
   listeners.activate({waitUntil(work) { activateWork = work; }});
   await activateWork;
-  if (!deleted.includes("hub-optimus-operator-v0-26")) {
-    throw new Error("v0-26 cache was not deleted");
+  if (!deleted.includes("hub-optimus-operator-v0-27")) {
+    throw new Error("v0-27 cache was not deleted");
   }
-  if (!cacheNames.has("hub-optimus-operator-v0-27")) {
-    throw new Error("v0-27 cache was not retained");
+  if (!cacheNames.has("hub-optimus-operator-v0-28")) {
+    throw new Error("v0-28 cache was not retained");
   }
   if (claimCalls !== 1) throw new Error("updated worker did not claim clients");
 })().catch((error) => {
@@ -2741,6 +3237,143 @@ vm.runInContext(source, context);
     assert completed.returncode == 0, completed.stderr
     assert "STATIC_ASSET_URLS.has(url.href)" in sw
     assert "event.respondWith(cacheFirst(event.request))" in sw
+    html = _read(INDEX)
+    login_flow = html.split("async function beginPrivateOperatorLogin", 1)[1].split(
+        "function endPrivateOperatorSession", 1
+    )[0]
+    assert login_flow.index("await privateOperatorServiceWorkerReady()") < login_flow.index(
+        "await OPERATOR_PRIVATE_AUTH.login()"
+    )
+    assert 'const REQUIRED_OPERATOR_SW_VERSION = "hub-optimus-operator-v0-28"' in html
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
+def test_operator_service_worker_never_caches_oauth_callback_query():
+    sw = _read(SW)
+    smoke = f"""
+const vm = require("node:vm");
+const handlers = {{}};
+const writes = [];
+const response = {{ok: true, clone() {{ return this; }}}};
+const context = {{
+  URL,
+  Request,
+  fetch: async () => response,
+  caches: {{
+    async open() {{
+      return {{
+        async addAll() {{}},
+        async match() {{ return null; }},
+        async put(key) {{ writes.push(typeof key === "string" ? key : key.url); }}
+      }};
+    }},
+    async match() {{ return null; }},
+    async keys() {{ return []; }},
+    async delete() {{ return true; }}
+  }},
+  self: {{
+    location: {{href: "https://huboptimus.dev/operator/sw.js", origin: "https://huboptimus.dev"}},
+    addEventListener(name, handler) {{ handlers[name] = handler; }},
+    skipWaiting() {{}},
+    clients: {{claim() {{ return Promise.resolve(); }}}}
+  }}
+}};
+vm.createContext(context);
+vm.runInContext({json.dumps(sw)}, context);
+(async () => {{
+  let work;
+  handlers.fetch({{
+    request: {{
+      method: "GET",
+      mode: "navigate",
+      url: "https://huboptimus.dev/operator/?code=secret-code&state=secret-state"
+    }},
+    respondWith(value) {{ work = value; }}
+  }});
+  await work;
+  if (writes.some((key) => String(key).includes("secret-code") || String(key).includes("secret-state"))) {{
+    throw new Error(`OAuth callback cached: ${{writes.join(",")}}`);
+  }}
+  if (writes.length !== 0) {{
+    throw new Error(`OAuth callback response was cached: ${{writes.join(",")}}`);
+  }}
+}})().catch((error) => {{ console.error(error); process.exitCode = 1; }});
+"""
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
+def test_operator_service_worker_never_caches_or_falls_back_to_stale_runtime_config():
+    sw = _read(SW)
+    smoke = f"""
+const vm = require("node:vm");
+const handlers = {{}};
+const writes = [];
+const fetches = [];
+let shouldFail = false;
+const response = {{ok: true, clone() {{ return this; }}}};
+const context = {{
+  URL,
+  Request,
+  fetch: async (_request, options) => {{
+    fetches.push(options || {{}});
+    if (shouldFail) throw new Error("offline");
+    return response;
+  }},
+  caches: {{
+    async open() {{
+      return {{
+        async addAll() {{}},
+        async match() {{ return {{source: "stale-enabled-config"}}; }},
+        async put(key) {{ writes.push(typeof key === "string" ? key : key.url); }}
+      }};
+    }},
+    async match() {{ return {{source: "stale-enabled-config"}}; }},
+    async keys() {{ return []; }},
+    async delete() {{ return true; }}
+  }},
+  self: {{
+    location: {{href: "https://huboptimus.dev/operator/sw.js", origin: "https://huboptimus.dev"}},
+    addEventListener(name, handler) {{ handlers[name] = handler; }},
+    skipWaiting() {{}},
+    clients: {{claim() {{ return Promise.resolve(); }}}}
+  }}
+}};
+vm.createContext(context);
+vm.runInContext({json.dumps(sw)}, context);
+function requestRuntimeConfig() {{
+  let work;
+  handlers.fetch({{
+    request: {{
+      method: "GET",
+      mode: "no-cors",
+      url: "https://huboptimus.dev/operator/runtime-config.v1.js"
+    }},
+    respondWith(value) {{ work = value; }}
+  }});
+  return work;
+}}
+(async () => {{
+  const online = await requestRuntimeConfig();
+  if (online !== response) throw new Error("runtime config did not use network response");
+  if (fetches.length !== 1 || fetches[0].cache !== "no-store") {{
+    throw new Error("runtime config was not fetched no-store");
+  }}
+  if (writes.length) throw new Error("runtime config was cached");
+  shouldFail = true;
+  let rejected = false;
+  try {{ await requestRuntimeConfig(); }} catch {{ rejected = true; }}
+  if (!rejected) throw new Error("offline runtime config used a stale cache fallback");
+  if (writes.length) throw new Error("runtime config cache write occurred after failure");
+}})().catch((error) => {{ console.error(error); process.exitCode = 1; }});
+"""
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
