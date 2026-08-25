@@ -37,6 +37,7 @@ const DEFAULT_MAX_REDIRECTS = 3;
 const DEFAULT_MAX_REQUEST_BYTES = 4_096;
 const DEFAULT_SUBJECT_REQUESTS_PER_DAY = 3;
 const MAX_HTML_DEPTH = 256;
+const MAX_DNS_ADDRESSES = 16;
 const MAX_PRIMARY_REGIONS = 64;
 const MAX_URL_CHARACTERS = 2_048;
 const USER_AGENT = 'HUB_Optimus-Operator-URL-Intake/0.1 (+https://huboptimus.dev/operator/)';
@@ -148,12 +149,16 @@ class CandidateConnectionError extends Error {
   }
 }
 
-function parsePositiveInteger(value: string | undefined, fallback: number): number {
+export function parseBoundedPositiveInteger(
+  value: string | undefined,
+  fallback: number,
+  maximum: number,
+): number {
   if (value === undefined || !/^\d+$/.test(value)) {
     return fallback;
   }
   const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
+  return Number.isSafeInteger(parsed) && parsed > 0 && parsed <= maximum ? parsed : fallback;
 }
 
 export function dailyQuotaWindow(nowMs = Date.now()): DailyQuotaWindow {
@@ -217,6 +222,30 @@ function ipv6Bytes(address: string): number[] | undefined {
   return bytes;
 }
 
+function hasIpv6Prefix(
+  addressBytes: readonly number[],
+  prefixAddress: string,
+  prefixLength: number,
+): boolean {
+  const prefixBytes = ipv6Bytes(prefixAddress);
+  if (prefixBytes === undefined || prefixLength < 0 || prefixLength > 128) {
+    return false;
+  }
+
+  const completeBytes = Math.floor(prefixLength / 8);
+  for (let index = 0; index < completeBytes; index += 1) {
+    if (addressBytes[index] !== prefixBytes[index]) {
+      return false;
+    }
+  }
+  const remainingBits = prefixLength % 8;
+  if (remainingBits === 0) {
+    return true;
+  }
+  const mask = (0xff << (8 - remainingBits)) & 0xff;
+  return (addressBytes[completeBytes] & mask) === (prefixBytes[completeBytes] & mask);
+}
+
 function isPublicIpv4(address: string): boolean {
   const octets = ipv4Octets(address);
   if (octets === undefined) {
@@ -247,25 +276,36 @@ function isPublicIpv6(address: string): boolean {
     return false;
   }
   const globallyRoutablePrefix = (bytes[0] & 0xe0) === 0x20;
-  const documentationPrefix = bytes[0] === 0x20
-    && bytes[1] === 0x01
-    && bytes[2] === 0x0d
-    && bytes[3] === 0xb8;
-  const teredoPrefix = bytes[0] === 0x20
-    && bytes[1] === 0x01
-    && bytes[2] === 0x00
-    && bytes[3] === 0x00;
   const isatapInterface = (bytes[8] === 0x00 || bytes[8] === 0x02)
     && bytes[9] === 0x00
     && bytes[10] === 0x5e
     && bytes[11] === 0xfe;
-  if (!globallyRoutablePrefix || documentationPrefix || teredoPrefix || isatapInterface) {
+  if (!globallyRoutablePrefix || isatapInterface) {
     return false;
   }
-  if (bytes[0] === 0x20 && bytes[1] === 0x02) {
-    const embedded = `${bytes[2]}.${bytes[3]}.${bytes[4]}.${bytes[5]}`;
-    return isPublicIpv4(embedded);
+
+  // IANA marks 2001::/23 as non-global unless a more-specific allocation
+  // explicitly says otherwise. Fail closed for that block and allow only the
+  // currently global exceptions that are useful as ordinary destinations.
+  if (hasIpv6Prefix(bytes, '2001::', 23)) {
+    return hasIpv6Prefix(bytes, '2001:1::1', 128)
+      || hasIpv6Prefix(bytes, '2001:1::2', 128)
+      || hasIpv6Prefix(bytes, '2001:1::3', 128)
+      || hasIpv6Prefix(bytes, '2001:3::', 32)
+      || hasIpv6Prefix(bytes, '2001:4:112::', 48)
+      || hasIpv6Prefix(bytes, '2001:20::', 28)
+      || hasIpv6Prefix(bytes, '2001:30::', 28);
   }
+
+  // IANA special-purpose ranges that are not globally reachable (or whose
+  // global reachability is explicitly indeterminate) are not valid fetch
+  // targets. This includes benchmarking, documentation, and transition space.
+  if (hasIpv6Prefix(bytes, '2001:db8::', 32)
+    || hasIpv6Prefix(bytes, '2002::', 16)
+    || hasIpv6Prefix(bytes, '3fff::', 20)) {
+    return false;
+  }
+
   return true;
 }
 
@@ -359,6 +399,9 @@ export async function resolvePublicAddresses(
   }
 
   const unique = new Map(addresses.map((entry) => [`${entry.family}:${entry.address}`, entry]));
+  if (unique.size > MAX_DNS_ADDRESSES) {
+    throw intakeError('unresolvable_url_host', 400, 'URL host returned too many addresses.');
+  }
   return [...unique.values()].sort((left, right) => left.family - right.family
     || left.address.localeCompare(right.address));
 }
@@ -441,7 +484,15 @@ export function resolveRedirectTarget(from: URL, location: string, redirectCount
   } catch {
     throw intakeError('invalid_url', 400, 'Redirect URL could not be parsed.');
   }
-  return validateTargetUrl(next.href);
+  const validated = validateTargetUrl(next.href);
+  if (from.protocol === 'https:' && validated.protocol !== 'https:') {
+    throw intakeError(
+      'url_fetch_failed',
+      502,
+      'HTTPS sources may not redirect to an unencrypted URL.',
+    );
+  }
+  return validated;
 }
 
 function remainingMilliseconds(deadline: number): number {
@@ -471,7 +522,7 @@ function withDeadline<T>(promise: Promise<T>, deadline: number): Promise<T> {
   });
 }
 
-function sameIpAddress(left: string | undefined, right: string): boolean {
+export function sameIpAddress(left: string | undefined, right: string): boolean {
   if (left === undefined) {
     return false;
   }
@@ -499,7 +550,7 @@ function collectResponse(response: IncomingMessage, maxContentBytes: number): Pr
     try {
       metadata = validateResponseMetadata(response.statusCode ?? 0, rawHeaderValues(response));
     } catch (error) {
-      response.resume();
+      response.destroy();
       reject(error);
       return;
     }
@@ -554,14 +605,11 @@ function collectResponse(response: IncomingMessage, maxContentBytes: number): Pr
   });
 }
 
-function requestPinnedAddress(
-  target: URL,
-  address: LookupAddress,
-  timeoutMs: number,
-  maxContentBytes: number,
-): Promise<HopResult> {
-  const transport = target.protocol === 'https:' ? https : http;
-  const options: https.RequestOptions = {
+export function pinnedRequestOptions(target: URL, address: LookupAddress): https.RequestOptions {
+  return {
+    // Disable connection pooling so every hop creates a fresh socket and the
+    // peer-address check always runs, including after redirects.
+    agent: false,
     family: address.family,
     headers: {
       accept: 'text/html, text/plain, application/xhtml+xml;q=0.9',
@@ -576,6 +624,16 @@ function requestPinnedAddress(
     protocol: target.protocol,
     servername: isIP(normalizedHostname(target)) === 0 ? normalizedHostname(target) : undefined,
   };
+}
+
+function requestPinnedAddress(
+  target: URL,
+  address: LookupAddress,
+  timeoutMs: number,
+  maxContentBytes: number,
+): Promise<HopResult> {
+  const transport = target.protocol === 'https:' ? https : http;
+  const options = pinnedRequestOptions(target, address);
 
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -592,7 +650,7 @@ function requestPinnedAddress(
       const headers = rawHeaderValues(response);
       if (REDIRECT_STATUSES.has(status)) {
         const locations = headerValues(headers, 'location');
-        response.resume();
+        response.destroy();
         if (locations.length !== 1 || locations[0].trim() === '') {
           finishReject(intakeError(
             'redirect_without_location',
@@ -848,13 +906,26 @@ function extractDocument(
 }
 
 export async function fetchPublicText(target: URL, submittedUrl = target.href): Promise<ControlledUrlSuccess> {
-  const timeoutMs = parsePositiveInteger(process.env.FETCH_TIMEOUT_MS, DEFAULT_FETCH_TIMEOUT_MS);
-  const maxContentBytes = parsePositiveInteger(process.env.MAX_CONTENT_BYTES, DEFAULT_MAX_CONTENT_BYTES);
-  const maxTextCharacters = parsePositiveInteger(
+  const timeoutMs = parseBoundedPositiveInteger(
+    process.env.FETCH_TIMEOUT_MS,
+    DEFAULT_FETCH_TIMEOUT_MS,
+    10_000,
+  );
+  const maxContentBytes = parseBoundedPositiveInteger(
+    process.env.MAX_CONTENT_BYTES,
+    DEFAULT_MAX_CONTENT_BYTES,
+    DEFAULT_MAX_CONTENT_BYTES,
+  );
+  const maxTextCharacters = parseBoundedPositiveInteger(
     process.env.MAX_EXTRACTED_TEXT_CHARS,
     DEFAULT_MAX_EXTRACTED_TEXT_CHARS,
+    DEFAULT_MAX_EXTRACTED_TEXT_CHARS,
   );
-  const maxRedirects = parsePositiveInteger(process.env.MAX_REDIRECTS, DEFAULT_MAX_REDIRECTS);
+  const maxRedirects = parseBoundedPositiveInteger(
+    process.env.MAX_REDIRECTS,
+    DEFAULT_MAX_REDIRECTS,
+    DEFAULT_MAX_REDIRECTS,
+  );
   const deadline = Date.now() + timeoutMs;
   const redirects: RedirectRecord[] = [];
   let current = target;
@@ -908,8 +979,9 @@ class DynamoSubjectQuota implements SubjectQuota {
     if (tableName === undefined || tableName === '') {
       throw new Error('quota_table_missing');
     }
-    const limit = parsePositiveInteger(
+    const limit = parseBoundedPositiveInteger(
       process.env.PER_SUBJECT_REQUESTS_PER_DAY,
+      DEFAULT_SUBJECT_REQUESTS_PER_DAY,
       DEFAULT_SUBJECT_REQUESTS_PER_DAY,
     );
     const window = dailyQuotaWindow();
@@ -958,8 +1030,33 @@ function jsonResponse(statusCode: number, payload: unknown): HttpApiResponse {
 }
 
 function authenticatedSubject(event: HttpApiEvent): string | undefined {
-  const subject = event.requestContext?.authorizer?.jwt?.claims?.sub;
-  return typeof subject === 'string' && subject !== '' ? subject : undefined;
+  const claims = event.requestContext?.authorizer?.jwt?.claims;
+  const expectedClientId = process.env.EXPECTED_CLIENT_ID;
+  const requiredScope = process.env.REQUIRED_SCOPE;
+  if (claims === undefined
+    || expectedClientId === undefined
+    || expectedClientId === ''
+    || /\s/.test(expectedClientId)
+    || requiredScope === undefined
+    || requiredScope === ''
+    || /\s/.test(requiredScope)) {
+    return undefined;
+  }
+
+  const subject = claims.sub;
+  const tokenUse = claims.token_use;
+  const clientId = claims.client_id;
+  const scope = claims.scope;
+  const grantedScopes = typeof scope === 'string'
+    ? scope.split(/\s+/).filter((entry) => entry !== '')
+    : [];
+  return typeof subject === 'string'
+    && subject !== ''
+    && tokenUse === 'access'
+    && clientId === expectedClientId
+    && grantedScopes.includes(requiredScope)
+    ? subject
+    : undefined;
 }
 
 export function createHandler(
@@ -969,7 +1066,11 @@ export function createHandler(
   options: HandlerOptions = {},
 ): (event: HttpApiEvent) => Promise<HttpApiResponse> {
   const maxRequestBytes = options.maxRequestBytes
-    ?? parsePositiveInteger(process.env.MAX_REQUEST_BYTES, DEFAULT_MAX_REQUEST_BYTES);
+    ?? parseBoundedPositiveInteger(
+      process.env.MAX_REQUEST_BYTES,
+      DEFAULT_MAX_REQUEST_BYTES,
+      DEFAULT_MAX_REQUEST_BYTES,
+    );
 
   return async (event) => {
     const requestId = event.requestContext?.requestId ?? 'unknown';
@@ -1031,7 +1132,6 @@ export function createHandler(
         requestId,
         urlFingerprint,
         bytesRead: result.bytes_read,
-        contentType: result.content_type,
         redirects: result.redirects.length,
         truncated: result.truncated,
       });
