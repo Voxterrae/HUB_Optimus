@@ -1,6 +1,6 @@
 # Public portfolio translation status
 
-Operator interface catalog version: `1.3.2`.
+Operator interface catalog version: `1.3.3`.
 
 This directory records the translation boundary for the static public portfolio and
 the complete Operator interface. It does not translate the repository or the
@@ -54,6 +54,13 @@ Operator does not execute the Semantic Engine, establish truth, or verify proven
 neither does localization change those limits. A localized interface therefore does
 not promote the browser prototype into a released analysis service.
 Triage does not verify stated provenance.
+
+Before a source-bound draft can be prepared, the Operator now proposes atomic claim
+drafts for every human-selected excerpt. The operator may edit those proposals and
+must explicitly confirm the complete set. Exact excerpts remain unchanged evidence;
+claim confirmation records attribution and decomposition only, never truth or
+independent corroboration. Claim identifiers and confirmation hashes stay stable when
+the interface language changes.
 
 ## Document-link language resolution
 
