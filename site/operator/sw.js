@@ -1,8 +1,19 @@
-const CACHE_NAME = "hub-optimus-operator-v0-27";
+const CACHE_NAME = "hub-optimus-operator-v0-28";
+const VERSION_REQUEST = "HUB_OPTIMUS_OPERATOR_SW_VERSION_V1";
 const OFFLINE_FALLBACK = "./index.html";
+const OAUTH_CALLBACK_FIELDS = [
+  "code",
+  "state",
+  "error",
+  "error_description",
+  "error_uri",
+  "iss",
+  "session_state"
+];
 const STATIC_ASSETS = [
   "./",
   "./index.html",
+  "./auth.v1.js",
   "./i18n.v1.js",
   "./learning-candidate.v1.js",
   "./learning-store.v1.js",
@@ -38,10 +49,16 @@ async function networkFirst(request) {
     const response = await fetch(request, { cache: "no-store" });
 
     if (response && response.ok) {
-      await cache.put(request, response.clone());
-
       if (request.mode === "navigate") {
-        await cache.put(OFFLINE_FALLBACK, response.clone());
+        const navigationUrl = new URL(request.url);
+        const isOAuthCallback = OAUTH_CALLBACK_FIELDS.some((field) =>
+          navigationUrl.searchParams.has(field)
+        );
+        if (!isOAuthCallback) {
+          await cache.put(OFFLINE_FALLBACK, response.clone());
+        }
+      } else {
+        await cache.put(request, response.clone());
       }
     }
 
@@ -85,6 +102,11 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== VERSION_REQUEST) return;
+  event.ports?.[0]?.postMessage({ version: CACHE_NAME });
+});
+
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
@@ -93,6 +115,13 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (url.pathname.endsWith("/operator/sw.js")) return;
+
+  if (url.pathname.endsWith("/operator/runtime-config.v1.js")) {
+    // Runtime enablement is a kill switch. Never let an older enabled config
+    // survive in Cache Storage; a network failure therefore disables auth.
+    event.respondWith(fetch(event.request, { cache: "no-store" }));
+    return;
+  }
 
   if (
     event.request.mode === "navigate" ||
