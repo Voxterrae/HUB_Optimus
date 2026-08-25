@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import { existsSync } from 'node:fs';
 import {
   Duration,
   RemovalPolicy,
@@ -26,16 +27,32 @@ import {
 import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { Construct } from 'constructs';
-import { Config } from './config';
+import { Config, resolveAwsRegion } from './config';
+
+function readBooleanContext(scope: Construct, name: string): boolean {
+  const value = scope.node.tryGetContext(name) as unknown;
+  if (value === undefined || value === false || value === 'false') {
+    return false;
+  }
+  if (value === true || value === 'true') {
+    return true;
+  }
+  throw new Error(`${name} must be the boolean true or false.`);
+}
 
 export class HubOptimusOperatorInfraStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
-    super(scope, id, props);
+    const account = props?.env?.account ?? Config.AWS_ACCOUNT_ID;
+    if (account !== Config.AWS_ACCOUNT_ID) {
+      throw new Error(`This stack may only target AWS account ${Config.AWS_ACCOUNT_ID}.`);
+    }
+    const region = resolveAwsRegion(props?.env?.region ?? scope.node.tryGetContext('awsRegion'));
+    super(scope, id, {
+      ...props,
+      env: { account: Config.AWS_ACCOUNT_ID, region },
+    });
 
-    Tags.of(this).add('costTag-project', Config.COST_TAG_PROJECT);
-    Tags.of(this).add('costTag-module', Config.COST_TAG_MODULE);
-    Tags.of(this).add('costTag-submodule', Config.COST_TAG_SUBMODULE);
-    Tags.of(this).add('costTag-resource', Config.COST_TAG_RESOURCE);
+    Tags.of(this).add(Config.COST_TAG_KEY, Config.COST_TAG_VALUE);
     Tags.of(this).add('managedBy', Config.MANAGED_BY);
     Tags.of(this).add('backup-required', Config.BACKUP_REQUIRED);
 
@@ -43,8 +60,13 @@ export class HubOptimusOperatorInfraStack extends Stack {
     const repoName = this.node.tryGetContext('repoName') as string | undefined;
     const branch = this.node.tryGetContext('branchName') as string | undefined;
     const environmentName = (this.node.tryGetContext('environmentName') as string | undefined) ?? 'candidate';
-    const publicPilotContext = this.node.tryGetContext('publicPilotEnabled') as string | boolean | undefined;
-    const publicPilotEnabled = publicPilotContext === true || publicPilotContext === 'true';
+    const serviceEnabled = readBooleanContext(this, 'serviceEnabled');
+    const publicSignupEnabled = readBooleanContext(this, 'publicSignupEnabled');
+    if (publicSignupEnabled) {
+      throw new Error(
+        'Public signup is not authorized in this candidate; use one administrator-created smoke user.',
+      );
+    }
     Tags.of(this).add('Project', 'HUB_Optimus');
     Tags.of(this).add('Workload', 'Operator');
     Tags.of(this).add('Environment', environmentName);
@@ -62,20 +84,20 @@ export class HubOptimusOperatorInfraStack extends Stack {
       type: 'String',
       allowedPattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
       constraintDescription: 'Provide a valid email address for mandatory pilot cost alerts.',
-      description: 'Mandatory recipient for the $10 budget and Cost Anomaly Detection alerts.',
+      description: 'Mandatory recipient for the $10 workload, $25 gross account, and anomaly alerts.',
     });
     const operatorCallbackUrl = new CfnParameter(this, 'OperatorCallbackUrl', {
       type: 'String',
       default: 'https://huboptimus.dev/operator/',
-      allowedPattern: '^https://huboptimus\\.dev(?:/.*)?$',
-      constraintDescription: 'Callback must remain on https://huboptimus.dev.',
+      allowedPattern: '^https://huboptimus\\.dev/operator/$',
+      constraintDescription: 'Callback must be exactly https://huboptimus.dev/operator/.',
       description: 'Hosted UI OAuth callback for the Operator PKCE client.',
     });
     const operatorLogoutUrl = new CfnParameter(this, 'OperatorLogoutUrl', {
       type: 'String',
       default: 'https://huboptimus.dev/operator/',
-      allowedPattern: '^https://huboptimus\\.dev(?:/.*)?$',
-      constraintDescription: 'Logout URL must remain on https://huboptimus.dev.',
+      allowedPattern: '^https://huboptimus\\.dev/operator/$',
+      constraintDescription: 'Logout URL must be exactly https://huboptimus.dev/operator/.',
       description: 'Hosted UI logout destination for the Operator client.',
     });
     const operatorAuthDomainPrefix = new CfnParameter(this, 'OperatorAuthDomainPrefix', {
@@ -117,8 +139,12 @@ export class HubOptimusOperatorInfraStack extends Stack {
       resources: [quotaTable.tableArn],
     }));
 
+    const handlerAsset = path.join(__dirname, '../lambda/url-ingest-handler.js');
+    if (!existsSync(handlerAsset)) {
+      throw new Error('Compiled Lambda handler is missing; run npm run build before synth or deploy.');
+    }
     const intakeFunction = new lambda.Function(this, 'UrlIntakeFunction', {
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda'), {
+      code: lambda.Code.fromAsset(path.dirname(handlerAsset), {
         exclude: ['*.d.ts', '*.ts'],
       }),
       handler: 'url-ingest-handler.handler',
@@ -127,7 +153,7 @@ export class HubOptimusOperatorInfraStack extends Stack {
       architecture: lambda.Architecture.ARM_64,
       memorySize: 128,
       timeout: Duration.seconds(10),
-      reservedConcurrentExecutions: publicPilotEnabled ? 1 : 0,
+      reservedConcurrentExecutions: serviceEnabled ? 1 : 0,
       logGroup: functionLogs,
       loggingFormat: lambda.LoggingFormat.JSON,
       applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
@@ -146,9 +172,15 @@ export class HubOptimusOperatorInfraStack extends Stack {
     const userPool = new cognito.UserPool(this, 'OperatorUserPool', {
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       autoVerify: { email: true },
+      featurePlan: cognito.FeaturePlan.LITE,
       removalPolicy: RemovalPolicy.RETAIN,
-      selfSignUpEnabled: publicPilotEnabled,
+      selfSignUpEnabled: false,
       signInAliases: { email: true },
+      mfa: cognito.Mfa.REQUIRED,
+      mfaSecondFactor: {
+        otp: true,
+        sms: false,
+      },
       standardAttributes: {
         email: { mutable: true, required: true },
       },
@@ -166,9 +198,25 @@ export class HubOptimusOperatorInfraStack extends Stack {
         domainPrefix: operatorAuthDomainPrefix.valueAsString,
       },
     });
+    const intakeScope = new cognito.ResourceServerScope({
+      scopeName: 'intake',
+      scopeDescription: 'Submit one controlled URL to the HUB_Optimus Operator intake.',
+    });
+    const operatorResourceServer = userPool.addResourceServer('OperatorResourceServer', {
+      identifier: 'operator',
+      scopes: [intakeScope],
+    });
     const userPoolClient = userPool.addClient('OperatorWebClient', {
       accessTokenValidity: Duration.minutes(15),
-      authFlows: { userSrp: true },
+      // The public browser client authenticates only through Hosted UI OAuth
+      // authorization-code + PKCE. Keep direct Cognito password/SRP/custom
+      // API authentication disabled; CDK retains refresh-token auth only.
+      authFlows: {
+        adminUserPassword: false,
+        custom: false,
+        userPassword: false,
+        userSrp: false,
+      },
       enableTokenRevocation: true,
       generateSecret: false,
       idTokenValidity: Duration.minutes(15),
@@ -182,11 +230,14 @@ export class HubOptimusOperatorInfraStack extends Stack {
         scopes: [
           cognito.OAuthScope.OPENID,
           cognito.OAuthScope.EMAIL,
+          cognito.OAuthScope.resourceServer(operatorResourceServer, intakeScope),
         ],
       },
       preventUserExistenceErrors: true,
-      refreshTokenValidity: Duration.days(1),
+      refreshTokenValidity: Duration.hours(1),
     });
+    intakeFunction.addEnvironment('EXPECTED_CLIENT_ID', userPoolClient.userPoolClientId);
+    intakeFunction.addEnvironment('REQUIRED_SCOPE', Config.REQUIRED_SCOPE);
     const authorizer = new HttpJwtAuthorizer(
       'OperatorCognitoJwt',
       userPool.userPoolProviderUrl,
@@ -208,6 +259,7 @@ export class HubOptimusOperatorInfraStack extends Stack {
       path: '/intake/url',
       methods: [HttpMethod.POST],
       authorizer,
+      authorizationScopes: [Config.REQUIRED_SCOPE],
       integration: new HttpLambdaIntegration('UrlIntakeIntegration', intakeFunction),
     });
 
@@ -216,8 +268,10 @@ export class HubOptimusOperatorInfraStack extends Stack {
       stageName: '$default',
       autoDeploy: true,
       throttle: {
+        // One browser action is an automatic CORS preflight followed by POST.
+        // Keep the sustained rate low while allowing that pair to complete.
         burstLimit: 2,
-        rateLimit: 0.5,
+        rateLimit: 0.2,
       },
       accessLogSettings: {
         destination: new LogGroupLogDestination(accessLogs),
@@ -255,27 +309,38 @@ export class HubOptimusOperatorInfraStack extends Stack {
         subscriptionType: 'EMAIL',
       }],
     });
+    const grossCostTypes = {
+      includeCredit: false,
+      includeDiscount: true,
+      includeOtherSubscription: true,
+      includeRecurring: true,
+      includeRefund: false,
+      includeSubscription: true,
+      includeSupport: true,
+      includeTax: true,
+      includeUpfront: true,
+      useAmortized: false,
+      useBlended: false,
+    };
     new budgets.CfnBudget(this, 'MonthlyCostBudget', {
       budget: {
         budgetLimit: { amount: 10, unit: 'USD' },
         budgetName: `${this.stackName}-url-ingestion-monthly`,
         budgetType: 'COST',
         costFilters: {
-          TagKeyValue: [`user:costTag-project$${Config.COST_TAG_PROJECT}`],
+          TagKeyValue: [`user:${Config.COST_TAG_KEY}$${Config.COST_TAG_VALUE}`],
         },
-        costTypes: {
-          includeCredit: false,
-          includeDiscount: true,
-          includeOtherSubscription: true,
-          includeRecurring: true,
-          includeRefund: false,
-          includeSubscription: true,
-          includeSupport: true,
-          includeTax: true,
-          includeUpfront: true,
-          useAmortized: false,
-          useBlended: false,
-        },
+        costTypes: grossCostTypes,
+        timeUnit: 'MONTHLY',
+      },
+      notificationsWithSubscribers: notifications,
+    });
+    new budgets.CfnBudget(this, 'GrossAccountMonthlyBudget', {
+      budget: {
+        budgetLimit: { amount: 25, unit: 'USD' },
+        budgetName: `${this.stackName}-gross-account-monthly`,
+        budgetType: 'COST',
+        costTypes: grossCostTypes,
         timeUnit: 'MONTHLY',
       },
       notificationsWithSubscribers: notifications,
@@ -286,9 +351,9 @@ export class HubOptimusOperatorInfraStack extends Stack {
       monitorType: 'CUSTOM',
       monitorSpecification: JSON.stringify({
         Tags: {
-          Key: 'costTag-project',
+          Key: Config.COST_TAG_KEY,
           MatchOptions: ['EQUALS'],
-          Values: [Config.COST_TAG_PROJECT],
+          Values: [Config.COST_TAG_VALUE],
         },
       }),
     });
@@ -336,9 +401,13 @@ export class HubOptimusOperatorInfraStack extends Stack {
     new CfnOutput(this, 'OperatorLogoutUrlOutput', {
       value: operatorLogoutUrl.valueAsString,
     });
-    new CfnOutput(this, 'PublicPilotState', {
-      value: publicPilotEnabled ? 'ENABLED' : 'DISABLED',
-      description: 'Fail-closed unless CDK context publicPilotEnabled=true is supplied explicitly.',
+    new CfnOutput(this, 'ServiceState', {
+      value: serviceEnabled ? 'ENABLED' : 'DISABLED',
+      description: 'Fail-closed unless CDK context serviceEnabled=true is supplied explicitly.',
+    });
+    new CfnOutput(this, 'PublicSignupState', {
+      value: 'DISABLED',
+      description: 'Public signup is not authorized by this private-smoke candidate.',
     });
   }
 }
