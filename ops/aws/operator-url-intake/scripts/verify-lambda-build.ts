@@ -1,34 +1,21 @@
-import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { buildLambdaBundle, LAMBDA_BUNDLE_PATH, validateLambdaBundle } from './lambda-bundle';
 
-const projectRoot = resolve(__dirname, '..');
-const sourceBuild = join(projectRoot, 'lambda', 'url-ingest-handler.js');
-const temporaryOutput = mkdtempSync(join(tmpdir(), 'hub-optimus-lambda-build-'));
-
-try {
-  execFileSync(process.execPath, [
-    join(projectRoot, 'node_modules', 'typescript', 'bin', 'tsc'),
-    '--project', join(projectRoot, 'tsconfig.json'),
-    '--outDir', temporaryOutput,
-    '--declaration', 'false',
-  ], {
-    cwd: projectRoot,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-
-  const expected = readFileSync(join(temporaryOutput, 'lambda', 'url-ingest-handler.js'));
-  const actual = readFileSync(sourceBuild);
-  if (!actual.equals(expected)) {
-    throw new Error(
-      'lambda/url-ingest-handler.js is stale or differs from the TypeScript compiler output.',
-    );
+async function main(): Promise<void> {
+  const bundle = await buildLambdaBundle();
+  validateLambdaBundle(bundle);
+  const reviewedBundle = readFileSync(LAMBDA_BUNDLE_PATH);
+  if (!reviewedBundle.equals(Buffer.from(bundle))) {
+    throw new Error('Reviewed Lambda bundle is stale; run npm run build:lambda and commit it.');
   }
 
-  const digest = createHash('sha256').update(actual).digest('hex');
-  console.log(`LAMBDA_BUILD_OK sha256=${digest}`);
-} finally {
-  rmSync(temporaryOutput, { recursive: true, force: true });
+  const digest = createHash('sha256').update(bundle).digest('hex');
+  console.log(`LAMBDA_BUNDLE_OK sha256=${digest}`);
 }
+
+main().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : 'unknown bundle verification error';
+  console.error(`LAMBDA_BUNDLE_BLOCKED: ${message}`);
+  process.exitCode = 1;
+});
