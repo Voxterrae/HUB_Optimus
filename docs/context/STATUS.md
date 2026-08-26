@@ -46,3 +46,17 @@ canonical v1 methodology remains Spanish under `v1_core/languages/es/`.
 - `.github/copilot-instructions.md` identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
 - Other meta-learning files exist as compatibility targets, translations, or unclassified copies and need separate canonical/parity/legacy classification.
 - Do not consolidate, delete, or rewrite meta-learning files without a scoped issue or PR.
+
+## Operator URL-intake runtime status
+
+- The public Operator remains local/pasted-text first; controlled remote URL
+  retrieval is not enabled on production.
+- The invitation-only AWS canary is an unmerged, not-deployed candidate tracked
+  by issue `#1917` and draft PR `#1918`.
+- Its canonical implementation location is `ops/aws/operator-url-intake/`.
+- Public signup, DNS publication, audiovisual/TikTok ingestion, public crawling,
+  and enterprise claims memory are outside this canary and remain separate
+  governed changes.
+- AWS mutation remains blocked until the repository hold, identity exception,
+  merged SHA, cost/credit headroom, alert path, and least-privilege roles are
+  verified through their authoritative records.
