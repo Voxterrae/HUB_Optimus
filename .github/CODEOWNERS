@@ -31,6 +31,7 @@ site/                                                  @Voxterrae
 benchmarks/                                            @Voxterrae
 tests/                                                 @Voxterrae
 tools/                                                 @Voxterrae
+ops/aws/operator-url-intake/                           @Voxterrae
 examples/                                              @Voxterrae
 scenario.schema.json                                   @Voxterrae
 hub_optimus_simulator.py                               @Voxterrae

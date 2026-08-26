@@ -1,0 +1,831 @@
+name: Operator private canary deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: Exact governed forward transition to prepare and execute
+        required: true
+        type: choice
+        options:
+          - foundation
+          - controls
+          - private
+          - deactivate
+      canary_started_at:
+        description: Private only, UTC seconds (YYYY-MM-DDTHH:MM:SSZ)
+        required: false
+        type: string
+      canary_expires_at:
+        description: Private only, no more than two hours after start
+        required: false
+        type: string
+      activation_sha:
+        description: Deactivate only, exact SourceCommit output of the private activation
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: operator-private-canary-forward
+  cancel-in-progress: false
+
+env:
+  ASSET_BUCKET: cdk-hnb659fds-assets-904851777129-eu-west-1
+  AWS_ACCOUNT_ID: '904851777129'
+  AWS_REGION: eu-west-1
+  CFN_EXECUTION_ROLE_ARN: arn:aws:iam::904851777129:role/cdk-hnb659fds-cfn-exec-role-904851777129-eu-west-1
+  EXECUTE_ROLE_ARN: arn:aws:iam::904851777129:role/HUBOptimusOperatorExecute
+  FILE_PUBLISHING_ROLE_ARN: arn:aws:iam::904851777129:role/cdk-hnb659fds-file-publishing-role-904851777129-eu-west-1
+  PREPARE_ROLE_ARN: arn:aws:iam::904851777129:role/HUBOptimusOperatorPrepare
+  STACK_NAME: hub-optimus-operator-infra
+
+jobs:
+  prepare:
+    name: Prepare reviewed change set
+    if: github.ref == 'refs/heads/main' && github.repository == 'Voxterrae/HUB_Optimus'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+        working-directory: ops/aws/operator-url-intake
+    environment: operator-private-canary-prepare
+    outputs:
+      asset_checksum: ${{ steps.prepare.outputs.asset_checksum }}
+      asset_version_id: ${{ steps.prepare.outputs.asset_version_id }}
+      bundle_sha: ${{ steps.prepare.outputs.bundle_sha }}
+      change_set_arn: ${{ steps.prepare.outputs.change_set_arn }}
+      parameter_fingerprint: ${{ steps.prepare.outputs.parameter_fingerprint }}
+      security_binding: ${{ steps.prepare.outputs.security_binding }}
+      template_sha: ${{ steps.prepare.outputs.template_sha }}
+      target_phase: ${{ steps.prepare.outputs.target_phase }}
+    env:
+      ACTIVATION_SHA: ${{ inputs.activation_sha }}
+      CANARY_EXPIRES_AT: ${{ inputs.canary_expires_at }}
+      CANARY_STARTED_AT: ${{ inputs.canary_started_at }}
+      HUB_OPTIMUS_DEPLOY_SHA: ${{ inputs.phase == 'deactivate' && inputs.activation_sha || github.sha }}
+      HUB_OPTIMUS_GITHUB_ENVIRONMENT: operator-private-canary-prepare
+      SOURCE_SHA: ${{ inputs.phase == 'deactivate' && inputs.activation_sha || github.sha }}
+
+    steps:
+      - name: Checkout exact merged main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.phase == 'deactivate' && inputs.activation_sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+
+      - name: Install and validate reviewed source
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run check
+
+      - name: Validate fresh governance and economic attestations
+        if: inputs.phase != 'deactivate'
+        env:
+          ALERT_PATH_VERIFIED_AT: ${{ vars.ALERT_PATH_VERIFIED_AT }}
+          AWS_MUTATION_EXCEPTION: ${{ vars.AWS_MUTATION_EXCEPTION }}
+          CANARY_DEPLOYMENTS_ENABLED: ${{ vars.CANARY_DEPLOYMENTS_ENABLED }}
+          CANARY_GOVERNANCE_RECORD: ${{ vars.CANARY_GOVERNANCE_RECORD }}
+          CANARY_IDENTITY_DECISION: ${{ vars.CANARY_IDENTITY_DECISION }}
+          COST_REVIEWED_AT: ${{ vars.COST_REVIEWED_AT }}
+          CREDITS_REVIEWED_AT: ${{ vars.CREDITS_REVIEWED_AT }}
+          GROSS_ACTUAL_USD: ${{ vars.GROSS_ACTUAL_USD }}
+          GROSS_FORECAST_USD: ${{ vars.GROSS_FORECAST_USD }}
+          PROMOTIONAL_CREDIT_BALANCE_USD: ${{ secrets.PROMOTIONAL_CREDIT_BALANCE_USD }}
+          PROMOTIONAL_CREDIT_EXPIRES_AT: ${{ vars.PROMOTIONAL_CREDIT_EXPIRES_AT }}
+        run: npm run predeploy:attest
+
+      - name: Obtain prepare-only AWS credentials
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          allowed-account-ids: '904851777129'
+          aws-region: eu-west-1
+          role-session-name: hub-operator-${{ github.run_id }}-prepare
+          role-to-assume: arn:aws:iam::904851777129:role/HUBOptimusOperatorPrepare
+
+      - name: Validate AWS identity, source and exact phase transition
+        env:
+          PHASE: ${{ inputs.phase }}
+        run: |
+          set -euo pipefail
+          npm run predeploy:check -- "--phase=${PHASE}"
+
+      - name: Synthesize, publish one asset and prepare one immutable change set
+        id: prepare
+        env:
+          CANARY_ALLOWED_SUBJECT_SHA256: ${{ secrets.CANARY_ALLOWED_SUBJECT_SHA256 }}
+          COST_ALERT_EMAIL: ${{ secrets.COST_ALERT_EMAIL }}
+          DEPLOYMENT_FINGERPRINT_KEY: ${{ secrets.DEPLOYMENT_FINGERPRINT_KEY }}
+          OPERATOR_AUTH_DOMAIN_PREFIX: ${{ vars.OPERATOR_AUTH_DOMAIN_PREFIX }}
+          PHASE: ${{ inputs.phase }}
+        run: |
+          set -euo pipefail
+          case "$PHASE" in
+            foundation) CURRENT_PHASE=ABSENT; TARGET_PHASE=foundation; CHANGE_SET_TYPE=CREATE ;;
+            controls) CURRENT_PHASE=foundation; TARGET_PHASE=controls; CHANGE_SET_TYPE=UPDATE ;;
+            private) CURRENT_PHASE=controls; TARGET_PHASE=private; CHANGE_SET_TYPE=UPDATE ;;
+            deactivate) CURRENT_PHASE=private; TARGET_PHASE=controls; CHANGE_SET_TYPE=UPDATE ;;
+            *) echo 'Unsupported phase' >&2; exit 1 ;;
+          esac
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          if [[ "$PHASE" == deactivate ]]; then
+            [[ -n "$ACTIVATION_SHA" ]]
+            [[ "$SOURCE_SHA" == "$HUB_OPTIMUS_DEPLOY_SHA" ]]
+          else
+            [[ -z "$ACTIVATION_SHA" ]]
+          fi
+
+          if [[ "$PHASE" == private ]]; then
+            [[ -n "$CANARY_STARTED_AT" && -n "$CANARY_EXPIRES_AT" ]]
+            [[ "$CANARY_ALLOWED_SUBJECT_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          else
+            [[ -z "$CANARY_STARTED_AT" && -z "$CANARY_EXPIRES_AT" ]]
+          fi
+          if [[ "$PHASE" != deactivate ]]; then
+            [[ -n "$COST_ALERT_EMAIL" ]]
+          fi
+          if [[ "$PHASE" == controls || "$PHASE" == private ]]; then
+            [[ "$OPERATOR_AUTH_DOMAIN_PREFIX" =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]]
+          fi
+
+          synth_phase() {
+            local target_phase="$1"
+            local output_dir="$2"
+            node_modules/.bin/cdk synth "$STACK_NAME" --quiet \
+              --output "$output_dir" \
+              -c "deploymentPhase=${target_phase}" \
+              -c publicSignupEnabled=false \
+              -c identityProviderDecision=cognito-temporary-canary \
+              -c "gitCommit=${SOURCE_SHA}" \
+              -c repoName=Voxterrae/HUB_Optimus \
+              -c branchName=main \
+              -c environmentName=private-canary
+          }
+
+          synth_phase "$TARGET_PHASE" cdk.out.reviewed
+          npm run verify:cdk-assets -- cdk.out.reviewed
+          TARGET_TEMPLATE="cdk.out.reviewed/${STACK_NAME}.template.json"
+          if [[ "$CURRENT_PHASE" == ABSENT ]]; then
+            CURRENT_TEMPLATE=ABSENT
+            CURRENT_ASSET_VERSION=not-applicable
+          else
+            synth_phase "$CURRENT_PHASE" cdk.out.current
+            EXPECTED_CURRENT_TEMPLATE="cdk.out.current/${STACK_NAME}.template.json"
+            CURRENT_TEMPLATE="${RUNNER_TEMP}/deployed-current-template.json"
+            aws cloudformation get-template \
+              --stack-name "$STACK_NAME" \
+              --template-stage Original \
+              --region "$AWS_REGION" \
+              --output json | jq \
+                '.TemplateBody | if type == "string" then fromjson else . end' \
+                > "$CURRENT_TEMPLATE"
+            [[ "$(jq '[.Resources[] | select(.Type == "AWS::Lambda::Function")] | length' \
+              "$CURRENT_TEMPLATE")" == 1 ]]
+            CURRENT_ASSET_VERSION="$(jq -r \
+              '.Resources[] | select(.Type == "AWS::Lambda::Function") | .Properties.Code.S3ObjectVersion // empty' \
+              "$CURRENT_TEMPLATE")"
+            [[ -n "$CURRENT_ASSET_VERSION" ]]
+            CURRENT_LAMBDA_ID="$(jq -r \
+              '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::Function") | .key' \
+              "$EXPECTED_CURRENT_TEMPLATE")"
+            jq --arg id "$CURRENT_LAMBDA_ID" --arg version "$CURRENT_ASSET_VERSION" \
+              '.Resources[$id].Properties.Code.S3ObjectVersion = $version' \
+              "$EXPECTED_CURRENT_TEMPLATE" > "${EXPECTED_CURRENT_TEMPLATE}.versioned"
+            mv "${EXPECTED_CURRENT_TEMPLATE}.versioned" "$EXPECTED_CURRENT_TEMPLATE"
+            npm run verify:change-set -- template "$EXPECTED_CURRENT_TEMPLATE" "$CURRENT_TEMPLATE"
+          fi
+
+          BUNDLE_SHA="$(sha256sum lambda/url-ingest-handler.bundle.js | cut -d' ' -f1)"
+
+          ASSET_MANIFEST="cdk.out.reviewed/${STACK_NAME}.assets.json"
+          [[ "$(jq '[.files | to_entries[] | select(.value.displayName == "UrlIntakeFunction/Code")] | length' "$ASSET_MANIFEST")" == 1 ]]
+          ASSET_ID="$(jq -r '.files | to_entries[] | select(.value.displayName == "UrlIntakeFunction/Code") | .key' "$ASSET_MANIFEST")"
+          ASSET_PATH="$(jq -r --arg id "$ASSET_ID" '.files[$id].source.path' "$ASSET_MANIFEST")"
+          DESTINATION="$(jq -c --arg id "$ASSET_ID" '.files[$id].destinations | to_entries | .[0].value' "$ASSET_MANIFEST")"
+          [[ "$ASSET_ID" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$ASSET_PATH" == "asset.${ASSET_ID}" ]]
+          [[ "$(jq -r '.bucketName' <<< "$DESTINATION")" == "$ASSET_BUCKET" ]]
+          [[ "$(jq -r '.objectKey' <<< "$DESTINATION")" == "${ASSET_ID}.zip" ]]
+          [[ "$(jq -r '.region' <<< "$DESTINATION")" == "$AWS_REGION" ]]
+          MANIFEST_PUBLISH_ROLE="$(jq -r \
+            '.assumeRoleArn | sub("arn:\\$\\{AWS::Partition\\}"; "arn:aws")' \
+            <<< "$DESTINATION")"
+          [[ "$MANIFEST_PUBLISH_ROLE" == "$FILE_PUBLISHING_ROLE_ARN" ]]
+          ASSET_BUILD_DIR="$(mktemp -d)"
+          cp "cdk.out.reviewed/${ASSET_PATH}/url-ingest-handler.bundle.js" \
+            "${ASSET_BUILD_DIR}/url-ingest-handler.bundle.js"
+          touch -t 198001010000 "${ASSET_BUILD_DIR}/url-ingest-handler.bundle.js"
+          ASSET_ZIP="${RUNNER_TEMP}/${ASSET_ID}.zip"
+          (
+            cd "$ASSET_BUILD_DIR"
+            zip -q -X "$ASSET_ZIP" url-ingest-handler.bundle.js
+          )
+          ASSET_CHECKSUM="$(openssl dgst -sha256 -binary "$ASSET_ZIP" | base64 -w 0)"
+          [[ -n "$ASSET_CHECKSUM" ]]
+          ASSET_SIZE="$(wc -c < "$ASSET_ZIP" | tr -d ' ')"
+
+          PUBLISH_SESSION_POLICY="$(jq -cn \
+            --arg bucket "arn:aws:s3:::${ASSET_BUCKET}" \
+            --arg object "arn:aws:s3:::${ASSET_BUCKET}/${ASSET_ID}.zip" \
+            '{Version:"2012-10-17",Statement:[
+              {Effect:"Allow",Action:"s3:GetBucketVersioning",Resource:$bucket},
+              {Effect:"Allow",Action:["s3:GetObject","s3:GetObjectVersion","s3:PutObject"],Resource:$object},
+              {Effect:"Allow",Action:["kms:Decrypt","kms:GenerateDataKey"],Resource:"*"}
+            ]}')"
+          PUBLISH_CREDENTIALS="$(aws sts assume-role \
+            --role-arn "$FILE_PUBLISHING_ROLE_ARN" \
+            --role-session-name "hub-operator-${GITHUB_RUN_ID}-asset" \
+            --duration-seconds 900 \
+            --policy "$PUBLISH_SESSION_POLICY" \
+            --output json)"
+          asset_aws() {
+            AWS_ACCESS_KEY_ID="$(jq -r '.Credentials.AccessKeyId' <<< "$PUBLISH_CREDENTIALS")" \
+            AWS_SECRET_ACCESS_KEY="$(jq -r '.Credentials.SecretAccessKey' <<< "$PUBLISH_CREDENTIALS")" \
+            AWS_SESSION_TOKEN="$(jq -r '.Credentials.SessionToken' <<< "$PUBLISH_CREDENTIALS")" \
+              aws "$@"
+          }
+          [[ "$(asset_aws s3api get-bucket-versioning \
+            --bucket "$ASSET_BUCKET" \
+            --expected-bucket-owner "$AWS_ACCOUNT_ID" \
+            --region "$AWS_REGION" --query Status --output text)" == Enabled ]]
+          if [[ "$PHASE" != deactivate ]]; then
+            PUT_RESULT="$(asset_aws s3api put-object \
+              --bucket "$ASSET_BUCKET" \
+              --key "${ASSET_ID}.zip" \
+              --body "$ASSET_ZIP" \
+              --checksum-algorithm SHA256 \
+              --checksum-sha256 "$ASSET_CHECKSUM" \
+              --expected-bucket-owner "$AWS_ACCOUNT_ID" \
+              --region "$AWS_REGION" --output json)"
+            ASSET_VERSION_ID="$(jq -r '.VersionId // empty' <<< "$PUT_RESULT")"
+            [[ "$(jq -r '.ChecksumSHA256 // empty' <<< "$PUT_RESULT")" == "$ASSET_CHECKSUM" ]]
+          else
+            ASSET_VERSION_ID="$CURRENT_ASSET_VERSION"
+          fi
+          [[ -n "$ASSET_VERSION_ID" && "$ASSET_VERSION_ID" != null ]]
+          HEAD_RESULT="$(asset_aws s3api head-object \
+            --bucket "$ASSET_BUCKET" \
+            --key "${ASSET_ID}.zip" \
+            --version-id "$ASSET_VERSION_ID" \
+            --checksum-mode ENABLED \
+            --expected-bucket-owner "$AWS_ACCOUNT_ID" \
+            --region "$AWS_REGION" --output json)"
+          [[ "$(jq -r '.VersionId // empty' <<< "$HEAD_RESULT")" == "$ASSET_VERSION_ID" ]]
+          [[ "$(jq -r '.ChecksumSHA256 // empty' <<< "$HEAD_RESULT")" == "$ASSET_CHECKSUM" ]]
+          [[ "$(jq -r '.ContentLength' <<< "$HEAD_RESULT")" == "$ASSET_SIZE" ]]
+
+          [[ "$(jq '[.Resources[] | select(.Type == "AWS::Lambda::Function")] | length' \
+            "$TARGET_TEMPLATE")" == 1 ]]
+          TARGET_LAMBDA_ID="$(jq -r \
+            '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::Function") | .key' \
+            "$TARGET_TEMPLATE")"
+          jq --arg id "$TARGET_LAMBDA_ID" --arg version "$ASSET_VERSION_ID" \
+            '.Resources[$id].Properties.Code.S3ObjectVersion = $version' \
+            "$TARGET_TEMPLATE" > "${TARGET_TEMPLATE}.versioned"
+          mv "${TARGET_TEMPLATE}.versioned" "$TARGET_TEMPLATE"
+          [[ "$(wc -c < "$TARGET_TEMPLATE")" -le 51200 ]]
+          TEMPLATE_SHA="$(sha256sum "$TARGET_TEMPLATE" | cut -d' ' -f1)"
+
+          if [[ "$PHASE" == deactivate ]]; then
+            PARAMETERS=(
+              "ParameterKey=CostAlertEmail,UsePreviousValue=true"
+              "ParameterKey=OperatorCallbackUrl,UsePreviousValue=true"
+              "ParameterKey=OperatorLogoutUrl,UsePreviousValue=true"
+              "ParameterKey=OperatorAuthDomainPrefix,UsePreviousValue=true"
+            )
+          else
+            PARAMETERS=(
+              "ParameterKey=CostAlertEmail,ParameterValue=${COST_ALERT_EMAIL}"
+              "ParameterKey=OperatorCallbackUrl,ParameterValue=https://huboptimus.dev/operator/"
+              "ParameterKey=OperatorLogoutUrl,ParameterValue=https://huboptimus.dev/operator/"
+            )
+          fi
+          if [[ "$PHASE" == controls || "$PHASE" == private ]]; then
+            PARAMETERS+=("ParameterKey=OperatorAuthDomainPrefix,ParameterValue=${OPERATOR_AUTH_DOMAIN_PREFIX}")
+          fi
+          if [[ "$PHASE" == private ]]; then
+            SECURITY_BINDING="$(node --require ts-node/register \
+              scripts/deployment-parameter-fingerprint.ts --canary-security-binding)"
+            [[ "$SECURITY_BINDING" =~ ^[0-9a-f]{64}$ ]]
+            PARAMETERS+=(
+              "ParameterKey=CanaryAllowedSubjectSha256,ParameterValue=${CANARY_ALLOWED_SUBJECT_SHA256}"
+              "ParameterKey=CanaryStartedAt,ParameterValue=${CANARY_STARTED_AT}"
+              "ParameterKey=CanaryExpiresAt,ParameterValue=${CANARY_EXPIRES_AT}"
+              "ParameterKey=CanarySecurityBindingSha256,ParameterValue=${SECURITY_BINDING}"
+            )
+          else
+            SECURITY_BINDING=not-applicable
+          fi
+          PARAMETER_FINGERPRINT="$(node --require ts-node/register \
+            scripts/deployment-parameter-fingerprint.ts "$PHASE")"
+          [[ "$PARAMETER_FINGERPRINT" =~ ^[0-9a-f]{64}$ ]]
+
+          CHANGE_SET_NAME="operator-${PHASE}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          aws cloudformation create-change-set \
+            --stack-name "$STACK_NAME" \
+            --change-set-name "$CHANGE_SET_NAME" \
+            --change-set-type "$CHANGE_SET_TYPE" \
+            --description "HUB_Optimus ${PHASE} ${CHANGE_SET_TYPE} ${SOURCE_SHA} ${TEMPLATE_SHA} ${PARAMETER_FINGERPRINT}" \
+            --template-body "file://${TARGET_TEMPLATE}" \
+            --parameters "${PARAMETERS[@]}" \
+            --capabilities CAPABILITY_IAM \
+            --role-arn "$CFN_EXECUTION_ROLE_ARN" \
+            --region "$AWS_REGION" >/dev/null
+          aws cloudformation wait change-set-create-complete \
+            --stack-name "$STACK_NAME" \
+            --change-set-name "$CHANGE_SET_NAME" \
+            --region "$AWS_REGION"
+
+          CHANGE_SET_JSON="${RUNNER_TEMP}/change-set.json"
+          aws cloudformation describe-change-set \
+            --stack-name "$STACK_NAME" \
+            --change-set-name "$CHANGE_SET_NAME" \
+            --region "$AWS_REGION" \
+            --output json > "$CHANGE_SET_JSON"
+          CHANGE_SET_ARN="$(jq -r '.ChangeSetId' "$CHANGE_SET_JSON")"
+          [[ "$CHANGE_SET_ARN" == arn:aws:cloudformation:eu-west-1:904851777129:changeSet/operator-* ]]
+          [[ "$(jq -r '.ChangeSetName' "$CHANGE_SET_JSON")" == "$CHANGE_SET_NAME" ]]
+          [[ "$(jq -r '.StackName' "$CHANGE_SET_JSON")" == "$STACK_NAME" ]]
+          [[ "$(jq -r '.Capabilities | sort | join(",")' "$CHANGE_SET_JSON")" == CAPABILITY_IAM ]]
+          [[ "$(jq -r '.IncludeNestedStacks // false' "$CHANGE_SET_JSON")" == false ]]
+          [[ "$(jq -r '.Description' "$CHANGE_SET_JSON")" == \
+            "HUB_Optimus ${PHASE} ${CHANGE_SET_TYPE} ${SOURCE_SHA} ${TEMPLATE_SHA} ${PARAMETER_FINGERPRINT}" ]]
+
+          CHANGE_SET_TEMPLATE="${RUNNER_TEMP}/change-set-template.json"
+          aws cloudformation get-template \
+            --change-set-name "$CHANGE_SET_ARN" \
+            --template-stage Original \
+            --region "$AWS_REGION" \
+            --output json | jq \
+              '.TemplateBody | if type == "string" then fromjson else . end' \
+              > "$CHANGE_SET_TEMPLATE"
+          npm run verify:change-set -- template "$TARGET_TEMPLATE" "$CHANGE_SET_TEMPLATE"
+          npm run verify:change-set -- changes "$CURRENT_TEMPLATE" "$TARGET_TEMPLATE" "$CHANGE_SET_JSON"
+
+          echo "asset_checksum=${ASSET_CHECKSUM}" >> "$GITHUB_OUTPUT"
+          echo "asset_version_id=${ASSET_VERSION_ID}" >> "$GITHUB_OUTPUT"
+          echo "bundle_sha=${BUNDLE_SHA}" >> "$GITHUB_OUTPUT"
+          echo "change_set_arn=${CHANGE_SET_ARN}" >> "$GITHUB_OUTPUT"
+          echo "parameter_fingerprint=${PARAMETER_FINGERPRINT}" >> "$GITHUB_OUTPUT"
+          echo "security_binding=${SECURITY_BINDING}" >> "$GITHUB_OUTPUT"
+          echo "template_sha=${TEMPLATE_SHA}" >> "$GITHUB_OUTPUT"
+          echo "target_phase=${TARGET_PHASE}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo '## Prepared Operator change set'
+            echo
+            echo "- Phase: \`${PHASE}\`"
+            echo "- Source SHA: \`${SOURCE_SHA}\`"
+            echo "- Template SHA-256: \`${TEMPLATE_SHA}\`"
+            echo "- Lambda bundle SHA-256: \`${BUNDLE_SHA}\`"
+            echo "- Immutable Lambda object version: \`${ASSET_VERSION_ID}\`"
+            echo "- Change set: \`${CHANGE_SET_ARN}\`"
+            echo "- Account / region: \`${AWS_ACCOUNT_ID} / ${AWS_REGION}\`"
+            echo "- Stack: \`${STACK_NAME}\`"
+            echo "- Prepare role: \`${PREPARE_ROLE_ARN}\`"
+            echo "- File-publishing role: \`${FILE_PUBLISHING_ROLE_ARN}\`"
+            echo "- Execute role: \`${EXECUTE_ROLE_ARN}\`"
+            echo "- Parameter fingerprint: \`${PARAMETER_FINGERPRINT}\`"
+            if [[ "$PHASE" == private ]]; then
+              echo "- Window: \`${CANARY_STARTED_AT}\` to \`${CANARY_EXPIRES_AT}\`"
+            fi
+            echo '- Stop conditions: unexpected spend, access, logs, SSRF, schema, role or account.'
+            echo '- Emergency stop: fixed stop-only workflow sets Lambda concurrency to zero.'
+            echo
+            echo 'Exact reviewed actions:'
+            echo '```text'
+            aws cloudformation describe-change-set \
+              --change-set-name "$CHANGE_SET_ARN" \
+              --region "$AWS_REGION" \
+              --query 'Changes[].ResourceChange.[Action,LogicalResourceId,ResourceType,Replacement]' \
+              --output table
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  execute:
+    name: Execute exact approved change set
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+        working-directory: ops/aws/operator-url-intake
+    environment: operator-private-canary-execute
+    env:
+      CANARY_EXPIRES_AT: ${{ inputs.canary_expires_at }}
+      CANARY_STARTED_AT: ${{ inputs.canary_started_at }}
+      CHANGE_SET_ARN: ${{ needs.prepare.outputs.change_set_arn }}
+      EXPECTED_ASSET_CHECKSUM: ${{ needs.prepare.outputs.asset_checksum }}
+      EXPECTED_ASSET_VERSION_ID: ${{ needs.prepare.outputs.asset_version_id }}
+      EXPECTED_BUNDLE_SHA: ${{ needs.prepare.outputs.bundle_sha }}
+      EXPECTED_PARAMETER_FINGERPRINT: ${{ needs.prepare.outputs.parameter_fingerprint }}
+      EXPECTED_SECURITY_BINDING: ${{ needs.prepare.outputs.security_binding }}
+      EXPECTED_TEMPLATE_SHA: ${{ needs.prepare.outputs.template_sha }}
+      HUB_OPTIMUS_DEPLOY_SHA: ${{ inputs.phase == 'deactivate' && inputs.activation_sha || github.sha }}
+      HUB_OPTIMUS_GITHUB_ENVIRONMENT: operator-private-canary-execute
+      PHASE: ${{ inputs.phase }}
+      SOURCE_SHA: ${{ inputs.phase == 'deactivate' && inputs.activation_sha || github.sha }}
+      TARGET_PHASE: ${{ needs.prepare.outputs.target_phase }}
+
+    steps:
+      - name: Checkout the same immutable source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.phase == 'deactivate' && inputs.activation_sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+
+      - name: Reproduce the reviewed templates and hashes
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run check
+          case "$PHASE" in
+            foundation) CURRENT_PHASE=ABSENT ;;
+            controls) CURRENT_PHASE=foundation ;;
+            private) CURRENT_PHASE=controls ;;
+            deactivate) CURRENT_PHASE=private ;;
+            *) echo 'Unsupported phase' >&2; exit 1 ;;
+          esac
+          synth_phase() {
+            local target_phase="$1"
+            local output_dir="$2"
+            node_modules/.bin/cdk synth "$STACK_NAME" --quiet \
+              --output "$output_dir" \
+              -c "deploymentPhase=${target_phase}" \
+              -c publicSignupEnabled=false \
+              -c identityProviderDecision=cognito-temporary-canary \
+              -c "gitCommit=${SOURCE_SHA}" \
+              -c repoName=Voxterrae/HUB_Optimus \
+              -c branchName=main \
+              -c environmentName=private-canary
+          }
+          synth_phase "$TARGET_PHASE" cdk.out.execute
+          npm run verify:cdk-assets -- cdk.out.execute
+          TARGET_TEMPLATE="cdk.out.execute/${STACK_NAME}.template.json"
+          [[ "$(jq '[.Resources[] | select(.Type == "AWS::Lambda::Function")] | length' \
+            "$TARGET_TEMPLATE")" == 1 ]]
+          TARGET_LAMBDA_ID="$(jq -r \
+            '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::Function") | .key' \
+            "$TARGET_TEMPLATE")"
+          jq --arg id "$TARGET_LAMBDA_ID" --arg version "$EXPECTED_ASSET_VERSION_ID" \
+            '.Resources[$id].Properties.Code.S3ObjectVersion = $version' \
+            "$TARGET_TEMPLATE" > "${TARGET_TEMPLATE}.versioned"
+          mv "${TARGET_TEMPLATE}.versioned" "$TARGET_TEMPLATE"
+          if [[ "$CURRENT_PHASE" != ABSENT ]]; then
+            synth_phase "$CURRENT_PHASE" cdk.out.execute-current
+          fi
+          ACTUAL_TEMPLATE_SHA="$(sha256sum \
+            "$TARGET_TEMPLATE" | cut -d' ' -f1)"
+          ACTUAL_BUNDLE_SHA="$(sha256sum \
+            lambda/url-ingest-handler.bundle.js | cut -d' ' -f1)"
+          [[ "$ACTUAL_TEMPLATE_SHA" == "$EXPECTED_TEMPLATE_SHA" ]]
+          [[ "$ACTUAL_BUNDLE_SHA" == "$EXPECTED_BUNDLE_SHA" ]]
+          ASSET_MANIFEST="cdk.out.execute/${STACK_NAME}.assets.json"
+          ASSET_ID="$(jq -r \
+            '.files | to_entries[] | select(.value.displayName == "UrlIntakeFunction/Code") | .key' \
+            "$ASSET_MANIFEST")"
+          ASSET_PATH="$(jq -r --arg id "$ASSET_ID" '.files[$id].source.path' "$ASSET_MANIFEST")"
+          ASSET_BUILD_DIR="$(mktemp -d)"
+          cp "cdk.out.execute/${ASSET_PATH}/url-ingest-handler.bundle.js" \
+            "${ASSET_BUILD_DIR}/url-ingest-handler.bundle.js"
+          touch -t 198001010000 "${ASSET_BUILD_DIR}/url-ingest-handler.bundle.js"
+          REBUILT_ASSET_ZIP="${RUNNER_TEMP}/${ASSET_ID}-execute.zip"
+          (cd "$ASSET_BUILD_DIR" && zip -q -X "$REBUILT_ASSET_ZIP" url-ingest-handler.bundle.js)
+          [[ "$(openssl dgst -sha256 -binary "$REBUILT_ASSET_ZIP" | base64 -w 0)" == \
+            "$EXPECTED_ASSET_CHECKSUM" ]]
+          echo "ASSET_ID=${ASSET_ID}" >> "$GITHUB_ENV"
+
+      - name: Revalidate fresh governance and economic attestations
+        if: inputs.phase != 'deactivate'
+        env:
+          ALERT_PATH_VERIFIED_AT: ${{ vars.ALERT_PATH_VERIFIED_AT }}
+          AWS_MUTATION_EXCEPTION: ${{ vars.AWS_MUTATION_EXCEPTION }}
+          CANARY_DEPLOYMENTS_ENABLED: ${{ vars.CANARY_DEPLOYMENTS_ENABLED }}
+          CANARY_GOVERNANCE_RECORD: ${{ vars.CANARY_GOVERNANCE_RECORD }}
+          CANARY_IDENTITY_DECISION: ${{ vars.CANARY_IDENTITY_DECISION }}
+          COST_REVIEWED_AT: ${{ vars.COST_REVIEWED_AT }}
+          CREDITS_REVIEWED_AT: ${{ vars.CREDITS_REVIEWED_AT }}
+          GROSS_ACTUAL_USD: ${{ vars.GROSS_ACTUAL_USD }}
+          GROSS_FORECAST_USD: ${{ vars.GROSS_FORECAST_USD }}
+          PROMOTIONAL_CREDIT_BALANCE_USD: ${{ secrets.PROMOTIONAL_CREDIT_BALANCE_USD }}
+          PROMOTIONAL_CREDIT_EXPIRES_AT: ${{ vars.PROMOTIONAL_CREDIT_EXPIRES_AT }}
+        run: npm run predeploy:attest
+
+      - name: Recompute exact deployment-parameter fingerprint
+        id: parameter_fingerprint
+        env:
+          CANARY_ALLOWED_SUBJECT_SHA256: ${{ secrets.CANARY_ALLOWED_SUBJECT_SHA256 }}
+          COST_ALERT_EMAIL: ${{ secrets.COST_ALERT_EMAIL }}
+          DEPLOYMENT_FINGERPRINT_KEY: ${{ secrets.DEPLOYMENT_FINGERPRINT_KEY }}
+          OPERATOR_AUTH_DOMAIN_PREFIX: ${{ vars.OPERATOR_AUTH_DOMAIN_PREFIX }}
+        run: |
+          set -euo pipefail
+          VALUE="$(node --require ts-node/register \
+            scripts/deployment-parameter-fingerprint.ts "$PHASE")"
+          [[ "$VALUE" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$VALUE" == "$EXPECTED_PARAMETER_FINGERPRINT" ]]
+          if [[ "$PHASE" == private ]]; then
+            SECURITY_BINDING="$(node --require ts-node/register \
+              scripts/deployment-parameter-fingerprint.ts --canary-security-binding)"
+            [[ "$SECURITY_BINDING" == "$EXPECTED_SECURITY_BINDING" ]]
+          else
+            SECURITY_BINDING=not-applicable
+          fi
+          echo "value=${VALUE}" >> "$GITHUB_OUTPUT"
+          echo "security_binding=${SECURITY_BINDING}" >> "$GITHUB_OUTPUT"
+
+      - name: Obtain execute-only AWS credentials
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          allowed-account-ids: '904851777129'
+          aws-region: eu-west-1
+          role-session-name: hub-operator-${{ github.run_id }}-execute
+          role-to-assume: arn:aws:iam::904851777129:role/HUBOptimusOperatorExecute
+
+      - name: Revalidate source, AWS state and canary-window freshness
+        run: |
+          set -euo pipefail
+          npm run predeploy:check -- "--phase=${PHASE}"
+
+      - name: Verify and execute only the prepared change-set ARN
+        env:
+          OPERATOR_AUTH_DOMAIN_PREFIX: ${{ vars.OPERATOR_AUTH_DOMAIN_PREFIX }}
+          PARAMETER_FINGERPRINT: ${{ steps.parameter_fingerprint.outputs.value }}
+          SECURITY_BINDING: ${{ steps.parameter_fingerprint.outputs.security_binding }}
+        run: |
+          set -euo pipefail
+          verify_live_identity() {
+            local stack_json="$1"
+            local user_pool_id user_pool_client_id live_user_pool live_user_pool_client
+            user_pool_id="$(jq -r \
+              '.Stacks[0].Outputs[] | select(.OutputKey == "OperatorUserPoolId") | .OutputValue' \
+              "$stack_json")"
+            user_pool_client_id="$(jq -r \
+              '.Stacks[0].Outputs[] | select(.OutputKey == "OperatorWebClientId") | .OutputValue' \
+              "$stack_json")"
+            [[ "$user_pool_id" =~ ^eu-west-1_[A-Za-z0-9]+$ ]]
+            [[ "$user_pool_client_id" =~ ^[a-z0-9]+$ ]]
+            live_user_pool="$(aws cognito-idp describe-user-pool \
+              --user-pool-id "$user_pool_id" \
+              --region "$AWS_REGION" --output json)"
+            jq -e '
+              .UserPool.AdminCreateUserConfig.AllowAdminCreateUserOnly == true
+              and .UserPool.MfaConfiguration == "ON"
+              and .UserPool.SoftwareTokenMfaConfiguration.Enabled == true
+            ' <<< "$live_user_pool" >/dev/null
+            live_user_pool_client="$(aws cognito-idp describe-user-pool-client \
+              --user-pool-id "$user_pool_id" \
+              --client-id "$user_pool_client_id" \
+              --region "$AWS_REGION" --output json)"
+            jq -e '
+              .UserPoolClient.AllowedOAuthFlowsUserPoolClient == true
+              and ([.UserPoolClient.AllowedOAuthFlows[]?] | sort) == ["code"]
+              and ([.UserPoolClient.AllowedOAuthScopes[]?] | sort)
+                == ["email", "openid", "operator/intake"]
+              and ([.UserPoolClient.CallbackURLs[]?] | sort)
+                == ["https://huboptimus.dev/operator/"]
+              and ([.UserPoolClient.LogoutURLs[]?] | sort)
+                == ["https://huboptimus.dev/operator/"]
+              and ((.UserPoolClient.ClientSecret // "") == "")
+              and ([.UserPoolClient.ExplicitAuthFlows[]?] | sort)
+                == ["ALLOW_REFRESH_TOKEN_AUTH"]
+            ' <<< "$live_user_pool_client" >/dev/null
+          }
+          [[ "$CHANGE_SET_ARN" == arn:aws:cloudformation:eu-west-1:904851777129:changeSet/operator-${PHASE}-* ]]
+          case "$PHASE" in
+            foundation) EXPECTED_CHANGE_SET_TYPE=CREATE ;;
+            controls|private|deactivate) EXPECTED_CHANGE_SET_TYPE=UPDATE ;;
+            *) echo 'Unsupported phase' >&2; exit 1 ;;
+          esac
+          [[ "$(aws s3api get-bucket-versioning \
+            --bucket "$ASSET_BUCKET" \
+            --expected-bucket-owner "$AWS_ACCOUNT_ID" \
+            --region "$AWS_REGION" --query Status --output text)" == Enabled ]]
+          REMOTE_ASSET="$(aws s3api head-object \
+            --bucket "$ASSET_BUCKET" \
+            --key "${ASSET_ID}.zip" \
+            --version-id "$EXPECTED_ASSET_VERSION_ID" \
+            --expected-bucket-owner "$AWS_ACCOUNT_ID" \
+            --region "$AWS_REGION" --output json)"
+          [[ "$(jq -r '.VersionId // empty' <<< "$REMOTE_ASSET")" == "$EXPECTED_ASSET_VERSION_ID" ]]
+          TARGET_TEMPLATE="cdk.out.execute/${STACK_NAME}.template.json"
+          if [[ "$PHASE" == foundation ]]; then
+            CURRENT_TEMPLATE=ABSENT
+          else
+            EXPECTED_CURRENT_TEMPLATE="cdk.out.execute-current/${STACK_NAME}.template.json"
+            CURRENT_TEMPLATE="${RUNNER_TEMP}/deployed-current-template-execute.json"
+            aws cloudformation get-template \
+              --stack-name "$STACK_NAME" \
+              --template-stage Original \
+              --region "$AWS_REGION" \
+              --output json | jq \
+                '.TemplateBody | if type == "string" then fromjson else . end' \
+                > "$CURRENT_TEMPLATE"
+            [[ "$(jq '[.Resources[] | select(.Type == "AWS::Lambda::Function")] | length' \
+              "$CURRENT_TEMPLATE")" == 1 ]]
+            CURRENT_ASSET_VERSION="$(jq -r \
+              '.Resources[] | select(.Type == "AWS::Lambda::Function") | .Properties.Code.S3ObjectVersion // empty' \
+              "$CURRENT_TEMPLATE")"
+            [[ -n "$CURRENT_ASSET_VERSION" ]]
+            CURRENT_LAMBDA_ID="$(jq -r \
+              '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::Function") | .key' \
+              "$EXPECTED_CURRENT_TEMPLATE")"
+            jq --arg id "$CURRENT_LAMBDA_ID" --arg version "$CURRENT_ASSET_VERSION" \
+              '.Resources[$id].Properties.Code.S3ObjectVersion = $version' \
+              "$EXPECTED_CURRENT_TEMPLATE" > "${EXPECTED_CURRENT_TEMPLATE}.versioned"
+            mv "${EXPECTED_CURRENT_TEMPLATE}.versioned" "$EXPECTED_CURRENT_TEMPLATE"
+            npm run verify:change-set -- template "$EXPECTED_CURRENT_TEMPLATE" "$CURRENT_TEMPLATE"
+          fi
+          CHANGE_SET_TEMPLATE="${RUNNER_TEMP}/change-set-template-execute.json"
+          CHANGE_SET_JSON="${RUNNER_TEMP}/change-set-execute.json"
+          aws cloudformation get-template \
+            --change-set-name "$CHANGE_SET_ARN" \
+            --template-stage Original \
+            --region "$AWS_REGION" \
+            --output json | jq \
+              '.TemplateBody | if type == "string" then fromjson else . end' \
+              > "$CHANGE_SET_TEMPLATE"
+          aws cloudformation describe-change-set \
+            --change-set-name "$CHANGE_SET_ARN" \
+            --region "$AWS_REGION" \
+            --output json > "$CHANGE_SET_JSON"
+          npm run verify:change-set -- template "$TARGET_TEMPLATE" "$CHANGE_SET_TEMPLATE"
+          npm run verify:change-set -- changes "$CURRENT_TEMPLATE" "$TARGET_TEMPLATE" "$CHANGE_SET_JSON"
+
+          [[ "$(jq -r '.Status' "$CHANGE_SET_JSON")" == CREATE_COMPLETE ]]
+          [[ "$(jq -r '.ExecutionStatus' "$CHANGE_SET_JSON")" == AVAILABLE ]]
+          [[ "$(jq -r '.StackName' "$CHANGE_SET_JSON")" == "$STACK_NAME" ]]
+          [[ "$(jq -r '.Capabilities | sort | join(",")' "$CHANGE_SET_JSON")" == CAPABILITY_IAM ]]
+          [[ "$(jq -r '.IncludeNestedStacks // false' "$CHANGE_SET_JSON")" == false ]]
+          [[ "$(jq -r '.Description' "$CHANGE_SET_JSON")" == \
+            "HUB_Optimus ${PHASE} ${EXPECTED_CHANGE_SET_TYPE} ${SOURCE_SHA} ${EXPECTED_TEMPLATE_SHA} ${PARAMETER_FINGERPRINT}" ]]
+          parameter_value() {
+            local key="$1"
+            jq -r --arg key "$key" \
+              '.Parameters[] | select(.ParameterKey == $key) | .ParameterValue // empty' \
+              "$CHANGE_SET_JSON"
+          }
+          if [[ "$PHASE" != deactivate ]]; then
+            [[ "$(parameter_value OperatorCallbackUrl)" == https://huboptimus.dev/operator/ ]]
+            [[ "$(parameter_value OperatorLogoutUrl)" == https://huboptimus.dev/operator/ ]]
+          fi
+          if [[ "$PHASE" == controls || "$PHASE" == private ]]; then
+            [[ "$(parameter_value OperatorAuthDomainPrefix)" == "$OPERATOR_AUTH_DOMAIN_PREFIX" ]]
+          fi
+          if [[ "$PHASE" == private ]]; then
+            [[ "$(parameter_value CanaryStartedAt)" == "$CANARY_STARTED_AT" ]]
+            [[ "$(parameter_value CanaryExpiresAt)" == "$CANARY_EXPIRES_AT" ]]
+            [[ "$(parameter_value CanarySecurityBindingSha256)" == "$SECURITY_BINDING" ]]
+          fi
+          if [[ "$PHASE" == deactivate ]]; then
+            for key in CostAlertEmail OperatorAuthDomainPrefix OperatorCallbackUrl OperatorLogoutUrl; do
+              [[ "$(jq -r --arg key "$key" \
+                '.Parameters[] | select(.ParameterKey == $key) | .UsePreviousValue // false' \
+                "$CHANGE_SET_JSON")" == true ]]
+            done
+          fi
+
+          if [[ "$PHASE" != foundation ]]; then
+            PRE_EXECUTE_STACK_JSON="${RUNNER_TEMP}/pre-execute-stack.json"
+            aws cloudformation describe-stacks \
+              --stack-name "$STACK_NAME" --region "$AWS_REGION" \
+              --output json > "$PRE_EXECUTE_STACK_JSON"
+            verify_live_identity "$PRE_EXECUTE_STACK_JSON"
+          fi
+
+          aws cloudformation execute-change-set \
+            --change-set-name "$CHANGE_SET_ARN" \
+            --region "$AWS_REGION"
+          if [[ "$EXPECTED_CHANGE_SET_TYPE" == CREATE ]]; then
+            aws cloudformation wait stack-create-complete \
+              --stack-name "$STACK_NAME" --region "$AWS_REGION"
+          else
+            aws cloudformation wait stack-update-complete \
+              --stack-name "$STACK_NAME" --region "$AWS_REGION"
+          fi
+          DEPLOYED_STACK_JSON="${RUNNER_TEMP}/deployed-stack.json"
+          aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" --region "$AWS_REGION" \
+            --output json > "$DEPLOYED_STACK_JSON"
+          [[ "$(jq -r '.Stacks | length' "$DEPLOYED_STACK_JSON")" == 1 ]]
+          [[ "$(jq -r '.Stacks[0].RoleARN' "$DEPLOYED_STACK_JSON")" == "$CFN_EXECUTION_ROLE_ARN" ]]
+          ACTUAL_PHASE="$(jq -r \
+            '.Stacks[0].Outputs[] | select(.OutputKey == "DeploymentPhase") | .OutputValue' \
+            "$DEPLOYED_STACK_JSON")"
+          [[ "$ACTUAL_PHASE" == "${TARGET_PHASE^^}" ]]
+          SIGNUP_STATE="$(jq -r \
+            '.Stacks[0].Outputs[] | select(.OutputKey == "PublicSignupState") | .OutputValue' \
+            "$DEPLOYED_STACK_JSON")"
+          [[ "$SIGNUP_STATE" == DISABLED ]]
+          verify_live_identity "$DEPLOYED_STACK_JSON"
+          EXPECTED_CONCURRENCY=0
+          [[ "$TARGET_PHASE" == private ]] && EXPECTED_CONCURRENCY=1
+          ACTUAL_CONCURRENCY="$(aws lambda get-function-concurrency \
+            --function-name hub-optimus-operator-url-intake \
+            --region "$AWS_REGION" \
+            --query ReservedConcurrentExecutions --output text)"
+          [[ "$ACTUAL_CONCURRENCY" == "$EXPECTED_CONCURRENCY" ]]
+          DEPLOYED_CODE_SHA="$(aws lambda get-function \
+            --function-name hub-optimus-operator-url-intake \
+            --region "$AWS_REGION" --query Configuration.CodeSha256 --output text)"
+          [[ "$DEPLOYED_CODE_SHA" == "$EXPECTED_ASSET_CHECKSUM" ]]
+          if [[ "$TARGET_PHASE" == private ]]; then
+            [[ "$(aws scheduler get-schedule \
+              --group-name "${STACK_NAME}-canary" \
+              --name "${STACK_NAME}-canary-auto-stop" \
+              --region "$AWS_REGION" --query State --output text)" == ENABLED ]]
+          fi
+
+          {
+            echo '## Executed reviewed Operator change set'
+            echo
+            echo "- Source SHA: \`${SOURCE_SHA}\`"
+            echo "- Phase: \`${ACTUAL_PHASE}\`"
+            echo "- Change set: \`${CHANGE_SET_ARN}\`"
+            echo "- Lambda concurrency: \`${ACTUAL_CONCURRENCY}\`"
+            echo "- Lambda package checksum verified: \`${EXPECTED_ASSET_CHECKSUM}\`"
+            echo '- Public signup remains disabled.'
+            echo '- Live Cognito signup, MFA, OAuth-code and direct-auth settings verified.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  contain-private-failure:
+    name: Fail-closed containment after a private execution error
+    needs:
+      - prepare
+      - execute
+    if: ${{ always() && (inputs.phase == 'private' || inputs.phase == 'deactivate') && needs.execute.result != 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    environment: operator-private-canary-stop
+    steps:
+      - name: Obtain stop-only AWS credentials
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          allowed-account-ids: '904851777129'
+          aws-region: eu-west-1
+          role-duration-seconds: 10800
+          role-session-name: hub-operator-${{ github.run_id }}-contain
+          role-to-assume: arn:aws:iam::904851777129:role/HUBOptimusOperatorStop
+
+      - name: Force zero concurrency after stack stability
+        env:
+          AWS_REGION: eu-west-1
+          FUNCTION_NAME: hub-optimus-operator-url-intake
+        run: |
+          set -euo pipefail
+          CALLER_ARN="$(aws sts get-caller-identity --query Arn --output text)"
+          [[ "$CALLER_ARN" == arn:aws:sts::904851777129:assumed-role/HUBOptimusOperatorStop/* ]]
+          try_concurrency_zero() {
+            aws lambda put-function-concurrency \
+              --function-name "$FUNCTION_NAME" \
+              --reserved-concurrent-executions 0 \
+              --region "$AWS_REGION" >/dev/null
+          }
+          set_concurrency_zero() {
+            for _ in $(seq 1 12); do
+              if try_concurrency_zero; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
+          set_concurrency_zero || echo 'Initial stop is waiting for stack stability.'
+          STACK_STABLE=false
+          for _ in $(seq 1 720); do
+            if STACK_STATUS="$(aws cloudformation describe-stacks \
+              --stack-name hub-optimus-operator-infra \
+              --region "$AWS_REGION" \
+              --query 'Stacks[0].StackStatus' --output text)"; then
+              if [[ "$STACK_STATUS" != *_IN_PROGRESS ]]; then
+                STACK_STABLE=true
+                break
+              fi
+            fi
+            try_concurrency_zero || true
+            sleep 10
+          done
+          set_concurrency_zero
+          [[ "$(aws lambda get-function-concurrency \
+            --function-name "$FUNCTION_NAME" \
+            --region "$AWS_REGION" \
+            --query ReservedConcurrentExecutions --output text)" == 0 ]]
+          [[ "$STACK_STABLE" == true ]]

@@ -6,7 +6,7 @@
 | Síntoma | Causa probable | Acción |
 | --- | --- | --- |
 | Se queda en `6 %` | El navegador todavía ejecuta el worker antiguo `v0-26`. | Recarga dos veces o abre una pestaña privada; confirma después que aparece el flujo manual/local. |
-| Una URL sola pide texto | Es el límite intencional del Operator público `v0-27`; no se envió ninguna petición. | Pega el texto completo o espera al Operator privado autenticado. |
+| Una URL sola pide texto | Es el límite intencional del Operator público `v0-28`; no se envió ninguna petición. | Pega el texto completo o usa el Operator privado solo cuando esté autenticado y habilitado. |
 | URL + texto no avanza | Falta revisar o confirmar los pasajes propuestos. | Revisa la selección, marca la confirmación y pulsa de nuevo. |
 | Aparece “1.200 caracteres” | Es el contexto opcional, no el máximo de la fuente. | Introduce la fuente en el campo de texto principal. |
 | Hay pasajes seleccionados pero no borrador | Falta la confirmación humana. | Revisa, marca la confirmación y pulsa de nuevo. |

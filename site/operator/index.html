@@ -2,6 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <script>
+    (() => {
+      "use strict";
+      const callbackFields = [
+        "code",
+        "state",
+        "error",
+        "error_description",
+        "error_uri",
+        "iss",
+        "session_state"
+      ];
+      const current = new URL(window.location.href);
+      if (!callbackFields.some((field) => current.searchParams.has(field))) return;
+      const snapshot = {
+        callbackUrl: `${current.origin}${current.pathname}`
+      };
+      callbackFields.forEach((field) => {
+        const values = current.searchParams.getAll(field);
+        if (values.length) snapshot[field] = Object.freeze(values.slice());
+        current.searchParams.delete(field);
+      });
+      Object.defineProperty(globalThis, "__HUB_OPTIMUS_OPERATOR_OAUTH_CALLBACK_V1__", {
+        configurable: true,
+        enumerable: false,
+        writable: false,
+        value: Object.freeze(snapshot)
+      });
+      window.history.replaceState(
+        null,
+        "",
+        `${current.pathname}${current.search}${current.hash}`
+      );
+    })();
+  </script>
+  <script src="./runtime-config.v1.js"></script>
+  <script src="./auth.v1.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HUB_Optimus Operator</title>
   <meta name="description" content="Local-first HUB_Optimus browser prototype for preparing structured drafts for human review.">
@@ -453,6 +490,40 @@
 
     .operator-note b {
       color: var(--brand-signal);
+    }
+
+    .operator-auth-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+      padding: 0.9rem;
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.34);
+      border-radius: 0.85rem;
+      background: rgba(0, 8, 22, 0.68);
+    }
+
+    .operator-auth-panel p {
+      flex: 1 1 24rem;
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .operator-auth-panel button {
+      min-height: 2.65rem;
+      padding: 0.55rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 0.7rem;
+      color: var(--text);
+      background: var(--panel-2);
+      cursor: pointer;
+    }
+
+    .operator-auth-panel button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
     }
 
     .grid {
@@ -1309,6 +1380,15 @@
     <p class="operator-note">
       <b data-op-i18n="scopeLabel">Scope:</b> <span data-op-i18n="scopeText">organize submitted material into an editable draft, preserve source provenance and uncertainty, then hand the draft to a separately controlled runtime only when an operator chooses to do so.</span>
     </p>
+
+    <section class="operator-auth-panel" id="operator_auth_panel" aria-labelledby="operator_auth_title">
+      <p>
+        <b id="operator_auth_title" data-op-i18n="msgPrivateIntakeRequiredTitle">Authenticated URL intake required</b><br>
+        <span id="operator_auth_status" role="status" aria-live="polite" data-op-i18n="msgPrivateIntakeRequiredWait" data-op-message-key="msgPrivateIntakeRequiredWait" data-op-message-parameters="{}">URL kept local. Paste the source text or open the private Operator; no request was sent.</span>
+      </p>
+      <button id="operator_auth_login" type="button" disabled data-op-i18n="privateIntakeLink">Sign in to private Operator</button>
+      <button id="operator_auth_logout" type="button" hidden data-op-i18n="privateAuthLogout">Sign out</button>
+    </section>
 
     <form class="panel full product-intake" id="product_intake" aria-labelledby="product_intake_title">
       <h2 id="product_intake_title" data-op-i18n="intakeTitle">Prepare a review draft</h2>
@@ -4233,7 +4313,13 @@
     // OPERATOR_CONTROLLED_INTAKE_CONTRACT_START
     const PRIVATE_OPERATOR_LOGIN_URL = "https://api.huboptimus.dev/oauth2/start?rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F";
     const PUBLIC_OPERATOR_CONTROLLED_URL_INTAKE_ENABLED = false;
-    const CONTROLLED_URL_INTAKE_ENDPOINT = "https://api.huboptimus.dev/intake/url";
+    const OPERATOR_PRIVATE_AUTH = globalThis.HUB_OPTIMUS_OPERATOR_AUTH || null;
+    const CONTROLLED_URL_INTAKE_ENDPOINT = (
+      OPERATOR_PRIVATE_AUTH?.getIntakeEndpoint?.() ||
+      "https://api.huboptimus.dev/intake/url"
+    );
+    const REQUIRED_OPERATOR_SW_VERSION = "hub-optimus-operator-v0-28";
+    const OPERATOR_SW_VERSION_REQUEST = "HUB_OPTIMUS_OPERATOR_SW_VERSION_V1";
     const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;
     const CONTROLLED_INTAKE_LIMITS = Object.freeze({
       urlCharacters: 2048,
@@ -4308,9 +4394,19 @@
     );
 
     function controlledUrlIntakeAvailable() {
-      // GitHub Pages is deliberately manual/local. Authenticated retrieval is
-      // a separate private deployment and cannot be enabled by this artifact.
+      if (OPERATOR_PRIVATE_AUTH?.isEnabled?.()) {
+        return OPERATOR_PRIVATE_AUTH.isAuthenticated();
+      }
+      // The checked-in runtime config is deliberately disabled. Retain the
+      // original public/local behavior unless a reviewed private config and an
+      // in-memory access token are both present.
       return PUBLIC_OPERATOR_CONTROLLED_URL_INTAKE_ENABLED;
+    }
+
+    function privateOperatorLoginHref() {
+      return OPERATOR_PRIVATE_AUTH?.isEnabled?.()
+        ? "#operator_auth_panel"
+        : PRIVATE_OPERATOR_LOGIN_URL;
     }
 
     function isControlledIntakeObject(value) {
@@ -4563,7 +4659,7 @@
           <section class="output-card full">
             <h3>${escapeHtml(opText("msgPrivateIntakeRequiredTitle"))}</h3>
             <p>${escapeHtml(opText("msgPrivateIntakeRequiredBody"))}</p>
-            <p><a href="${PRIVATE_OPERATOR_LOGIN_URL}" rel="noopener noreferrer">${escapeHtml(opText("privateIntakeLink"))}</a></p>
+            <p><a href="${privateOperatorLoginHref()}" rel="noopener noreferrer">${escapeHtml(opText("privateIntakeLink"))}</a></p>
             <p class="meta">${escapeHtml(opText("msgUrlFallbackBoundary"))}</p>
           </section>
         `;
@@ -4589,6 +4685,10 @@
     }
 
     async function readControlledUrlText(sourceUrl, { signal = undefined } = {}) {
+      const accessToken = OPERATOR_PRIVATE_AUTH?.getAccessToken?.();
+      if (!accessToken || !OPERATOR_PRIVATE_AUTH?.isEnabled?.()) {
+        throw new ControlledIntakeError("private_intake_required", 401);
+      }
       const deadlineController = typeof AbortController === "function"
         ? new AbortController()
         : null;
@@ -4612,15 +4712,27 @@
           response = await fetch(CONTROLLED_URL_INTAKE_ENDPOINT, {
             method: "POST",
             headers: {
+              "Authorization": `Bearer ${accessToken}`,
               "Content-Type": "application/json"
             },
             body: JSON.stringify({ url: sourceUrl }),
+            cache: "no-store",
+            credentials: "omit",
+            redirect: "error",
             signal: requestSignal
           });
         } catch (error) {
           if (timedOut) throw new ControlledIntakeError("url_fetch_timeout", 504);
           if (signal?.aborted || error?.name === "AbortError") throw error;
           throw new ControlledIntakeError("url_fetch_unavailable");
+        }
+
+        if (response?.status === 401 || response?.status === 403) {
+          OPERATOR_PRIVATE_AUTH.clearTokens("authorization_rejected");
+          throw new ControlledIntakeError("private_intake_required", response.status);
+        }
+        if (response?.status === 429) {
+          throw new ControlledIntakeError("rate_limited", 429);
         }
 
         let payload;
@@ -4660,6 +4772,100 @@
       }
     }
     // OPERATOR_CONTROLLED_INTAKE_CONTRACT_END
+
+    function renderPrivateAuthState(authState = null) {
+      const loginButton = $("operator_auth_login");
+      const logoutButton = $("operator_auth_logout");
+      const statusNode = $("operator_auth_status");
+      if (!loginButton || !logoutButton || !statusNode) return;
+
+      const state = authState?.state || "disabled";
+      const enabled = Boolean(authState?.enabled);
+      const authenticated = Boolean(authState?.authenticated);
+      loginButton.hidden = authenticated;
+      loginButton.disabled = !enabled || ["completing", "redirecting"].includes(state);
+      logoutButton.hidden = !authenticated;
+      logoutButton.disabled = !authenticated;
+
+      const messageKey = {
+        authenticated: "privateAuthAuthenticated",
+        completing: "privateAuthCompleting",
+        redirecting: "privateAuthRedirecting",
+        signed_out: "privateAuthSignedOut",
+        error: "privateAuthError",
+        worker_update_required: "privateAuthWorkerUpdate",
+        disabled: "msgPrivateIntakeRequiredWait",
+        uninitialized: "privateAuthChecking"
+      }[state] || "privateAuthUnavailable";
+      setOperatorMessage(statusNode, messageKey);
+    }
+
+    async function initializePrivateOperatorAuth() {
+      if (!OPERATOR_PRIVATE_AUTH) {
+        renderPrivateAuthState({ state: "disabled", enabled: false, authenticated: false });
+        return;
+      }
+      OPERATOR_PRIVATE_AUTH.onChange(renderPrivateAuthState);
+      try {
+        await OPERATOR_PRIVATE_AUTH.initialize();
+      } catch {
+        // The auth module publishes a non-secret error state for presentation.
+      }
+    }
+
+    async function beginPrivateOperatorLogin() {
+      if (!OPERATOR_PRIVATE_AUTH) return;
+      try {
+        if (!(await privateOperatorServiceWorkerReady())) {
+          renderPrivateAuthState({
+            state: "worker_update_required",
+            enabled: true,
+            authenticated: false
+          });
+          return;
+        }
+        await OPERATOR_PRIVATE_AUTH.login();
+      } catch {
+        renderPrivateAuthState({ state: "error", enabled: true, authenticated: false });
+      }
+    }
+
+    async function privateOperatorServiceWorkerReady() {
+      if (
+        !("serviceWorker" in navigator) ||
+        !navigator.serviceWorker.controller ||
+        typeof MessageChannel !== "function"
+      ) return false;
+
+      return new Promise((resolve) => {
+        const channel = new MessageChannel();
+        let settled = false;
+        const finish = (ready) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          channel.port1.close();
+          channel.port2.close();
+          resolve(Boolean(ready));
+        };
+        const timer = setTimeout(() => finish(false), 1000);
+        channel.port1.onmessage = (event) => {
+          finish(event.data?.version === REQUIRED_OPERATOR_SW_VERSION);
+        };
+        try {
+          navigator.serviceWorker.controller.postMessage(
+            { type: OPERATOR_SW_VERSION_REQUEST },
+            [channel.port2]
+          );
+        } catch {
+          finish(false);
+        }
+      });
+    }
+
+    function endPrivateOperatorSession() {
+      OPERATOR_PRIVATE_AUTH?.logout?.();
+    }
 
     function currentShareableMemory() {
       if (!currentMemoryRecord) {
@@ -6252,6 +6458,10 @@
     });
     $("share_memory_link").addEventListener("click", shareMemoryLink);
     $("share_memory_whatsapp").addEventListener("click", shareMemoryWhatsapp);
+    $("operator_auth_login").addEventListener("click", () => {
+      void beginPrivateOperatorLogin();
+    });
+    $("operator_auth_logout").addEventListener("click", endPrivateOperatorSession);
     $("product_intake").addEventListener("submit", (event) => {
       event.preventDefault();
       void runProductAnalyze();
@@ -6332,6 +6542,7 @@
     setMemoryActionsEnabled(false);
     syncProductInputState();
     updateJson();
+    void initializePrivateOperatorAuth();
     void initializeLearningWorkspace();
 
     if ("serviceWorker" in navigator) {

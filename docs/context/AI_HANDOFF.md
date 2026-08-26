@@ -101,6 +101,29 @@ protected `main` and the later ruleset decision requires the head-bound check.
 Issue `#1881` is the current owner-facing reorganization ledger. Its execution
 order and safety gates remain controlling for the open pull-request portfolio.
 
+## Operator URL-intake canary handoff
+
+Issue `#1917` and draft PR `#1918` are the scoped records for controlled URL
+intake. The v0.4 candidate lives only under
+`ops/aws/operator-url-intake/` plus its three root GitHub workflows. It is not a
+public crawler, video analyzer, truth engine, or authorization to deploy.
+
+The protected path is deliberately phased: `foundation` creates disabled
+resources and the gross budget, `controls` adds tagged/anomaly/email controls,
+`private` opens one invitation-only two-hour canary, and `deactivate` restores
+controls after the emergency stop has verified Lambda concurrency `0`.
+Preparation and execution use different OIDC roles; a third role can only stop
+the fixed Lambda. Live Cognito configuration, immutable Lambda object version,
+change-set contents, exact source SHA, cost/credit attestations, and rollback
+state are revalidated by the workflow.
+
+Before any AWS mutation, verify and explicitly lift the mutation hold referenced
+by issue `#1831` for this exact scope, record the temporary Cognito identity
+exception, merge one owner-reviewed SHA to protected `main`, validate current
+gross actual/forecast and promotional-credit expiry, confirm alert delivery,
+and review the three OIDC roles and CDK bootstrap resources. Chat authorization
+alone does not satisfy those repository and AWS gates.
+
 ## Historical handoff archive
 
 The previous broad handoff is preserved byte-for-byte at

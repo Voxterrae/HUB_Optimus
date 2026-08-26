@@ -1,0 +1,32 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadCallerIdentity",
+      "Effect": "Allow",
+      "Action": "sts:GetCallerIdentity",
+      "Resource": "*"
+    },
+    {
+      "Sid": "ObserveOnlyFixedStackUntilStable",
+      "Effect": "Allow",
+      "Action": "cloudformation:DescribeStacks",
+      "Resource": "arn:aws:cloudformation:eu-west-1:904851777129:stack/hub-optimus-operator-infra/*"
+    },
+    {
+      "Sid": "DenyAssumingAnyRole",
+      "Effect": "Deny",
+      "Action": "sts:AssumeRole",
+      "Resource": "*"
+    },
+    {
+      "Sid": "StopOnlyFixedCanaryFunction",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:GetFunctionConcurrency",
+        "lambda:PutFunctionConcurrency"
+      ],
+      "Resource": "arn:aws:lambda:eu-west-1:904851777129:function:hub-optimus-operator-url-intake"
+    }
+  ]
+}
