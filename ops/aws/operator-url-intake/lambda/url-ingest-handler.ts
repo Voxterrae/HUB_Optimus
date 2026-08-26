@@ -6,6 +6,7 @@ import * as https from 'node:https';
 import type { IncomingMessage } from 'node:http';
 import { isIP } from 'node:net';
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { hasValidCanarySecurityBinding } from '../lib/canary-security-binding';
 
 const ALLOWED_CONTENT_TYPES = new Set([
   'application/xhtml+xml',
@@ -35,11 +36,12 @@ const DEFAULT_MAX_CONTENT_BYTES = 1_000_000;
 const DEFAULT_MAX_EXTRACTED_TEXT_CHARS = 24_000;
 const DEFAULT_MAX_REDIRECTS = 3;
 const DEFAULT_MAX_REQUEST_BYTES = 4_096;
-const DEFAULT_SUBJECT_REQUESTS_PER_DAY = 3;
+const DEFAULT_CANARY_REQUESTS_TOTAL = 3;
 const MAX_HTML_DEPTH = 256;
 const MAX_DNS_ADDRESSES = 16;
 const MAX_PRIMARY_REGIONS = 64;
 const MAX_URL_CHARACTERS = 2_048;
+const MAX_CANARY_WINDOW_MS = 2 * 60 * 60 * 1_000;
 const USER_AGENT = 'HUB_Optimus-Operator-URL-Intake/0.1 (+https://huboptimus.dev/operator/)';
 
 type HeaderValues = Record<string, string | readonly string[] | undefined>;
@@ -92,8 +94,8 @@ export interface Logger {
   warn(entry: unknown): void;
 }
 
-export interface SubjectQuota {
-  consume(subject: string): Promise<boolean>;
+export interface CanaryQuota {
+  consume(): Promise<boolean>;
 }
 
 export type LookupAll = (hostname: string) => Promise<readonly LookupAddress[]>;
@@ -101,10 +103,16 @@ export type Fetcher = (target: URL, submittedUrl?: string) => Promise<Controlled
 
 export interface HandlerOptions {
   readonly maxRequestBytes?: number;
+  readonly now?: () => number;
 }
 
-export interface DailyQuotaWindow {
-  readonly day: string;
+export interface CanaryWindowStatus {
+  readonly active: boolean;
+  readonly code: 'active' | 'invalid' | 'not_started' | 'expired';
+}
+
+export interface CanaryQuotaWindow {
+  readonly key: string;
   readonly expiresAt: number;
 }
 
@@ -161,13 +169,59 @@ export function parseBoundedPositiveInteger(
   return Number.isSafeInteger(parsed) && parsed > 0 && parsed <= maximum ? parsed : fallback;
 }
 
-export function dailyQuotaWindow(nowMs = Date.now()): DailyQuotaWindow {
-  const dayIndex = Math.floor(nowMs / 86_400_000);
+export function canaryWindowStatus(
+  startedAt: string | undefined,
+  expiresAt: string | undefined,
+  nowMs = Date.now(),
+): CanaryWindowStatus {
+  const utcTimestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+  if (startedAt === undefined
+    || expiresAt === undefined
+    || !utcTimestamp.test(startedAt)
+    || !utcTimestamp.test(expiresAt)) {
+    return { active: false, code: 'invalid' };
+  }
+  const startMs = Date.parse(startedAt);
+  const expiryMs = Date.parse(expiresAt);
+  if (!Number.isFinite(startMs)
+    || !Number.isFinite(expiryMs)
+    || expiryMs <= startMs
+    || expiryMs - startMs > MAX_CANARY_WINDOW_MS) {
+    return { active: false, code: 'invalid' };
+  }
+  if (nowMs < startMs) {
+    return { active: false, code: 'not_started' };
+  }
+  if (nowMs >= expiryMs) {
+    return { active: false, code: 'expired' };
+  }
+  return { active: true, code: 'active' };
+}
+
+export function isAllowedCanarySubject(
+  subject: string,
+  expectedSha256: string | undefined,
+): boolean {
+  if (!/^[0-9a-f]{64}$/.test(expectedSha256 ?? '')) {
+    return false;
+  }
+  return createHash('sha256').update(subject).digest('hex') === expectedSha256;
+}
+
+export function canaryQuotaWindow(
+  startedAt: string | undefined,
+  expiresAt: string | undefined,
+): CanaryQuotaWindow {
+  const status = canaryWindowStatus(startedAt, expiresAt, Date.parse(startedAt ?? ''));
+  if (!status.active || startedAt === undefined || expiresAt === undefined) {
+    throw new Error('invalid_canary_quota_window');
+  }
+  const expiryMs = Date.parse(expiresAt);
   return {
-    day: new Date(dayIndex * 86_400_000).toISOString().slice(0, 10),
-    // DynamoDB TTL deletion is asynchronous. Keep one grace day; a new UTC
-    // date always uses a different key, so stale items cannot consume quota.
-    expiresAt: (dayIndex + 2) * 86_400,
+    key: `canary:${createHash('sha256').update(`${startedAt}/${expiresAt}`).digest('hex')}`,
+    // DynamoDB TTL deletion is asynchronous. Keep a one-day grace period;
+    // every reviewed canary window has its own non-identifying key.
+    expiresAt: Math.floor(expiryMs / 1_000) + 86_400,
   };
 }
 
@@ -971,26 +1025,30 @@ export async function fetchPublicText(target: URL, submittedUrl = target.href): 
   }
 }
 
-class DynamoSubjectQuota implements SubjectQuota {
+class DynamoCanaryQuota implements CanaryQuota {
   private readonly client = new DynamoDBClient({});
 
-  async consume(subject: string): Promise<boolean> {
+  async consume(): Promise<boolean> {
     const tableName = process.env.QUOTA_TABLE_NAME;
     if (tableName === undefined || tableName === '') {
       throw new Error('quota_table_missing');
     }
     const limit = parseBoundedPositiveInteger(
-      process.env.PER_SUBJECT_REQUESTS_PER_DAY,
-      DEFAULT_SUBJECT_REQUESTS_PER_DAY,
-      DEFAULT_SUBJECT_REQUESTS_PER_DAY,
+      process.env.CANARY_REQUESTS_TOTAL,
+      DEFAULT_CANARY_REQUESTS_TOTAL,
+      DEFAULT_CANARY_REQUESTS_TOTAL,
     );
-    const window = dailyQuotaWindow();
-    const subjectHash = createHash('sha256').update(subject).digest('hex');
+    const window = canaryQuotaWindow(
+      process.env.CANARY_STARTED_AT,
+      process.env.CANARY_EXPIRES_AT,
+    );
 
     try {
       await this.client.send(new UpdateItemCommand({
         TableName: tableName,
-        Key: { subjectDay: { S: `${subjectHash}:${window.day}` } },
+        // The private canary has one shared window-wide ceiling. Do not store a
+        // Cognito subject or subject-derived identifier in DynamoDB.
+        Key: { canaryWindow: { S: window.key } },
         ConditionExpression: 'attribute_not_exists(#count) OR #count < :limit',
         ExpressionAttributeNames: {
           '#count': 'requestCount',
@@ -1061,7 +1119,7 @@ function authenticatedSubject(event: HttpApiEvent): string | undefined {
 
 export function createHandler(
   fetcher: Fetcher = fetchPublicText,
-  quota: SubjectQuota = new DynamoSubjectQuota(),
+  quota: CanaryQuota = new DynamoCanaryQuota(),
   logger: Logger = consoleLogger,
   options: HandlerOptions = {},
 ): (event: HttpApiEvent) => Promise<HttpApiResponse> {
@@ -1071,6 +1129,7 @@ export function createHandler(
       DEFAULT_MAX_REQUEST_BYTES,
       DEFAULT_MAX_REQUEST_BYTES,
     );
+  const now = options.now ?? Date.now;
 
   return async (event) => {
     const requestId = event.requestContext?.requestId ?? 'unknown';
@@ -1078,6 +1137,41 @@ export function createHandler(
     if (subject === undefined) {
       logger.warn({ event: 'intake.rejected', requestId, code: 'unauthorized' });
       return jsonResponse(401, { message: 'Unauthorized' });
+    }
+    if (!hasValidCanarySecurityBinding(
+      process.env.CANARY_ALLOWED_SUBJECT_SHA256,
+      process.env.CANARY_STARTED_AT,
+      process.env.CANARY_EXPIRES_AT,
+      process.env.CANARY_SECURITY_BINDING_SHA256,
+    )) {
+      logger.warn({ event: 'intake.rejected', requestId, code: 'canary_binding_invalid' });
+      return jsonResponse(503, { message: 'Private canary configuration is invalid' });
+    }
+    if (!isAllowedCanarySubject(subject, process.env.CANARY_ALLOWED_SUBJECT_SHA256)) {
+      logger.warn({ event: 'intake.rejected', requestId, code: 'unauthorized' });
+      return jsonResponse(401, { message: 'Unauthorized' });
+    }
+    const canaryWindow = canaryWindowStatus(
+      process.env.CANARY_STARTED_AT,
+      process.env.CANARY_EXPIRES_AT,
+      now(),
+    );
+    if (!canaryWindow.active) {
+      logger.warn({ event: 'intake.rejected', requestId, code: `canary_${canaryWindow.code}` });
+      return jsonResponse(503, { message: 'Private canary is not active' });
+    }
+
+    // Every authenticated invocation inside the window consumes the same
+    // three-attempt ceiling, including malformed or unsafe requests.
+    try {
+      const quotaAllowed = await quota.consume();
+      if (!quotaAllowed) {
+        logger.warn({ event: 'intake.rejected', requestId, code: 'rate_limited' });
+        return jsonResponse(429, { message: 'Too Many Requests' });
+      }
+    } catch {
+      logger.warn({ event: 'intake.rejected', requestId, code: 'quota_unavailable' });
+      return jsonResponse(503, { message: 'Service Unavailable' });
     }
 
     const rawBody = event.body ?? '';
@@ -1109,17 +1203,6 @@ export function createHandler(
     const urlFingerprint = typeof submittedUrl === 'string'
       ? createHash('sha256').update(submittedUrl).digest('hex').slice(0, 16)
       : undefined;
-
-    try {
-      const quotaAllowed = await quota.consume(subject);
-      if (!quotaAllowed) {
-        logger.warn({ event: 'intake.rejected', requestId, urlFingerprint, code: 'rate_limited' });
-        return jsonResponse(429, { message: 'Too Many Requests' });
-      }
-    } catch {
-      logger.warn({ event: 'intake.rejected', requestId, urlFingerprint, code: 'quota_unavailable' });
-      return jsonResponse(503, { message: 'Service Unavailable' });
-    }
 
     try {
       if (!hasExactUrlShape || typeof submittedUrl !== 'string') {
