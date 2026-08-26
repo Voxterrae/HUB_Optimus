@@ -1,0 +1,92 @@
+name: CDK Candidate Validation
+
+on:
+  pull_request:
+    paths:
+      - 'ops/aws/operator-url-intake/**'
+      - '.github/workflows/operator-url-intake-validation.yml'
+      - '.github/workflows/operator-private-canary.yml'
+      - '.github/workflows/operator-private-canary-stop.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'ops/aws/operator-url-intake/**'
+      - '.github/workflows/operator-url-intake-validation.yml'
+      - '.github/workflows/operator-private-canary.yml'
+      - '.github/workflows/operator-private-canary-stop.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SYNTHETIC_VALIDATION_SHA: 0000000000000000000000000000000000000000
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: ops/aws/operator-url-intake
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and test
+        run: npm run check
+
+      - name: Synthesize foundation structure
+        run: >-
+          npm run cdk -- synth hub-optimus-operator-infra
+          --output cdk.out.foundation
+          -c deploymentPhase=foundation
+          -c publicSignupEnabled=false
+          -c identityProviderDecision=cognito-temporary-canary
+          -c gitCommit=${SYNTHETIC_VALIDATION_SHA}
+          -c repoName=Voxterrae/HUB_Optimus
+          -c branchName=main
+          -c environmentName=private-canary
+
+      - name: Synthesize cost-controls structure
+        run: >-
+          npm run cdk -- synth hub-optimus-operator-infra
+          --output cdk.out.controls
+          -c deploymentPhase=controls
+          -c publicSignupEnabled=false
+          -c identityProviderDecision=cognito-temporary-canary
+          -c gitCommit=${SYNTHETIC_VALIDATION_SHA}
+          -c repoName=Voxterrae/HUB_Optimus
+          -c branchName=main
+          -c environmentName=private-canary
+
+      - name: Synthesize private-canary structure
+        run: >-
+          npm run cdk -- synth hub-optimus-operator-infra
+          --output cdk.out.private
+          -c deploymentPhase=private
+          -c publicSignupEnabled=false
+          -c identityProviderDecision=cognito-temporary-canary
+          -c gitCommit=${SYNTHETIC_VALIDATION_SHA}
+          -c repoName=Voxterrae/HUB_Optimus
+          -c branchName=main
+          -c environmentName=private-canary
+
+      - name: Verify staged Lambda assets
+        run: >-
+          npm run verify:cdk-assets --
+          cdk.out.foundation
+          cdk.out.controls
+          cdk.out.private

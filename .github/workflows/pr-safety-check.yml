@@ -37,6 +37,7 @@ jobs:
             "tools/kernel_guard.py"
             "v1_core/languages/"
             "docs/governance/"
+            "ops/aws/operator-url-intake/"
           )
 
           # Paths that trigger MEDIUM RISK classification
