@@ -18,6 +18,14 @@ EXPECTED_ACTION_PINS = {
         "5fda3b95a4ea91299a34e894583c3862153e4b97",
         "v7.0.0",
     ),
+    "actions/setup-node": (
+        "249970729cb0ef3589644e2896645e5dc5ba9c38",
+        "v6",
+    ),
+    "aws-actions/configure-aws-credentials": (
+        "e6de054238d6b7531b4efff3b6587d9aade6a06c",
+        "v6.2.3",
+    ),
     "actions/configure-pages": (
         "45bfe0192ca1faeb007ade9deae92b16b8254a0d",
         "v6.0.0",
