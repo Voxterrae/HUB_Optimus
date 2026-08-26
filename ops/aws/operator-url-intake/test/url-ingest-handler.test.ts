@@ -1,8 +1,11 @@
+import { createHash } from 'node:crypto';
 import {
   SafeIngestError,
+  canaryWindowStatus,
   createHandler,
-  dailyQuotaWindow,
+  canaryQuotaWindow,
   isAllowedContentType,
+  isAllowedCanarySubject,
   isPublicIp,
   parseBoundedPositiveInteger,
   pinnedRequestOptions,
@@ -13,11 +16,17 @@ import {
   validateTargetUrl,
 } from '../lambda/url-ingest-handler';
 import { OPERATOR_INTAKE_SCOPE } from '../frontend/pkce-client';
+import { canarySecurityBinding } from '../lib/canary-security-binding';
 
 const TEST_CLIENT_ID = 'operator-public-client';
 const TEST_REQUIRED_SCOPE = OPERATOR_INTAKE_SCOPE;
 const ORIGINAL_EXPECTED_CLIENT_ID = process.env.EXPECTED_CLIENT_ID;
 const ORIGINAL_REQUIRED_SCOPE = process.env.REQUIRED_SCOPE;
+const ORIGINAL_CANARY_STARTED_AT = process.env.CANARY_STARTED_AT;
+const ORIGINAL_CANARY_EXPIRES_AT = process.env.CANARY_EXPIRES_AT;
+const ORIGINAL_CANARY_ALLOWED_SUBJECT_SHA256 = process.env.CANARY_ALLOWED_SUBJECT_SHA256;
+const ORIGINAL_CANARY_SECURITY_BINDING_SHA256 = process.env.CANARY_SECURITY_BINDING_SHA256;
+const ALLOWED_SUBJECT = 'subject-1';
 
 function authenticatedClaims(subject: string): Record<string, string> {
   return {
@@ -31,6 +40,19 @@ function authenticatedClaims(subject: string): Record<string, string> {
 beforeAll(() => {
   process.env.EXPECTED_CLIENT_ID = TEST_CLIENT_ID;
   process.env.REQUIRED_SCOPE = TEST_REQUIRED_SCOPE;
+  process.env.CANARY_ALLOWED_SUBJECT_SHA256 = createHash('sha256')
+    .update(ALLOWED_SUBJECT)
+    .digest('hex');
+  const startMs = Math.floor((Date.now() - 60_000) / 1_000) * 1_000;
+  process.env.CANARY_STARTED_AT = new Date(startMs).toISOString().replace('.000Z', 'Z');
+  process.env.CANARY_EXPIRES_AT = new Date(startMs + 60 * 60 * 1_000)
+    .toISOString()
+    .replace('.000Z', 'Z');
+  process.env.CANARY_SECURITY_BINDING_SHA256 = canarySecurityBinding(
+    process.env.CANARY_ALLOWED_SUBJECT_SHA256,
+    process.env.CANARY_STARTED_AT,
+    process.env.CANARY_EXPIRES_AT,
+  );
 });
 
 afterAll(() => {
@@ -43,6 +65,26 @@ afterAll(() => {
     delete process.env.REQUIRED_SCOPE;
   } else {
     process.env.REQUIRED_SCOPE = ORIGINAL_REQUIRED_SCOPE;
+  }
+  if (ORIGINAL_CANARY_STARTED_AT === undefined) {
+    delete process.env.CANARY_STARTED_AT;
+  } else {
+    process.env.CANARY_STARTED_AT = ORIGINAL_CANARY_STARTED_AT;
+  }
+  if (ORIGINAL_CANARY_EXPIRES_AT === undefined) {
+    delete process.env.CANARY_EXPIRES_AT;
+  } else {
+    process.env.CANARY_EXPIRES_AT = ORIGINAL_CANARY_EXPIRES_AT;
+  }
+  if (ORIGINAL_CANARY_ALLOWED_SUBJECT_SHA256 === undefined) {
+    delete process.env.CANARY_ALLOWED_SUBJECT_SHA256;
+  } else {
+    process.env.CANARY_ALLOWED_SUBJECT_SHA256 = ORIGINAL_CANARY_ALLOWED_SUBJECT_SHA256;
+  }
+  if (ORIGINAL_CANARY_SECURITY_BINDING_SHA256 === undefined) {
+    delete process.env.CANARY_SECURITY_BINDING_SHA256;
+  } else {
+    process.env.CANARY_SECURITY_BINDING_SHA256 = ORIGINAL_CANARY_SECURITY_BINDING_SHA256;
   }
 });
 
@@ -78,13 +120,41 @@ describe('URL validation', () => {
 });
 
 describe('network and response policy', () => {
-  test('uses a three-request UTC-day quota window with TTL grace', () => {
-    const beforeMidnight = dailyQuotaWindow(Date.parse('2026-08-24T23:59:59.999Z'));
-    const afterMidnight = dailyQuotaWindow(Date.parse('2026-08-25T00:00:00.000Z'));
+  test('enforces one valid private canary window of at most two hours', () => {
+    const start = '2026-08-26T12:00:00Z';
+    expect(canaryWindowStatus(start, '2026-08-26T14:00:00Z', Date.parse(start)))
+      .toEqual({ active: true, code: 'active' });
+    expect(canaryWindowStatus(start, '2026-08-26T14:00:01Z', Date.parse(start)))
+      .toEqual({ active: false, code: 'invalid' });
+    expect(canaryWindowStatus(start, '2026-08-26T14:00:00Z', Date.parse(start) - 1))
+      .toEqual({ active: false, code: 'not_started' });
+    expect(canaryWindowStatus(start, '2026-08-26T14:00:00Z', Date.parse('2026-08-26T14:00:00Z')))
+      .toEqual({ active: false, code: 'expired' });
+    expect(canaryWindowStatus(undefined, undefined, Date.parse(start)))
+      .toEqual({ active: false, code: 'invalid' });
+  });
 
-    expect(beforeMidnight.day).toBe('2026-08-24');
-    expect(afterMidnight.day).toBe('2026-08-25');
-    expect(afterMidnight.expiresAt - beforeMidnight.expiresAt).toBe(86400);
+  test('uses one three-attempt quota key even when the canary crosses UTC midnight', () => {
+    const window = canaryQuotaWindow(
+      '2026-08-24T23:30:00Z',
+      '2026-08-25T01:30:00Z',
+    );
+
+    expect(window.key).toMatch(/^canary:[0-9a-f]{64}$/);
+    expect(window.expiresAt).toBe(Date.parse('2026-08-26T01:30:00Z') / 1_000);
+    expect(() => canaryQuotaWindow(
+      '2026-08-24T23:30:00Z',
+      '2026-08-25T01:30:01Z',
+    )).toThrow('invalid_canary_quota_window');
+  });
+
+  test('allows only the one subject whose SHA-256 was approved', () => {
+    const approvedHash = createHash('sha256')
+      .update(ALLOWED_SUBJECT)
+      .digest('hex');
+    expect(isAllowedCanarySubject(ALLOWED_SUBJECT, approvedHash)).toBe(true);
+    expect(isAllowedCanarySubject('subject-other', approvedHash)).toBe(false);
+    expect(isAllowedCanarySubject(ALLOWED_SUBJECT, undefined)).toBe(false);
   });
 
   test.each([
@@ -191,6 +261,82 @@ describe('network and response policy', () => {
 });
 
 describe('HTTP API handler privacy', () => {
+  test('blocks authenticated work outside the approved canary window before quota or fetch', async () => {
+    const fetcher = jest.fn();
+    const quota = { consume: jest.fn().mockResolvedValue(true) };
+    const handler = createHandler(
+      fetcher,
+      quota,
+      { info: jest.fn(), warn: jest.fn() },
+      { now: () => Date.parse('2026-08-26T14:00:00Z') },
+    );
+    const previousStart = process.env.CANARY_STARTED_AT;
+    const previousExpiry = process.env.CANARY_EXPIRES_AT;
+    const previousBinding = process.env.CANARY_SECURITY_BINDING_SHA256;
+    process.env.CANARY_STARTED_AT = '2026-08-26T12:00:00Z';
+    process.env.CANARY_EXPIRES_AT = '2026-08-26T14:00:00Z';
+    process.env.CANARY_SECURITY_BINDING_SHA256 = canarySecurityBinding(
+      process.env.CANARY_ALLOWED_SUBJECT_SHA256 ?? '',
+      process.env.CANARY_STARTED_AT,
+      process.env.CANARY_EXPIRES_AT,
+    );
+    try {
+      const response = await handler({
+        body: JSON.stringify({ url: 'https://example.com/' }),
+        requestContext: {
+          requestId: 'request-expired-canary',
+          authorizer: { jwt: { claims: authenticatedClaims(ALLOWED_SUBJECT) } },
+        },
+      });
+      expect(response.statusCode).toBe(503);
+      expect(JSON.parse(response.body)).toEqual({ message: 'Private canary is not active' });
+      expect(quota.consume).not.toHaveBeenCalled();
+      expect(fetcher).not.toHaveBeenCalled();
+    } finally {
+      if (previousStart === undefined) {
+        delete process.env.CANARY_STARTED_AT;
+      } else {
+        process.env.CANARY_STARTED_AT = previousStart;
+      }
+      if (previousExpiry === undefined) {
+        delete process.env.CANARY_EXPIRES_AT;
+      } else {
+        process.env.CANARY_EXPIRES_AT = previousExpiry;
+      }
+      if (previousBinding === undefined) {
+        delete process.env.CANARY_SECURITY_BINDING_SHA256;
+      } else {
+        process.env.CANARY_SECURITY_BINDING_SHA256 = previousBinding;
+      }
+    }
+  });
+
+  test('fails closed before quota or fetch when the subject/window binding differs', async () => {
+    const fetcher = jest.fn();
+    const quota = { consume: jest.fn().mockResolvedValue(true) };
+    const handler = createHandler(fetcher, quota, { info: jest.fn(), warn: jest.fn() });
+    const previousBinding = process.env.CANARY_SECURITY_BINDING_SHA256;
+    process.env.CANARY_SECURITY_BINDING_SHA256 = 'f'.repeat(64);
+    try {
+      const response = await handler({
+        body: JSON.stringify({ url: 'https://example.com/' }),
+        requestContext: {
+          requestId: 'request-invalid-binding',
+          authorizer: { jwt: { claims: authenticatedClaims(ALLOWED_SUBJECT) } },
+        },
+      });
+      expect(response.statusCode).toBe(503);
+      expect(quota.consume).not.toHaveBeenCalled();
+      expect(fetcher).not.toHaveBeenCalled();
+    } finally {
+      if (previousBinding === undefined) {
+        delete process.env.CANARY_SECURITY_BINDING_SHA256;
+      } else {
+        process.env.CANARY_SECURITY_BINDING_SHA256 = previousBinding;
+      }
+    }
+  });
+
   test('returns the canonical intake schema but never logs content or the complete URL', async () => {
     const messages: string[] = [];
     const logger = {
@@ -221,7 +367,7 @@ describe('HTTP API handler privacy', () => {
       isBase64Encoded: false,
       requestContext: {
         requestId: 'request-1',
-        authorizer: { jwt: { claims: authenticatedClaims('subject-1') } },
+        authorizer: { jwt: { claims: authenticatedClaims(ALLOWED_SUBJECT) } },
       },
     });
 
@@ -239,7 +385,7 @@ describe('HTTP API handler privacy', () => {
     expect(messages.join('\n')).not.toContain(TEST_CLIENT_ID);
     expect(messages.join('\n')).not.toContain(TEST_REQUIRED_SCOPE);
     expect(messages.join('\n')).toContain('urlFingerprint');
-    expect(quota.consume).toHaveBeenCalledWith('subject-1');
+    expect(quota.consume).toHaveBeenCalledTimes(1);
   });
 
   test.each([
@@ -261,6 +407,24 @@ describe('HTTP API handler privacy', () => {
       requestContext: {
         requestId: 'request-unauthorized-claims',
         authorizer: claims === undefined ? undefined : { jwt: { claims } },
+      },
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(quota.consume).not.toHaveBeenCalled();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  test('rejects a valid token from every subject except the one approved for the canary', async () => {
+    const fetcher = jest.fn();
+    const quota = { consume: jest.fn().mockResolvedValue(true) };
+    const handler = createHandler(fetcher, quota, { info: jest.fn(), warn: jest.fn() });
+
+    const response = await handler({
+      body: JSON.stringify({ url: 'https://example.com/' }),
+      requestContext: {
+        requestId: 'request-wrong-canary-user',
+        authorizer: { jwt: { claims: authenticatedClaims('subject-other') } },
       },
     });
 
@@ -306,7 +470,7 @@ describe('HTTP API handler privacy', () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  test('enforces per-subject quota after validating all access-token claims', async () => {
+  test('enforces the global canary quota after validating all access-token claims', async () => {
     const fetcher = jest.fn();
     const deniedQuota = { consume: jest.fn().mockResolvedValue(false) };
     const logger = { info: jest.fn(), warn: jest.fn() };
@@ -316,17 +480,18 @@ describe('HTTP API handler privacy', () => {
       body: JSON.stringify({ url: 'https://example.com/' }),
       requestContext: {
         requestId: 'request-limited',
-        authorizer: { jwt: { claims: authenticatedClaims('subject-2') } },
+        authorizer: { jwt: { claims: authenticatedClaims(ALLOWED_SUBJECT) } },
       },
     });
     expect(rateLimited.statusCode).toBe(429);
-    expect(deniedQuota.consume).toHaveBeenCalledWith('subject-2');
+    expect(deniedQuota.consume).toHaveBeenCalledTimes(1);
     expect(fetcher).not.toHaveBeenCalled();
   });
 
   test('rejects an oversized request before fetching', async () => {
     const fetcher = jest.fn();
-    const handler = createHandler(fetcher, { consume: jest.fn().mockResolvedValue(true) }, { info: jest.fn(), warn: jest.fn() }, {
+    const quota = { consume: jest.fn().mockResolvedValue(true) };
+    const handler = createHandler(fetcher, quota, { info: jest.fn(), warn: jest.fn() }, {
       maxRequestBytes: 32,
     });
 
@@ -335,11 +500,30 @@ describe('HTTP API handler privacy', () => {
       isBase64Encoded: false,
       requestContext: {
         requestId: 'request-2',
-        authorizer: { jwt: { claims: authenticatedClaims('subject-3') } },
+        authorizer: { jwt: { claims: authenticatedClaims(ALLOWED_SUBJECT) } },
       },
     });
 
     expect(response.statusCode).toBe(413);
+    expect(quota.consume).toHaveBeenCalledTimes(1);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  test('charges malformed JSON against the same global canary ceiling', async () => {
+    const fetcher = jest.fn();
+    const quota = { consume: jest.fn().mockResolvedValue(true) };
+    const handler = createHandler(fetcher, quota, { info: jest.fn(), warn: jest.fn() });
+
+    const response = await handler({
+      body: '{not-json',
+      requestContext: {
+        requestId: 'request-invalid-json',
+        authorizer: { jwt: { claims: authenticatedClaims(ALLOWED_SUBJECT) } },
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(quota.consume).toHaveBeenCalledTimes(1);
     expect(fetcher).not.toHaveBeenCalled();
   });
 
@@ -355,7 +539,7 @@ describe('HTTP API handler privacy', () => {
       body: JSON.stringify({ url: 'https://example.com/', context: 'must-not-pass' }),
       requestContext: {
         requestId: 'request-extra-field',
-        authorizer: { jwt: { claims: authenticatedClaims('subject-4') } },
+        authorizer: { jwt: { claims: authenticatedClaims(ALLOWED_SUBJECT) } },
       },
     });
 
