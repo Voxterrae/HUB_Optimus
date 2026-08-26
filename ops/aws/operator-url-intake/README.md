@@ -111,4 +111,4 @@ its Beer-Ware license in [`LICENSE`](LICENSE). HUB_Optimus-specific security,
 cost, and product changes do not transfer operational ownership to the starter
 author.
 
-[Traceability starter background](https://lars-andersson.medium.com/where-the-hell-is-the-git-project-that-owns-this-550bd96dd230)
+[Traceability starter repository](https://github.com/zipon/Traceability)
