@@ -42,6 +42,21 @@ const SOURCE_BOUND_NORMALIZER_VERSIONS = new Set([
 function isSourceBoundNormalizer(version) {
   return SOURCE_BOUND_NORMALIZER_VERSIONS.has(String(version || ""));
 }
+function currentSourceBoundV2Snapshot() {
+  return {metadata: currentCaseMetadata, claims, evidence};
+}
+function hasSourceBoundV2Markers(payload) {
+  const metadata = payload?.metadata || {};
+  return metadata.normalizer_version === "operator-source-bound-v2"
+    || Object.prototype.hasOwnProperty.call(metadata, "claim_drafting")
+    || metadata.operator_mode === "browser-local-human-confirmed-atomic-claim-draft"
+    || (payload?.claims || []).some((record) => record?.metadata?.normalized_by === "operator-source-bound-v2")
+    || (payload?.evidence || []).some((record) => record?.metadata?.normalized_by === "operator-source-bound-v2")
+    || (metadata.relationships || []).some((record) => record?.created_by === "operator-source-bound-v2");
+}
+function passesSourceBoundV2IntegrityGate(payload) {
+  return !hasSourceBoundV2Markers(payload);
+}
 """ + learning
 
 
@@ -331,7 +346,7 @@ def test_learning_scripts_schema_and_offline_assets_are_versioned_in_order():
     assert source.index("./learning-candidate.v1.js") < source.index("./learning-store.v1.js")
     assert source.index("./learning-store.v1.js") < source.index("const $ =")
     service_worker = SW.read_text(encoding="utf-8")
-    assert 'hub-optimus-operator-v0-28' in service_worker
+    assert 'hub-optimus-operator-v0-29' in service_worker
     assert '"./claim-decomposition.v1.js"' in service_worker
     for asset in (
         './learning-candidate.v1.js',

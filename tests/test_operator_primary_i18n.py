@@ -23,8 +23,15 @@ CLAIM_DRAFT_KEYS = frozenset(
     claimDraftIntro
     claimDraftExcerpt
     claimDraftClaimLabel
+    claimDraftSourceSpan
     claimDraftAdd
     claimDraftRemove
+    claimDraftOmit
+    claimDraftRestore
+    claimDraftReview
+    claimDraftPending
+    claimDraftReviewed
+    claimDraftOmittedHeading
     claimDraftExact
     claimDraftParaphrase
     claimDraftConfirm
@@ -228,17 +235,17 @@ def test_operator_catalog_has_six_locale_parity_and_plain_text_values():
 def test_operator_catalog_version_matches_locale_metadata_readme_and_cache():
     catalog = _catalog_snapshot()
     metadata = json.loads(_read(LOCALE_METADATA))
-    assert catalog["version"] == "1.3.3"
+    assert catalog["version"] == "1.3.4"
     assert metadata["manifest_version"] == catalog["version"]
     assert f'catalog version: `{catalog["version"]}`' in _read(LOCALE_README)
-    assert "hub-optimus-operator-v0-28" in _read(SW)
+    assert "hub-optimus-operator-v0-29" in _read(SW)
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for catalog validation")
 def test_atomic_claim_review_is_complete_in_six_locales_and_direction_safe():
     catalog = _catalog_snapshot()
     messages = catalog["messages"]
-    assert len(CLAIM_DRAFT_KEYS) == 17
+    assert len(CLAIM_DRAFT_KEYS) == 24
     for key in CLAIM_DRAFT_KEYS:
         english_placeholders = sorted(re.findall(r"\{[a-z][a-z0-9_]*\}", messages["en"][key]))
         for locale in LOCALES:
@@ -249,12 +256,17 @@ def test_atomic_claim_review_is_complete_in_six_locales_and_direction_safe():
     html = _read(INDEX)
     assert '<blockquote dir="auto" tabindex="0" aria-labelledby="product_claim_excerpt_heading_${groupIndex}">' in html
     assert 'textarea id="${fieldId}" dir="auto"' in html
+    assert (
+        '<bdi dir="ltr">[${escapeHtml(claim.source_span_start)}, '
+        '${escapeHtml(claim.source_span_end)}) · '
+        '${escapeHtml(claim.source_span_unit)}</bdi>'
+    ) in html
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for catalog validation")
 def test_future_learning_catalog_is_exact_localized_and_semantically_bounded():
     catalog = _catalog_snapshot()
-    assert catalog["version"] == "1.3.3"
+    assert catalog["version"] == "1.3.4"
     assert len(LEARNING_KEYS) == 91
 
     messages = catalog["messages"]
@@ -389,7 +401,7 @@ def test_localized_manifests_share_identity_match_metadata_and_allow_all_orienta
         assert "orientation" not in manifest
 
     sw = _read(SW)
-    assert "hub-optimus-operator-v0-28" in sw
+    assert "hub-optimus-operator-v0-29" in sw
     assert '"./i18n.v1.js"' in sw
     assert '"./claim-decomposition.v1.js"' in sw
     for locale in LOCALES:
@@ -661,7 +673,7 @@ def test_source_snapshot_is_keyboard_focusable_and_accessibly_described():
 def test_advanced_ui_is_localized_in_six_languages_and_technical_data_stays_ltr():
     html = _read(INDEX)
     catalog = _catalog_snapshot()
-    assert catalog["version"] == "1.3.3"
+    assert catalog["version"] == "1.3.4"
     advanced_keys = {
         key for key in catalog["messages"]["en"] if key.startswith("advanced")
     }

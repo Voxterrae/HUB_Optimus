@@ -2,14 +2,40 @@
 
 ## Status
 
-- Draft RFC / proposed implementation tracked by issue #1920
-- Tracks issue #1920
-- Proposed draft identity: `operator-source-bound-v2`
-- No runtime, schema, deployment, or public-service change is authorized by this
-  document alone
+- **Accepted** by Benjamin Gerrit Hoff through the protected GitHub account
+  `@Voxterrae` (immutable user ID `249308740`).
+- Decision record: [issue #1920 comment
+  `5430873541`](https://github.com/Voxterrae/HUB_Optimus/issues/1920#issuecomment-5430873541).
+- Bounded correction and reconciliation authority: [PR #1921 comment
+  `5431264847`](https://github.com/Voxterrae/HUB_Optimus/pull/1921#issuecomment-5431264847).
+- Decision-pinned RFC snapshot: commit
+  `d96fa7de64e5a27a3058d892ca31cf93d0fa0de7`, tree
+  `21ec2710f61df06c099d64366cd88c3d3da5d024`, and RFC blob
+  `088c10e36dfc451414028b30c7c761b2660c17d6`.
+- At the time of this reconciliation, the candidate implementation was tracked
+  by Draft PR #1921. Listing that PR is traceability, not implementation
+  approval.
+- Proposed draft identity: `operator-source-bound-v2`.
+- No schema change, public activation, merge, deployment, GitHub Pages, AWS,
+  DNS, audiovisual intake, truth verdict, institutional ledger, or
+  public-service change is authorized by this acceptance record or by green
+  checks.
 
 The current `operator-source-bound-v1` flow remains authoritative until a
-reviewed implementation satisfies this RFC and its executable tests.
+conforming implementation satisfies this RFC and its executable tests, receives
+independent review, and is merged through the protected process.
+
+Within this unactivated v2 candidate, `exact_excerpt_sha256`,
+`confirmation_sha256`, `source_proposal_id`, and the `source_span_*` keys are
+reserved provenance markers. Their presence is fail-closed and requires a valid
+v2 attestation; generic or v1 extensions must use separately namespaced keys.
+
+The pinned RFC blob is the text accepted by the decision record. This
+reconciliation records that external decision and the expressly authorized
+fail-closed corrections in PR #1921. The correction authority is limited to
+reconciling this Accepted record, producing a new verifiable candidate head,
+running CI, and requesting independent review; it does not authorize merge or
+deployment and does not broaden the RFC's operational authority.
 
 ## Problem
 
@@ -42,9 +68,9 @@ separate.
 - A **canonical claim draft** is one bounded, independently reviewable assertion
   used within one case revision. “Canonical” means the working statement for
   that case, not canonical repository knowledge or verified truth.
-- A **paraphrase** is human-edited claim wording that differs from the exact
-  excerpt. It MUST remain labelled as a claim expression and MUST NOT be rendered
-  or exported as an exact quotation.
+- A **paraphrase** is any human-edited claim wording. It remains a paraphrase
+  even if its characters match the original span or another substring of the
+  excerpt, and MUST NOT be rendered or exported as an exact quotation.
 
 One excerpt may support several claim drafts. In this first version, every claim
 occurrence stays bound to exactly one selected excerpt; apparently equivalent
@@ -61,7 +87,8 @@ challenging the others.
 
 The distinction between “a speaker made this statement” and “the underlying
 statement is true” MUST remain visible. Recording either claim does not accept
-it.
+it. Evidence-to-claim links in this candidate MUST retain
+`support_scope=attribution-only`; they record attribution, not corroboration.
 
 Mechanical sentence or clause suggestions MAY seed the editor. They are
 navigation aids only. They MUST NOT add unsupported meaning, infer hidden
@@ -73,10 +100,13 @@ Before Operator prepares a v2 draft, a human MUST be able to:
 
 1. inspect each exact evidence excerpt beside its proposed claim drafts;
 2. edit, add, remove, or split claim wording;
-3. identify a claim expression as an exact source quotation or a human
+3. record every mechanical proposal explicitly as reviewed or omitted, without
+   deleting omitted proposals from the review ledger;
+4. identify a claim expression as an exact source quotation or a human
    paraphrase;
-4. confirm that every retained item is one separately reviewable claim; and
-5. confirm the complete evidence-to-claim links and selected-passage coverage.
+5. inspect the Unicode-code-point source span retained for every claim;
+6. confirm that every retained item is one separately reviewable claim; and
+7. confirm the complete evidence-to-claim links and selected-passage coverage.
 
 The preparation action MUST fail closed while an unconfirmed claim, dangling
 link, or uncovered passage remains. Confirmation means only that the human has
@@ -88,6 +118,9 @@ decision.
 Coverage is structural and limited to the selected passages.
 
 - Every confirmed claim MUST link to at least one exact evidence excerpt.
+- Every mechanical proposal MUST have an attested `reviewed` or `omitted`
+  disposition. A pending proposal blocks preparation. An omitted proposal stays
+  in the review ledger and MUST NOT produce a claim or relation.
 - Every selected excerpt MUST link to at least one confirmed claim in this first
   version. Material selected only for context must be removed from the claim
   passage selection and recorded separately as operator context.
@@ -115,6 +148,12 @@ does not infer or label content language. A translated expression may share a
 conceptual claim only after explicit human confirmation; the system MUST NOT
 infer cross-language equivalence. A meaning-changing edit requires renewed
 review and MUST NOT be hidden behind a translated label.
+
+Every claim occurrence MUST also retain an inspectable absolute
+Unicode-code-point source span inside its selected excerpt. Exact claim wording
+must equal that exact span. Human-edited wording remains a paraphrase even when
+its characters happen to occur elsewhere in the excerpt; it retains the source
+span reviewed as its provenance boundary.
 
 ## Staleness and revision binding
 
@@ -181,17 +220,21 @@ A reviewed implementation MUST provide executable tests showing that:
 1. one synthetic compound passage can produce multiple independently confirmed
    claims without changing its exact evidence excerpt;
 2. a paraphrase is never presented or exported as exact evidence or quotation;
-3. unconfirmed claims, dangling links, and uncovered excerpts block v2
+3. every mechanical proposal remains in an attested review ledger with an
+   explicit reviewed or omitted disposition;
+4. every claim retains a valid absolute Unicode-code-point source span, and an
+   exact claim equals that span;
+5. unconfirmed claims, pending proposals, dangling links, and uncovered excerpts block v2
    preparation;
-4. every confirmed claim and selected excerpt satisfies the coverage rule;
-5. interface-language changes preserve opaque IDs and case revision identity;
-6. source, excerpt, claim, or relation edits invalidate the prepared draft and
+6. every confirmed claim and selected excerpt satisfies the coverage rule;
+7. interface-language changes preserve opaque IDs and case revision identity;
+8. source, excerpt, proposal disposition, claim, or relation edits invalidate the prepared draft and
    any derived freshness binding;
-7. current v1 drafts and local learning candidates remain readable and are not
+9. current v1 drafts and local learning candidates remain readable and are not
    silently migrated;
-8. the implementation performs no new network request and does not alter the
+10. the implementation performs no new network request and does not alter the
    PR #1918 infrastructure boundary; and
-9. all supported Operator languages explain confirmation, paraphrase,
+11. all supported Operator languages explain confirmation, paraphrase,
     coverage, staleness, and the non-verification boundary consistently.
 
 Tests prove only the reviewed code paths. They do not prove source truth,

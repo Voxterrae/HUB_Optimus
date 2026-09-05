@@ -3,8 +3,8 @@
   "authority": "Lifecycle metadata only. This registry does not ratify an RFC, change governance, or authorize implementation.",
   "baseline": {
     "repository": "Voxterrae/HUB_Optimus",
-    "verified_at": "2026-07-28",
-    "verified_commit": "3ef199305c2d2d114f88aceb97b65a08b9f91b4a"
+    "verified_at": "2026-08-25",
+    "verified_commit": "d96fa7de64e5a27a3058d892ca31cf93d0fa0de7"
   },
   "lifecycle_states": [
     "Proposed",
@@ -221,13 +221,15 @@
       "id": "operator-atomic-claim-drafting",
       "path": "docs/rfc/operator_atomic_claim_drafting.md",
       "title": "Operator Human-Confirmed Atomic Claim Drafting",
-      "lifecycle": "Draft",
+      "lifecycle": "Accepted",
       "proposal_issue": 1920,
-      "record_pr": null,
-      "decision_pr": null,
-      "implementation_prs": [],
-      "owner": null,
-      "ratifier": null,
+      "record_pr": 1921,
+      "decision_pr": 1921,
+      "implementation_prs": [
+        1921
+      ],
+      "owner": "Benjamin Gerrit Hoff",
+      "ratifier": "Benjamin Gerrit Hoff via the protected @Voxterrae account (GitHub user ID 249308740)",
       "evidence_paths": [
         "docs/rfc/operator_atomic_claim_drafting.md",
         "site/operator/claim-decomposition.v1.js",
@@ -235,7 +237,7 @@
         "tests/test_operator_claim_decomposition.py",
         "tests/test_operator_pwa_product_actions.py"
       ],
-      "note": "Issue #1920 and this record define an unratified browser-local candidate: deterministic claim proposals, human editing, explicit confirmation, exact excerpt provenance, and fail-closed v2 preparation. They do not verify claims, establish an institutional ledger, change URL intake or AWS, prove public deployment, or authorize autonomous analysis."
+      "note": "Accepted by the owner decision at https://github.com/Voxterrae/HUB_Optimus/issues/1920#issuecomment-5430873541, pinned to commit d96fa7de64e5a27a3058d892ca31cf93d0fa0de7, tree 21ec2710f61df06c099d64366cd88c3d3da5d024, and RFC blob 088c10e36dfc451414028b30c7c761b2660c17d6. The bounded correction and reconciliation authority is recorded at https://github.com/Voxterrae/HUB_Optimus/pull/1921#issuecomment-5431264847. decision_pr identifies PR #1921 as the protected-history reconciliation of that external decision; it does not recast the Draft PR as the ratification source or as approval. At preparation time, Draft PR #1921 was unapproved and unmerged; listing it under implementation_prs provides traceability, not approval. operator-source-bound-v1 remains authoritative until a conforming implementation is independently reviewed and merged through the protected process. This record grants no schema change, public activation, merge, deployment, Pages, AWS, DNS, audiovisual intake, truth-verdict, institutional-ledger, or autonomous-analysis authority."
     },
     {
       "id": "operator-local-learning-candidate",

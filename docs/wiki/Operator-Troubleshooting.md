@@ -1,13 +1,13 @@
 # Resolución de problemas de Operator
 
 > **Estado:** guía candidata actualizada para el RFC #1920 el 2026-08-25; no
-> demuestra que `v0-28` esté desplegado públicamente.
+> demuestra que `v0-29` esté desplegado públicamente.
 > **Última base pública auditada:** [`c399c94`](https://github.com/Voxterrae/HUB_Optimus/commit/c399c94e098058a723482001811c7d8491ebbd5e).
 
 | Síntoma | Causa probable | Acción |
 | --- | --- | --- |
 | Se queda en `6 %` | El navegador todavía ejecuta el worker antiguo `v0-26`. | Recarga dos veces o abre una pestaña privada; confirma después que aparece el flujo manual/local. |
-| Una URL sola pide texto | Es el límite intencional del Operator público `v0-28`; no se envió ninguna petición. | Pega el texto completo o espera al Operator privado autenticado. |
+| Una URL sola pide texto | Es el límite intencional del artefacto público candidato `v0-29`; no se envió ninguna petición. | Pega el texto completo o espera al Operator privado autenticado. |
 | URL + texto no avanza | Falta revisar o confirmar los pasajes propuestos o sus afirmaciones atómicas. | Confirma primero los pasajes; después revisa las afirmaciones, confirma el conjunto y pulsa de nuevo. |
 | Aparece “1.200 caracteres” | Es el contexto opcional, no el máximo de la fuente. | Introduce la fuente en el campo de texto principal. |
 | Hay pasajes seleccionados pero no borrador | Falta revisar o confirmar el conjunto de afirmaciones. | Conserva al menos una afirmación por extracto, confirma el conjunto y pulsa de nuevo. |
