@@ -776,6 +776,49 @@
       margin-top: 0.2rem;
     }
 
+    .claim-drafting {
+      display: grid;
+      gap: 0.8rem;
+      margin-block-start: 1rem;
+      padding-block-start: 1rem;
+      border-block-start: 1px solid rgba(var(--brand-signal-rgb), 0.26);
+    }
+
+    .claim-drafting[hidden] {
+      display: none;
+    }
+
+    .claim-drafting-group {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .claim-drafting-group blockquote {
+      max-height: 9rem;
+      margin: 0;
+      font-size: 0.92rem;
+    }
+
+    .claim-draft-row {
+      display: grid;
+      gap: 0.45rem;
+      padding: 0.7rem;
+      border: 1px solid rgba(var(--brand-signal-rgb), 0.24);
+      border-radius: 0.7rem;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .claim-draft-row textarea {
+      min-height: 5.5rem;
+    }
+
+    .claim-draft-meta {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.78rem;
+      overflow-wrap: anywhere;
+    }
+
     #product_output:focus {
       outline: 3px solid var(--brand-signal);
       outline-offset: 4px;
@@ -1362,6 +1405,17 @@
           <input id="product_confirm_source" type="checkbox" disabled>
           <span data-op-i18n="previewConfirm">I reviewed the snapshot and confirm only the exact passages above for this draft. This confirms selection, not truth or completeness.</span>
         </label>
+
+        <section class="claim-drafting" id="product_claim_drafting" aria-labelledby="product_claim_drafting_title" hidden>
+          <h3 id="product_claim_drafting_title" data-op-i18n="claimDraftTitle">Separate the source claims</h3>
+          <p data-op-i18n="claimDraftIntro">Review each proposed statement. Keep one reviewable proposition per item. Editing a proposal creates a human-authored paraphrase; the exact source excerpt remains unchanged.</p>
+          <div id="product_claim_draft_groups"></div>
+          <p class="source-selection-status" id="product_claim_draft_status" role="status" aria-live="polite" data-op-i18n="claimDraftRequired">Review and confirm at least one claim before preparing the draft.</p>
+          <label class="source-confirmation" for="product_confirm_claims">
+            <input id="product_confirm_claims" type="checkbox" disabled>
+            <span data-op-i18n="claimDraftConfirm">I reviewed these claims as separate propositions. They record what the source asserts; they do not confirm that it is true.</span>
+          </label>
+        </section>
       </section>
 
       <div class="actions">
@@ -1636,6 +1690,10 @@
         </div>
       </section>
 
+      <p id="source_bound_v2_advanced_lock" class="callout warning" data-op-i18n="claimDraftAdvancedLocked" hidden>
+        This human-confirmed atomic draft is read-only here. Return to the source review to change claims or evidence, then confirm a new revision.
+      </p>
+
       <section class="panel">
         <h2 data-op-i18n="resultClaimsTitle">Claims</h2>
         <p data-op-i18n="advancedClaimsIntro">Capture what is asserted. Do not treat submitted claims as verified facts.</p>
@@ -1769,6 +1827,7 @@
   </main>
 
   <script src="./i18n.v1.js"></script>
+  <script src="./claim-decomposition.v1.js"></script>
   <script src="./learning-candidate.v1.js"></script>
   <script src="./learning-store.v1.js"></script>
   <script>
@@ -1888,6 +1947,10 @@
       if (typeof renderAdvancedLocalizedView === "function") {
         renderAdvancedLocalizedView();
       }
+      if (currentClaimDraftSet) {
+        renderClaimDraftGroups();
+        renderClaimDraftValidation();
+      }
       if (persist) {
         try {
           window.localStorage.setItem(operatorLanguageStorageKey, activeOperatorLanguage);
@@ -1908,6 +1971,10 @@
     const ADVANCED_RESULT_MAX_CHARACTERS = 1000000;
     const ADVANCED_RESULT_MAX_DEPTH = 32;
     const ADVANCED_RESULT_MAX_COLLECTION_ITEMS = 10000;
+    const SOURCE_BOUND_NORMALIZER_VERSIONS = new Set([
+      "operator-source-bound-v1",
+      "operator-source-bound-v2"
+    ]);
     let currentMemoryRecord = null;
     let currentIntakeRecord = null;
     let currentRetrievedSourceText = "";
@@ -1922,9 +1989,12 @@
     let activeIntakeAbortController = null;
     let currentSourceSelectionState = null;
     let currentConfirmedSourceSelection = null;
+    let currentClaimDraftSet = null;
+    let currentConfirmedClaimSet = null;
 
     let claims = [];
     let evidence = [];
+    const claimDraftModel = globalThis.HUB_OPTIMUS_CLAIM_DECOMPOSITION_V1;
     const learningModel = globalThis.HUB_OPTIMUS_LEARNING_CANDIDATE_V1;
     const learningStoreModel = globalThis.HUB_OPTIMUS_LEARNING_STORE_V1;
     let learningAdapter = null;
@@ -2017,12 +2087,99 @@
 
     function invalidateShareableResult(messageKey = "msgDraftEdited", parameters = {}) {
       currentMemoryRecord = null;
+      currentAdvancedNormalizerPayload = null;
       preparedDraftReady = false;
       setMemoryActionsEnabled(false);
+      renderMemoryStatus("memoryInitial");
       renderMemoryStatus(messageKey, parameters, false);
+      if (typeof $ === "function") $("normalizer_readout")?.replaceChildren?.();
+    }
+
+    function hasSourceBoundV2Markers(payload) {
+      const metadata = payload?.metadata
+        && typeof payload.metadata === "object"
+        && !Array.isArray(payload.metadata)
+        ? payload.metadata
+        : {};
+      const claimsToInspect = Array.isArray(payload?.claims) ? payload.claims : [];
+      const evidenceToInspect = Array.isArray(payload?.evidence) ? payload.evidence : [];
+      const relationshipsToInspect = Array.isArray(metadata.relationships)
+        ? metadata.relationships
+        : [];
+      const hasOwn = (record, key) => (
+        record !== null &&
+        typeof record === "object" &&
+        !Array.isArray(record) &&
+        Object.prototype.hasOwnProperty.call(record, key)
+      );
+      const hasAnyOwn = (record, keys) => keys.some((key) => hasOwn(record, key));
+      const hasAllOwn = (record, keys) => keys.every((key) => hasOwn(record, key));
+      const v2ReservedClaimBindingKeys = [
+        "exact_excerpt_sha256", "confirmation_sha256", "source_proposal_id",
+        "source_span_start", "source_span_end", "source_span_unit"
+      ];
+      const v2ClaimProvenanceKeys = [
+        "claim_origin", "source_quote_type", "exact_excerpt_sha256",
+        "review_state", "confirmation_sha256"
+      ];
+      const hasV2ClaimShape = (record) => (
+        hasAnyOwn(record?.metadata, v2ReservedClaimBindingKeys) ||
+        hasAllOwn(record?.metadata, v2ClaimProvenanceKeys)
+      );
+      const hasV2EvidenceShape = (record) => (
+        hasAnyOwn(record?.metadata, ["exact_excerpt_sha256", "confirmation_sha256"])
+      );
+      return (
+        metadata.normalizer_version === "operator-source-bound-v2" ||
+        hasOwn(metadata, "claim_drafting") ||
+        metadata.operator_mode === "browser-local-human-confirmed-atomic-claim-draft" ||
+        claimsToInspect.some((record) => (
+          record?.metadata?.normalized_by === "operator-source-bound-v2" ||
+          hasV2ClaimShape(record)
+        )) ||
+        evidenceToInspect.some((record) => (
+          record?.metadata?.normalized_by === "operator-source-bound-v2" ||
+          hasV2EvidenceShape(record)
+        )) ||
+        relationshipsToInspect.some((record) => record?.created_by === "operator-source-bound-v2")
+      );
+    }
+
+    function passesSourceBoundV2IntegrityGate(payload) {
+      return !hasSourceBoundV2Markers(payload) || hasValidSourceBoundV2Attestation(payload);
+    }
+
+    function currentSourceBoundV2Snapshot() {
+      return { metadata: currentCaseMetadata, claims, evidence };
+    }
+
+    function sourceBoundV2StructureLocked() {
+      return hasSourceBoundV2Markers(currentSourceBoundV2Snapshot());
+    }
+
+    function syncAdvancedStructureLock() {
+      const locked = sourceBoundV2StructureLocked();
+      [
+        "claim_text", "claim_source", "claim_type", "claim_status", "claim_requires", "add_claim",
+        "evidence_text", "evidence_source", "evidence_type", "evidence_supports",
+        "evidence_limitations", "add_evidence"
+      ].forEach((id) => {
+        const control = $(id);
+        if (control) control.disabled = locked;
+      });
+      const notice = $("source_bound_v2_advanced_lock");
+      if (notice) notice.hidden = !locked;
+    }
+
+    function blockSourceBoundV2StructureMutation() {
+      if (!sourceBoundV2StructureLocked()) return false;
+      alert(opText("claimDraftAdvancedLocked"));
+      setOperatorMessage("product_wait_status", "claimDraftAdvancedLocked");
+      return true;
     }
 
     function removeClaimAt(index) {
+      if (blockSourceBoundV2StructureMutation()) return;
       const [removedClaim] = claims.splice(index, 1);
       if (removedClaim?.claim_id) {
         evidence = evidence.map((item) => ({
@@ -2043,6 +2200,7 @@
     }
 
     function removeEvidenceAt(index) {
+      if (blockSourceBoundV2StructureMutation()) return;
       evidence.splice(index, 1);
       reconcileRecordRelationships();
       invalidateShareableResult();
@@ -2077,7 +2235,12 @@
     }
 
     function buildPayload() {
-      reconcileRecordRelationships();
+      const liveSnapshot = currentSourceBoundV2Snapshot();
+      const hasV2Markers = hasSourceBoundV2Markers(liveSnapshot);
+      if (hasV2Markers && !passesSourceBoundV2IntegrityGate(liveSnapshot)) {
+        throw new Error("stale_source_bound_v2");
+      }
+      if (!hasV2Markers) reconcileRecordRelationships();
       const payload = {
         case_id: value("case_id") || "operator-case-001",
         core_version_ref: value("core_version_ref") || "main",
@@ -2105,6 +2268,10 @@
       const intake = value("intake_channel");
       if (intake) metadata.intake_channel = intake;
       payload.metadata = metadata;
+
+      if (!passesSourceBoundV2IntegrityGate(payload)) {
+        throw new Error("stale_source_bound_v2");
+      }
 
       return payload;
     }
@@ -2144,36 +2311,45 @@
     }
 
     function renderClaims() {
+      const structureLocked = sourceBoundV2StructureLocked();
       $("claims_list").innerHTML = claims.length
         ? claims.map((claim, index) => `
           <article class="mini-card">
             <h3 dir="ltr">${escapeHtml(claim.claim_id)} // ${escapeHtml(claim.claim_type)}</h3>
             <p dir="auto">${escapeHtml(claim.text)}</p>
             <p class="meta" dir="ltr">source=${escapeHtml(claim.source_ref)} · status=${escapeHtml(claim.status)} · requires_evidence=${claim.requires_evidence}</p>
-            <button class="remove" type="button" data-remove-claim="${index}">${escapeHtml(opText("advancedRemove"))}</button>
+            ${structureLocked
+              ? ""
+              : `<button class="remove" type="button" data-remove-claim="${index}">${escapeHtml(opText("advancedRemove"))}</button>`}
           </article>
         `).join("")
         : `<p class="empty">${escapeHtml(opText("advancedNoClaims"))}</p>`;
+      syncAdvancedStructureLock();
       updateJson();
       refreshLearningAvailability({ preserveStatus: true });
     }
 
     function renderEvidence() {
+      const structureLocked = sourceBoundV2StructureLocked();
       $("evidence_list").innerHTML = evidence.length
         ? evidence.map((item, index) => `
           <article class="mini-card">
             <h3 dir="ltr">${escapeHtml(item.evidence_id)} // ${escapeHtml(item.source_type)}</h3>
             <p dir="auto">${escapeHtml(item.text)}</p>
             <p class="meta" dir="ltr">source=${escapeHtml(item.source_ref)} · supports=${escapeHtml(item.supports_claim_ids.join(", ") || "none")}</p>
-            <button class="remove" type="button" data-remove-evidence="${index}">${escapeHtml(opText("advancedRemove"))}</button>
+            ${structureLocked
+              ? ""
+              : `<button class="remove" type="button" data-remove-evidence="${index}">${escapeHtml(opText("advancedRemove"))}</button>`}
           </article>
         `).join("")
         : `<p class="empty">${escapeHtml(opText("advancedNoEvidence"))}</p>`;
+      syncAdvancedStructureLock();
       updateJson();
       refreshLearningAvailability({ preserveStatus: true });
     }
 
     function addClaim() {
+      if (blockSourceBoundV2StructureMutation()) return;
       const text = value("claim_text");
       if (!text) {
         alert(opText("advancedClaimRequired"));
@@ -2197,6 +2373,7 @@
     }
 
     function addEvidence() {
+      if (blockSourceBoundV2StructureMutation()) return;
       const text = value("evidence_text");
       if (!text) {
         alert(opText("advancedEvidenceTextRequired"));
@@ -2520,12 +2697,14 @@
       for (const key of ["inferences", "uncertainties", "narrative_amplification"]) {
         if (key in payload && !isNonEmptyStringList(payload[key])) return false;
       }
-      return (
+      const structurallyValid = (
         isOptionalNonEmptyString(payload, "operational_signal") &&
         isOptionalNonEmptyString(payload, "status") &&
         (!("metadata" in payload) || isPlainRecord(payload.metadata)) &&
         hasValidRecordIdentityAndReferences(payload)
       );
+      if (!structurallyValid) return false;
+      return passesSourceBoundV2IntegrityGate(payload);
     }
 
     function hasValidRecordIdentityAndReferences(payload) {
@@ -2538,6 +2717,208 @@
         (record.supports_claim_ids || []).every((claimId) => knownClaimIds.has(claimId)) &&
         (record.contradicts_claim_ids || []).every((claimId) => knownClaimIds.has(claimId))
       ));
+    }
+
+    function reconstructedSourceBoundV2ClaimSet(payload) {
+      const metadata = payload?.metadata;
+      const drafting = metadata?.claim_drafting;
+      const draftingFields = new Set([
+        "schema_version", "selection_sha256", "claim_set_sha256",
+        "confirmation_sha256", "record_projection_sha256", "attestation_sha256",
+        "status", "coverage_scope", "proposal_reviews"
+      ]);
+      if (
+        !claimDraftModel ||
+        !isPlainRecord(drafting) ||
+        !hasExactRecordKeys(drafting, draftingFields) ||
+        metadata?.normalizer_version !== "operator-source-bound-v2" ||
+        drafting?.schema_version !== "operator_claim_set.v1" ||
+        drafting?.status !== "human-confirmed" ||
+        drafting?.coverage_scope !== "all-selected-passages-reviewed" ||
+        !Array.isArray(drafting?.proposal_reviews) ||
+        !/^sha256:[0-9a-f]{64}$/.test(metadata?.source_text_fingerprint || "") ||
+        ![
+          drafting.selection_sha256, drafting.claim_set_sha256, drafting.confirmation_sha256,
+          drafting.record_projection_sha256, drafting.attestation_sha256
+        ]
+          .every((digest) => /^[0-9a-f]{64}$/.test(digest || "")) ||
+        !Array.isArray(payload.claims) || !payload.claims.length ||
+        !Array.isArray(payload.evidence) || !payload.evidence.length ||
+        drafting.proposal_reviews.length !== payload.evidence.length
+      ) return null;
+
+      const claimsById = new Map(payload.claims.map((claim) => [claim.claim_id, claim]));
+      if (claimsById.size !== payload.claims.length) return null;
+      if (!isPlainRecord(metadata.intake_record)) return null;
+      const expectedSourceRef = sourceReferenceForIntake(metadata.intake_record);
+      const expectedSourceType = metadata.intake_record.mode === "controlled-url"
+        ? "retrieved-source-excerpt"
+        : "operator-provided-excerpt";
+      const seenClaimIds = new Set();
+      const expectedRelationshipKeys = new Set();
+      const expectedRelationshipIds = new Map();
+      const groups = [];
+
+      for (const [evidenceIndex, item] of payload.evidence.entries()) {
+        const evidenceMeta = item?.metadata;
+        const proposalReviewGroup = drafting.proposal_reviews[evidenceIndex];
+        if (
+          !isPlainRecord(proposalReviewGroup) ||
+          !hasExactRecordKeys(proposalReviewGroup, new Set(["excerpt_id", "proposals"])) ||
+          proposalReviewGroup.excerpt_id !== evidenceMeta?.excerpt_id ||
+          !Array.isArray(proposalReviewGroup.proposals) ||
+          item.evidence_id !== `evidence-${String(evidenceIndex + 1).padStart(3, "0")}` ||
+          item.source_ref !== expectedSourceRef ||
+          item.source_type !== expectedSourceType ||
+          !Array.isArray(item.supports_claim_ids) || !item.supports_claim_ids.length ||
+          !Array.isArray(item.contradicts_claim_ids) || item.contradicts_claim_ids.length ||
+          evidenceMeta?.normalized_by !== "operator-source-bound-v2" ||
+          evidenceMeta?.review_state !== "human-confirmed" ||
+          evidenceMeta?.support_scope !== "attribution-only" ||
+          evidenceMeta?.selection_origin !== "human-confirmed" ||
+          !["complete-candidate-passage", "partial-source-passage"].includes(evidenceMeta?.passage_scope) ||
+          evidenceMeta?.intake_record_ref !== "metadata.intake_record" ||
+          evidenceMeta?.confirmation_sha256 !== drafting.confirmation_sha256 ||
+          evidenceMeta?.source_text_fingerprint !== metadata.source_text_fingerprint ||
+          evidenceMeta?.span_unit !== "unicode-code-point" ||
+          evidenceMeta?.exact_excerpt_sha256 !== sha256Hex(item.text) ||
+          JSON.stringify(item.limitations) !== JSON.stringify(SOURCE_BOUND_V2_LIMITATIONS)
+        ) return null;
+
+        const groupClaims = [];
+        for (const claimId of item.supports_claim_ids) {
+          const claim = claimsById.get(claimId);
+          const claimMeta = claim?.metadata;
+          if (
+            !claim || seenClaimIds.has(claimId) ||
+            claim.requires_evidence !== true || claim.status !== "pending" ||
+            claim.source_ref !== expectedSourceRef ||
+            claim.source_ref !== item.source_ref ||
+            claimMeta?.normalized_by !== "operator-source-bound-v2" ||
+            claimMeta?.review_state !== "human-confirmed" ||
+            claimMeta?.support_scope !== "attribution-only" ||
+            claimMeta?.selection_origin !== evidenceMeta.selection_origin ||
+            claimMeta?.passage_scope !== evidenceMeta.passage_scope ||
+            claimMeta?.intake_record_ref !== "metadata.intake_record" ||
+            claimMeta?.confirmation_sha256 !== drafting.confirmation_sha256 ||
+            claimMeta?.source_text_fingerprint !== evidenceMeta.source_text_fingerprint ||
+            claimMeta?.excerpt_id !== evidenceMeta.excerpt_id ||
+            claimMeta?.span_start !== evidenceMeta.span_start ||
+            claimMeta?.span_end !== evidenceMeta.span_end ||
+            claimMeta?.span_unit !== evidenceMeta.span_unit ||
+            !Number.isSafeInteger(claimMeta?.source_span_start) ||
+            !Number.isSafeInteger(claimMeta?.source_span_end) ||
+            claimMeta.source_span_start < evidenceMeta.span_start ||
+            claimMeta.source_span_end > evidenceMeta.span_end ||
+            claimMeta.source_span_end <= claimMeta.source_span_start ||
+            claimMeta?.source_span_unit !== "unicode-code-point" ||
+            !(claimMeta?.source_proposal_id === null || typeof claimMeta?.source_proposal_id === "string") ||
+            claimMeta?.exact_excerpt_sha256 !== evidenceMeta.exact_excerpt_sha256 ||
+            !["mechanical-proposal", "human-edited"].includes(claimMeta?.claim_origin) ||
+            !["exact", "paraphrase"].includes(claimMeta?.source_quote_type)
+          ) return null;
+          seenClaimIds.add(claimId);
+          const relationshipKey = `${item.evidence_id}\u0000${claimId}`;
+          expectedRelationshipKeys.add(relationshipKey);
+          expectedRelationshipIds.set(
+            relationshipKey,
+            sourceBoundRelationshipId(expectedRelationshipIds.size + 1)
+          );
+          groupClaims.push({
+            draft_id: claim.claim_id,
+            text: claim.text,
+            origin: claimMeta.claim_origin,
+            source_quote_type: claimMeta.source_quote_type,
+            source_proposal_id: claimMeta.source_proposal_id,
+            source_span_start: claimMeta.source_span_start,
+            source_span_end: claimMeta.source_span_end,
+            source_span_unit: claimMeta.source_span_unit
+          });
+        }
+
+        groups.push({
+          excerpt_id: evidenceMeta.excerpt_id,
+          source_text_fingerprint: evidenceMeta.source_text_fingerprint,
+          span_start: evidenceMeta.span_start,
+          span_end: evidenceMeta.span_end,
+          exact_excerpt: item.text,
+          proposal_reviews: structuredClone(proposalReviewGroup.proposals),
+          claims: groupClaims
+        });
+      }
+      if (seenClaimIds.size !== payload.claims.length) return null;
+
+      const relationships = metadata.relationships;
+      if (!Array.isArray(relationships) || relationships.length !== expectedRelationshipKeys.size) return null;
+      const actualRelationshipKeys = new Set();
+      const actualRelationshipIds = new Set();
+      const relationshipFields = new Set([
+        "relationship_id", "type", "from_ref", "to_ref", "status", "created_by"
+      ]);
+      for (const relationship of relationships) {
+        const relationshipKey = `${relationship?.from_ref}\u0000${relationship?.to_ref}`;
+        if (
+          !isPlainRecord(relationship) ||
+          !hasExactRecordKeys(relationship, relationshipFields) ||
+          relationship.relationship_id !== expectedRelationshipIds.get(relationshipKey) ||
+          relationship?.type !== "SUPPORTS_ATTRIBUTION" ||
+          relationship?.status !== "candidate" ||
+          relationship?.created_by !== "operator-source-bound-v2"
+        ) return null;
+        actualRelationshipKeys.add(relationshipKey);
+        actualRelationshipIds.add(relationship.relationship_id);
+      }
+      if (
+        actualRelationshipKeys.size !== expectedRelationshipKeys.size ||
+        actualRelationshipIds.size !== expectedRelationshipKeys.size ||
+        [...expectedRelationshipKeys].some((key) => !actualRelationshipKeys.has(key))
+      ) return null;
+
+      const recordProjectionSha256 = sourceBoundV2RecordProjectionSha256({
+        intakeRecord: metadata.intake_record,
+        sourceTextFingerprint: metadata.source_text_fingerprint,
+        claims: payload.claims,
+        evidence: payload.evidence,
+        relationships,
+        proposalReviews: drafting.proposal_reviews
+      });
+      if (drafting.record_projection_sha256 !== recordProjectionSha256) return null;
+      if (
+        drafting.attestation_sha256 !== sourceBoundV2AttestationSha256(
+          drafting.confirmation_sha256,
+          recordProjectionSha256
+        )
+      ) return null;
+
+      return {
+        schema_version: drafting.schema_version,
+        normalizer_version: "operator-source-bound-v2",
+        source_text_fingerprint: metadata.source_text_fingerprint,
+        groups,
+        confirmation: {
+          status: drafting.status,
+          selection_sha256: drafting.selection_sha256,
+          claim_set_sha256: drafting.claim_set_sha256,
+          confirmation_note: null,
+          confirmation_sha256: drafting.confirmation_sha256
+        }
+      };
+    }
+
+    function hasValidSourceBoundV2Attestation(payload) {
+      const claimSet = reconstructedSourceBoundV2ClaimSet(payload);
+      if (!claimSet) return false;
+      try {
+        const validation = claimDraftModel.validateClaimSet(claimSet, {
+          hashText: sha256Hex,
+          requireConfirmed: true,
+          expectedSourceFingerprint: payload.metadata.source_text_fingerprint,
+          expectedSelectionSha256: payload.metadata.claim_drafting.selection_sha256
+        });
+        return validation.valid;
+      } catch {
+        return false;
+      }
     }
 
     function isSafeJsonValue(candidate, depth = 0) {
@@ -2696,7 +3077,8 @@
         !hasExactRecordKeys(envelope, allowed) ||
         !isSafeJsonValue(envelope) ||
         (!backendIdentityValid && !localDraftIdentityValid) ||
-        !isStoredAnalysisResult(envelope.analysis_result)
+        !isStoredAnalysisResult(envelope.analysis_result) ||
+        !passesSourceBoundV2IntegrityGate(envelope.analysis_result)
       ) {
         return { ok: false, code: "structure" };
       }
@@ -2740,6 +3122,9 @@
     }
 
     function loadPayload(payload) {
+      if (!passesSourceBoundV2IntegrityGate(payload)) {
+        throw new Error("stale_source_bound_v2");
+      }
       currentAdvancedNormalizerPayload = null;
       invalidateShareableResult("msgDifferentCaseLoaded");
       $("case_id").value = payload.case_id || "operator-case-001";
@@ -3260,16 +3645,65 @@
       );
     }
 
+    function isSourceBoundNormalizer(version) {
+      return SOURCE_BOUND_NORMALIZER_VERSIONS.has(String(version || ""));
+    }
+
+    const SOURCE_BOUND_V2_LIMITATIONS = Object.freeze([
+      "The exact excerpt supports attribution only: the reviewed source representation contains this statement.",
+      "This excerpt is not independent corroboration of the underlying claim.",
+      "Authorship, context, completeness and relevance still require human review."
+    ]);
+
+    function sourceBoundRelationshipId(index) {
+      return `relation-${String(index).padStart(3, "0")}`;
+    }
+
+    function sourceBoundV2RecordProjectionSha256({
+      intakeRecord, sourceTextFingerprint, claims, evidence, relationships, proposalReviews = []
+    }) {
+      if (!claimDraftModel?.stableStringify) return null;
+      const compareBy = (field) => (left, right) => {
+        const a = String(left?.[field] || "");
+        const b = String(right?.[field] || "");
+        return a < b ? -1 : a > b ? 1 : 0;
+      };
+      return sha256Hex(claimDraftModel.stableStringify({
+        source_text_fingerprint: sourceTextFingerprint,
+        intake_record: intakeRecord,
+        claims: [...claims].sort(compareBy("claim_id")),
+        evidence: [...evidence].sort(compareBy("evidence_id")),
+        relationships: [...relationships].sort(compareBy("relationship_id")),
+        proposal_reviews: proposalReviews
+      }));
+    }
+
+    function sourceBoundV2AttestationSha256(confirmationSha256, recordProjectionSha256) {
+      if (!claimDraftModel?.stableStringify) return null;
+      return sha256Hex(claimDraftModel.stableStringify({
+        confirmation_sha256: confirmationSha256,
+        record_projection_sha256: recordProjectionSha256
+      }));
+    }
+
     function buildSourceBoundRecords(profile, {
       sourceRef,
       claimType,
-      retrieved
+      retrieved,
+      claimSet
     }) {
-      const claims = profile.excerpts.map((excerpt, index) => {
-        const claimId = `claim-${String(index + 1).padStart(3, "0")}`;
-        return {
-          claim_id: claimId,
-          text: buildSpecificClaim(excerpt),
+      const excerptsById = new Map(profile.excerpts.map((excerpt) => [excerpt.excerpt_id, excerpt]));
+      const groups = Array.isArray(claimSet?.groups) ? claimSet.groups : [];
+      const proposalReviews = groups.map((group) => ({
+        excerpt_id: group.excerpt_id,
+        proposals: structuredClone(group.proposal_reviews)
+      }));
+      const claims = groups.flatMap((group) => {
+        const excerpt = excerptsById.get(group.excerpt_id);
+        if (!excerpt) return [];
+        return group.claims.map((claim) => ({
+          claim_id: claim.draft_id,
+          text: claim.text,
           source_ref: sourceRef,
           claim_type: claimType,
           requires_evidence: true,
@@ -3282,52 +3716,65 @@
             span_unit: excerpt.span_unit,
             passage_scope: excerpt.passage_scope,
             selection_origin: excerpt.selection_origin,
+            claim_origin: claim.origin,
+            source_quote_type: claim.source_quote_type,
+            source_proposal_id: claim.source_proposal_id,
+            source_span_start: claim.source_span_start,
+            source_span_end: claim.source_span_end,
+            source_span_unit: claim.source_span_unit,
+            exact_excerpt_sha256: sha256Hex(group.exact_excerpt),
             support_scope: "attribution-only",
+            review_state: "human-confirmed",
+            confirmation_sha256: claimSet.confirmation.confirmation_sha256,
             intake_record_ref: "metadata.intake_record",
-            normalized_by: "operator-source-bound-v1"
+            normalized_by: "operator-source-bound-v2"
           }
-        };
+        }));
       });
-      const evidence = profile.excerpts.map((excerpt, index) => {
-        const claimId = `claim-${String(index + 1).padStart(3, "0")}`;
+      const evidence = groups.map((group, index) => {
+        const excerpt = excerptsById.get(group.excerpt_id);
+        const claimIds = group.claims.map((claim) => claim.draft_id);
         return {
           evidence_id: `evidence-${String(index + 1).padStart(3, "0")}`,
-          text: excerpt.text,
+          text: group.exact_excerpt,
           source_ref: sourceRef,
           source_type: retrieved
             ? "retrieved-source-excerpt"
             : "operator-provided-excerpt",
-          supports_claim_ids: [claimId],
+          supports_claim_ids: claimIds,
           contradicts_claim_ids: [],
-          limitations: [
-            opText("limitationAttribution"),
-            opText("limitationCorroboration"),
-            opText("limitationContext")
-          ],
+          limitations: [...SOURCE_BOUND_V2_LIMITATIONS],
           metadata: {
-            excerpt_id: excerpt.excerpt_id,
-            source_text_fingerprint: excerpt.source_text_fingerprint,
-            span_start: excerpt.span_start,
-            span_end: excerpt.span_end,
-            span_unit: excerpt.span_unit,
-            passage_scope: excerpt.passage_scope,
-            selection_origin: excerpt.selection_origin,
+            excerpt_id: excerpt?.excerpt_id || group.excerpt_id,
+            source_text_fingerprint: group.source_text_fingerprint,
+            span_start: group.span_start,
+            span_end: group.span_end,
+            span_unit: "unicode-code-point",
+            passage_scope: excerpt?.passage_scope || "complete-candidate-passage",
+            selection_origin: excerpt?.selection_origin || "human-confirmed",
+            exact_excerpt_sha256: sha256Hex(group.exact_excerpt),
             support_scope: "attribution-only",
+            review_state: "human-confirmed",
+            confirmation_sha256: claimSet.confirmation.confirmation_sha256,
             intake_record_ref: "metadata.intake_record",
-            normalized_by: "operator-source-bound-v1"
+            normalized_by: "operator-source-bound-v2"
           }
         };
       });
-      const relationships = evidence.map((item, index) => ({
-        relationship_id: `relation-${String(index + 1).padStart(3, "0")}`,
-        type: "SUPPORTS_ATTRIBUTION",
-        from_ref: item.evidence_id,
-        to_ref: item.supports_claim_ids[0],
-        status: "candidate",
-        created_by: "operator-source-bound-v1"
+      let relationshipIndex = 0;
+      const relationships = evidence.flatMap((item) => item.supports_claim_ids.map((claimId) => {
+        relationshipIndex += 1;
+        return {
+          relationship_id: sourceBoundRelationshipId(relationshipIndex),
+          type: "SUPPORTS_ATTRIBUTION",
+          from_ref: item.evidence_id,
+          to_ref: claimId,
+          status: "candidate",
+          created_by: "operator-source-bound-v2"
+        };
       }));
 
-      return { claims, evidence, relationships };
+      return { claims, evidence, relationships, proposalReviews };
     }
 
     function buildConservativeTriage(profile) {
@@ -3541,17 +3988,35 @@
         alert(opText("msgSelectionRequired"));
         return null;
       }
+      const confirmedClaims = confirmedClaimSetFor(confirmedExcerpts);
+      if (!confirmedClaims) {
+        alert(opText("msgClaimDraftConfirm"));
+        return null;
+      }
       const profile = buildSourceProfile(raw, sourceType, sourceUrl, {
         excerpts: confirmedExcerpts
       });
 
       const triage = buildConservativeTriage(profile);
       const protocol = buildProtocolNotes(profile);
-      const { claims, evidence, relationships } = buildSourceBoundRecords(profile, {
+      const { claims, evidence, relationships, proposalReviews } = buildSourceBoundRecords(profile, {
         sourceRef,
         claimType,
-        retrieved: canReuseControlledIntake
+        retrieved: canReuseControlledIntake,
+        claimSet: confirmedClaims
       });
+      const recordProjectionSha256 = sourceBoundV2RecordProjectionSha256({
+        intakeRecord,
+        sourceTextFingerprint: profile.sourceFingerprint,
+        claims,
+        evidence,
+        relationships,
+        proposalReviews
+      });
+      const sourceBoundAttestationSha256 = sourceBoundV2AttestationSha256(
+        confirmedClaims.confirmation.confirmation_sha256,
+        recordProjectionSha256
+      );
 
       const payload = {
         case_id: `operator-signal-${Date.now()}`,
@@ -3583,8 +4048,19 @@
           review_guidance: {
             safe_next_action: triage.safe_action
           },
-          normalizer_version: "operator-source-bound-v1",
-          operator_mode: "browser-local-source-bound-draft"
+          claim_drafting: {
+            schema_version: confirmedClaims.schema_version,
+            selection_sha256: confirmedClaims.confirmation.selection_sha256,
+            claim_set_sha256: confirmedClaims.confirmation.claim_set_sha256,
+            confirmation_sha256: confirmedClaims.confirmation.confirmation_sha256,
+            record_projection_sha256: recordProjectionSha256,
+            attestation_sha256: sourceBoundAttestationSha256,
+            status: confirmedClaims.confirmation.status,
+            coverage_scope: "all-selected-passages-reviewed",
+            proposal_reviews: proposalReviews
+          },
+          normalizer_version: "operator-source-bound-v2",
+          operator_mode: "browser-local-human-confirmed-atomic-claim-draft"
         }
       };
 
@@ -3791,11 +4267,22 @@
       });
     }
 
+    function clearClaimDrafting() {
+      currentClaimDraftSet = null;
+      currentConfirmedClaimSet = null;
+      $("product_claim_draft_groups").replaceChildren();
+      $("product_confirm_claims").checked = false;
+      $("product_confirm_claims").disabled = true;
+      $("product_claim_drafting").hidden = true;
+      setOperatorMessage("product_claim_draft_status", "claimDraftRequired");
+    }
+
     function clearRetrievedSourcePreview() {
       currentRetrievedSourceText = "";
       currentRetrievedSourceUrl = "";
       currentSourceSelectionState = null;
       currentConfirmedSourceSelection = null;
+      clearClaimDrafting();
       $("product_confirm_source").checked = false;
       $("product_confirm_source").disabled = true;
       $("product_source_preview").hidden = true;
@@ -3891,6 +4378,7 @@
     function invalidateSourceSelectionConfirmation() {
       currentConfirmedSourceSelection = null;
       $("product_confirm_source").checked = false;
+      clearClaimDrafting();
     }
 
     function confirmedSourceExcerptsFor(raw) {
@@ -3906,6 +4394,324 @@
       }
       const validation = currentSourceSelectionValidation();
       return validation.ok ? validation.excerpts : null;
+    }
+
+    function claimDraftId(group, text, {
+      sourceSpanStart = group.span_start,
+      sourceSpanEnd = group.span_end,
+      sourceSpanUnit = "unicode-code-point"
+    } = {}) {
+      try {
+        return claimDraftModel.computeDraftId({
+          source_text_fingerprint: group.source_text_fingerprint,
+          excerpt_id: group.excerpt_id,
+          source_span_start: sourceSpanStart,
+          source_span_end: sourceSpanEnd,
+          source_span_unit: sourceSpanUnit,
+          text
+        }, { hashText: sha256Hex });
+      } catch {
+        // A newly added blank row remains visibly invalid until the operator
+        // supplies a canonical, claim-bearing text value.
+        return "claim-pending";
+      }
+    }
+
+    function claimDraftDisplayType(claim) {
+      return claim?.source_quote_type === "exact"
+        ? opText("claimDraftExact")
+        : opText("claimDraftParaphrase");
+    }
+
+    function claimDraftProposal(group, claim) {
+      if (!claim?.source_proposal_id || !Array.isArray(group?.proposal_reviews)) return null;
+      return group.proposal_reviews.find(
+        (proposal) => proposal.proposal_id === claim.source_proposal_id
+      ) || null;
+    }
+
+    function claimDraftProposalStatus(proposal) {
+      return proposal?.review_disposition === "reviewed"
+        ? opText("claimDraftReviewed")
+        : opText("claimDraftPending");
+    }
+
+    function renderClaimDraftGroups() {
+      const container = $("product_claim_draft_groups");
+      const groups = Array.isArray(currentClaimDraftSet?.groups)
+        ? currentClaimDraftSet.groups
+        : [];
+      container.innerHTML = groups.map((group, groupIndex) => `
+        <article class="mini-card claim-drafting-group" data-claim-group="${groupIndex}">
+          <h4 id="product_claim_excerpt_heading_${groupIndex}">${escapeHtml(opText("claimDraftExcerpt", { number: groupIndex + 1 }))}</h4>
+          <blockquote dir="auto" tabindex="0" aria-labelledby="product_claim_excerpt_heading_${groupIndex}">${escapeHtml(group.exact_excerpt)}</blockquote>
+          <div>
+            ${group.claims.map((claim, claimIndex) => {
+              const fieldId = `product_claim_${groupIndex}_${claimIndex}`;
+              const proposal = claimDraftProposal(group, claim);
+              return `
+                <div class="claim-draft-row" data-claim-row="${claimIndex}">
+                  <label for="${fieldId}">${escapeHtml(opText("claimDraftClaimLabel", { number: claimIndex + 1 }))}</label>
+                  <textarea id="${fieldId}" dir="auto" data-claim-text="${claimIndex}">${escapeHtml(claim.text)}</textarea>
+                  <span class="claim-draft-meta" data-claim-type="${claimIndex}">${escapeHtml(claimDraftDisplayType(claim))}${proposal ? ` · ${escapeHtml(claimDraftProposalStatus(proposal))}` : ""}</span>
+                  <span class="claim-draft-meta" data-claim-source-span="${claimIndex}">${escapeHtml(opText("claimDraftSourceSpan"))}: <bdi dir="ltr">[${escapeHtml(claim.source_span_start)}, ${escapeHtml(claim.source_span_end)}) · ${escapeHtml(claim.source_span_unit)}</bdi></span>
+                  ${proposal
+                    ? `<button type="button" data-review-claim-proposal="${claimIndex}"${proposal.review_disposition === "pending" ? "" : " hidden"}>${escapeHtml(opText("claimDraftReview"))}</button>`
+                    : ""}
+                  <button class="remove" type="button" data-remove-claim-draft="${claimIndex}">${escapeHtml(opText(proposal ? "claimDraftOmit" : "claimDraftRemove"))}</button>
+                </div>
+              `;
+            }).join("")}
+          </div>
+          ${(group.proposal_reviews || []).some((proposal) => proposal.review_disposition === "omitted") ? `
+            <div class="claim-draft-omissions">
+              <p>${escapeHtml(opText("claimDraftOmittedHeading"))}</p>
+              <ul>
+                ${(group.proposal_reviews || []).map((proposal, proposalIndex) => (
+                  proposal.review_disposition === "omitted" ? `
+                    <li>
+                      <bdi dir="auto">${escapeHtml(proposal.exact_proposal)}</bdi>
+                      <button type="button" data-restore-claim-proposal="${proposalIndex}">${escapeHtml(opText("claimDraftRestore"))}</button>
+                    </li>
+                  ` : ""
+                )).join("")}
+              </ul>
+            </div>
+          ` : ""}
+          <div class="actions">
+            <button type="button" data-add-claim-draft="${groupIndex}">${escapeHtml(opText("claimDraftAdd"))}</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function currentClaimDraftValidation({ requireConfirmed = false } = {}) {
+      if (!claimDraftModel || !currentClaimDraftSet) {
+        return { valid: false, errors: [{ code: "unavailable" }] };
+      }
+      const excerpts = currentConfirmedSourceSelection?.excerpts || [];
+      if (!excerpts.length) return { valid: false, errors: [{ code: "stale" }] };
+      let selectionSha256;
+      try {
+        selectionSha256 = claimDraftModel.computeSelectionSha256(excerpts, {
+          hashText: sha256Hex,
+          requireHumanSelection: true
+        });
+      } catch {
+        return { valid: false, errors: [{ code: "stale" }] };
+      }
+      return claimDraftModel.validateClaimSet(
+        requireConfirmed ? currentConfirmedClaimSet : currentClaimDraftSet,
+        {
+          hashText: sha256Hex,
+          requireConfirmed,
+          expectedSourceFingerprint: currentConfirmedSourceSelection.source_text_fingerprint,
+          expectedSelectionSha256: selectionSha256
+        }
+      );
+    }
+
+    function renderClaimDraftValidation() {
+      const validation = currentClaimDraftValidation();
+      const checkbox = $("product_confirm_claims");
+      checkbox.disabled = !validation.valid;
+      const claimCount = currentClaimDraftSet?.groups?.reduce(
+        (total, group) => total + (Array.isArray(group.claims) ? group.claims.length : 0),
+        0
+      ) || 0;
+      if (currentConfirmedClaimSet && checkbox.checked) {
+        const confirmed = currentClaimDraftValidation({ requireConfirmed: true });
+        setOperatorMessage(
+          "product_claim_draft_status",
+          confirmed.valid ? "claimDraftConfirmedWait" : "claimDraftChanged"
+        );
+        return confirmed;
+      }
+      setOperatorMessage(
+        "product_claim_draft_status",
+        validation.valid ? "claimDraftValid" : "claimDraftInvalid",
+        { count: claimCount }
+      );
+      return validation;
+    }
+
+    function initializeClaimDrafting(excerpts) {
+      clearClaimDrafting();
+      $("product_claim_drafting").hidden = false;
+      if (!claimDraftModel) {
+        setOperatorMessage("product_claim_draft_status", "claimDraftInvalid");
+        return false;
+      }
+      try {
+        currentClaimDraftSet = claimDraftModel.proposeClaimSet(excerpts, { hashText: sha256Hex });
+      } catch {
+        currentClaimDraftSet = null;
+        setOperatorMessage("product_claim_draft_status", "claimDraftInvalid");
+        return false;
+      }
+      renderClaimDraftGroups();
+      renderClaimDraftValidation();
+      return true;
+    }
+
+    function invalidateClaimDraftConfirmation(reasonKey = "claimDraftChanged") {
+      currentConfirmedClaimSet = null;
+      if (currentClaimDraftSet) currentClaimDraftSet.confirmation = null;
+      $("product_confirm_claims").checked = false;
+      invalidatePreparedDraft(reasonKey);
+    }
+
+    function confirmedClaimSetFor(excerpts) {
+      if (!currentConfirmedClaimSet || !$("product_confirm_claims").checked) return null;
+      let selectionSha256;
+      try {
+        selectionSha256 = claimDraftModel.computeSelectionSha256(excerpts, {
+          hashText: sha256Hex,
+          requireHumanSelection: true
+        });
+      } catch {
+        return null;
+      }
+      const validation = claimDraftModel.validateClaimSet(currentConfirmedClaimSet, {
+        hashText: sha256Hex,
+        requireConfirmed: true,
+        expectedSourceFingerprint: currentConfirmedSourceSelection?.source_text_fingerprint,
+        expectedSelectionSha256: selectionSha256
+      });
+      return validation.valid ? currentConfirmedClaimSet : null;
+    }
+
+    function updateClaimDraftText(groupIndex, claimIndex, rawText) {
+      if (!currentClaimDraftSet?.groups?.[groupIndex]?.claims?.[claimIndex]) return;
+      const next = structuredClone(currentClaimDraftSet);
+      const group = next.groups[groupIndex];
+      const claim = group.claims[claimIndex];
+      const text = claimDraftModel.normalizeClaimText(String(rawText || ""));
+      claim.text = text;
+      claim.origin = "human-edited";
+      claim.source_quote_type = "paraphrase";
+      claim.draft_id = claimDraftId(group, text, {
+        sourceSpanStart: claim.source_span_start,
+        sourceSpanEnd: claim.source_span_end,
+        sourceSpanUnit: claim.source_span_unit
+      });
+      const proposal = claimDraftProposal(group, claim);
+      if (proposal) proposal.review_disposition = "pending";
+      next.confirmation = null;
+      currentClaimDraftSet = next;
+      invalidateClaimDraftConfirmation();
+      const typeNode = $("product_claim_draft_groups").querySelector(
+        `[data-claim-group="${groupIndex}"] [data-claim-type="${claimIndex}"]`
+      );
+      if (typeNode) {
+        typeNode.textContent = `${claimDraftDisplayType(claim)}${proposal ? ` · ${claimDraftProposalStatus(proposal)}` : ""}`;
+      }
+      const reviewButton = $("product_claim_draft_groups").querySelector(
+        `[data-claim-group="${groupIndex}"] [data-review-claim-proposal="${claimIndex}"]`
+      );
+      if (reviewButton && proposal) reviewButton.hidden = false;
+      renderClaimDraftValidation();
+    }
+
+    function addClaimDraft(groupIndex) {
+      if (!currentClaimDraftSet?.groups?.[groupIndex]) return;
+      const next = structuredClone(currentClaimDraftSet);
+      const group = next.groups[groupIndex];
+      const total = next.groups.reduce((count, item) => count + item.claims.length, 0);
+      if (
+        group.claims.length >= claimDraftModel.limits.maxClaimsPerExcerpt ||
+        total >= claimDraftModel.limits.maxTotalClaims
+      ) return;
+      group.claims.push({
+        draft_id: claimDraftId(group, "", {
+          sourceSpanStart: group.span_start,
+          sourceSpanEnd: group.span_end
+        }),
+        text: "",
+        origin: "human-edited",
+        source_quote_type: "paraphrase",
+        source_proposal_id: null,
+        source_span_start: group.span_start,
+        source_span_end: group.span_end,
+        source_span_unit: "unicode-code-point"
+      });
+      next.confirmation = null;
+      currentClaimDraftSet = next;
+      invalidateClaimDraftConfirmation();
+      renderClaimDraftGroups();
+      renderClaimDraftValidation();
+      const added = $("product_claim_draft_groups").querySelector(
+        `[data-claim-group="${groupIndex}"] [data-claim-text="${group.claims.length - 1}"]`
+      );
+      added?.focus();
+    }
+
+    function removeClaimDraft(groupIndex, claimIndex) {
+      if (!currentClaimDraftSet?.groups?.[groupIndex]?.claims?.[claimIndex]) return;
+      const next = structuredClone(currentClaimDraftSet);
+      const group = next.groups[groupIndex];
+      const [removed] = group.claims.splice(claimIndex, 1);
+      if (removed.source_proposal_id) {
+        const proposal = claimDraftProposal(group, removed);
+        if (proposal) {
+          proposal.review_disposition = group.claims.some(
+            (claim) => claim.source_proposal_id === removed.source_proposal_id
+          ) ? "pending" : "omitted";
+        }
+      }
+      next.confirmation = null;
+      currentClaimDraftSet = next;
+      invalidateClaimDraftConfirmation();
+      renderClaimDraftGroups();
+      renderClaimDraftValidation();
+    }
+
+    function reviewClaimProposal(groupIndex, claimIndex) {
+      if (!currentClaimDraftSet?.groups?.[groupIndex]?.claims?.[claimIndex]) return;
+      const next = structuredClone(currentClaimDraftSet);
+      const group = next.groups[groupIndex];
+      const proposal = claimDraftProposal(group, group.claims[claimIndex]);
+      if (!proposal || proposal.review_disposition === "omitted") return;
+      proposal.review_disposition = "reviewed";
+      next.confirmation = null;
+      currentClaimDraftSet = next;
+      invalidateClaimDraftConfirmation();
+      renderClaimDraftGroups();
+      renderClaimDraftValidation();
+    }
+
+    function restoreClaimProposal(groupIndex, proposalIndex) {
+      const currentGroup = currentClaimDraftSet?.groups?.[groupIndex];
+      const currentProposal = currentGroup?.proposal_reviews?.[proposalIndex];
+      if (!currentGroup || currentProposal?.review_disposition !== "omitted") return;
+      const next = structuredClone(currentClaimDraftSet);
+      const group = next.groups[groupIndex];
+      const proposal = group.proposal_reviews[proposalIndex];
+      const total = next.groups.reduce((count, item) => count + item.claims.length, 0);
+      if (
+        group.claims.length >= claimDraftModel.limits.maxClaimsPerExcerpt ||
+        total >= claimDraftModel.limits.maxTotalClaims
+      ) return;
+      proposal.review_disposition = "pending";
+      group.claims.push({
+        draft_id: claimDraftId(group, proposal.exact_proposal, {
+          sourceSpanStart: proposal.source_span_start,
+          sourceSpanEnd: proposal.source_span_end,
+          sourceSpanUnit: proposal.source_span_unit
+        }),
+        text: proposal.exact_proposal,
+        origin: "mechanical-proposal",
+        source_quote_type: "exact",
+        source_proposal_id: proposal.proposal_id,
+        source_span_start: proposal.source_span_start,
+        source_span_end: proposal.source_span_end,
+        source_span_unit: proposal.source_span_unit
+      });
+      next.confirmation = null;
+      currentClaimDraftSet = next;
+      invalidateClaimDraftConfirmation();
+      renderClaimDraftGroups();
+      renderClaimDraftValidation();
     }
 
     function sourceSelectionSnapshotIsCurrent(raw, mode) {
@@ -3934,6 +4740,7 @@
         inventory
       };
       currentConfirmedSourceSelection = null;
+      clearClaimDrafting();
       $("product_confirm_source").checked = false;
       $("product_source_preview").hidden = false;
       refreshRetrievedSourcePreviewMeta();
@@ -3968,7 +4775,10 @@
     }
 
     function invalidatePreparedDraft(reasonKey = "msgSourceChanged", parameters = {}) {
-      const sourceBoundDraftWasActive = currentCaseMetadata.normalizer_version === "operator-source-bound-v1";
+      const sourceBoundDraftWasActive = (
+        isSourceBoundNormalizer(currentCaseMetadata.normalizer_version) ||
+        hasSourceBoundV2Markers(currentSourceBoundV2Snapshot())
+      );
       const hadPreparedDraft = Boolean(
         currentMemoryRecord ||
         currentCaseMetadata.normalizer_version ||
@@ -4175,12 +4985,20 @@
       const claimRecords = (payload.claims || []).map((item) => ({
         id: item.claim_id || "claim-without-id",
         text: String(item.text || ""),
-        passage_scope: item.metadata?.passage_scope || "complete-candidate-passage"
+        passage_scope: item.metadata?.passage_scope || "complete-candidate-passage",
+        excerpt_id: item.metadata?.excerpt_id || null,
+        source_quote_type: item.metadata?.source_quote_type || null,
+        confirmation_sha256: item.metadata?.confirmation_sha256 || null
       }));
       const evidenceRecords = (payload.evidence || []).map((item) => ({
         id: item.evidence_id || "evidence-without-id",
         text: String(item.text || ""),
-        passage_scope: item.metadata?.passage_scope || "complete-candidate-passage"
+        passage_scope: item.metadata?.passage_scope || "complete-candidate-passage",
+        excerpt_id: item.metadata?.excerpt_id || null,
+        supports_claim_ids: Array.isArray(item.supports_claim_ids)
+          ? [...item.supports_claim_ids]
+          : [],
+        confirmation_sha256: item.metadata?.confirmation_sha256 || null
       }));
       const claim = claimRecords[0]?.text || opText("resultNoClaim");
       const evidenceText = evidenceRecords[0]?.text || opText("resultNoEvidence");
@@ -4201,6 +5019,7 @@
         evidence_count: evidenceRecords.length,
         claims: claimRecords,
         evidence_records: evidenceRecords,
+        claim_confirmation_sha256: payload.metadata?.claim_drafting?.confirmation_sha256 || null,
         claim: compactText(claim, 420),
         evidence: compactText(evidenceText, 520),
         uncertainty: compactText((payload.uncertainties || []).join(" "), 360),
@@ -4746,10 +5565,38 @@
       return lines;
     }
 
+    function sourceBoundV2ShareRecordLines(record) {
+      const claimsById = new Map(
+        (Array.isArray(record.claims) ? record.claims : []).map((claim) => [claim.id, claim])
+      );
+      const evidenceRecords = Array.isArray(record.evidence_records)
+        ? record.evidence_records
+        : [];
+      const lines = [];
+      evidenceRecords.forEach((item, evidenceIndex) => {
+        lines.push(`${opText("shareEvidence")} ${evidenceIndex + 1} [${item.id}]: ${String(item.text || "")}`);
+        (Array.isArray(item.supports_claim_ids) ? item.supports_claim_ids : []).forEach((claimId) => {
+          const claim = claimsById.get(claimId);
+          if (!claim) return;
+          const expressionType = claim.source_quote_type === "exact"
+            ? opText("claimDraftExact")
+            : opText("claimDraftParaphrase");
+          lines.push(`  - ${opText("shareClaims")} [${claim.id}] · ${expressionType}: ${String(claim.text || "")}`);
+        });
+      });
+      if (record.claim_confirmation_sha256) {
+        lines.push(`confirmation_sha256=${record.claim_confirmation_sha256}`);
+      }
+      return lines;
+    }
+
     function localizedShareRecords(record) {
       const evidenceRecords = Array.isArray(record.evidence_records) ? record.evidence_records : [];
       const claimRecords = Array.isArray(record.claims) ? record.claims : [];
-      if (record.normalizer_version !== "operator-source-bound-v1") {
+      if (!isSourceBoundNormalizer(record.normalizer_version)) {
+        return { claimRecords, evidenceRecords };
+      }
+      if (record.normalizer_version === "operator-source-bound-v2") {
         return { claimRecords, evidenceRecords };
       }
       return {
@@ -4779,7 +5626,14 @@
 
     function buildHumanShareText(record) {
       const { claimRecords, evidenceRecords } = localizedShareRecords(record);
-      const sourceBound = record.normalizer_version === "operator-source-bound-v1";
+      const sourceBound = isSourceBoundNormalizer(record.normalizer_version);
+      const v2RecordLines = record.normalizer_version === "operator-source-bound-v2"
+        ? sourceBoundV2ShareRecordLines({
+            ...record,
+            claims: claimRecords,
+            evidence_records: evidenceRecords
+          })
+        : null;
       const summary = sourceBound
         ? opText("triageSummary", { source: sourceTypeDisplayLabel(record.source_type) })
         : record.summary;
@@ -4795,9 +5649,8 @@
         "",
         opText("shareSummary", { value: compactText(summary, 280) }),
         "",
-        ...shareRecordLines("claim", "shareClaims", claimRecords, record.claim),
-        "",
-        ...shareRecordLines("evidence", "shareEvidence", evidenceRecords, record.evidence),
+        ...(v2RecordLines || shareRecordLines("claim", "shareClaims", claimRecords, record.claim)),
+        ...(v2RecordLines ? [] : ["", ...shareRecordLines("evidence", "shareEvidence", evidenceRecords, record.evidence)]),
         "",
         opText("shareUncertainty", { value: compactText(uncertainty, 260) }),
         "",
@@ -5022,6 +5875,20 @@
         }
       }
 
+      const reviewedExcerpts = confirmedSourceExcerptsFor(raw);
+      if (!reviewedExcerpts?.length || !confirmedClaimSetFor(reviewedExcerpts)) {
+        renderClaimDraftValidation();
+        setOperatorMessage("product_wait_status", "msgClaimDraftConfirm");
+        if ($("product_confirm_claims").disabled) {
+          $("product_claim_draft_groups").querySelector("textarea")?.focus();
+        } else {
+          $("product_confirm_claims").focus();
+        }
+        if (analyzeButton) analyzeButton.disabled = false;
+        if (advancedNormalizeButton) advancedNormalizeButton.disabled = false;
+        return;
+      }
+
       syncAuditIntakeView();
 
       productStep("product_step_capture", "msgStepRunning");
@@ -5139,36 +6006,94 @@
     function clearAll() {
       if (!confirm(opText("advancedClearConfirm"))) return;
 
-      document.querySelectorAll("input, textarea").forEach((field) => {
+      const controllerToAbort = activeIntakeAbortController;
+      const clearedIntakeGeneration = intakeGeneration + 1;
+      const resetActiveState = () => {
+        activeIntakeAbortController = null;
+        intakeGeneration = clearedIntakeGeneration;
+        activeIntakeRequestToken = 0;
+        currentCaseMetadata = {};
+        currentMemoryRecord = null;
+        currentIntakeRecord = null;
+        currentRetrievedSourceText = "";
+        currentRetrievedSourceUrl = "";
+        currentIntakeFailure = null;
+        currentAdvancedNormalizerPayload = null;
+        preparedDraftReady = false;
+        currentSourceSelectionState = null;
+        currentConfirmedSourceSelection = null;
+        currentClaimDraftSet = null;
+        currentConfirmedClaimSet = null;
+        claims = [];
+        evidence = [];
+        recordSequences = { claim: 0, evidence: 0 };
+      };
+
+      resetActiveState();
+
+      try {
+        controllerToAbort?.abort();
+      } catch {
+        // The post-abort reset below remains authoritative.
+      } finally {
+        resetActiveState();
+      }
+
+      const clearUiStep = (callback) => {
+        try {
+          callback();
+        } catch {
+          // Clearing is best-effort after the sensitive in-memory state is gone.
+        }
+      };
+      clearUiStep(() => setMemoryActionsEnabled(false));
+      clearUiStep(() => document.querySelectorAll("input, textarea").forEach((field) => {
         if (field.type === "checkbox") field.checked = false;
         else field.value = "";
+      }));
+      clearUiStep(() => {
+        $("claim_requires").checked = true;
+        $("case_id").value = "operator-case-001";
+        $("core_version_ref").value = "main";
+        $("signal_source_type").value = "automatic";
+        $("operational_signal").value = "none";
+        $("intake_channel").value = "operator-pwa";
       });
-      $("claim_requires").checked = true;
-      $("case_id").value = "operator-case-001";
-      $("core_version_ref").value = "main";
-      $("signal_source_type").value = "automatic";
-      $("operational_signal").value = "none";
-      $("intake_channel").value = "operator-pwa";
-      claims = [];
-      evidence = [];
-      currentIntakeRecord = null;
-      currentMemoryRecord = null;
-      currentIntakeFailure = null;
-      currentAdvancedNormalizerPayload = null;
-      preparedDraftReady = false;
-      recordSequences = { claim: 0, evidence: 0 };
-      clearRetrievedSourcePreview();
-      renderClaims();
-      renderEvidence();
-      $("result_input").value = "";
-      $("result_view").innerHTML = "";
-      setMemoryActionsEnabled(false);
-      resetProductProgress();
-      syncProductInputState({
-        resetRetrievedSource: true,
-        invalidateRetrieval: true
+      clearUiStep(() => { $("product_source_url").value = ""; });
+      clearUiStep(() => { $("product_source_text").value = ""; });
+      clearUiStep(() => { $("audit_source_type").textContent = "external-source"; });
+      clearUiStep(() => { $("audit_source_url").textContent = opText("valueNotProvided"); });
+      clearUiStep(() => { $("audit_source_text").textContent = opText("valueNotProvided"); });
+      clearUiStep(clearRetrievedSourcePreview);
+      clearUiStep(() => { $("product_confirm_source").checked = false; });
+      clearUiStep(() => { $("product_confirm_source").disabled = true; });
+      clearUiStep(() => { $("product_confirm_claims").checked = false; });
+      clearUiStep(() => { $("product_confirm_claims").disabled = true; });
+      clearUiStep(() => { $("product_source_preview").hidden = true; });
+      clearUiStep(() => { $("product_claim_drafting").hidden = true; });
+      clearUiStep(() => $("product_source_preview_text").replaceChildren());
+      clearUiStep(() => { $("product_source_selection").value = ""; });
+      clearUiStep(() => $("product_source_selection").removeAttribute("aria-invalid"));
+      clearUiStep(() => $("product_claim_draft_groups").replaceChildren());
+      clearUiStep(() => $("product_output").replaceChildren());
+      clearUiStep(() => $("normalizer_readout").replaceChildren());
+      clearUiStep(() => { $("case_json").textContent = "{}"; });
+      clearUiStep(() => {
+        $("analyze_command").textContent = opText("advancedBuildCommandFirst");
       });
-      updateJson();
+      clearUiStep(() => { $("result_input").value = ""; });
+      clearUiStep(() => $("result_view").replaceChildren());
+      clearUiStep(resetProductProgress);
+      clearUiStep(() => syncProductInputState({
+        resetIntakeRecord: false,
+        resetRetrievedSource: false,
+        invalidateRetrieval: false,
+        preserveSourceSelectionConfirmation: true
+      }));
+      clearUiStep(renderClaims);
+      clearUiStep(renderEvidence);
+      clearUiStep(updateJson);
+      resetActiveState();
     }
 
     function firstArrayItem(items, fallback) {
@@ -5193,12 +6118,14 @@
       const resultClaims = Array.isArray(result.claims) ? result.claims : [];
       const resultEvidence = Array.isArray(result.evidence) ? result.evidence : [];
       const signal = result.operational_signal || "none";
-      const sourceBound = result.metadata?.normalizer_version === "operator-source-bound-v1";
+      const sourceBound = isSourceBoundNormalizer(result.metadata?.normalizer_version);
       const firstClaim = resultClaims[0] || null;
       const linkedEvidence = resultEvidence.find((item) => (
         item?.metadata?.excerpt_id && item.metadata.excerpt_id === firstClaim?.metadata?.excerpt_id
       )) || resultEvidence[0];
-      const headlineClaim = sourceBound && linkedEvidence?.text
+      const headlineClaim = result.metadata?.normalizer_version === "operator-source-bound-v2"
+        ? (firstClaim?.text || opText("resultNoClaim"))
+        : sourceBound && linkedEvidence?.text
         ? buildSpecificClaim({
             text: linkedEvidence.text,
             passage_scope: linkedEvidence.metadata?.passage_scope
@@ -5224,12 +6151,23 @@
       const safeNextAction = sourceBound
         ? opText("triageSafeAction")
         : opText(signal === "none" ? "resultKeepDraft" : "resultReviewRecords");
+      const assertedClaims = result.metadata?.normalizer_version === "operator-source-bound-v2" && resultClaims.length
+        ? `<ol class="claim-result-list">${resultClaims.map((claim) => {
+            const quoteTypeKey = claim.metadata?.source_quote_type === "paraphrase"
+              ? "claimDraftParaphrase"
+              : "claimDraftExact";
+            return `<li><code>${escapeHtml(claim.claim_id)}</code> · <bdi dir="auto">${escapeHtml(claim.text)}</bdi> <span class="muted">(${escapeHtml(opText(quoteTypeKey))})</span></li>`;
+          }).join("")}</ol>`
+        : `<p><b>${escapeHtml(opText("resultAsserted"))}</b> <bdi dir="auto">${escapeHtml(headlineClaim)}</bdi></p>`;
 
       return `
         <section class="output-card full">
           <h3>${escapeHtml(opText("resultReportTitle"))}</h3>
           <p><b>${escapeHtml(opText("resultOperationalSummary"))}</b> <bdi dir="auto">${escapeHtml(summary)}</bdi></p>
-          <p><b>${escapeHtml(opText("resultAsserted"))}</b> <bdi dir="auto">${escapeHtml(headlineClaim)}</bdi></p>
+          ${result.metadata?.normalizer_version === "operator-source-bound-v2"
+            ? `<p><b>${escapeHtml(opText("resultAsserted"))}</b></p>`
+            : ""}
+          ${assertedClaims}
           <p><b>${escapeHtml(opText("resultEvidencePosition"))}</b> ${escapeHtml(evidenceSummary)}</p>
           <p><b>${escapeHtml(opText("resultInferenceBoundary"))}</b> ${escapeHtml(inferenceBoundary)}</p>
           <p><b>${escapeHtml(opText("resultUncertainty"))}</b> ${escapeHtml(uncertaintyBoundary)}</p>
@@ -5458,7 +6396,13 @@
     }
 
     function currentLearningCaseRecord() {
-      if (!learningModel || !preparedDraftReady || currentCaseMetadata.normalizer_version !== "operator-source-bound-v1") {
+      const liveSnapshot = currentSourceBoundV2Snapshot();
+      if (
+        !learningModel ||
+        !preparedDraftReady ||
+        !isSourceBoundNormalizer(currentCaseMetadata.normalizer_version) ||
+        !passesSourceBoundV2IntegrityGate(liveSnapshot)
+      ) {
         return null;
       }
       const caseId = value("case_id");
@@ -6229,6 +7173,7 @@
     $("product_confirm_source").addEventListener("change", () => {
       if (!$("product_confirm_source").checked) {
         currentConfirmedSourceSelection = null;
+        clearClaimDrafting();
         invalidatePreparedDraft("msgConfirmationRemoved");
         setOperatorMessage("product_wait_status", "msgConfirmationRemovedWait");
         return;
@@ -6247,8 +7192,93 @@
         editor_value: $("product_source_selection").value,
         excerpts: Object.freeze(validation.excerpts.map((excerpt) => Object.freeze({ ...excerpt })))
       });
+      initializeClaimDrafting(validation.excerpts);
       invalidateShareableResult("msgSelectionConfirmed");
-      setOperatorMessage("product_wait_status", "msgSelectionConfirmedWait");
+      setOperatorMessage("product_wait_status", "msgClaimDraftConfirm");
+    });
+    $("product_claim_draft_groups").addEventListener("input", (event) => {
+      const field = event.target?.closest?.("[data-claim-text]");
+      const group = field?.closest?.("[data-claim-group]");
+      if (!field || !group) return;
+      updateClaimDraftText(
+        Number(group.getAttribute("data-claim-group")),
+        Number(field.getAttribute("data-claim-text")),
+        field.value
+      );
+      setOperatorMessage("product_wait_status", "msgClaimDraftConfirm");
+    });
+    $("product_claim_draft_groups").addEventListener("click", (event) => {
+      const add = event.target?.closest?.("[data-add-claim-draft]");
+      if (add) {
+        addClaimDraft(Number(add.getAttribute("data-add-claim-draft")));
+        setOperatorMessage("product_wait_status", "msgClaimDraftConfirm");
+        return;
+      }
+      const review = event.target?.closest?.("[data-review-claim-proposal]");
+      const reviewGroup = review?.closest?.("[data-claim-group]");
+      if (review && reviewGroup) {
+        reviewClaimProposal(
+          Number(reviewGroup.getAttribute("data-claim-group")),
+          Number(review.getAttribute("data-review-claim-proposal"))
+        );
+        setOperatorMessage("product_wait_status", "msgClaimDraftConfirm");
+        return;
+      }
+      const restore = event.target?.closest?.("[data-restore-claim-proposal]");
+      const restoreGroup = restore?.closest?.("[data-claim-group]");
+      if (restore && restoreGroup) {
+        restoreClaimProposal(
+          Number(restoreGroup.getAttribute("data-claim-group")),
+          Number(restore.getAttribute("data-restore-claim-proposal"))
+        );
+        setOperatorMessage("product_wait_status", "msgClaimDraftConfirm");
+        return;
+      }
+      const remove = event.target?.closest?.("[data-remove-claim-draft]");
+      const group = remove?.closest?.("[data-claim-group]");
+      if (!remove || !group) return;
+      removeClaimDraft(
+        Number(group.getAttribute("data-claim-group")),
+        Number(remove.getAttribute("data-remove-claim-draft"))
+      );
+      setOperatorMessage("product_wait_status", "msgClaimDraftConfirm");
+    });
+    $("product_confirm_claims").addEventListener("change", () => {
+      if (!$("product_confirm_claims").checked) {
+        currentConfirmedClaimSet = null;
+        invalidatePreparedDraft("claimDraftConfirmationRemovedWait");
+        renderClaimDraftValidation();
+        setOperatorMessage("product_wait_status", "claimDraftConfirmationRemovedWait");
+        return;
+      }
+      const validation = renderClaimDraftValidation();
+      const excerpts = currentConfirmedSourceSelection?.excerpts || [];
+      if (!validation.valid || !excerpts.length) {
+        $("product_confirm_claims").checked = false;
+        currentConfirmedClaimSet = null;
+        setOperatorMessage("product_wait_status", "msgClaimDraftConfirm");
+        return;
+      }
+      try {
+        const selectionSha256 = claimDraftModel.computeSelectionSha256(excerpts, {
+          hashText: sha256Hex,
+          requireHumanSelection: true
+        });
+        currentConfirmedClaimSet = claimDraftModel.confirmClaimSet(currentClaimDraftSet, {
+          hashText: sha256Hex,
+          expectedSourceFingerprint: currentConfirmedSourceSelection.source_text_fingerprint,
+          expectedSelectionSha256: selectionSha256
+        });
+      } catch {
+        $("product_confirm_claims").checked = false;
+        currentConfirmedClaimSet = null;
+        setOperatorMessage("product_claim_draft_status", "claimDraftInvalid");
+        setOperatorMessage("product_wait_status", "msgClaimDraftConfirm");
+        return;
+      }
+      renderClaimDraftValidation();
+      invalidateShareableResult("msgSelectionConfirmed");
+      setOperatorMessage("product_wait_status", "claimDraftConfirmedWait");
     });
     $("share_memory_link").addEventListener("click", shareMemoryLink);
     $("share_memory_whatsapp").addEventListener("click", shareMemoryWhatsapp);
@@ -6311,6 +7341,10 @@
         applyOperatorLanguage(button.getAttribute("data-operator-language"));
         refreshRetrievedSourcePreviewMeta();
         if (currentSourceSelectionState) renderSourceSelectionValidation();
+        if (currentClaimDraftSet) {
+          renderClaimDraftGroups();
+          renderClaimDraftValidation();
+        }
         refreshFlow(Boolean(value("result_input")));
         if (currentIntakeFailure) {
           renderUrlIntakeFallback(

@@ -26,13 +26,33 @@ The registry reports evidence; it does not create authority. In particular:
 | `Superseded` | A later decision replaces the RFC and is linked from the registry. |
 | `Rejected` | A human decision record rejects the proposal. |
 
+## Registry field semantics
+
+- `record_pr` identifies the Pull Request that places the lifecycle record in
+  protected repository history.
+- `decision_pr` identifies the Pull Request that places the decision record in
+  protected repository history. When the accountable human decision originates
+  in an issue or an exact issue comment, `decision_pr` identifies the Pull
+  Request that incorporates or reconciles that external decision, and `note`
+  MUST link the exact decision source. It does not mean that the Pull Request
+  supplied the decision, is approved, or is authorized to merge.
+- `ratifier` names the accountable human first. A repository account and its
+  immutable ID may record the channel and provenance of that decision, but the
+  account is not an independent human authority.
+
 ## Current snapshot
 
-At baseline commit `3ef199305c2d2d114f88aceb97b65a08b9f91b4a`,
-fourteen RFC records are `Draft`. Operator Controlled URL Intake is
-`Partially Implemented` because local/private code and tests exist, but no
-decision PR, public deployment evidence, or full RFC implementation is
-recorded.
+At the verified baseline commit
+`d96fa7de64e5a27a3058d892ca31cf93d0fa0de7` from 2026-08-25, sixteen RFC
+records were `Draft`. Operator Controlled URL Intake was `Partially
+Implemented` because local/private code and tests existed, but no decision PR,
+public deployment evidence, or full RFC implementation was recorded.
+
+This reconciliation records the later owner decision accepting Operator Human-
+Confirmed Atomic Claim Drafting. The candidate registry therefore reports
+fifteen `Draft`, one `Accepted`, and one `Partially Implemented` record. Draft
+PR #1921 was unapproved and unmerged when this reconciliation candidate was
+prepared; this lifecycle transition authorizes neither merge nor deployment.
 
 Repository capabilities are tracked separately in
 [`../architecture/capability_status.md`](../architecture/capability_status.md).

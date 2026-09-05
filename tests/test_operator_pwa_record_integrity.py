@@ -58,6 +58,14 @@ def test_operator_record_integrity_helpers_are_wired():
     assert "contradicts_claim_ids" in removal.group(1)
     assert "renderClaims();" in removal.group(1)
     assert "renderEvidence();" in removal.group(1)
+    for function_name in ("removeClaimAt", "removeEvidenceAt", "addClaim", "addEvidence"):
+        function = re.search(
+            rf"function {function_name}\([^)]*\) \{{(.*?)\n    \}}",
+            html,
+            re.DOTALL,
+        )
+        assert function is not None
+        assert "blockSourceBoundV2StructureMutation()" in function.group(1)
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
@@ -79,6 +87,9 @@ function renderClaims() {}
 function renderEvidence() {}
 function setMemoryActionsEnabled() {}
 function renderMemoryStatus() {}
+function alert() { blockedAlerts += 1; }
+function opText(key) { return key; }
+function setOperatorMessage() {}
 
 let claims = [
   {claim_id: "claim-001"},
@@ -98,6 +109,9 @@ let evidence = [
 ];
 let currentCaseMetadata = {};
 let currentMemoryRecord = null;
+let currentAdvancedNormalizerPayload = null;
+let preparedDraftReady = false;
+let blockedAlerts = 0;
 """
         + helpers
         + """
@@ -133,6 +147,58 @@ if (nextRecordId("claim") !== "claim-010") {
 }
 if (nextRecordId("evidence") !== "evidence-008") {
   throw new Error("loaded evidence IDs did not advance the sequence baseline");
+}
+
+claims = [{claim_id: "claim-v2", text: "Confirmed claim"}];
+evidence = [{
+  evidence_id: "evidence-v2",
+  supports_claim_ids: ["claim-v2"],
+  contradicts_claim_ids: []
+}];
+currentCaseMetadata = {normalizer_version: "operator-source-bound-v2"};
+const lockedSnapshot = JSON.stringify({claims, evidence});
+removeClaimAt(0);
+removeEvidenceAt(0);
+if (JSON.stringify({claims, evidence}) !== lockedSnapshot || blockedAlerts !== 2) {
+  throw new Error("advanced controls mutated a human-confirmed v2 structure");
+}
+
+currentCaseMetadata = {
+  normalizer_version: "operator-source-bound-v1",
+  claim_drafting: {schema_version: "operator_claim_set.v1"}
+};
+removeClaimAt(0);
+if (JSON.stringify({claims, evidence}) !== lockedSnapshot || blockedAlerts !== 3) {
+  throw new Error("root relabeling bypassed residual v2 structure locking");
+}
+
+currentCaseMetadata = {normalizer_version: "operator-source-bound-v1"};
+claims[0].metadata = {normalized_by: "operator-source-bound-v2"};
+removeClaimAt(0);
+if (JSON.stringify({claims, evidence}) !== JSON.stringify({
+  claims: [{claim_id: "claim-v2", text: "Confirmed claim", metadata: {normalized_by: "operator-source-bound-v2"}}],
+  evidence
+}) || blockedAlerts !== 4) {
+  throw new Error("nested v2 provenance did not preserve the structure lock");
+}
+
+currentCaseMetadata = {normalizer_version: "operator-source-bound-v1"};
+claims[0].metadata = {
+  normalized_by: "operator-source-bound-v1",
+  source_proposal_id: "proposal-structural-only",
+  source_span_start: 0,
+  source_span_end: 15,
+  source_span_unit: "unicode-code-point"
+};
+removeClaimAt(0);
+if (claims.length !== 1 || blockedAlerts !== 5) {
+  throw new Error("structural-only v2 provenance bypassed the advanced edit lock");
+}
+
+claims[0].metadata = {review_state: "opaque-v1-extension"};
+removeClaimAt(0);
+if (claims.length !== 0 || blockedAlerts !== 5) {
+  throw new Error("legacy/generic advanced editing was blocked by opaque metadata");
 }
 """
     )

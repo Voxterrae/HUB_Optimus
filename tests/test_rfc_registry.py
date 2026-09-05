@@ -8,6 +8,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RFC_DIR = REPO_ROOT / "docs" / "rfc"
 REGISTRY_PATH = RFC_DIR / "registry.v1.json"
+README_PATH = RFC_DIR / "README.md"
 
 
 def _registry() -> dict:
@@ -54,6 +55,11 @@ def test_registry_has_versioned_evidence_and_decision_fields() -> None:
 
     assert registry["format_version"] == 1
     assert baseline["repository"] == "Voxterrae/HUB_Optimus"
+    assert baseline["verified_at"] == "2026-08-25"
+    assert (
+        baseline["verified_commit"]
+        == "d96fa7de64e5a27a3058d892ca31cf93d0fa0de7"
+    )
     assert re.fullmatch(r"[0-9a-f]{40}", baseline["verified_commit"])
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", baseline["verified_at"])
     assert allowed_states == {
@@ -96,7 +102,7 @@ def test_registry_has_versioned_evidence_and_decision_fields() -> None:
             assert entry["implementation_prs"]
 
 
-def test_current_lifecycle_snapshot_is_explicitly_unratified() -> None:
+def test_operator_atomic_claim_rfc_records_the_pinned_accepted_decision() -> None:
     entries = _registry()["rfcs"]
     counts = {
         state: sum(1 for entry in entries if entry["lifecycle"] == state)
@@ -105,13 +111,67 @@ def test_current_lifecycle_snapshot_is_explicitly_unratified() -> None:
     url_intake = next(
         entry for entry in entries if entry["id"] == "operator-controlled-url-intake"
     )
+    atomic = next(
+        entry for entry in entries if entry["id"] == "operator-atomic-claim-drafting"
+    )
+    rfc = (REPO_ROOT / atomic["path"]).read_text(encoding="utf-8")
 
     assert counts["Draft"] == 15
     assert counts["Partially Implemented"] == 1
-    assert counts["Accepted"] == 0
+    assert counts["Accepted"] == 1
     assert counts["Implemented"] == 0
     assert url_intake["decision_pr"] is None
     assert url_intake["implementation_prs"] == [1717, 1720]
+    assert atomic["lifecycle"] == "Accepted"
+    assert atomic["proposal_issue"] == 1920
+    assert atomic["record_pr"] == 1921
+    assert atomic["decision_pr"] == 1921
+    assert atomic["implementation_prs"] == [1921]
+    assert atomic["owner"] == "Benjamin Gerrit Hoff"
+    assert atomic["ratifier"] == (
+        "Benjamin Gerrit Hoff via the protected @Voxterrae account "
+        "(GitHub user ID 249308740)"
+    )
+    assert atomic["evidence_paths"] == [
+        "docs/rfc/operator_atomic_claim_drafting.md",
+        "site/operator/claim-decomposition.v1.js",
+        "site/operator/index.html",
+        "tests/test_operator_claim_decomposition.py",
+        "tests/test_operator_pwa_product_actions.py",
+    ]
+    decision_url = (
+        "https://github.com/Voxterrae/HUB_Optimus/issues/1920"
+        "#issuecomment-5430873541"
+    )
+    correction_url = (
+        "https://github.com/Voxterrae/HUB_Optimus/pull/1921"
+        "#issuecomment-5431264847"
+    )
+    for pinned in (
+        decision_url,
+        correction_url,
+        "d96fa7de64e5a27a3058d892ca31cf93d0fa0de7",
+        "21ec2710f61df06c099d64366cd88c3d3da5d024",
+        "088c10e36dfc451414028b30c7c761b2660c17d6",
+    ):
+        assert pinned in atomic["note"]
+        assert pinned in rfc
+    assert "unapproved and unmerged" in atomic["note"]
+    assert "does not recast the Draft PR as the ratification source" in atomic["note"]
+    assert "operator-source-bound-v1 remains authoritative" in atomic["note"]
+    assert "merged through the protected process" in rfc
+    assert "No schema change, public activation, merge, deployment" in rfc
+    assert "reserved provenance markers" in rfc
+
+
+def test_registry_documents_external_decision_and_human_ratifier_semantics() -> None:
+    readme = " ".join(README_PATH.read_text(encoding="utf-8").split())
+
+    assert "When the accountable human decision originates" in readme
+    assert "`decision_pr` identifies the Pull Request that incorporates" in readme
+    assert "It does not mean that the Pull Request" in readme
+    assert "`ratifier` names the accountable human first" in readme
+    assert "the account is not an independent human authority" in readme
 
 
 def test_plain_overview_and_capability_ledger_keep_claim_classes_separate() -> None:
