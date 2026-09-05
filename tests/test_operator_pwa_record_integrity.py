@@ -163,9 +163,43 @@ if (JSON.stringify({claims, evidence}) !== lockedSnapshot || blockedAlerts !== 2
   throw new Error("advanced controls mutated a human-confirmed v2 structure");
 }
 
-currentCaseMetadata = {normalizer_version: "operator-source-bound-v1"};
+currentCaseMetadata = {
+  normalizer_version: "operator-source-bound-v1",
+  claim_drafting: {schema_version: "operator_claim_set.v1"}
+};
 removeClaimAt(0);
-if (claims.length !== 0) throw new Error("legacy/generic advanced editing was blocked");
+if (JSON.stringify({claims, evidence}) !== lockedSnapshot || blockedAlerts !== 3) {
+  throw new Error("root relabeling bypassed residual v2 structure locking");
+}
+
+currentCaseMetadata = {normalizer_version: "operator-source-bound-v1"};
+claims[0].metadata = {normalized_by: "operator-source-bound-v2"};
+removeClaimAt(0);
+if (JSON.stringify({claims, evidence}) !== JSON.stringify({
+  claims: [{claim_id: "claim-v2", text: "Confirmed claim", metadata: {normalized_by: "operator-source-bound-v2"}}],
+  evidence
+}) || blockedAlerts !== 4) {
+  throw new Error("nested v2 provenance did not preserve the structure lock");
+}
+
+currentCaseMetadata = {normalizer_version: "operator-source-bound-v1"};
+claims[0].metadata = {
+  normalized_by: "operator-source-bound-v1",
+  source_proposal_id: "proposal-structural-only",
+  source_span_start: 0,
+  source_span_end: 15,
+  source_span_unit: "unicode-code-point"
+};
+removeClaimAt(0);
+if (claims.length !== 1 || blockedAlerts !== 5) {
+  throw new Error("structural-only v2 provenance bypassed the advanced edit lock");
+}
+
+claims[0].metadata = {review_state: "opaque-v1-extension"};
+removeClaimAt(0);
+if (claims.length !== 0 || blockedAlerts !== 5) {
+  throw new Error("legacy/generic advanced editing was blocked by opaque metadata");
+}
 """
     )
     completed = _run_node(smoke, "-")

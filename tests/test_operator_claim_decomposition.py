@@ -38,6 +38,12 @@ function mustThrow(callback, fragment) {
 function sourceFingerprint(text) {
   return `sha256:${hashText(text)}`;
 }
+function reviewAll(value) {
+  value.groups.forEach((group) => group.proposal_reviews.forEach((proposal) => {
+    proposal.review_disposition = "reviewed";
+  }));
+  return value;
+}
 function excerpt(text, fingerprint, excerptId = "excerpt-001", spanStart = 0) {
   return {
     excerpt_id: excerptId,
@@ -129,8 +135,14 @@ for (const group of firstSet.groups) {
     assert(claim.origin === "mechanical-proposal", "proposal origin changed");
     assert(claim.source_quote_type === "exact", "proposal was mislabeled as a paraphrase");
     assert(group.exact_excerpt.includes(claim.text), "exact proposal is absent from its excerpt");
+    assert(claim.source_span_unit === "unicode-code-point", "claim span unit changed");
+    const sourcePoints = Array.from(completeSource);
+    assert(sourcePoints.slice(claim.source_span_start, claim.source_span_end).join("") === claim.text,
+      "claim Unicode span does not locate its exact text");
     assert(/^claim-[0-9a-f]{64}$/.test(claim.draft_id), "claim ID is not a full SHA-256 ID");
   }
+  assert(group.proposal_reviews.every((proposal) => proposal.review_disposition === "pending"),
+    "mechanical proposals silently reviewed themselves");
 }
 assert(firstSet.confirmation === null, "proposal silently confirmed itself");
 assert(api.computeSelectionSha256(selected, {hashText, requireHumanSelection: true})
@@ -158,8 +170,12 @@ claim.source_quote_type = "paraphrase";
 claim.draft_id = api.computeDraftId({
   source_text_fingerprint: fingerprint,
   excerpt_id: edited.groups[0].excerpt_id,
+  source_span_start: claim.source_span_start,
+  source_span_end: claim.source_span_end,
+  source_span_unit: claim.source_span_unit,
   text: claim.text
 }, {hashText});
+reviewAll(edited);
 
 const draftValidation = api.validateClaimSet(edited, {hashText, requireConfirmed: false});
 assert(draftValidation.valid, JSON.stringify(draftValidation.errors));
@@ -171,6 +187,9 @@ assert(!defaultValidation.valid
 const alternateSpacingId = api.computeDraftId({
   source_text_fingerprint: fingerprint,
   excerpt_id: edited.groups[0].excerpt_id,
+  source_span_start: claim.source_span_start,
+  source_span_end: claim.source_span_end,
+  source_span_unit: claim.source_span_unit,
   text: "The source  attributes a decision to the council."
 }, {hashText});
 assert(alternateSpacingId === claim.draft_id, "claim identity was not based on normalized text");
@@ -195,8 +214,8 @@ const text = "One claim is recorded. Another claim remains uncertain.";
 const fingerprint = sourceFingerprint(text);
 const selected = [excerpt(text, fingerprint)];
 const selectionSha256 = api.computeSelectionSha256(selected, {hashText, requireHumanSelection: true});
-const proposedA = api.proposeClaimSet(selected, {hashText});
-const proposedB = api.proposeClaimSet(clone(selected), {hashText});
+const proposedA = reviewAll(api.proposeClaimSet(selected, {hashText}));
+const proposedB = reviewAll(api.proposeClaimSet(clone(selected), {hashText}));
 const options = {
   hashText,
   confirmationNote: "Reviewed by the human operator.",
@@ -229,6 +248,9 @@ tampered.groups[0].claims[0].source_quote_type = "paraphrase";
 tampered.groups[0].claims[0].draft_id = api.computeDraftId({
   source_text_fingerprint: fingerprint,
   excerpt_id: tampered.groups[0].excerpt_id,
+  source_span_start: tampered.groups[0].claims[0].source_span_start,
+  source_span_end: tampered.groups[0].claims[0].source_span_end,
+  source_span_unit: tampered.groups[0].claims[0].source_span_unit,
   text: tampered.groups[0].claims[0].text
 }, {hashText});
 const tamperedValidation = api.validateClaimSet(tampered, {hashText});
@@ -298,6 +320,209 @@ mustThrow(() => api.proposeClaimSet([valid], {hashText: () => "0".repeat(64)}), 
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required")
+def test_every_mechanical_proposal_is_explicitly_reviewed_or_omitted():
+    run_module(
+        r"""
+const text = "The council approved the motion. Independent verification remains pending.";
+const fingerprint = sourceFingerprint(text);
+const selected = [excerpt(text, fingerprint)];
+const proposed = api.proposeClaimSet(selected, {hashText});
+const pending = api.validateClaimSet(proposed, {hashText, requireConfirmed: false});
+assert(!pending.valid && pending.errors.some((error) => error.code === "unconfirmed"),
+  "pending proposals passed the explicit review gate");
+const attemptedPublicBypass = api.validateClaimSet(proposed, {
+  hashText,
+  requireConfirmed: false,
+  allowPendingProposals: true
+});
+assert(!attemptedPublicBypass.valid
+  && attemptedPublicBypass.errors.some((error) => error.code === "unconfirmed"),
+  "public validation option bypassed the explicit review gate");
+mustThrow(() => api.confirmClaimSet(proposed, {hashText}), "reviewed or omitted");
+
+const reviewed = clone(proposed);
+reviewed.groups[0].proposal_reviews[0].review_disposition = "reviewed";
+const omittedProposal = reviewed.groups[0].proposal_reviews[1];
+omittedProposal.review_disposition = "omitted";
+reviewed.groups[0].claims = reviewed.groups[0].claims.filter(
+  (claim) => claim.source_proposal_id !== omittedProposal.proposal_id
+);
+const reviewValidation = api.validateClaimSet(reviewed, {hashText, requireConfirmed: false});
+assert(reviewValidation.valid, JSON.stringify(reviewValidation.errors));
+const confirmed = api.confirmClaimSet(reviewed, {
+  hashText,
+  expectedSourceFingerprint: fingerprint,
+  expectedSelectionSha256: api.computeSelectionSha256(selected, {
+    hashText,
+    requireHumanSelection: true
+  })
+});
+assert(confirmed.groups[0].proposal_reviews[1].review_disposition === "omitted",
+  "omitted proposal disappeared from the confirmed review ledger");
+assert(!confirmed.groups[0].claims.some(
+  (claim) => claim.source_proposal_id === omittedProposal.proposal_id
+), "omitted proposal retained an output claim");
+
+const forgedLink = clone(reviewed);
+forgedLink.groups[0].claims[0].source_proposal_id = omittedProposal.proposal_id;
+assert(!api.validateClaimSet(forgedLink, {hashText, requireConfirmed: false}).valid,
+  "an omitted proposal retained a linked claim");
+const missingDisposition = clone(reviewed);
+missingDisposition.groups[0].proposal_reviews[0].review_disposition = "pending";
+assert(!api.validateClaimSet(missingDisposition, {hashText, requireConfirmed: false}).valid,
+  "a pending review disposition passed");
+const uncovered = clone(reviewed);
+uncovered.groups[0].proposal_reviews[0].review_disposition = "omitted";
+uncovered.groups[0].claims = [];
+assert(!api.validateClaimSet(uncovered, {hashText, requireConfirmed: false}).valid,
+  "an excerpt with every proposal omitted passed coverage");
+const tamperedLedger = clone(confirmed);
+tamperedLedger.groups[0].proposal_reviews[1].exact_proposal += " changed";
+assert(!api.validateClaimSet(tamperedLedger, {hashText}).valid,
+  "proposal ledger tampering retained confirmation");
+
+const deletedLedgerRow = clone(reviewed);
+deletedLedgerRow.groups[0].proposal_reviews.pop();
+assert(!api.validateClaimSet(deletedLedgerRow, {hashText, requireConfirmed: false}).valid,
+  "a deleted proposal ledger row passed validation");
+
+const reorderedLedger = clone(reviewed);
+reorderedLedger.groups[0].proposal_reviews.reverse();
+assert(!api.validateClaimSet(reorderedLedger, {hashText, requireConfirmed: false}).valid,
+  "a reordered proposal ledger passed validation");
+
+const duplicatedLedgerRow = clone(reviewed);
+duplicatedLedgerRow.groups[0].proposal_reviews[1] = clone(
+  duplicatedLedgerRow.groups[0].proposal_reviews[0]
+);
+const duplicatedLedgerValidation = api.validateClaimSet(
+  duplicatedLedgerRow,
+  {hashText, requireConfirmed: false}
+);
+assert(!duplicatedLedgerValidation.valid
+  && duplicatedLedgerValidation.errors.some((error) => error.code === "duplicate"),
+  "a duplicated proposal ledger row passed validation");
+
+const unlinkedReviewedProposal = reviewAll(clone(proposed));
+unlinkedReviewedProposal.groups[0].claims.shift();
+const unlinkedValidation = api.validateClaimSet(
+  unlinkedReviewedProposal,
+  {hashText, requireConfirmed: false}
+);
+assert(!unlinkedValidation.valid
+  && unlinkedValidation.errors.some((error) => (
+    error.code === "empty" && error.message.includes("non-omitted proposal")
+  )),
+  "a reviewed proposal without a claim passed under excerpt-level coverage");
+"""
+    )
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required")
+def test_claim_ids_and_exact_quotes_bind_to_absolute_unicode_code_point_spans():
+    run_module(
+        r"""
+const prefix = "🙂 前置 العربية ";
+const excerptText = "The vote passed. The vote passed.";
+const source = `${prefix}${excerptText}`;
+const fingerprint = sourceFingerprint(source);
+const spanStart = Array.from(prefix).length;
+const selected = [excerpt(excerptText, fingerprint, "excerpt-001", spanStart)];
+const proposed = api.proposeClaimSet(selected, {hashText});
+assert(proposed.groups[0].claims.length === 2, "repeated exact claims were not proposed");
+const [first, second] = proposed.groups[0].claims;
+assert(first.text === second.text, "repeated source wording changed");
+assert(first.source_span_start !== second.source_span_start, "distinct occurrences share a span");
+assert(first.draft_id !== second.draft_id, "distinct occurrences share a claim ID");
+for (const claim of [first, second]) {
+  assert(Array.from(source).slice(claim.source_span_start, claim.source_span_end).join("") === claim.text,
+    "absolute Unicode span does not locate exact claim text");
+}
+
+const offByOne = reviewAll(clone(proposed));
+offByOne.groups[0].claims[0].source_span_start += 1;
+assert(!api.validateClaimSet(offByOne, {hashText, requireConfirmed: false}).valid,
+  "off-by-one claim span passed");
+const utf16Span = reviewAll(clone(proposed));
+utf16Span.groups[0].claims[0].source_span_start += 2;
+assert(!api.validateClaimSet(utf16Span, {hashText, requireConfirmed: false}).valid,
+  "UTF-16-derived claim span passed as a Unicode code-point span");
+const humanSubstring = reviewAll(clone(proposed));
+const edited = humanSubstring.groups[0].claims[0];
+edited.text = "vote passed";
+edited.origin = "human-edited";
+edited.source_quote_type = "exact";
+edited.draft_id = api.computeDraftId({
+  source_text_fingerprint: fingerprint,
+  excerpt_id: humanSubstring.groups[0].excerpt_id,
+  source_span_start: edited.source_span_start,
+  source_span_end: edited.source_span_end,
+  source_span_unit: edited.source_span_unit,
+  text: edited.text
+}, {hashText});
+assert(!api.validateClaimSet(humanSubstring, {hashText, requireConfirmed: false}).valid,
+  "human-edited substring was silently accepted as exact");
+
+const astralPrefix = "Context: ";
+const astralExcerpt = "🙂 Alpha passed. Beta passed. Gamma remains.";
+const astralSource = `${astralPrefix}${astralExcerpt}`;
+const astralFingerprint = sourceFingerprint(astralSource);
+const astralSpanStart = Array.from(astralPrefix).length;
+const astralSet = reviewAll(api.proposeClaimSet([
+  excerpt(astralExcerpt, astralFingerprint, "excerpt-astral", astralSpanStart)
+], {hashText}));
+const astralGroup = astralSet.groups[0];
+const astralClaim = astralGroup.claims[1];
+const astralProposal = astralGroup.proposal_reviews.find(
+  (proposal) => proposal.proposal_id === astralClaim.source_proposal_id
+);
+assert(astralProposal && astralClaim.text === "Beta passed.",
+  "astral-span fixture did not select the middle proposal");
+
+const utf16RelativeStart = astralExcerpt.indexOf(astralClaim.text);
+const wrongUtf16Start = astralSpanStart + utf16RelativeStart;
+const wrongUtf16End = wrongUtf16Start + astralClaim.text.length;
+assert(wrongUtf16Start === astralClaim.source_span_start + 1,
+  "fixture did not create a real UTF-16/code-point offset difference");
+
+astralProposal.source_span_start = wrongUtf16Start;
+astralProposal.source_span_end = wrongUtf16End;
+astralProposal.proposal_id = `proposal-${hashText(api.stableStringify({
+  source_text_fingerprint: astralFingerprint,
+  excerpt_id: astralGroup.excerpt_id,
+  source_span_start: wrongUtf16Start,
+  source_span_end: wrongUtf16End,
+  source_span_unit: astralProposal.source_span_unit,
+  exact_proposal: astralProposal.exact_proposal
+}))}`;
+astralClaim.source_proposal_id = astralProposal.proposal_id;
+astralClaim.source_span_start = wrongUtf16Start;
+astralClaim.source_span_end = wrongUtf16End;
+astralClaim.draft_id = api.computeDraftId({
+  source_text_fingerprint: astralFingerprint,
+  excerpt_id: astralGroup.excerpt_id,
+  source_span_start: wrongUtf16Start,
+  source_span_end: wrongUtf16End,
+  source_span_unit: astralClaim.source_span_unit,
+  text: astralClaim.text
+}, {hashText});
+
+const astralValidation = api.validateClaimSet(astralSet, {
+  hashText,
+  requireConfirmed: false
+});
+assert(!astralValidation.valid
+  && astralValidation.errors.some((error) => (
+    error.message === "Exact claim text does not equal its Unicode source span"
+  )),
+  "coherently re-hashed UTF-16 offsets bypassed exact Unicode-span validation");
+assert(!astralValidation.errors.some((error) => error.path.endsWith(".draft_id")),
+  "astral-span fixture failed only because its deterministic claim ID was stale");
+"""
+    )
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required")
 def test_repeated_statement_in_distinct_excerpts_remains_two_occurrences():
     run_module(
         r"""
@@ -315,6 +540,7 @@ const repeated = proposed.groups.map((group) => (
 assert(repeated.every(Boolean), "repeated statement occurrence was dropped");
 assert(repeated[0].draft_id !== repeated[1].draft_id,
   "separate excerpt occurrences were silently merged");
+reviewAll(proposed);
 assert(api.validateClaimSet(proposed, {hashText, requireConfirmed: false}).valid,
   "separate excerpt occurrences were rejected as duplicates");
 """
@@ -329,7 +555,7 @@ const text = "The first record is selected. The second claim remains open.";
 const fingerprint = sourceFingerprint(text);
 const selected = [excerpt(text, fingerprint)];
 const currentSelection = api.computeSelectionSha256(selected, {hashText, requireHumanSelection: true});
-const proposed = api.proposeClaimSet(selected, {hashText});
+const proposed = reviewAll(api.proposeClaimSet(selected, {hashText}));
 const differentFingerprint = `sha256:${hashText("different source")}`;
 const staleSource = api.validateClaimSet(proposed, {
   hashText,

@@ -24,13 +24,26 @@
     "span_start",
     "span_end",
     "exact_excerpt",
+    "proposal_reviews",
     "claims"
+  ]);
+  const PROPOSAL_REVIEW_KEYS = Object.freeze([
+    "proposal_id",
+    "exact_proposal",
+    "source_span_start",
+    "source_span_end",
+    "source_span_unit",
+    "review_disposition"
   ]);
   const CLAIM_KEYS = Object.freeze([
     "draft_id",
     "text",
     "origin",
-    "source_quote_type"
+    "source_quote_type",
+    "source_proposal_id",
+    "source_span_start",
+    "source_span_end",
+    "source_span_unit"
   ]);
   const CONFIRMATION_KEYS = Object.freeze([
     "status",
@@ -41,6 +54,7 @@
   ]);
   const CLAIM_ORIGINS = new Set(["mechanical-proposal", "human-edited"]);
   const SOURCE_QUOTE_TYPES = new Set(["exact", "paraphrase"]);
+  const REVIEW_DISPOSITIONS = new Set(["pending", "reviewed", "omitted"]);
   const ABBREVIATIONS = new Set([
     "art", "dra", "dr", "etc", "fig", "hr", "mr", "mrs", "ms", "no", "nr",
     "prof", "sr", "sra", "st", "vs"
@@ -309,28 +323,71 @@
     return end;
   }
 
-  function proposeTexts(exactExcerpt) {
+  function exactSegment(points, start, end) {
+    while (start < end && /\s/u.test(points[start])) start += 1;
+    while (end > start && /\s/u.test(points[end - 1])) end -= 1;
+    const text = points.slice(start, end).join("");
+    return text ? { text, relative_start: start, relative_end: end } : null;
+  }
+
+  function proposeSegments(exactExcerpt) {
     const points = Array.from(exactExcerpt);
     const proposed = [];
     let start = 0;
     for (let index = 0; index < points.length; index += 1) {
       const end = boundaryEnd(points, index);
       if (end === null) continue;
-      const text = normalizeClaimText(points.slice(start, end).join(""));
-      if (text) proposed.push(text);
+      const segment = exactSegment(points, start, end);
+      if (segment) proposed.push(segment);
       start = end;
       while (start < points.length && /\s/u.test(points[start])) start += 1;
       index = start - 1;
     }
-    const tail = normalizeClaimText(points.slice(start).join(""));
+    const tail = exactSegment(points, start, points.length);
     if (tail) proposed.push(tail);
     return proposed;
   }
 
-  function claimId(sourceFingerprint, excerptId, text, hashText) {
+  function proposalId(sourceFingerprint, excerptId, sourceSpanStart, sourceSpanEnd, text, hashText) {
+    return `proposal-${hashText(stableStringify({
+      source_text_fingerprint: sourceFingerprint,
+      excerpt_id: excerptId,
+      source_span_start: sourceSpanStart,
+      source_span_end: sourceSpanEnd,
+      source_span_unit: "unicode-code-point",
+      exact_proposal: text
+    }))}`;
+  }
+
+  function proposalReviewsForExcerpt(excerpt, hashText) {
+    return proposeSegments(excerpt.exact_excerpt).map((segment) => {
+      const sourceSpanStart = excerpt.span_start + segment.relative_start;
+      const sourceSpanEnd = excerpt.span_start + segment.relative_end;
+      return {
+        proposal_id: proposalId(
+          excerpt.source_text_fingerprint,
+          excerpt.excerpt_id,
+          sourceSpanStart,
+          sourceSpanEnd,
+          segment.text,
+          hashText
+        ),
+        exact_proposal: segment.text,
+        source_span_start: sourceSpanStart,
+        source_span_end: sourceSpanEnd,
+        source_span_unit: "unicode-code-point",
+        review_disposition: "pending"
+      };
+    });
+  }
+
+  function claimId(sourceFingerprint, excerptId, sourceSpanStart, sourceSpanEnd, text, hashText) {
     return `claim-${hashText(stableStringify({
       source_text_fingerprint: sourceFingerprint,
       excerpt_id: excerptId,
+      source_span_start: sourceSpanStart,
+      source_span_end: sourceSpanEnd,
+      source_span_unit: "unicode-code-point",
       text: claimIdentityText(text)
     }))}`;
   }
@@ -340,6 +397,11 @@
     if (!isPlainObject(material)
       || !isSourceFingerprint(material.source_text_fingerprint)
       || !isExcerptId(material.excerpt_id)
+      || !Number.isSafeInteger(material.source_span_start)
+      || material.source_span_start < 0
+      || !Number.isSafeInteger(material.source_span_end)
+      || material.source_span_end <= material.source_span_start
+      || material.source_span_unit !== "unicode-code-point"
       || typeof material.text !== "string"
       || hasUnpairedSurrogate(material.text)) {
       throw new Error("Invalid claim ID material");
@@ -348,7 +410,14 @@
     if (!text || !/[\p{L}\p{N}]/u.test(text) || codePointLength(text) > MAX_CLAIM_CODE_POINTS) {
       throw new Error("Invalid claim ID material");
     }
-    return claimId(material.source_text_fingerprint, material.excerpt_id, text, hashText);
+    return claimId(
+      material.source_text_fingerprint,
+      material.excerpt_id,
+      material.source_span_start,
+      material.source_span_end,
+      text,
+      hashText
+    );
   }
 
   function proposeClaimSet(excerpts, options = {}) {
@@ -359,12 +428,12 @@
     }
     let totalClaims = 0;
     const groups = collection.excerpts.map((excerpt) => {
-      const texts = proposeTexts(excerpt.exact_excerpt);
-      if (!texts.length) throw new Error("Excerpt produced no claim proposal");
-      if (texts.length > MAX_CLAIMS_PER_EXCERPT) {
+      const proposalReviews = proposalReviewsForExcerpt(excerpt, hashText);
+      if (!proposalReviews.length) throw new Error("Excerpt produced no claim proposal");
+      if (proposalReviews.length > MAX_CLAIMS_PER_EXCERPT) {
         throw new Error("Excerpt exceeds the claim proposal limit");
       }
-      totalClaims += texts.length;
+      totalClaims += proposalReviews.length;
       if (totalClaims > MAX_TOTAL_CLAIMS) throw new Error("Claim set exceeds the total claim limit");
       return {
         excerpt_id: excerpt.excerpt_id,
@@ -372,11 +441,23 @@
         span_start: excerpt.span_start,
         span_end: excerpt.span_end,
         exact_excerpt: excerpt.exact_excerpt,
-        claims: texts.map((text) => ({
-          draft_id: claimId(excerpt.source_text_fingerprint, excerpt.excerpt_id, text, hashText),
-          text,
+        proposal_reviews: proposalReviews,
+        claims: proposalReviews.map((proposal) => ({
+          draft_id: claimId(
+            excerpt.source_text_fingerprint,
+            excerpt.excerpt_id,
+            proposal.source_span_start,
+            proposal.source_span_end,
+            proposal.exact_proposal,
+            hashText
+          ),
+          text: proposal.exact_proposal,
           origin: "mechanical-proposal",
-          source_quote_type: "exact"
+          source_quote_type: "exact",
+          source_proposal_id: proposal.proposal_id,
+          source_span_start: proposal.source_span_start,
+          source_span_end: proposal.source_span_end,
+          source_span_unit: proposal.source_span_unit
         }))
       };
     });
@@ -387,7 +468,11 @@
       groups,
       confirmation: null
     };
-    const validation = validateClaimSet(result, { hashText, requireConfirmed: false });
+    const validation = validateClaimSetInternal(result, {
+      hashText,
+      requireConfirmed: false,
+      allowPendingProposals: true
+    });
     if (!validation.valid) throw new Error(`Invalid proposed claim set: ${validation.errors.map((error) => error.message).join("; ")}`);
     return canonicalValue(result);
   }
@@ -402,7 +487,7 @@
     };
   }
 
-  function validateClaimSet(value, options = {}) {
+  function validateClaimSetInternal(value, options = {}) {
     const errors = [];
     let hashText;
     try {
@@ -431,6 +516,7 @@
     const groups = [];
     const claimIds = new Set();
     let totalClaims = 0;
+    let totalProposals = 0;
     if (Array.isArray(value.groups)) value.groups.forEach((group, groupIndex) => {
       const groupPath = `$.groups[${groupIndex}]`;
       if (!sameKeys(group, GROUP_KEYS)) {
@@ -442,6 +528,42 @@
       errors.push(...excerptErrors);
       if (excerpt && excerpt.source_text_fingerprint !== value.source_text_fingerprint) {
         errors.push({ path: `${groupPath}.source_text_fingerprint`, code: "stale", message: "Claim group source fingerprint is stale" });
+      }
+      const proposalsById = new Map();
+      const proposalLinkCounts = new Map();
+      if (!Array.isArray(group.proposal_reviews) || group.proposal_reviews.length < 1) {
+        errors.push({ path: `${groupPath}.proposal_reviews`, code: "empty", message: "Every mechanical proposal needs a review record" });
+      } else if (group.proposal_reviews.length > MAX_CLAIMS_PER_EXCERPT) {
+        errors.push({ path: `${groupPath}.proposal_reviews`, code: "over-limit", message: "Too many proposal review records for one excerpt" });
+      }
+      const expectedProposals = excerpt ? proposalReviewsForExcerpt(excerpt, hashText) : [];
+      if (Array.isArray(group.proposal_reviews)) {
+        totalProposals += group.proposal_reviews.length;
+        if (excerpt && group.proposal_reviews.length !== expectedProposals.length) {
+          errors.push({ path: `${groupPath}.proposal_reviews`, code: "stale", message: "Mechanical proposal review ledger is incomplete" });
+        }
+        group.proposal_reviews.forEach((proposal, proposalIndex) => {
+          const proposalPath = `${groupPath}.proposal_reviews[${proposalIndex}]`;
+          if (!sameKeys(proposal, PROPOSAL_REVIEW_KEYS)) {
+            errors.push({ path: proposalPath, code: "malformed", message: "Unknown or missing proposal review properties" });
+            return;
+          }
+          if (!REVIEW_DISPOSITIONS.has(proposal.review_disposition)) {
+            errors.push({ path: `${proposalPath}.review_disposition`, code: "malformed", message: "Invalid proposal review disposition" });
+          }
+          const expected = expectedProposals[proposalIndex];
+          if (expected && [
+            "proposal_id", "exact_proposal", "source_span_start",
+            "source_span_end", "source_span_unit"
+          ].some((key) => proposal[key] !== expected[key])) {
+            errors.push({ path: proposalPath, code: "stale", message: "Mechanical proposal review ledger does not match the exact excerpt" });
+          }
+          if (proposalsById.has(proposal.proposal_id)) {
+            errors.push({ path: `${proposalPath}.proposal_id`, code: "duplicate", message: "Duplicate proposal ID" });
+          }
+          proposalsById.set(proposal.proposal_id, proposal);
+          proposalLinkCounts.set(proposal.proposal_id, 0);
+        });
       }
       if (!Array.isArray(group.claims) || group.claims.length < 1) {
         errors.push({ path: `${groupPath}.claims`, code: "empty", message: "At least one claim is required per excerpt" });
@@ -473,33 +595,104 @@
         if (!SOURCE_QUOTE_TYPES.has(claim.source_quote_type)) {
           errors.push({ path: `${claimPath}.source_quote_type`, code: "malformed", message: "Claim must explicitly mark exact text or paraphrase" });
         }
-        if (claim.source_quote_type === "paraphrase" && claim.origin !== "human-edited") {
-          errors.push({ path: claimPath, code: "malformed", message: "A paraphrase must be explicitly human-edited" });
+        if (!Number.isSafeInteger(claim.source_span_start)
+          || !Number.isSafeInteger(claim.source_span_end)
+          || claim.source_span_end <= claim.source_span_start
+          || claim.source_span_unit !== "unicode-code-point"
+          || (excerpt && (
+            claim.source_span_start < excerpt.span_start
+            || claim.source_span_end > excerpt.span_end
+          ))) {
+          errors.push({ path: claimPath, code: "malformed", message: "Claim source span is not a valid Unicode span inside its excerpt" });
         }
-        if (excerpt && claim.source_quote_type === "exact" && !excerpt.exact_excerpt.includes(text)) {
-          errors.push({ path: claimPath, code: "malformed", message: "Exact claim text is not present in its excerpt" });
+        const proposal = claim.source_proposal_id === null
+          ? null
+          : proposalsById.get(claim.source_proposal_id);
+        if (claim.source_proposal_id !== null && !proposal) {
+          errors.push({ path: `${claimPath}.source_proposal_id`, code: "malformed", message: "Claim links an unknown mechanical proposal" });
         }
-        if (claim.origin === "mechanical-proposal" && claim.source_quote_type !== "exact") {
+        if (proposal) {
+          proposalLinkCounts.set(
+            proposal.proposal_id,
+            (proposalLinkCounts.get(proposal.proposal_id) || 0) + 1
+          );
+          if (proposal.review_disposition === "omitted") {
+            errors.push({ path: `${claimPath}.source_proposal_id`, code: "malformed", message: "Claim links a proposal recorded as omitted" });
+          }
+          if (claim.source_span_start !== proposal.source_span_start
+            || claim.source_span_end !== proposal.source_span_end
+            || claim.source_span_unit !== proposal.source_span_unit) {
+            errors.push({ path: claimPath, code: "stale", message: "Claim source span diverges from its mechanical proposal" });
+          }
+        }
+        if (claim.source_proposal_id === null
+          && (claim.origin !== "human-edited" || claim.source_quote_type !== "paraphrase")) {
+          errors.push({ path: claimPath, code: "malformed", message: "A human-added claim must remain an explicit paraphrase" });
+        }
+        if (claim.origin === "human-edited" && claim.source_quote_type !== "paraphrase") {
+          errors.push({ path: claimPath, code: "malformed", message: "Human-edited wording must never be labelled as exact source text" });
+        }
+        if (claim.origin === "mechanical-proposal"
+          && (claim.source_quote_type !== "exact" || !proposal)) {
           errors.push({ path: claimPath, code: "malformed", message: "Mechanical proposals must preserve exact source text" });
         }
         if (excerpt && text) {
-          const expectedId = claimId(excerpt.source_text_fingerprint, excerpt.excerpt_id, text, hashText);
+          const excerptPoints = Array.from(excerpt.exact_excerpt);
+          const localStart = claim.source_span_start - excerpt.span_start;
+          const localEnd = claim.source_span_end - excerpt.span_start;
+          const sourceSpanText = Number.isSafeInteger(localStart) && Number.isSafeInteger(localEnd)
+            ? excerptPoints.slice(localStart, localEnd).join("")
+            : "";
+          if (claim.source_quote_type === "exact" && sourceSpanText !== text) {
+            errors.push({ path: claimPath, code: "malformed", message: "Exact claim text does not equal its Unicode source span" });
+          }
+          if (claim.origin === "mechanical-proposal" && proposal?.exact_proposal !== text) {
+            errors.push({ path: claimPath, code: "malformed", message: "Mechanical claim text differs from its exact proposal" });
+          }
+          const expectedId = claimId(
+            excerpt.source_text_fingerprint,
+            excerpt.excerpt_id,
+            claim.source_span_start,
+            claim.source_span_end,
+            text,
+            hashText
+          );
           if (claim.draft_id !== expectedId) {
             errors.push({ path: `${claimPath}.draft_id`, code: "malformed", message: "Claim ID does not match canonical claim material" });
           }
         }
-        if (groupClaimTexts.has(identityText)) {
-          errors.push({ path: `${claimPath}.text`, code: "duplicate", message: "Duplicate claim text within one excerpt" });
+        const occurrenceIdentity = `${identityText}\u0000${claim.source_span_start}\u0000${claim.source_span_end}`;
+        if (groupClaimTexts.has(occurrenceIdentity)) {
+          errors.push({ path: `${claimPath}.text`, code: "duplicate", message: "Duplicate claim occurrence within one excerpt" });
         }
-        groupClaimTexts.add(identityText);
+        groupClaimTexts.add(occurrenceIdentity);
         if (claimIds.has(claim.draft_id)) {
           errors.push({ path: `${claimPath}.draft_id`, code: "duplicate", message: "Duplicate claim ID" });
         }
         claimIds.add(claim.draft_id);
       });
+      if (Array.isArray(group.proposal_reviews)) {
+        group.proposal_reviews.forEach((proposal, proposalIndex) => {
+          if (!sameKeys(proposal, PROPOSAL_REVIEW_KEYS)) return;
+          const proposalPath = `${groupPath}.proposal_reviews[${proposalIndex}]`;
+          const links = proposalLinkCounts.get(proposal.proposal_id) || 0;
+          if (proposal.review_disposition === "omitted" && links !== 0) {
+            errors.push({ path: proposalPath, code: "malformed", message: "An omitted proposal still has a retained claim" });
+          }
+          if (["pending", "reviewed"].includes(proposal.review_disposition) && links < 1) {
+            errors.push({ path: proposalPath, code: "empty", message: "A non-omitted proposal has no retained claim" });
+          }
+          if (proposal.review_disposition === "pending" && options.allowPendingProposals !== true) {
+            errors.push({ path: proposalPath, code: "unconfirmed", message: "Every proposal must be explicitly reviewed or omitted" });
+          }
+        });
+      }
     });
     if (totalClaims > MAX_TOTAL_CLAIMS) {
       errors.push({ path: "$.groups", code: "over-limit", message: "Claim set exceeds the total claim limit" });
+    }
+    if (totalProposals > MAX_TOTAL_CLAIMS) {
+      errors.push({ path: "$.groups", code: "over-limit", message: "Proposal review ledger exceeds the total proposal limit" });
     }
 
     if (Array.isArray(value.groups) && groups.length === value.groups.length) {
@@ -571,6 +764,12 @@
       }
     }
     return { valid: errors.length === 0, errors };
+  }
+
+  function validateClaimSet(value, options = {}) {
+    const publicOptions = { ...options };
+    delete publicOptions.allowPendingProposals;
+    return validateClaimSetInternal(value, publicOptions);
   }
 
   function confirmClaimSet(value, options = {}) {
