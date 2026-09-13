@@ -317,6 +317,7 @@
     if (point === "\n") return index;
     if (point !== "." && !STRONG_BOUNDARIES.has(point)) return null;
     let end = index + 1;
+    while (end < points.length && STRONG_BOUNDARIES.has(points[end])) end += 1;
     while (end < points.length && CLOSING_PUNCTUATION.has(points[end])) end += 1;
     if (point === "." && !asciiPeriodIsBoundary(points, index, end)) return null;
     if (end < points.length && !/\s/u.test(points[end]) && !NO_SPACE_BOUNDARIES.has(point)) return null;

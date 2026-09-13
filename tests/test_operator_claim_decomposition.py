@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -57,12 +58,17 @@ function excerpt(text, fingerprint, excerptId = "excerpt-001", spanStart = 0) {
   };
 }
 """
+    node_env = {"CLAIM_MODULE": str(MODULE)}
+    # Windows Node needs SystemRoot to initialize its cryptographic RNG.
+    if os.name == "nt" and "SystemRoot" in os.environ:
+        node_env["SystemRoot"] = os.environ["SystemRoot"]
     completed = subprocess.run(
         [NODE, "-e", harness + body],
         check=False,
         capture_output=True,
         text=True,
-        env={"CLAIM_MODULE": str(MODULE)},
+        encoding="utf-8",
+        env=node_env,
     )
     assert completed.returncode == 0, completed.stderr
     return completed.stdout
@@ -578,5 +584,26 @@ assert(api.validateClaimSet(proposed, {
   expectedSourceFingerprint: fingerprint,
   expectedSelectionSha256: currentSelection
 }).valid, "current exact selection was rejected");
+"""
+    )
+
+
+def test_adjacent_cjk_terminators_form_one_exact_proposal_boundary():
+    run_module(
+        r"""
+for (const source of ["真的吗？！下一项。", "真的吗！！下一项。", "😀真的吗？！下一项。"]) {
+  const proposed = api.proposeClaimSet([excerpt(source, sourceFingerprint(source))], {hashText});
+  const group = proposed.groups[0];
+  assert(group.claims.length === 2, "paired punctuation produced an extra claim");
+  assert(group.proposal_reviews.length === 2, "proposal ledger drifted");
+  assert(group.claims.map((claim) => claim.text).join("") === source, "source bytes changed");
+  for (const claim of group.claims) {
+    assert(/\p{L}|\p{N}/u.test(claim.text), "punctuation-only proposal");
+    const exact = Array.from(source).slice(claim.source_span_start, claim.source_span_end).join("");
+    assert(exact === claim.text, "Unicode source span drifted");
+  }
+  const confirmed = api.confirmClaimSet(reviewAll(proposed), {hashText});
+  assert(api.validateClaimSet(confirmed, {hashText}).valid, "confirmed proposal validation failed");
+}
 """
     )

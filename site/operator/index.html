@@ -6457,6 +6457,11 @@
         evidence: projectedEvidence,
         relationships
       };
+      if (liveSnapshot.metadata?.normalizer_version === "operator-source-bound-v2") {
+        const attestationSha256 = liveSnapshot.metadata?.claim_drafting?.attestation_sha256;
+        if (!/^[0-9a-f]{64}$/.test(attestationSha256 || "")) return null;
+        liveCase.source_bound_v2_attestation_sha256 = attestationSha256;
+      }
       try {
         liveCase.revision_sha256 = learningModel.computeCaseRevision(liveCase, { hashText: sha256Hex });
         return learningModel.canonicalValue(liveCase);

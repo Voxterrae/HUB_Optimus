@@ -43,7 +43,7 @@ The registry reports evidence; it does not create authority. In particular:
 ## Current snapshot
 
 At the verified baseline commit
-`d96fa7de64e5a27a3058d892ca31cf93d0fa0de7` from 2026-08-25, sixteen RFC
+`d96fa7de64e5a27a3058d892ca31cf93d0fa0de7` from 2026-08-25, fifteen RFC
 records were `Draft`. Operator Controlled URL Intake was `Partially
 Implemented` because local/private code and tests existed, but no decision PR,
 public deployment evidence, or full RFC implementation was recorded.
