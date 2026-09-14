@@ -1,0 +1,137 @@
+{
+  "fragment_version": "hub-optimus-project-intelligence.learning.v1.1",
+  "generated_at_utc": "2026-08-21T21:10:11Z",
+  "release": {
+    "version": "1.1",
+    "status": "experimental",
+    "issue": 1912,
+    "name": "Graph Intelligence and Deep Whole-System Learning",
+    "boundary": "Repository learning remains evidence-bound, incremental and human-reviewable; it is not autonomous truth adjudication or opaque model training."
+  },
+  "baseline": {
+    "semantic_model_commit": "30e985226347b4bc59b0e187b96633a09647ca42",
+    "semantic_model_tree": "fabb9da1fdb6979df0bc764017752f118088e69f",
+    "v1_candidate_commit": "9c7b5d81b2cf85d349b1ca141d559a75067a9b14",
+    "v1_candidate_tree": "05bdc116e526c02e5db33995513350fb20cb5297",
+    "repository": "Voxterrae/HUB_Optimus"
+  },
+  "coverage": {
+    "model_snapshot": {
+      "components": 16,
+      "interfaces": 7,
+      "entities": 13,
+      "relations": 25,
+      "risks": 8,
+      "confidence": "CONFIRMED",
+      "source": [
+        "site/obsidian-HUB_Optimus/system.json",
+        "site/obsidian-HUB_Optimus/system.runtime.json"
+      ]
+    },
+    "semantic_coverage": {
+      "status": "active",
+      "confidence": "CONFIRMED",
+      "description": "The v1 semantic model maps the implemented components, interfaces, entities, relations, runtime flows, deployment boundaries and key risks represented by the reviewed snapshot."
+    },
+    "repository_inventory": {
+      "status": "planned",
+      "confidence": "CONFIRMED",
+      "description": "A deterministic recursive inventory and unmodelled-surface report is part of the v1.1 roadmap but is not represented as complete in this first increment."
+    },
+    "live_external_state": {
+      "status": "unknown",
+      "confidence": "UNKNOWN",
+      "description": "Mutable settings, infrastructure and service state remain separate from repository learning and require direct inspection."
+    }
+  },
+  "capabilities": [
+    {
+      "id": "graph-node-search",
+      "name": "Cross-model node search",
+      "status": "experimental",
+      "confidence": "CONFIRMED",
+      "purpose": "Find components, external systems or dependencies by name, purpose, layer or source path and open a view that contains the selected node.",
+      "evidence": "site/obsidian-HUB_Optimus/app-v11.js"
+    },
+    {
+      "id": "graph-impact-focus",
+      "name": "Upstream and downstream impact focus",
+      "status": "experimental",
+      "confidence": "CONFIRMED",
+      "purpose": "Derive direct, upstream and downstream context exclusively from the existing typed relation graph.",
+      "evidence": "site/obsidian-HUB_Optimus/app-v11.js"
+    },
+    {
+      "id": "graph-viewport",
+      "name": "Accessible zoom, pan and fit",
+      "status": "experimental",
+      "confidence": "CONFIRMED",
+      "purpose": "Navigate dense graph views without mutating the underlying architecture model.",
+      "evidence": "site/obsidian-HUB_Optimus/app-v11.js"
+    },
+    {
+      "id": "relation-evidence",
+      "name": "Relation evidence inspector",
+      "status": "experimental",
+      "confidence": "CONFIRMED",
+      "purpose": "Expose the model's real relation label, type, status and confidence while a node is in focus.",
+      "evidence": "site/obsidian-HUB_Optimus/app-v11.js"
+    },
+    {
+      "id": "repository-domain-inventory",
+      "name": "Deterministic repository domain inventory",
+      "status": "planned",
+      "confidence": "CONFIRMED",
+      "purpose": "Classify source, tests, workflows, documentation, schemas and operational surfaces and report what is not yet mapped.",
+      "evidence": "obsidian-HUB_Optimus/98_META/Whole-System Learning.md"
+    },
+    {
+      "id": "incremental-model-delta",
+      "name": "Incremental intelligence delta",
+      "status": "planned",
+      "confidence": "CONFIRMED",
+      "purpose": "Compare a new repository commit with the prior baseline and update only affected model facts, notes, views and tests.",
+      "evidence": "obsidian-HUB_Optimus/98_META/Whole-System Learning.md"
+    }
+  ],
+  "evidence_contract": {
+    "summary": "No repository observation becomes system knowledge unless its source, baseline, status, confidence and review boundary are explicit.",
+    "required_dimensions": [
+      "claim",
+      "source",
+      "baseline",
+      "status",
+      "confidence",
+      "freshness",
+      "review_state"
+    ],
+    "status_vocabulary": [
+      "active",
+      "partial",
+      "experimental",
+      "deprecated",
+      "planned",
+      "unknown"
+    ],
+    "confidence_vocabulary": [
+      "CONFIRMED",
+      "INFERRED",
+      "UNKNOWN"
+    ],
+    "prohibited_collapses": [
+      "source presence does not prove live deployment",
+      "documentation does not override current executable evidence",
+      "draft or local records do not become canonical evidence",
+      "inference does not become confirmed fact without new evidence"
+    ]
+  },
+  "delta_protocol": [
+    "Pin the new repository commit and tree before analysis.",
+    "Inventory changed paths and classify affected system domains.",
+    "Re-evaluate only model facts whose evidence set changed.",
+    "Preserve prior facts and documentation drift rather than silently rewriting history.",
+    "Regenerate synchronized JSON, Obsidian notes and graph views.",
+    "Run structural, source-path, accessibility and production-route validation.",
+    "Record unresolved external state as UNKNOWN."
+  ]
+}

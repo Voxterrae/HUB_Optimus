@@ -147,6 +147,25 @@ are inspected, source presence proves neither production publication nor the
 live state of `/`, `/operator/`, or `/obsidian-HUB_Optimus/`. Repository state,
 Pages deployment state, and externally served bytes remain separate claims.
 
+
+## Project intelligence v1.1 release channels
+
+Issue #1912 and existing PR #1913 reconcile the graph-search, impact-focus,
+zoom/pan, and evidence-bound learning increment with protected main. The stable
+route is /obsidian-HUB_Optimus/; /obsidian-HUB_Optimus-v1.1/ is its complete byte
+alias. The frozen /obsidian-HUB_Optimus-v1.0/ recovery route preserves verified
+historical Git bytes recorded in site/obsidian-release-channels.v1.json.
+These retained public release channels are intentional, not disposable duplicates.
+
+The semantic model remains a dated observation of main@30e985226347b4bc59b0e187b96633a09647ca42.
+The inventory and delta in this integration describe protected main@c7d08b78d38148ffc6f84b9f2dd8541149d224ff.
+They do not claim automatic freshness or certify live external infrastructure.
+Regeneration uses tools/project_intelligence/repository_intelligence.py with an
+explicit reviewed source commit; synchronize the v1.1 alias after updating stable
+assets. Run the Project Intelligence site, v1.1, release-channel, and public-route
+tests, then inspect the actual deployment run and served bytes. Browser graph
+interaction does not execute the Python simulator or enable URL retrieval.
+
 ## Historical handoff archive
 
 The previous broad handoff is preserved byte-for-byte at
