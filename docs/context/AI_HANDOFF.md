@@ -33,7 +33,9 @@ Presence of the Charter on `main` does not by itself change the
 machine-readable ratification state. The current
 `config/governance/owner_identity.v1.json` remains
 `RATIFICATION_PROPOSED`, hardware-backed owner-key enrollment remains pending,
-and PR `#1896` is the separate open proposal to change that record. No operator
+and the remaining enrollment/status work is tracked in existing issues
+`#1743` and `#1881`. PR `#1896` reconciles documentation while retaining
+that machine-readable state. No operator
 may describe the identity record as `RATIFIED` unless the exact protected
 change, live required checks, explicit owner record, and applicable
 cryptographic gate are all satisfied. Draft PR `#1862` is historical proposal
@@ -41,14 +43,14 @@ provenance rather than the current merge gate.
 
 ## CODEOWNERS and review policy
 
-`@Voxterrae` is the sole proposed repository-wide CODEOWNER. CODEOWNERS records
+`@Voxterrae` is the sole repository-wide CODEOWNER. CODEOWNERS records
 review responsibility and owner authority; it does not itself grant legal
 ownership or mutate GitHub permissions.
 
 Native CODEOWNER approval must not be configured as a required gate while the
 sole CODEOWNER is also the author of owner-created pull requests, because an
 author cannot provide the required approval to their own pull request. The
-approved policy for this proposal is instead:
+owner-approved review policy is:
 
 - protected-path pull requests and every commit in them must be owner-authored;
 - all commits must be verified;
@@ -59,9 +61,13 @@ approved policy for this proposal is instead:
 - all required checks and conversations must be complete before merge;
 - force-push and deletion protections remain in place.
 
-Live rulesets and collaborator permissions are repository settings. This draft
-changes neither. They require a separate authenticated owner action and fresh
-audit evidence.
+The dated 2026-09-14 settings audit confirms one active main ruleset,
+`11665521`, with no bypass actors, strict checks bound to GitHub Actions
+integration `15368`, signed commits, linear history, squash-only merge,
+conversation resolution, and deletion/force-push protection. See
+`docs/governance/GITHUB_SETTINGS_PROTECTION_CHECKLIST.md`. Native approvals
+remain zero under the owner-only model. Settings and collaborator permissions
+are mutable; this dated evidence does not replace a fresh audit before changes.
 
 ## Technical contributor boundary
 
@@ -77,7 +83,7 @@ owner decisions recorded through the governed repository process.
 
 ## Founder Authority Guard boundary
 
-The proposed Founder Authority Guard executes trusted policy from the protected
+The active Founder Authority Guard executes trusted policy from the protected
 base and fails closed. For protected changes it checks:
 
 - repository owner login and immutable numeric user ID;
