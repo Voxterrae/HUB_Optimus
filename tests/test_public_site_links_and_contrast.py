@@ -13,6 +13,8 @@ PUBLIC_ROUTES = {
     "/404.html": SITE / "404.html",
     "/operator/": SITE / "operator" / "index.html",
     "/obsidian-HUB_Optimus/": SITE / "obsidian-HUB_Optimus" / "index.html",
+    "/obsidian-HUB_Optimus-v1.0/": SITE / "obsidian-HUB_Optimus-v1.0" / "index.html",
+    "/obsidian-HUB_Optimus-v1.1/": SITE / "obsidian-HUB_Optimus-v1.1" / "index.html",
 }
 LIVE_MAIN_NAVIGATION = {
     "https://github.com/Voxterrae/HUB_Optimus/tree/main/obsidian-HUB_Optimus",
