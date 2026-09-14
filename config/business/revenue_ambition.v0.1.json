@@ -1,0 +1,88 @@
+{
+  "schema_version": "0.1",
+  "status": "MANAGEMENT_SCENARIO_PR_PROPOSED",
+  "authority_issue": 1863,
+  "owner": "Benjamin Gerrit Hoff",
+  "currency": "EUR",
+  "model_date": "2026-08-08",
+  "not_a_guarantee_or_accounting_forecast": true,
+  "scenarios": {
+    "validation_floor": {
+      "gross_contracted_value": 1954000,
+      "exit_arr": 594000
+    },
+    "operating_target": {
+      "gross_contracted_value": 5014500,
+      "exit_arr": 2104500,
+      "one_time_value": 2910000,
+      "components": {
+        "diagnostics": 300000,
+        "paid_proof_of_value": 800000,
+        "implementation": 1500000,
+        "platform_canon_arr": 600000,
+        "application_module_arr": 540000,
+        "connector_activation": 160000,
+        "connector_arr": 240000,
+        "api_hub_unit_arr": 270000,
+        "embedded_setup": 100000,
+        "embedded_arr": 180000,
+        "premium_support_arr": 274500,
+        "vendor_activation_procurement": 50000
+      },
+      "illustrative_channel_mix": {
+        "microsoft_marketplace": {
+          "share_percent": 45,
+          "fee_percent": 3
+        },
+        "aws_professional_services": {
+          "share_percent": 25,
+          "fee_percent": 0.5
+        },
+        "direct_b2b": {
+          "share_percent": 20,
+          "fee_percent_internal_assumption": 0.5
+        },
+        "merchant_of_record": {
+          "share_percent": 10,
+          "fee_percent": 5
+        }
+      },
+      "weighted_channel_fee_percent": 2.075,
+      "channel_fees": 104050.875,
+      "cash_after_channel_fees_before_tax_and_operating_cost": 4910449.125,
+      "management_cost_assumptions": {
+        "delivery_engineering_percent_of_gross": 30,
+        "cloud_third_party_percent_of_gross": 7,
+        "legal_tax_accounting_insurance_compliance_percent_of_gross": 5,
+        "product_rnd_operations_admin_percent_of_gross": 11,
+        "common_good_percent_of_post_channel_collected_value": 5
+      },
+      "illustrative_operating_result_before_corporate_tax_and_owner_remuneration": 2007241.66875,
+      "illustrative_operating_margin_percent": 40.02875
+    },
+    "breakout": {
+      "gross_contracted_value": 15209750,
+      "exit_arr": 7964750
+    }
+  },
+  "three_year_ambition": [
+    {
+      "year": 1,
+      "gross_contracted_value": 5014500,
+      "exit_arr": 2104500
+    },
+    {
+      "year": 2,
+      "gross_contracted_value": 15209750,
+      "exit_arr": 7964750
+    },
+    {
+      "year": 3,
+      "gross_contracted_value": 41562000,
+      "exit_arr": 23762000
+    }
+  ],
+  "three_year_cumulative_gross_contracted_value": 61786250,
+  "personal_take_home_modelled": false,
+  "requires_professional_legal_tax_accounting_design": true
+}
