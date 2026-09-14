@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "status": "PASS",
+  "mode": "OFFLINE_DRY_RUN",
+  "solution": "OptimusEvidenceLab",
+  "version": "0.1.0.0",
+  "publisher": "HUB_Optimus",
+  "prefix": "opt",
+  "contractSha256": "912e762601fb3265627787dd57fb1f248929492a6bca3ba5c3d2cec5afe09e70",
+  "schemaPlanSha256": "fd6751ff5fe42b0336bb3bc5b7da1d3854b78ec733afb76fc72a7f842005a981",
+  "seedName": "HIVGlobal2026Seed",
+  "seedSha256": "005fcdf4b99c0496a934d7fb0c75cde6ddf4d98564125a20570edb1ae089de04",
+  "seedPlanSha256": "800cb8db1fbbd0ee7264893dd1898fe1d95654566c6835e5078c783764da0c8f",
+  "counts": {
+    "globalChoices": 6,
+    "choiceOptions": 33,
+    "tables": 5,
+    "primaryColumns": 5,
+    "scalarColumns": 50,
+    "lookupColumns": 4,
+    "alternateKeys": 5,
+    "relationships": 4,
+    "logicalSchemaComponents": 70,
+    "schemaPlannedActions": 74,
+    "schemaPlannedWrites": 72,
+    "seedRows": 17,
+    "seedLookupBindings": 20,
+    "seedPlannedActions": 37
+  },
+  "writesExecuted": {
+    "metadata": 0,
+    "rows": 0
+  },
+  "liveTargetInspectionExecuted": false,
+  "productionTouched": false,
+  "merge": false,
+  "deployment": false
+}

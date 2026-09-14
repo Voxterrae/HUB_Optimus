@@ -1,0 +1,609 @@
+{
+  "schemaVersion": "1.0",
+  "mode": "SEED_DRY_RUN",
+  "apply": false,
+  "seedName": "HIVGlobal2026Seed",
+  "targetSolution": "OptimusEvidenceLab",
+  "contractSha256": "912e762601fb3265627787dd57fb1f248929492a6bca3ba5c3d2cec5afe09e70",
+  "seedSha256": "005fcdf4b99c0496a934d7fb0c75cde6ddf4d98564125a20570edb1ae089de04",
+  "counts": {
+    "rows": 17,
+    "lookupBindings": 20,
+    "tableRows": {
+      "opt_geography": 1,
+      "opt_metric": 6,
+      "opt_observation": 6,
+      "opt_release": 2,
+      "opt_source": 2
+    },
+    "plannedActions": 37,
+    "plannedWrites": 17,
+    "plannedReads": 20
+  },
+  "actions": [
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_geographyid",
+      "targetTable": "opt_geography",
+      "alternateKey": {
+        "opt_geographykey": "UNM49|001"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_geographyid",
+      "targetTable": "opt_geography",
+      "alternateKey": {
+        "opt_geographykey": "UNM49|001"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_geographyid",
+      "targetTable": "opt_geography",
+      "alternateKey": {
+        "opt_geographykey": "UNM49|001"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_geographyid",
+      "targetTable": "opt_geography",
+      "alternateKey": {
+        "opt_geographykey": "UNM49|001"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_geographyid",
+      "targetTable": "opt_geography",
+      "alternateKey": {
+        "opt_geographykey": "UNM49|001"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_geographyid",
+      "targetTable": "opt_geography",
+      "alternateKey": {
+        "opt_geographykey": "UNM49|001"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_metricid",
+      "targetTable": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_AIDS_RELATED_DEATHS_ANNUAL"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_metricid",
+      "targetTable": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_CUMULATIVE_ACQUISITIONS"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_metricid",
+      "targetTable": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_CUMULATIVE_AIDS_DEATHS"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_metricid",
+      "targetTable": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_NEW_ACQUISITIONS_ANNUAL"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_metricid",
+      "targetTable": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_ON_ART_TOTAL"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_metricid",
+      "targetTable": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_PLHIV_TOTAL"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_releaseid",
+      "targetTable": "opt_release",
+      "alternateKey": {
+        "opt_releasekey": "UNAIDS_FACTS_2026|DATA2025|CUT20260814"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_releaseid",
+      "targetTable": "opt_release",
+      "alternateKey": {
+        "opt_releasekey": "UNAIDS_FACTS_2026|DATA2025|CUT20260814"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_releaseid",
+      "targetTable": "opt_release",
+      "alternateKey": {
+        "opt_releasekey": "UNAIDS_FACTS_2026|DATA2025|CUT20260814"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_releaseid",
+      "targetTable": "opt_release",
+      "alternateKey": {
+        "opt_releasekey": "UNAIDS_FACTS_2026|DATA2025|CUT20260814"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_releaseid",
+      "targetTable": "opt_release",
+      "alternateKey": {
+        "opt_releasekey": "UNAIDS_FACTS_2026|DATA2025|CUT20260814"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "lookup": "opt_releaseid",
+      "targetTable": "opt_release",
+      "alternateKey": {
+        "opt_releasekey": "UNAIDS_FACTS_2026|DATA2025|CUT20260814"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_release",
+      "lookup": "opt_sourceid",
+      "targetTable": "opt_source",
+      "alternateKey": {
+        "opt_sourcekey": "UNAIDS_FACTS_2026"
+      },
+      "write": false
+    },
+    {
+      "phase": 0,
+      "action": "RESOLVE_LOOKUP_BY_ALTERNATE_KEY",
+      "table": "opt_release",
+      "lookup": "opt_sourceid",
+      "targetTable": "opt_source",
+      "alternateKey": {
+        "opt_sourcekey": "UNM49_CURRENT"
+      },
+      "write": false
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_geography",
+      "alternateKey": {
+        "opt_geographykey": "UNM49|001"
+      },
+      "values": {
+        "opt_name": "World",
+        "opt_geographykey": "UNM49|001",
+        "opt_scheme": "UN M49",
+        "opt_sourcecode": "03M49WLD",
+        "opt_m49code": "001",
+        "opt_isoalpha3": null,
+        "opt_namees": "Mundo",
+        "opt_geographylevel": 884834000,
+        "opt_unmemberstate": false,
+        "opt_unobserverstate": false,
+        "opt_isextension": false,
+        "opt_validfrom": null,
+        "opt_validto": null,
+        "opt_notes": "Global aggregate used by the UNAIDS 2025 workbook. Source-specific area code: 03M49WLD."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_AIDS_RELATED_DEATHS_ANNUAL"
+      },
+      "values": {
+        "opt_name": "AIDS-related deaths",
+        "opt_metrickey": "HIV_AIDS_RELATED_DEATHS_ANNUAL",
+        "opt_definition": "Estimated AIDS-related deaths during the stated data year.",
+        "opt_unit": 884836002,
+        "opt_population": "All people",
+        "opt_measuretype": 884837001,
+        "opt_iscomparable": true,
+        "opt_notes": "Annual flow; preserve the uncertainty interval."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_CUMULATIVE_ACQUISITIONS"
+      },
+      "values": {
+        "opt_name": "Cumulative HIV acquisitions since the beginning",
+        "opt_metrickey": "HIV_CUMULATIVE_ACQUISITIONS",
+        "opt_definition": "Estimated cumulative HIV acquisitions since the beginning of the epidemic.",
+        "opt_unit": 884836000,
+        "opt_population": "All people",
+        "opt_measuretype": 884837001,
+        "opt_iscomparable": false,
+        "opt_notes": "Release revisions may reflect new source data and model changes."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_CUMULATIVE_AIDS_DEATHS"
+      },
+      "values": {
+        "opt_name": "Cumulative AIDS-related deaths",
+        "opt_metrickey": "HIV_CUMULATIVE_AIDS_DEATHS",
+        "opt_definition": "Estimated cumulative AIDS-related deaths since the beginning of the epidemic.",
+        "opt_unit": 884836000,
+        "opt_population": "All people",
+        "opt_measuretype": 884837001,
+        "opt_iscomparable": false,
+        "opt_notes": "Release revisions may reflect new source data and model changes."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_NEW_ACQUISITIONS_ANNUAL"
+      },
+      "values": {
+        "opt_name": "New HIV acquisitions",
+        "opt_metrickey": "HIV_NEW_ACQUISITIONS_ANNUAL",
+        "opt_definition": "Estimated number of people who acquired HIV during the stated data year.",
+        "opt_unit": 884836001,
+        "opt_population": "All people",
+        "opt_measuretype": 884837001,
+        "opt_iscomparable": true,
+        "opt_notes": "Annual flow, not a cumulative count."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_ON_ART_TOTAL"
+      },
+      "values": {
+        "opt_name": "People receiving antiretroviral therapy",
+        "opt_metrickey": "HIV_ON_ART_TOTAL",
+        "opt_definition": "Estimated number of people living with HIV receiving antiretroviral therapy.",
+        "opt_unit": 884836000,
+        "opt_population": "People living with HIV",
+        "opt_measuretype": 884837000,
+        "opt_iscomparable": true,
+        "opt_notes": "Published point estimate; the source also reports 78% treatment coverage."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_metric",
+      "alternateKey": {
+        "opt_metrickey": "HIV_PLHIV_TOTAL"
+      },
+      "values": {
+        "opt_name": "People living with HIV",
+        "opt_metrickey": "HIV_PLHIV_TOTAL",
+        "opt_definition": "Estimated number of people living with HIV in the global aggregate.",
+        "opt_unit": 884836000,
+        "opt_population": "All people",
+        "opt_measuretype": 884837001,
+        "opt_iscomparable": true,
+        "opt_notes": "Modelled estimate; preserve the uncertainty interval."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "alternateKey": {
+        "opt_observationkey": "OBS|WLD|2025|AIDS_DEATHS|UNAIDS_FACTS_2026"
+      },
+      "values": {
+        "opt_name": "Global 2025 — AIDS-related deaths",
+        "opt_observationkey": "OBS|WLD|2025|AIDS_DEATHS|UNAIDS_FACTS_2026",
+        "opt_datayear": 2025,
+        "opt_pointvalue": 570000,
+        "opt_lowerbound": 430000,
+        "opt_upperbound": 780000,
+        "opt_valuequalifier": 884838001,
+        "opt_valuestatus": 884839000,
+        "opt_iscomparable": true,
+        "opt_originaltext": "570,000 (430,000–780,000)",
+        "opt_notes": "Aggregate published estimate from the verified 2026 corpus."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "alternateKey": {
+        "opt_observationkey": "OBS|WLD|2025|CUMULATIVE_ACQUISITIONS|UNAIDS_FACTS_2026"
+      },
+      "values": {
+        "opt_name": "Global 2025 — Cumulative HIV acquisitions",
+        "opt_observationkey": "OBS|WLD|2025|CUMULATIVE_ACQUISITIONS|UNAIDS_FACTS_2026",
+        "opt_datayear": 2025,
+        "opt_pointvalue": 92000000,
+        "opt_lowerbound": 70200000,
+        "opt_upperbound": 123500000,
+        "opt_valuequalifier": 884838001,
+        "opt_valuestatus": 884839000,
+        "opt_iscomparable": false,
+        "opt_originaltext": "92.0 M (70.2–123.5 M)",
+        "opt_notes": "Aggregate published estimate from the verified 2026 corpus."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "alternateKey": {
+        "opt_observationkey": "OBS|WLD|2025|CUMULATIVE_AIDS_DEATHS|UNAIDS_FACTS_2026"
+      },
+      "values": {
+        "opt_name": "Global 2025 — Cumulative AIDS-related deaths",
+        "opt_observationkey": "OBS|WLD|2025|CUMULATIVE_AIDS_DEATHS|UNAIDS_FACTS_2026",
+        "opt_datayear": 2025,
+        "opt_pointvalue": 44200000,
+        "opt_lowerbound": 33800000,
+        "opt_upperbound": 61100000,
+        "opt_valuequalifier": 884838001,
+        "opt_valuestatus": 884839000,
+        "opt_iscomparable": false,
+        "opt_originaltext": "44.2 M (33.8–61.1 M)",
+        "opt_notes": "Aggregate published estimate from the verified 2026 corpus."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "alternateKey": {
+        "opt_observationkey": "OBS|WLD|2025|NEW_ACQUISITIONS|UNAIDS_FACTS_2026"
+      },
+      "values": {
+        "opt_name": "Global 2025 — New HIV acquisitions",
+        "opt_observationkey": "OBS|WLD|2025|NEW_ACQUISITIONS|UNAIDS_FACTS_2026",
+        "opt_datayear": 2025,
+        "opt_pointvalue": 1200000,
+        "opt_lowerbound": 950000,
+        "opt_upperbound": 1700000,
+        "opt_valuequalifier": 884838001,
+        "opt_valuestatus": 884839000,
+        "opt_iscomparable": true,
+        "opt_originaltext": "1.2 M (950,000–1.7 M)",
+        "opt_notes": "Aggregate published estimate from the verified 2026 corpus."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "alternateKey": {
+        "opt_observationkey": "OBS|WLD|2025|ON_ART|UNAIDS_FACTS_2026"
+      },
+      "values": {
+        "opt_name": "Global 2025 — People receiving ART",
+        "opt_observationkey": "OBS|WLD|2025|ON_ART|UNAIDS_FACTS_2026",
+        "opt_datayear": 2025,
+        "opt_pointvalue": 32100000,
+        "opt_lowerbound": null,
+        "opt_upperbound": null,
+        "opt_valuequalifier": 884838001,
+        "opt_valuestatus": 884839000,
+        "opt_iscomparable": true,
+        "opt_originaltext": "32.1 M",
+        "opt_notes": "Aggregate published estimate from the verified 2026 corpus."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_observation",
+      "alternateKey": {
+        "opt_observationkey": "OBS|WLD|2025|PLHIV_TOTAL|UNAIDS_FACTS_2026"
+      },
+      "values": {
+        "opt_name": "Global 2025 — People living with HIV",
+        "opt_observationkey": "OBS|WLD|2025|PLHIV_TOTAL|UNAIDS_FACTS_2026",
+        "opt_datayear": 2025,
+        "opt_pointvalue": 41000000,
+        "opt_lowerbound": 35300000,
+        "opt_upperbound": 47500000,
+        "opt_valuequalifier": 884838001,
+        "opt_valuestatus": 884839000,
+        "opt_iscomparable": true,
+        "opt_originaltext": "41.0 M (35.3–47.5 M)",
+        "opt_notes": "Aggregate published estimate from the verified 2026 corpus."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_release",
+      "alternateKey": {
+        "opt_releasekey": "UNAIDS_FACTS_2026|DATA2025|CUT20260814"
+      },
+      "values": {
+        "opt_name": "UNAIDS Global HIV fact sheet 2026 — data year 2025",
+        "opt_releasekey": "UNAIDS_FACTS_2026|DATA2025|CUT20260814",
+        "opt_publishedon": null,
+        "opt_datayear": 2025,
+        "opt_vintage": "UNAIDS 2026 fact sheet; data year 2025",
+        "opt_versionlabel": "Global HIV Fact Sheet 2026",
+        "opt_retrievedon": "2026-08-14",
+        "opt_archiveuri": "https://www.unaids.org/sites/default/files/2026-06/20260612_Global_HIV_Factsheet.pdf",
+        "opt_sha256": null,
+        "opt_verificationstatus": 884835000,
+        "opt_notes": "Publication date is intentionally left null because the corpus supports the source filename and cut date, not a separately verified publication date."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_release",
+      "alternateKey": {
+        "opt_releasekey": "UNM49_CURRENT|CUT20260814"
+      },
+      "values": {
+        "opt_name": "UN M49 current snapshot — cut 2026-08-14",
+        "opt_releasekey": "UNM49_CURRENT|CUT20260814",
+        "opt_publishedon": null,
+        "opt_datayear": null,
+        "opt_vintage": "Current UN M49 snapshot verified on 2026-08-14",
+        "opt_versionlabel": "Current snapshot / cut 2026-08-14",
+        "opt_retrievedon": "2026-08-14",
+        "opt_archiveuri": "https://unstats.un.org/unsd/methodology/m49/overview/",
+        "opt_sha256": "748f6ff7380c8a50ea9448f068b79e3a1ee31be63207249e8cc89bf1eb969d11",
+        "opt_verificationstatus": 884835000,
+        "opt_notes": "Reference release anchoring the World geography row."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_source",
+      "alternateKey": {
+        "opt_sourcekey": "UNAIDS_FACTS_2026"
+      },
+      "values": {
+        "opt_name": "UNAIDS Global HIV fact sheet 2026",
+        "opt_sourcekey": "UNAIDS_FACTS_2026",
+        "opt_organization": "UNAIDS",
+        "opt_title": "Global HIV fact sheet 2026",
+        "opt_url": "https://www.unaids.org/sites/default/files/2026-06/20260612_Global_HIV_Factsheet.pdf",
+        "opt_domain": "HIV epidemiology",
+        "opt_languagecoverage": "English",
+        "opt_verificationstatus": 884835000,
+        "opt_sha256": null,
+        "opt_accessedon": "2026-08-14",
+        "opt_notes": "Primary source for the six pilot observations. The corpus does not record a SHA-256 for this PDF."
+      },
+      "write": true
+    },
+    {
+      "phase": 1,
+      "action": "UPSERT_ROW_BY_ALTERNATE_KEY",
+      "table": "opt_source",
+      "alternateKey": {
+        "opt_sourcekey": "UNM49_CURRENT"
+      },
+      "values": {
+        "opt_name": "UN M49 current classification",
+        "opt_sourcekey": "UNM49_CURRENT",
+        "opt_organization": "United Nations Statistics Division",
+        "opt_title": "Standard country or area codes for statistical use (M49)",
+        "opt_url": "https://unstats.un.org/unsd/methodology/m49/overview/",
+        "opt_domain": "Geography",
+        "opt_languagecoverage": "Arabic, Chinese, English, French, Russian, Spanish",
+        "opt_verificationstatus": 884835000,
+        "opt_sha256": "748f6ff7380c8a50ea9448f068b79e3a1ee31be63207249e8cc89bf1eb969d11",
+        "opt_accessedon": "2026-08-14",
+        "opt_notes": "Primary geography source captured in the verified corpus."
+      },
+      "write": true
+    }
+  ],
+  "rowsWritten": 0,
+  "productionTouched": false,
+  "merge": false,
+  "deployment": false,
+  "planHash": "800cb8db1fbbd0ee7264893dd1898fe1d95654566c6835e5078c783764da0c8f"
+}
