@@ -12,6 +12,16 @@ PUBLIC_ROUTES = {
     "/": SITE / "index.html",
     "/404.html": SITE / "404.html",
     "/operator/": SITE / "operator" / "index.html",
+    "/obsidian-HUB_Optimus/": SITE / "obsidian-HUB_Optimus" / "index.html",
+}
+LIVE_MAIN_NAVIGATION = {
+    "https://github.com/Voxterrae/HUB_Optimus/tree/main/obsidian-HUB_Optimus",
+}
+EXPECTED_EXTERNAL_NAVIGATION = LIVE_MAIN_NAVIGATION | {
+    "https://github.com/Voxterrae/HUB_Optimus",
+    "https://github.com/Voxterrae/HUB_Optimus/issues",
+    "https://github.com/Voxterrae/HUB_Optimus/issues/1901",
+    "https://github.com/Voxterrae/HUB-Optimus-labs",
 }
 
 
@@ -157,8 +167,9 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
         for tag, attribute, reference in parse_document(path).references:
             if tag != "a" or attribute != "href":
                 continue
-            assert "/blob/main/" not in reference
-            assert "/tree/main/" not in reference
+            if "/blob/main/" in reference or "/tree/main/" in reference:
+                assert reference in LIVE_MAIN_NAVIGATION, reference
+
             match = evidence_pattern.match(reference)
             if not match:
                 continue
@@ -175,11 +186,6 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
 
 
 def test_live_external_navigation_targets_are_explicit_and_network_free_in_pytest():
-    expected_navigation = {
-        "https://github.com/Voxterrae/HUB_Optimus",
-        "https://github.com/Voxterrae/HUB_Optimus/issues",
-        "https://github.com/Voxterrae/HUB-Optimus-labs",
-    }
     external_navigation = set()
 
     for path in PUBLIC_ROUTES.values():
@@ -199,7 +205,7 @@ def test_live_external_navigation_targets_are_explicit_and_network_free_in_pytes
                 continue
             external_navigation.add(reference)
 
-    assert external_navigation == expected_navigation
+    assert external_navigation == EXPECTED_EXTERNAL_NAVIGATION
 
 
 def test_reported_dark_surface_normal_text_uses_one_contrast_guarded_token():

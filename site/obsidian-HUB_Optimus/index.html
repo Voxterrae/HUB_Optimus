@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="es" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0f14">
+  <meta name="description" content="Modelo técnico, funcional y visual del repositorio HUB_Optimus, fijado a un commit verificable.">
+  <title>HUB_Optimus · Project Intelligence</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./styles-explorer.css">
+  <link rel="stylesheet" href="./styles-content.css">
+  <script src="./app-graph.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido principal</a>
+
+  <header class="site-header">
+    <a class="brand" href="../" aria-label="HUB_Optimus, volver al portfolio">
+      <span class="brand-mark" aria-hidden="true">H_O</span>
+      <span>
+        <strong>HUB_Optimus</strong>
+        <small>Project Intelligence</small>
+      </span>
+    </a>
+    <nav class="primary-nav" aria-label="Navegación principal">
+      <a href="#overview">Overview</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#components">Components</a>
+      <a href="#interfaces">APIs</a>
+      <a href="#deployment">Deployment</a>
+      <a href="#source-map">Source</a>
+    </nav>
+    <div class="header-actions">
+      <a class="quiet-link" href="../operator/">Operator</a>
+      <a class="quiet-link" href="https://github.com/Voxterrae/HUB_Optimus/tree/main/obsidian-HUB_Optimus">Obsidian</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero section" id="overview" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">REPOSITORY INTELLIGENCE · EVIDENCE-BOUND</p>
+        <h1 id="hero-title">El sistema puede<br><span>explicarse a sí mismo.</span></h1>
+        <p class="hero-lede">
+          Un único modelo reconstruye qué es HUB_Optimus, cómo fluye la información,
+          qué contratos ejecuta, dónde termina la evidencia y qué estado externo sigue sin verificarse.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#architecture">Explorar arquitectura</a>
+          <a class="button button-secondary" href="./system.json">Inspeccionar system.json</a>
+        </div>
+        <div class="baseline" aria-label="Baseline de análisis">
+          <span>BASELINE</span>
+          <code>30e985226347b4bc59b0e187b96633a09647ca42</code>
+          <a href="https://github.com/Voxterrae/HUB_Optimus/issues/1901">Issue #1901</a>
+        </div>
+      </div>
+      <aside class="hero-panel" aria-label="Resumen del sistema">
+        <div class="signal-orbit" aria-hidden="true">
+          <span class="orbit orbit-one"></span>
+          <span class="orbit orbit-two"></span>
+          <span class="orbit-core">H_O</span>
+        </div>
+        <p class="panel-kicker">CURRENT MODEL</p>
+        <h2>Repository → Model → Vault → Explorer</h2>
+        <p>
+          Código, schemas, tests y workflows actuales prevalecen en sus dominios.
+          Deployment, settings e infraestructura viva permanecen <strong>UNKNOWN</strong> hasta inspección.
+        </p>
+        <div class="truth-legend" aria-label="Leyenda epistemológica">
+          <span><i class="truth confirmed"></i> CONFIRMED</span>
+          <span><i class="truth inferred"></i> INFERRED</span>
+          <span><i class="truth unknown"></i> UNKNOWN</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="metric-strip" aria-label="Métricas del modelo">
+      <article><strong data-stat="components">—</strong><span>Components</span></article>
+      <article><strong data-stat="interfaces">—</strong><span>Interfaces</span></article>
+      <article><strong data-stat="entities">—</strong><span>Entities</span></article>
+      <article><strong data-stat="relations">—</strong><span>Relations</span></article>
+      <article><strong data-stat="risks">—</strong><span>Risks</span></article>
+    </section>
+
+    <section class="section" id="architecture" aria-labelledby="architecture-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">LIVE ARCHITECTURE MODEL</p>
+          <h2 id="architecture-title">La misma verdad, cinco perspectivas.</h2>
+        </div>
+        <p id="view-description">
+          Fronteras principales entre personas, superficies ejecutables, documentación y entrega.
+        </p>
+      </div>
+
+      <div class="mode-toolbar" role="group" aria-label="Modo de visualización">
+        <button type="button" data-mode="system" aria-pressed="true">SYSTEM</button>
+        <button type="button" data-mode="data" aria-pressed="false">DATA FLOW</button>
+        <button type="button" data-mode="api" aria-pressed="false">API FLOW</button>
+        <button type="button" data-mode="deployment" aria-pressed="false">DEPLOYMENT</button>
+        <button type="button" data-mode="dependencies" aria-pressed="false">DEPENDENCIES</button>
+      </div>
+
+      <div class="explorer-shell">
+        <div class="graph-card">
+          <div class="graph-header">
+            <span id="graph-mode-label">SYSTEM</span>
+            <span class="graph-hint">Selecciona un nodo para ver evidencia y source.</span>
+          </div>
+          <div class="graph-stage">
+            <svg id="architecture-graph" viewBox="0 0 940 600" role="img" aria-labelledby="graph-title graph-description">
+              <title id="graph-title">Arquitectura interactiva de HUB_Optimus</title>
+              <desc id="graph-description">Componentes y relaciones derivados del repositorio.</desc>
+            </svg>
+            <div id="mobile-graph-list" class="mobile-graph-list" aria-label="Componentes de la vista"></div>
+            <p id="graph-error" class="graph-error" hidden>
+              No se pudo cargar el modelo estructurado. La arquitectura estática permanece disponible más abajo.
+            </p>
+          </div>
+          <div class="status-legend" aria-label="Estados de componente">
+            <span><i class="status-dot status-active"></i> active</span>
+            <span><i class="status-dot status-partial"></i> partial</span>
+            <span><i class="status-dot status-experimental"></i> experimental</span>
+            <span><i class="status-dot status-unknown"></i> unknown</span>
+          </div>
+        </div>
+
+        <aside class="detail-panel" id="node-detail" aria-live="polite">
+          <p class="panel-kicker">SELECTED NODE</p>
+          <h3>HUB_Optimus</h3>
+          <div class="detail-badges">
+            <span class="badge">repository system</span>
+            <span class="badge badge-confirmed">CONFIRMED</span>
+          </div>
+          <p>
+            Selecciona un nodo. El panel mostrará propósito, estado, relaciones,
+            dependencias, notas Obsidian y archivos fuente fijados al baseline.
+          </p>
+        </aside>
+      </div>
+
+      <noscript>
+        <div class="noscript-architecture">
+          <h3>Arquitectura estática</h3>
+          <p>
+            Human review → Operator / Scenario input → validation → Simulator or Semantic Engine →
+            local records. GitHub → Pages workflow → static site. Managed EC2 operations are a separate,
+            externally verified plane.
+          </p>
+        </div>
+      </noscript>
+    </section>
+
+    <section class="section section-muted" id="project-state" aria-labelledby="state-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PROJECT STATE</p>
+          <h2 id="state-title">Implementado, parcial y desconocido.</h2>
+        </div>
+        <p>No se mezclan source status, product maturity y live deployment.</p>
+      </div>
+      <div class="state-grid">
+        <article class="state-card">
+          <span class="state-number">01</span>
+          <h3>Runnable</h3>
+          <p>Scenario validation/simulation, Semantic contracts/CLI, static site, browser Operator y quality gates.</p>
+        </article>
+        <article class="state-card">
+          <span class="state-number">02</span>
+          <h3>Partial</h3>
+          <p>Local API, controlled intake, learning store, EC2 operations e integraciones dependientes de entorno.</p>
+        </article>
+        <article class="state-card">
+          <span class="state-number">03</span>
+          <h3>Unknown externally</h3>
+          <p>Pages run, EC2 host, DNS, TLS, Nginx instalado, settings, secrets y disponibilidad pública.</p>
+        </article>
+        <article class="state-card">
+          <span class="state-number">04</span>
+          <h3>Not implemented</h3>
+          <p>Truth adjudication, prediction, public authenticated engine, HERMES, enterprise y post-quantum runtime.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="components" aria-labelledby="components-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">COMPONENTS</p>
+          <h2 id="components-title">El sistema que emerge de los archivos.</h2>
+        </div>
+        <p>Filtra por madurez; cada card mantiene su capa, propósito y procedencia.</p>
+      </div>
+      <div class="filter-toolbar" role="group" aria-label="Filtrar componentes por estado">
+        <button type="button" data-filter="all" aria-pressed="true">ALL</button>
+        <button type="button" data-filter="active" aria-pressed="false">ACTIVE</button>
+        <button type="button" data-filter="partial" aria-pressed="false">PARTIAL</button>
+        <button type="button" data-filter="experimental" aria-pressed="false">EXPERIMENTAL</button>
+      </div>
+      <div id="component-grid" class="component-grid"></div>
+    </section>
+
+    <section class="section section-muted" id="runtime" aria-labelledby="runtime-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">RUNTIME</p>
+          <h2 id="runtime-title">Flujos separados, contratos explícitos.</h2>
+        </div>
+        <p>Una línea animada solo representa una llamada, transformación o entrega que el repositorio demuestra.</p>
+      </div>
+      <div id="runtime-flow-list" class="flow-list"></div>
+    </section>
+
+    <section class="section" id="data-flow" aria-labelledby="data-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">DATA FLOW</p>
+          <h2 id="data-title">Datos con ownership y autoridad visibles.</h2>
+        </div>
+        <p>Un record estructurado no se convierte automáticamente en un hecho verificado.</p>
+      </div>
+      <div class="table-shell">
+        <table>
+          <thead>
+            <tr>
+              <th>Entity</th>
+              <th>Status</th>
+              <th>Purpose</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="entity-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section section-muted" id="interfaces" aria-labelledby="interfaces-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">APIs & COMMANDS</p>
+          <h2 id="interfaces-title">Cuatro rutas HTTP. Tres interfaces CLI.</h2>
+        </div>
+        <p>La API HTTP es local por defecto; el proxy público versionado solo permite health e intake.</p>
+      </div>
+      <div id="interface-grid" class="interface-grid"></div>
+    </section>
+
+    <section class="section" id="dependencies" aria-labelledby="dependencies-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">DEPENDENCIES</p>
+          <h2 id="dependencies-title">Pequeña superficie técnica, fronteras grandes.</h2>
+        </div>
+        <p>No existe build frontend ni framework de grafo pesado.</p>
+      </div>
+      <div id="dependency-grid" class="dependency-grid"></div>
+    </section>
+
+    <section class="section section-muted" id="deployment" aria-labelledby="deployment-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">DEPLOYMENT</p>
+          <h2 id="deployment-title">Static Pages y managed host no son lo mismo.</h2>
+        </div>
+        <p>El código de deployment se confirma; el estado vivo se verifica por separado.</p>
+      </div>
+      <div id="deployment-grid" class="deployment-grid"></div>
+    </section>
+
+    <section class="section" id="source-map" aria-labelledby="source-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">SOURCE MAP</p>
+          <h2 id="source-title">Del concepto al código real.</h2>
+        </div>
+        <p>Los enlaces apuntan al commit analizado; el vault comparte exactamente los mismos nombres.</p>
+      </div>
+      <div class="source-tools">
+        <label for="source-search">Buscar componente o path</label>
+        <input id="source-search" type="search" placeholder="semantic, operator, ops/ec2…" autocomplete="off">
+      </div>
+      <div class="table-shell">
+        <table>
+          <thead>
+            <tr>
+              <th>Concept</th>
+              <th>Status</th>
+              <th>Layer</th>
+              <th>Source files</th>
+            </tr>
+          </thead>
+          <tbody id="source-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section section-muted" id="technical-notes" aria-labelledby="notes-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">TECHNICAL NOTES</p>
+          <h2 id="notes-title">Límites que protegen la interpretación.</h2>
+        </div>
+      </div>
+      <div class="notes-grid">
+        <article>
+          <h3>Repository reality wins</h3>
+          <p>Código, configuración activa, schemas y tests actuales prevalecen en sus dominios; la discrepancia histórica se conserva.</p>
+        </article>
+        <article>
+          <h3>Method ≠ runtime</h3>
+          <p>La metodología v1 guía trabajo humano y es más amplia que el simulador o la CLI.</p>
+        </article>
+        <article>
+          <h3>Draft ≠ evidence</h3>
+          <p>Operator, learning candidates e intake mantienen estado local o unreviewed hasta revisión explícita.</p>
+        </article>
+        <article>
+          <h3>Source ≠ deployment</h3>
+          <p>Un workflow o runbook versionado no certifica que Pages, EC2, DNS, TLS o Nginx estén activos.</p>
+        </article>
+      </div>
+      <div class="risk-panel">
+        <div>
+          <p class="panel-kicker">KEY RISKS</p>
+          <h3>Riesgos derivados del mismo modelo</h3>
+        </div>
+        <div id="risk-list" class="risk-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>
+      <strong>HUB_Optimus Project Intelligence</strong>
+      <p>Snapshot técnico; no sustituye inspección del objeto mutable o revisión humana.</p>
+    </div>
+    <div class="footer-links">
+      <a href="../">Portfolio</a>
+      <a href="../operator/">Operator</a>
+      <a href="./system.json">system.json</a>
+      <a href="https://github.com/Voxterrae/HUB_Optimus/tree/main/obsidian-HUB_Optimus">Obsidian vault</a>
+    </div>
+  </footer>
+</body>
+</html>
