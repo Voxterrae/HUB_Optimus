@@ -6,7 +6,8 @@ Lifecycle: **Local Operator prototype; draft RFC, not ratified**.
 
 Operator now loads the versioned model and IndexedDB adapter and exposes a fifth,
 always-visible local review step after source-bound draft preparation. The form is
-locked until the current page holds a prepared `operator-source-bound-v1` draft.
+locked until the current page holds a prepared, supported source-bound draft
+(`operator-source-bound-v1` or a human-confirmed `operator-source-bound-v2`).
 It then lets a human create, inspect, transition, export, import, and explicitly
 delete candidate records on that device. This is an executable local review loop,
 not model training, institutional memory, a truth score, or an automatic update
