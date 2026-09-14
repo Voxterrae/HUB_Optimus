@@ -7,6 +7,8 @@ EXPECTED_COMMIT="${1:-}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 OPERATION_LOCK_TOOL="$SCRIPT_DIR/operation-lock.py"
 OPERATION_ENTRYPOINT="$SCRIPT_DIR/adopt-legacy-current.sh"
+SOURCE_TREE_TOOL="$SCRIPT_DIR/verify-release-worktree.py"
+VALIDATION_RUNNER="$SCRIPT_DIR/run-release-validation.py"
 
 usage() {
   cat <<USAGE
@@ -52,6 +54,98 @@ sha256_file() {
   digest="$(sha256sum -- "$path" | awk '{print $1}')"
   [[ "$digest" =~ ^[0-9a-f]{64}$ ]] \
     || fail "Could not calculate SHA-256 for $path"
+  printf '%s\n' "$digest"
+}
+
+verify_release_head() {
+  local release_path="$1"
+  local commit="$2"
+  local head_commit
+
+  head_commit="$(
+    /usr/bin/env -i \
+      HOME=/nonexistent \
+      LANG=C.UTF-8 \
+      PATH=/usr/bin:/bin \
+      GIT_CONFIG_GLOBAL=/dev/null \
+      GIT_CONFIG_NOSYSTEM=1 \
+      GIT_NO_REPLACE_OBJECTS=1 \
+      /usr/bin/git --no-replace-objects \
+        -C "$release_path" rev-parse --verify HEAD
+  )" || fail "Current release HEAD could not be resolved safely."
+  [[ "$head_commit" =~ ^[0-9a-f]{40}$ ]] \
+    && [ "$head_commit" = "$commit" ] \
+    || fail "Current release HEAD differs from its recorded commit."
+}
+
+release_source_evidence() {
+  local release_path="$1"
+  local commit="$2"
+  local evidence
+
+  verify_release_head "$release_path" "$commit"
+
+  [ -f "$SOURCE_TREE_TOOL" ] && [ ! -L "$SOURCE_TREE_TOOL" ] \
+    || fail "Source-tree verifier is not one regular file: $SOURCE_TREE_TOOL"
+  evidence="$(
+    /usr/bin/env -i \
+      HOME=/nonexistent \
+      LANG=C.UTF-8 \
+      PATH=/usr/bin:/bin \
+      /usr/bin/python3 -I \
+        "$SOURCE_TREE_TOOL" \
+        "$release_path" \
+        "$commit" \
+        --allow-generated .venv \
+        --allow-generated .hub-deployment
+  )" || fail "Current source tree differs from its reviewed commit."
+  [ -n "$evidence" ] \
+    || fail "Source-tree verifier returned empty evidence."
+  verify_release_head "$release_path" "$commit"
+  printf '%s\n' "$evidence"
+}
+
+source_tree_digest() {
+  local evidence="$1"
+  local expected_commit="$2"
+
+  /usr/bin/python3 -I - "$expected_commit" "$evidence" <<'PY_SOURCE_EVIDENCE'
+import json
+import re
+import sys
+
+
+expected_commit, raw = sys.argv[1:]
+try:
+    evidence = json.loads(raw)
+except json.JSONDecodeError:
+    raise SystemExit(1)
+digest = evidence.get("source_tree_sha256")
+if evidence.get("commit") != expected_commit or not isinstance(digest, str):
+    raise SystemExit(1)
+if re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+    raise SystemExit(1)
+print(digest)
+PY_SOURCE_EVIDENCE
+}
+
+current_venv_digest() {
+  local digest
+
+  [ -f "$VALIDATION_RUNNER" ] && [ ! -L "$VALIDATION_RUNNER" ] \
+    || fail "Validation supervisor is not one regular file: $VALIDATION_RUNNER"
+  digest="$(
+    /usr/bin/env -i \
+      HOME=/nonexistent \
+      LANG=C.UTF-8 \
+      PATH=/usr/bin:/bin \
+      /usr/bin/python3 -I \
+        "$VALIDATION_RUNNER" \
+        manifest-venv \
+        "$CURRENT_RELEASE"
+  )" || fail "Current venv manifest verification failed."
+  [[ "$digest" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "Validation supervisor returned an invalid venv digest."
   printf '%s\n' "$digest"
 }
 
@@ -270,12 +364,15 @@ validate_adopted_state() {
   local adopted_at
   local legacy_state_sha256
   local legacy_commit_prefix
+  local source_tree_sha256
+  local venv_tree_sha256
 
   validate_exact_state_keys \
     "$state_file" \
     release requested_ref requested_ref_kind commit path adopted_at_utc \
     validation_command validation_exit_code validation_result validation_log \
-    validation_log_exit_code launcher_sha256 status provenance \
+    validation_log_exit_code source_tree_sha256 venv_tree_sha256 \
+    launcher_sha256 status provenance \
     legacy_state_sha256 legacy_commit_prefix
 
   [ "$(required_state_value "$state_file" "release")" = "$CURRENT_RELEASE_ID" ] \
@@ -292,17 +389,25 @@ validate_adopted_state() {
     || fail "Adopted state launcher does not match current."
   [ "$(required_state_value "$state_file" "status")" = "adopted-legacy-current" ] \
     || fail "Adopted state status is invalid."
-  [ "$(required_state_value "$state_file" "provenance")" = "adopted-legacy-current-v1" ] \
+  [ "$(required_state_value "$state_file" "provenance")" = "adopted-legacy-current-v2" ] \
     || fail "Adopted state provenance is invalid."
   adopted_at="$(required_state_value "$state_file" "adopted_at_utc")"
   legacy_state_sha256="$(required_state_value "$state_file" "legacy_state_sha256")"
   legacy_commit_prefix="$(required_state_value "$state_file" "legacy_commit_prefix")"
+  source_tree_sha256="$(required_state_value "$state_file" source_tree_sha256)"
+  venv_tree_sha256="$(required_state_value "$state_file" venv_tree_sha256)"
   [[ "$adopted_at" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]] \
     || fail "Adopted state timestamp is invalid."
   [[ "$legacy_state_sha256" =~ ^[0-9a-f]{64}$ ]] \
     || fail "Adopted state legacy-state SHA-256 is invalid."
   [[ "$legacy_commit_prefix" =~ ^[0-9a-f]{7,39}$ ]] \
     || fail "Adopted state legacy commit prefix is invalid."
+  [[ "$source_tree_sha256" =~ ^[0-9a-f]{64}$ ]] \
+    && [ "$source_tree_sha256" = "$BASELINE_SOURCE_TREE_SHA256" ] \
+    || fail "Adopted state source-tree authority is invalid."
+  [[ "$venv_tree_sha256" =~ ^[0-9a-f]{64}$ ]] \
+    && [ "$venv_tree_sha256" = "$BASELINE_VENV_TREE_SHA256" ] \
+    || fail "Adopted state venv authority is invalid."
   case "$ACTUAL_COMMIT" in
     "$legacy_commit_prefix"*) ;;
     *) fail "Adopted state legacy commit prefix does not match current." ;;
@@ -310,6 +415,8 @@ validate_adopted_state() {
 }
 
 validate_complete_adoption() {
+  local post_source_evidence
+  local post_venv_tree_sha256
   local recorded_legacy_sha256
 
   validate_adopted_state "$CURRENT_DEPLOYMENT_STATE"
@@ -334,6 +441,15 @@ validate_complete_adoption() {
       "$TRANSACTION_DIR/RELEASE_STATE.source" \
       || fail "Published adopted state differs from the staged state."
   fi
+  post_source_evidence="$(
+    release_source_evidence "$CURRENT_RELEASE" "$ACTUAL_COMMIT"
+  )"
+  [ "$post_source_evidence" = "$BASELINE_SOURCE_EVIDENCE" ] \
+    || fail "Current source evidence changed during legacy adoption."
+  post_venv_tree_sha256="$(current_venv_digest)"
+  [ "$post_venv_tree_sha256" = "$BASELINE_VENV_TREE_SHA256" ] \
+    || fail "Current venv evidence changed during legacy adoption."
+  verify_release_head "$CURRENT_RELEASE" "$ACTUAL_COMMIT"
 }
 
 MUTATION_STARTED=0
@@ -352,6 +468,9 @@ CURRENT_LEGACY_STATE=""
 CURRENT_LEGACY_STATE_NEW=""
 CURRENT_GIT_EXCLUDE=""
 DEPLOYMENT_DIR_EXISTED=0
+BASELINE_SOURCE_EVIDENCE=""
+BASELINE_SOURCE_TREE_SHA256=""
+BASELINE_VENV_TREE_SHA256=""
 trap on_exit EXIT
 
 case "$APP_ROOT" in
@@ -396,6 +515,15 @@ ACTUAL_COMMIT="$(git -C "$CURRENT_RELEASE" rev-parse --verify HEAD)"
   || fail "Current full commit does not match the explicit expected commit."
 [ -z "$(git -C "$CURRENT_RELEASE" status --porcelain --untracked-files=normal)" ] \
   || fail "Current release worktree is not clean."
+
+BASELINE_SOURCE_EVIDENCE="$(
+  release_source_evidence "$CURRENT_RELEASE" "$ACTUAL_COMMIT"
+)"
+BASELINE_SOURCE_TREE_SHA256="$(
+  source_tree_digest "$BASELINE_SOURCE_EVIDENCE" "$ACTUAL_COMMIT"
+)" || fail "Initial source-tree evidence is invalid."
+BASELINE_VENV_TREE_SHA256="$(current_venv_digest)"
+verify_release_head "$CURRENT_RELEASE" "$ACTUAL_COMMIT"
 
 CURRENT_LAUNCHER="$CURRENT_RELEASE/ops/ec2/hub-api.sh"
 SHARED_LAUNCHER="$APP_ROOT/shared/bin/hub-api"
@@ -468,9 +596,11 @@ validation_exit_code=not-run
 validation_result=legacy validation claim not re-attested; original state retained by SHA-256
 validation_log=not-applicable
 validation_log_exit_code=not-run
+source_tree_sha256=$BASELINE_SOURCE_TREE_SHA256
+venv_tree_sha256=$BASELINE_VENV_TREE_SHA256
 launcher_sha256=$CURRENT_LAUNCHER_SHA256
 status=adopted-legacy-current
-provenance=adopted-legacy-current-v1
+provenance=adopted-legacy-current-v2
 legacy_state_sha256=$LEGACY_STATE_SHA256
 legacy_commit_prefix=$LEGACY_COMMIT
 STATE
@@ -503,6 +633,22 @@ snapshot_item "$SHARED_STATE" "shared-release-state"
 snapshot_item "$CURRENT_DEPLOYMENT_STATE" "current-release-state"
 snapshot_item "$CURRENT_LEGACY_STATE" "legacy-release-state"
 snapshot_item "$CURRENT_GIT_EXCLUDE" "current-git-exclude"
+
+if [ -n "${HUB_OPTIMUS_TEST_LEGACY_ADOPTION_BEFORE_AUTHORITY_READY:-}" ]; then
+  touch "$HUB_OPTIMUS_TEST_LEGACY_ADOPTION_BEFORE_AUTHORITY_READY"
+  while [ ! -e "${HUB_OPTIMUS_TEST_LEGACY_ADOPTION_BEFORE_AUTHORITY_PROCEED:-}" ]; do
+    sleep 0.01
+  done
+fi
+PRE_MUTATION_SOURCE_EVIDENCE="$(
+  release_source_evidence "$CURRENT_RELEASE" "$ACTUAL_COMMIT"
+)"
+[ "$PRE_MUTATION_SOURCE_EVIDENCE" = "$BASELINE_SOURCE_EVIDENCE" ] \
+  || fail "Current source evidence changed before legacy adoption mutation."
+PRE_MUTATION_VENV_TREE_SHA256="$(current_venv_digest)"
+[ "$PRE_MUTATION_VENV_TREE_SHA256" = "$BASELINE_VENV_TREE_SHA256" ] \
+  || fail "Current venv evidence changed before legacy adoption mutation."
+verify_release_head "$CURRENT_RELEASE" "$ACTUAL_COMMIT"
 
 MUTATION_STARTED=1
 

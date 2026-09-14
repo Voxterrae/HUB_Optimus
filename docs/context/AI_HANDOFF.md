@@ -277,6 +277,24 @@ The root requirements remain the portable authoring tiers. This source-level
 change does not complete the separate locking/isolation/recovery gates or
 execute the blocked host operation in #1831.
 
+## EC2 isolated validation and release authority
+
+The reviewed operator entrypoint launches Bash with an allowlisted environment.
+Source verification reads and authenticates commit, tree and blob bytes directly,
+including drift hidden by index flags. The validation supervisor records actual
+pytest execution, rejects surviving descendants, and compares source and venv
+manifests before and after validation. Root execution drops the worker to nobody;
+the sealed worker descriptor grants that selected UID read ownership before exec.
+Hosted regression tests exercise the unmodified UID transition and descendant
+cleanup as well as the portable isolated fixtures.
+
+Deploy and rollback recheck live HEAD, source and venv authority for participating
+releases before mutation. Legacy adoption records source and venv digests in the
+incompatible exact adopted-legacy-current-v2 schema and postvalidates publication.
+API/core launchers disable bytecode writes; core tests disable pytest cache writes.
+This code integration does not certify a live host: #1854, #1855 and #1831 remain
+separate operational gates.
+
 ## Historical handoff archive
 
 The previous broad handoff is preserved byte-for-byte at
