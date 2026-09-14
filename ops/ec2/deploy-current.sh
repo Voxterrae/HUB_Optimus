@@ -8,6 +8,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 STATE_VALIDATOR="$SCRIPT_DIR/validate-release-state.sh"
 DEPENDENCY_LOCK_TOOL="$SCRIPT_DIR/dependency-lock-digest.sh"
 DEPENDENCY_INVENTORY_TOOL="$SCRIPT_DIR/verify-installed-dependencies.py"
+OPERATION_LOCK_TOOL="$SCRIPT_DIR/operation-lock.py"
+OPERATION_ENTRYPOINT="$SCRIPT_DIR/deploy-current.sh"
 SYSTEM_PYTHON="/usr/bin/python3"
 
 usage() {
@@ -25,6 +27,26 @@ USAGE
 fail() {
   echo "[deploy:error] $*" >&2
   exit 1
+}
+
+verify_or_acquire_operation_lock() {
+  [ -f "$OPERATION_LOCK_TOOL" ] && [ ! -L "$OPERATION_LOCK_TOOL" ] \
+    || fail "Operation-lock helper is not one regular file: $OPERATION_LOCK_TOOL"
+  if [ -z "${HUB_OPTIMUS_OPERATION_LOCK_FD:-}" ]; then
+    exec /usr/bin/python3 -I \
+      "$OPERATION_LOCK_TOOL" \
+      exec \
+      "$APP_ROOT" \
+      "$OPERATION_ENTRYPOINT" \
+      "$@"
+  fi
+  /usr/bin/python3 -I \
+    "$OPERATION_LOCK_TOOL" \
+    verify \
+    "$APP_ROOT" \
+    "$HUB_OPTIMUS_OPERATION_LOCK_FD" \
+    || fail "Inherited operation lock could not be verified."
+  unset HUB_OPTIMUS_OPERATION_LOCK_FD
 }
 
 reject_ambient_pip_environment() {
@@ -364,6 +386,8 @@ else
   FETCH_REF="refs/tags/$DEPLOY_REF"
 fi
 
+verify_or_acquire_operation_lock "$@"
+
 reject_ambient_pip_environment
 
 "$SYSTEM_PYTHON" -I - <<'PY_DEPLOY_ABI' \
@@ -383,8 +407,6 @@ echo "[deploy] Starting HUB_Optimus deploy"
 echo "[deploy] Requested $REF_KIND: $DEPLOY_REF"
 
 mkdir -p "$APP_ROOT/releases" "$APP_ROOT/shared/logs" "$APP_ROOT/shared/bin"
-exec 9> "$APP_ROOT/shared/deploy.lock"
-flock -n 9 || fail "another deploy or rollback operation is active."
 RELEASE_DIR="$(mktemp -d "$APP_ROOT/releases/$(date -u +%Y%m%dT%H%M%SZ).XXXXXX")"
 RELEASE_ID="$(basename "$RELEASE_DIR")"
 DEPLOYMENT_DIR="$RELEASE_DIR/.hub-deployment"
