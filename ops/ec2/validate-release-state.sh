@@ -104,12 +104,24 @@ validate_production() {
   local commit
   local requested_ref
   local requested_ref_kind
+  local digest_bound="no"
+  local validation_log
+  local validation_log_sha256
 
   if [ "$transitional" = "yes" ]; then
-    require_exact_keys \
-      release requested_ref requested_ref_kind commit path validated_at_utc \
-      validation_command validation_exit_code validation_result validation_log \
-      validation_log_exit_code launcher_sha256 status provenance
+    if [[ -n "${SEEN_STATE_KEYS[validation_log_sha256]+present}" ]]; then
+      require_exact_keys \
+        release requested_ref requested_ref_kind commit path validated_at_utc \
+        validation_command validation_exit_code validation_result validation_log \
+        validation_log_exit_code validation_log_sha256 launcher_sha256 status \
+        provenance
+      digest_bound="yes"
+    else
+      require_exact_keys \
+        release requested_ref requested_ref_kind commit path validated_at_utc \
+        validation_command validation_exit_code validation_result validation_log \
+        validation_log_exit_code launcher_sha256 status provenance
+    fi
     [ "$(state_value provenance)" = "adopted-pre-1832" ] \
       || fail "$STATE_FILE has unsupported transitional provenance."
     schema="transitional-adopted-pre-1832"
@@ -117,8 +129,9 @@ validate_production() {
     require_exact_keys \
       release requested_ref requested_ref_kind commit path validated_at_utc \
       validation_command validation_exit_code validation_result validation_log \
-      validation_log_exit_code launcher_sha256 status
+      validation_log_exit_code validation_log_sha256 launcher_sha256 status
     schema="production"
+    digest_bound="yes"
   fi
 
   require_common_identity
@@ -152,6 +165,107 @@ validate_production() {
   [ -n "$(state_value validation_result)" ] \
     && [ -n "$(state_value validation_log)" ] \
     || fail "$STATE_FILE has incomplete validation evidence."
+
+  if [ "$digest_bound" = "yes" ]; then
+    validation_log="$(state_value validation_log)"
+    [ "$validation_log" = "$(state_value path)/.hub-deployment/validation.log" ] \
+      || fail "$STATE_FILE has the wrong validation-log path."
+    [ -f "$validation_log" ] && [ ! -L "$validation_log" ] \
+      || fail "Validation log is not one regular file: $validation_log"
+    validation_log_sha256="$(state_value validation_log_sha256)"
+    [[ "$validation_log_sha256" =~ ^[0-9a-f]{64}$ ]] \
+      || fail "$STATE_FILE has no valid validation-log SHA-256."
+    /usr/bin/python3 -I - \
+      "$validation_log" \
+      "$validation_log_sha256" \
+      "$(state_value validation_result)" <<'PY_VALIDATION_LOG' \
+      || fail "Validation-log attestation failed: $validation_log"
+import hashlib
+import os
+import stat
+import sys
+
+
+path, expected_sha256, expected_result = sys.argv[1:]
+
+
+def fail(message: str) -> None:
+    print(f"[release-state:error] {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+flags = os.O_RDONLY | os.O_CLOEXEC
+if not hasattr(os, "O_NOFOLLOW"):
+    fail("O_NOFOLLOW is unavailable for validation-log attestation.")
+flags |= os.O_NOFOLLOW
+try:
+    descriptor = os.open(path, flags)
+except OSError as exc:
+    fail(f"Could not open validation log without following links: {path}: {exc}")
+
+try:
+    opened = os.fstat(descriptor)
+    if not stat.S_ISREG(opened.st_mode):
+        fail(f"Validation log is not one regular file: {path}")
+    if stat.S_IMODE(opened.st_mode) != 0o600:
+        fail(f"Validation log has an unexpected mode: {path}")
+    chunks = []
+    while True:
+        chunk = os.read(descriptor, 1024 * 1024)
+        if not chunk:
+            break
+        chunks.append(chunk)
+    raw = b"".join(chunks)
+
+    if hashlib.sha256(raw).hexdigest() != expected_sha256:
+        fail(f"Validation log does not match {path}")
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        fail(f"Validation log is not UTF-8: {path}")
+    if not raw.endswith(b"\n"):
+        fail(f"Validation log has no terminal LF: {path}")
+    for character in text:
+        codepoint = ord(character)
+        if character in {"\n", "\t"}:
+            continue
+        if codepoint < 0x20 or 0x7F <= codepoint <= 0x9F:
+            fail(f"Validation log is not canonical UTF-8/LF text: {path}")
+        if character in {"\u2028", "\u2029"}:
+            fail(f"Validation log is not canonical UTF-8/LF text: {path}")
+    result_lines = [
+        line for line in text[:-1].split("\n") if line.split()
+    ]
+    if not result_lines:
+        fail(f"Validation log has no non-empty result line: {path}")
+    if result_lines[-1] != expected_result:
+        fail("Validation result does not match the validation log.")
+
+    finished = os.fstat(descriptor)
+    visible = os.stat(path, follow_symlinks=False)
+    identity_fields = (
+        "st_dev",
+        "st_ino",
+        "st_mode",
+        "st_size",
+        "st_mtime_ns",
+        "st_ctime_ns",
+    )
+    if any(
+        getattr(opened, field) != getattr(finished, field)
+        for field in identity_fields
+    ):
+        fail(f"Validation log changed while it was being attested: {path}")
+    if any(
+        getattr(finished, field) != getattr(visible, field)
+        for field in identity_fields
+    ):
+        fail(f"Validation log path changed while it was being attested: {path}")
+finally:
+    os.close(descriptor)
+PY_VALIDATION_LOG
+  fi
+
   [[ "$(state_value launcher_sha256)" =~ ^[0-9a-f]{64}$ ]] \
     || fail "$STATE_FILE has no valid launcher SHA-256."
   [ "$(state_value status)" = "production-candidate-core" ] \

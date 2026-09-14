@@ -134,9 +134,10 @@ test "$(git -C "$DEPLOYED_RELEASE" rev-parse --verify HEAD)" = "$TARGET_SHA"
 DEPLOYED_RELEASE_STATE="$DEPLOYED_RELEASE/.hub-deployment/RELEASE_STATE"
 cmp -s "$DEPLOYED_RELEASE_STATE" "$APP_ROOT/shared/RELEASE_STATE"
 
-python3 - "$APP_ROOT" "$DEPLOYED_RELEASE" "$TARGET_SHA" <<'PY_DEPLOY_STATE'
+/usr/bin/python3 -I - "$APP_ROOT" "$DEPLOYED_RELEASE" "$TARGET_SHA" <<'PY_DEPLOY_STATE'
 import hashlib
 import json
+import os
 import re
 import stat
 import sys
@@ -157,6 +158,7 @@ required_keys = {
     "validation_result",
     "validation_log",
     "validation_log_exit_code",
+    "validation_log_sha256",
     "launcher_sha256",
     "status",
 }
@@ -169,6 +171,72 @@ def require_regular(path, *, executable=False, mode=None):
         raise SystemExit(f"not executable: {path}")
     if mode is not None and actual_mode != mode:
         raise SystemExit(f"unexpected mode for {path}: {actual_mode:o}")
+
+def read_canonical_validation_log(path, *, mode):
+    flags = os.O_RDONLY | os.O_CLOEXEC
+    if not hasattr(os, "O_NOFOLLOW"):
+        raise SystemExit("O_NOFOLLOW is unavailable for validation-log attestation")
+    flags |= os.O_NOFOLLOW
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as exc:
+        raise SystemExit(
+            f"could not open validation log without following links: {path}: {exc}"
+        ) from exc
+    try:
+        opened = os.fstat(descriptor)
+        if not stat.S_ISREG(opened.st_mode):
+            raise SystemExit(f"validation log is not one regular file: {path}")
+        actual_mode = stat.S_IMODE(opened.st_mode)
+        if actual_mode != mode:
+            raise SystemExit(
+                f"unexpected validation-log mode for {path}: {actual_mode:o}"
+            )
+        chunks = []
+        while True:
+            chunk = os.read(descriptor, 1024 * 1024)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        raw = b"".join(chunks)
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise SystemExit("validation log is not UTF-8") from exc
+        if not raw.endswith(b"\n"):
+            raise SystemExit("validation log has no terminal LF")
+        for character in text:
+            codepoint = ord(character)
+            if character in {"\n", "\t"}:
+                continue
+            if codepoint < 0x20 or 0x7F <= codepoint <= 0x9F:
+                raise SystemExit("validation log is not canonical UTF-8/LF text")
+            if character in {"\u2028", "\u2029"}:
+                raise SystemExit("validation log is not canonical UTF-8/LF text")
+
+        finished = os.fstat(descriptor)
+        visible = os.stat(path, follow_symlinks=False)
+        identity_fields = (
+            "st_dev",
+            "st_ino",
+            "st_mode",
+            "st_size",
+            "st_mtime_ns",
+            "st_ctime_ns",
+        )
+        if any(
+            getattr(opened, field) != getattr(finished, field)
+            for field in identity_fields
+        ):
+            raise SystemExit("validation log changed while it was being attested")
+        if any(
+            getattr(finished, field) != getattr(visible, field)
+            for field in identity_fields
+        ):
+            raise SystemExit("validation log path changed while it was being attested")
+        return raw, text
+    finally:
+        os.close(descriptor)
 
 def exact_state(path, raw):
     try:
@@ -230,7 +298,20 @@ if not state["validation_result"]:
 expected_validation_log = deployed / ".hub-deployment" / "validation.log"
 if state["validation_log"] != str(expected_validation_log):
     raise SystemExit("release-state validation log path differs")
-require_regular(expected_validation_log, mode=0o600)
+validation_log_raw, validation_log_text = read_canonical_validation_log(
+    expected_validation_log,
+    mode=0o600,
+)
+validation_log_sha256 = hashlib.sha256(validation_log_raw).hexdigest()
+if state["validation_log_sha256"] != validation_log_sha256:
+    raise SystemExit("validation log does not match RELEASE_STATE")
+validation_result_lines = [
+    line for line in validation_log_text[:-1].split("\n") if line.split()
+]
+if not validation_result_lines:
+    raise SystemExit("validation log has no non-empty result line")
+if validation_result_lines[-1] != state["validation_result"]:
+    raise SystemExit("validation result does not match the validation log")
 if not re.fullmatch(r"[0-9a-f]{64}", state["launcher_sha256"]):
     raise SystemExit("launcher identity is missing")
 if state["status"] != "production-candidate-core":
@@ -262,6 +343,7 @@ print(json.dumps({
     "release_state_sha256": hashlib.sha256(release_state_raw).hexdigest(),
     "validation_exit_code": state["validation_exit_code"],
     "validation_log_exit_code": state["validation_log_exit_code"],
+    "validation_log_sha256": state["validation_log_sha256"],
 }, indent=2, sort_keys=True))
 PY_DEPLOY_STATE
 
@@ -270,6 +352,11 @@ EXPECTED_LAUNCHER_SHA256="$(
 )"
 [[ "$EXPECTED_LAUNCHER_SHA256" =~ ^[0-9a-f]{64}$ ]]
 ```
+
+The production release state is acceptable only while its mode-`0600`,
+canonical UTF-8/LF validation log can be read from one no-follow regular-file
+snapshot, still matches the recorded SHA-256, and has a final non-empty line
+equal to `validation_result`.
 
 An internal failure after deployment mutation begins automatically restores the
 exact pre-deploy `current` symlink, shared launcher, shared release state,
