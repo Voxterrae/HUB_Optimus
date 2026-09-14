@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Trusted-base GitHub Actions adapter for the Founder Authority Guard.
 
-This module is executed only after the workflow checks out the protected base
-commit. It creates a check run on the exact pull-request head, collects immutable
-GitHub evidence, evaluates the repository policy, and finalizes that same check.
-A collection, validation, or finalization failure leaves no successful head-bound
-check and therefore fails closed.
+This module executes only after the workflow checks out the protected base
+commit. It evaluates immutable pull-request evidence and publishes the same
+fail-closed result on both the exact pull-request head and GitHub's live test
+merge commit. Success is published only while the head, base, merge candidate,
+and semantic evidence remain unchanged.
 """
 
 from __future__ import annotations
@@ -54,6 +54,25 @@ def require_int(value: Any, label: str) -> int:
     return value
 
 
+def require_decimal_id(value: Any, label: str) -> int:
+    if not isinstance(value, str):
+        raise WorkflowError(f"{label} must be a positive decimal integer")
+    text = value.strip()
+    if not text or not text.isascii() or not text.isdecimal():
+        raise WorkflowError(f"{label} must be a positive decimal integer")
+    result = int(text)
+    if result <= 0:
+        raise WorkflowError(f"{label} must be a positive decimal integer")
+    return result
+
+
+def require_sha(value: Any, label: str) -> str:
+    sha = require_string(value, label).lower()
+    if len(sha) != 40 or any(ch not in "0123456789abcdef" for ch in sha):
+        raise WorkflowError(f"{label} must be a 40-character hexadecimal SHA")
+    return sha
+
+
 class GitHubClient:
     def __init__(self, token: str, full_name: str) -> None:
         self.token = require_string(token, "GITHUB_TOKEN")
@@ -67,6 +86,118 @@ class GitHubClient:
         self.graphql_url = os.environ.get(
             "GITHUB_GRAPHQL_URL", "https://api.github.com/graphql"
         )
+        expected_app_id = os.environ.get("FOUNDER_AUTHORITY_EXPECTED_APP_ID")
+        expected_app_slug = os.environ.get("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG")
+        if (expected_app_id is None) != (expected_app_slug is None):
+            raise WorkflowError(
+                "FOUNDER_AUTHORITY_EXPECTED_APP_ID and "
+                "FOUNDER_AUTHORITY_EXPECTED_APP_SLUG must be set together"
+            )
+        self.strict_check_publisher = expected_app_id is not None
+        self.expected_check_app_id = (
+            require_decimal_id(
+                expected_app_id,
+                "FOUNDER_AUTHORITY_EXPECTED_APP_ID",
+            )
+            if self.strict_check_publisher
+            else None
+        )
+        self.expected_check_app_slug = (
+            require_string(
+                expected_app_slug,
+                "FOUNDER_AUTHORITY_EXPECTED_APP_SLUG",
+            )
+            if self.strict_check_publisher
+            else None
+        )
+        self.created_check_targets: dict[int, tuple[str, str]] = {}
+
+    def require_expected_check(
+        self,
+        check: dict[str, Any],
+        *,
+        label: str,
+        expected_head_sha: str | None = None,
+    ) -> None:
+        if not self.strict_check_publisher:
+            raise WorkflowError(
+                "strict check-publisher validation was not configured"
+            )
+        if check.get("name") != CHECK_NAME:
+            raise WorkflowError(
+                f"{label} has name {check.get('name')!r}, expected {CHECK_NAME!r}"
+            )
+        if expected_head_sha is not None:
+            actual_head_sha = require_sha(check.get("head_sha"), f"{label} head SHA")
+            if actual_head_sha != expected_head_sha:
+                raise WorkflowError(
+                    f"{label} targets {actual_head_sha}, expected {expected_head_sha}"
+                )
+        app = require_mapping(check.get("app"), f"{label} publisher app")
+        app_id = require_int(app.get("id"), f"{label} publisher app ID")
+        if app_id != self.expected_check_app_id:
+            raise WorkflowError(
+                f"{label} was published by GitHub App {app_id}, expected "
+                f"{self.expected_check_app_id}"
+            )
+        app_slug = require_string(app.get("slug"), f"{label} publisher app slug")
+        if app_slug != self.expected_check_app_slug:
+            raise WorkflowError(
+                f"{label} was published by GitHub App slug {app_slug!r}, expected "
+                f"{self.expected_check_app_slug!r}"
+            )
+
+    def fail_invalid_created_check(
+        self,
+        check_run_id: int,
+        *,
+        reason: str,
+    ) -> str | None:
+        """Best-effort fail-close for a check created before validation failed."""
+
+        try:
+            check = self.repository_request(
+                f"check-runs/{check_run_id}",
+                method="PATCH",
+                payload={
+                    "status": "completed",
+                    "conclusion": "failure",
+                    "output": {
+                        "title": "Founder Authority Guard failed closed",
+                        "summary": (
+                            "FOUNDER_AUTHORITY_GUARD: FAIL: invalid newly created "
+                            f"check response: {reason}"
+                        )[-60000:],
+                    },
+                },
+            )
+            check = require_mapping(
+                check, f"failed-closed invalid check run {check_run_id}"
+            )
+            actual_id = require_int(
+                check.get("id"), f"failed-closed check run {check_run_id} ID"
+            )
+            if actual_id != check_run_id:
+                raise WorkflowError(
+                    f"failed-closed response identified check {actual_id}, "
+                    f"expected {check_run_id}"
+                )
+            if check.get("status") != "completed":
+                raise WorkflowError(
+                    f"failed-closed check run {check_run_id} is not completed"
+                )
+            if check.get("conclusion") != "failure":
+                raise WorkflowError(
+                    f"failed-closed check run {check_run_id} did not conclude failure"
+                )
+        except (
+            OSError,
+            json.JSONDecodeError,
+            WorkflowError,
+            urllib.error.URLError,
+        ) as exc:
+            return f"cannot fail-close invalid check {check_run_id}: {exc}"
+        return None
 
     @property
     def headers(self) -> dict[str, str]:
@@ -133,27 +264,68 @@ class GitHubClient:
             )
         return require_mapping(result.get("data"), "GitHub GraphQL data")
 
-    def create_head_check(self, head_sha: str) -> int:
+    def create_check(self, target_sha: str, *, target_label: str) -> int:
+        external_id: str | None = None
+        if self.strict_check_publisher:
+            target_sha = require_sha(target_sha, f"{target_label} target SHA")
+            external_id = f"founder-authority:v1:{target_label}:{target_sha}"
+        payload: dict[str, Any] = {
+            "name": CHECK_NAME,
+            "head_sha": target_sha,
+            "status": "in_progress",
+            "output": {
+                "title": "Founder Authority Guard",
+                "summary": (
+                    "Trusted-base validation is running for the "
+                    f"{target_label}."
+                ),
+            },
+        }
+        if external_id is not None:
+            payload["external_id"] = external_id
         check = self.repository_request(
             "check-runs",
             method="POST",
-            payload={
-                "name": CHECK_NAME,
-                "head_sha": head_sha,
-                "status": "in_progress",
-                "output": {
-                    "title": "Founder Authority Guard",
-                    "summary": (
-                        "Trusted-base validation is running for this exact "
-                        "pull-request head."
-                    ),
-                },
-            },
+            payload=payload,
         )
-        check = require_mapping(check, "created check run")
-        return require_int(check.get("id"), "created check-run ID")
+        check = require_mapping(check, f"created {target_label} check run")
+        check_run_id = require_int(
+            check.get("id"), f"created {target_label} check-run ID"
+        )
+        if not self.strict_check_publisher:
+            return check_run_id
 
-    def finalize_head_check(
+        assert external_id is not None
+        try:
+            self.require_expected_check(
+                check,
+                label=f"created {target_label} check run",
+                expected_head_sha=target_sha,
+            )
+            if check.get("external_id") != external_id:
+                raise WorkflowError(
+                    f"created {target_label} check run has unexpected external ID"
+                )
+            if check.get("status") != "in_progress":
+                raise WorkflowError(
+                    f"created {target_label} check run is not in progress"
+                )
+            if check.get("conclusion") is not None:
+                raise WorkflowError(
+                    f"created {target_label} check run already has a conclusion"
+                )
+        except WorkflowError as exc:
+            cleanup_error = self.fail_invalid_created_check(
+                check_run_id,
+                reason=str(exc),
+            )
+            suffix = f"; {cleanup_error}" if cleanup_error else ""
+            raise WorkflowError(f"{exc}{suffix}") from exc
+
+        self.created_check_targets[check_run_id] = (target_sha, external_id)
+        return check_run_id
+
+    def finalize_check(
         self,
         check_run_id: int,
         *,
@@ -166,15 +338,57 @@ class GitHubClient:
             if success
             else "Founder Authority Guard failed closed"
         )
-        self.repository_request(
+        payload = {
+            "status": "completed",
+            "conclusion": conclusion,
+            "output": {"title": title, "summary": summary[-60000:]},
+        }
+        if not self.strict_check_publisher:
+            self.repository_request(
+                f"check-runs/{check_run_id}",
+                method="PATCH",
+                payload=payload,
+            )
+            return
+
+        target = self.created_check_targets.get(check_run_id)
+        if target is None:
+            raise WorkflowError(
+                f"refusing to finalize unknown check run {check_run_id}"
+            )
+        expected_head_sha, expected_external_id = target
+        check = self.repository_request(
             f"check-runs/{check_run_id}",
             method="PATCH",
-            payload={
-                "status": "completed",
-                "conclusion": conclusion,
-                "output": {"title": title, "summary": summary[-60000:]},
-            },
+            payload=payload,
         )
+        check = require_mapping(check, f"finalized check run {check_run_id}")
+        self.require_expected_check(
+            check,
+            label=f"finalized check run {check_run_id}",
+            expected_head_sha=expected_head_sha,
+        )
+        actual_id = require_int(
+            check.get("id"), f"finalized check run {check_run_id} ID"
+        )
+        if actual_id != check_run_id:
+            raise WorkflowError(
+                f"finalized response identified check {actual_id}, "
+                f"expected {check_run_id}"
+            )
+        if check.get("external_id") != expected_external_id:
+            raise WorkflowError(
+                f"finalized check run {check_run_id} has unexpected external ID"
+            )
+        if check.get("status") != "completed":
+            raise WorkflowError(
+                f"finalized check run {check_run_id} is not completed"
+            )
+        if check.get("conclusion") != conclusion:
+            raise WorkflowError(
+                f"finalized check run {check_run_id} concluded "
+                f"{check.get('conclusion')!r}, expected {conclusion!r}"
+            )
 
 
 SIGNATURE_QUERY = """
@@ -403,35 +617,212 @@ def load_event() -> dict[str, Any]:
         raise WorkflowError(f"cannot load GitHub event: {exc}") from exc
 
 
+def live_pull_snapshot(
+    client: GitHubClient,
+    pull_number: int,
+    *,
+    expected_head_sha: str,
+    expected_base_sha: str,
+    expected_merge_sha: str | None = None,
+) -> dict[str, Any]:
+    pull = require_mapping(
+        client.repository_request(f"pulls/{pull_number}"),
+        f"live pull request #{pull_number}",
+    )
+    if pull.get("state") != "open" or pull.get("merged") is not False:
+        raise WorkflowError("pull request must remain open and unmerged")
+
+    head = require_mapping(pull.get("head"), "live pull-request head")
+    base = require_mapping(pull.get("base"), "live pull-request base")
+    head_sha = require_sha(head.get("sha"), "live pull-request head SHA")
+    base_sha = require_sha(base.get("sha"), "live pull-request base SHA")
+    merge_sha = require_sha(
+        pull.get("merge_commit_sha"), "live test merge commit SHA"
+    )
+
+    if head_sha != expected_head_sha:
+        raise WorkflowError(
+            f"pull-request head changed: expected {expected_head_sha}, got {head_sha}"
+        )
+    if base_sha != expected_base_sha:
+        raise WorkflowError(
+            f"pull-request base changed: expected {expected_base_sha}, got {base_sha}"
+        )
+    if expected_merge_sha is not None and merge_sha != expected_merge_sha:
+        raise WorkflowError(
+            f"test merge commit changed: expected {expected_merge_sha}, got {merge_sha}"
+        )
+    if merge_sha in {head_sha, base_sha}:
+        raise WorkflowError("test merge commit must differ from head and base")
+
+    merge_commit = require_mapping(
+        client.repository_request(f"commits/{merge_sha}"),
+        "live test merge commit",
+    )
+    parents = merge_commit.get("parents")
+    if not isinstance(parents, list):
+        raise WorkflowError("live test merge commit parents must be an array")
+    parent_shas = [
+        require_sha(item.get("sha"), "test merge parent SHA")
+        for item in parents
+        if isinstance(item, dict)
+    ]
+    if parent_shas != [base_sha, head_sha]:
+        raise WorkflowError(
+            "test merge commit parents do not match the live base and head"
+        )
+
+    return {
+        "pull": pull,
+        "head_sha": head_sha,
+        "base_sha": base_sha,
+        "merge_sha": merge_sha,
+    }
+
+
+def semantic_fingerprint(value: dict[str, Any]) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def finalize_created_checks(
+    client: GitHubClient,
+    checks: list[tuple[str, int]],
+    *,
+    success: bool,
+    summary: str,
+) -> list[str]:
+    errors: list[str] = []
+    for label, check_run_id in checks:
+        try:
+            client.finalize_check(
+                check_run_id,
+                success=success,
+                summary=f"target={label}\n{summary}",
+            )
+        except (OSError, WorkflowError, urllib.error.URLError) as exc:
+            errors.append(f"cannot finalize {label} check {check_run_id}: {exc}")
+            break
+
+    if not errors:
+        return []
+
+    failure_summary = (
+        "FOUNDER_AUTHORITY_GUARD: FAIL: check publication failed; "
+        "no created check may retain a successful conclusion.\n"
+        + "\n".join(errors)
+    )
+    revocation_errors: list[str] = []
+    for label, check_run_id in checks:
+        try:
+            client.finalize_check(
+                check_run_id,
+                success=False,
+                summary=f"target={label}\n{failure_summary}",
+            )
+        except (OSError, WorkflowError, urllib.error.URLError) as exc:
+            revocation_errors.append(
+                f"cannot fail-close {label} check {check_run_id}: {exc}"
+            )
+    return [*errors, *revocation_errors]
+
+
 def run() -> int:
     event = load_event()
     repository = require_mapping(event.get("repository"), "repository payload")
-    pull = require_mapping(event.get("pull_request"), "pull_request payload")
+    event_pull = require_mapping(event.get("pull_request"), "pull_request payload")
     full_name = require_string(repository.get("full_name"), "repository full name")
-    head = require_mapping(pull.get("head"), "pull request head")
-    head_sha = require_string(head.get("sha"), "pull request head SHA")
-    if len(head_sha) != 40:
-        raise WorkflowError("pull request head SHA must contain 40 characters")
+    pull_number = require_int(event_pull.get("number"), "pull request number")
+    event_head = require_mapping(event_pull.get("head"), "event pull-request head")
+    event_base = require_mapping(event_pull.get("base"), "event pull-request base")
+    expected_head_sha = require_sha(
+        event_head.get("sha"), "event pull-request head SHA"
+    )
+    expected_base_sha = require_sha(
+        event_base.get("sha"), "event pull-request base SHA"
+    )
 
     client = GitHubClient(os.environ.get("GITHUB_TOKEN", ""), full_name)
-    check_run_id = client.create_head_check(head_sha)
+    checks: list[tuple[str, int]] = []
     success = False
     summary = "Founder Authority Guard failed before producing a result."
 
     try:
+        initial = live_pull_snapshot(
+            client,
+            pull_number,
+            expected_head_sha=expected_head_sha,
+            expected_base_sha=expected_base_sha,
+        )
+        checks.append(
+            (
+                "exact pull-request head",
+                client.create_check(
+                    initial["head_sha"], target_label="exact pull-request head"
+                ),
+            )
+        )
+        checks.append(
+            (
+                "live test merge commit",
+                client.create_check(
+                    initial["merge_sha"], target_label="live test merge commit"
+                ),
+            )
+        )
+
         manifest = require_mapping(
             json.loads(MANIFEST_PATH.read_text(encoding="utf-8")),
             "owner identity manifest",
         )
-        evidence = collect_evidence(client, event, manifest)
+        evaluation_event = dict(event)
+        evaluation_event["pull_request"] = initial["pull"]
+        evidence = collect_evidence(client, evaluation_event, manifest)
+        evidence["evaluation_targets"] = {
+            "head_sha": initial["head_sha"],
+            "base_sha": initial["base_sha"],
+            "merge_commit_sha": initial["merge_sha"],
+        }
         EVIDENCE_PATH.write_text(
             json.dumps(evidence, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         EVIDENCE_PATH.chmod(0o600)
+
         owner = load_owner_identity(MANIFEST_PATH)
         decision = evaluate(evidence, manifest, owner)
         summary = decision_summary(decision)
+
+        before_finalize = live_pull_snapshot(
+            client,
+            pull_number,
+            expected_head_sha=initial["head_sha"],
+            expected_base_sha=initial["base_sha"],
+            expected_merge_sha=initial["merge_sha"],
+        )
+        verification_event = dict(event)
+        verification_event["pull_request"] = before_finalize["pull"]
+        verification_evidence = collect_evidence(
+            client, verification_event, manifest
+        )
+        verification_evidence["evaluation_targets"] = evidence["evaluation_targets"]
+        if semantic_fingerprint(verification_evidence) != semantic_fingerprint(evidence):
+            raise WorkflowError(
+                "semantic evidence changed after evaluation and before finalization"
+            )
+
+        live_pull_snapshot(
+            client,
+            pull_number,
+            expected_head_sha=initial["head_sha"],
+            expected_base_sha=initial["base_sha"],
+            expected_merge_sha=initial["merge_sha"],
+        )
+        summary = (
+            f"{summary}\n"
+            f"head_sha={initial['head_sha']}\n"
+            f"base_sha={initial['base_sha']}\n"
+            f"merge_commit_sha={initial['merge_sha']}"
+        )
         success = True
     except (
         OSError,
@@ -441,12 +832,16 @@ def run() -> int:
         urllib.error.URLError,
     ) as exc:
         summary = f"FOUNDER_AUTHORITY_GUARD: FAIL: {exc}"
-    finally:
-        client.finalize_head_check(
-            check_run_id,
-            success=success,
-            summary=summary,
-        )
+
+    finalization_errors = finalize_created_checks(
+        client,
+        checks,
+        success=success,
+        summary=summary,
+    )
+    if finalization_errors:
+        success = False
+        summary = f"{summary}\n" + "\n".join(finalization_errors)
 
     print(summary, file=sys.stdout if success else sys.stderr)
     return 0 if success else 1
