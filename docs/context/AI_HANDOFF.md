@@ -223,8 +223,8 @@ Issue #1874 introduces an isolated phase-one prototype under
 `hub_optimus/connect/`; the complete boundary is documented in
 `docs/architecture/xai_x_signal_bridge.md`.
 
-- The official visible project account is `@HubOptimus`. The handle is display
-  context, not stable authorization. No account `user_id` is asserted in the
+- The configured project display handle is `@HubOptimus`. This declaration
+  is not authenticated account ownership or stable authorization. No account `user_id` is asserted in the
   repository; a future live write must bind `GET /2/users/me` to a separately
   approved stable ID.
 - xAI remains an optional analytical witness and X remains an optional public

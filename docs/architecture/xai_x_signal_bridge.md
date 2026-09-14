@@ -8,9 +8,11 @@ implementation boundary, not evidence of a live integration, deployment,
 partnership, endorsement, approved X application, or configured provider
 account.
 
-The official visible X identity for this project is
-[`@HubOptimus`](https://x.com/HubOptimus). The handle is not a sufficient
-authorization identifier: a later live implementation must obtain the
+The phase-one code is configured for the display handle `@HubOptimus`.
+This is a project declaration, not an authenticated account attestation. The
+profile endpoint denied the hosted link check with HTTP 403 on 2026-09-14;
+that response establishes neither ownership nor account availability. A later
+live implementation must obtain the
 authenticated account's stable `user_id` through
 [`GET /2/users/me`](https://docs.x.com/x-api/users/get-my-user) and compare it
 with a separately approved owner record before any write. That ID is not known
