@@ -16,8 +16,8 @@
     },
     {
       "path": "VALIDATION_RESULTS.txt",
-      "bytes": 5810,
-      "sha256": "833eeab0df64e13cb65f017080131f87025a4d8716408bbe2703c2032aca564d"
+      "bytes": 5875,
+      "sha256": "f3f9be066d0f952b66abdc86dfc91b454063e51ea96f60f8f96669ab10b2f97d"
     },
     {
       "path": "contract/optimus-evidence-lab.dataverse.json",
@@ -41,8 +41,8 @@
     },
     {
       "path": "dataverse/pac/Invoke-OptimusEvidenceLabSchema.ps1",
-      "bytes": 5229,
-      "sha256": "274f738c4ffca523a49526ddac6fc6e7ff2f650f7b2334c9d133ae407d3b7e59"
+      "bytes": 5380,
+      "sha256": "67488a031b2566ba440e0341ae9fe77bf8e32c853c5d1a5dd41b815af4e9beca"
     },
     {
       "path": "dataverse/rollback/rollback-plan.template.json",
@@ -91,8 +91,8 @@
     },
     {
       "path": "scripts/apply-dataverse-schema.py",
-      "bytes": 55770,
-      "sha256": "1a4a699788405dfc4aee0cf855602ab8e5eb60ee7d9ce6fe60f3eafac1596afe"
+      "bytes": 56037,
+      "sha256": "6992b3806934bede9b1fbad683f6a3106a0339fe66439104afbee6ce9e21dafe"
     },
     {
       "path": "scripts/build_artifacts.py",
@@ -136,8 +136,8 @@
     },
     {
       "path": "tests/test_schema_applicator.py",
-      "bytes": 9790,
-      "sha256": "89e515dfc99ac0183ff677bfb46fd1326f5811a4887425010735b9e728eef879"
+      "bytes": 11071,
+      "sha256": "89b4aae0aa02590c2aec7324ba4c159aa191b8f3d519b04238a9bee1cb3dcfbf"
     },
     {
       "path": "tests/test_schema_rollback.py",

@@ -58,6 +58,36 @@ class MembershipFreeApplicator(MODULE.SchemaApplicator):
 
 
 class ApplicatorTests(unittest.TestCase):
+
+    def test_live_transport_installs_redirect_rejection(self):
+        transport = MODULE.UrllibTransport(
+            "https://example.crm4.dynamics.com/", "synthetic-test-token"
+        )
+        handlers = [
+            handler for handler in transport.opener.handlers
+            if isinstance(handler, MODULE.NoRedirectHandler)
+        ]
+        self.assertEqual(len(handlers), 1)
+
+    def test_authenticated_redirects_fail_before_followup_request(self):
+        request = MODULE.urllib.request.Request(
+            "https://example.crm4.dynamics.com/api/data/v9.2/solutions",
+            headers={"Authorization": "Bearer synthetic-test-token"},
+        )
+        handler = MODULE.NoRedirectHandler()
+        for status in (301, 302, 303, 307, 308):
+            for target in (
+                "https://example.invalid/capture",
+                "https://example.crm4.dynamics.com/another-path",
+            ):
+                with self.subTest(status=status, target=target):
+                    with self.assertRaisesRegex(
+                        MODULE.ApplicatorError, "redirects are not allowed"
+                    ):
+                        handler.redirect_request(
+                            request, None, status, "Redirect", {}, target
+                        )
+
     def test_offline_review_is_bound_and_zero_write(self):
         contract, plan = MODULE.load_public_artifacts()
         result = MODULE.offline_review(contract, plan)

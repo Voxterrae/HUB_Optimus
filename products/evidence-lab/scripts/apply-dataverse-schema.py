@@ -174,6 +174,11 @@ class Transport(Protocol):
     ) -> Response: ...
 
 
+class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise ApplicatorError("Dataverse redirects are not allowed.")
+
+
 class UrllibTransport:
     def __init__(self, environment_url: str, access_token: str, *, timeout: int = 90):
         token = access_token.strip()
@@ -182,6 +187,7 @@ class UrllibTransport:
         self.base_url = normalize_environment_url(environment_url).rstrip("/") + "/api/data/v9.2/"
         self.access_token = token
         self.timeout = timeout
+        self.opener = urllib.request.build_opener(NoRedirectHandler())
 
     def request(
         self,
@@ -205,7 +211,7 @@ class UrllibTransport:
             request_headers.update(headers)
         request = urllib.request.Request(url, data=payload, headers=request_headers, method=method.upper())
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with self.opener.open(request, timeout=self.timeout) as response:
                 raw = response.read()
                 parsed = json.loads(raw.decode("utf-8")) if raw else None
                 return Response(response.status, dict(response.headers.items()), parsed)
