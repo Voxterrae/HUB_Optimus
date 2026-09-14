@@ -255,7 +255,7 @@ def test_obsidian_required_notes_and_wikilinks_resolve():
         "98_META/Update Protocol.md",
         "18_SOURCE_MAP/Source Map.md",
     }
-    assert required <= {str(path.relative_to(VAULT)) for path in notes}
+    assert required <= {path.relative_to(VAULT).as_posix() for path in notes}
 
     stems = {}
     for note in notes:
