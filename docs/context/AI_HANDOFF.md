@@ -97,8 +97,9 @@ A missing, pending, cancelled, or failed check is not approval. The active
 ruleset requires both `founder-authority` and `founder-authority-bootstrap`
 from GitHub Actions integration `15368`. This records the observed mechanism,
 not a dedicated trusted publisher: issue `#1906` remains open for publisher
-identity and exact-authorization hardening. PR `#1919` is a separate shadow-only
-canary candidate and cannot change the required-check source by itself.
+identity and exact-authorization hardening. PR `#1919` introduced the separate
+shadow-only App canary at `dc16281fe91d255939bf017798e5924ab52e0e7c`.
+It remains non-required and does not change the required-check source.
 
 ## Operating discipline
 
