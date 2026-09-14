@@ -290,7 +290,7 @@ validate_complete_adoption() {
   local recorded_legacy_sha256
 
   validate_adopted_state "$CURRENT_DEPLOYMENT_STATE"
-  cmp -s "$CURRENT_DEPLOYMENT_STATE" "$LEGACY_STATE" \
+  cmp -s "$CURRENT_DEPLOYMENT_STATE" "$SHARED_STATE" \
     || fail "Shared release state differs from the adopted current state."
   validate_legacy_state "$CURRENT_LEGACY_STATE"
   [ "$(stat -c '%a' "$CURRENT_LEGACY_STATE")" = "400" ] \
@@ -395,8 +395,8 @@ CURRENT_MARKER_FILE="$APP_ROOT/shared/current_release"
 [ "$(cat "$CURRENT_MARKER_FILE")" = "$CURRENT_RELEASE_ID" ] \
   || fail "Current-release marker does not match the current symlink."
 
-LEGACY_STATE="$APP_ROOT/shared/RELEASE_STATE"
-[ -f "$LEGACY_STATE" ] && [ ! -L "$LEGACY_STATE" ] \
+SHARED_STATE="$APP_ROOT/shared/RELEASE_STATE"
+[ -f "$SHARED_STATE" ] && [ ! -L "$SHARED_STATE" ] \
   || fail "Shared release state is not one regular file."
 CURRENT_DEPLOYMENT_DIR="$CURRENT_RELEASE/.hub-deployment"
 CURRENT_DEPLOYMENT_STATE="$CURRENT_DEPLOYMENT_DIR/RELEASE_STATE"
@@ -419,9 +419,9 @@ fi
 [ ! -e "$CURRENT_DEPLOYMENT_DIR" ] \
   || fail "Current deployment directory exists without an adopted release state."
 
-validate_legacy_state "$LEGACY_STATE"
-LEGACY_COMMIT="$(required_state_value "$LEGACY_STATE" "commit")"
-LEGACY_STATE_SHA256="$(sha256_file "$LEGACY_STATE")"
+validate_legacy_state "$SHARED_STATE"
+LEGACY_COMMIT="$(required_state_value "$SHARED_STATE" "commit")"
+LEGACY_STATE_SHA256="$(sha256_file "$SHARED_STATE")"
 
 ADOPTION_WORK_DIR="$(
   mktemp -d "$APP_ROOT/shared/legacy-adoption.$(date -u +%Y%m%dT%H%M%SZ).XXXXXX"
@@ -459,7 +459,7 @@ install -m 0644 \
   "$TRANSACTION_DIR/RELEASE_STATE.source" \
   "$TRANSACTION_DIR/shared-RELEASE_STATE"
 install -m 0400 \
-  "$LEGACY_STATE" \
+  "$SHARED_STATE" \
   "$TRANSACTION_DIR/LEGACY_RELEASE_STATE"
 
 cp -a -- "$CURRENT_GIT_EXCLUDE" "$TRANSACTION_DIR/git-exclude"
@@ -477,7 +477,7 @@ snapshot_item "$APP_ROOT/current" "current-symlink"
 snapshot_item "$SHARED_LAUNCHER" "shared-launcher"
 snapshot_item "$APP_ROOT/shared/previous_release" "previous-release-pointer"
 snapshot_item "$CURRENT_MARKER_FILE" "current-release-marker"
-snapshot_item "$LEGACY_STATE" "shared-release-state"
+snapshot_item "$SHARED_STATE" "shared-release-state"
 snapshot_item "$CURRENT_DEPLOYMENT_STATE" "current-release-state"
 snapshot_item "$CURRENT_LEGACY_STATE" "legacy-release-state"
 snapshot_item "$CURRENT_GIT_EXCLUDE" "current-git-exclude"
