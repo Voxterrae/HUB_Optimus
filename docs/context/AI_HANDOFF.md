@@ -217,6 +217,19 @@ mode 0600. Explicit legacy schemas retain their documented compatibility.
 This code integration does not certify a deployed host or authorize the blocked
 operation in #1831; dependency, locking and recovery hardening remain separate.
 
+## EC2 dependency lock boundary
+
+PR #1858 binds the retained EC2 environment to separate runtime and validation
+locks for Linux x86_64 CPython 3.12. Exact versions, reviewed wheel hashes,
+sealed no-follow lock snapshots and path-identity tokens constrain installation.
+Ambient pip settings, mutable pins, extra distributions and bootstrap pip are
+rejected; the expected package inventory and base Python identity are checked,
+including after tests. The combined lock digest, tier and path enter release
+state. CI compares two offline installs and rejects a deliberately corrupt wheel.
+The root requirements remain the portable authoring tiers. This source-level
+change does not complete the separate locking/isolation/recovery gates or
+execute the blocked host operation in #1831.
+
 ## Historical handoff archive
 
 The previous broad handoff is preserved byte-for-byte at
