@@ -70,7 +70,17 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
 
     deployment_dir = release / ".hub-deployment"
     validation_log = deployment_dir / "validation.log"
-    validation_log_raw = b"collecting tests\n692 passed in 30.45s\n\n"
+    source_tree_sha256 = "1" * 64
+    venv_tree_sha256 = "2" * 64
+    nodeids_sha256 = "3" * 64
+    validation_result = (
+        "HUB_OPTIMUS_VALIDATION_V1 collected=692 terminal=692 passed=692 "
+        "skipped=0 failed=0 pytest_exit_code=0 "
+        f"nodeids_sha256={nodeids_sha256} descendants=0 "
+        f"source_tree_sha256={source_tree_sha256} "
+        f"venv_tree_sha256={venv_tree_sha256} worker_uid=65534 result=passed"
+    )
+    validation_log_raw = f"collecting tests\n{validation_result}\n".encode()
     _write_bytes(validation_log, validation_log_raw, 0o600)
     dependency_digest = hashlib.sha256()
     for relative in DEPENDENCY_LOCKS:
@@ -90,14 +100,27 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
         "path": str(release),
         "validated_at_utc": "2026-08-02T12:00:00Z",
         "validation_command": (
-            f"/usr/bin/env -i HOME={release} LANG=C.UTF-8 PATH=/usr/bin:/bin "
-            f"PYTHONNOUSERSITE=1 {release}/.venv/bin/python -m pytest -q"
+            "/usr/bin/env -i HOME=/nonexistent LANG=C.UTF-8 PATH=/usr/bin:/bin "
+            f"/usr/bin/python3 -I {release}/ops/ec2/run-release-validation.py "
+            f"{release} {commit} {release}/ops/ec2/verify-release-worktree.py"
         ),
         "validation_exit_code": "0",
-        "validation_result": "692 passed in 30.45s",
+        "validation_result": validation_result,
         "validation_log": str(validation_log),
         "validation_log_exit_code": "0",
         "validation_log_sha256": hashlib.sha256(validation_log_raw).hexdigest(),
+        "validation_protocol": "isolated-pytest-v1",
+        "validation_collected": "692",
+        "validation_terminal": "692",
+        "validation_passed": "692",
+        "validation_skipped": "0",
+        "validation_failed": "0",
+        "validation_pytest_exit_code": "0",
+        "validation_nodeids_sha256": nodeids_sha256,
+        "validation_descendants": "0",
+        "validation_worker_uid": "65534",
+        "source_tree_sha256": source_tree_sha256,
+        "venv_tree_sha256": venv_tree_sha256,
         "dependency_tier": "runtime+validation-v1",
         "dependency_lock": str(dependency_lock),
         "dependency_lock_sha256": dependency_digest.hexdigest(),
@@ -245,9 +268,12 @@ def test_post_deploy_disk_attestation_rejects_every_identity_drift(
         _replace_state_pair(
             release_state,
             shared_state,
-            lambda raw: raw.replace(
-                b"validation_result=692 passed in 30.45s\n",
+            lambda raw: re.sub(
+                rb"^validation_result=.*\n",
                 b"validation_result=forged result\n",
+                raw,
+                count=1,
+                flags=re.MULTILINE,
             ),
         )
     elif invalid_case == "validation-log-invalid-utf8":
@@ -418,9 +444,11 @@ def _rollback_fixture(tmp_path: Path) -> dict[str, object]:
         ),
         "validation_log": "not-applicable",
         "validation_log_exit_code": "not-run",
+        "source_tree_sha256": "1" * 64,
+        "venv_tree_sha256": "2" * 64,
         "launcher_sha256": launcher_sha256,
         "status": "adopted-legacy-current",
-        "provenance": "adopted-legacy-current-v1",
+        "provenance": "adopted-legacy-current-v2",
         "legacy_state_sha256": hashlib.sha256(legacy_raw).hexdigest(),
         "legacy_commit_prefix": legacy_prefix,
     }
