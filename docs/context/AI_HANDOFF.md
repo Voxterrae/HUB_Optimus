@@ -17,7 +17,10 @@ control, assignment, collaboration, or joint ventures, read:
 4. `docs/context/SOURCE_OF_TRUTH.md`
 5. the active governance issue and pull request
 
-The proposal recorded by issue `#1861` and draft PR `#1862` identifies:
+The Founder Ownership and Authority Charter entered protected main in
+`30e985226347b4bc59b0e187b96633a09647ca42`, linked to issue `#1861`.
+It remains present at the integration checkpoint
+`main@260666ce9cdeb7a1b3daf43ba550da549d98f3ce` and identifies:
 
 - **Benjamin Gerrit Hoff** as founder, architect, creator, project owner, and
   final human authority of HUB_Optimus;
@@ -26,9 +29,15 @@ The proposal recorded by issue `#1861` and draft PR `#1862` identifies:
 - HUB_Optimus as the foundational tool and technological parent platform through
   which Benjamin Gerrit Hoff develops LCDH-OS and the wider ecosystem.
 
-This proposal is not ratified merely because it appears on a branch. Draft PR
-`#1862` must remain unmerged until its reviewed final tree is recreated in
-verified owner-authored history and all protected review gates are satisfied.
+Presence of the Charter on `main` does not by itself change the
+machine-readable ratification state. The current
+`config/governance/owner_identity.v1.json` remains
+`RATIFICATION_PROPOSED`, hardware-backed owner-key enrollment remains pending,
+and PR `#1896` is the separate open proposal to change that record. No operator
+may describe the identity record as `RATIFIED` unless the exact protected
+change, live required checks, explicit owner record, and applicable
+cryptographic gate are all satisfied. Draft PR `#1862` is historical proposal
+provenance rather than the current merge gate.
 
 ## CODEOWNERS and review policy
 
@@ -81,10 +90,15 @@ base and fails closed. For protected changes it checks:
 - when owner-key status becomes `ACTIVE`, a valid owner SSH signature whose
   exact fingerprint is pinned in the owner identity manifest.
 
-The workflow creates the `founder-authority` check directly on the exact pull
-request head SHA. A missing, pending, cancelled, or failed check is not approval.
-The workflow cannot become active policy until its reviewed code exists on
-protected `main` and the later ruleset decision requires the head-bound check.
+The adapter merged through PR `#1907` at
+`5cb923c38e8ec0f45468c29268c79dcc3b06b822` publishes `founder-authority`
+on the exact pull-request head and revalidated live test-merge candidate.
+A missing, pending, cancelled, or failed check is not approval. The active
+ruleset requires both `founder-authority` and `founder-authority-bootstrap`
+from GitHub Actions integration `15368`. This records the observed mechanism,
+not a dedicated trusted publisher: issue `#1906` remains open for publisher
+identity and exact-authorization hardening. PR `#1919` is a separate shadow-only
+canary candidate and cannot change the required-check source by itself.
 
 ## Operating discipline
 
