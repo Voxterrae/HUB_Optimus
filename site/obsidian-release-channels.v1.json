@@ -1,0 +1,21 @@
+{
+  "aliases": {
+    "obsidian-HUB_Optimus-v1.1": "obsidian-HUB_Optimus"
+  },
+  "frozen_v1_0": {
+    "files": {
+      "app-graph.js": "7840c4285607bd5110ee71c43c129bdd86e46850bbd4c9c2d611247d0aa6002e",
+      "app.js": "7b52a2ab0dbe171153defb61f0a3ad209a2b351a5b7a8cae5565926309dcfeb4",
+      "index.html": "c2112ff72199911871bc7207a720b6d127a7ce001d52f210f0807d3f94066d02",
+      "styles-content.css": "0e9fea75fd4d84d94ede09cbf953d5c8b2e4035b2101775dcadde77e52d894c7",
+      "styles-explorer.css": "68fabef774cdc1674baa93881787c8b59707e8d31dc9538eb9b1d8d6f018897f",
+      "styles.css": "dff21227eb3a2996228b142dc851a5a11b08d5f0a7e2bb87858f545d0493deee",
+      "system.json": "a880812439e96cb0cddbacb28d28eb5ae61cc3bd50bbb30d6a6a46c56760d2f1",
+      "system.runtime.json": "ed71759923487b584cc7c074ce5c7e6cd06a47a99b380482ad07fb09f74b4706"
+    },
+    "route": "obsidian-HUB_Optimus-v1.0",
+    "source_commit": "115d100e278f38dffe23ce6493fbd1ac0f296de1"
+  },
+  "schema_version": "hub-optimus-obsidian-release-channels.v1",
+  "stable": "obsidian-HUB_Optimus"
+}

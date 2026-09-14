@@ -134,29 +134,35 @@ v0.1 does not authorize or claim:
 
 ## 5. Terms
 
-**Authority plane**  
+**Authority plane**
+
 The protected GitHub records and live GitHub evidence that define governance,
 contracts, versions, capability state, and change history within their stated
 boundaries.
 
-**Operational ledger**  
+**Operational ledger**
+
 A private Dataverse deployment that may record governed operational evidence.
 It is a ledger of operational state, not a source of constitutional authority or
 automatic truth.
 
-**Evidence Gateway**  
+**Evidence Gateway**
+
 The HUB_Optimus-controlled MCP server that authenticates, authorizes, validates,
 queries, sanitizes, and projects approved ledger and repository data.
 
-**OpenAI plugin**  
+**OpenAI plugin**
+
 The combined methodology Skill and MCP tool integration used by ChatGPT or a
 compatible OpenAI host. In v0.1 it has no custom UI and no write tools.
 
-**Case draft**  
+**Case draft**
+
 A transient, unratified structure submitted for validation. Validation does not
 store, publish, endorse, or convert it into canonical knowledge.
 
-**Provenance chain**  
+**Provenance chain**
+
 The bounded set of version, source, hash, relation, supersession, and review
 records needed to explain where an object came from and what authority it does
 or does not possess.
@@ -740,31 +746,39 @@ A later implementation PR must additionally demonstrate:
 
 ## 21. Risks and mitigations
 
-**Authority drift**  
+**Authority drift**
+
 Mitigation: exact commit binding, explicit precedence, and fail-closed status.
 
-**Schema/vendor drift**  
+**Schema/vendor drift**
+
 Mitigation: stable HUB_Optimus public contract and an internal versioned adapter.
 
-**Data leakage**  
+**Data leakage**
+
 Mitigation: allowlists, field minimization, output validation, opaque IDs, and
 synthetic-first testing.
 
-**Prompt injection**  
+**Prompt injection**
+
 Mitigation: untrusted-content boundary and independent server-side validation.
 
-**Narrative overclaiming**  
+**Narrative overclaiming**
+
 Mitigation: explicit epistemic states, capability-status tool, missing-evidence
 fields, and mandatory human review.
 
-**Duplicate corroboration**  
+**Duplicate corroboration**
+
 Mitigation: fingerprints, source lineage, and `duplicate_of` relations.
 
-**Unexpected cost or availability**  
+**Unexpected cost or availability**
+
 Mitigation: live licensing inspection, budgets, quotas, alarms, bounded canary,
 and kill switch.
 
-**Premature coupling to draft work**  
+**Premature coupling to draft work**
+
 Mitigation: non-interference map and implementation from reviewed `main` only.
 
 ## 22. Open questions
