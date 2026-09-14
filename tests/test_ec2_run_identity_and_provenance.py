@@ -9,6 +9,8 @@ import subprocess
 import time
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 HUB_CORE = ROOT / "ops" / "ec2" / "hub-core.sh"
@@ -827,9 +829,50 @@ def test_rollback_state_parser_rejects_duplicate_identity_keys(
         result = _run([ROLLBACK], env=env)
 
         assert result.returncode == 1
-        assert f"must contain exactly one {key} field" in result.stderr
+        assert f"contains a duplicate field: {key}" in result.stderr
         assert _operational_snapshot(app_root) == before
         assert not list((app_root / "shared").glob("rollback-transaction.*"))
+
+
+@pytest.mark.parametrize(
+    "state_location",
+    ("current", "shared", "matching-current-and-shared", "previous"),
+)
+def test_rollback_rejects_malformed_managed_state_before_mutation(
+    tmp_path: Path,
+    state_location: str,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    fake_bin = _fake_deploy_python(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo, fake_bin)
+
+    assert _run([DEPLOY, reviewed_commit], env=env).returncode == 0
+    previous_release = (app_root / "current").resolve()
+    assert _run([DEPLOY, head_commit], env=env).returncode == 0
+    current_release = (app_root / "current").resolve()
+    current_state = current_release / ".hub-deployment" / "RELEASE_STATE"
+    shared_state = app_root / "shared" / "RELEASE_STATE"
+    previous_state = previous_release / ".hub-deployment" / "RELEASE_STATE"
+
+    targets = {
+        "current": (current_state,),
+        "shared": (shared_state,),
+        "matching-current-and-shared": (current_state, shared_state),
+        "previous": (previous_state,),
+    }[state_location]
+    for target in targets:
+        with target.open("a", encoding="utf-8") as handle:
+            handle.write("status=production-candidate-core\n")
+    before = _operational_snapshot(app_root)
+
+    result = _run([ROLLBACK], env=env)
+
+    assert result.returncode == 1
+    assert "contains a duplicate field: status" in result.stderr
+    assert _operational_snapshot(app_root) == before
+    assert not list((app_root / "shared").glob("rollback-transaction.*"))
 
 
 def test_invalid_rollback_target_state_fails_before_mutation(
@@ -858,8 +901,53 @@ def test_invalid_rollback_target_state_fails_before_mutation(
     result = _run([DEPLOY, head_commit], env=env)
 
     assert result.returncode == 1
-    assert "Rollback target commit does not match" in result.stderr
+    assert "requested commit differs from its resolved commit" in result.stderr
     assert "Restoring exact pre-deploy" not in result.stderr
+    assert _operational_snapshot(app_root) == before
+
+
+@pytest.mark.parametrize(
+    ("corruption", "expected_error"),
+    (
+        ("malformed", "contains a malformed state line"),
+        (
+            "valid-but-divergent",
+            "Shared RELEASE_STATE differs from current per-release state",
+        ),
+    ),
+)
+def test_deploy_rejects_shared_only_state_drift_before_mutation(
+    tmp_path: Path,
+    corruption: str,
+    expected_error: str,
+) -> None:
+    source_repo = tmp_path / "source"
+    reviewed_commit, head_commit = _source_repository(source_repo)
+    fake_bin = _fake_deploy_python(tmp_path)
+    app_root = tmp_path / "app"
+    env = _deploy_env(app_root, source_repo, fake_bin)
+
+    first = _run([DEPLOY, reviewed_commit], env=env)
+    assert first.returncode == 0, first.stderr
+    shared_state = app_root / "shared" / "RELEASE_STATE"
+    if corruption == "malformed":
+        with shared_state.open("a", encoding="utf-8") as handle:
+            handle.write("malformed-state-line\n")
+    else:
+        shared_state.write_text(
+            shared_state.read_text(encoding="utf-8").replace(
+                "validation_result=17 passed in 0.01s",
+                "validation_result=18 passed in 0.01s",
+            ),
+            encoding="utf-8",
+        )
+    before = _operational_snapshot(app_root)
+
+    result = _run([DEPLOY, head_commit], env=env)
+
+    assert result.returncode == 1
+    assert expected_error in result.stderr
+    assert "Restoring exact pre-deploy operational state" not in result.stderr
     assert _operational_snapshot(app_root) == before
 
 
