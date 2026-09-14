@@ -166,6 +166,16 @@ assets. Run the Project Intelligence site, v1.1, release-channel, and public-rou
 tests, then inspect the actual deployment run and served bytes. Browser graph
 interaction does not execute the Python simulator or enable URL retrieval.
 
+## EC2 validation-log attestation
+
+The implementation in PR #1857 binds every newly validated production release
+state to the complete validation log SHA-256 and its final non-empty result.
+Preflight, deployment and rollback reject replaced, truncated or result-divergent
+logs using one no-follow regular-file snapshot, canonical UTF-8/LF text and
+mode 0600. Explicit legacy schemas retain their documented compatibility.
+This code integration does not certify a deployed host or authorize the blocked
+operation in #1831; dependency, locking and recovery hardening remain separate.
+
 ## Historical handoff archive
 
 The previous broad handoff is preserved byte-for-byte at
