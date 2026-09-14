@@ -447,3 +447,14 @@ def test_new_files_do_not_contain_common_secret_markers():
         content = path.read_text(encoding="utf-8")
         for pattern in patterns:
             assert re.search(pattern, content) is None, (path, pattern)
+
+
+def test_dependency_view_exposes_every_declared_dependency():
+    model = load_model()
+    declared = {dependency["id"] for dependency in model["dependencies"]}
+    visible = set(model["views"]["dependencies"]["nodes"])
+    assert declared <= visible, f"Dependencies missing from graph: {declared - visible}"
+    layout = model["layouts"]["dependencies"]
+    assert declared <= layout.keys()
+    positions = [tuple(layout[node_id]) for node_id in declared]
+    assert len(positions) == len(set(positions)), "Dependencies overlap in graph"
