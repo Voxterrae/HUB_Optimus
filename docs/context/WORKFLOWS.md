@@ -39,6 +39,19 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   - `benchmarks`: non-blocking benchmark pack with `continue-on-error: true`.
 - Writes to repo: no.
 
+### optimus-admin-gateway.yml
+
+- Triggers:
+  - `push` to `main` when the Admin Gateway package or this workflow changes;
+  - `pull_request` for the same paths;
+  - `workflow_dispatch`.
+- Permissions: `contents: read`.
+- Job `python-contract`:
+  - installs the package with its development dependencies on Python 3.11;
+  - runs the complete product test suite;
+  - treats the Starlette legacy-TestClient deprecation as an error.
+- Writes to repo: no.
+
 ### link-check.yml
 
 - Triggers:

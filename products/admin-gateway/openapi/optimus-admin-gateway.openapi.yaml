@@ -1,0 +1,129 @@
+openapi: 3.1.0
+info:
+  title: Optimus Admin Gateway
+  version: 0.1.0
+  description: Governed allowlisted administration API for HUB_Optimus
+paths:
+  /healthz:
+    get:
+      tags: [system]
+      summary: Healthz
+      operationId: healthz_healthz_get
+      responses:
+        '200':
+          description: Successful Response
+  /api/v1/operations:
+    get:
+      tags: [operations]
+      summary: List Operations
+      operationId: list_operations_api_v1_operations_get
+      security:
+        - EntraOAuth2: [access_as_user]
+      responses:
+        '200':
+          description: Successful Response
+        '401':
+          description: Authenticated Entra principal required
+        '403':
+          description: Optimus.Reader role required
+        '503':
+          description: Entra tenant binding not configured
+  /api/v1/operations/{operation_id}:plan:
+    post:
+      tags: [operations]
+      summary: Plan Operation
+      operationId: plan_operation_api_v1_operations__operation_id__plan_post
+      security:
+        - EntraOAuth2: [access_as_user]
+      parameters:
+        - in: path
+          name: operation_id
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OperationRequest'}
+      responses:
+        '200':
+          description: Validated deterministic operation plan
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OperationPlan'}
+        '401': {description: Authenticated Entra principal required}
+        '403': {description: Optimus.Reader role required}
+        '404': {description: Operation not found}
+        '503': {description: Entra tenant binding not configured}
+        '422': {description: Parameter validation failed}
+  /api/v1/operations/{operation_id}:execute:
+    post:
+      tags: [operations]
+      summary: Execute Operation
+      operationId: execute_operation_api_v1_operations__operation_id__execute_post
+      security:
+        - EntraOAuth2: [access_as_user]
+      parameters:
+        - in: path
+          name: operation_id
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OperationRequest'}
+      responses:
+        '200': {description: DryRun or configured execution result}
+        '401': {description: Authenticated Entra principal required}
+        '403': {description: Required application role or approval missing or invalid}
+        '503': {description: Entra tenant binding or tenant executor not configured}
+components:
+  securitySchemes:
+    EntraOAuth2:
+      type: oauth2
+      description: Replace the tenant placeholder and bind the client-specific API audience before deployment.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID/oauth2/v2.0/authorize
+          tokenUrl: https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID/oauth2/v2.0/token
+          scopes:
+            access_as_user: Request governed Admin Gateway operations as the signed-in principal.
+  schemas:
+    ApprovalReceipt:
+      type: object
+      additionalProperties: false
+      required: [approval_id, plan_hash, approved_by, approved_at, signature]
+      properties:
+        approval_id: {type: string, minLength: 8, maxLength: 128}
+        plan_hash: {type: string, pattern: '^[a-f0-9]{64}$'}
+        approved_by: {type: string, minLength: 1, maxLength: 256}
+        approved_at: {type: string, format: date-time}
+        signature: {type: string, minLength: 32, maxLength: 512}
+    OperationRequest:
+      type: object
+      additionalProperties: false
+      required: [parameters, idempotency_key]
+      properties:
+        parameters: {type: object, additionalProperties: true}
+        dry_run: {type: boolean, default: true}
+        idempotency_key: {type: string, minLength: 8, maxLength: 128}
+        approval:
+          oneOf:
+            - {$ref: '#/components/schemas/ApprovalReceipt'}
+            - {type: 'null'}
+    OperationPlan:
+      type: object
+      additionalProperties: false
+      required: [operation_id, title, mutation, approval_required, risk, dry_run, parameters, plan_hash, catalog_version, state]
+      properties:
+        operation_id: {type: string}
+        title: {type: string}
+        mutation: {type: boolean}
+        approval_required: {type: boolean}
+        risk: {type: string, enum: [low, medium, high]}
+        dry_run: {type: boolean}
+        parameters: {type: object, additionalProperties: true}
+        plan_hash: {type: string, pattern: '^[a-f0-9]{64}$'}
+        catalog_version: {type: string}
+        state: {type: string, enum: [PLANNED, APPROVAL_REQUIRED, QUEUED, RUNNING, SUCCEEDED, FAILED, CANCELLED]}

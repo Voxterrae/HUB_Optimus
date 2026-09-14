@@ -2,7 +2,7 @@
 
 A tenant-neutral, governed administration module for **HUB_Optimus**.
 
-This foundation documents a planned product for allowlisted Microsoft 365 administration through Copilot Studio, Power Platform and mobile clients, without an unrestricted PowerShell shell. This checkout contains documentation only; executable capabilities require the reviewed follow-up slices.
+This reference API validates allowlisted Microsoft 365 administration plans for future Copilot Studio, Power Platform and mobile clients. The API, operation catalog and tests are executable locally. The default executor performs DryRun only; live tenant execution remains unconfigured and requires the reviewed follow-up slices.
 
 ## Product/client boundary
 
@@ -22,16 +22,15 @@ See `docs/CLIENT_BOUNDARY.md`.
 
 ## Quick start
 
-The commands below apply to a complete Admin Gateway package checkout. The
-foundation slice establishes only the product and tenant boundary; executable
-API, runbook and deployment assets arrive in the focused follow-up slices.
+Run from this product directory. The API starts on localhost; production identity
+requires the EasyAuth boundary described in `docs/SECURITY.md`.
 
 ```bash
 python -m venv .venv
 . .venv/bin/activate
 python -m pip install -e '.[dev]'
 pytest
-uvicorn optimus_admin_gateway.main:app --reload
+uvicorn optimus_admin_gateway.main:app --host 127.0.0.1 --port 8766
 ```
 
 For local tests only:
@@ -42,7 +41,8 @@ export OPTIMUS_DEV_MODE=true
 
 ## Module map
 
-The following layout describes the complete package planned across the focused follow-up slices. These implementation paths are not present in this foundation-only checkout.
+The API, catalog and OpenAPI paths below are present. PowerShell, Power Platform,
+Copilot, Dataverse and deployment assets remain planned in dependent PRs.
 
 - `src/optimus_admin_gateway/` — API, validation and safety controls.
 - `config/operations.catalog.json` — allowlisted operation registry.
@@ -53,3 +53,19 @@ The following layout describes the complete package planned across the focused f
 - `dataverse/` — tenant-neutral data model and PAC bootstrap.
 - `power-platform/flows/` — approval-flow blueprint.
 - `deployment/` — deployment and tenant-overlay templates.
+
+## Windows PowerShell quick start
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m pytest
+$env:OPTIMUS_DEV_MODE = "true"
+$env:OPTIMUS_EXECUTOR_MODE = "disabled"
+.\.venv\Scripts\python.exe -m uvicorn optimus_admin_gateway.main:app --host 127.0.0.1 --port 8766
+```
+
+Open http://127.0.0.1:8766/healthz to verify the local service. Development calls
+use the explicit local principal and role headers described in the security
+model. Keep development mode confined to local tests; the reference executor
+still rejects live requests.

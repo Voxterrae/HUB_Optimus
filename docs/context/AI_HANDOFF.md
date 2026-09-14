@@ -301,6 +301,21 @@ API/core launchers disable bytecode writes; core tests disable pytest cache writ
 This code integration does not certify a live host: #1854, #1855 and #1831 remain
 separate operational gates.
 
+## Admin Gateway API boundary
+
+Existing PR #1871 adds the isolated FastAPI reference service, allowlisted
+operation catalog, tenant-bound EasyAuth parser, additive Reader/Mutator roles,
+semantic plan hashing and product tests. DryRun is the default. Its hash excludes
+execution mode while retaining operation, normalized parameters, mutation,
+risk and catalog version. Switching mode alone grants no permission: mutation
+still requires the caller role, matching receipt and configured executor.
+
+The reference executor remains disabled for live operations. The package has
+its own Python environment and workflow; do not mix those dependencies with
+the root EC2 lock. #1869 and dependent PRs retain tenant deployment, approval
+expiry/replay, durable idempotency, audit and runbook boundaries.
+Windows product validation passed 33 synthetic tests before protected review.
+
 ## Historical handoff archive
 
 The previous broad handoff is preserved byte-for-byte at

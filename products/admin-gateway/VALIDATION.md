@@ -1,20 +1,26 @@
 # Validation record
 
-Validation target: Optimus Admin Gateway foundation boundary.
+## Protected integration candidate - 2026-09-14
 
-This slice contains product-boundary documentation only. It does not contain
-the API, operation catalog, runbook, Power Platform assets or deployment
-templates, so it makes no runtime-test or deployable-package claim.
+Windows, Python 3.14, isolated Admin Gateway environment:
 
-Verified for this slice:
+- editable package installation with development dependencies succeeded;
+- all 33 product tests passed;
+- API identity, tenant and role rejection checks passed;
+- the semantic plan hash stays stable from DryRun to intended execution;
+- a synthetic valid receipt reaches only the disabled reference executor;
+- changed parameters, risk or catalog version change the plan hash;
+- invalid mailbox, delegate and reason inputs return JSON-safe HTTP 422.
 
-- the five tracked Admin Gateway files are the README, this validation record,
-  architecture, client-boundary and security documentation;
-- no pilot mailbox address, tenant ID, client environment URL, credential or
-  execution output is stored in the public foundation;
-- executable validation is deferred to the focused implementation slices that
-  introduce the corresponding assets.
+The tests use synthetic identities and example.invalid addresses. No tenant
+adapter, live mailbox, approval service or external administration was called.
+The hosted product Python contract and required repository controls must also
+pass on the final signed candidate before merge.
 
-The complete package must be validated again at its final stacked head before
-review or deployment. A package manifest is intentionally absent until it can
-be generated from the files that actually exist in Git.
+The API, operation catalog and OAuth/OpenAPI template exist in this slice.
+PowerShell runbooks, Power Platform, Dataverse and deployment assets belong to
+later dependent PRs. Tenant deployment remains gated by the security model and
+issue #1869; this test record does not certify a production deployment.
+
+The original API proposal recorded 28 local tests and a later 29-test hosted
+result. Git history retains those earlier candidate records.
