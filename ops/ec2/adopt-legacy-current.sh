@@ -4,6 +4,9 @@ set -euo pipefail
 APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 REPO_URL="${HUB_OPTIMUS_REPO_URL:-https://github.com/Voxterrae/HUB_Optimus.git}"
 EXPECTED_COMMIT="${1:-}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+OPERATION_LOCK_TOOL="$SCRIPT_DIR/operation-lock.py"
+OPERATION_ENTRYPOINT="$SCRIPT_DIR/adopt-legacy-current.sh"
 
 usage() {
   cat <<USAGE
@@ -20,6 +23,26 @@ USAGE
 fail() {
   echo "[legacy-adoption:error] $*" >&2
   exit 1
+}
+
+verify_or_acquire_operation_lock() {
+  [ -f "$OPERATION_LOCK_TOOL" ] && [ ! -L "$OPERATION_LOCK_TOOL" ] \
+    || fail "Operation-lock helper is not one regular file: $OPERATION_LOCK_TOOL"
+  if [ -z "${HUB_OPTIMUS_OPERATION_LOCK_FD:-}" ]; then
+    exec /usr/bin/python3 -I \
+      "$OPERATION_LOCK_TOOL" \
+      exec \
+      "$APP_ROOT" \
+      "$OPERATION_ENTRYPOINT" \
+      "$@"
+  fi
+  /usr/bin/python3 -I \
+    "$OPERATION_LOCK_TOOL" \
+    verify \
+    "$APP_ROOT" \
+    "$HUB_OPTIMUS_OPERATION_LOCK_FD" \
+    || fail "Inherited operation lock could not be verified."
+  unset HUB_OPTIMUS_OPERATION_LOCK_FD
 }
 
 sha256_file() {
@@ -348,8 +371,7 @@ esac
 [[ "$EXPECTED_COMMIT" =~ ^[0-9a-f]{40}$ ]] \
   || fail "Expected current commit must be one full lowercase SHA."
 
-exec 9> "$APP_ROOT/shared/deploy.lock"
-flock -n 9 || fail "another deploy, rollback, or adoption is active."
+verify_or_acquire_operation_lock "$@"
 
 [ -L "$APP_ROOT/current" ] || fail "Current release is not a symlink."
 CURRENT_RELEASE="$(readlink -f "$APP_ROOT/current")"
