@@ -32,3 +32,40 @@ jobs:
         run: python -m pip install -e '.[dev]'
       - name: Run API and authentication contract tests
         run: python -m pytest -q
+
+  powershell-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Parse and inspect PowerShell 7 runbooks
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Recurse products/admin-gateway/runbooks -Filter *.ps1
+          if ($files.Count -eq 0) { throw 'No PowerShell runbooks found.' }
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $file.FullName,
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error "$($file.FullName): $($_.Message)" }
+              throw "PowerShell parse failed for $($file.FullName)."
+            }
+          }
+          $runbook = Get-Content -Raw products/admin-gateway/runbooks/Invoke-OptimusExchangeOperation.ps1
+          if ($runbook -match '(?i)Invoke-Expression|\biex\b|DownloadString') {
+            throw 'Dynamic execution is forbidden.'
+          }
+          if ($runbook -notmatch '\[bool\]\$DryRun = \$true') {
+            throw 'DryRun must default to true.'
+          }
+      - name: Run PowerShell safety contracts
+        shell: pwsh
+        run: |
+          Import-Module Pester -MinimumVersion 5.0 -ErrorAction Stop
+          Invoke-Pester -Path products/admin-gateway/runbooks/tests -CI

@@ -316,6 +316,19 @@ the root EC2 lock. #1869 and dependent PRs retain tenant deployment, approval
 expiry/replay, durable idempotency, audit and runbook boundaries.
 Windows product validation passed 33 synthetic tests before protected review.
 
+## Admin Gateway PowerShell boundary
+
+Existing PR #1872 adds the allowlisted Exchange runbook and PowerShell/Pester
+contract. Mutation previews return before module import, certificate access or
+connection. Delegate and approval inputs are checked before connection; failed
+mailbox/store probes return structured diagnostic warnings. Read diagnostics
+still require an explicitly configured tenant connection outside synthetic tests.
+
+The API executor remains disabled. Runbook publication, tenant credentials,
+resource scoping and containment of direct Automation invocation remain under
+#1869 and later delivery gates. The Windows validation uses synthetic command
+responses; it is not a live Exchange execution record.
+
 ## Historical handoff archive
 
 The previous broad handoff is preserved byte-for-byte at

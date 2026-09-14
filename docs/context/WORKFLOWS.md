@@ -50,6 +50,10 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   - installs the package with its development dependencies on Python 3.11;
   - runs the complete product test suite;
   - treats the Starlette legacy-TestClient deprecation as an error.
+- Job `powershell-contract`:
+  - parses every Admin Gateway runbook with PowerShell's language parser;
+  - rejects dynamic execution and a non-safe DryRun default;
+  - runs the versioned Pester safety contracts with `Invoke-Pester -CI`.
 - Writes to repo: no.
 
 ### link-check.yml
