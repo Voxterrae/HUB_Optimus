@@ -74,7 +74,8 @@ Its Draft 2020-12 JSON Schema lives beside it. Each component records:
 - whether a production service is deployed;
 - production-write and live-external-transport claims;
 - exact GitHub evidence;
-- a human-readable claim boundary.
+- a human-readable claim boundary;
+- optional, separately validated merged foundation evidence for an implementation that remains in development.
 
 The registry is intentionally static and human-reviewed in v1. A future generator may consume it, but no generator may infer product state directly from labels, titles, mergeability, check status, branch names, or chat instructions.
 
@@ -115,7 +116,7 @@ Private identifiers, protected URLs, tenant details, credentials, certificates, 
 
 ## Treatment at the 2026-08-21 observation
 
-- **Optimus Admin Gateway** remains the exact draft PR stack #1870–#1873 plus #1875–#1876. Private Sandbox recovery evidence does not authorize production deployment, connector activation, or another tenant mutation.
+- **Optimus Admin Gateway** was a draft stack at the August observation. The September integration now separates merged documentation foundation #1870 at ebe288effbdc3307c8f9f6c509178f66fe42484f from pending implementation PRs #1871-#1873 and #1875-#1876. The registry records the foundation in a separate commit-bound foundation_evidence field; it does not promote the implementation or authorize tenant execution.
 - **Optimus Evidence Lab** remains draft PR #1879 and an offline package boundary. It is not a production deployment or a public runtime.
 - **HUB_Optimus Connect — xAI and X Foundation** remains draft PR #1877 and a disabled provider boundary. It has no credentials, live calls, automatic publication, or partnership claim.
 - **Optimus Global Graph** remains issue-only under #1880. It has no implementation, person-level graph, Dataverse mutation, public API, public globe integration, or Sites deployment.
@@ -201,6 +202,6 @@ After a canonical merge, revert the exact site/registry commit through a reviewe
 
 ## Foundation-slice limitation
 
-The first PR under #1888 adds the registry, schema, architecture documentation, focused validation, and the operational AI handoff update required to inherit this flow. It does not modify `site/index.html`, translations, styles, JavaScript, the Pages workflow, the protected Sites project, or any runtime. The visible portfolio remains unchanged until a separate reviewed presentation slice consumes the registry.
+The foundation under #1888 adds the registry, schema, architecture documentation, focused validation, and operational AI handoff. Its integration correction also narrows the Labs data-status metadata in site/index.html to documented-incubation-surface, with matching portfolio tests: a dated portfolio reference does not certify mutable contents or emptiness of the separate Labs repository. Translations, styles, JavaScript, Pages workflow, Sites and external runtimes are unchanged. The existing dated Labs wording remains a historical observation, not a current emptiness attestation.
 
 The registry and schema are nevertheless public files under `site/data/` after an authorized merge. That non-visible deployment is an explicit effect, not an implication that the presentation update or Sites synchronization has already occurred.

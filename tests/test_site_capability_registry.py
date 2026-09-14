@@ -6,6 +6,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
+import pytest
+
 from jsonschema import Draft202012Validator, FormatChecker
 
 
@@ -50,7 +52,7 @@ IN_DEVELOPMENT_COMPONENTS = {
     "connect-xai-x",
     "global-graph",
 }
-ADMIN_GATEWAY_STACK = {"1870", "1871", "1872", "1873", "1875", "1876"}
+ADMIN_GATEWAY_STACK = {"1871", "1872", "1873", "1875", "1876"}
 ALLOWED_LIFECYCLE_STATES = {
     "active-methodology",
     "working-deterministic-prototype",
@@ -59,7 +61,7 @@ ALLOWED_LIFECYCLE_STATES = {
     "implementation-present-deployment-unverified",
     "experimental-tooling",
     "active-ratified-protocol",
-    "official-empty-incubation",
+    "documented-incubation-surface",
     "draft",
     "issue-only",
 }
@@ -90,10 +92,16 @@ class PortfolioStatusParser(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.statuses = {}
+        self.sections = {}
+        self.section_stack = []
 
     def handle_starttag(self, tag, attributes):
         attrs = dict(attributes)
+        if tag == "section":
+            self.section_stack.append(attrs.get("id"))
         component_id = attrs.get("data-portfolio-component")
+        if {"portfolio-card", "labs-state"} & set(attrs.get("class", "").split()):
+            assert component_id, "portfolio card must declare data-portfolio-component"
         if not component_id:
             return
 
@@ -103,6 +111,11 @@ class PortfolioStatusParser(HTMLParser):
             f"duplicate public component status for {component_id!r}"
         )
         self.statuses[component_id] = status
+        self.sections[component_id] = self.section_stack[-1] if self.section_stack else None
+
+    def handle_endtag(self, tag):
+        if tag == "section" and self.section_stack:
+            self.section_stack.pop()
 
 
 def load_registry():
@@ -121,6 +134,18 @@ def parse_public_component_statuses():
     parser = PortfolioStatusParser()
     parser.feed(INDEX_PATH.read_text(encoding="utf-8"))
     return parser.statuses
+
+
+def validate_portfolio_markup(registry, markup):
+    parser = PortfolioStatusParser()
+    parser.feed(markup)
+    listed = {c["id"]: c for c in registry["components"] if c["publicly_listed"]}
+    assert parser.statuses == {key: c["lifecycle_state"] for key, c in listed.items()}
+    for key, component in listed.items():
+        section = component["public_section"]
+        allowed = {"portfolio", "labs"} if section == "what-exists-today" else {"in-development"}
+        assert parser.sections[key] in allowed, (key, section, parser.sections[key])
+    return parser
 
 
 def walk_keys(value):
@@ -222,20 +247,7 @@ def test_registry_contains_exact_current_and_development_component_sets():
     assert len(components) == len(registry["components"]), "component IDs must be unique"
     assert set(components) == PUBLIC_COMPONENTS | IN_DEVELOPMENT_COMPONENTS
 
-    markup_statuses = parse_public_component_statuses()
-    expected_public_statuses = {
-        component_id: components[component_id]["lifecycle_state"]
-        for component_id in PUBLIC_COMPONENTS
-    }
-
-    assert set(markup_statuses) == PUBLIC_COMPONENTS
-    assert markup_statuses == expected_public_statuses
-    assert {
-        component["id"]
-        for component in registry["components"]
-        if component["public_section"] == "what-exists-today"
-    } == PUBLIC_COMPONENTS
-    assert not (set(markup_statuses) & IN_DEVELOPMENT_COMPONENTS)
+    validate_portfolio_markup(registry, INDEX_PATH.read_text(encoding="utf-8"))
 
 
 def test_evidence_type_ref_and_url_identity_are_exact_and_unique():
@@ -301,8 +313,6 @@ def test_component_states_and_present_claims_are_bounded():
 
         if component["source_status"] in NON_MERGED_SOURCE_STATUSES:
             assert component["public_section"] == "in-development"
-            assert component["publicly_listed"] is False
-            assert component["public_static_surface_available"] is False
             assert component["public_browser_runtime_available"] is False
             assert component["production_service_deployed"] is False
             assert component["production_writes_executed"] == 0
@@ -379,3 +389,34 @@ def test_schema_contains_cross_field_fail_closed_rules():
     assert schema["$defs"]["baseline"]["properties"]["sites_mirror"]["properties"][
         "authoritative"
     ]["const"] is False
+
+
+def test_new_unmarked_portfolio_card_is_rejected():
+    markup = INDEX_PATH.read_text(encoding="utf-8")
+    markup += '<article class="portfolio-card" data-status="draft">Unregistered</article>'
+    with pytest.raises(AssertionError, match="must declare data-portfolio-component"):
+        validate_portfolio_markup(load_registry(), markup)
+
+
+def test_listed_development_card_is_allowed_only_in_its_declared_section():
+    registry = load_registry()
+    component = component_map(registry)["evidence-lab"]
+    component["publicly_listed"] = True
+    component["public_static_surface_available"] = True
+    assert not schema_errors(registry, load_schema())
+    card = '<article class="portfolio-card" data-portfolio-component="evidence-lab" data-status="draft">Evidence Lab</article>'
+    markup = INDEX_PATH.read_text(encoding="utf-8")
+    validate_portfolio_markup(registry, markup + '<section id="in-development">' + card + '</section>')
+    with pytest.raises(AssertionError):
+        validate_portfolio_markup(registry, markup + '<section id="portfolio">' + card + '</section>')
+
+
+def test_merged_admin_foundation_is_separate_from_pending_implementation():
+    component = component_map(load_registry())["admin-gateway"]
+    assert {item["ref"] for item in component["evidence"]} == ADMIN_GATEWAY_STACK
+    assert component["source_status"] == "draft-pr-stack"
+    assert component["foundation_evidence"] == [{
+        "type": "commit-path",
+        "ref": "ebe288effbdc3307c8f9f6c509178f66fe42484f",
+        "url": "https://github.com/Voxterrae/HUB_Optimus/blob/ebe288effbdc3307c8f9f6c509178f66fe42484f/products/admin-gateway/README.md",
+    }]

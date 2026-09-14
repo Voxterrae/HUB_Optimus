@@ -113,7 +113,7 @@ def test_every_commit_evidence_path_exists_at_the_declared_object_type():
     registry = load_registry()
 
     for component in registry["components"]:
-        for evidence in component["evidence"]:
+        for evidence in [*component["evidence"], *component.get("foundation_evidence", [])]:
             if evidence["type"] != "commit-path":
                 continue
 

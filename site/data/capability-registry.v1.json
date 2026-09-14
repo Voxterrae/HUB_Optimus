@@ -3,7 +3,7 @@
   "schema_version": "1.0.0",
   "registry_id": "hub_optimus.public_capabilities.v1",
   "registry_mode": "human-reviewed-static",
-  "reviewed_at": "2026-08-21",
+  "reviewed_at": "2026-09-14",
   "baseline": {
     "canonical_repository": "Voxterrae/HUB_Optimus",
     "source_baseline_sha": "30e985226347b4bc59b0e187b96633a09647ca42",
@@ -181,7 +181,7 @@
     {
       "id": "labs",
       "display_name": "HUB-Optimus Labs",
-      "lifecycle_state": "official-empty-incubation",
+      "lifecycle_state": "documented-incubation-surface",
       "source_status": "merged",
       "public_section": "what-exists-today",
       "publicly_listed": true,
@@ -197,7 +197,7 @@
           "url": "https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/site/index.html"
         }
       ],
-      "claim_boundary": "Official public incubation surface; the separate Labs repository is presented as empty and no unreleased engine, dataset, deployment or security capability is attributed to it."
+      "claim_boundary": "The pinned HUB_Optimus portfolio documents a public Labs incubation reference. This registry does not certify the current contents or emptiness of the separate Labs repository; its mutable external state remains unverified."
     },
     {
       "id": "admin-gateway",
@@ -212,11 +212,6 @@
       "production_writes_executed": 0,
       "live_external_transport_enabled": false,
       "evidence": [
-        {
-          "type": "pull-request",
-          "ref": "1870",
-          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1870"
-        },
         {
           "type": "pull-request",
           "ref": "1871",
@@ -243,7 +238,14 @@
           "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1876"
         }
       ],
-      "claim_boundary": "Draft tenant-neutral stack; historical private Sandbox recovery evidence does not authorize production deployment, connector activation or further tenant mutation."
+      "claim_boundary": "Documentation foundation #1870 is merged; the separate implementation stack #1871-#1873 and #1875-#1876 remains pending. Documentation does not establish a deployed API, connector activation, production execution or tenant authorization.",
+      "foundation_evidence": [
+        {
+          "type": "commit-path",
+          "ref": "ebe288effbdc3307c8f9f6c509178f66fe42484f",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/ebe288effbdc3307c8f9f6c509178f66fe42484f/products/admin-gateway/README.md"
+        }
+      ]
     },
     {
       "id": "evidence-lab",
