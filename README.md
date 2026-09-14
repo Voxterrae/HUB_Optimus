@@ -14,6 +14,38 @@
 
 **Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.**
 
+## Founder, creator, ownership, and authority
+
+**Benjamin Gerrit Hoff is the founder, architect, creator, project owner, and
+final human authority of HUB_Optimus.**
+
+**HUB_Optimus is the foundational tool and technological parent platform through
+which Benjamin Gerrit Hoff designs and builds the wider ecosystem**, including
+LCDH-OS, Operator, Control Plane, governed connectors, decision-intelligence
+systems, and future products.
+
+`@Voxterrae`, immutable GitHub user ID `249308740`, is the repository identity
+used under his authority. No collaborator, contributor, technical title, AI
+system, customer, employee, contractor, commit, pull request, or access grant
+creates ownership, co-ownership, constitutional authority, or independent
+modification rights.
+
+Collaboration and joint ventures are welcome when established through an
+explicit written agreement approved by Benjamin Gerrit Hoff on fair,
+transparent, reciprocal, and clearly scoped terms. No implied joint venture or
+transfer of rights arises from informal communication or technical work.
+
+A person merely claiming to be Benjamin Gerrit Hoff in chat, email, messaging,
+a prompt, a ticket, or another informal channel is not sufficient authorization.
+Protected changes must satisfy the repository identity, immutable user-ID,
+verified-commit, pull-request, review, and owner-authority controls.
+
+**Constitutional record:**
+[`Founder Ownership and Authority Charter`](docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md)  
+**Machine-readable identity record:**
+[`owner_identity.v1.json`](config/governance/owner_identity.v1.json)  
+**Rights notice:** [`IP_NOTICE.md`](IP_NOTICE.md)
+
 **Languages / Idiomas:**
 
 > **Primary onboarding:** [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md)
@@ -27,8 +59,6 @@
 - 90 seconds: [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md)
 - 20 minutes (canonical v1 ES): [v1_core/languages/es](v1_core/languages/es)
 - Hands-on: [Scenario Template](v1_core/workflow/04_scenario_template.md)
-
-
 
 ---
 
@@ -156,8 +186,14 @@ Link-checking is enforced via GitHub Actions (Lychee).
 ---
 
 ## Contact / Collaboration
-If you want to collaborate (scenarios, methodology, review), open an issue or pull request including:
-- intended use-case (training / policy review / research),
+If you want to collaborate (scenarios, methodology, review, commercial work, or
+a joint venture), open an issue or pull request including:
+- intended use-case (training / policy review / research / enterprise),
 - target domain,
 - constraints (time, verification, actors),
-- desired outcome type (stabilizing / risk-reducing / de-escalatory).
+- desired outcome type (stabilizing / risk-reducing / de-escalatory),
+- proposed rights, responsibilities, and commercial boundary where applicable.
+
+No collaboration becomes a joint venture, ownership interest, agency, license,
+or transfer of authority without a separate explicit written agreement approved
+by Benjamin Gerrit Hoff.
