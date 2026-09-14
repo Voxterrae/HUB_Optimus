@@ -281,3 +281,29 @@ def test_parameter_validator_errors_are_serializable_422_responses() -> None:
         assert response.status_code == 422
         assert response.json()["detail"]["code"] == "PARAMETER_VALIDATION_FAILED"
         assert response.json()["detail"]["errors"]
+
+
+def test_dataverse_alternate_key_identifiers_reject_odata_reserved_characters() -> None:
+    body = {
+        "parameters": {"mailbox": "pilot@example.com"},
+        "dry_run": True,
+        "idempotency_key": "request:0001",
+    }
+    response = client.post(
+        "/api/v1/operations/exchange.diagnose_mailbox:plan",
+        json=body,
+        headers=PRODUCTION_READER_HEADERS,
+    )
+    assert response.status_code == 422
+
+    safe_body = {
+        "parameters": {"mailbox": "pilot@example.com"},
+        "dry_run": True,
+        "idempotency_key": "request.0001-safe",
+    }
+    safe_response = client.post(
+        "/api/v1/operations/exchange.diagnose_mailbox:plan",
+        json=safe_body,
+        headers=PRODUCTION_READER_HEADERS,
+    )
+    assert safe_response.status_code == 200

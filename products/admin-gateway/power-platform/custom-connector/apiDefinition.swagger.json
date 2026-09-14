@@ -1,0 +1,204 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Optimus Admin Gateway",
+    "description": "Governed allowlisted administration operations",
+    "version": "0.1.0"
+  },
+  "host": "REPLACE_WITH_GATEWAY_HOST",
+  "basePath": "/api/v1",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "securityDefinitions": {
+    "oauth2": {
+      "type": "oauth2",
+      "flow": "accessCode",
+      "authorizationUrl": "https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID/oauth2/v2.0/authorize",
+      "tokenUrl": "https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID/oauth2/v2.0/token",
+      "scopes": {
+        "api://REPLACE_WITH_APP_ID/access_as_user": "Access Optimus Admin Gateway"
+      }
+    }
+  },
+  "security": [
+    {
+      "oauth2": [
+        "api://REPLACE_WITH_APP_ID/access_as_user"
+      ]
+    }
+  ],
+  "paths": {
+    "/operations": {
+      "get": {
+        "operationId": "ListAllowedOperations",
+        "summary": "List allowlisted operations",
+        "responses": {
+          "200": {
+            "description": "Operation catalog"
+          },
+          "401": {
+            "description": "Authenticated Entra principal required"
+          },
+          "403": {
+            "description": "Optimus.Reader role required"
+          },
+          "503": {
+            "description": "Entra tenant binding not configured"
+          }
+        }
+      }
+    },
+    "/operations/{operation_id}:plan": {
+      "post": {
+        "operationId": "PlanAllowedOperation",
+        "summary": "Validate and plan an operation",
+        "parameters": [
+          {
+            "name": "operation_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OperationRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Validated plan"
+          },
+          "401": {
+            "description": "Authenticated Entra principal required"
+          },
+          "403": {
+            "description": "Optimus.Reader role required"
+          },
+          "404": {
+            "description": "Operation not found"
+          },
+          "503": {
+            "description": "Entra tenant binding not configured"
+          },
+          "422": {
+            "description": "Parameter validation failed"
+          }
+        }
+      }
+    },
+    "/operations/{operation_id}:execute": {
+      "post": {
+        "operationId": "ExecuteAllowedOperation",
+        "summary": "Execute an allowlisted operation",
+        "parameters": [
+          {
+            "name": "operation_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OperationRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DryRun or execution result"
+          },
+          "401": {
+            "description": "Authenticated Entra principal required"
+          },
+          "403": {
+            "description": "Optimus.Reader is required; live mutations additionally require Optimus.Mutator and a valid approval"
+          },
+          "404": {
+            "description": "Operation not found"
+          },
+          "422": {
+            "description": "Parameter validation failed"
+          },
+          "503": {
+            "description": "Entra tenant binding or tenant executor not configured"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "OperationRequest": {
+      "type": "object",
+      "required": [
+        "parameters",
+        "idempotency_key"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "parameters": {
+          "type": "object"
+        },
+        "dry_run": {
+          "type": "boolean",
+          "default": true
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._-]{8,128}$"
+        },
+        "approval": {
+          "$ref": "#/definitions/ApprovalReceipt"
+        }
+      }
+    },
+    "ApprovalReceipt": {
+      "type": "object",
+      "required": [
+        "approval_id",
+        "plan_hash",
+        "approved_by",
+        "approved_at",
+        "signature"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "approval_id": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._-]{8,128}$"
+        },
+        "plan_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "signature": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
