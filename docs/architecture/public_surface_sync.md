@@ -113,7 +113,7 @@ unless a separate reviewed record proves that exact statement.
 
 Private identifiers, protected URLs, tenant details, credentials, certificates, customer information, private evidence, unpublished source snapshots, authorization receipts, and operational logs do not belong in the public registry or site.
 
-## Current truthful treatment of recent work
+## Treatment at the 2026-08-21 observation
 
 - **Optimus Admin Gateway** remains the exact draft PR stack #1870–#1873 plus #1875–#1876. Private Sandbox recovery evidence does not authorize production deployment, connector activation, or another tenant mutation.
 - **Optimus Evidence Lab** remains draft PR #1879 and an offline package boundary. It is not a production deployment or a public runtime.

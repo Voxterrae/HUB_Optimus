@@ -268,7 +268,7 @@ def test_evidence_type_ref_and_url_identity_are_exact_and_unique():
             assert not parsed.fragment
 
 
-def test_admin_gateway_stack_lists_only_exact_open_pull_requests():
+def test_historical_admin_gateway_stack_lists_exact_recorded_pull_requests():
     registry = load_registry()
     admin_gateway = component_map(registry)["admin-gateway"]
 
