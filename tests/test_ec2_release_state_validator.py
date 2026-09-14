@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -12,6 +13,11 @@ VALIDATOR = ROOT / "ops" / "ec2" / "validate-release-state.sh"
 PREFLIGHT = ROOT / "ops" / "ec2" / "preflight-deploy.sh"
 DEPLOY = ROOT / "ops" / "ec2" / "deploy-current.sh"
 ROLLBACK = ROOT / "ops" / "ec2" / "rollback-current.sh"
+DEPENDENCY_LOCK_TOOL = ROOT / "ops" / "ec2" / "dependency-lock-digest.sh"
+DEPENDENCY_LOCKS = (
+    ROOT / "ops" / "ec2" / "requirements-runtime.lock",
+    ROOT / "ops" / "ec2" / "requirements-validation.lock",
+)
 
 COMMIT = "b" * 40
 LAUNCHER_SHA256 = "c" * 64
@@ -40,14 +46,22 @@ def _write_state(path: Path, fields: list[tuple[str, str]]) -> None:
 
 
 def _production_fields(*, transitional: bool = False) -> list[tuple[str, str]]:
+    release_path = "/opt/hub-optimus/releases/20260803T120000Z.ABC123"
+    validation_command = "python -m pytest -q"
+    if not transitional:
+        validation_command = (
+            f"/usr/bin/env -i HOME={release_path} LANG=C.UTF-8 "
+            "PATH=/usr/bin:/bin PYTHONNOUSERSITE=1 "
+            f"{release_path}/.venv/bin/python -m pytest -q"
+        )
     fields = [
         ("release", "20260803T120000Z.ABC123"),
         ("requested_ref", COMMIT),
         ("requested_ref_kind", "commit"),
         ("commit", COMMIT),
-        ("path", "/opt/hub-optimus/releases/20260803T120000Z.ABC123"),
+        ("path", release_path),
         ("validated_at_utc", "2026-08-03T12:00:00Z"),
-        ("validation_command", "python -m pytest -q"),
+        ("validation_command", validation_command),
         ("validation_exit_code", "0"),
         ("validation_result", VALIDATION_RESULT),
         (
@@ -58,10 +72,19 @@ def _production_fields(*, transitional: bool = False) -> list[tuple[str, str]]:
         ("validation_log_exit_code", "0"),
     ]
     if not transitional:
-        fields.append(
+        fields.extend(
             (
-                "validation_log_sha256",
-                hashlib.sha256(VALIDATION_LOG_RAW).hexdigest(),
+                (
+                    "validation_log_sha256",
+                    hashlib.sha256(VALIDATION_LOG_RAW).hexdigest(),
+                ),
+                ("dependency_tier", "runtime+validation-v1"),
+                (
+                    "dependency_lock",
+                    "/opt/hub-optimus/releases/20260803T120000Z.ABC123/"
+                    "ops/ec2/requirements-validation.lock",
+                ),
+                ("dependency_lock_sha256", "e" * 64),
             )
         )
     fields.extend(
@@ -95,9 +118,35 @@ def _production_fixture(
     validation_log.write_bytes(VALIDATION_LOG_RAW)
     validation_log.chmod(0o600)
     fields = _production_fields()
+    lock_dir = release / "ops" / "ec2"
+    lock_dir.mkdir(parents=True)
+    for source in DEPENDENCY_LOCKS:
+        target = lock_dir / source.name
+        shutil.copyfile(source, target)
+        target.chmod(0o644)
+    digest = subprocess.run(
+        ["bash", str(DEPENDENCY_LOCK_TOOL), str(release)],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
     fields = _replace_field(fields, "release", release.name)
     fields = _replace_field(fields, "path", str(release))
+    fields = _replace_field(
+        fields,
+        "validation_command",
+        (
+            f"/usr/bin/env -i HOME={release} LANG=C.UTF-8 PATH=/usr/bin:/bin "
+            f"PYTHONNOUSERSITE=1 {release}/.venv/bin/python -m pytest -q"
+        ),
+    )
     fields = _replace_field(fields, "validation_log", str(validation_log))
+    fields = _replace_field(
+        fields,
+        "dependency_lock",
+        str(lock_dir / "requirements-validation.lock"),
+    )
+    fields = _replace_field(fields, "dependency_lock_sha256", digest)
     state = validation_log.parent / "RELEASE_STATE"
     _write_state(state, fields)
     return state, validation_log, fields

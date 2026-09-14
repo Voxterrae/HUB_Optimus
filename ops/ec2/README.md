@@ -83,6 +83,21 @@ command, its exit code, its final output line, and its validation log. Failed
 validation leaves its candidate release and metadata for inspection but never
 switches `current`.
 
+The EC2 release environment is installed from separate runtime and validation
+locks under `ops/ec2`. Both contain exact versions and reviewed wheel hashes for
+the Linux x86_64 CPython 3.12 deployment ABI. Deployment rejects ambient
+`PIP_*` settings, removes the former pip self-upgrade, uses only the fixed
+PyPI simple index with `--require-hashes --no-deps --only-binary`, and runs
+`pip check`. It then removes the bootstrap installer and requires the installed
+name/version inventory and the virtual-environment base interpreter to match
+the reviewed locks exactly, both before and after validation. Pip consumes a
+single sealed Linux `memfd` assembled from the same no-follow lock snapshot that
+produces the evidence digest; path identity tokens also reject temporary atomic
+replacement followed by restoration. The combined lock digest is checked again
+after validation and recorded with the selected tier and lock path in
+`RELEASE_STATE`. The root requirement files remain the portable authoring tiers;
+they are not the EC2 deployment lock.
+
 The release state also records the SHA-256 of the selected `hub-api.sh`
 launcher. Before changing operational state, deployment validates that the
 current release is a managed, usable rollback target and stages all replacement

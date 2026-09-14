@@ -13,6 +13,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNBOOK = ROOT / "ops" / "ec2" / "ISSUE_1831_RUNBOOK.md"
+DEPENDENCY_LOCKS = (
+    "ops/ec2/requirements-runtime.lock",
+    "ops/ec2/requirements-validation.lock",
+)
 
 
 def _heredoc(name: str) -> str:
@@ -68,6 +72,16 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
     validation_log = deployment_dir / "validation.log"
     validation_log_raw = b"collecting tests\n692 passed in 30.45s\n\n"
     _write_bytes(validation_log, validation_log_raw, 0o600)
+    dependency_digest = hashlib.sha256()
+    for relative in DEPENDENCY_LOCKS:
+        raw = (ROOT / relative).read_bytes()
+        _write_bytes(release / relative, raw, 0o644)
+        relative_raw = relative.encode("ascii")
+        dependency_digest.update(len(relative_raw).to_bytes(4, "big"))
+        dependency_digest.update(relative_raw)
+        dependency_digest.update(len(raw).to_bytes(8, "big"))
+        dependency_digest.update(raw)
+    dependency_lock = release / "ops" / "ec2" / "requirements-validation.lock"
     fields = {
         "release": release.name,
         "requested_ref": commit,
@@ -75,12 +89,18 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
         "commit": commit,
         "path": str(release),
         "validated_at_utc": "2026-08-02T12:00:00Z",
-        "validation_command": "python -m pytest -q",
+        "validation_command": (
+            f"/usr/bin/env -i HOME={release} LANG=C.UTF-8 PATH=/usr/bin:/bin "
+            f"PYTHONNOUSERSITE=1 {release}/.venv/bin/python -m pytest -q"
+        ),
         "validation_exit_code": "0",
         "validation_result": "692 passed in 30.45s",
         "validation_log": str(validation_log),
         "validation_log_exit_code": "0",
         "validation_log_sha256": hashlib.sha256(validation_log_raw).hexdigest(),
+        "dependency_tier": "runtime+validation-v1",
+        "dependency_lock": str(dependency_lock),
+        "dependency_lock_sha256": dependency_digest.hexdigest(),
         "launcher_sha256": launcher_sha256,
         "status": "production-candidate-core",
     }
@@ -125,6 +145,7 @@ def test_post_deploy_disk_attestation_accepts_exact_release(tmp_path: Path) -> N
     assert evidence["validation_log_sha256"] == hashlib.sha256(
         Path(fixture["validation_log"]).read_bytes()
     ).hexdigest()
+    assert re.fullmatch(r"[0-9a-f]{64}", evidence["dependency_lock_sha256"])
 
 
 @pytest.mark.parametrize(
