@@ -10,6 +10,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 
 EXPECTED_ACTION_PINS = {
+    "actions/create-github-app-token": (
+        "bcd2ba49218906704ab6c1aa796996da409d3eb1",
+        "v3.2.0",
+    ),
     "actions/checkout": (
         "3d3c42e5aac5ba805825da76410c181273ba90b1",
         "v7.0.1",
