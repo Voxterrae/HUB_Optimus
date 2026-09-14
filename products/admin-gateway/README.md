@@ -41,8 +41,8 @@ export OPTIMUS_DEV_MODE=true
 
 ## Module map
 
-The API, catalog and OpenAPI paths below are present. PowerShell, Power Platform,
-Copilot, Dataverse and deployment assets remain planned in dependent PRs.
+The API, catalog, OpenAPI and PowerShell runbook paths below are present.
+Power Platform, Copilot, Dataverse and deployment assets remain in dependent PRs.
 
 - `src/optimus_admin_gateway/` — API, validation and safety controls.
 - `config/operations.catalog.json` — allowlisted operation registry.
@@ -69,3 +69,16 @@ Open http://127.0.0.1:8766/healthz to verify the local service. Development call
 use the explicit local principal and role headers described in the security
 model. Keep development mode confined to local tests; the reference executor
 still rejects live requests.
+
+## Exchange runbook boundary
+
+The allowlisted PowerShell 7.4+ runbook returns mutation previews without
+importing Exchange modules, reading certificates or opening a connection.
+Malformed delegate/approval inputs fail before connection. Read-only diagnostic
+operations do query Exchange when used outside tests; DryRun prevents mutations
+and does not mean that every diagnostic is offline.
+
+The repository tests replace every Exchange command with synthetic responses.
+A live runbook invocation is a separate tenant-controlled operation: direct
+Automation invocation must not bypass API roles and approval verification.
+The API reference executor remains disabled and does not invoke this runbook.
