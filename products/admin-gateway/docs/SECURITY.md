@@ -29,9 +29,17 @@ The plan hash is computed from canonical JSON containing:
 - validated parameters;
 - mutation flag;
 - risk level;
-- dry-run value;
 - catalog version.
 
+The execution-mode flag `dry_run` is excluded from this semantic plan hash.
+The planned read-only planning flow must compute the intended mutation plan
+without executing it. The same reviewed plan hash must remain stable when an
+approved request later changes `dry_run` from `true` to `false`.
+
 The approval flow must return a signed or otherwise trusted receipt containing
-that exact plan hash. A changed parameter produces a different hash and makes
-the old approval unusable.
+that exact plan hash. Changing an operation, semantic parameter, mutation flag,
+risk level or catalog version invalidates the receipt. Changing execution mode
+alone grants no authority: execution still requires the matching valid receipt,
+an authorized caller and a configured executor. The implementation slice must
+prove both a stable planning-to-execution hash and rejection of changed plans
+before it can be integrated.

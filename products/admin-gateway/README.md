@@ -2,12 +2,12 @@
 
 A tenant-neutral, governed administration module for **HUB_Optimus**.
 
-The product provides allowlisted Microsoft 365 administration operations to Copilot Studio, Power Platform and mobile clients without exposing an unrestricted PowerShell shell.
+This foundation documents a planned product for allowlisted Microsoft 365 administration through Copilot Studio, Power Platform and mobile clients, without an unrestricted PowerShell shell. This checkout contains documentation only; executable capabilities require the reviewed follow-up slices.
 
 ## Product/client boundary
 
-- **HUB_Optimus** owns the generic gateway, contracts, operation catalog, tests and deployable templates.
-- **Client tenants** own identities, mailbox addresses, tenant IDs, connection references, approvals, logs and evidence.
+- The generic gateway, contracts, operation catalog, tests and templates are part of **HUB_Optimus**. Ownership and final authority follow the [Founder Ownership and Authority Charter](../../docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md), which identifies **Benjamin Gerrit Hoff** as the project owner; this module creates no competing ownership record.
+- **Client tenants** retain control of their private identities, mailbox addresses, tenant IDs, connection references, approvals, logs and evidence.
 - The first pilot tenant is represented only by a private client overlay outside the public product repository.
 
 See `docs/CLIENT_BOUNDARY.md`.
@@ -41,6 +41,8 @@ export OPTIMUS_DEV_MODE=true
 ```
 
 ## Module map
+
+The following layout describes the complete package planned across the focused follow-up slices. These implementation paths are not present in this foundation-only checkout.
 
 - `src/optimus_admin_gateway/` — API, validation and safety controls.
 - `config/operations.catalog.json` — allowlisted operation registry.

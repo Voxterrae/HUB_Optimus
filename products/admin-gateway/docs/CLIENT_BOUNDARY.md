@@ -45,6 +45,7 @@ It must not contain:
 
 ## Tenant overlay
 
-A tenant overlay is a private JSON document conforming to
-`deployment/sharepoint/tenant-overlay.schema.json`. It binds the product to one
-customer without forking product code.
+The deployment slice is planned to introduce a private tenant-overlay JSON
+contract at `deployment/sharepoint/tenant-overlay.schema.json`; that schema is
+not included in this foundation checkout. The intended overlay binds the
+product to one customer without forking product code.

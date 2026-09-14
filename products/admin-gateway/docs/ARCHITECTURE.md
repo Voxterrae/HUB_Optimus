@@ -12,7 +12,7 @@ Optimus Admin Gateway API
   - allowlisted operation catalog
   - typed parameter validation
   - deterministic plan hash
-  - DryRun default
+  - dry_run=true default
   - approval receipt validation
   - idempotency and audit envelope
                     |
