@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import subprocess
 from pathlib import Path
 
@@ -15,6 +16,8 @@ ROLLBACK = ROOT / "ops" / "ec2" / "rollback-current.sh"
 COMMIT = "b" * 40
 LAUNCHER_SHA256 = "c" * 64
 LEGACY_SHA256 = "d" * 64
+VALIDATION_RESULT = "719 passed in 30.45s"
+VALIDATION_LOG_RAW = f"collecting tests\n{VALIDATION_RESULT}\n\n".encode()
 ADOPTION_RESULT = (
     "legacy validation claim not re-attested; original state retained by SHA-256"
 )
@@ -46,19 +49,58 @@ def _production_fields(*, transitional: bool = False) -> list[tuple[str, str]]:
         ("validated_at_utc", "2026-08-03T12:00:00Z"),
         ("validation_command", "python -m pytest -q"),
         ("validation_exit_code", "0"),
-        ("validation_result", "719 passed in 30.45s"),
+        ("validation_result", VALIDATION_RESULT),
         (
             "validation_log",
             "/opt/hub-optimus/releases/20260803T120000Z.ABC123/"
             ".hub-deployment/validation.log",
         ),
         ("validation_log_exit_code", "0"),
-        ("launcher_sha256", LAUNCHER_SHA256),
-        ("status", "production-candidate-core"),
     ]
+    if not transitional:
+        fields.append(
+            (
+                "validation_log_sha256",
+                hashlib.sha256(VALIDATION_LOG_RAW).hexdigest(),
+            )
+        )
+    fields.extend(
+        (
+            ("launcher_sha256", LAUNCHER_SHA256),
+            ("status", "production-candidate-core"),
+        )
+    )
     if transitional:
         fields.append(("provenance", "adopted-pre-1832"))
     return fields
+
+
+def _replace_field(
+    fields: list[tuple[str, str]],
+    field: str,
+    value: str,
+) -> list[tuple[str, str]]:
+    return [
+        (key, value if key == field else original)
+        for key, original in fields
+    ]
+
+
+def _production_fixture(
+    tmp_path: Path,
+) -> tuple[Path, Path, list[tuple[str, str]]]:
+    release = tmp_path / "releases" / "20260803T120000Z.ABC123"
+    validation_log = release / ".hub-deployment" / "validation.log"
+    validation_log.parent.mkdir(parents=True)
+    validation_log.write_bytes(VALIDATION_LOG_RAW)
+    validation_log.chmod(0o600)
+    fields = _production_fields()
+    fields = _replace_field(fields, "release", release.name)
+    fields = _replace_field(fields, "path", str(release))
+    fields = _replace_field(fields, "validation_log", str(validation_log))
+    state = validation_log.parent / "RELEASE_STATE"
+    _write_state(state, fields)
+    return state, validation_log, fields
 
 
 def _adopted_fields() -> list[tuple[str, str]]:
@@ -112,8 +154,11 @@ def test_validator_accepts_each_supported_exact_schema(
     expected_kind: str,
     fields: list[tuple[str, str]],
 ) -> None:
-    state = tmp_path / schema_name
-    _write_state(state, fields)
+    if schema_name == "production":
+        state, _, fields = _production_fixture(tmp_path)
+    else:
+        state = tmp_path / schema_name
+        _write_state(state, fields)
 
     result = _run(state)
 
@@ -122,16 +167,26 @@ def test_validator_accepts_each_supported_exact_schema(
 
 
 def test_validator_accepts_an_exact_tag_state(tmp_path: Path) -> None:
-    fields = _production_fields()
-    fields[1] = ("requested_ref", "v2.3.4")
-    fields[2] = ("requested_ref_kind", "tag")
-    state = tmp_path / "tag-state"
+    state, _, fields = _production_fixture(tmp_path)
+    fields = _replace_field(fields, "requested_ref", "v2.3.4")
+    fields = _replace_field(fields, "requested_ref_kind", "tag")
     _write_state(state, fields)
 
     result = _run(state)
 
     assert result.returncode == 0, result.stderr
     assert "PASS production" in result.stdout
+
+
+def test_validator_accepts_digest_bound_transitional_state(tmp_path: Path) -> None:
+    state, _, fields = _production_fixture(tmp_path)
+    fields.append(("provenance", "adopted-pre-1832"))
+    _write_state(state, fields)
+
+    result = _run(state)
+
+    assert result.returncode == 0, result.stderr
+    assert "PASS transitional-adopted-pre-1832" in result.stdout
 
 
 def test_validator_rejects_an_invalid_tag_name(tmp_path: Path) -> None:
@@ -252,6 +307,119 @@ def test_validator_rejects_malformed_duplicate_unknown_partial_and_mixed_state(
     assert expected_error in result.stderr
 
 
+def test_pre_digest_production_state_is_not_silently_accepted(
+    tmp_path: Path,
+) -> None:
+    state, _, fields = _production_fixture(tmp_path)
+    fields = [
+        (key, value)
+        for key, value in fields
+        if key != "validation_log_sha256"
+    ]
+    _write_state(state, fields)
+
+    result = _run(state)
+
+    assert result.returncode == 1
+    assert "exact expected field set" in result.stderr
+
+
+@pytest.mark.parametrize(
+    ("corruption", "expected_error"),
+    (
+        ("truncated", "Validation log does not match"),
+        ("replaced", "Validation log does not match"),
+        ("digest", "Validation log does not match"),
+        ("result", "Validation result does not match"),
+        ("empty", "no non-empty result line"),
+        ("path", "wrong validation-log path"),
+        ("invalid-utf8", "Validation log is not UTF-8"),
+        ("nul", "not canonical UTF-8/LF text"),
+        ("crlf", "not canonical UTF-8/LF text"),
+        ("line-separator", "not canonical UTF-8/LF text"),
+        ("missing-terminal-lf", "has no terminal LF"),
+        ("mode", "unexpected mode"),
+    ),
+)
+def test_validator_rejects_validation_log_or_result_drift(
+    tmp_path: Path,
+    corruption: str,
+    expected_error: str,
+) -> None:
+    state, validation_log, fields = _production_fixture(tmp_path)
+    if corruption == "truncated":
+        validation_log.write_bytes(VALIDATION_LOG_RAW[:-8])
+    elif corruption == "replaced":
+        validation_log.write_bytes(f"replacement\n{VALIDATION_RESULT}\n\n".encode())
+    elif corruption == "digest":
+        fields = _replace_field(fields, "validation_log_sha256", "0" * 64)
+        _write_state(state, fields)
+    elif corruption == "result":
+        fields = _replace_field(fields, "validation_result", "forged result")
+        _write_state(state, fields)
+    elif corruption == "empty":
+        validation_log.write_bytes(b"\n \t\n")
+        fields = _replace_field(
+            fields,
+            "validation_log_sha256",
+            hashlib.sha256(validation_log.read_bytes()).hexdigest(),
+        )
+        _write_state(state, fields)
+    elif corruption in {
+        "invalid-utf8",
+        "nul",
+        "crlf",
+        "line-separator",
+        "missing-terminal-lf",
+    }:
+        prefix = {
+            "invalid-utf8": b"context=\xff\n",
+            "nul": b"context=has\x00nul\n",
+            "crlf": b"context uses CRLF\r\n",
+            "line-separator": "context uses LS\u2028\n".encode(),
+            "missing-terminal-lf": b"context without terminal LF\n",
+        }[corruption]
+        raw = prefix + f"{VALIDATION_RESULT}\n".encode()
+        if corruption == "missing-terminal-lf":
+            raw = raw[:-1]
+        validation_log.write_bytes(raw)
+        fields = _replace_field(
+            fields,
+            "validation_log_sha256",
+            hashlib.sha256(raw).hexdigest(),
+        )
+        _write_state(state, fields)
+    elif corruption == "mode":
+        validation_log.chmod(0o644)
+    else:
+        fields = _replace_field(
+            fields,
+            "validation_log",
+            str(tmp_path / "replacement-validation.log"),
+        )
+        _write_state(state, fields)
+
+    result = _run(state)
+
+    assert result.returncode == 1
+    assert expected_error in result.stderr
+
+
+def test_validation_log_attestation_uses_one_stable_descriptor_snapshot() -> None:
+    source = VALIDATOR.read_text(encoding="utf-8")
+
+    assert "flags |= os.O_NOFOLLOW" in source
+    assert "descriptor = os.open(path, flags)" in source
+    assert "opened = os.fstat(descriptor)" in source
+    assert "finished = os.fstat(descriptor)" in source
+    assert "visible = os.stat(path, follow_symlinks=False)" in source
+    assert 'raw = b"".join(chunks)' in source
+    assert "hashlib.sha256(raw).hexdigest()" in source
+    assert 'text = raw.decode("utf-8")' in source
+    assert 'sha256sum -- "$validation_log"' not in source
+    assert "NF { result=$0; found=1 }" not in source
+
+
 @pytest.mark.parametrize(
     ("field", "value", "expected_error"),
     (
@@ -286,12 +454,13 @@ def test_preflight_deploy_and_rollback_use_the_shared_validator() -> None:
         assert 'bash "$STATE_VALIDATOR" "$state_file"' in source
 
 
-def test_validator_scope_excludes_follow_up_attestation_and_hardening() -> None:
+def test_attestation_scope_excludes_operational_hardening() -> None:
     sources = "\n".join(
         path.read_text(encoding="utf-8")
         for path in (VALIDATOR, PREFLIGHT, DEPLOY, ROLLBACK)
     )
 
-    assert "validation_log_sha256" not in sources
+    assert "validation_log_sha256" in sources
     assert "validate-release-worktree" not in sources
     assert "recovery-snapshot" not in sources
+    assert "PYTEST_ADDOPTS" not in sources

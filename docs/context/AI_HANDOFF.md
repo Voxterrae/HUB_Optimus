@@ -207,6 +207,16 @@ Until those slices have exact repository and platform evidence, future operators
 must continue to describe GitHub Pages as the canonical public static surface
 and Sites as a non-authoritative, separately synchronized mirror.
 
+## EC2 validation-log attestation
+
+The implementation in PR #1857 binds every newly validated production release
+state to the complete validation log SHA-256 and its final non-empty result.
+Preflight, deployment and rollback reject replaced, truncated or result-divergent
+logs using one no-follow regular-file snapshot, canonical UTF-8/LF text and
+mode 0600. Explicit legacy schemas retain their documented compatibility.
+This code integration does not certify a deployed host or authorize the blocked
+operation in #1831; dependency, locking and recovery hardening remain separate.
+
 ## Historical handoff archive
 
 The previous broad handoff is preserved byte-for-byte at
