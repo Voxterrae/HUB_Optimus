@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>HUB_Optimus · Device Bridge · Simulación Windows</title>
+  <style>
+    :root {color-scheme: dark; font-family: system-ui, sans-serif; background: #101923; color: #edf4fa;}
+    body {max-width: 900px; margin: auto; padding: 28px 20px 60px;}
+    header {border-bottom: 1px solid #44576a; margin-bottom: 24px;}
+    h1 {font-size: 2rem;} h2 {font-size: 1.2rem;}
+    .banner {padding: 16px; background: #233e52; border-left: 4px solid #80d4ff; font-weight: 700;}
+    p {line-height: 1.6;} label {display: block; margin: 12px 0 8px;}
+    select, button {font: inherit; padding: 10px 14px; border: 1px solid #92aec0; border-radius: 6px;}
+    select {background: #172a3c; color: #edf4fa; max-width: 100%;}
+    button {background: #9ce0ff; color: #10202c; cursor: pointer;}
+    button:disabled {background: #344656; color: #becbd5; cursor: default;}
+    :focus-visible {outline: 3px solid #fff3a3; outline-offset: 4px;}
+    .actions {display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0;}
+    pre {background: #172432; border: 1px solid #44576a; padding: 16px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;}
+    footer {margin-top: 28px; color: #bfced9;}
+  </style>
+  <script defer src="fixtures.v0_1.js"></script>
+  <script defer src="contract.v0_1.js"></script>
+  <script defer src="ui.v0_1.js"></script>
+</head>
+<body>
+  <header>
+    <p>HUB_Optimus / Device Bridge</p>
+    <h1>Windows · Prototipo offline</h1>
+    <p class="banner">Simulación offline — no accede a tu equipo</p>
+  </header>
+  <main>
+    <p>Explora una solicitud de inventario con datos ficticios. La aprobación y los
+      rechazos son ejemplos; el ejecutor real permanece deshabilitado.</p>
+    <label for="fixture-scenario">Escenario sintético</label>
+    <select id="fixture-scenario">
+      <option value="approved">Resultado sintético disponible</option>
+      <option value="missing_approval">Falta aprobación</option>
+      <option value="expired">Aprobación expirada</option>
+      <option value="invalid_signature">Firma ficticia inválida</option>
+      <option value="changed_request">Solicitud cambiada</option>
+      <option value="changed_target">Destino cambiado</option>
+      <option value="replayed">Aprobación reutilizada</option>
+      <option value="cancelled">Cancelación simulada</option>
+      <option value="timeout">Tiempo agotado</option>
+      <option value="missing_runtime">Runtime ausente en el ejemplo</option>
+      <option value="unverified_runtime">Runtime sin verificar en el ejemplo</option>
+    </select>
+    <h2>Solicitud ficticia para revisar</h2>
+    <pre id="fixture-request" aria-label="Solicitud sintética"></pre>
+    <div class="actions">
+      <button id="fixture-run" type="button">Iniciar simulación</button>
+      <button id="fixture-complete" type="button" disabled>Completar simulación</button>
+      <button id="fixture-cancel" type="button" disabled>Cancelar</button>
+    </div>
+    <p id="fixture-status" role="status" aria-live="polite"></p>
+    <h2>Resultado sintético</h2>
+    <pre id="fixture-result" aria-label="Resultado sintético"></pre>
+    <button id="fixture-export" type="button" disabled>Exportar JSON sintético</button>
+    <noscript>Activa JavaScript para probar esta interfaz local.</noscript>
+  </main>
+  <footer>HUB_Optimus · Benjamin Gerrit Hoff / Voxterrae. Prototipo experimental;
+    sin biometría, instalación nativa ni certificación Windows.</footer>
+</body>
+</html>
