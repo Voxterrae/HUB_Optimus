@@ -1,0 +1,45 @@
+[Unit]
+Description=HUB_Optimus Operator OIDC proxy (oauth2-proxy v7.15.3)
+Documentation=https://oauth2-proxy.github.io/oauth2-proxy/
+Wants=network-online.target
+After=network-online.target redis-server.service
+Requires=redis-server.service
+
+[Service]
+Type=simple
+User=hub-oauth2-proxy
+Group=hub-oauth2-proxy
+UMask=0077
+
+# Pin both the installed artifact and its reported runtime version.  The
+# configuration test is deliberately a start precondition; it also verifies
+# provider settings and Redis availability.
+ExecStartPre=/usr/bin/test -x /usr/local/bin/oauth2-proxy-v7.15.3
+ExecStartPre=/bin/sh -ec '/usr/local/bin/oauth2-proxy-v7.15.3 --version | /usr/bin/grep -Eq "(^|[[:space:]])v?7\.15\.3([[:space:]]|$)"'
+ExecStartPre=/usr/local/bin/oauth2-proxy-v7.15.3 --config=/etc/hub-optimus/oauth2-proxy.cfg --config-test
+ExecStart=/usr/local/bin/oauth2-proxy-v7.15.3 --config=/etc/hub-optimus/oauth2-proxy.cfg
+Restart=on-failure
+RestartSec=3s
+
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+ReadOnlyPaths=/etc/hub-optimus/oauth2-proxy.cfg
+ReadOnlyPaths=/etc/hub-optimus/secrets/oauth2-proxy-client-secret
+ReadOnlyPaths=/etc/hub-optimus/secrets/oauth2-proxy-cookie-secret
+
+[Install]
+WantedBy=multi-user.target
