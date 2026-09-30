@@ -20,8 +20,8 @@
     },
     {
       "path": "VALIDATION.md",
-      "sha256": "e128e3c7a3dc9c8655413d6085a9773b121b3cb0d492a8ff34abe7c507b96029",
-      "size": 8768
+      "sha256": "94c0bb2151cc41b9414cc8485fa3f42b80680439143e560f3d63e1893d2fbc94",
+      "size": 9030
     },
     {
       "path": "config/operations.catalog.json",
@@ -140,8 +140,8 @@
     },
     {
       "path": "docs/DEPLOYMENT.md",
-      "sha256": "f3e09e5b38bce9744e551a6cbdb289eb7d8a85b955acc307e19d242c2809aa0b",
-      "size": 2065
+      "sha256": "87adef60d69bebd8eff60c39be57ca858a36e18b8389da9315737aced26d2a25",
+      "size": 2346
     },
     {
       "path": "docs/OPERATIONS.md",
@@ -150,18 +150,18 @@
     },
     {
       "path": "docs/SECURITY.md",
-      "sha256": "24d81ca9f49790c8ba87f5a5553dd63675f9bb12ae62d25092e779e9400b08c2",
-      "size": 5453
+      "sha256": "f3df3184d1814c8ca8df5c0216188c6332f6bb4cea3b6dd0d40f5c2e33fbd86e",
+      "size": 8708
     },
     {
       "path": "openapi/optimus-admin-gateway.openapi.yaml",
-      "sha256": "63cad0bd58d63f85a7cb700a9cd95ee0f5ea428b6c8246fdd7506dc8d7025d7f",
-      "size": 5053
+      "sha256": "27606b4e4bce712c1d86250074961295887295d73b0c11896d42ea1ada88fd54",
+      "size": 5317
     },
     {
       "path": "power-platform/custom-connector/apiDefinition.swagger.json",
-      "sha256": "0c5c95ff639fc0f363e1ad782c62957255e93b35d1ddbe6b5f1820285d758b76",
-      "size": 5166
+      "sha256": "08602e76a68bee37c7540ace6dca0869f2e78e73d8902914c2c9c3cceb435b08",
+      "size": 5588
     },
     {
       "path": "power-platform/custom-connector/apiProperties.template.json",
@@ -170,8 +170,8 @@
     },
     {
       "path": "power-platform/flows/approval-flow.blueprint.yaml",
-      "sha256": "245483fc71068b085386d4fde59b35fb23ec4a82fa515123d8a853f1dbd225d3",
-      "size": 1709
+      "sha256": "d7fa5cc4c8221ffefe4403274406ef4b682deac354adb7a43911209ea16f2c85",
+      "size": 2466
     },
     {
       "path": "pyproject.toml",
@@ -215,8 +215,8 @@
     },
     {
       "path": "src/optimus_admin_gateway/approvals.py",
-      "sha256": "c218e3675f325a2e69eae51cb8def964f072e7c720d70468449ed7a6cfe56809",
-      "size": 1887
+      "sha256": "6d35db51491df35284884643290e0cde9bc9795e36f98a3883616da826d5e766",
+      "size": 4568
     },
     {
       "path": "src/optimus_admin_gateway/auth.py",
@@ -245,8 +245,8 @@
     },
     {
       "path": "src/optimus_admin_gateway/models.py",
-      "sha256": "4f1277f6d595e50bb057277cebda0ddd2150ef71ac76c6ade016327cb92bddf4",
-      "size": 4553
+      "sha256": "c1c3c532aab46ace15b22f4a692b48e178988ecd2da21b4930c39beb2f70db9a",
+      "size": 5847
     },
     {
       "path": "tests/conftest.py",
@@ -255,13 +255,13 @@
     },
     {
       "path": "tests/test_api.py",
-      "sha256": "86706c847acbd5b17833113ef617523d3441b906a0c5c6eb374382ea4c309d19",
-      "size": 14578
+      "sha256": "c89854ced0a3a939ea542864baf329d2d382e1da7b4f13f2ce249b65feae32d9",
+      "size": 17653
     },
     {
       "path": "tests/test_approvals.py",
-      "sha256": "24c270c582dcec496429d3fb6cbbae9f075a3c2b4d2a6ec14822b35a4964be8f",
-      "size": 6731
+      "sha256": "096a061e34762c663870601a5778f2721a8e9c84bda12576f183fbdc144c574f",
+      "size": 17549
     },
     {
       "path": "tests/test_auth.py",
@@ -290,8 +290,8 @@
     },
     {
       "path": "tests/test_dataverse_schema_contract.py",
-      "sha256": "e612522635a702a3bf1e1423d89f657230b4748c47553e5700e6a0e4341b38af",
-      "size": 9306
+      "sha256": "80feeb52772ec08ea69d14b54b01cf02ef461a5b6f3caf83dbc0521d365f4897",
+      "size": 10326
     },
     {
       "path": "tests/test_dataverse_solution_baseline.py",
@@ -300,8 +300,8 @@
     },
     {
       "path": "tests/test_pac_bootstrap_safety.py",
-      "sha256": "c48a87cc57e84bdc1cc5cda7bccd5b6963c5a6165bbf4af10726088ea84e30f1",
-      "size": 3050
+      "sha256": "ad1ff65f082c99fda1eb9846da1253f498c0cf35108d33df7ab695b471367b98",
+      "size": 4281
     },
     {
       "path": "tests/test_package_manifest.py",
@@ -310,8 +310,8 @@
     },
     {
       "path": "tests/test_public_boundary.py",
-      "sha256": "e5d7f4f3da379fe8a55de08806c73c0d8788722b2ae4d53a9d9849851d1129d6",
-      "size": 5053
+      "sha256": "cf5ca8ae03e4607c0788bdba016a19e73ecf9940cc266ea8b8c141ee60ab8d9f",
+      "size": 7163
     },
     {
       "path": "tests/test_runbook_safety.py",
