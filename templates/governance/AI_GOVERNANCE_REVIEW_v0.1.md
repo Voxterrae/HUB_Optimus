@@ -41,16 +41,22 @@ disclosure is inappropriate; state the resulting verification limitation.
 - Pull Request or proposal reference:
 - Review record date (UTC):
 - Base commit (full SHA):
-- Reviewed head commit (full SHA):
+- Reviewed head commit (full SHA or external review record reference):
 - Exact affected files and capability:
 - Implemented, proposed, or external state, with supporting references:
 - In-scope change:
 - Out-of-scope change:
 - AI assistance used, if any (role and limitations; no private prompt content):
 
-The reviewed head must match the content being considered. After a new commit,
-update the record and obtain any renewed review required by existing policy.
-An approval on another head is not evidence of current-head approval.
+Record the final reviewed head SHA and human decision in the Pull Request
+body, an issue/PR comment, or a GitHub review after the final push. If this
+record is committed in the same change, reference that external review record
+instead of trying to embed the commit SHA of the file itself.
+
+The externally recorded head must match the content being considered. After
+a new commit, refresh the external head reference and obtain any renewed
+review required by existing policy. An approval on another head is historical
+evidence, not evidence of current-head approval.
 
 ## 2. Six-layer analytical record
 
@@ -140,7 +146,7 @@ system evidence. Do not copy an older green check as proof for a new commit.
 ## 6. Human review disposition
 
 - Human reviewer and role:
-- Exact head SHA covered by the decision:
+- Full head SHA or external review record reference covering the decision:
 - GitHub review/decision reference, or explicit pending status:
 - Objections, their disposition, and remaining blockers:
 - Authorized next action and its precise scope, or no action authorized:
