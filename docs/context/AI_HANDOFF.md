@@ -348,3 +348,30 @@ linked issue, pull request, current commit, and live platform state before use.
 ## Operator owner/team OIDC integration boundary
 
 PR #1844 adds a separately configured single-tenant Entra owner/team boundary for the exact private Operator origin. Public Pages remains browser-local and sends neither pasted source text nor URLs during intake. Private routes require the configured OIDC roles, loopback gateway, Redis session store, TLS and rate/SSRF controls. The merged browser-local atomic claim workflow remains available. Code integration alone does not deploy Entra registration, DNS, TLS or EC2 services; #1831 and #1835 retain live deployment and acceptance evidence gates. Founder identity and ownership records remain unchanged.
+
+## Operator URL-intake canary integration boundary
+
+Issue #1917 and PR #1918 track the disabled AWS infrastructure candidate under
+`ops/aws/operator-url-intake/` and its validation/prepare/execute/stop workflows.
+The canonical Operator retains the single-tenant Entra owner/team boundary,
+private sign-out and cache isolation, and human-confirmed atomic claim workflow
+from protected main. Founder identity and ownership records remain unchanged.
+
+The Cognito auth helper and empty, disabled runtime configuration are dormant
+assets: canonical `site/operator/index.html` does not load them and `sw.js` does
+not precache them. Changing `enabled` alone cannot activate this candidate.
+Frontend wiring and a response adapter remain pending under #1917. They must
+preserve cookie-authenticated same-origin `/api/intake` and its versioned
+`operator_public_intake.v1` envelope while separately validating the canary's
+Bearer-authenticated `/intake/url` response. Callback scrubbing, network-only
+configuration, cache exclusion and an exact active-worker version gate require
+reviewed evidence before any private browser canary. Issue #1917 remains open.
+
+The infrastructure path remains phased through foundation, controls, private
+and deactivate, with separate preparation/execution/emergency-stop roles and
+immutable asset/change-set provenance. Historical v0.4 evidence does not attest
+the reconciled tree or a current canary release. Read current validation from
+the exact PR head and checks. Integration grants no temporary Cognito identity
+exception and lifts no #1831 or #1835 gate: exact merged-SHA authorization,
+identity, roles/bootstrap, current cost/credit headroom, confirmed alerts,
+private-window approval and rollback evidence remain required before AWS.

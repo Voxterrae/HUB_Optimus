@@ -55,4 +55,5 @@ jobs:
             CONTRIBUTING.md
             docs/CONTRIBUTING.md
             docs/**/*.md
+            ops/aws/operator-url-intake/*.md
           fail: true

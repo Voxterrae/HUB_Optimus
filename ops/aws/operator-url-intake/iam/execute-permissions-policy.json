@@ -1,0 +1,104 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadIdentityAndCostTagState",
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity",
+        "ce:ListCostAllocationTags"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "InspectFixedStackAndChangeSets",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:DescribeStacks",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:GetTemplate"
+      ],
+      "Resource": [
+        "arn:aws:cloudformation:eu-west-1:904851777129:stack/hub-optimus-operator-infra/*",
+        "arn:aws:cloudformation:eu-west-1:904851777129:changeSet/operator-*/*"
+      ]
+    },
+    {
+      "Sid": "ExecuteOnlyNamedReviewedChangeSets",
+      "Effect": "Allow",
+      "Action": "cloudformation:ExecuteChangeSet",
+      "Resource": "arn:aws:cloudformation:eu-west-1:904851777129:stack/hub-optimus-operator-infra/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-west-1"
+        },
+        "StringLike": {
+          "cloudformation:ChangeSetName": "operator-*"
+        }
+      }
+    },
+    {
+      "Sid": "VerifyExactVersionedLambdaAsset",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetBucketVersioning"
+      ],
+      "Resource": "arn:aws:s3:::cdk-hnb659fds-assets-904851777129-eu-west-1"
+    },
+    {
+      "Sid": "VerifyExactVersionedLambdaAssetObject",
+      "Effect": "Allow",
+      "Action": "s3:GetObjectVersion",
+      "Resource": "arn:aws:s3:::cdk-hnb659fds-assets-904851777129-eu-west-1/*.zip"
+    },
+    {
+      "Sid": "VerifyOnlyFixedCanaryResources",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:GetFunction",
+        "lambda:GetFunctionConcurrency"
+      ],
+      "Resource": "arn:aws:lambda:eu-west-1:904851777129:function:hub-optimus-operator-url-intake"
+    },
+    {
+      "Sid": "VerifyOnlyTaggedOperatorUserPool",
+      "Effect": "Allow",
+      "Action": [
+        "cognito-idp:DescribeUserPool",
+        "cognito-idp:DescribeUserPoolClient"
+      ],
+      "Resource": "arn:aws:cognito-idp:eu-west-1:904851777129:userpool/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/HUBOptimusCostUnit": "ControlledUrlIntake"
+        }
+      }
+    },
+    {
+      "Sid": "VerifyOnlyFixedStopSchedule",
+      "Effect": "Allow",
+      "Action": "scheduler:GetSchedule",
+      "Resource": "arn:aws:scheduler:eu-west-1:904851777129:schedule/hub-optimus-operator-infra-canary/hub-optimus-operator-infra-canary-auto-stop"
+    },
+    {
+      "Sid": "DenyAssumingAnyRole",
+      "Effect": "Deny",
+      "Action": "sts:AssumeRole",
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyChangeSetCreationAndDirectStackMutation",
+      "Effect": "Deny",
+      "Action": [
+        "cloudformation:ContinueUpdateRollback",
+        "cloudformation:CreateChangeSet",
+        "cloudformation:CreateStack",
+        "cloudformation:DeleteStack",
+        "cloudformation:SetStackPolicy",
+        "cloudformation:UpdateStack",
+        "cloudformation:UpdateTerminationProtection"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

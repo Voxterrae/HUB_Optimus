@@ -1,0 +1,81 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadIdentityAndCostTagState",
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity",
+        "ce:ListCostAllocationTags"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "InspectFixedStackAndChangeSets",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:DescribeStacks",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:GetTemplate"
+      ],
+      "Resource": [
+        "arn:aws:cloudformation:eu-west-1:904851777129:stack/hub-optimus-operator-infra/*",
+        "arn:aws:cloudformation:eu-west-1:904851777129:changeSet/operator-*/*"
+      ]
+    },
+    {
+      "Sid": "CreateOnlyNamedReviewedChangeSets",
+      "Effect": "Allow",
+      "Action": "cloudformation:CreateChangeSet",
+      "Resource": "arn:aws:cloudformation:eu-west-1:904851777129:stack/hub-optimus-operator-infra/*",
+      "Condition": {
+        "ArnEquals": {
+          "cloudformation:RoleArn": "arn:aws:iam::904851777129:role/cdk-hnb659fds-cfn-exec-role-904851777129-eu-west-1"
+        },
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-west-1"
+        },
+        "StringLike": {
+          "cloudformation:ChangeSetName": "operator-*"
+        }
+      }
+    },
+    {
+      "Sid": "AssumeOnlyPinnedBootstrapFilePublishingRole",
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::904851777129:role/cdk-hnb659fds-file-publishing-role-904851777129-eu-west-1"
+    },
+    {
+      "Sid": "DenyAssumingEveryOtherRole",
+      "Effect": "Deny",
+      "Action": "sts:AssumeRole",
+      "NotResource": "arn:aws:iam::904851777129:role/cdk-hnb659fds-file-publishing-role-904851777129-eu-west-1"
+    },
+    {
+      "Sid": "PassOnlyPinnedCloudFormationExecutionRole",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::904851777129:role/cdk-hnb659fds-cfn-exec-role-904851777129-eu-west-1",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "cloudformation.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "DenyExecutionAndDirectStackMutation",
+      "Effect": "Deny",
+      "Action": [
+        "cloudformation:ContinueUpdateRollback",
+        "cloudformation:CreateStack",
+        "cloudformation:DeleteStack",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:SetStackPolicy",
+        "cloudformation:UpdateStack",
+        "cloudformation:UpdateTerminationProtection"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

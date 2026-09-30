@@ -1,0 +1,40 @@
+{
+  "name": "hub-optimus-operator-infra",
+  "version": "0.1.0",
+  "author": "Voxterrae / HUB_Optimus",
+  "contributors": [
+    "Lars Andersson (Traceability starter)"
+  ],
+  "bin": {
+    "hub-optimus-operator-infra": "bin/hub-optimus-operator-infra.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:lambda": "node --require ts-node/register scripts/build-lambda-bundle.ts",
+    "watch": "tsc -w",
+    "test": "jest",
+    "check": "npm run verify:lambda-build && npm run build && npm test -- --runInBand",
+    "cdk": "cdk",
+    "predeploy:check": "node --require ts-node/register scripts/predeploy-check.ts",
+    "predeploy:attest": "node --require ts-node/register scripts/validate-deployment-attestations.ts",
+    "verify:cdk-assets": "node --require ts-node/register scripts/verify-cdk-assets.ts",
+    "verify:change-set": "node --require ts-node/register scripts/verify-change-set.ts",
+    "fingerprint:parameters": "node --require ts-node/register scripts/deployment-parameter-fingerprint.ts",
+    "verify:lambda-build": "node --require ts-node/register scripts/verify-lambda-build.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.1118.0",
+    "aws-cdk-lib": "^2.264.0",
+    "constructs": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30",
+    "@types/node": "^24.10.1",
+    "esbuild": "0.28.2",
+    "jest": "^30",
+    "ts-jest": "^29",
+    "aws-cdk": "2.1135.1",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.9.3"
+  }
+}

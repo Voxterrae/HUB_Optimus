@@ -1,0 +1,75 @@
+name: Operator private canary emergency stop
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: operator-private-canary-forward
+  cancel-in-progress: true
+
+jobs:
+  stop:
+    name: Set URL intake concurrency to zero
+    if: github.ref == 'refs/heads/main' && github.repository == 'Voxterrae/HUB_Optimus'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    environment: operator-private-canary-stop
+    steps:
+      - name: Obtain stop-only AWS credentials
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          allowed-account-ids: '904851777129'
+          aws-region: eu-west-1
+          role-duration-seconds: 10800
+          role-session-name: hub-operator-${{ github.run_id }}-stop
+          role-to-assume: arn:aws:iam::904851777129:role/HUBOptimusOperatorStop
+
+      - name: Stop now, outlast any in-flight stack update, and verify again
+        env:
+          AWS_REGION: eu-west-1
+          FUNCTION_NAME: hub-optimus-operator-url-intake
+        run: |
+          set -euo pipefail
+          CALLER_ARN="$(aws sts get-caller-identity --query Arn --output text)"
+          [[ "$CALLER_ARN" == arn:aws:sts::904851777129:assumed-role/HUBOptimusOperatorStop/* ]]
+          try_concurrency_zero() {
+            aws lambda put-function-concurrency \
+              --function-name "$FUNCTION_NAME" \
+              --reserved-concurrent-executions 0 \
+              --region "$AWS_REGION" >/dev/null
+          }
+          set_concurrency_zero() {
+            for _ in $(seq 1 12); do
+              if try_concurrency_zero; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
+          set_concurrency_zero || echo 'Initial stop is waiting for stack stability.'
+          STACK_STABLE=false
+          for _ in $(seq 1 720); do
+            if STACK_STATUS="$(aws cloudformation describe-stacks \
+              --stack-name hub-optimus-operator-infra \
+              --region "$AWS_REGION" \
+              --query 'Stacks[0].StackStatus' --output text)"; then
+              if [[ "$STACK_STATUS" != *_IN_PROGRESS ]]; then
+                STACK_STABLE=true
+                break
+              fi
+            fi
+            try_concurrency_zero || true
+            sleep 10
+          done
+          set_concurrency_zero
+          [[ "$(aws lambda get-function-concurrency \
+            --function-name "$FUNCTION_NAME" \
+            --region "$AWS_REGION" \
+            --query ReservedConcurrentExecutions --output text)" == 0 ]]
+          [[ "$STACK_STABLE" == true ]]
+          echo 'CANARY_STOPPED concurrency=0 public_signup=unchanged'
