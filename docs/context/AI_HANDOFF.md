@@ -344,3 +344,7 @@ current active issue/PR evidence.
 
 Technical boundaries retained in the archive must be checked against their
 linked issue, pull request, current commit, and live platform state before use.
+
+## Operator owner/team OIDC integration boundary
+
+PR #1844 adds a separately configured single-tenant Entra owner/team boundary for the exact private Operator origin. Public Pages remains browser-local and sends neither pasted source text nor URLs during intake. Private routes require the configured OIDC roles, loopback gateway, Redis session store, TLS and rate/SSRF controls. The merged browser-local atomic claim workflow remains available. Code integration alone does not deploy Entra registration, DNS, TLS or EC2 services; #1831 and #1835 retain live deployment and acceptance evidence gates. Founder identity and ownership records remain unchanged.

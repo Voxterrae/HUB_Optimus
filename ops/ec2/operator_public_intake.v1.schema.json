@@ -1,0 +1,474 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huboptimus.dev/schemas/operator-public-intake-v1.schema.json",
+  "title": "HUB_Optimus authenticated public Operator URL intake v1",
+  "description": "Public request and response contract for the OIDC-protected Operator URL intake boundary. Gateway and upstream responses use the versioned envelope. NGINX errors produced before or instead of the gateway use the exact two-field edge error response defined here.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/request"
+    },
+    {
+      "$ref": "#/$defs/success_response"
+    },
+    {
+      "$ref": "#/$defs/error_response"
+    },
+    {
+      "$ref": "#/$defs/edge_error_response"
+    }
+  ],
+  "x-hub-optimus-runtime-boundary": {
+    "bind_host": "127.0.0.1",
+    "bind_port": 8081,
+    "endpoint": "/intake/url",
+    "method": "POST",
+    "origin": "https://api.huboptimus.dev",
+    "correlation_header": "X-Request-ID",
+    "correlation_input_pattern": "^[0-9a-f]{32}$",
+    "public_request_id_prefix": "req_",
+    "upstream_correlation_header": "X-Request-ID",
+    "request_body_bytes": 4096,
+    "capability_format": "base64url",
+    "capability_min_characters": 43,
+    "capability_max_characters": 128,
+    "requests_per_minute_per_subject": 12,
+    "requests_per_minute_per_ip": 12,
+    "maximum_rate_limit_subject_keys": 4096,
+    "maximum_rate_limit_ip_keys": 4096,
+    "concurrent_requests_per_subject": 1,
+    "concurrent_upstream_requests": 1,
+    "upstream": "http://127.0.0.1:8080/intake/url",
+    "upstream_timeout_seconds": 12,
+    "upstream_response_bytes": 131072,
+    "success_url_binding": "intake.url equals request.url exactly; redirects form one contiguous chain from request.url to final_url; source_domain equals the final_url hostname",
+    "authorized_roles": [
+      "HUB.Owner",
+      "HUB.Operator"
+    ]
+  },
+  "x-hub-optimus-edge-error-http-status": {
+    "authentication_required": 401,
+    "forbidden": 403,
+    "internal_error": 500,
+    "invalid_request": 400,
+    "method_not_allowed": 405,
+    "not_found": 404,
+    "rate_limited": 429,
+    "request_timeout": 408,
+    "request_too_large": 413,
+    "upstream_busy": 503,
+    "upstream_timeout": 504,
+    "upstream_unavailable": 502
+  },
+  "x-hub-optimus-gateway-error-http-status": {
+    "forbidden": 403,
+    "internal_error": 500,
+    "invalid_client_ip": 400,
+    "invalid_framing": 400,
+    "invalid_request": 400,
+    "length_required": 411,
+    "method_not_allowed": 405,
+    "not_found": 404,
+    "origin_forbidden": 403,
+    "rate_limited": 429,
+    "request_timeout": 408,
+    "request_too_large": 413,
+    "subject_busy": 429,
+    "unauthorized": 401,
+    "unsupported_media_type": 415,
+    "untrusted_headers": 400,
+    "upstream_busy": 503,
+    "upstream_malformed": 502,
+    "upstream_response_too_large": 502,
+    "upstream_timeout": 504,
+    "upstream_unavailable": 502
+  },
+  "x-hub-optimus-upstream-error-http-status": {
+    "blocked_url_host": 400,
+    "empty_extraction": 422,
+    "invalid_url": 400,
+    "invalid_url_host": 400,
+    "invalid_url_port": 400,
+    "redirect_without_location": 502,
+    "too_many_redirects": 508,
+    "unresolvable_url_host": 400,
+    "unsupported_content_encoding": 415,
+    "unsupported_content_type": 415,
+    "unsupported_url_credentials": 400,
+    "unsupported_url_iri": 400,
+    "unsupported_url_port": 400,
+    "unsupported_url_scheme": 400,
+    "url_fetch_failed": 502,
+    "url_fetch_timeout": 504,
+    "url_fetch_unavailable": 503,
+    "url_too_long": 414
+  },
+  "$defs": {
+    "request": {
+      "title": "Public URL intake request",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      },
+      "examples": [
+        {
+          "url": "https://example.com/article"
+        }
+      ]
+    },
+    "edge_error_response": {
+      "title": "NGINX edge error before or instead of gateway handling",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "error",
+        "request_id"
+      ],
+      "properties": {
+        "error": {
+          "enum": [
+            "authentication_required",
+            "forbidden",
+            "internal_error",
+            "invalid_request",
+            "method_not_allowed",
+            "not_found",
+            "rate_limited",
+            "request_timeout",
+            "request_too_large",
+            "upstream_busy",
+            "upstream_timeout",
+            "upstream_unavailable"
+          ]
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^req_[0-9a-f]{32}$"
+        }
+      },
+      "examples": [
+        {
+          "error": "rate_limited",
+          "request_id": "req_0123456789abcdef0123456789abcdef"
+        }
+      ]
+    },
+    "response_identity": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "request_id",
+        "status"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "operator_public_intake.v1"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^req_[0-9a-f]{32}$",
+          "description": "Trusted NGINX request ID prefixed with req_; the same value is forwarded to the one loopback upstream request."
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "error"
+          ]
+        }
+      }
+    },
+    "success_response": {
+      "title": "Versioned public URL intake success",
+      "allOf": [
+        {
+          "$ref": "#/$defs/response_identity"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "request_id",
+            "status",
+            "intake"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": "operator_public_intake.v1"
+            },
+            "request_id": {
+              "type": "string",
+              "pattern": "^req_[0-9a-f]{32}$",
+              "description": "Trusted NGINX request ID prefixed with req_; the same value is forwarded to the one loopback upstream request."
+            },
+            "status": {
+              "const": "ok"
+            },
+            "intake": {
+              "$ref": "#/$defs/controlled_intake_success"
+            }
+          }
+        }
+      ],
+      "examples": [
+        {
+          "schema_version": "operator_public_intake.v1",
+          "request_id": "req_0123456789abcdef0123456789abcdef",
+          "status": "ok",
+          "intake": {
+            "status": "ok",
+            "intake_type": "controlled_url",
+            "url": "https://example.com/article",
+            "final_url": "https://example.com/article",
+            "source_domain": "example.com",
+            "retrieved_at_utc": "2026-08-02T00:00:00+00:00",
+            "title": "Example article",
+            "text": "Exact extracted source text.",
+            "content_type": "text/html; charset=utf-8",
+            "bytes_read": 1024,
+            "truncated": false,
+            "redirects": [],
+            "verification_status": "unreviewed",
+            "learning_status": "candidate-source-not-verified",
+            "extraction_notes": [
+              "Fetched by local backend controlled URL intake."
+            ]
+          }
+        }
+      ]
+    },
+    "error_response": {
+      "title": "Versioned public URL intake error",
+      "allOf": [
+        {
+          "$ref": "#/$defs/response_identity"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "request_id",
+            "status",
+            "error"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": "operator_public_intake.v1"
+            },
+            "request_id": {
+              "type": "string",
+              "pattern": "^req_[0-9a-f]{32}$",
+              "description": "Trusted NGINX request ID prefixed with req_; the same value is forwarded to the one loopback upstream request."
+            },
+            "status": {
+              "const": "error"
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          }
+        }
+      ],
+      "examples": [
+        {
+          "schema_version": "operator_public_intake.v1",
+          "request_id": "req_0123456789abcdef0123456789abcdef",
+          "status": "error",
+          "error": {
+            "code": "unauthorized",
+            "message": "Authentication is required."
+          }
+        }
+      ]
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "blocked_url_host",
+            "empty_extraction",
+            "forbidden",
+            "internal_error",
+            "invalid_client_ip",
+            "invalid_framing",
+            "invalid_request",
+            "invalid_url",
+            "invalid_url_host",
+            "invalid_url_port",
+            "length_required",
+            "method_not_allowed",
+            "not_found",
+            "origin_forbidden",
+            "rate_limited",
+            "redirect_without_location",
+            "request_timeout",
+            "request_too_large",
+            "subject_busy",
+            "too_many_redirects",
+            "unauthorized",
+            "unresolvable_url_host",
+            "unsupported_content_encoding",
+            "unsupported_content_type",
+            "unsupported_media_type",
+            "unsupported_url_credentials",
+            "unsupported_url_iri",
+            "unsupported_url_port",
+            "unsupported_url_scheme",
+            "untrusted_headers",
+            "upstream_busy",
+            "upstream_malformed",
+            "upstream_response_too_large",
+            "upstream_timeout",
+            "upstream_unavailable",
+            "url_fetch_failed",
+            "url_fetch_timeout",
+            "url_fetch_unavailable",
+            "url_too_long"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    },
+    "controlled_intake_success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "intake_type",
+        "url",
+        "final_url",
+        "source_domain",
+        "retrieved_at_utc",
+        "title",
+        "text",
+        "content_type",
+        "bytes_read",
+        "truncated",
+        "redirects",
+        "verification_status",
+        "learning_status",
+        "extraction_notes"
+      ],
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "intake_type": {
+          "const": "controlled_url"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Must equal the submitted request url exactly; the gateway rejects a success bound to any other URL."
+        },
+        "final_url": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Must equal the last URL in the gateway-validated contiguous redirect chain, or url when there was no redirect."
+        },
+        "source_domain": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Must equal the parsed hostname of final_url."
+        },
+        "retrieved_at_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24001
+        },
+        "content_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bytes_read": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "redirects": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/redirect"
+          }
+        },
+        "verification_status": {
+          "const": "unreviewed"
+        },
+        "learning_status": {
+          "const": "candidate-source-not-verified"
+        },
+        "extraction_notes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "redirect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "status"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "integer",
+          "enum": [
+            301,
+            302,
+            303,
+            307,
+            308
+          ]
+        }
+      }
+    }
+  }
+}

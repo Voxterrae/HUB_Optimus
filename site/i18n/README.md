@@ -1,6 +1,6 @@
 # Public portfolio translation status
 
-Operator interface catalog version: `1.3.4`.
+Operator interface catalog version: `1.4.2`.
 
 This directory records the translation boundary for the static public portfolio and
 the complete Operator interface. It does not translate the repository or the
