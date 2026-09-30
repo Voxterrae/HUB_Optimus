@@ -121,5 +121,3 @@ def test_contract_and_plan_content_pins_still_fail_closed():
     changed_plan = dict(PLAN, mode="APPLY")
     with pytest.raises(app.ApplicatorError, match="self-hash"):
         app.verify_public_artifacts(CONTRACT, changed_plan, require_git_binding=False)
-
-

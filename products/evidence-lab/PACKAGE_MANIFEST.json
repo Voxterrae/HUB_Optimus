@@ -116,8 +116,8 @@
     },
     {
       "path": "tests/test_checkout_binding.py",
-      "bytes": 5615,
-      "sha256": "e7a057df5d65546b23c2bd50e2afa87d7ce3a8fa708c053dc5bffb454d1edb99"
+      "bytes": 5613,
+      "sha256": "6bb5679328b184efd7be5989b12c37ae727a3b8779ff8913ff3268795c99ea03"
     },
     {
       "path": "tests/test_contract.py",
