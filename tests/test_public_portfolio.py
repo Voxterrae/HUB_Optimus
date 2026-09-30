@@ -152,6 +152,7 @@ process.stdout.write(JSON.stringify({
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**os.environ, "ROUTE_SCRIPT": str(DOCUMENT_ROUTES)},
     )
     assert result.returncode == 0, result.stderr
@@ -265,6 +266,7 @@ process.stdout.write(JSON.stringify({initial, after: snapshot()}));
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env=environment,
     )
     assert result.returncode == 0, result.stderr
@@ -342,6 +344,7 @@ process.stdout.write(JSON.stringify({initial, after: snapshot()}));
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={
             **os.environ,
             "APP_SCRIPT": str(APP),
@@ -435,6 +438,7 @@ process.stdout.write(JSON.stringify({initial, after: snapshot()}));
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={
             **os.environ,
             "NOT_FOUND_SCRIPT": str(NOT_FOUND_APP),
@@ -551,6 +555,7 @@ process.stdout.write(JSON.stringify({initial, after: snapshot()}));
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={
             **os.environ,
             "ROUTE_SCRIPT": str(DOCUMENT_ROUTES),
@@ -587,6 +592,7 @@ def test_public_javascript_syntax_and_translation_key_parity():
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         assert result.returncode == 0, result.stderr
 
@@ -1286,7 +1292,7 @@ def test_public_portfolio_matches_repository_maturity():
         "controlled-url-intake": "implementation-present-deployment-unverified",
         "research": "experimental-tooling",
         "governance-intelligence": "active-ratified-protocol",
-        "labs": "official-empty-incubation",
+        "labs": "documented-incubation-surface",
     }
     assert parser.future_statuses == ["rfc-not-implemented"] * 3
 
@@ -1546,6 +1552,7 @@ def test_document_route_targets_exist_in_the_pinned_git_tree():
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert commit.returncode == 0, commit.stderr
 
@@ -1578,6 +1585,7 @@ def test_document_route_targets_exist_in_the_pinned_git_tree():
                 check=False,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
             )
             assert target.returncode == 0, f"{href}: {target.stderr}"
 
@@ -1599,6 +1607,7 @@ def test_document_route_markup_covers_map_and_matches_no_javascript_english():
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     english_relation = {
         "source": "source",
@@ -1972,6 +1981,7 @@ renderer.destroy();
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={
             **os.environ,
             "GLOBE_PATH": str(GLOBE),

@@ -39,6 +39,27 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   - `benchmarks`: non-blocking benchmark pack with `continue-on-error: true`.
 - Writes to repo: no.
 
+### optimus-admin-gateway.yml
+
+- Triggers:
+  - `push` to `main` when the Admin Gateway package or this workflow changes;
+  - `pull_request` for the same paths;
+  - `workflow_dispatch`.
+- Permissions: `contents: read`.
+- Job `python-contract`:
+  - installs the package with its development dependencies on Python 3.11;
+  - runs the complete product test suite;
+  - treats the Starlette legacy-TestClient deprecation as an error.
+  - verifies that the package manifest exactly matches the tracked Git-index
+    bytes for the Admin Gateway package and its workflow.
+- Job `powershell-contract`:
+  - parses every Admin Gateway PowerShell asset with PowerShell's language parser;
+  - self-tests an executable-AST guard that allows inert strings and comments
+    while rejecting direct dynamic-execution calls;
+  - rejects a non-safe DryRun default;
+  - runs the versioned Pester safety contracts with `Invoke-Pester -CI`.
+- Writes to repo: no.
+
 ### link-check.yml
 
 - Triggers:

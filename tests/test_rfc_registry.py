@@ -116,7 +116,7 @@ def test_operator_atomic_claim_rfc_records_the_pinned_accepted_decision() -> Non
     )
     rfc = (REPO_ROOT / atomic["path"]).read_text(encoding="utf-8")
 
-    assert counts["Draft"] == 15
+    assert counts["Draft"] == 16
     assert counts["Partially Implemented"] == 1
     assert counts["Accepted"] == 1
     assert counts["Implemented"] == 0

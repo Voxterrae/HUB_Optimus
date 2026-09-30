@@ -54,6 +54,18 @@ def require_int(value: Any, label: str) -> int:
     return value
 
 
+def require_decimal_id(value: Any, label: str) -> int:
+    if not isinstance(value, str):
+        raise WorkflowError(f"{label} must be a positive decimal integer")
+    text = value.strip()
+    if not text or not text.isascii() or not text.isdecimal():
+        raise WorkflowError(f"{label} must be a positive decimal integer")
+    result = int(text)
+    if result <= 0:
+        raise WorkflowError(f"{label} must be a positive decimal integer")
+    return result
+
+
 def require_sha(value: Any, label: str) -> str:
     sha = require_string(value, label).lower()
     if len(sha) != 40 or any(ch not in "0123456789abcdef" for ch in sha):
@@ -74,6 +86,118 @@ class GitHubClient:
         self.graphql_url = os.environ.get(
             "GITHUB_GRAPHQL_URL", "https://api.github.com/graphql"
         )
+        expected_app_id = os.environ.get("FOUNDER_AUTHORITY_EXPECTED_APP_ID")
+        expected_app_slug = os.environ.get("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG")
+        if (expected_app_id is None) != (expected_app_slug is None):
+            raise WorkflowError(
+                "FOUNDER_AUTHORITY_EXPECTED_APP_ID and "
+                "FOUNDER_AUTHORITY_EXPECTED_APP_SLUG must be set together"
+            )
+        self.strict_check_publisher = expected_app_id is not None
+        self.expected_check_app_id = (
+            require_decimal_id(
+                expected_app_id,
+                "FOUNDER_AUTHORITY_EXPECTED_APP_ID",
+            )
+            if self.strict_check_publisher
+            else None
+        )
+        self.expected_check_app_slug = (
+            require_string(
+                expected_app_slug,
+                "FOUNDER_AUTHORITY_EXPECTED_APP_SLUG",
+            )
+            if self.strict_check_publisher
+            else None
+        )
+        self.created_check_targets: dict[int, tuple[str, str]] = {}
+
+    def require_expected_check(
+        self,
+        check: dict[str, Any],
+        *,
+        label: str,
+        expected_head_sha: str | None = None,
+    ) -> None:
+        if not self.strict_check_publisher:
+            raise WorkflowError(
+                "strict check-publisher validation was not configured"
+            )
+        if check.get("name") != CHECK_NAME:
+            raise WorkflowError(
+                f"{label} has name {check.get('name')!r}, expected {CHECK_NAME!r}"
+            )
+        if expected_head_sha is not None:
+            actual_head_sha = require_sha(check.get("head_sha"), f"{label} head SHA")
+            if actual_head_sha != expected_head_sha:
+                raise WorkflowError(
+                    f"{label} targets {actual_head_sha}, expected {expected_head_sha}"
+                )
+        app = require_mapping(check.get("app"), f"{label} publisher app")
+        app_id = require_int(app.get("id"), f"{label} publisher app ID")
+        if app_id != self.expected_check_app_id:
+            raise WorkflowError(
+                f"{label} was published by GitHub App {app_id}, expected "
+                f"{self.expected_check_app_id}"
+            )
+        app_slug = require_string(app.get("slug"), f"{label} publisher app slug")
+        if app_slug != self.expected_check_app_slug:
+            raise WorkflowError(
+                f"{label} was published by GitHub App slug {app_slug!r}, expected "
+                f"{self.expected_check_app_slug!r}"
+            )
+
+    def fail_invalid_created_check(
+        self,
+        check_run_id: int,
+        *,
+        reason: str,
+    ) -> str | None:
+        """Best-effort fail-close for a check created before validation failed."""
+
+        try:
+            check = self.repository_request(
+                f"check-runs/{check_run_id}",
+                method="PATCH",
+                payload={
+                    "status": "completed",
+                    "conclusion": "failure",
+                    "output": {
+                        "title": "Founder Authority Guard failed closed",
+                        "summary": (
+                            "FOUNDER_AUTHORITY_GUARD: FAIL: invalid newly created "
+                            f"check response: {reason}"
+                        )[-60000:],
+                    },
+                },
+            )
+            check = require_mapping(
+                check, f"failed-closed invalid check run {check_run_id}"
+            )
+            actual_id = require_int(
+                check.get("id"), f"failed-closed check run {check_run_id} ID"
+            )
+            if actual_id != check_run_id:
+                raise WorkflowError(
+                    f"failed-closed response identified check {actual_id}, "
+                    f"expected {check_run_id}"
+                )
+            if check.get("status") != "completed":
+                raise WorkflowError(
+                    f"failed-closed check run {check_run_id} is not completed"
+                )
+            if check.get("conclusion") != "failure":
+                raise WorkflowError(
+                    f"failed-closed check run {check_run_id} did not conclude failure"
+                )
+        except (
+            OSError,
+            json.JSONDecodeError,
+            WorkflowError,
+            urllib.error.URLError,
+        ) as exc:
+            return f"cannot fail-close invalid check {check_run_id}: {exc}"
+        return None
 
     @property
     def headers(self) -> dict[str, str]:
@@ -141,24 +265,65 @@ class GitHubClient:
         return require_mapping(result.get("data"), "GitHub GraphQL data")
 
     def create_check(self, target_sha: str, *, target_label: str) -> int:
+        external_id: str | None = None
+        if self.strict_check_publisher:
+            target_sha = require_sha(target_sha, f"{target_label} target SHA")
+            external_id = f"founder-authority:v1:{target_label}:{target_sha}"
+        payload: dict[str, Any] = {
+            "name": CHECK_NAME,
+            "head_sha": target_sha,
+            "status": "in_progress",
+            "output": {
+                "title": "Founder Authority Guard",
+                "summary": (
+                    "Trusted-base validation is running for the "
+                    f"{target_label}."
+                ),
+            },
+        }
+        if external_id is not None:
+            payload["external_id"] = external_id
         check = self.repository_request(
             "check-runs",
             method="POST",
-            payload={
-                "name": CHECK_NAME,
-                "head_sha": target_sha,
-                "status": "in_progress",
-                "output": {
-                    "title": "Founder Authority Guard",
-                    "summary": (
-                        "Trusted-base validation is running for the "
-                        f"{target_label}."
-                    ),
-                },
-            },
+            payload=payload,
         )
         check = require_mapping(check, f"created {target_label} check run")
-        return require_int(check.get("id"), f"created {target_label} check-run ID")
+        check_run_id = require_int(
+            check.get("id"), f"created {target_label} check-run ID"
+        )
+        if not self.strict_check_publisher:
+            return check_run_id
+
+        assert external_id is not None
+        try:
+            self.require_expected_check(
+                check,
+                label=f"created {target_label} check run",
+                expected_head_sha=target_sha,
+            )
+            if check.get("external_id") != external_id:
+                raise WorkflowError(
+                    f"created {target_label} check run has unexpected external ID"
+                )
+            if check.get("status") != "in_progress":
+                raise WorkflowError(
+                    f"created {target_label} check run is not in progress"
+                )
+            if check.get("conclusion") is not None:
+                raise WorkflowError(
+                    f"created {target_label} check run already has a conclusion"
+                )
+        except WorkflowError as exc:
+            cleanup_error = self.fail_invalid_created_check(
+                check_run_id,
+                reason=str(exc),
+            )
+            suffix = f"; {cleanup_error}" if cleanup_error else ""
+            raise WorkflowError(f"{exc}{suffix}") from exc
+
+        self.created_check_targets[check_run_id] = (target_sha, external_id)
+        return check_run_id
 
     def finalize_check(
         self,
@@ -173,15 +338,57 @@ class GitHubClient:
             if success
             else "Founder Authority Guard failed closed"
         )
-        self.repository_request(
+        payload = {
+            "status": "completed",
+            "conclusion": conclusion,
+            "output": {"title": title, "summary": summary[-60000:]},
+        }
+        if not self.strict_check_publisher:
+            self.repository_request(
+                f"check-runs/{check_run_id}",
+                method="PATCH",
+                payload=payload,
+            )
+            return
+
+        target = self.created_check_targets.get(check_run_id)
+        if target is None:
+            raise WorkflowError(
+                f"refusing to finalize unknown check run {check_run_id}"
+            )
+        expected_head_sha, expected_external_id = target
+        check = self.repository_request(
             f"check-runs/{check_run_id}",
             method="PATCH",
-            payload={
-                "status": "completed",
-                "conclusion": conclusion,
-                "output": {"title": title, "summary": summary[-60000:]},
-            },
+            payload=payload,
         )
+        check = require_mapping(check, f"finalized check run {check_run_id}")
+        self.require_expected_check(
+            check,
+            label=f"finalized check run {check_run_id}",
+            expected_head_sha=expected_head_sha,
+        )
+        actual_id = require_int(
+            check.get("id"), f"finalized check run {check_run_id} ID"
+        )
+        if actual_id != check_run_id:
+            raise WorkflowError(
+                f"finalized response identified check {actual_id}, "
+                f"expected {check_run_id}"
+            )
+        if check.get("external_id") != expected_external_id:
+            raise WorkflowError(
+                f"finalized check run {check_run_id} has unexpected external ID"
+            )
+        if check.get("status") != "completed":
+            raise WorkflowError(
+                f"finalized check run {check_run_id} is not completed"
+            )
+        if check.get("conclusion") != conclusion:
+            raise WorkflowError(
+                f"finalized check run {check_run_id} concluded "
+                f"{check.get('conclusion')!r}, expected {conclusion!r}"
+            )
 
 
 SIGNATURE_QUERY = """

@@ -10,6 +10,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 
 EXPECTED_ACTION_PINS = {
+    "actions/create-github-app-token": (
+        "bcd2ba49218906704ab6c1aa796996da409d3eb1",
+        "v3.2.0",
+    ),
     "actions/checkout": (
         "3d3c42e5aac5ba805825da76410c181273ba90b1",
         "v7.0.1",
@@ -27,8 +31,8 @@ EXPECTED_ACTION_PINS = {
         "v5.0.0",
     ),
     "actions/deploy-pages": (
-        "cd2ce8fcbc39b97be8ca5fce6e763baed58fa128",
-        "v5.0.0",
+        "368f82528645a54fb793d4d04e342629a3f51346",
+        "v5.0.1",
     ),
     "lycheeverse/lychee-action": (
         "e7477775783ea5526144ba13e8db5eec57747ce8",
