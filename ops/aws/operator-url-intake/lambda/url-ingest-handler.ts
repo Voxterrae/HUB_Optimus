@@ -940,11 +940,13 @@ function extractDocument(
   body: Buffer,
   contentType: string,
   maxCharacters: number,
+  bodyTruncated: boolean = false,
 ): { text: string; title: string | null; truncated: boolean } {
   const parsed = parseContentType(contentType);
   let decoded: string;
   try {
-    decoded = new TextDecoder(parsed.charset, { fatal: true }).decode(body);
+    // Only an intentional byte-cap cut may leave the trailing character unfinished.
+    decoded = new TextDecoder(parsed.charset, { fatal: true }).decode(body, { stream: bodyTruncated });
   } catch {
     throw intakeError(
       'unsupported_content_type',
@@ -997,7 +999,9 @@ export async function fetchPublicText(target: URL, submittedUrl = target.href): 
       continue;
     }
 
-    const extracted = extractDocument(hop.document.body, hop.document.contentType, maxTextCharacters);
+    const extracted = extractDocument(
+      hop.document.body, hop.document.contentType, maxTextCharacters, hop.document.truncated,
+    );
     if (extracted.text === '') {
       throw intakeError('empty_extraction', 422, 'URL was fetched but no readable text was extracted.');
     }
