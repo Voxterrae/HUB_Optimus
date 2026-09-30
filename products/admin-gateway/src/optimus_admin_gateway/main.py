@@ -18,7 +18,10 @@ from .models import (
 
 settings = Settings.from_env()
 catalog = OperationCatalog.load(settings.catalog_path)
-approvals = ApprovalVerifier(settings.approval_hmac_secret)
+approvals = ApprovalVerifier(
+    settings.approval_hmac_secret,
+    settings.approval_max_age_seconds,
+)
 executor = OperationExecutor(settings.executor_mode)
 get_principal = build_principal_dependency(settings)
 

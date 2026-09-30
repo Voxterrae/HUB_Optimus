@@ -9,6 +9,7 @@
   "allowedTokenAudiences": ["api://REPLACE_WITH_APP_ID"],
   "readerRole": "Optimus.Reader",
   "mutatorRole": "Optimus.Mutator",
+  "approvalMaxAgeSeconds": 900,
   "requireAuthentication": true,
   "unauthenticatedClientAction": "Return401",
   "easyAuthIssuer": "https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID/v2.0",
@@ -16,7 +17,8 @@
   "applicationSettings": {
     "OPTIMUS_ENTRA_TENANT_ID": "REPLACE_WITH_TENANT_ID",
     "OPTIMUS_READER_ROLE": "Optimus.Reader",
-    "OPTIMUS_MUTATOR_ROLE": "Optimus.Mutator"
+    "OPTIMUS_MUTATOR_ROLE": "Optimus.Mutator",
+    "OPTIMUS_APPROVAL_MAX_AGE_SECONDS": "900"
   },
   "executorMode": "azure-automation",
   "keyVaultReferencesOnly": true,

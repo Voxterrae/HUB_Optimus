@@ -65,3 +65,13 @@ def test_approval_blueprint_targets_numeric_schema_contract_values() -> None:
     assert "preserve_original_plan_digest: true" in content
     assert "opt_state eq 'APPROVAL_REQUIRED'" not in content
     assert "opt_adminrequests" not in content
+    assert "approved_at_source: utc_approval_decision" in content
+    assert "capture_approved_at_from_utc_approval_decision" in content
+    assert content.index("capture_approved_at_from_utc_approval_decision") < content.index(
+        "persist_complete_signed_approval_receipt"
+    )
+    assert content.index("persist_complete_signed_approval_receipt") < content.index(
+        "call_gateway_execute_with_original_parameters"
+    )
+    for field in ("approval_id", "plan_hash", "approved_by", "approved_at"):
+        assert f"    - {field}" in content
