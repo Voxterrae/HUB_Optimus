@@ -1,6 +1,6 @@
 # Android, Microsoft and call checks
 
-These are recommendations and controlled follow-up checks. Applied local changes and their dates are listed separately in [VALIDATION.md](VALIDATION.md). The initial Termux session had limited visibility; later authorized ADB access supported scoped diagnostics. Current device operations must first satisfy the user\'s [biometric access prerequisite](SECURITY_REQUIREMENTS.md).
+These are recommendations and controlled follow-up checks. Applied local changes and their dates are listed separately in [VALIDATION.md](VALIDATION.md). The initial Termux session had limited visibility; later authorized ADB access supported scoped diagnostics. Current device operations must first satisfy the user's [biometric access prerequisite](SECURITY_REQUIREMENTS.md).
 
 ## Performance profile
 
