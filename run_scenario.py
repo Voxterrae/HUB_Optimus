@@ -208,9 +208,23 @@ def main() -> int:
         print(f"[schema-error] {exc}", file=sys.stderr)
         return INPUT_ERROR_EXIT_CODE
 
+    output_path = Path(args.output) if args.output else scenario_path.with_suffix(".result.json")
+    try:
+        same_input_file = output_path.resolve() == scenario_path.resolve() or (
+            output_path.exists() and output_path.samefile(scenario_path)
+        )
+    except (OSError, RuntimeError) as exc:
+        print(f"[input-error] cannot resolve output file: {exc}", file=sys.stderr)
+        return INPUT_ERROR_EXIT_CODE
+    if same_input_file:
+        print(
+            "[input-error] Output file must not refer to the input scenario.",
+            file=sys.stderr,
+        )
+        return INPUT_ERROR_EXIT_CODE
+
     simulator = Simulator(scenario, policy_name=args.policy)
     result = simulator.run(seed=args.seed)
-    output_path = Path(args.output) if args.output else scenario_path.with_suffix(".result.json")
     try:
         with output_path.open("w", encoding="utf-8", newline="\n") as output_file:
             output_file.write(
