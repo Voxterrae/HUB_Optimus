@@ -1,0 +1,44 @@
+name: Optimus Evidence Lab
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/optimus-evidence-lab.yml"
+      - "products/evidence-lab/**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Offline contract, seed and manifest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Rebuild deterministic plans
+        run: |
+          python products/evidence-lab/scripts/build_artifacts.py
+          git diff --exit-code -- \
+            products/evidence-lab/plans/optimus-evidence-lab.schema-plan.json \
+            products/evidence-lab/plans/hiv-global-2026.seed-plan.json \
+            products/evidence-lab/plans/optimus-evidence-lab.dry-run.json
+
+      - name: Run Evidence Lab tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python -m unittest discover \
+            -s products/evidence-lab/tests \
+            -v

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "mode": "ROLLBACK_METADATA_PLAN",
+  "solution": "OptimusEvidenceLab",
+  "authorizedBaseCommit": "fc5939fe46152464378f4f09ae02824954970d83",
+  "contractSha256": "912e762601fb3265627787dd57fb1f248929492a6bca3ba5c3d2cec5afe09e70",
+  "schemaPlanSha256": "fd6751ff5fe42b0336bb3bc5b7da1d3854b78ec733afb76fc72a7f842005a981",
+  "baselineB0Sha256": "3f141153424f178fae8007d0ac829932b8fff5ddecf21264c6c6b08714b0100b",
+  "expectedBefore": {
+    "directComponents": 11,
+    "globalChoices": 6,
+    "tableRoots": 5,
+    "rowsAcrossTargetTables": 0
+  },
+  "journalBindingRequired": true,
+  "postApplyExportBindingRequired": true,
+  "deleteOrder": [
+    "RelationshipsReverseJournalOrder",
+    "AlternateKeysReverseJournalOrder",
+    "LookupAndScalarColumnsReverseJournalOrder",
+    "TableRootsReverseJournalOrder",
+    "GlobalChoicesReverseJournalOrder"
+  ],
+  "alreadyAbsentPolicy": {
+    "allowed": true,
+    "onlyForExactJournalEntry": true,
+    "onlyWhenParentTableRootIsAlreadyAbsent": true,
+    "orphanMetadataRejected": true
+  },
+  "publicationCount": 1,
+  "finalVerification": {
+    "directComponents": 0,
+    "targetTablesAbsent": 5,
+    "targetChoicesAbsent": 6,
+    "targetRows": 0,
+    "postRollbackExportRequired": true
+  },
+  "automaticRollback": false,
+  "automaticRetry": false
+}

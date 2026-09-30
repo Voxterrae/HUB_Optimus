@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "status": "PASS",
+  "classification": "OPTIMUS_EVIDENCE_LAB_BASELINE_B0",
+  "solution": "OptimusEvidenceLab",
+  "displayName": "Optimus Evidence Lab",
+  "version": "0.1.0.0",
+  "publisher": "HUB_Optimus",
+  "managed": false,
+  "directComponents": 0,
+  "exportedRootComponents": 0,
+  "missingDependencies": 0,
+  "customRows": 0,
+  "unmanagedBaselineSha256": "3f141153424f178fae8007d0ac829932b8fff5ddecf21264c6c6b08714b0100b",
+  "reconciliationResultSha256": "0befb0199666e1630796f2741a6bcda19650c83ac4e95b7ff6da546f00040726",
+  "privateEnvironmentIdentifiersPublished": false,
+  "privateEvidencePathsPublished": false,
+  "metadataApplyExecuted": false,
+  "seedExecuted": false
+}
