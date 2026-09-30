@@ -7,7 +7,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
+import tempfile
+import unittest
+from unittest.mock import patch
 
 SOURCE = Path(__file__).parents[1] / "scripts" / "apply-dataverse-schema.py"
 SPEC = importlib.util.spec_from_file_location("evidence_dataverse_binding_regressions", SOURCE)
@@ -18,7 +20,6 @@ SPEC.loader.exec_module(app)
 CONTRACT, PLAN = app.load_public_artifacts()
 
 
-@pytest.fixture
 def squashed_checkout(tmp_path, monkeypatch):
     source = tmp_path / "source"
     source.mkdir()
@@ -67,57 +68,94 @@ def squashed_checkout(tmp_path, monkeypatch):
     return clone, relative, clone_git
 
 
-def test_fresh_squash_clone_binds_without_old_branch_history(squashed_checkout):
-    _clone, _paths, git = squashed_checkout
-    expected = git("rev-parse", "HEAD").stdout.decode().strip()
-    assert app.verify_public_artifacts(CONTRACT, PLAN, require_git_binding=True) == expected
+class CheckoutBindingTests(unittest.TestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        case = self
+        class Patcher:
+            def setattr(self, obj, name, value, raising=True):
+                active = patch.object(obj, name, value, create=not raising)
+                active.start()
+                case.addCleanup(active.stop)
+            def setenv(self, name, value):
+                active = patch.dict(os.environ, {name: value})
+                active.start()
+                case.addCleanup(active.stop)
+        self.monkeypatch = Patcher()
+        self.checkout = squashed_checkout(Path(directory.name), self.monkeypatch)
+
+    def test_fresh_squash_clone_binds_without_old_branch_history(self):
+        squashed_checkout = self.checkout
+        monkeypatch = self.monkeypatch
+        _clone, _paths, git = squashed_checkout
+        expected = git("rev-parse", "HEAD").stdout.decode().strip()
+        assert app.verify_public_artifacts(CONTRACT, PLAN, require_git_binding=True) == expected
 
 
-@pytest.mark.parametrize("index", [0, 1, 2])
-def test_hidden_worktree_edits_are_rejected(squashed_checkout, index):
-    clone, paths, git = squashed_checkout
-    relative = Path("products/evidence-lab") / paths[index]
-    git("update-index", "--skip-worktree", relative.as_posix())
-    with (clone / relative).open("a", encoding="utf-8") as stream:
-        stream.write("\nchanged source\n")
-    assert not git("diff", "--name-only").stdout.strip()
-    with pytest.raises(app.ApplicatorError, match="bytes differ"):
-        app.verify_public_artifacts(CONTRACT, PLAN, require_git_binding=True)
+    def _assert_hidden_worktree_edit_is_rejected(self, index):
+        squashed_checkout = self.checkout
+        monkeypatch = self.monkeypatch
+        clone, paths, git = squashed_checkout
+        relative = Path("products/evidence-lab") / paths[index]
+        git("update-index", "--skip-worktree", relative.as_posix())
+        with (clone / relative).open("a", encoding="utf-8") as stream:
+            stream.write("\nchanged source\n")
+        assert not git("diff", "--name-only").stdout.strip()
+        with self.assertRaisesRegex(app.ApplicatorError, "bytes differ"):
+            app.verify_public_artifacts(CONTRACT, PLAN, require_git_binding=True)
 
 
-def test_staged_edit_with_restored_worktree_is_rejected(squashed_checkout):
-    clone, paths, git = squashed_checkout
-    relative = Path("products/evidence-lab") / paths[2]
-    target = clone / relative
-    original = target.read_bytes()
-    target.write_bytes(original + b"staged alteration\n")
-    git("add", relative.as_posix())
-    target.write_bytes(original)
-    with pytest.raises(app.ApplicatorError, match="bytes differ"):
-        app.verify_public_artifacts(CONTRACT, PLAN, require_git_binding=True)
+    def test_staged_edit_with_restored_worktree_is_rejected(self):
+        squashed_checkout = self.checkout
+        monkeypatch = self.monkeypatch
+        clone, paths, git = squashed_checkout
+        relative = Path("products/evidence-lab") / paths[2]
+        target = clone / relative
+        original = target.read_bytes()
+        target.write_bytes(original + b"staged alteration\n")
+        git("add", relative.as_posix())
+        target.write_bytes(original)
+        with self.assertRaisesRegex(app.ApplicatorError, "bytes differ"):
+            app.verify_public_artifacts(CONTRACT, PLAN, require_git_binding=True)
 
 
-def test_unrelated_anchor_fails_closed(squashed_checkout, monkeypatch):
-    monkeypatch.setattr(app, "PROTECTED_MAIN_ANCHOR", "0" * 40, raising=False)
-    with pytest.raises(app.ApplicatorError, match="protected main anchor"):
-        app.verify_public_artifacts(CONTRACT, PLAN, require_git_binding=True)
+    def test_unrelated_anchor_fails_closed(self):
+        squashed_checkout = self.checkout
+        monkeypatch = self.monkeypatch
+        monkeypatch.setattr(app, "PROTECTED_MAIN_ANCHOR", "0" * 40, raising=False)
+        with self.assertRaisesRegex(app.ApplicatorError, "protected main anchor"):
+            app.verify_public_artifacts(CONTRACT, PLAN, require_git_binding=True)
 
 
-def test_ambient_git_redirection_cannot_select_another_checkout(squashed_checkout, monkeypatch):
-    _clone, _paths, git = squashed_checkout
-    monkeypatch.setenv("GIT_DIR", "does-not-exist")
-    monkeypatch.setenv("GIT_WORK_TREE", "does-not-exist")
-    monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
-    monkeypatch.setenv("GIT_CONFIG_KEY_0", "core.repositoryformatversion")
-    monkeypatch.setenv("GIT_CONFIG_VALUE_0", "999")
-    expected = git("rev-parse", "HEAD").stdout.decode().strip()
-    assert app.verify_public_artifacts(CONTRACT, PLAN, require_git_binding=True) == expected
+    def test_ambient_git_redirection_cannot_select_another_checkout(self):
+        squashed_checkout = self.checkout
+        monkeypatch = self.monkeypatch
+        _clone, _paths, git = squashed_checkout
+        monkeypatch.setenv("GIT_DIR", "does-not-exist")
+        monkeypatch.setenv("GIT_WORK_TREE", "does-not-exist")
+        monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
+        monkeypatch.setenv("GIT_CONFIG_KEY_0", "core.repositoryformatversion")
+        monkeypatch.setenv("GIT_CONFIG_VALUE_0", "999")
+        expected = git("rev-parse", "HEAD").stdout.decode().strip()
+        assert app.verify_public_artifacts(CONTRACT, PLAN, require_git_binding=True) == expected
 
 
-def test_contract_and_plan_content_pins_still_fail_closed():
-    changed = dict(CONTRACT, schemaVersion="tampered")
-    with pytest.raises(app.ApplicatorError, match="Contract hash drift"):
-        app.verify_public_artifacts(changed, PLAN, require_git_binding=False)
-    changed_plan = dict(PLAN, mode="APPLY")
-    with pytest.raises(app.ApplicatorError, match="self-hash"):
-        app.verify_public_artifacts(CONTRACT, changed_plan, require_git_binding=False)
+    def test_contract_and_plan_content_pins_still_fail_closed(self):
+        squashed_checkout = self.checkout
+        monkeypatch = self.monkeypatch
+        changed = dict(CONTRACT, schemaVersion="tampered")
+        with self.assertRaisesRegex(app.ApplicatorError, "Contract hash drift"):
+            app.verify_public_artifacts(changed, PLAN, require_git_binding=False)
+        changed_plan = dict(PLAN, mode="APPLY")
+        with self.assertRaisesRegex(app.ApplicatorError, "self-hash"):
+            app.verify_public_artifacts(CONTRACT, changed_plan, require_git_binding=False)
+
+    def test_hidden_contract_edit_is_rejected(self):
+        self._assert_hidden_worktree_edit_is_rejected(0)
+
+    def test_hidden_plan_edit_is_rejected(self):
+        self._assert_hidden_worktree_edit_is_rejected(1)
+
+    def test_hidden_applicator_edit_is_rejected(self):
+        self._assert_hidden_worktree_edit_is_rejected(2)
