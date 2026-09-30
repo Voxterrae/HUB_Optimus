@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import time
@@ -19,6 +20,8 @@ CONTRACT_PATH = PACKAGE_ROOT / "contract" / "optimus-evidence-lab.dataverse.json
 PLAN_PATH = PACKAGE_ROOT / "plans" / "optimus-evidence-lab.schema-plan.json"
 
 AUTHORIZED_BASE_COMMIT = "fc5939fe46152464378f4f09ae02824954970d83"
+# Historical authorization provenance above is retained; it is not a branch-ancestry gate.
+PROTECTED_MAIN_ANCHOR = "663556d7622dcc5c4cbf352b3561ad439f38b86a"
 AUTHORIZED_CONTRACT_SHA256 = "912e762601fb3265627787dd57fb1f248929492a6bca3ba5c3d2cec5afe09e70"
 AUTHORIZED_PLAN_SHA256 = "fd6751ff5fe42b0336bb3bc5b7da1d3854b78ec733afb76fc72a7f842005a981"
 AUTHORIZED_BASELINE_B0_SHA256 = "3f141153424f178fae8007d0ac829932b8fff5ddecf21264c6c6b08714b0100b"
@@ -284,6 +287,47 @@ def load_public_artifacts() -> tuple[dict[str, Any], dict[str, Any]]:
     )
 
 
+def _binding_git(repo_root: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
+    # Bind the actual checkout, without caller-supplied Git redirection or replace refs.
+    environment = {key: value for key, value in os.environ.items() if not key.upper().startswith("GIT_")}
+    environment.update(GIT_NO_REPLACE_OBJECTS="1", GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+    return subprocess.run(
+        ["git", "--no-replace-objects", *args], cwd=repo_root,
+        capture_output=True, env=environment,
+    )
+
+
+def verify_checkout_binding() -> str:
+    repo_root = PACKAGE_ROOT.parents[1].resolve()
+    result = _binding_git(repo_root, "rev-parse", "--verify", "HEAD")
+    current_head = result.stdout.decode("ascii", errors="replace").strip()
+    if result.returncode or not re.fullmatch(r"[0-9a-f]{40}", current_head):
+        raise ApplicatorError("Could not resolve the applicator Git commit.")
+    ancestor = _binding_git(
+        repo_root, "merge-base", "--is-ancestor", PROTECTED_MAIN_ANCHOR, current_head
+    )
+    if ancestor.returncode:
+        raise ApplicatorError("The protected main anchor is not an ancestor of the applicator commit.")
+    for path in (CONTRACT_PATH, PLAN_PATH, Path(__file__)):
+        absolute = path.absolute()
+        if not path.is_file() or path.is_symlink() or absolute.resolve() != absolute:
+            raise ApplicatorError("Critical applicator source must be a regular checkout file.")
+        try:
+            relative = absolute.relative_to(repo_root).as_posix()
+        except ValueError as exc:
+            raise ApplicatorError("Critical applicator source is outside the checkout.") from exc
+        committed = _binding_git(repo_root, "show", f"{current_head}:{relative}")
+        indexed = _binding_git(repo_root, "show", f":{relative}")
+        if committed.returncode or indexed.returncode:
+            raise ApplicatorError(f"Critical applicator source is not tracked: {relative}")
+        # Git text checkouts may use CRLF on Windows. Compare canonical LF bytes
+        # directly, so assume-unchanged/skip-worktree cannot hide a source edit.
+        working = path.read_bytes().replace(b"\r\n", b"\n")
+        if working != committed.stdout.replace(b"\r\n", b"\n") or indexed.stdout != committed.stdout:
+            raise ApplicatorError("Critical applicator, contract or plan bytes differ from the authorized Git commit.")
+    return current_head
+
+
 def verify_public_artifacts(contract: dict[str, Any], plan: dict[str, Any], *, require_git_binding: bool) -> str | None:
     if canonical_sha256(contract) != AUTHORIZED_CONTRACT_SHA256:
         raise ApplicatorError("Contract hash drift.")
@@ -309,31 +353,7 @@ def verify_public_artifacts(contract: dict[str, Any], plan: dict[str, Any], *, r
             raise ApplicatorError(f"Solution contract drift for {name}.")
     if not require_git_binding:
         return None
-    repo_root = PACKAGE_ROOT.parents[1]
-    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo_root, capture_output=True, text=True)
-    current_head = head.stdout.strip() if head.returncode == 0 else ""
-    if not re.fullmatch(r"[0-9a-f]{40}", current_head):
-        raise ApplicatorError("Could not resolve the applicator Git commit.")
-    critical = [CONTRACT_PATH, PLAN_PATH, Path(__file__).resolve()]
-    relative = [str(path.relative_to(repo_root)) for path in critical]
-    for path in relative:
-        tracked = subprocess.run(["git", "ls-files", "--error-unmatch", "--", path], cwd=repo_root)
-        if tracked.returncode != 0:
-            raise ApplicatorError(f"Critical source is not tracked: {path}")
-    for args in (("diff", "--quiet", "HEAD"), ("diff", "--cached", "--quiet", "HEAD")):
-        clean = subprocess.run(["git", *args, "--", *relative], cwd=repo_root)
-        if clean.returncode != 0:
-            raise ApplicatorError("Critical bytes differ from the Git commit.")
-    ancestor = subprocess.run(["git", "merge-base", "--is-ancestor", AUTHORIZED_BASE_COMMIT, current_head], cwd=repo_root)
-    if ancestor.returncode != 0:
-        raise ApplicatorError("The authorized base commit is not an ancestor of the applicator commit.")
-    unchanged = subprocess.run(
-        ["git", "diff", "--quiet", AUTHORIZED_BASE_COMMIT, current_head, "--", str(CONTRACT_PATH.relative_to(repo_root)), str(PLAN_PATH.relative_to(repo_root))],
-        cwd=repo_root,
-    )
-    if unchanged.returncode != 0:
-        raise ApplicatorError("The contract or plan changed after the authorized base commit.")
-    return current_head
+    return verify_checkout_binding()
 
 
 def _private_path(path: Path, *, must_exist: bool) -> Path:

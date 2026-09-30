@@ -4,10 +4,34 @@ set -euo pipefail
 APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 STATE_VALIDATOR="$SCRIPT_DIR/validate-release-state.sh"
+OPERATION_LOCK_TOOL="$SCRIPT_DIR/operation-lock.py"
+OPERATION_ENTRYPOINT="$SCRIPT_DIR/rollback-current.sh"
+SOURCE_TREE_TOOL="$SCRIPT_DIR/verify-release-worktree.py"
+VALIDATION_RUNNER="$SCRIPT_DIR/run-release-validation.py"
 
 fail() {
   echo "[rollback:error] $*" >&2
   exit 1
+}
+
+verify_or_acquire_operation_lock() {
+  [ -f "$OPERATION_LOCK_TOOL" ] && [ ! -L "$OPERATION_LOCK_TOOL" ] \
+    || fail "Operation-lock helper is not one regular file: $OPERATION_LOCK_TOOL"
+  if [ -z "${HUB_OPTIMUS_OPERATION_LOCK_FD:-}" ]; then
+    exec /usr/bin/python3 -I \
+      "$OPERATION_LOCK_TOOL" \
+      exec \
+      "$APP_ROOT" \
+      "$OPERATION_ENTRYPOINT" \
+      "$@"
+  fi
+  /usr/bin/python3 -I \
+    "$OPERATION_LOCK_TOOL" \
+    verify \
+    "$APP_ROOT" \
+    "$HUB_OPTIMUS_OPERATION_LOCK_FD" \
+    || fail "Inherited operation lock could not be verified."
+  unset HUB_OPTIMUS_OPERATION_LOCK_FD
 }
 
 validate_release_state_schema() {
@@ -44,6 +68,135 @@ sha256_file() {
   [[ "$digest" =~ ^[0-9a-f]{64}$ ]] \
     || fail "Could not calculate launcher SHA-256: $path"
   printf '%s\n' "$digest"
+}
+
+verify_release_head() {
+  local release_path="$1"
+  local commit="$2"
+  local head_commit
+
+  head_commit="$(
+    /usr/bin/env -i \
+      HOME=/nonexistent \
+      LANG=C.UTF-8 \
+      PATH=/usr/bin:/bin \
+      GIT_CONFIG_GLOBAL=/dev/null \
+      GIT_CONFIG_NOSYSTEM=1 \
+      GIT_NO_REPLACE_OBJECTS=1 \
+      /usr/bin/git --no-replace-objects \
+        -C "$release_path" rev-parse --verify HEAD
+  )" || fail "Release HEAD could not be resolved safely: $release_path"
+  [[ "$head_commit" =~ ^[0-9a-f]{40}$ ]] \
+    && [ "$head_commit" = "$commit" ] \
+    || fail "Release HEAD differs from its recorded commit: $release_path"
+}
+
+release_source_evidence() {
+  local release_path="$1"
+  local commit="$2"
+  local evidence
+
+  verify_release_head "$release_path" "$commit"
+
+  [ -f "$SOURCE_TREE_TOOL" ] && [ ! -L "$SOURCE_TREE_TOOL" ] \
+    || fail "Source-tree verifier is not one regular file: $SOURCE_TREE_TOOL"
+  evidence="$(
+    /usr/bin/env -i \
+      HOME=/nonexistent \
+      LANG=C.UTF-8 \
+      PATH=/usr/bin:/bin \
+      /usr/bin/python3 -I \
+        "$SOURCE_TREE_TOOL" \
+        "$release_path" \
+        "$commit" \
+        --allow-generated .venv \
+        --allow-generated .hub-deployment
+  )" || fail "Release source tree differs from its reviewed commit: $release_path"
+  [ -n "$evidence" ] \
+    || fail "Source-tree verifier returned empty evidence."
+  verify_release_head "$release_path" "$commit"
+  printf '%s\n' "$evidence"
+}
+
+source_tree_digest() {
+  local evidence="$1"
+  local expected_commit="$2"
+
+  /usr/bin/python3 -I - "$expected_commit" "$evidence" <<'PY_SOURCE_EVIDENCE'
+import json
+import re
+import sys
+
+
+expected_commit, raw = sys.argv[1:]
+try:
+    evidence = json.loads(raw)
+except json.JSONDecodeError:
+    raise SystemExit(1)
+digest = evidence.get("source_tree_sha256")
+if evidence.get("commit") != expected_commit or not isinstance(digest, str):
+    raise SystemExit(1)
+if re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+    raise SystemExit(1)
+print(digest)
+PY_SOURCE_EVIDENCE
+}
+
+release_venv_digest() {
+  local release_path="$1"
+  local digest
+
+  [ -f "$VALIDATION_RUNNER" ] && [ ! -L "$VALIDATION_RUNNER" ] \
+    || fail "Venv-manifest supervisor is not one regular file: $VALIDATION_RUNNER"
+  digest="$(
+    /usr/bin/env -i \
+      HOME=/nonexistent \
+      LANG=C.UTF-8 \
+      PATH=/usr/bin:/bin \
+      /usr/bin/python3 -I \
+        "$VALIDATION_RUNNER" \
+        manifest-venv \
+        "$release_path"
+  )" || fail "Release venv manifest verification failed: $release_path"
+  [[ "$digest" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "Venv-manifest supervisor returned an invalid digest."
+  printf '%s\n' "$digest"
+}
+
+verify_recorded_release_authority() {
+  local release_path="$1"
+  local state_file="$2"
+  local label="$3"
+  local commit
+  local evidence
+  local actual_source_tree_sha256
+  local actual_venv_tree_sha256
+  local recorded_source_tree_sha256
+  local recorded_venv_tree_sha256
+
+  commit="$(required_state_value "$state_file" commit)"
+  recorded_source_tree_sha256="$(
+    required_state_value "$state_file" source_tree_sha256
+  )"
+  recorded_venv_tree_sha256="$(
+    required_state_value "$state_file" venv_tree_sha256
+  )"
+  [[ "$recorded_source_tree_sha256" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "$label RELEASE_STATE has no valid source-tree SHA-256."
+  [[ "$recorded_venv_tree_sha256" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "$label RELEASE_STATE has no valid venv-tree SHA-256."
+
+  evidence="$(release_source_evidence "$release_path" "$commit")"
+  actual_source_tree_sha256="$(source_tree_digest "$evidence" "$commit")" \
+    || fail "$label source-tree verifier returned invalid evidence."
+  [ "$actual_source_tree_sha256" = "$recorded_source_tree_sha256" ] \
+    || fail "$label source tree does not match RELEASE_STATE."
+
+  actual_venv_tree_sha256="$(release_venv_digest "$release_path")"
+  [ "$actual_venv_tree_sha256" = "$recorded_venv_tree_sha256" ] \
+    || fail "$label venv does not match RELEASE_STATE."
+  verify_release_head "$release_path" "$commit"
+  printf '%s:%s\n' "$actual_source_tree_sha256" "$actual_venv_tree_sha256"
 }
 
 snapshot_item() {
@@ -188,8 +341,7 @@ case "$APP_ROOT" in
   *) fail "HUB_OPTIMUS_APP_ROOT must be an absolute path." ;;
 esac
 
-exec 9> "$APP_ROOT/shared/deploy.lock"
-flock -n 9 || fail "another deploy or rollback operation is active."
+verify_or_acquire_operation_lock "$@"
 
 if [ ! -L "$APP_ROOT/current" ]; then
   fail "Current symlink does not exist."
@@ -237,6 +389,11 @@ CURRENT_COMMIT="$(git -C "$CURRENT" rev-parse --verify HEAD)"
 CURRENT_LAUNCHER_SHA256="$(sha256_file "$CURRENT/ops/ec2/hub-api.sh")"
 [ "$(required_state_value "$CURRENT_STATE" "launcher_sha256")" = "$CURRENT_LAUNCHER_SHA256" ] \
   || fail "Current release launcher does not match its deployment state."
+verify_recorded_release_authority \
+  "$CURRENT" \
+  "$CURRENT_STATE" \
+  "Current release" \
+  >/dev/null
 
 if [ "$CURRENT" = "$PREVIOUS" ]; then
   echo "[rollback] Current release already matches previous_release target:"
@@ -272,6 +429,11 @@ ACTUAL_COMMIT="$(git -C "$PREVIOUS" rev-parse --verify HEAD)"
 ACTUAL_LAUNCHER_SHA256="$(sha256_file "$PREVIOUS/ops/ec2/hub-api.sh")"
 [ "$RECORDED_LAUNCHER_SHA256" = "$ACTUAL_LAUNCHER_SHA256" ] \
   || fail "Previous release launcher does not match its deployment state."
+verify_recorded_release_authority \
+  "$PREVIOUS" \
+  "$PREVIOUS_STATE" \
+  "Previous release" \
+  >/dev/null
 
 CURRENT_RELEASE="$(basename "$CURRENT")"
 PREVIOUS_RELEASE="$(basename "$PREVIOUS")"
@@ -308,6 +470,25 @@ snapshot_item "$APP_ROOT/shared/RELEASE_STATE" "shared-release-state"
 snapshot_item "$APP_ROOT/shared/ROLLBACK_STATE" "rollback-state"
 snapshot_item "$APP_ROOT/shared/current_release" "current-release-marker"
 snapshot_item "$APP_ROOT/current" "current-symlink"
+
+if [ -n "${HUB_OPTIMUS_TEST_ROLLBACK_BEFORE_AUTHORITY_READY:-}" ]; then
+  touch "$HUB_OPTIMUS_TEST_ROLLBACK_BEFORE_AUTHORITY_READY"
+  while [ ! -e "${HUB_OPTIMUS_TEST_ROLLBACK_BEFORE_AUTHORITY_PROCEED:-}" ]; do
+    sleep 0.01
+  done
+fi
+verify_recorded_release_authority \
+  "$CURRENT" \
+  "$CURRENT_STATE" \
+  "Current release" \
+  >/dev/null
+verify_recorded_release_authority \
+  "$PREVIOUS" \
+  "$PREVIOUS_STATE" \
+  "Previous release" \
+  >/dev/null
+verify_release_head "$CURRENT" "$CURRENT_COMMIT"
+verify_release_head "$PREVIOUS" "$ACTUAL_COMMIT"
 
 MUTATION_STARTED=1
 

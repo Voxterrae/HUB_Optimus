@@ -3,3 +3,6 @@
 *.py text eol=lf
 *.json text eol=lf
 *.bundle binary
+site/obsidian-HUB_Optimus/** text eol=lf
+site/obsidian-HUB_Optimus-v1.0/** text eol=lf
+site/obsidian-HUB_Optimus-v1.1/** text eol=lf

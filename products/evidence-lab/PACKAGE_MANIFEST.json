@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "package": "OptimusEvidenceLab",
   "version": "0.1.0.0",
-  "fileCount": 30,
+  "fileCount": 31,
   "files": [
     {
       "path": ".gitattributes",
@@ -56,8 +56,8 @@
     },
     {
       "path": "docs/APPLICATOR.md",
-      "bytes": 2372,
-      "sha256": "db21040ee0c1b909536048f9fd6e0551be84dd9ab951324ee1b697e499d7061b"
+      "bytes": 3144,
+      "sha256": "dda51e9f2ddb53085deda2b53d3418c5fe73341c81d25bddd1c539aac8988996"
     },
     {
       "path": "docs/MODEL.md",
@@ -96,8 +96,8 @@
     },
     {
       "path": "scripts/apply-dataverse-schema.py",
-      "bytes": 56037,
-      "sha256": "6992b3806934bede9b1fbad683f6a3106a0339fe66439104afbee6ce9e21dafe"
+      "bytes": 57022,
+      "sha256": "196e7623a7c11aed9c86695261bd0d3a944e8b8a6dd1aa71df911f588ea04874"
     },
     {
       "path": "scripts/build_artifacts.py",
@@ -113,6 +113,11 @@
       "path": "tests/test_baseline_b0_and_rollback_plan.py",
       "bytes": 1342,
       "sha256": "76ff6f9b3ce2c0cb2c2037e180fcf33c933096a8589b57f2bbf290da1e154d65"
+    },
+    {
+      "path": "tests/test_checkout_binding.py",
+      "bytes": 5615,
+      "sha256": "e7a057df5d65546b23c2bd50e2afa87d7ce3a8fa708c053dc5bffb454d1edb99"
     },
     {
       "path": "tests/test_contract.py",

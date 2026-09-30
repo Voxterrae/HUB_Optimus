@@ -44,8 +44,14 @@ git -C "$TOOLS_ROOT" fetch --quiet --depth 1 origin "$TARGET_SHA"
 git -C "$TOOLS_ROOT" checkout --quiet --detach FETCH_HEAD
 test "$(git -C "$TOOLS_ROOT" rev-parse --verify HEAD)" = "$TARGET_SHA"
 
-bash -n "$TOOLS_ROOT"/ops/ec2/*.sh
-python3 -m py_compile "$TOOLS_ROOT/ops/ec2/intake-smoke-evidence.py"
+find "$TOOLS_ROOT/ops/ec2" -maxdepth 1 -type f -name '*.sh' \
+  ! -name 'hub-ops.sh' -exec bash -n '{}' +
+python3 -m py_compile \
+  "$TOOLS_ROOT/ops/ec2/hub-ops.sh" \
+  "$TOOLS_ROOT/ops/ec2/intake-smoke-evidence.py" \
+  "$TOOLS_ROOT/ops/ec2/run-reviewed-operation.py" \
+  "$TOOLS_ROOT/ops/ec2/run-release-validation.py" \
+  "$TOOLS_ROOT/ops/ec2/verify-release-worktree.py"
 ```
 
 Removal of this retained checkout is a separate post-operation cleanup choice;
@@ -59,10 +65,11 @@ file, the launcher, or a symlink by hand. The command is deliberately bound to
 the known full current commit rather than the legacy state's short SHA:
 
 ```bash
-HUB_OPTIMUS_APP_ROOT="$APP_ROOT" \
-HUB_OPTIMUS_REPO_URL="$REPO_URL" \
-  bash "$TOOLS_ROOT/ops/ec2/adopt-legacy-current.sh" \
-    "$LEGACY_CURRENT_SHA"
+/usr/bin/python3 -I \
+  "$TOOLS_ROOT/ops/ec2/run-reviewed-operation.py" \
+  --app-root "$APP_ROOT" \
+  --repo-url "$REPO_URL" \
+  adopt "$LEGACY_CURRENT_SHA"
 
 ADOPTED_CURRENT="$(readlink -f "$APP_ROOT/current")"
 ADOPTED_STATE="$ADOPTED_CURRENT/.hub-deployment/RELEASE_STATE"
@@ -82,24 +89,33 @@ Adoption validates the managed symlink, exact repository origin, clean release
 checkout, full commit, marker, and byte-identical versioned/shared launcher. It
 does not re-assert the old `pytest 55 passed` claim. Instead it preserves the
 original legacy state byte-for-byte as mode-`0400` evidence, records its
-SHA-256 and short-commit prefix in a new full-SHA state, and postvalidates that
-the per-release and shared states are identical before committing success.
+SHA-256 and short-commit prefix in a new full-SHA v2 adoption state. That state
+also records the reviewed source-tree and venv digests. Adoption verifies HEAD,
+source, and venv at baseline, immediately before mutation, and after
+publication, then postvalidates that the per-release and shared states are
+identical before committing success.
 
 The command is idempotent only when that complete evidence bundle remains
 exact. A failure after mutation begins restores the pre-adoption state and
 retains its snapshot and recovery log under `shared/legacy-adoption.*`. Stop
 and inspect that evidence; do not repair or retry by hand.
 
+Normal API and core execution must not write caches into a release: the
+reviewed launchers and unit set `PYTHONDONTWRITEBYTECODE=1`, and `hub-core test`
+disables pytest's cache provider. Any pre-existing `__pycache__` or
+`.pytest_cache` is unexpected source drift and blocks adoption, deploy, and
+rollback.
+
 ## 3. Fail-closed host preflight
 
 Run the versioned preflight before deployment:
 
 ```bash
-HUB_OPTIMUS_APP_ROOT="$APP_ROOT" \
-HUB_OPTIMUS_REPO_URL="$REPO_URL" \
-  bash "$TOOLS_ROOT/ops/ec2/preflight-deploy.sh" \
-    "$TARGET_SHA" \
-    "$REFERENCE_URL"
+/usr/bin/python3 -I \
+  "$TOOLS_ROOT/ops/ec2/run-reviewed-operation.py" \
+  --app-root "$APP_ROOT" \
+  --repo-url "$REPO_URL" \
+  preflight "$TARGET_SHA" "$REFERENCE_URL"
 ```
 
 The preflight stops unless all of the following are true:
@@ -125,18 +141,21 @@ Do not override a failed threshold or identity check inside the same operation.
 ## 4. Exact-SHA deploy and review
 
 ```bash
-HUB_OPTIMUS_APP_ROOT="$APP_ROOT" \
-HUB_OPTIMUS_REPO_URL="$REPO_URL" \
-  bash "$TOOLS_ROOT/ops/ec2/deploy-current.sh" "$TARGET_SHA"
+/usr/bin/python3 -I \
+  "$TOOLS_ROOT/ops/ec2/run-reviewed-operation.py" \
+  --app-root "$APP_ROOT" \
+  --repo-url "$REPO_URL" \
+  deploy "$TARGET_SHA"
 
 DEPLOYED_RELEASE="$(readlink -f "$APP_ROOT/current")"
 test "$(git -C "$DEPLOYED_RELEASE" rev-parse --verify HEAD)" = "$TARGET_SHA"
 DEPLOYED_RELEASE_STATE="$DEPLOYED_RELEASE/.hub-deployment/RELEASE_STATE"
 cmp -s "$DEPLOYED_RELEASE_STATE" "$APP_ROOT/shared/RELEASE_STATE"
 
-python3 - "$APP_ROOT" "$DEPLOYED_RELEASE" "$TARGET_SHA" <<'PY_DEPLOY_STATE'
+/usr/bin/python3 -I - "$APP_ROOT" "$DEPLOYED_RELEASE" "$TARGET_SHA" <<'PY_DEPLOY_STATE'
 import hashlib
 import json
+import os
 import re
 import stat
 import sys
@@ -157,6 +176,22 @@ required_keys = {
     "validation_result",
     "validation_log",
     "validation_log_exit_code",
+    "validation_log_sha256",
+    "validation_protocol",
+    "validation_collected",
+    "validation_terminal",
+    "validation_passed",
+    "validation_skipped",
+    "validation_failed",
+    "validation_pytest_exit_code",
+    "validation_nodeids_sha256",
+    "validation_descendants",
+    "validation_worker_uid",
+    "source_tree_sha256",
+    "venv_tree_sha256",
+    "dependency_tier",
+    "dependency_lock",
+    "dependency_lock_sha256",
     "launcher_sha256",
     "status",
 }
@@ -169,6 +204,100 @@ def require_regular(path, *, executable=False, mode=None):
         raise SystemExit(f"not executable: {path}")
     if mode is not None and actual_mode != mode:
         raise SystemExit(f"unexpected mode for {path}: {actual_mode:o}")
+
+def read_stable_regular(path, *, mode):
+    flags = os.O_RDONLY | os.O_CLOEXEC
+    if not hasattr(os, "O_NOFOLLOW"):
+        raise SystemExit("O_NOFOLLOW is unavailable for dependency-lock attestation")
+    descriptor = os.open(path, flags | os.O_NOFOLLOW)
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+            raise SystemExit(f"not one regular single-link file: {path}")
+        if stat.S_IMODE(before.st_mode) != mode:
+            raise SystemExit(f"unexpected mode for {path}: {stat.S_IMODE(before.st_mode):o}")
+        chunks = []
+        while True:
+            chunk = os.read(descriptor, 1024 * 1024)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        after = os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
+    fields = ("st_dev", "st_ino", "st_mode", "st_nlink", "st_size", "st_mtime_ns", "st_ctime_ns")
+    visible = os.stat(path, follow_symlinks=False)
+    if any(getattr(before, field) != getattr(after, field) for field in fields):
+        raise SystemExit(f"regular file changed while it was read: {path}")
+    if any(getattr(after, field) != getattr(visible, field) for field in fields):
+        raise SystemExit(f"regular file path changed while it was read: {path}")
+    return b"".join(chunks)
+
+def read_canonical_validation_log(path, *, mode):
+    flags = os.O_RDONLY | os.O_CLOEXEC
+    if not hasattr(os, "O_NOFOLLOW"):
+        raise SystemExit("O_NOFOLLOW is unavailable for validation-log attestation")
+    flags |= os.O_NOFOLLOW
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as exc:
+        raise SystemExit(
+            f"could not open validation log without following links: {path}: {exc}"
+        ) from exc
+    try:
+        opened = os.fstat(descriptor)
+        if not stat.S_ISREG(opened.st_mode):
+            raise SystemExit(f"validation log is not one regular file: {path}")
+        actual_mode = stat.S_IMODE(opened.st_mode)
+        if actual_mode != mode:
+            raise SystemExit(
+                f"unexpected validation-log mode for {path}: {actual_mode:o}"
+            )
+        chunks = []
+        while True:
+            chunk = os.read(descriptor, 1024 * 1024)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        raw = b"".join(chunks)
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise SystemExit("validation log is not UTF-8") from exc
+        if not raw.endswith(b"\n"):
+            raise SystemExit("validation log has no terminal LF")
+        for character in text:
+            codepoint = ord(character)
+            if character in {"\n", "\t"}:
+                continue
+            if codepoint < 0x20 or 0x7F <= codepoint <= 0x9F:
+                raise SystemExit("validation log is not canonical UTF-8/LF text")
+            if character in {"\u2028", "\u2029"}:
+                raise SystemExit("validation log is not canonical UTF-8/LF text")
+
+        finished = os.fstat(descriptor)
+        visible = os.stat(path, follow_symlinks=False)
+        identity_fields = (
+            "st_dev",
+            "st_ino",
+            "st_mode",
+            "st_size",
+            "st_mtime_ns",
+            "st_ctime_ns",
+        )
+        if any(
+            getattr(opened, field) != getattr(finished, field)
+            for field in identity_fields
+        ):
+            raise SystemExit("validation log changed while it was being attested")
+        if any(
+            getattr(finished, field) != getattr(visible, field)
+            for field in identity_fields
+        ):
+            raise SystemExit("validation log path changed while it was being attested")
+        return raw, text
+    finally:
+        os.close(descriptor)
 
 def exact_state(path, raw):
     try:
@@ -221,7 +350,12 @@ if not re.fullmatch(
     state["validated_at_utc"],
 ):
     raise SystemExit("release-state validation timestamp is invalid")
-if state["validation_command"] != "python -m pytest -q":
+expected_validation_command = (
+    "/usr/bin/env -i HOME=/nonexistent LANG=C.UTF-8 PATH=/usr/bin:/bin "
+    f"/usr/bin/python3 -I {deployed}/ops/ec2/run-release-validation.py "
+    f"{deployed} {target} {deployed}/ops/ec2/verify-release-worktree.py"
+)
+if state["validation_command"] != expected_validation_command:
     raise SystemExit("release-state validation command differs")
 if state["validation_exit_code"] != "0" or state["validation_log_exit_code"] != "0":
     raise SystemExit("candidate validation did not pass")
@@ -230,7 +364,85 @@ if not state["validation_result"]:
 expected_validation_log = deployed / ".hub-deployment" / "validation.log"
 if state["validation_log"] != str(expected_validation_log):
     raise SystemExit("release-state validation log path differs")
-require_regular(expected_validation_log, mode=0o600)
+validation_log_raw, validation_log_text = read_canonical_validation_log(
+    expected_validation_log,
+    mode=0o600,
+)
+validation_log_sha256 = hashlib.sha256(validation_log_raw).hexdigest()
+if state["validation_log_sha256"] != validation_log_sha256:
+    raise SystemExit("validation log does not match RELEASE_STATE")
+validation_result_lines = [
+    line for line in validation_log_text[:-1].split("\n") if line.split()
+]
+if not validation_result_lines:
+    raise SystemExit("validation log has no non-empty result line")
+if validation_result_lines[-1] != state["validation_result"]:
+    raise SystemExit("validation result does not match the validation log")
+if state["validation_protocol"] != "isolated-pytest-v1":
+    raise SystemExit("release state has the wrong validation protocol")
+numeric_validation_fields = (
+    "validation_collected",
+    "validation_terminal",
+    "validation_passed",
+    "validation_skipped",
+    "validation_failed",
+    "validation_pytest_exit_code",
+    "validation_descendants",
+    "validation_worker_uid",
+)
+if any(not state[field].isdigit() for field in numeric_validation_fields):
+    raise SystemExit("release state has non-numeric validation evidence")
+collected = int(state["validation_collected"])
+terminal = int(state["validation_terminal"])
+passed = int(state["validation_passed"])
+skipped = int(state["validation_skipped"])
+failed = int(state["validation_failed"])
+if not (
+    collected > 0
+    and terminal == collected
+    and failed == 0
+    and state["validation_pytest_exit_code"] == "0"
+    and state["validation_descendants"] == "0"
+    and passed + skipped == terminal
+):
+    raise SystemExit("release state has incomplete validation evidence")
+for field in (
+    "validation_nodeids_sha256",
+    "source_tree_sha256",
+    "venv_tree_sha256",
+):
+    if not re.fullmatch(r"[0-9a-f]{64}", state[field]):
+        raise SystemExit(f"release state has invalid {field}")
+expected_validation_result = (
+    f"HUB_OPTIMUS_VALIDATION_V1 collected={collected} terminal={terminal} "
+    f"passed={passed} skipped={skipped} failed={failed} "
+    f"pytest_exit_code={state['validation_pytest_exit_code']} "
+    f"nodeids_sha256={state['validation_nodeids_sha256']} "
+    f"descendants={state['validation_descendants']} "
+    f"source_tree_sha256={state['source_tree_sha256']} "
+    f"venv_tree_sha256={state['venv_tree_sha256']} "
+    f"worker_uid={state['validation_worker_uid']} result=passed"
+)
+if state["validation_result"] != expected_validation_result:
+    raise SystemExit("validation result does not match structured evidence")
+if state["dependency_tier"] != "runtime+validation-v1":
+    raise SystemExit("release state has the wrong dependency tier")
+expected_dependency_lock = deployed / "ops" / "ec2" / "requirements-validation.lock"
+if state["dependency_lock"] != str(expected_dependency_lock):
+    raise SystemExit("release state has the wrong dependency-lock path")
+dependency_digest = hashlib.sha256()
+for relative in (
+    "ops/ec2/requirements-runtime.lock",
+    "ops/ec2/requirements-validation.lock",
+):
+    raw = read_stable_regular(deployed / relative, mode=0o644)
+    relative_raw = relative.encode("ascii")
+    dependency_digest.update(len(relative_raw).to_bytes(4, "big"))
+    dependency_digest.update(relative_raw)
+    dependency_digest.update(len(raw).to_bytes(8, "big"))
+    dependency_digest.update(raw)
+if state["dependency_lock_sha256"] != dependency_digest.hexdigest():
+    raise SystemExit("dependency locks do not match RELEASE_STATE")
 if not re.fullmatch(r"[0-9a-f]{64}", state["launcher_sha256"]):
     raise SystemExit("launcher identity is missing")
 if state["status"] != "production-candidate-core":
@@ -256,12 +468,14 @@ if current_marker.read_bytes() != f"{deployed.name}\n".encode():
 
 print(json.dumps({
     "commit": state["commit"],
+    "dependency_lock_sha256": state["dependency_lock_sha256"],
     "launcher_sha256": state["launcher_sha256"],
     "path": state["path"],
     "release": state["release"],
     "release_state_sha256": hashlib.sha256(release_state_raw).hexdigest(),
     "validation_exit_code": state["validation_exit_code"],
     "validation_log_exit_code": state["validation_log_exit_code"],
+    "validation_log_sha256": state["validation_log_sha256"],
 }, indent=2, sort_keys=True))
 PY_DEPLOY_STATE
 
@@ -270,6 +484,12 @@ EXPECTED_LAUNCHER_SHA256="$(
 )"
 [[ "$EXPECTED_LAUNCHER_SHA256" =~ ^[0-9a-f]{64}$ ]]
 ```
+
+The production release state is acceptable only while its mode-`0600`,
+canonical UTF-8/LF validation log can be read from one no-follow regular-file
+snapshot, still matches the recorded SHA-256, and has a final non-empty line
+equal to `validation_result`. Its reviewed runtime and validation locks must
+also reproduce the recorded combined digest.
 
 An internal failure after deployment mutation begins automatically restores the
 exact pre-deploy `current` symlink, shared launcher, shared release state,
@@ -390,8 +610,11 @@ deploy itself completed, retain the local response and use the rollback script
 from the persistent deployed release, not a temporary checkout:
 
 ```bash
-HUB_OPTIMUS_APP_ROOT="$APP_ROOT" \
-  bash "$DEPLOYED_RELEASE/ops/ec2/rollback-current.sh"
+/usr/bin/python3 -I \
+    "$DEPLOYED_RELEASE/ops/ec2/run-reviewed-operation.py" \
+    --app-root "$APP_ROOT" \
+    --repo-url "$REPO_URL" \
+    rollback
 
 ROLLED_BACK_RELEASE="$(readlink -f "$APP_ROOT/current")"
 RESTORED_COMMIT="$(git -C "$ROLLED_BACK_RELEASE" rev-parse --verify HEAD)"
@@ -433,6 +656,8 @@ adopted_keys = {
     "validation_result",
     "validation_log",
     "validation_log_exit_code",
+    "source_tree_sha256",
+    "venv_tree_sha256",
     "launcher_sha256",
     "status",
     "provenance",
@@ -545,8 +770,12 @@ if release_state["validation_log_exit_code"] != "not-run":
     raise SystemExit("restored adoption log exit differs")
 if release_state["status"] != "adopted-legacy-current":
     raise SystemExit("restored adoption status differs")
-if release_state["provenance"] != "adopted-legacy-current-v1":
+if release_state["provenance"] != "adopted-legacy-current-v2":
     raise SystemExit("restored adoption provenance differs")
+if not re.fullmatch(r"[0-9a-f]{64}", release_state["source_tree_sha256"]):
+    raise SystemExit("restored source-tree authority is invalid")
+if not re.fullmatch(r"[0-9a-f]{64}", release_state["venv_tree_sha256"]):
+    raise SystemExit("restored venv authority is invalid")
 if not re.fullmatch(r"[0-9a-f]{64}", release_state["legacy_state_sha256"]):
     raise SystemExit("restored legacy-state identity is invalid")
 legacy_prefix = release_state["legacy_commit_prefix"]

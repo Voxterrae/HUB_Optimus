@@ -97,6 +97,22 @@
       "note": "Planning record only; repository settings and platform adoption require separate evidence."
     },
     {
+      "id": "hub-optimus-evidence-bridge",
+      "path": "docs/rfc/hub_optimus_evidence_bridge.md",
+      "title": "HUB_Optimus Evidence Bridge",
+      "lifecycle": "Draft",
+      "proposal_issue": 1922,
+      "record_pr": null,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/hub_optimus_evidence_bridge.md"
+      ],
+      "note": "Architecture proposal only; it authorizes no Dataverse mutation, hosted MCP endpoint, OpenAI plugin publication, truth adjudication, merge, or deployment."
+    },
+    {
       "id": "hermes-pwa-gate-issue-pack",
       "path": "docs/rfc/hermes_pwa_gate_issue_pack.md",
       "title": "HERMES PWA Gate Issue Pack",

@@ -13,6 +13,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNBOOK = ROOT / "ops" / "ec2" / "ISSUE_1831_RUNBOOK.md"
+DEPENDENCY_LOCKS = (
+    "ops/ec2/requirements-runtime.lock",
+    "ops/ec2/requirements-validation.lock",
+)
 
 
 def _heredoc(name: str) -> str:
@@ -66,7 +70,28 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
 
     deployment_dir = release / ".hub-deployment"
     validation_log = deployment_dir / "validation.log"
-    _write_bytes(validation_log, b"692 passed\n", 0o600)
+    source_tree_sha256 = "1" * 64
+    venv_tree_sha256 = "2" * 64
+    nodeids_sha256 = "3" * 64
+    validation_result = (
+        "HUB_OPTIMUS_VALIDATION_V1 collected=692 terminal=692 passed=692 "
+        "skipped=0 failed=0 pytest_exit_code=0 "
+        f"nodeids_sha256={nodeids_sha256} descendants=0 "
+        f"source_tree_sha256={source_tree_sha256} "
+        f"venv_tree_sha256={venv_tree_sha256} worker_uid=65534 result=passed"
+    )
+    validation_log_raw = f"collecting tests\n{validation_result}\n".encode()
+    _write_bytes(validation_log, validation_log_raw, 0o600)
+    dependency_digest = hashlib.sha256()
+    for relative in DEPENDENCY_LOCKS:
+        raw = (ROOT / relative).read_bytes()
+        _write_bytes(release / relative, raw, 0o644)
+        relative_raw = relative.encode("ascii")
+        dependency_digest.update(len(relative_raw).to_bytes(4, "big"))
+        dependency_digest.update(relative_raw)
+        dependency_digest.update(len(raw).to_bytes(8, "big"))
+        dependency_digest.update(raw)
+    dependency_lock = release / "ops" / "ec2" / "requirements-validation.lock"
     fields = {
         "release": release.name,
         "requested_ref": commit,
@@ -74,11 +99,31 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
         "commit": commit,
         "path": str(release),
         "validated_at_utc": "2026-08-02T12:00:00Z",
-        "validation_command": "python -m pytest -q",
+        "validation_command": (
+            "/usr/bin/env -i HOME=/nonexistent LANG=C.UTF-8 PATH=/usr/bin:/bin "
+            f"/usr/bin/python3 -I {release}/ops/ec2/run-release-validation.py "
+            f"{release} {commit} {release}/ops/ec2/verify-release-worktree.py"
+        ),
         "validation_exit_code": "0",
-        "validation_result": "692 passed in 30.45s",
+        "validation_result": validation_result,
         "validation_log": str(validation_log),
         "validation_log_exit_code": "0",
+        "validation_log_sha256": hashlib.sha256(validation_log_raw).hexdigest(),
+        "validation_protocol": "isolated-pytest-v1",
+        "validation_collected": "692",
+        "validation_terminal": "692",
+        "validation_passed": "692",
+        "validation_skipped": "0",
+        "validation_failed": "0",
+        "validation_pytest_exit_code": "0",
+        "validation_nodeids_sha256": nodeids_sha256,
+        "validation_descendants": "0",
+        "validation_worker_uid": "65534",
+        "source_tree_sha256": source_tree_sha256,
+        "venv_tree_sha256": venv_tree_sha256,
+        "dependency_tier": "runtime+validation-v1",
+        "dependency_lock": str(dependency_lock),
+        "dependency_lock_sha256": dependency_digest.hexdigest(),
         "launcher_sha256": launcher_sha256,
         "status": "production-candidate-core",
     }
@@ -98,6 +143,7 @@ def _deploy_fixture(tmp_path: Path) -> dict[str, object]:
         "launcher_sha256": launcher_sha256,
         "release": release,
         "release_state": release_state,
+        "validation_log": validation_log,
         "shared_launcher": shared_launcher,
         "shared_state": shared_state,
         "versioned_launcher": versioned_launcher,
@@ -119,6 +165,10 @@ def test_post_deploy_disk_attestation_accepts_exact_release(tmp_path: Path) -> N
     assert evidence["release"] == Path(fixture["release"]).name
     assert evidence["commit"] == fixture["commit"]
     assert evidence["launcher_sha256"] == fixture["launcher_sha256"]
+    assert evidence["validation_log_sha256"] == hashlib.sha256(
+        Path(fixture["validation_log"]).read_bytes()
+    ).hexdigest()
+    assert re.fullmatch(r"[0-9a-f]{64}", evidence["dependency_lock_sha256"])
 
 
 @pytest.mark.parametrize(
@@ -130,6 +180,33 @@ def test_post_deploy_disk_attestation_accepts_exact_release(tmp_path: Path) -> N
         ("extra-field", "exact field set"),
         ("release", "wrong release name"),
         ("path", "wrong release path"),
+        (
+            "validation-log-truncated",
+            "validation log does not match RELEASE_STATE",
+        ),
+        (
+            "validation-log-replaced",
+            "validation log does not match RELEASE_STATE",
+        ),
+        (
+            "validation-result",
+            "validation result does not match the validation log",
+        ),
+        ("validation-log-invalid-utf8", "validation log is not UTF-8"),
+        (
+            "validation-log-nul",
+            "validation log is not canonical UTF-8/LF text",
+        ),
+        (
+            "validation-log-crlf",
+            "validation log is not canonical UTF-8/LF text",
+        ),
+        (
+            "validation-log-line-separator",
+            "validation log is not canonical UTF-8/LF text",
+        ),
+        ("validation-log-missing-lf", "validation log has no terminal LF"),
+        ("validation-log-mode", "unexpected validation-log mode"),
         ("state-launcher", "launcher hashes do not match"),
         ("versioned-launcher", "shared and versioned launchers differ"),
         ("shared-launcher", "shared and versioned launchers differ"),
@@ -181,6 +258,46 @@ def test_post_deploy_disk_attestation_rejects_every_identity_drift(
                 b"path=/tmp/wrong\n",
             ),
         )
+    elif invalid_case == "validation-log-truncated":
+        Path(fixture["validation_log"]).write_bytes(b"collecting tests\n")
+    elif invalid_case == "validation-log-replaced":
+        Path(fixture["validation_log"]).write_bytes(
+            b"replacement context\n692 passed in 30.45s\n\n"
+        )
+    elif invalid_case == "validation-result":
+        _replace_state_pair(
+            release_state,
+            shared_state,
+            lambda raw: re.sub(
+                rb"^validation_result=.*\n",
+                b"validation_result=forged result\n",
+                raw,
+                count=1,
+                flags=re.MULTILINE,
+            ),
+        )
+    elif invalid_case == "validation-log-invalid-utf8":
+        Path(fixture["validation_log"]).write_bytes(
+            b"invalid=\xff\n692 passed in 30.45s\n"
+        )
+    elif invalid_case == "validation-log-nul":
+        Path(fixture["validation_log"]).write_bytes(
+            b"has=\x00\n692 passed in 30.45s\n"
+        )
+    elif invalid_case == "validation-log-crlf":
+        Path(fixture["validation_log"]).write_bytes(
+            b"uses CRLF\r\n692 passed in 30.45s\n"
+        )
+    elif invalid_case == "validation-log-line-separator":
+        Path(fixture["validation_log"]).write_bytes(
+            "uses LS\u2028\n692 passed in 30.45s\n".encode()
+        )
+    elif invalid_case == "validation-log-missing-lf":
+        Path(fixture["validation_log"]).write_bytes(
+            b"692 passed in 30.45s"
+        )
+    elif invalid_case == "validation-log-mode":
+        Path(fixture["validation_log"]).chmod(0o644)
     elif invalid_case == "state-launcher":
         _replace_state_pair(
             release_state,
@@ -327,9 +444,11 @@ def _rollback_fixture(tmp_path: Path) -> dict[str, object]:
         ),
         "validation_log": "not-applicable",
         "validation_log_exit_code": "not-run",
+        "source_tree_sha256": "1" * 64,
+        "venv_tree_sha256": "2" * 64,
         "launcher_sha256": launcher_sha256,
         "status": "adopted-legacy-current",
-        "provenance": "adopted-legacy-current-v1",
+        "provenance": "adopted-legacy-current-v2",
         "legacy_state_sha256": hashlib.sha256(legacy_raw).hexdigest(),
         "legacy_commit_prefix": legacy_prefix,
     }
