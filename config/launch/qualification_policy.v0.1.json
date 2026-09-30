@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.1",
+  "authority_issue": 1867,
+  "owner": "Benjamin Gerrit Hoff",
+  "general_minimum_budget_bands": [
+    "15k_50k",
+    "50k_250k",
+    "250k_750k",
+    "750k_3m",
+    "over_3m"
+  ],
+  "enterprise_public_minimum_budget_bands": [
+    "50k_250k",
+    "250k_750k",
+    "750k_3m",
+    "over_3m"
+  ],
+  "enterprise_public_types": [
+    "enterprise",
+    "public_institution"
+  ],
+  "free_bespoke_work_allowed": false,
+  "core_source_transfer_allowed_by_standard_qualification": false,
+  "ownership_or_control_allowed": false,
+  "white_label_oem_resale_requires_owner_review": true,
+  "paid_diagnostic_required": true,
+  "common_good": {
+    "requires_nonprofit": true,
+    "requires_direct_human_or_animal_benefit": true,
+    "requires_noncommercial_use": true,
+    "hidden_commercial_beneficiary_allowed": false,
+    "core_source_transfer_allowed": false,
+    "ownership_or_control_allowed": false
+  }
+}
