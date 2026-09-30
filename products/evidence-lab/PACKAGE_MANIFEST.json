@@ -130,6 +130,11 @@
       "sha256": "a4159b2d12157b0c9aa6a4446d39a42f623d57d557d134618afbf3f9bc10b2df"
     },
     {
+      "path": "tests/test_evidence_public_boundary.py",
+      "bytes": 1656,
+      "sha256": "91afd8e8b5866a9cd38b53cdb4543b02f3df421a4c2f445e248a339286320958"
+    },
+    {
       "path": "tests/test_manifest.py",
       "bytes": 1156,
       "sha256": "036f158ddb9ee619ae9acd3092254689815832e6d97f70fce44bd606ef386474"
@@ -138,11 +143,6 @@
       "path": "tests/test_plan.py",
       "bytes": 2925,
       "sha256": "ae3df3b4d44d84cecd509ee9e08bbc3929206707da9218a46febf01aa9f76c15"
-    },
-    {
-      "path": "tests/test_public_boundary.py",
-      "bytes": 1656,
-      "sha256": "91afd8e8b5866a9cd38b53cdb4543b02f3df421a4c2f445e248a339286320958"
     },
     {
       "path": "tests/test_schema_applicator.py",
