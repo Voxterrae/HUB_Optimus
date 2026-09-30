@@ -1,20 +1,12 @@
-const CACHE_NAME = "hub-optimus-operator-v0-28";
-const VERSION_REQUEST = "HUB_OPTIMUS_OPERATOR_SW_VERSION_V1";
+const CACHE_NAME = "hub-optimus-operator-v0-30";
+const PRIVATE_OPERATOR_ORIGIN = "https://api.huboptimus.dev";
+const IS_PRIVATE_OPERATOR_ORIGIN = self.location.origin === PRIVATE_OPERATOR_ORIGIN;
 const OFFLINE_FALLBACK = "./index.html";
-const OAUTH_CALLBACK_FIELDS = [
-  "code",
-  "state",
-  "error",
-  "error_description",
-  "error_uri",
-  "iss",
-  "session_state"
-];
 const STATIC_ASSETS = [
   "./",
   "./index.html",
-  "./auth.v1.js",
   "./i18n.v1.js",
+  "./claim-decomposition.v1.js",
   "./learning-candidate.v1.js",
   "./learning-store.v1.js",
   "./schemas/operator_learning_candidate.v1.schema.json",
@@ -49,16 +41,10 @@ async function networkFirst(request) {
     const response = await fetch(request, { cache: "no-store" });
 
     if (response && response.ok) {
+      await cache.put(request, response.clone());
+
       if (request.mode === "navigate") {
-        const navigationUrl = new URL(request.url);
-        const isOAuthCallback = OAUTH_CALLBACK_FIELDS.some((field) =>
-          navigationUrl.searchParams.has(field)
-        );
-        if (!isOAuthCallback) {
-          await cache.put(OFFLINE_FALLBACK, response.clone());
-        }
-      } else {
-        await cache.put(request, response.clone());
+        await cache.put(OFFLINE_FALLBACK, response.clone());
       }
     }
 
@@ -84,30 +70,36 @@ async function cacheFirst(request) {
 }
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(cacheStaticAssets());
+  event.waitUntil(
+    IS_PRIVATE_OPERATOR_ORIGIN
+      ? Promise.resolve()
+      : cacheStaticAssets()
+  );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(
-      keys
-        .filter((
-          key
-        ) => key.startsWith("hub-optimus-operator-") && key !== CACHE_NAME)
-        .map((key) => caches.delete(key))
-    ))
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys
+        .filter((key) => (
+          key.startsWith("hub-optimus-operator-") &&
+          (IS_PRIVATE_OPERATOR_ORIGIN || key !== CACHE_NAME)
+        ))
+        .map((key) => caches.delete(key)));
+      if (IS_PRIVATE_OPERATOR_ORIGIN) {
+        await self.registration.unregister();
+      }
+      await self.clients.claim();
+    })()
   );
-
-  self.clients.claim();
-});
-
-self.addEventListener("message", (event) => {
-  if (event.data?.type !== VERSION_REQUEST) return;
-  event.ports?.[0]?.postMessage({ version: CACHE_NAME });
 });
 
 self.addEventListener("fetch", (event) => {
+  // The authenticated console must never work from an offline shell after a
+  // session expires or is deliberately closed. NGINX is its only source.
+  if (IS_PRIVATE_OPERATOR_ORIGIN) return;
   if (event.request.method !== "GET") return;
 
   const url = new URL(event.request.url);
@@ -115,13 +107,6 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (url.pathname.endsWith("/operator/sw.js")) return;
-
-  if (url.pathname.endsWith("/operator/runtime-config.v1.js")) {
-    // Runtime enablement is a kill switch. Never let an older enabled config
-    // survive in Cache Storage; a network failure therefore disables auth.
-    event.respondWith(fetch(event.request, { cache: "no-store" }));
-    return;
-  }
 
   if (
     event.request.mode === "navigate" ||

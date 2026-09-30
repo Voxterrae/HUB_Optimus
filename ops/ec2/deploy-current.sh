@@ -4,7 +4,15 @@ set -euo pipefail
 APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 REPO_URL="${HUB_OPTIMUS_REPO_URL:-https://github.com/Voxterrae/HUB_Optimus.git}"
 DEPLOY_REF="${1:-}"
-VALIDATION_COMMAND_TEXT="python -m pytest -q"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+STATE_VALIDATOR="$SCRIPT_DIR/validate-release-state.sh"
+DEPENDENCY_LOCK_TOOL="$SCRIPT_DIR/dependency-lock-digest.sh"
+DEPENDENCY_INVENTORY_TOOL="$SCRIPT_DIR/verify-installed-dependencies.py"
+OPERATION_LOCK_TOOL="$SCRIPT_DIR/operation-lock.py"
+OPERATION_ENTRYPOINT="$SCRIPT_DIR/deploy-current.sh"
+SOURCE_TREE_TOOL="$SCRIPT_DIR/verify-release-worktree.py"
+VALIDATION_RUNNER="$SCRIPT_DIR/run-release-validation.py"
+SYSTEM_PYTHON="/usr/bin/python3"
 
 usage() {
   cat <<USAGE
@@ -21,6 +29,251 @@ USAGE
 fail() {
   echo "[deploy:error] $*" >&2
   exit 1
+}
+
+verify_or_acquire_operation_lock() {
+  [ -f "$OPERATION_LOCK_TOOL" ] && [ ! -L "$OPERATION_LOCK_TOOL" ] \
+    || fail "Operation-lock helper is not one regular file: $OPERATION_LOCK_TOOL"
+  if [ -z "${HUB_OPTIMUS_OPERATION_LOCK_FD:-}" ]; then
+    exec /usr/bin/python3 -I \
+      "$OPERATION_LOCK_TOOL" \
+      exec \
+      "$APP_ROOT" \
+      "$OPERATION_ENTRYPOINT" \
+      "$@"
+  fi
+  /usr/bin/python3 -I \
+    "$OPERATION_LOCK_TOOL" \
+    verify \
+    "$APP_ROOT" \
+    "$HUB_OPTIMUS_OPERATION_LOCK_FD" \
+    || fail "Inherited operation lock could not be verified."
+  unset HUB_OPTIMUS_OPERATION_LOCK_FD
+}
+
+reject_ambient_pip_environment() {
+  local name
+
+  while IFS= read -r name; do
+    case "$name" in
+      PIP_*) fail "ambient pip setting is not allowed: $name" ;;
+    esac
+  done < <(compgen -e)
+}
+
+dependency_lock_digest() {
+  local release_path="$1"
+  local digest
+
+  [ -f "$DEPENDENCY_LOCK_TOOL" ] && [ ! -L "$DEPENDENCY_LOCK_TOOL" ] \
+    || fail "Dependency-lock validator is not one regular file: $DEPENDENCY_LOCK_TOOL"
+  digest="$(/bin/bash "$DEPENDENCY_LOCK_TOOL" "$release_path")" \
+    || fail "Dependency lock validation failed for $release_path"
+  [[ "$digest" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "Dependency-lock validator returned an invalid digest."
+  printf '%s\n' "$digest"
+}
+
+verify_release_head() {
+  local release_path="$1"
+  local commit="$2"
+  local head_commit
+
+  head_commit="$(
+    /usr/bin/env -i \
+      HOME=/nonexistent \
+      LANG=C.UTF-8 \
+      PATH=/usr/bin:/bin \
+      GIT_CONFIG_GLOBAL=/dev/null \
+      GIT_CONFIG_NOSYSTEM=1 \
+      GIT_NO_REPLACE_OBJECTS=1 \
+      /usr/bin/git --no-replace-objects \
+        -C "$release_path" rev-parse --verify HEAD
+  )" || fail "Release HEAD could not be resolved safely: $release_path"
+  [[ "$head_commit" =~ ^[0-9a-f]{40}$ ]] \
+    && [ "$head_commit" = "$commit" ] \
+    || fail "Release HEAD differs from its recorded commit: $release_path"
+}
+
+verify_candidate_source() {
+  local release_path="$1"
+  local commit="$2"
+  local evidence
+
+  verify_release_head "$release_path" "$commit"
+
+  [ -f "$SOURCE_TREE_TOOL" ] && [ ! -L "$SOURCE_TREE_TOOL" ] \
+    || fail "Source-tree verifier is not one regular file: $SOURCE_TREE_TOOL"
+  evidence="$(
+    /usr/bin/env -i \
+      HOME=/nonexistent \
+      LANG=C.UTF-8 \
+      PATH=/usr/bin:/bin \
+      /usr/bin/python3 -I \
+        "$SOURCE_TREE_TOOL" \
+        "$release_path" \
+        "$commit" \
+        --allow-generated .venv \
+        --allow-generated .hub-deployment
+  )" || fail "Candidate source tree differs from its reviewed commit."
+  [ -n "$evidence" ] \
+    || fail "Source-tree verifier returned empty evidence."
+  verify_release_head "$release_path" "$commit"
+  printf '%s\n' "$evidence"
+}
+
+candidate_venv_digest() {
+  local release_path="$1"
+  local runner="${2:-$VALIDATION_RUNNER}"
+  local digest
+
+  [ -f "$runner" ] && [ ! -L "$runner" ] \
+    || fail "Validation supervisor is not one regular file: $runner"
+  digest="$(
+    /usr/bin/env -i \
+      HOME=/nonexistent \
+      LANG=C.UTF-8 \
+      PATH=/usr/bin:/bin \
+      /usr/bin/python3 -I \
+        "$runner" \
+        manifest-venv \
+        "$release_path"
+  )" || fail "Candidate venv manifest verification failed."
+  [[ "$digest" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "Validation supervisor returned an invalid venv digest."
+  printf '%s\n' "$digest"
+}
+
+source_tree_digest() {
+  local evidence="$1"
+  local expected_commit="$2"
+
+  /usr/bin/python3 -I - "$expected_commit" "$evidence" <<'PY_SOURCE_EVIDENCE'
+import json
+import re
+import sys
+
+
+expected_commit, raw = sys.argv[1:]
+try:
+    evidence = json.loads(raw)
+except json.JSONDecodeError:
+    raise SystemExit(1)
+digest = evidence.get("source_tree_sha256")
+if evidence.get("commit") != expected_commit or not isinstance(digest, str):
+    raise SystemExit(1)
+if re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+    raise SystemExit(1)
+print(digest)
+PY_SOURCE_EVIDENCE
+}
+
+verify_recorded_release_authority() {
+  local release_path="$1"
+  local state_file="$2"
+  local label="$3"
+  local commit
+  local evidence
+  local actual_source_tree_sha256
+  local actual_venv_tree_sha256
+  local recorded_source_tree_sha256
+  local recorded_venv_tree_sha256
+
+  commit="$(required_state_value "$state_file" commit)"
+  recorded_source_tree_sha256="$(
+    required_state_value "$state_file" source_tree_sha256
+  )"
+  recorded_venv_tree_sha256="$(
+    required_state_value "$state_file" venv_tree_sha256
+  )"
+  [[ "$recorded_source_tree_sha256" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "$label RELEASE_STATE has no valid source-tree SHA-256."
+  [[ "$recorded_venv_tree_sha256" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "$label RELEASE_STATE has no valid venv-tree SHA-256."
+
+  evidence="$(verify_candidate_source "$release_path" "$commit")"
+  actual_source_tree_sha256="$(source_tree_digest "$evidence" "$commit")" \
+    || fail "$label source-tree verifier returned invalid evidence."
+  [ "$actual_source_tree_sha256" = "$recorded_source_tree_sha256" ] \
+    || fail "$label source tree does not match RELEASE_STATE."
+
+  actual_venv_tree_sha256="$(
+    candidate_venv_digest "$release_path" "$VALIDATION_RUNNER"
+  )"
+  [ "$actual_venv_tree_sha256" = "$recorded_venv_tree_sha256" ] \
+    || fail "$label venv does not match RELEASE_STATE."
+  verify_release_head "$release_path" "$commit"
+  printf '%s:%s\n' "$actual_source_tree_sha256" "$actual_venv_tree_sha256"
+}
+
+parse_validation_marker() {
+  local marker="$1"
+  local field
+  local key
+  local value
+
+  [[ "$marker" == HUB_OPTIMUS_VALIDATION_V1\ * ]] \
+    || fail "Validation supervisor returned no terminal evidence marker."
+  VALIDATION_COLLECTED=""
+  VALIDATION_TERMINAL=""
+  VALIDATION_PASSED=""
+  VALIDATION_SKIPPED=""
+  VALIDATION_FAILED=""
+  VALIDATION_PYTEST_EXIT_CODE=""
+  VALIDATION_NODEIDS_SHA256=""
+  VALIDATION_DESCENDANTS=""
+  SOURCE_TREE_SHA256=""
+  VENV_TREE_SHA256=""
+  VALIDATION_WORKER_UID=""
+  VALIDATION_BOUNDARY_RESULT=""
+  for field in ${marker#HUB_OPTIMUS_VALIDATION_V1 }; do
+    key="${field%%=*}"
+    value="${field#*=}"
+    case "$key" in
+      collected) VALIDATION_COLLECTED="$value" ;;
+      terminal) VALIDATION_TERMINAL="$value" ;;
+      passed) VALIDATION_PASSED="$value" ;;
+      skipped) VALIDATION_SKIPPED="$value" ;;
+      failed) VALIDATION_FAILED="$value" ;;
+      pytest_exit_code) VALIDATION_PYTEST_EXIT_CODE="$value" ;;
+      nodeids_sha256) VALIDATION_NODEIDS_SHA256="$value" ;;
+      descendants) VALIDATION_DESCENDANTS="$value" ;;
+      source_tree_sha256) SOURCE_TREE_SHA256="$value" ;;
+      venv_tree_sha256) VENV_TREE_SHA256="$value" ;;
+      worker_uid) VALIDATION_WORKER_UID="$value" ;;
+      result) VALIDATION_BOUNDARY_RESULT="$value" ;;
+      *) fail "Validation supervisor returned an unsupported evidence field: $key" ;;
+    esac
+  done
+  for value in \
+    "$VALIDATION_COLLECTED" \
+    "$VALIDATION_TERMINAL" \
+    "$VALIDATION_PASSED" \
+    "$VALIDATION_SKIPPED" \
+    "$VALIDATION_FAILED" \
+    "$VALIDATION_PYTEST_EXIT_CODE" \
+    "$VALIDATION_DESCENDANTS" \
+    "$VALIDATION_WORKER_UID"; do
+    [[ "$value" =~ ^[0-9]+$ ]] \
+      || fail "Validation supervisor returned non-numeric evidence."
+  done
+  [[ "$VALIDATION_NODEIDS_SHA256" =~ ^[0-9a-f]{64}$ ]] \
+    && [[ "$SOURCE_TREE_SHA256" =~ ^[0-9a-f]{64}$ ]] \
+    && [[ "$VENV_TREE_SHA256" =~ ^[0-9a-f]{64}$ ]] \
+    || fail "Validation supervisor returned an invalid evidence digest."
+  case "$VALIDATION_BOUNDARY_RESULT" in
+    passed|failed) ;;
+    *) fail "Validation supervisor returned an invalid result." ;;
+  esac
+}
+
+validate_release_state_schema() {
+  local state_file="$1"
+
+  [ -f "$STATE_VALIDATOR" ] && [ ! -L "$STATE_VALIDATOR" ] \
+    || fail "Release-state validator is not one regular file: $STATE_VALIDATOR"
+  /bin/bash "$STATE_VALIDATOR" "$state_file" >/dev/null \
+    || fail "Complete release-state validation failed: $state_file"
 }
 
 sha256_file() {
@@ -64,8 +317,9 @@ validate_release_state() {
   local recorded_path
   local recorded_launcher_sha256
 
-  [ -f "$state_file" ] \
+  [ -f "$state_file" ] && [ ! -L "$state_file" ] \
     || fail "Rollback target has no deployment state: $state_file"
+  validate_release_state_schema "$state_file"
 
   recorded_release="$(required_state_value "$state_file" "release")"
   recorded_commit="$(required_state_value "$state_file" "commit")"
@@ -109,17 +363,34 @@ prepare_previous_release_state() {
     || fail "Rollback target has no hub-api launcher: $previous/ops/ec2/hub-api.sh"
   previous_launcher_sha256="$(sha256_file "$previous/ops/ec2/hub-api.sh")"
 
-  if [ -f "$previous_state" ]; then
+  [ -f "$shared_state" ] && [ ! -L "$shared_state" ] \
+    || fail "Shared rollback state is not one regular file: $shared_state"
+  validate_release_state \
+    "$previous" \
+    "$shared_state" \
+    "$previous_commit" \
+    "$previous_launcher_sha256"
+
+  if [ -e "$previous_state" ] || [ -L "$previous_state" ]; then
+    validate_release_state \
+      "$previous" \
+      "$previous_state" \
+      "$previous_commit" \
+      "$previous_launcher_sha256"
+    cmp -s "$previous_state" "$shared_state" \
+      || fail "Shared RELEASE_STATE differs from current per-release state."
     source_state="$previous_state"
   else
     source_state="$shared_state"
   fi
 
-  validate_release_state \
+  PREVIOUS_AUTHORITY_STATE="$source_state"
+  PREVIOUS_AUTHORITY_COMMIT="$previous_commit"
+  verify_recorded_release_authority \
     "$previous" \
-    "$source_state" \
-    "$previous_commit" \
-    "$previous_launcher_sha256"
+    "$PREVIOUS_AUTHORITY_STATE" \
+    "Rollback target" \
+    >/dev/null
 
   PREVIOUS_STATE_PATH="$previous_state"
   recorded_launcher_sha256="$(
@@ -142,6 +413,7 @@ prepare_previous_release_state() {
       >> "$PREVIOUS_STATE_INSTALL_SOURCE"
   fi
   chmod 0600 "$PREVIOUS_STATE_INSTALL_SOURCE"
+  validate_release_state_schema "$PREVIOUS_STATE_INSTALL_SOURCE"
 }
 
 snapshot_item() {
@@ -279,6 +551,8 @@ inject_test_failure() {
 MUTATION_STARTED=0
 PREVIOUS_STATE_PATH=""
 PREVIOUS_STATE_INSTALL_SOURCE=""
+PREVIOUS_AUTHORITY_STATE=""
+PREVIOUS_AUTHORITY_COMMIT=""
 RECOVERY_DIR=""
 RECOVERY_LOG="/dev/null"
 RECOVERY_LOG_READY=0
@@ -317,13 +591,29 @@ else
   FETCH_REF="refs/tags/$DEPLOY_REF"
 fi
 
+verify_or_acquire_operation_lock "$@"
+
+reject_ambient_pip_environment
+
+"$SYSTEM_PYTHON" -I - <<'PY_DEPLOY_ABI' \
+  || fail "EC2 dependency lock requires CPython 3.12 on Linux x86_64."
+import platform
+import sys
+
+if sys.implementation.name != "cpython":
+    raise SystemExit(1)
+if sys.version_info[:2] != (3, 12):
+    raise SystemExit(1)
+if sys.platform != "linux" or platform.machine() != "x86_64":
+    raise SystemExit(1)
+PY_DEPLOY_ABI
+
 echo "[deploy] Starting HUB_Optimus deploy"
 echo "[deploy] Requested $REF_KIND: $DEPLOY_REF"
 
 mkdir -p "$APP_ROOT/releases" "$APP_ROOT/shared/logs" "$APP_ROOT/shared/bin"
-exec 9> "$APP_ROOT/shared/deploy.lock"
-flock -n 9 || fail "another deploy or rollback operation is active."
 RELEASE_DIR="$(mktemp -d "$APP_ROOT/releases/$(date -u +%Y%m%dT%H%M%SZ).XXXXXX")"
+chmod 0755 "$RELEASE_DIR"
 RELEASE_ID="$(basename "$RELEASE_DIR")"
 DEPLOYMENT_DIR="$RELEASE_DIR/.hub-deployment"
 DEPLOYMENT_STATE="$DEPLOYMENT_DIR/RELEASE_STATE"
@@ -349,6 +639,25 @@ fi
 git -C "$RELEASE_DIR" checkout --quiet --detach "$RESOLVED_COMMIT"
 
 echo "[deploy] Resolved commit: $RESOLVED_COMMIT"
+echo "[deploy] Verifying the candidate directly against its commit tree"
+INITIAL_SOURCE_EVIDENCE="$(
+  verify_candidate_source "$RELEASE_DIR" "$RESOLVED_COMMIT"
+)"
+[ -n "$INITIAL_SOURCE_EVIDENCE" ] \
+  || fail "Initial source-tree evidence is empty."
+INITIAL_SOURCE_TREE_SHA256="$(
+  /usr/bin/python3 -I -c \
+    'import json,sys; print(json.loads(sys.argv[1])["source_tree_sha256"])' \
+    "$INITIAL_SOURCE_EVIDENCE"
+)" || fail "Initial source-tree evidence is invalid."
+[[ "$INITIAL_SOURCE_TREE_SHA256" =~ ^[0-9a-f]{64}$ ]] \
+  || fail "Initial source-tree digest is invalid."
+CANDIDATE_SOURCE_TREE_TOOL="$RELEASE_DIR/ops/ec2/verify-release-worktree.py"
+CANDIDATE_VALIDATION_RUNNER="$RELEASE_DIR/ops/ec2/run-release-validation.py"
+[ -f "$CANDIDATE_SOURCE_TREE_TOOL" ] && [ ! -L "$CANDIDATE_SOURCE_TREE_TOOL" ] \
+  || fail "Candidate has no reviewed source-tree verifier."
+[ -f "$CANDIDATE_VALIDATION_RUNNER" ] && [ ! -L "$CANDIDATE_VALIDATION_RUNNER" ] \
+  || fail "Candidate has no reviewed validation supervisor."
 echo "[deploy] Verifying hub-api launcher source"
 if [ ! -f "$RELEASE_DIR/ops/ec2/hub-api.sh" ]; then
   fail "Missing hub-api launcher source: $RELEASE_DIR/ops/ec2/hub-api.sh"
@@ -358,35 +667,105 @@ CANDIDATE_LAUNCHER_SHA256="$(
 )"
 echo "[deploy] Candidate launcher SHA-256: $CANDIDATE_LAUNCHER_SHA256"
 
+echo "[deploy] Validating reviewed dependency locks"
+DEPENDENCY_LOCK_SHA256="$(dependency_lock_digest "$RELEASE_DIR")"
+DEPENDENCY_LOCK_PATH="$RELEASE_DIR/ops/ec2/requirements-validation.lock"
+echo "[deploy] Dependency-lock SHA-256: $DEPENDENCY_LOCK_SHA256"
+
 echo "[deploy] Creating venv"
 cd "$RELEASE_DIR"
-python3 -m venv .venv
-source .venv/bin/activate
+"$SYSTEM_PYTHON" -I -m venv .venv
+VENV_PYTHON="$RELEASE_DIR/.venv/bin/python"
+[ -x "$VENV_PYTHON" ] \
+  || fail "Virtual-environment Python is not executable."
+[ -f "$DEPENDENCY_INVENTORY_TOOL" ] && [ ! -L "$DEPENDENCY_INVENTORY_TOOL" ] \
+  || fail "Dependency-inventory verifier is not one regular file: $DEPENDENCY_INVENTORY_TOOL"
 
-echo "[deploy] Installing dependencies"
-python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
+printf -v VALIDATION_COMMAND_TEXT \
+  '/usr/bin/env -i HOME=/nonexistent LANG=C.UTF-8 PATH=/usr/bin:/bin /usr/bin/python3 -I %q %q %q %q' \
+  "$CANDIDATE_VALIDATION_RUNNER" \
+  "$RELEASE_DIR" \
+  "$RESOLVED_COMMIT" \
+  "$CANDIDATE_SOURCE_TREE_TOOL"
+
+echo "[deploy] Installing from one sealed, hash-locked dependency snapshot"
+DEPENDENCY_CAPTURE_TOKEN="$(
+  /usr/bin/env -i \
+    HOME="$RELEASE_DIR" \
+    LANG=C.UTF-8 \
+    PATH=/usr/bin:/bin \
+    PYTHONNOUSERSITE=1 \
+    "$SYSTEM_PYTHON" -I \
+      "$DEPENDENCY_INVENTORY_TOOL" \
+      install \
+      "$RELEASE_DIR" \
+      "$SYSTEM_PYTHON" \
+      "$DEPENDENCY_LOCK_SHA256"
+)"
+[[ "$DEPENDENCY_CAPTURE_TOKEN" =~ ^[0-9a-f]{64}$ ]] \
+  || fail "Dependency installer returned an invalid snapshot token."
 
 mkdir -p "$DEPLOYMENT_DIR"
 chmod 0700 "$DEPLOYMENT_DIR"
 
 echo "[deploy] Running validation: $VALIDATION_COMMAND_TEXT"
 set +e
-python -m pytest -q 2>&1 | tee "$VALIDATION_LOG"
+/usr/bin/env -i \
+  HOME=/nonexistent \
+  LANG=C.UTF-8 \
+  PATH=/usr/bin:/bin \
+  /usr/bin/python3 -I \
+    "$CANDIDATE_VALIDATION_RUNNER" \
+    "$RELEASE_DIR" \
+    "$RESOLVED_COMMIT" \
+    "$CANDIDATE_SOURCE_TREE_TOOL" \
+    2>&1 | tee "$VALIDATION_LOG"
 VALIDATION_PIPE_STATUS=("${PIPESTATUS[@]}")
 set -e
 VALIDATION_EXIT_CODE="${VALIDATION_PIPE_STATUS[0]}"
 VALIDATION_LOG_EXIT_CODE="${VALIDATION_PIPE_STATUS[1]}"
 
-deactivate
-
 VALIDATION_RESULT="$(
   awk 'NF { result=$0 } END { print result == "" ? "no output" : result }' \
     "$VALIDATION_LOG"
 )"
+parse_validation_marker "$VALIDATION_RESULT"
+[ "$SOURCE_TREE_SHA256" = "$INITIAL_SOURCE_TREE_SHA256" ] \
+  || fail "Validation source-tree evidence differs from initial verification."
+OPERATIONAL_VENV_TREE_SHA256="$(
+  candidate_venv_digest "$RELEASE_DIR" "$VALIDATION_RUNNER"
+)"
+[ "$OPERATIONAL_VENV_TREE_SHA256" = "$VENV_TREE_SHA256" ] \
+  || fail "Validation venv evidence differs from the operational verifier."
+verify_release_head "$RELEASE_DIR" "$RESOLVED_COMMIT"
+VALIDATION_LOG_SHA256="$(sha256_file "$VALIDATION_LOG")"
+[ "$(dependency_lock_digest "$RELEASE_DIR")" = "$DEPENDENCY_LOCK_SHA256" ] \
+  || fail "dependency locks changed during installation or validation."
+DEPENDENCY_INVENTORY_AFTER="$(
+  /usr/bin/env -i \
+    HOME="$RELEASE_DIR" \
+    LANG=C.UTF-8 \
+    PATH=/usr/bin:/bin \
+    PYTHONNOUSERSITE=1 \
+    "$VENV_PYTHON" -I \
+      "$DEPENDENCY_INVENTORY_TOOL" \
+      verify \
+      "$RELEASE_DIR" \
+      "$SYSTEM_PYTHON" \
+      "$DEPENDENCY_LOCK_SHA256" \
+      "$DEPENDENCY_CAPTURE_TOKEN"
+)" || fail "Installed dependencies changed during validation."
+[ -n "$DEPENDENCY_INVENTORY_AFTER" ] \
+  || fail "Installed dependency inventory evidence is empty."
 
 if [ "$VALIDATION_EXIT_CODE" -eq 0 ] \
-  && [ "$VALIDATION_LOG_EXIT_CODE" -eq 0 ]; then
+  && [ "$VALIDATION_LOG_EXIT_CODE" -eq 0 ] \
+  && [ "$VALIDATION_BOUNDARY_RESULT" = "passed" ] \
+  && [ "$VALIDATION_COLLECTED" -gt 0 ] \
+  && [ "$VALIDATION_TERMINAL" -eq "$VALIDATION_COLLECTED" ] \
+  && [ "$VALIDATION_FAILED" -eq 0 ] \
+  && [ "$VALIDATION_DESCENDANTS" -eq 0 ] \
+  && [ $((VALIDATION_PASSED + VALIDATION_SKIPPED)) -eq "$VALIDATION_TERMINAL" ]; then
   RELEASE_STATUS="production-candidate-core"
 else
   RELEASE_STATUS="validation-failed"
@@ -404,6 +783,22 @@ validation_exit_code=$VALIDATION_EXIT_CODE
 validation_result=$VALIDATION_RESULT
 validation_log=$VALIDATION_LOG
 validation_log_exit_code=$VALIDATION_LOG_EXIT_CODE
+validation_log_sha256=$VALIDATION_LOG_SHA256
+validation_protocol=isolated-pytest-v1
+validation_collected=$VALIDATION_COLLECTED
+validation_terminal=$VALIDATION_TERMINAL
+validation_passed=$VALIDATION_PASSED
+validation_skipped=$VALIDATION_SKIPPED
+validation_failed=$VALIDATION_FAILED
+validation_pytest_exit_code=$VALIDATION_PYTEST_EXIT_CODE
+validation_nodeids_sha256=$VALIDATION_NODEIDS_SHA256
+validation_descendants=$VALIDATION_DESCENDANTS
+validation_worker_uid=$VALIDATION_WORKER_UID
+source_tree_sha256=$SOURCE_TREE_SHA256
+venv_tree_sha256=$VENV_TREE_SHA256
+dependency_tier=runtime+validation-v1
+dependency_lock=$DEPENDENCY_LOCK_PATH
+dependency_lock_sha256=$DEPENDENCY_LOCK_SHA256
 launcher_sha256=$CANDIDATE_LAUNCHER_SHA256
 status=$RELEASE_STATUS
 STATE
@@ -422,6 +817,20 @@ fi
 if [ "$VALIDATION_EXIT_CODE" -ne 0 ]; then
   fail "validation failed (exit $VALIDATION_EXIT_CODE): $VALIDATION_RESULT"
 fi
+
+validate_release_state_schema "$DEPLOYMENT_STATE"
+
+FINAL_SOURCE_EVIDENCE="$(
+  verify_candidate_source "$RELEASE_DIR" "$RESOLVED_COMMIT"
+)"
+[ "$FINAL_SOURCE_EVIDENCE" = "$INITIAL_SOURCE_EVIDENCE" ] \
+  || fail "Candidate source evidence changed before publication."
+FINAL_VENV_TREE_SHA256="$(
+  candidate_venv_digest "$RELEASE_DIR" "$VALIDATION_RUNNER"
+)"
+[ "$FINAL_VENV_TREE_SHA256" = "$VENV_TREE_SHA256" ] \
+  || fail "Candidate venv evidence changed before publication."
+verify_release_head "$RELEASE_DIR" "$RESOLVED_COMMIT"
 
 PREVIOUS=""
 if [ -L "$APP_ROOT/current" ]; then
@@ -463,6 +872,34 @@ snapshot_item "$APP_ROOT/shared/current_release" "current-release-marker"
 snapshot_item "$APP_ROOT/shared/previous_release" "previous-release-pointer"
 if [ -n "$PREVIOUS_STATE_PATH" ]; then
   snapshot_item "$PREVIOUS_STATE_PATH" "previous-release-state"
+fi
+
+if [ -n "${HUB_OPTIMUS_TEST_DEPLOY_BEFORE_AUTHORITY_READY:-}" ]; then
+  touch "$HUB_OPTIMUS_TEST_DEPLOY_BEFORE_AUTHORITY_READY"
+  while [ ! -e "${HUB_OPTIMUS_TEST_DEPLOY_BEFORE_AUTHORITY_PROCEED:-}" ]; do
+    sleep 0.01
+  done
+fi
+PRE_SWITCH_SOURCE_EVIDENCE="$(
+  verify_candidate_source "$RELEASE_DIR" "$RESOLVED_COMMIT"
+)"
+[ "$PRE_SWITCH_SOURCE_EVIDENCE" = "$INITIAL_SOURCE_EVIDENCE" ] \
+  || fail "Candidate source evidence changed before the operational switch."
+PRE_SWITCH_VENV_TREE_SHA256="$(
+  candidate_venv_digest "$RELEASE_DIR" "$VALIDATION_RUNNER"
+)"
+[ "$PRE_SWITCH_VENV_TREE_SHA256" = "$VENV_TREE_SHA256" ] \
+  || fail "Candidate venv evidence changed before the operational switch."
+if [ -n "$PREVIOUS" ]; then
+  verify_recorded_release_authority \
+    "$PREVIOUS" \
+    "$PREVIOUS_AUTHORITY_STATE" \
+    "Rollback target" \
+    >/dev/null
+fi
+verify_release_head "$RELEASE_DIR" "$RESOLVED_COMMIT"
+if [ -n "$PREVIOUS" ]; then
+  verify_release_head "$PREVIOUS" "$PREVIOUS_AUTHORITY_COMMIT"
 fi
 
 MUTATION_STARTED=1

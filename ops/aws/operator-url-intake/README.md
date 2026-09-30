@@ -30,8 +30,17 @@ enabled URL retrieval on the public Operator.
   `0` at the reviewed expiry, with a dedicated schedule group, four-day
   encrypted SQS DLQ, three failure-state alarms, and the handler window as an
   independent stop layer;
-- a browser PKCE helper that stores only a single-use transaction in
+- a dormant browser PKCE helper that stores only a single-use transaction in
   `sessionStorage` and keeps tokens in memory.
+
+The canonical `site/operator/index.html` does not load the auth helper or the
+empty, disabled runtime configuration; `sw.js` does not precache them. Changing
+`enabled` alone cannot activate this candidate. Canonical Entra owner/team
+intake, private sign-out/cache isolation and atomic claims remain intact.
+Frontend wiring and a response adapter remain pending under #1917; the private
+browser canary cannot run until they and the callback/cache/version safeguards
+are reviewed and validated. Integration grants no Cognito identity exception
+and lifts no #1831 or #1835 deployment gate.
 
 There is no EC2, VPC, NAT Gateway, load balancer, provisioned database, OpenAI
 call, custom domain, or DNS record. The only SQS queue is the private phase's
@@ -70,8 +79,10 @@ npm run cdk -- synth \
   -c environmentName=private-canary
 ```
 
-The checked candidate passes TypeScript compilation, 133 Jest tests, and CDK
-synthesis in all three phases. The generated Lambda bundle is committed
+Historical v0.4 evidence recorded TypeScript compilation, 133 Jest tests, and
+CDK synthesis in all three phases. It does not attest the current bundle or
+reconciled tree; use the exact PR #1918 head and checks for current validation.
+The generated Lambda bundle is committed
 deliberately: `npm run check` rebuilds it in memory, verifies that the pinned
 DynamoDB client is included, and compares it byte for byte with the reviewed
 asset. Synthesis fails if that asset is absent.

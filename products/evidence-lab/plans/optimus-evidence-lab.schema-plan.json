@@ -1,0 +1,561 @@
+{
+  "schemaVersion": "1.0",
+  "mode": "SCHEMA_DRY_RUN",
+  "apply": false,
+  "solution": "OptimusEvidenceLab",
+  "contractSha256": "912e762601fb3265627787dd57fb1f248929492a6bca3ba5c3d2cec5afe09e70",
+  "counts": {
+    "globalChoices": 6,
+    "choiceOptions": 33,
+    "tables": 5,
+    "primaryColumns": 5,
+    "scalarColumns": 50,
+    "lookupColumns": 4,
+    "alternateKeys": 5,
+    "relationships": 4,
+    "logicalSchemaComponents": 70,
+    "plannedActions": 74,
+    "plannedWrites": 72,
+    "plannedReads": 2
+  },
+  "actions": [
+    {
+      "phase": 0,
+      "action": "VERIFY_PUBLISHER",
+      "target": "HUB_Optimus",
+      "write": false
+    },
+    {
+      "phase": 1,
+      "action": "ENSURE_SOLUTION",
+      "target": "OptimusEvidenceLab",
+      "write": true
+    },
+    {
+      "phase": 2,
+      "action": "ENSURE_GLOBAL_CHOICE",
+      "target": "opt_geographylevel",
+      "optionCount": 5,
+      "write": true
+    },
+    {
+      "phase": 2,
+      "action": "ENSURE_GLOBAL_CHOICE",
+      "target": "opt_measuretype",
+      "optionCount": 5,
+      "write": true
+    },
+    {
+      "phase": 2,
+      "action": "ENSURE_GLOBAL_CHOICE",
+      "target": "opt_metricunit",
+      "optionCount": 6,
+      "write": true
+    },
+    {
+      "phase": 2,
+      "action": "ENSURE_GLOBAL_CHOICE",
+      "target": "opt_valuequalifier",
+      "optionCount": 6,
+      "write": true
+    },
+    {
+      "phase": 2,
+      "action": "ENSURE_GLOBAL_CHOICE",
+      "target": "opt_valuestatus",
+      "optionCount": 6,
+      "write": true
+    },
+    {
+      "phase": 2,
+      "action": "ENSURE_GLOBAL_CHOICE",
+      "target": "opt_verificationstatus",
+      "optionCount": 5,
+      "write": true
+    },
+    {
+      "phase": 3,
+      "action": "ENSURE_TABLE",
+      "target": "opt_geography",
+      "write": true
+    },
+    {
+      "phase": 3,
+      "action": "ENSURE_TABLE",
+      "target": "opt_metric",
+      "write": true
+    },
+    {
+      "phase": 3,
+      "action": "ENSURE_TABLE",
+      "target": "opt_observation",
+      "write": true
+    },
+    {
+      "phase": 3,
+      "action": "ENSURE_TABLE",
+      "target": "opt_release",
+      "write": true
+    },
+    {
+      "phase": 3,
+      "action": "ENSURE_TABLE",
+      "target": "opt_source",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_geographykey",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_geographylevel",
+      "columnType": "Choice",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_isextension",
+      "columnType": "Boolean",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_isoalpha3",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_m49code",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_namees",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_notes",
+      "columnType": "Memo",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_scheme",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_sourcecode",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_unmemberstate",
+      "columnType": "Boolean",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_unobserverstate",
+      "columnType": "Boolean",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_validfrom",
+      "columnType": "DateTime",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_geography.opt_validto",
+      "columnType": "DateTime",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_metric.opt_definition",
+      "columnType": "Memo",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_metric.opt_iscomparable",
+      "columnType": "Boolean",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_metric.opt_measuretype",
+      "columnType": "Choice",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_metric.opt_metrickey",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_metric.opt_notes",
+      "columnType": "Memo",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_metric.opt_population",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_metric.opt_unit",
+      "columnType": "Choice",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_observation.opt_datayear",
+      "columnType": "Integer",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_observation.opt_iscomparable",
+      "columnType": "Boolean",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_observation.opt_lowerbound",
+      "columnType": "Decimal",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_observation.opt_notes",
+      "columnType": "Memo",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_observation.opt_observationkey",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_observation.opt_originaltext",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_observation.opt_pointvalue",
+      "columnType": "Decimal",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_observation.opt_upperbound",
+      "columnType": "Decimal",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_observation.opt_valuequalifier",
+      "columnType": "Choice",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_observation.opt_valuestatus",
+      "columnType": "Choice",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_release.opt_archiveuri",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_release.opt_datayear",
+      "columnType": "Integer",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_release.opt_notes",
+      "columnType": "Memo",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_release.opt_publishedon",
+      "columnType": "DateTime",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_release.opt_releasekey",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_release.opt_retrievedon",
+      "columnType": "DateTime",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_release.opt_sha256",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_release.opt_verificationstatus",
+      "columnType": "Choice",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_release.opt_versionlabel",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_release.opt_vintage",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_source.opt_accessedon",
+      "columnType": "DateTime",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_source.opt_domain",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_source.opt_languagecoverage",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_source.opt_notes",
+      "columnType": "Memo",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_source.opt_organization",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_source.opt_sha256",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_source.opt_sourcekey",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_source.opt_title",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_source.opt_url",
+      "columnType": "String",
+      "write": true
+    },
+    {
+      "phase": 4,
+      "action": "ENSURE_SCALAR_COLUMN",
+      "target": "opt_source.opt_verificationstatus",
+      "columnType": "Choice",
+      "write": true
+    },
+    {
+      "phase": 5,
+      "action": "ENSURE_ALTERNATE_KEY",
+      "target": "opt_Geography_GeographyKey",
+      "table": "opt_geography",
+      "columns": [
+        "opt_geographykey"
+      ],
+      "write": true
+    },
+    {
+      "phase": 5,
+      "action": "ENSURE_ALTERNATE_KEY",
+      "target": "opt_Metric_MetricKey",
+      "table": "opt_metric",
+      "columns": [
+        "opt_metrickey"
+      ],
+      "write": true
+    },
+    {
+      "phase": 5,
+      "action": "ENSURE_ALTERNATE_KEY",
+      "target": "opt_Observation_ObservationKey",
+      "table": "opt_observation",
+      "columns": [
+        "opt_observationkey"
+      ],
+      "write": true
+    },
+    {
+      "phase": 5,
+      "action": "ENSURE_ALTERNATE_KEY",
+      "target": "opt_Release_ReleaseKey",
+      "table": "opt_release",
+      "columns": [
+        "opt_releasekey"
+      ],
+      "write": true
+    },
+    {
+      "phase": 5,
+      "action": "ENSURE_ALTERNATE_KEY",
+      "target": "opt_Source_SourceKey",
+      "table": "opt_source",
+      "columns": [
+        "opt_sourcekey"
+      ],
+      "write": true
+    },
+    {
+      "phase": 6,
+      "action": "ENSURE_RELATIONSHIP",
+      "target": "opt_Geography_Observation",
+      "referencedTable": "opt_geography",
+      "referencingTable": "opt_observation",
+      "lookup": "opt_geographyid",
+      "write": true
+    },
+    {
+      "phase": 6,
+      "action": "ENSURE_RELATIONSHIP",
+      "target": "opt_Metric_Observation",
+      "referencedTable": "opt_metric",
+      "referencingTable": "opt_observation",
+      "lookup": "opt_metricid",
+      "write": true
+    },
+    {
+      "phase": 6,
+      "action": "ENSURE_RELATIONSHIP",
+      "target": "opt_Release_Observation",
+      "referencedTable": "opt_release",
+      "referencingTable": "opt_observation",
+      "lookup": "opt_releaseid",
+      "write": true
+    },
+    {
+      "phase": 6,
+      "action": "ENSURE_RELATIONSHIP",
+      "target": "opt_Source_Release",
+      "referencedTable": "opt_source",
+      "referencingTable": "opt_release",
+      "lookup": "opt_sourceid",
+      "write": true
+    },
+    {
+      "phase": 7,
+      "action": "PUBLISH_CUSTOMIZATIONS",
+      "target": "OptimusEvidenceLab",
+      "write": true
+    },
+    {
+      "phase": 8,
+      "action": "VERIFY_EXACT_SCHEMA",
+      "target": "OptimusEvidenceLab",
+      "write": false
+    }
+  ],
+  "metadataWritesExecuted": 0,
+  "rowsWritten": 0,
+  "productionTouched": false,
+  "merge": false,
+  "deployment": false,
+  "planHash": "fd6751ff5fe42b0336bb3bc5b7da1d3854b78ec733afb76fc72a7f842005a981"
+}

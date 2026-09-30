@@ -38,13 +38,24 @@ separate static runtime configuration must consume those outputs before a
 private browser test can run. That configuration contains identifiers and
 endpoints only—never credentials or tokens.
 
-The checked-in static configuration is disabled and empty. The service worker
-never precaches or falls back to an older runtime configuration: if the
-network-only config request fails, authentication stays disabled. OAuth
-callback query values are scrubbed before local external scripts execute; a
-callback navigation's request and response are never written to Cache Storage.
-Login also requires an exact version response from the active `v0-28` worker,
-so the older worker cannot initiate a callback during rollout.
+The checked-in auth helper and empty, disabled static configuration are dormant
+assets. The canonical `site/operator/index.html` does not load either file and
+`sw.js` does not precache them. Changing `enabled` alone cannot activate this
+candidate. The canonical Operator preserves the single-tenant Entra owner/team
+boundary, private sign-out/cache isolation and human-confirmed atomic claim
+workflow from protected `main`.
+
+Frontend wiring and a response adapter remain pending under #1917. The private
+Entra path uses cookie-authenticated same-origin `/api/intake` with the versioned
+`operator_public_intake.v1` envelope; the canary uses a Bearer token with the raw
+`/intake/url` response. A reviewed adapter must preserve both boundaries and
+validate the selected response without changing either contract. Before a
+private browser canary, that integration must prove OAuth callback scrubbing
+before external scripts, exclusion of callback requests/responses from caches,
+network-only runtime configuration with no stale fallback, and an exact active
+worker version gate. Those protections are requirements, not capabilities of
+the currently unwired assets. This integration grants no Cognito identity
+exception and lifts no #1831 or #1835 deployment gate.
 
 Service execution and account creation are deliberately separate. Synthesis
 requires one explicit phase and exact merged-main provenance:
@@ -152,9 +163,10 @@ frontend must render title and text with `textContent`, never `innerHTML`.
   peer matching, quotas, and synthesis. A real network-path canary is still
   required to prove DNS, TLS/SNI, timeout, redirects, and response truncation in
   the selected AWS environment.
-- Cognito remains a temporary private-canary exception only. Existing
+- Cognito is proposed only as a temporary private-canary exception. Existing
   governance records Entra single-tenant as the durable owner/team direction;
-  that exception must be recorded explicitly before even `foundation` is run.
+  the exception is not granted by integration and must be recorded explicitly
+  before even `foundation` is run.
 - The candidate workflow binds approved SHA, account, region, separate prepare
   and execute roles, an HMAC parameter fingerprint, cost recipient and disabled
   signup. Its file-publishing session is restricted to one content-addressed

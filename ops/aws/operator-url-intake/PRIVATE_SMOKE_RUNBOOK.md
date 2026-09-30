@@ -4,6 +4,15 @@ This runbook is preparation, not authorization. Running a deploy command changes
 AWS and is forbidden until the repository owner explicitly lifts the current
 mutation hold for the exact merged commit and scope.
 
+The canonical Operator preserves the Entra owner/team path, private sign-out
+and cache isolation, and human-confirmed atomic claims. Its `index.html` does
+not load the dormant auth/runtime assets and its worker does not precache them.
+Changing `enabled` alone cannot activate this candidate. Frontend wiring and a
+response adapter remain pending under #1917; this runbook cannot perform a
+browser canary until that integration and its callback/cache/version safeguards
+are reviewed and validated. No Cognito exception or #1831/#1835 gate is lifted
+by repository integration.
+
 ## Intended result
 
 For a short window, one administrator-created user with software-token MFA can
@@ -20,6 +29,10 @@ All items must be true before any mutation:
 
 - issue #1831 or its successor records that AWS mutation is unblocked;
 - the deployment source is one exact reviewed and merged 40-character SHA;
+- canonical frontend wiring and the canary response adapter are reviewed and
+  validated under #1917, preserving the Entra envelope/private-session boundary
+  and atomic claim workflow; callback scrubbing, network-only configuration,
+  cache exclusion and the exact active-worker version gate have fresh evidence;
 - the identity owner has approved Cognito for this canary, or the candidate has
   been replaced with the approved Entra design;
 - prepare, execute, and emergency stop use only `HUBOptimusOperatorPrepare`,
@@ -139,16 +152,20 @@ After a second explicit approval of the reviewed private change set:
    valid.
 2. Keep self-signup disabled, verify exactly one invited user exists, and bind
    the private change set to its protected `CanaryAllowedSubjectSha256` value.
-3. First publish the Operator `v0-28` code with its checked-in disabled, empty
-   runtime config. Wait for Pages propagation, use a clean browser profile,
-   and verify `v0-28` is the active controller before attempting login.
-4. In a separate reviewed change, publish `runtime-config.v1.js` containing
-   only the exact CloudFormation raw API invoke URL, Cognito issuer,
-   authorize/token/logout endpoints, client ID, exact callback, and scope. No
-   secret exists for this public client.
-5. Enable the private runtime flag only for the scheduled test window. Verify
-   the config matches the eu-west-1 API Gateway and Cognito outputs; the client
-   rejects arbitrary HTTPS domains and stale/offline config.
+3. Stop unless the separately reviewed frontend wiring and response adapter
+   have been merged and validated under #1917. Publish that reviewed Operator
+   with disabled, empty configuration, wait for Pages propagation, and use a
+   clean browser profile. Confirm its exact reviewed worker version and
+   callback/cache safeguards before attempting login; do not restore the
+   historical `v0-28` frontend over the canonical Entra/atomic-claim workflow.
+4. Only after that prerequisite, publish `runtime-config.v1.js` through a
+   reviewed change, containing only the exact CloudFormation raw API invoke
+   URL, Cognito issuer, authorize/token/logout endpoints, client ID, exact
+   callback, and scope. No secret exists for this public client.
+5. Only after all hard gates and the approved window hold, enable the private
+   runtime flag for that window. Verify the config matches the eu-west-1 API
+   Gateway and Cognito outputs and that arbitrary HTTPS domains and stale/offline
+   configuration fail closed. Publishing an enabled config alone is insufficient.
 6. Activate the reviewed template with `deploymentPhase=private`, signup false,
    the protected allowed-subject hash, and the exact
    `CanaryStartedAt`/`CanaryExpiresAt` values used by predeploy.

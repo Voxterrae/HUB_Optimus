@@ -51,9 +51,15 @@ canonical v1 methodology remains Spanish under `v1_core/languages/es/`.
 
 - The public Operator remains local/pasted-text first; controlled remote URL
   retrieval is not enabled on production.
-- The invitation-only AWS canary is an unmerged, not-deployed candidate tracked
-  by issue `#1917` and draft PR `#1918`.
-- Its canonical implementation location is `ops/aws/operator-url-intake/`.
+- The invitation-only AWS canary is a repository candidate tracked by issue
+  `#1917` and PR `#1918`; code integration does not prove deployment or browser
+  readiness. Its implementation location is `ops/aws/operator-url-intake/`.
+- Auth/runtime assets remain dormant: canonical `index.html` does not load them
+  and `sw.js` does not precache them. Changing `enabled` alone cannot activate
+  the canary. Frontend wiring and a response adapter remain pending under #1917.
+- Canonical Entra owner/team intake, private sign-out/cache isolation and
+  human-confirmed atomic claims remain intact. No Cognito identity exception or
+  #1831/#1835 deployment gate is lifted by this integration.
 - Public signup, DNS publication, audiovisual/TikTok ingestion, public crawling,
   and enterprise claims memory are outside this canary and remain separate
   governed changes.

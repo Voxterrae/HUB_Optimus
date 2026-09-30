@@ -17,7 +17,10 @@ control, assignment, collaboration, or joint ventures, read:
 4. `docs/context/SOURCE_OF_TRUTH.md`
 5. the active governance issue and pull request
 
-The proposal recorded by issue `#1861` and draft PR `#1862` identifies:
+The Founder Ownership and Authority Charter entered protected main in
+`30e985226347b4bc59b0e187b96633a09647ca42`, linked to issue `#1861`.
+It remains present at the integration checkpoint
+`main@260666ce9cdeb7a1b3daf43ba550da549d98f3ce` and identifies:
 
 - **Benjamin Gerrit Hoff** as founder, architect, creator, project owner, and
   final human authority of HUB_Optimus;
@@ -26,20 +29,28 @@ The proposal recorded by issue `#1861` and draft PR `#1862` identifies:
 - HUB_Optimus as the foundational tool and technological parent platform through
   which Benjamin Gerrit Hoff develops LCDH-OS and the wider ecosystem.
 
-This proposal is not ratified merely because it appears on a branch. Draft PR
-`#1862` must remain unmerged until its reviewed final tree is recreated in
-verified owner-authored history and all protected review gates are satisfied.
+Presence of the Charter on `main` does not by itself change the
+machine-readable ratification state. The current
+`config/governance/owner_identity.v1.json` remains
+`RATIFICATION_PROPOSED`, hardware-backed owner-key enrollment remains pending,
+and the remaining enrollment/status work is tracked in existing issues
+`#1743` and `#1881`. PR `#1896` reconciles documentation while retaining
+that machine-readable state. No operator
+may describe the identity record as `RATIFIED` unless the exact protected
+change, live required checks, explicit owner record, and applicable
+cryptographic gate are all satisfied. Draft PR `#1862` is historical proposal
+provenance rather than the current merge gate.
 
 ## CODEOWNERS and review policy
 
-`@Voxterrae` is the sole proposed repository-wide CODEOWNER. CODEOWNERS records
+`@Voxterrae` is the sole repository-wide CODEOWNER. CODEOWNERS records
 review responsibility and owner authority; it does not itself grant legal
 ownership or mutate GitHub permissions.
 
 Native CODEOWNER approval must not be configured as a required gate while the
 sole CODEOWNER is also the author of owner-created pull requests, because an
 author cannot provide the required approval to their own pull request. The
-approved policy for this proposal is instead:
+owner-approved review policy is:
 
 - protected-path pull requests and every commit in them must be owner-authored;
 - all commits must be verified;
@@ -50,9 +61,13 @@ approved policy for this proposal is instead:
 - all required checks and conversations must be complete before merge;
 - force-push and deletion protections remain in place.
 
-Live rulesets and collaborator permissions are repository settings. This draft
-changes neither. They require a separate authenticated owner action and fresh
-audit evidence.
+The dated 2026-09-14 settings audit confirms one active main ruleset,
+`11665521`, with no bypass actors, strict checks bound to GitHub Actions
+integration `15368`, signed commits, linear history, squash-only merge,
+conversation resolution, and deletion/force-push protection. See
+`docs/governance/GITHUB_SETTINGS_PROTECTION_CHECKLIST.md`. Native approvals
+remain zero under the owner-only model. Settings and collaborator permissions
+are mutable; this dated evidence does not replace a fresh audit before changes.
 
 ## Technical contributor boundary
 
@@ -68,7 +83,7 @@ owner decisions recorded through the governed repository process.
 
 ## Founder Authority Guard boundary
 
-The proposed Founder Authority Guard executes trusted policy from the protected
+The active Founder Authority Guard executes trusted policy from the protected
 base and fails closed. For protected changes it checks:
 
 - repository owner login and immutable numeric user ID;
@@ -81,10 +96,16 @@ base and fails closed. For protected changes it checks:
 - when owner-key status becomes `ACTIVE`, a valid owner SSH signature whose
   exact fingerprint is pinned in the owner identity manifest.
 
-The workflow creates the `founder-authority` check directly on the exact pull
-request head SHA. A missing, pending, cancelled, or failed check is not approval.
-The workflow cannot become active policy until its reviewed code exists on
-protected `main` and the later ruleset decision requires the head-bound check.
+The adapter merged through PR `#1907` at
+`5cb923c38e8ec0f45468c29268c79dcc3b06b822` publishes `founder-authority`
+on the exact pull-request head and revalidated live test-merge candidate.
+A missing, pending, cancelled, or failed check is not approval. The active
+ruleset requires both `founder-authority` and `founder-authority-bootstrap`
+from GitHub Actions integration `15368`. This records the observed mechanism,
+not a dedicated trusted publisher: issue `#1906` remains open for publisher
+identity and exact-authorization hardening. PR `#1919` introduced the separate
+shadow-only App canary at `dc16281fe91d255939bf017798e5924ab52e0e7c`.
+It remains non-required and does not change the required-check source.
 
 ## Operating discipline
 
@@ -101,28 +122,212 @@ protected `main` and the later ruleset decision requires the head-bound check.
 Issue `#1881` is the current owner-facing reorganization ledger. Its execution
 order and safety gates remain controlling for the open pull-request portfolio.
 
-## Operator URL-intake canary handoff
+## Project intelligence surface
 
-Issue `#1917` and draft PR `#1918` are the scoped records for controlled URL
-intake. The v0.4 candidate lives only under
-`ops/aws/operator-url-intake/` plus its three root GitHub workflows. It is not a
-public crawler, video analyzer, truth engine, or authorization to deploy.
+Governance issue `#1901` and PR `#1903` define a new repository-intelligence
+surface without expanding the executable runtime or changing `/operator/`.
+Future operators must treat these artifacts as one synchronized snapshot:
 
-The protected path is deliberately phased: `foundation` creates disabled
-resources and the gross budget, `controls` adds tagged/anomaly/email controls,
-`private` opens one invitation-only two-hour canary, and `deactivate` restores
-controls after the emergency stop has verified Lambda concurrency `0`.
-Preparation and execution use different OIDC roles; a third role can only stop
-the fixed Lambda. Live Cognito configuration, immutable Lambda object version,
-change-set contents, exact source SHA, cost/credit attestations, and rollback
-state are revalidated by the workflow.
+- analysis baseline: `main@30e985226347b4bc59b0e187b96633a09647ca42`,
+  tree `fabb9da1fdb6979df0bc764017752f118088e69f`;
+- knowledge graph: `obsidian-HUB_Optimus/`;
+- structured browser model: `site/obsidian-HUB_Optimus/system.json` plus declared
+  fragments;
+- static Pages route: `/obsidian-HUB_Optimus/`;
+- update contract: `obsidian-HUB_Optimus/98_META/Update Protocol.md`;
+- focused validation: `python -m pytest -q
+  tests/test_project_intelligence_site.py`;
+- public-route validation: `python -m pytest -q
+  tests/test_public_site_links_and_contrast.py`;
+- JavaScript syntax validation: `node --check
+  site/obsidian-HUB_Optimus/app-graph.js` and `node --check
+  site/obsidian-HUB_Optimus/app.js`.
 
-Before any AWS mutation, verify and explicitly lift the mutation hold referenced
-by issue `#1831` for this exact scope, record the temporary Cognito identity
-exception, merge one owner-reviewed SHA to protected `main`, validate current
-gross actual/forecast and promotional-credit expiry, confirm alert delivery,
-and review the three OIDC roles and CDK bootstrap resources. Chat authorization
-alone does not satisfy those repository and AWS gates.
+The Obsidian notes and browser explorer must remain derived from the same model
+and preserve `CONFIRMED`, `INFERRED`, and `UNKNOWN` distinctions. A future
+architecture-relevant change requires a model delta, affected-note updates,
+web-model synchronization, focused tests, and normal protected review.
+
+Until the exact reviewed PR is merged and the Pages workflow plus served URLs
+are inspected, source presence proves neither production publication nor the
+live state of `/`, `/operator/`, or `/obsidian-HUB_Optimus/`. Repository state,
+Pages deployment state, and externally served bytes remain separate claims.
+
+
+## Project intelligence v1.1 release channels
+
+Issue #1912 and existing PR #1913 reconcile the graph-search, impact-focus,
+zoom/pan, and evidence-bound learning increment with protected main. The stable
+route is /obsidian-HUB_Optimus/; /obsidian-HUB_Optimus-v1.1/ is its complete byte
+alias. The frozen /obsidian-HUB_Optimus-v1.0/ recovery route preserves verified
+historical Git bytes recorded in site/obsidian-release-channels.v1.json.
+These retained public release channels are intentional, not disposable duplicates.
+
+The semantic model remains a dated observation of main@30e985226347b4bc59b0e187b96633a09647ca42.
+The inventory and delta in this integration describe protected main@c7d08b78d38148ffc6f84b9f2dd8541149d224ff.
+They do not claim automatic freshness or certify live external infrastructure.
+Regeneration uses tools/project_intelligence/repository_intelligence.py with an
+explicit reviewed source commit; synchronize the v1.1 alias after updating stable
+assets. Run the Project Intelligence site, v1.1, release-channel, and public-route
+tests, then inspect the actual deployment run and served bytes. Browser graph
+interaction does not execute the Python simulator or enable URL retrieval.
+
+## Public surface capability registry boundary
+
+Issue `#1888` governs reconciliation between the canonical repository, the
+public GitHub Pages artifact, and the protected Sites mirror. Pull request
+`#1889` is the foundation record for the human-reviewed capability registry and
+its validation contract. The current merge, deployment, and receipt state must
+always be read from the exact issue, pull request, commit, checks, and Pages run;
+this handoff does not turn a draft or proposed SHA into merged evidence.
+
+The foundation paths are:
+
+- `site/data/capability-registry.v1.json`;
+- `site/data/capability-registry.v1.schema.json`;
+- `docs/architecture/public_surface_sync.md`;
+- the focused registry tests.
+
+The registry separates a public static surface, a public browser runtime, a
+production service, production writes, and live external transport. It must keep
+merged evidence distinct from draft pull requests, draft stacks, and issue-only
+work. Evidence type, reference, immutable commit, repository path, and URL must
+remain mutually consistent and testable.
+
+The existing Pages workflow is triggered by changes under `site/**` and
+`docs/**`, but deploys the exact `site/` artifact. Therefore any merge of the
+foundation requires an explicit owner decision that covers the resulting Pages
+deployment and a post-merge receipt for the merged commit, tree, workflow run,
+and public registry/schema resources.
+
+Outstanding slices remain separate:
+
+1. the visible presentation must consume the reviewed registry through its own
+   scoped pull request and must not present draft or issue-only work as live;
+2. the protected Sites mirror must be synchronized only after the canonical
+   presentation change is reviewed, merged, deployed, and bound to an exact SHA;
+3. Sites publication, access changes, tenant mutation, external transport, and
+   production-service writes require their own explicit owner authorization.
+
+Until those slices have exact repository and platform evidence, future operators
+must continue to describe GitHub Pages as the canonical public static surface
+and Sites as a non-authoritative, separately synchronized mirror.
+
+## EC2 validation-log attestation
+
+The implementation in PR #1857 binds every newly validated production release
+state to the complete validation log SHA-256 and its final non-empty result.
+Preflight, deployment and rollback reject replaced, truncated or result-divergent
+logs using one no-follow regular-file snapshot, canonical UTF-8/LF text and
+mode 0600. Explicit legacy schemas retain their documented compatibility.
+This code integration does not certify a deployed host or authorize the blocked
+operation in #1831; dependency, locking and recovery hardening remain separate.
+
+## xAI / X Signal Bridge Foundation Boundary
+
+Issue #1874 introduces an isolated phase-one prototype under
+`hub_optimus/connect/`; the complete boundary is documented in
+`docs/architecture/xai_x_signal_bridge.md`.
+
+- The configured project display handle is `@HubOptimus`. This declaration
+  is not authenticated account ownership or stable authorization. No account `user_id` is asserted in the
+  repository; a future live write must bind `GET /2/users/me` to a separately
+  approved stable ID.
+- xAI remains an optional analytical witness and X remains an optional public
+  signal source / governed publication destination. Neither gains authority
+  over evidence, governance, decisions, or publication.
+- Provider, source, and publisher boundaries are separate. Provider and source
+  adapters default to disabled and accept only caller-injected transports; the
+  repository ships no SDK, HTTP client, credential loader, or live transport.
+- The xAI plan is public-project-data-only, uses an opaque model reference,
+  fixes the API surface to Responses, and sets Responses state/history
+  `store` to false. That setting does not imply Zero Data Retention; an
+  optional future transport policy requires explicit ZDR-header attestation.
+  The public classification remains a caller assertion. The dormant result
+  contract preserves `encountered` versus `inline_cited` citation scope for a
+  future reviewed tool policy; phase one enables no provider search tool.
+- X read-side records retain IDs as strings, observed/reference URLs,
+  timestamps, content-addressed provenance and evidence-reference digests,
+  edit history, and a normalized-text digest. The package does not copy the
+  observation body into the persistable record; caller/transport retention
+  remains external.
+- X publication planning defaults to disabled. When enabled, it remains a pure
+  `DryRun` planner bound to `@HubOptimus` and an exact deterministic payload
+  hash. It has no publish method or network transport.
+  Only a standalone text payload is planned; replies, mentions, quotes, DMs,
+  likes, follows, reposts, trends, drafts, client data, unresolved risks,
+  affiliation claims, and unratified commercial commitments fail closed.
+  Bare domain-shaped text that X may autolink also fails closed; outbound links
+  must use an exact declared public HTTPS URL.
+- Human-supplied gate flags constrain planning but do not verify themselves.
+  A future live write requires a separate issue, stable OAuth account binding,
+  exact human approval, an immutable HUB Gateway receipt, and post-check
+  evidence. Merge does not authorize that phase.
+- The package is not wired to the scenario runtime, Semantic Engine, Operator,
+  browser, EC2 layer, or deployment. LCDH-OS and customer data remain outside
+  the boundary.
+- The existing External AI Review Protocol remains unchanged. This phase does
+  not activate automated external review, feed model output into Core, or
+  create an autonomous source of truth.
+
+## EC2 dependency lock boundary
+
+PR #1858 binds the retained EC2 environment to separate runtime and validation
+locks for Linux x86_64 CPython 3.12. Exact versions, reviewed wheel hashes,
+sealed no-follow lock snapshots and path-identity tokens constrain installation.
+Ambient pip settings, mutable pins, extra distributions and bootstrap pip are
+rejected; the expected package inventory and base Python identity are checked,
+including after tests. The combined lock digest, tier and path enter release
+state. CI compares two offline installs and rejects a deliberately corrupt wheel.
+The root requirements remain the portable authoring tiers. This source-level
+change does not complete the separate locking/isolation/recovery gates or
+execute the blocked host operation in #1831.
+
+## EC2 isolated validation and release authority
+
+The reviewed operator entrypoint launches Bash with an allowlisted environment.
+Source verification reads and authenticates commit, tree and blob bytes directly,
+including drift hidden by index flags. The validation supervisor records actual
+pytest execution, rejects surviving descendants, and compares source and venv
+manifests before and after validation. Root execution drops the worker to nobody;
+the sealed worker descriptor grants that selected UID read ownership before exec.
+Hosted regression tests exercise the unmodified UID transition and descendant
+cleanup as well as the portable isolated fixtures.
+
+Deploy and rollback recheck live HEAD, source and venv authority for participating
+releases before mutation. Legacy adoption records source and venv digests in the
+incompatible exact adopted-legacy-current-v2 schema and postvalidates publication.
+API/core launchers disable bytecode writes; core tests disable pytest cache writes.
+This code integration does not certify a live host: #1854, #1855 and #1831 remain
+separate operational gates.
+
+## Admin Gateway API boundary
+
+Existing PR #1871 adds the isolated FastAPI reference service, allowlisted
+operation catalog, tenant-bound EasyAuth parser, additive Reader/Mutator roles,
+semantic plan hashing and product tests. DryRun is the default. Its hash excludes
+execution mode while retaining operation, normalized parameters, mutation,
+risk and catalog version. Switching mode alone grants no permission: mutation
+still requires the caller role, matching receipt and configured executor.
+
+The reference executor remains disabled for live operations. The package has
+its own Python environment and workflow; do not mix those dependencies with
+the root EC2 lock. #1869 and dependent PRs retain tenant deployment, approval
+expiry/replay, durable idempotency, audit and runbook boundaries.
+Windows product validation passed 33 synthetic tests before protected review.
+
+## Admin Gateway PowerShell boundary
+
+Existing PR #1872 adds the allowlisted Exchange runbook and PowerShell/Pester
+contract. Mutation previews return before module import, certificate access or
+connection. Delegate and approval inputs are checked before connection; failed
+mailbox/store probes return structured diagnostic warnings. Read diagnostics
+still require an explicitly configured tenant connection outside synthetic tests.
+
+The API executor remains disabled. Runbook publication, tenant credentials,
+resource scoping and containment of direct Automation invocation remain under
+#1869 and later delivery gates. The Windows validation uses synthetic command
+responses; it is not a live Exchange execution record.
 
 ## Historical handoff archive
 
@@ -139,3 +344,34 @@ current active issue/PR evidence.
 
 Technical boundaries retained in the archive must be checked against their
 linked issue, pull request, current commit, and live platform state before use.
+
+## Operator owner/team OIDC integration boundary
+
+PR #1844 adds a separately configured single-tenant Entra owner/team boundary for the exact private Operator origin. Public Pages remains browser-local and sends neither pasted source text nor URLs during intake. Private routes require the configured OIDC roles, loopback gateway, Redis session store, TLS and rate/SSRF controls. The merged browser-local atomic claim workflow remains available. Code integration alone does not deploy Entra registration, DNS, TLS or EC2 services; #1831 and #1835 retain live deployment and acceptance evidence gates. Founder identity and ownership records remain unchanged.
+
+## Operator URL-intake canary integration boundary
+
+Issue #1917 and PR #1918 track the disabled AWS infrastructure candidate under
+`ops/aws/operator-url-intake/` and its validation/prepare/execute/stop workflows.
+The canonical Operator retains the single-tenant Entra owner/team boundary,
+private sign-out and cache isolation, and human-confirmed atomic claim workflow
+from protected main. Founder identity and ownership records remain unchanged.
+
+The Cognito auth helper and empty, disabled runtime configuration are dormant
+assets: canonical `site/operator/index.html` does not load them and `sw.js` does
+not precache them. Changing `enabled` alone cannot activate this candidate.
+Frontend wiring and a response adapter remain pending under #1917. They must
+preserve cookie-authenticated same-origin `/api/intake` and its versioned
+`operator_public_intake.v1` envelope while separately validating the canary's
+Bearer-authenticated `/intake/url` response. Callback scrubbing, network-only
+configuration, cache exclusion and an exact active-worker version gate require
+reviewed evidence before any private browser canary. Issue #1917 remains open.
+
+The infrastructure path remains phased through foundation, controls, private
+and deactivate, with separate preparation/execution/emergency-stop roles and
+immutable asset/change-set provenance. Historical v0.4 evidence does not attest
+the reconciled tree or a current canary release. Read current validation from
+the exact PR head and checks. Integration grants no temporary Cognito identity
+exception and lifts no #1831 or #1835 gate: exact merged-SHA authorization,
+identity, roles/bootstrap, current cost/credit headroom, confirmed alerts,
+private-window approval and rollback evidence remain required before AWS.

@@ -1,0 +1,861 @@
+{
+  "schemaVersion": "1.0",
+  "solution": {
+    "uniqueName": "OptimusAdminGateway",
+    "displayName": "Optimus Admin Gateway",
+    "publisher": "HUB_Optimus",
+    "prefix": "opt",
+    "choiceValuePrefix": 88483,
+    "version": "0.1.0.0",
+    "packageType": "Unmanaged",
+    "baseLanguageCode": 1033
+  },
+  "conventions": {
+    "alternateKeyPattern": "^[A-Za-z0-9._-]{8,128}$",
+    "sha256Pattern": "^[a-f0-9]{64}$",
+    "dateTimeBehavior": "UserLocal",
+    "dateTimeFormat": "DateAndTime",
+    "jsonStorageLimits": {
+      "parameters": 131072,
+      "approvalReceipt": 32768,
+      "jobOutputSummary": 131072,
+      "auditPayload": 65536
+    },
+    "tableDefaults": {
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false
+    },
+    "retention": {
+      "policy": "TenantConfigured",
+      "automaticDeletionInVersion": false,
+      "largePayloads": "Store only normalized parameters, receipts and sanitized summaries; keep full operational evidence outside Dataverse."
+    }
+  },
+  "globalChoices": [
+    {
+      "schemaName": "opt_AdminRisk",
+      "logicalName": "opt_adminrisk",
+      "displayName": "Admin Risk",
+      "description": "Risk classification copied from the allowlisted operation catalog.",
+      "options": [
+        {
+          "name": "low",
+          "label": "Low",
+          "value": 884830000
+        },
+        {
+          "name": "medium",
+          "label": "Medium",
+          "value": 884830001
+        },
+        {
+          "name": "high",
+          "label": "High",
+          "value": 884830002
+        }
+      ]
+    },
+    {
+      "schemaName": "opt_AdminRequestState",
+      "logicalName": "opt_adminrequeststate",
+      "displayName": "Admin Request State",
+      "description": "Lifecycle state of a governed administration request.",
+      "options": [
+        {
+          "name": "REQUESTED",
+          "label": "Requested",
+          "value": 884831000
+        },
+        {
+          "name": "VALIDATED",
+          "label": "Validated",
+          "value": 884831001
+        },
+        {
+          "name": "PLANNED",
+          "label": "Planned",
+          "value": 884831002
+        },
+        {
+          "name": "APPROVAL_REQUIRED",
+          "label": "Approval Required",
+          "value": 884831003
+        },
+        {
+          "name": "APPROVED",
+          "label": "Approved",
+          "value": 884831004
+        },
+        {
+          "name": "REJECTED",
+          "label": "Rejected",
+          "value": 884831005
+        },
+        {
+          "name": "QUEUED",
+          "label": "Queued",
+          "value": 884831006
+        },
+        {
+          "name": "RUNNING",
+          "label": "Running",
+          "value": 884831007
+        },
+        {
+          "name": "SUCCEEDED",
+          "label": "Succeeded",
+          "value": 884831008
+        },
+        {
+          "name": "FAILED",
+          "label": "Failed",
+          "value": 884831009
+        },
+        {
+          "name": "CANCELLED",
+          "label": "Cancelled",
+          "value": 884831010
+        }
+      ]
+    },
+    {
+      "schemaName": "opt_AdminApprovalDecision",
+      "logicalName": "opt_adminapprovaldecision",
+      "displayName": "Admin Approval Decision",
+      "description": "Recorded human approval decision for the exact plan hash.",
+      "options": [
+        {
+          "name": "APPROVED",
+          "label": "Approved",
+          "value": 884832000
+        },
+        {
+          "name": "REJECTED",
+          "label": "Rejected",
+          "value": 884832001
+        }
+      ]
+    },
+    {
+      "schemaName": "opt_AdminJobState",
+      "logicalName": "opt_adminjobstate",
+      "displayName": "Admin Job State",
+      "description": "Lifecycle state of an executor job.",
+      "options": [
+        {
+          "name": "QUEUED",
+          "label": "Queued",
+          "value": 884833000
+        },
+        {
+          "name": "RUNNING",
+          "label": "Running",
+          "value": 884833001
+        },
+        {
+          "name": "SUCCEEDED",
+          "label": "Succeeded",
+          "value": 884833002
+        },
+        {
+          "name": "FAILED",
+          "label": "Failed",
+          "value": 884833003
+        },
+        {
+          "name": "CANCELLED",
+          "label": "Cancelled",
+          "value": 884833004
+        }
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "schemaName": "opt_AdminRequest",
+      "logicalName": "opt_adminrequest",
+      "entitySetName": "opt_adminrequests",
+      "displayName": "Admin Request",
+      "displayCollectionName": "Admin Requests",
+      "description": "Governed request, deterministic plan binding and approval state.",
+      "ownershipType": "UserOwned",
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false,
+      "primaryName": {
+        "schemaName": "opt_Name",
+        "logicalName": "opt_name",
+        "displayName": "Name",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      },
+      "columns": [
+        {
+          "schemaName": "opt_OperationKey",
+          "logicalName": "opt_operationkey",
+          "displayName": "Operation Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_PlanDigest",
+          "logicalName": "opt_plandigest",
+          "displayName": "Plan SHA-256",
+          "type": "String",
+          "maxLength": 64,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[a-f0-9]{64}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_ParametersJson",
+          "logicalName": "opt_parametersjson",
+          "displayName": "Normalized Parameters JSON",
+          "type": "Memo",
+          "maxLength": 131072,
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": false,
+          "containsSensitiveData": true
+        },
+        {
+          "schemaName": "opt_DryRun",
+          "logicalName": "opt_dryrun",
+          "displayName": "Dry Run",
+          "type": "Boolean",
+          "requiredLevel": "ApplicationRequired",
+          "default": true,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Mutation",
+          "logicalName": "opt_mutation",
+          "displayName": "Mutation",
+          "type": "Boolean",
+          "requiredLevel": "ApplicationRequired",
+          "default": false,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_ApprovalRequired",
+          "logicalName": "opt_approvalrequired",
+          "displayName": "Approval Required",
+          "type": "Boolean",
+          "requiredLevel": "ApplicationRequired",
+          "default": false,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Risk",
+          "logicalName": "opt_risk",
+          "displayName": "Risk",
+          "type": "Choice",
+          "globalChoice": "opt_adminrisk",
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_RequestState",
+          "logicalName": "opt_requeststate",
+          "displayName": "Request State",
+          "type": "Choice",
+          "globalChoice": "opt_adminrequeststate",
+          "requiredLevel": "ApplicationRequired",
+          "default": 884831000,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_IdempotencyKey",
+          "logicalName": "opt_idempotencykey",
+          "displayName": "Idempotency Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[A-Za-z0-9._-]{8,128}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_RequesterObjectKey",
+          "logicalName": "opt_requesterobjectkey",
+          "displayName": "Requester Object Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_RequesterDisplayName",
+          "logicalName": "opt_requesterdisplayname",
+          "displayName": "Requester Display Name",
+          "type": "String",
+          "maxLength": 256,
+          "requiredLevel": "None",
+          "format": "Text",
+          "auditEnabled": false,
+          "containsSensitiveData": true
+        },
+        {
+          "schemaName": "opt_CatalogVersion",
+          "logicalName": "opt_catalogversion",
+          "displayName": "Catalog Version",
+          "type": "String",
+          "maxLength": 64,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_TargetSummary",
+          "logicalName": "opt_targetsummary",
+          "displayName": "Target Summary",
+          "type": "String",
+          "maxLength": 1000,
+          "requiredLevel": "None",
+          "format": "TextArea",
+          "auditEnabled": false,
+          "containsSensitiveData": true
+        },
+        {
+          "schemaName": "opt_Reason",
+          "logicalName": "opt_reason",
+          "displayName": "Reason",
+          "type": "String",
+          "maxLength": 500,
+          "requiredLevel": "None",
+          "format": "TextArea",
+          "auditEnabled": false,
+          "containsSensitiveData": true
+        },
+        {
+          "schemaName": "opt_ChangeTicket",
+          "logicalName": "opt_changeticket",
+          "displayName": "Change Ticket",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "None",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_RequestedAtUtc",
+          "logicalName": "opt_requestedatutc",
+          "displayName": "Requested At UTC",
+          "type": "DateTime",
+          "requiredLevel": "ApplicationRequired",
+          "behavior": "UserLocal",
+          "format": "DateAndTime",
+          "auditEnabled": true
+        }
+      ],
+      "alternateKeys": [
+        {
+          "schemaName": "opt_AdminRequest_IdempotencyKey",
+          "columns": [
+            "opt_idempotencykey"
+          ]
+        }
+      ],
+      "governance": {
+        "appendOnly": false,
+        "retentionClass": "TenantConfigured",
+        "largePayloadColumns": [
+          "opt_parametersjson"
+        ]
+      }
+    },
+    {
+      "schemaName": "opt_AdminApproval",
+      "logicalName": "opt_adminapproval",
+      "entitySetName": "opt_adminapprovals",
+      "displayName": "Admin Approval",
+      "displayCollectionName": "Admin Approvals",
+      "description": "Human decision and cryptographic receipt bound to an exact plan hash.",
+      "ownershipType": "UserOwned",
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false,
+      "primaryName": {
+        "schemaName": "opt_Name",
+        "logicalName": "opt_name",
+        "displayName": "Name",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      },
+      "columns": [
+        {
+          "schemaName": "opt_ApprovalKey",
+          "logicalName": "opt_approvalkey",
+          "displayName": "Approval Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[A-Za-z0-9._-]{8,128}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_PlanDigest",
+          "logicalName": "opt_plandigest",
+          "displayName": "Plan SHA-256",
+          "type": "String",
+          "maxLength": 64,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[a-f0-9]{64}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Decision",
+          "logicalName": "opt_decision",
+          "displayName": "Decision",
+          "type": "Choice",
+          "globalChoice": "opt_adminapprovaldecision",
+          "requiredLevel": "ApplicationRequired",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_DecidedByObjectKey",
+          "logicalName": "opt_decidedbyobjectkey",
+          "displayName": "Decided By Object Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_DecidedByDisplayName",
+          "logicalName": "opt_decidedbydisplayname",
+          "displayName": "Decided By Display Name",
+          "type": "String",
+          "maxLength": 256,
+          "requiredLevel": "None",
+          "format": "Text",
+          "auditEnabled": false,
+          "containsSensitiveData": true
+        },
+        {
+          "schemaName": "opt_DecidedAtUtc",
+          "logicalName": "opt_decidedatutc",
+          "displayName": "Decided At UTC",
+          "type": "DateTime",
+          "requiredLevel": "ApplicationRequired",
+          "behavior": "UserLocal",
+          "format": "DateAndTime",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_Signature",
+          "logicalName": "opt_signature",
+          "displayName": "Approval Signature",
+          "type": "String",
+          "maxLength": 512,
+          "requiredLevel": "None",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_ReceiptJson",
+          "logicalName": "opt_receiptjson",
+          "displayName": "Approval Receipt JSON",
+          "type": "Memo",
+          "maxLength": 32768,
+          "requiredLevel": "None",
+          "auditEnabled": false,
+          "containsSensitiveData": true
+        }
+      ],
+      "alternateKeys": [
+        {
+          "schemaName": "opt_AdminApproval_ApprovalKey",
+          "columns": [
+            "opt_approvalkey"
+          ]
+        }
+      ],
+      "governance": {
+        "appendOnly": true,
+        "retentionClass": "TenantConfigured",
+        "largePayloadColumns": [
+          "opt_receiptjson"
+        ]
+      }
+    },
+    {
+      "schemaName": "opt_AdminJob",
+      "logicalName": "opt_adminjob",
+      "entitySetName": "opt_adminjobs",
+      "displayName": "Admin Job",
+      "displayCollectionName": "Admin Jobs",
+      "description": "Executor job state and sanitized output summary.",
+      "ownershipType": "OrganizationOwned",
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false,
+      "primaryName": {
+        "schemaName": "opt_Name",
+        "logicalName": "opt_name",
+        "displayName": "Name",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      },
+      "columns": [
+        {
+          "schemaName": "opt_JobKey",
+          "logicalName": "opt_jobkey",
+          "displayName": "Job Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[A-Za-z0-9._-]{8,128}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_OperationKey",
+          "logicalName": "opt_operationkey",
+          "displayName": "Operation Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_JobState",
+          "logicalName": "opt_jobstate",
+          "displayName": "Job State",
+          "type": "Choice",
+          "globalChoice": "opt_adminjobstate",
+          "requiredLevel": "ApplicationRequired",
+          "default": 884833000,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_CorrelationKey",
+          "logicalName": "opt_correlationkey",
+          "displayName": "Correlation Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_PlanDigest",
+          "logicalName": "opt_plandigest",
+          "displayName": "Plan SHA-256",
+          "type": "String",
+          "maxLength": 64,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[a-f0-9]{64}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_DryRun",
+          "logicalName": "opt_dryrun",
+          "displayName": "Dry Run",
+          "type": "Boolean",
+          "requiredLevel": "ApplicationRequired",
+          "default": true,
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_OutputSummaryJson",
+          "logicalName": "opt_outputsummaryjson",
+          "displayName": "Sanitized Output Summary JSON",
+          "type": "Memo",
+          "maxLength": 131072,
+          "requiredLevel": "None",
+          "auditEnabled": false,
+          "containsSensitiveData": true
+        },
+        {
+          "schemaName": "opt_OutputDigest",
+          "logicalName": "opt_outputdigest",
+          "displayName": "Output SHA-256",
+          "type": "String",
+          "maxLength": 64,
+          "requiredLevel": "None",
+          "format": "Text",
+          "pattern": "^[a-f0-9]{64}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_StartedAtUtc",
+          "logicalName": "opt_startedatutc",
+          "displayName": "Started At UTC",
+          "type": "DateTime",
+          "requiredLevel": "None",
+          "behavior": "UserLocal",
+          "format": "DateAndTime",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_CompletedAtUtc",
+          "logicalName": "opt_completedatutc",
+          "displayName": "Completed At UTC",
+          "type": "DateTime",
+          "requiredLevel": "None",
+          "behavior": "UserLocal",
+          "format": "DateAndTime",
+          "auditEnabled": true
+        }
+      ],
+      "alternateKeys": [
+        {
+          "schemaName": "opt_AdminJob_JobKey",
+          "columns": [
+            "opt_jobkey"
+          ]
+        }
+      ],
+      "governance": {
+        "appendOnly": false,
+        "retentionClass": "TenantConfigured",
+        "largePayloadColumns": [
+          "opt_outputsummaryjson"
+        ]
+      }
+    },
+    {
+      "schemaName": "opt_AdminEvent",
+      "logicalName": "opt_adminevent",
+      "entitySetName": "opt_adminevents",
+      "displayName": "Admin Audit Event",
+      "displayCollectionName": "Admin Audit Events",
+      "description": "Append-only sanitized audit event with correlation and payload digest.",
+      "ownershipType": "OrganizationOwned",
+      "auditEnabled": true,
+      "changeTrackingEnabled": true,
+      "hasActivities": false,
+      "hasNotes": false,
+      "primaryName": {
+        "schemaName": "opt_Name",
+        "logicalName": "opt_name",
+        "displayName": "Name",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired",
+        "auditEnabled": true
+      },
+      "columns": [
+        {
+          "schemaName": "opt_EventKey",
+          "logicalName": "opt_eventkey",
+          "displayName": "Event Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[A-Za-z0-9._-]{8,128}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_EventType",
+          "logicalName": "opt_eventtype",
+          "displayName": "Event Type",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_CorrelationKey",
+          "logicalName": "opt_correlationkey",
+          "displayName": "Correlation Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_ActorObjectKey",
+          "logicalName": "opt_actorobjectkey",
+          "displayName": "Actor Object Key",
+          "type": "String",
+          "maxLength": 128,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_PayloadJson",
+          "logicalName": "opt_payloadjson",
+          "displayName": "Sanitized Payload JSON",
+          "type": "Memo",
+          "maxLength": 65536,
+          "requiredLevel": "None",
+          "auditEnabled": false,
+          "containsSensitiveData": true
+        },
+        {
+          "schemaName": "opt_PayloadDigest",
+          "logicalName": "opt_payloaddigest",
+          "displayName": "Payload SHA-256",
+          "type": "String",
+          "maxLength": 64,
+          "requiredLevel": "ApplicationRequired",
+          "format": "Text",
+          "pattern": "^[a-f0-9]{64}$",
+          "auditEnabled": true
+        },
+        {
+          "schemaName": "opt_OccurredAtUtc",
+          "logicalName": "opt_occurredatutc",
+          "displayName": "Occurred At UTC",
+          "type": "DateTime",
+          "requiredLevel": "ApplicationRequired",
+          "behavior": "UserLocal",
+          "format": "DateAndTime",
+          "auditEnabled": true
+        }
+      ],
+      "alternateKeys": [
+        {
+          "schemaName": "opt_AdminEvent_EventKey",
+          "columns": [
+            "opt_eventkey"
+          ]
+        }
+      ],
+      "governance": {
+        "appendOnly": true,
+        "retentionClass": "TenantConfigured",
+        "largePayloadColumns": [
+          "opt_payloadjson"
+        ]
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "schemaName": "opt_AdminRequest_AdminApproval",
+      "referencedTable": "opt_adminrequest",
+      "referencingTable": "opt_adminapproval",
+      "lookup": {
+        "schemaName": "opt_Request",
+        "logicalName": "opt_request",
+        "displayName": "Admin Request",
+        "requiredLevel": "ApplicationRequired"
+      },
+      "cascade": {
+        "assign": "NoCascade",
+        "delete": "Restrict",
+        "merge": "NoCascade",
+        "reparent": "NoCascade",
+        "share": "NoCascade",
+        "unshare": "NoCascade"
+      }
+    },
+    {
+      "schemaName": "opt_AdminRequest_AdminJob",
+      "referencedTable": "opt_adminrequest",
+      "referencingTable": "opt_adminjob",
+      "lookup": {
+        "schemaName": "opt_Request",
+        "logicalName": "opt_request",
+        "displayName": "Admin Request",
+        "requiredLevel": "ApplicationRequired"
+      },
+      "cascade": {
+        "assign": "NoCascade",
+        "delete": "Restrict",
+        "merge": "NoCascade",
+        "reparent": "NoCascade",
+        "share": "NoCascade",
+        "unshare": "NoCascade"
+      }
+    },
+    {
+      "schemaName": "opt_AdminRequest_AdminEvent",
+      "referencedTable": "opt_adminrequest",
+      "referencingTable": "opt_adminevent",
+      "lookup": {
+        "schemaName": "opt_Request",
+        "logicalName": "opt_request",
+        "displayName": "Admin Request",
+        "requiredLevel": "None"
+      },
+      "cascade": {
+        "assign": "NoCascade",
+        "delete": "Restrict",
+        "merge": "NoCascade",
+        "reparent": "NoCascade",
+        "share": "NoCascade",
+        "unshare": "NoCascade"
+      }
+    },
+    {
+      "schemaName": "opt_AdminJob_AdminEvent",
+      "referencedTable": "opt_adminjob",
+      "referencingTable": "opt_adminevent",
+      "lookup": {
+        "schemaName": "opt_Job",
+        "logicalName": "opt_job",
+        "displayName": "Admin Job",
+        "requiredLevel": "None"
+      },
+      "cascade": {
+        "assign": "NoCascade",
+        "delete": "Restrict",
+        "merge": "NoCascade",
+        "reparent": "NoCascade",
+        "share": "NoCascade",
+        "unshare": "NoCascade"
+      }
+    }
+  ],
+  "privacy": {
+    "publicContractContainsTenantIdentifiers": false,
+    "forbiddenAtRest": [
+      "access tokens",
+      "refresh tokens",
+      "passwords",
+      "certificate private keys",
+      "unredacted mailbox content"
+    ],
+    "sensitiveColumns": [
+      "opt_parametersjson",
+      "opt_requesterdisplayname",
+      "opt_targetsummary",
+      "opt_reason",
+      "opt_decidedbydisplayname",
+      "opt_receiptjson",
+      "opt_outputsummaryjson",
+      "opt_payloadjson"
+    ]
+  },
+  "deployment": {
+    "applyDefault": false,
+    "phases": [
+      "VerifyTargetSolutionAndPublisher",
+      "CreateGlobalChoices",
+      "CreateTablesWithPrimaryColumns",
+      "CreateScalarColumns",
+      "CreateAlternateKeysAndWaitForIndexes",
+      "CreateRestrictiveRelationships",
+      "PublishCustomizations",
+      "VerifyMetadataAndExportSolution"
+    ],
+    "rollback": {
+      "beforeFirstBusinessRow": "Export evidence, then remove newly created components in reverse order only from the non-production solution.",
+      "afterFirstBusinessRow": "No automatic metadata deletion. Use environment backup/restore or a reviewed solution upgrade and data migration."
+    }
+  }
+}

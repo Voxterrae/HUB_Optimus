@@ -1,7 +1,18 @@
 # HUB_Optimus Operator infrastructure candidate
 
-Status: **LOCAL v0.4 / NOT DEPLOYED / AWS AND PUBLIC NO-GO**
-Prepared: 2026-08-26
+Status: **REPOSITORY CANDIDATE / BROWSER WIRING PENDING / NOT DEPLOYED**
+Historical v0.4 preparation: 2026-08-26
+Reconciliation checkpoint: 2026-09-30
+
+The canonical Operator retains the single-tenant Entra owner/team boundary,
+private sign-out and cache isolation, and human-confirmed atomic claim workflow
+from protected `main`. The Cognito auth and empty, disabled runtime assets are
+dormant: `site/operator/index.html` does not load them and `sw.js` does not
+precache them. Changing `enabled` alone cannot activate this candidate.
+Frontend wiring and a response adapter remain pending under #1917; the Entra
+`/api/intake` envelope must remain distinct from the canary `/intake/url`
+response. Issue #1917 remains open. This integration records no Cognito identity
+exception and lifts no #1831 or #1835 deployment gate.
 
 The candidate defines a bounded authenticated implementation of
 `POST /intake/url`. It has not changed AWS account `904851777129`, DNS,
@@ -47,11 +58,17 @@ The candidate defines a bounded authenticated implementation of
   HMAC fingerprint, non-secret subject/window binding, and source SHA are rechecked
   after the second Environment approval. `deactivate` is tied to the private
   stack's `SourceCommit` and reconciles it to controls.
-- The companion browser integration defaults disabled, uses PKCE S256 and an
-  in-memory Bearer token, and never caches runtime enablement or OAuth callback
-  query values.
+- The dormant browser helper defines PKCE S256 and memory-only Bearer tokens.
+  Canonical frontend wiring, callback scrubbing, active-worker version checks,
+  network-only runtime configuration and transport/response regression evidence
+  are still required before a private browser canary.
 
-## Local evidence
+## Historical v0.4 local evidence
+
+These 2026-08-26 results describe the earlier v0.4 candidate. They do not certify
+the reconciled tree, current bundle, frontend integration, live costs or a
+canary release. Current validation must be read from the exact head and checks
+of PR #1918.
 
 - TypeScript build: passed.
 - Jest: 133/133 tests passed.
@@ -94,8 +111,11 @@ The candidate defines a bounded authenticated implementation of
 7. Publish and review the candidate protected workflows, configure their three
    Environments, and verify fixed OIDC trusts; do not enable
    either Environment before the scoped governance record is complete.
-8. Publish the output-derived static runtime configuration through a separate
-   reviewed Pages change, still disabled until the invited-user window.
+8. Review and validate canonical frontend wiring and the canary response adapter
+   under #1917, preserving Entra/private-session safeguards and atomic claims.
+   Prove callback scrubbing, active-worker version checks and network-only
+   runtime configuration before publishing output-derived configuration through
+   a reviewed Pages change. Keep it disabled until the approved invited-user window.
 9. Obtain a second approval for the exact private change set and two-hour
    window; execute the smoke matrix without copying tokens to a terminal.
 10. Run the idempotent stop workflow at expiry, then `deactivate` to `controls`,

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export PYTHONDONTWRITEBYTECODE=1
+
 APP_ROOT="${HUB_OPTIMUS_APP_ROOT:-/opt/hub-optimus}"
 API_DIR="$APP_ROOT/shared/api"
 API_FILE="$API_DIR/hub_api.py"
@@ -1544,7 +1546,7 @@ class Handler(BaseHTTPRequestHandler):
         cleanup_error: OSError | None = None
         try:
             code, stdout, stderr = run_command([
-                "/opt/hub-optimus/shared/bin/hub-core",
+                str(SHARED / "bin" / "hub-core"),
                 "analyze",
                 str(case_path),
             ])

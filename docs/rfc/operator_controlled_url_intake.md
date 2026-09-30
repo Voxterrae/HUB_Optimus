@@ -11,6 +11,15 @@ and a browser fallback exist in the repository (implementation PRs #1717 and
 deployment, complete RFC implementation, source verification, crawling, or
 truth adjudication.
 
+Issue #1835 adds a repository deployment candidate for an authenticated
+owner/team public boundary around this local endpoint. Its OIDC, gateway and
+same-origin artifacts do not prove that Entra, EC2, DNS, TLS or the public API
+is deployed. The operational gates are recorded in
+[`docs/maintenance/operator_oidc_owner_team.md`](../maintenance/operator_oidc_owner_team.md).
+The narrower public contract, including NGINX edge errors and the versioned
+gateway envelope, is
+[`ops/ec2/operator_public_intake.v1.schema.json`](../../ops/ec2/operator_public_intake.v1.schema.json).
+
 Issue #1753 reconciles this record with the implementation. The versioned
 application payload contract is
 [`ops/ec2/controlled_url_intake.v1.schema.json`](../../ops/ec2/controlled_url_intake.v1.schema.json).
@@ -28,10 +37,12 @@ A submitted URL is a source reference until the backend retrieves, bounds,
 extracts, and records source text. Intake does not verify truth, bypass access
 controls, or convert a URL into a conclusion.
 
-This RFC authorizes no additional public API exposure, crawler behavior,
-browser-side third-party fetching, authentication changes, storage changes, or
-analysis contract changes. Existing code must be evaluated against its reviewed
-issues, tests, and deployment evidence.
+This RFC does not by itself authorize public exposure, crawler behavior,
+browser-side third-party fetching, authentication, storage, or analysis
+contract changes. The narrower owner/team authentication candidate is reviewed
+separately under #1835 and remains subject to its deployment evidence. Existing
+code must be evaluated against its reviewed issues, tests, and deployment
+record.
 
 ## Parent boundary
 
@@ -44,8 +55,12 @@ merely referenced. It does not turn retrieved material into verified evidence.
 ## Implemented narrow flow
 
 ```text
-Operator URL
--> POST /intake/url with {"url": "..."}
+authenticated private Operator URL
+-> POST /api/intake with {"url": "..."}
+-> OIDC session, exact Origin, role, capability and rate/concurrency checks
+-> exact flat JSON if NGINX rejects before/instead of the gateway
+-> versioned public envelope gateway
+-> internal POST /intake/url with {"url": "..."}
 -> validate URI, host, port and resolved addresses
 -> controlled single-resource fetch
 -> content-type and byte bounds
@@ -53,6 +68,12 @@ Operator URL
 -> flat provenance response
 -> Operator browser-local draft
 ```
+
+NGINX and the gateway share one `req_<32 hex>` public request identifier. A
+successful gateway response is accepted only when its original URL equals the
+submitted URL exactly, its redirect records form one contiguous chain to
+`final_url`, and `source_domain` matches that final URL. A structurally valid
+response for a different request is rejected before its text is returned.
 
 The endpoint fetches one supplied resource and validated redirect hops. It does
 not crawl links, execute page JavaScript, retrieve embedded resources, run the
@@ -262,9 +283,13 @@ caption, or short-form content. It does not:
 
 ## Operator behavior
 
-The repository Operator posts only `{"url": sourceUrl}` to the controlled
-endpoint whenever a URL is supplied. Optional pasted text is never included in
-that request: it remains separately attributed operator context.
+The repository Operator posts only `{"url": sourceUrl}` when it is served from
+the exact authenticated private origin `https://api.huboptimus.dev`. Optional
+pasted text is never included in that request: it remains separately attributed
+operator context. The public Sites Operator never calls the intake API. With a
+URL and pasted text it prepares the local text-review flow and records that the
+URL was supplied but not fetched; with a URL alone it offers the explicit
+owner/team login route and asks for pasted source text as the public fallback.
 
 On success, it:
 
@@ -288,15 +313,16 @@ On success, it:
 On failure, it:
 
 - shows the controlled error message;
-- asks the operator to paste source text and remove the unavailable URL before
-  using text-only intake;
+- asks the operator to reauthenticate, obtain an assigned role, retry later, or
+  use the locally attributed pasted-text flow, according to the bounded error;
 - does not fetch the third-party URL directly from the browser;
 - does not classify the failed source as false or invalid.
 
-If the operator supplies text and a URL, the URL is still retrieved. The
-retrieved page supplies the source-bound excerpts; the pasted text is recorded
-separately as `operator-provided-context-not-attributed-to-source`. The
-description is therefore optional when URL extraction succeeds.
+On the authenticated private origin, supplying text and a URL still retrieves
+the URL. The retrieved page supplies the source-bound excerpts; the pasted text
+is recorded separately as `operator-provided-context-not-attributed-to-source`.
+On the public origin the URL is not sent and the pasted text itself becomes the
+review source with unverified URL attribution.
 
 Operator context longer than the local 1,200-character metadata field is
 stored with explicit original/canonical/stored character counts, a truncation
@@ -343,9 +369,10 @@ source type invalidates the previous shareable draft. Human-readable share
 text enumerates all records within its explicit message bound and states the
 number omitted when that bound is exceeded.
 
-The hard-coded endpoint URL in the static Operator is repository configuration,
-not proof that the service is publicly deployed, reachable, secure, or
-available.
+The static Operator contains only the same-origin path `/api/intake`; a runtime
+origin check prevents the public Sites build from calling it. The explicit
+login link and private-origin constant are repository configuration, not proof
+that the service is deployed, reachable, secure, or available.
 
 ## Storage and privacy
 

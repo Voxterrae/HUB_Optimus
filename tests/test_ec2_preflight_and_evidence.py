@@ -54,9 +54,12 @@ def test_runbook_retains_reviewed_tools_and_uses_allowlisted_evidence() -> None:
     assert "9d6771994095e4fc04e8fdbf2caa644ccb002ab1" in text
     assert "shared/reviewed-tools/$TARGET_SHA" in text
     assert "Do not put it behind an" in text
-    assert "preflight-deploy.sh" in text
-    assert "adopt-legacy-current.sh" in text
-    assert text.index("adopt-legacy-current.sh") < text.index("preflight-deploy.sh")
+    assert "run-reviewed-operation.py" in text
+    assert "  preflight \"$TARGET_SHA\" \"$REFERENCE_URL\"" in text
+    assert "  adopt \"$LEGACY_CURRENT_SHA\"" in text
+    assert text.index('  adopt "$LEGACY_CURRENT_SHA"') < text.index(
+        '  preflight "$TARGET_SHA"'
+    )
     assert "LEGACY_RELEASE_STATE" in text
     assert "legacy_state_sha256=" in text
     assert "legacy-unattested-not-deploy-rollback-target" in text
@@ -69,6 +72,13 @@ def test_runbook_retains_reviewed_tools_and_uses_allowlisted_evidence() -> None:
     assert 'cmp -s "$RESTORED_RELEASE_STATE" "$APP_ROOT/shared/RELEASE_STATE"' in text
     assert 'if release_state_raw != shared_state_raw:' in text
     assert 'if versioned_launcher_raw != shared_launcher_raw:' in text
+    assert 'state["validation_log_sha256"] != validation_log_sha256' in text
+    assert 'validation_result_lines[-1] != state["validation_result"]' in text
+    assert 'state["dependency_tier"] != "runtime+validation-v1"' in text
+    assert 'state["dependency_lock_sha256"] != dependency_digest.hexdigest()' in text
+    assert "flags |= os.O_NOFOLLOW" in text
+    assert "opened = os.fstat(descriptor)" in text
+    assert "visible = os.stat(path, follow_symlinks=False)" in text
     assert 'evidence["running_release"] != expected_release' in text
     assert 'evidence["configured_current_release"] != expected_release' in text
     assert "--fail-with-body" in text
@@ -85,6 +95,8 @@ def test_runbook_retains_reviewed_tools_and_uses_allowlisted_evidence() -> None:
     assert "PY_ROLLBACK_STATE" in text
     assert "PY_ROLLBACK_STATUS" in text
     assert '"to_launcher_sha256"' in text
+    assert '"validation_log_sha256": state["validation_log_sha256"]' in text
+    assert '"dependency_lock_sha256": state["dependency_lock_sha256"]' in text
     assert 'evidence["running_commit"] != expected_commit' in text
 
 

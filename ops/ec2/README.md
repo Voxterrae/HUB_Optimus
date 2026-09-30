@@ -13,19 +13,19 @@ Included:
 - local API launcher
 - local API systemd control wrapper
 - systemd unit for the local API
+- owner/team OIDC proxy configuration and systemd unit
+- authenticated intake gateway, schema and systemd unit
+- NGINX same-origin reverse-proxy configuration
 
 ## Non-goals
 
-This does not add:
+This does not automatically provision or prove:
 
-- public API exposure
-- nginx
-- DNS/domain configuration
-- Elastic IP configuration
-- Terraform
-- AWS automation
-- frontend
-- secrets handling
+- a public deployment
+- DNS, TLS, Elastic IP, firewall or Redis configuration
+- Entra tenant, App Registration, roles, assignments, MFA or Conditional Access
+- secret generation, distribution, rotation or recovery
+- Terraform or other AWS automation
 
 ## Current validated shape
 
@@ -38,6 +38,9 @@ The local backend runs as:
 - hub-api: localhost API wrapper
 - hub-api-control: systemd wrapper
 - hub-api.service: local API service
+- oauth2-proxy: loopback Entra OIDC/session boundary
+- operator-intake-gateway: loopback authorization, rate/concurrency and envelope boundary
+- nginx: the only intended public listener for the private Operator and intake API
 
 ## Local API
 
@@ -51,6 +54,20 @@ Validated endpoints:
 - GET /status
 - POST /intake/url
 - POST /analyze
+
+The local `/intake/url` route remains internal. The reviewed public candidate
+route is `POST https://api.huboptimus.dev/api/intake`, reachable only through
+NGINX, oauth2-proxy and the intake gateway. It is never proxied directly to
+hub-api.
+
+For that public candidate, NGINX protects the console and every local static
+dependency, disables caching, exposes only exact OAuth routes, and emits a
+two-field JSON error for every locally generated 400/401/403/404/405/408/413/
+429/500/502/503/504 response. The gateway uses the same NGINX request ID in its
+versioned envelope and upstream hop. It rejects any success/error payload whose
+URL differs from the requested URL, as well as discontinuous redirects or a
+final domain mismatch. The private console unregisters the public Operator PWA
+shell; signing out cannot leave a protected offline shell available.
 
 POST /analyze returns direct JSON with:
 
@@ -83,10 +100,27 @@ command, its exit code, its final output line, and its validation log. Failed
 validation leaves its candidate release and metadata for inspection but never
 switches `current`.
 
+The EC2 release environment is installed from separate runtime and validation
+locks under `ops/ec2`. Both contain exact versions and reviewed wheel hashes for
+the Linux x86_64 CPython 3.12 deployment ABI. Deployment rejects ambient
+`PIP_*` settings, removes the former pip self-upgrade, uses only the fixed
+PyPI simple index with `--require-hashes --no-deps --only-binary`, and runs
+`pip check`. It then removes the bootstrap installer and requires the installed
+name/version inventory and the virtual-environment base interpreter to match
+the reviewed locks exactly, both before and after validation. Pip consumes a
+single sealed Linux `memfd` assembled from the same no-follow lock snapshot that
+produces the evidence digest; path identity tokens also reject temporary atomic
+replacement followed by restoration. The combined lock digest is checked again
+after validation and recorded with the selected tier and lock path in
+`RELEASE_STATE`. The root requirement files remain the portable authoring tiers;
+they are not the EC2 deployment lock.
+
 The release state also records the SHA-256 of the selected `hub-api.sh`
-launcher. Before changing operational state, deployment validates that the
-current release is a managed, usable rollback target and stages all replacement
-artifacts. If any later step fails, an exit handler restores the exact previous
+launcher, the reviewed source-tree digest, and the complete venv-manifest
+digest. Before changing operational state, deployment validates that the
+current release is a managed, usable rollback target whose HEAD, source bytes,
+and venv still match that state, then stages all replacement artifacts. If any
+later step fails, an exit handler restores the exact previous
 `current` symlink, shared launcher, shared release state, current-release
 marker, previous-release pointer, and any transactionally completed legacy
 release state. The failed candidate retains its validation log,
@@ -100,9 +134,11 @@ prove that a commit or tag was reviewed or signed. GitHub review records and the
 human deploy decision remain the authority for that claim.
 
 Before switching, deployment preserves provenance for the current release.
-`rollback-current` rejects duplicate target-state identity keys, verifies the
-recorded commit, path, release, and launcher hash, then snapshots and stages its
-own complete transition. Any injected or ordinary failure after rollback
+`rollback-current` rejects duplicate target-state identity keys and verifies
+the recorded commit, path, release, launcher hash, source tree, and venv for
+both the current release and rollback target. It repeats mutable HEAD, source,
+and venv checks immediately before mutation, then snapshots and stages its own
+complete transition. Any injected or ordinary failure after rollback
 mutation begins restores the exact pre-rollback symlink, launcher, release
 state, rollback state, current marker, and prior transition marker. A successful
 rollback publishes a separate `ROLLBACK_STATE`. Deploy and rollback share a
@@ -111,6 +147,10 @@ non-blocking host lock so they cannot mutate release state concurrently.
 Neither operation silently restarts the running API service. After a deploy or
 rollback, an operator must review the recorded state and explicitly restart the
 service when the process should load the restored launcher.
+
+The API launcher, core launcher, and systemd unit disable Python bytecode writes
+inside a release. `hub-core test` also disables pytest's cache provider, so
+normal `analyze` and test operations do not invalidate source authority.
 
 At launcher start, the API captures the full commit of the resolved running
 release and the SHA-256 of the launcher that started it. `/status` reports those
@@ -129,9 +169,12 @@ the managed symlink, exact repository origin, clean checkout, marker, and
 byte-identical versioned/shared launcher. It does not trust the legacy short
 commit or validation-count claim as authority. The original six-field state is
 retained byte-for-byte as mode-`0400` `LEGACY_RELEASE_STATE`; its SHA-256 and
-short prefix are linked from the new full-SHA state. The shared/per-release
-states are postvalidated before success. Any post-mutation failure restores the
-exact snapshot, and an exact completed adoption can be rerun without change.
+short prefix are linked from the new full-SHA state. The v2 adoption state also
+records source-tree and venv authority captured with reviewed helpers. HEAD,
+source, and venv are checked at baseline, immediately before mutation, and
+after publication. The shared/per-release states are postvalidated before
+success. Any post-mutation failure restores the exact snapshot, and an exact
+completed adoption can be rerun without change.
 
 [`preflight-deploy.sh`](preflight-deploy.sh) is the read-only, fail-closed host
 gate for the exact-SHA localhost intake operation. It checks rollback release
@@ -214,12 +257,25 @@ Manual installation targets:
 
 - /opt/hub-optimus/shared/bin/
 - /etc/systemd/system/hub-api.service
+- /etc/systemd/system/oauth2-proxy.service
+- /etc/systemd/system/operator-intake-gateway.service
+- /etc/hub-optimus/oauth2-proxy.cfg
+- /etc/nginx/conf.d/hub-optimus-operator-api.conf
+- /etc/hub-optimus/secrets/ (external values only; never the repository examples)
+- /etc/hub-optimus/operator-intake-gateway.env (root-managed capability only)
+
+The complete identity, deployment, acceptance and rollback sequence is
+[`docs/maintenance/operator_oidc_owner_team.md`](../../docs/maintenance/operator_oidc_owner_team.md).
 
 ## Validation
 
 Run from the repository root:
 
-bash -n ops/ec2/*.sh
+```bash
+find ops/ec2 -maxdepth 1 -type f -name '*.sh' \
+  ! -name 'hub-ops.sh' -exec bash -n '{}' +
+python3 -m py_compile ops/ec2/hub-ops.sh ops/ec2/*.py
+```
 
 Runtime validation on EC2:
 

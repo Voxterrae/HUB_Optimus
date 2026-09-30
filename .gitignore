@@ -54,7 +54,6 @@ __pycache__/
 .Python
 
 # Local build/test artifacts
-site/
 out_pr41/
 .pytest_cache/
 
@@ -68,3 +67,16 @@ out_pr41/
 
 # Local IDE settings
 .vscode/
+
+# Local environments and credential files
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+.venv/
+venv/
+*.pem
+*.key
+*.pfx
+*.p12

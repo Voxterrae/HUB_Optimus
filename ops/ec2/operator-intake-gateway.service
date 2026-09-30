@@ -1,0 +1,41 @@
+[Unit]
+Description=HUB_Optimus authenticated Operator intake gateway
+After=network.target hub-api.service
+Requires=hub-api.service
+
+[Service]
+Type=simple
+User=hub-operator-gateway
+Group=hub-operator-gateway
+DynamicUser=true
+WorkingDirectory=/opt/hub-optimus/current
+EnvironmentFile=/etc/hub-optimus/operator-intake-gateway.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/usr/bin/python3 /opt/hub-optimus/current/ops/ec2/operator-intake-gateway.py
+Restart=on-failure
+RestartSec=3
+UMask=0077
+
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET
+RestrictNamespaces=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+IPAddressDeny=any
+IPAddressAllow=localhost
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
