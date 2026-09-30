@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import yaml
+
 
 PACKAGE_ROOT = Path(__file__).parents[1]
 
@@ -48,12 +50,14 @@ def test_schema_dry_run_preflight_is_read_only_and_has_no_apply_surface() -> Non
 
 
 def test_approval_blueprint_targets_numeric_schema_contract_values() -> None:
-    content = (
+    blueprint_path = (
         PACKAGE_ROOT
         / "power-platform"
         / "flows"
         / "approval-flow.blueprint.yaml"
-    ).read_text(encoding="utf-8")
+    )
+    content = blueprint_path.read_text(encoding="utf-8")
+    blueprint = yaml.safe_load(content)
 
     assert "table: opt_adminrequest" in content
     assert (
@@ -73,5 +77,33 @@ def test_approval_blueprint_targets_numeric_schema_contract_values() -> None:
     assert content.index("persist_complete_signed_approval_receipt") < content.index(
         "call_gateway_execute_with_original_parameters"
     )
-    for field in ("approval_id", "plan_hash", "approved_by", "approved_at"):
-        assert f"    - {field}" in content
+    assert "sign_v1_length_prefixed_receipt_using_tenant_service" in content
+    controls = blueprint["controls"]
+    assert controls["signature_profile"] == "hmac-sha256-lp-v1"
+    assert controls["signature_algorithm"] == "hmac-sha256"
+    assert controls["signature_encoding"] == "lowercase-hex-64"
+    assert controls["signature_material"] == {
+        "domain_ascii": "HUB_OPTIMUS_APPROVAL_RECEIPT",
+        "domain_suffix_hex": "00",
+        "ordered_field_count": 5,
+        "field_count_prefix": "none",
+        "field_encoding": "utf-8-strict",
+        "length_prefix": "uint32-big-endian",
+        "bom": "forbidden",
+        "separator": "none",
+        "trailing_bytes": "forbidden",
+        "unicode_normalization": "none",
+        "timestamp_encoding": "utc-plus-00:00-seconds-with-optional-six-digit-fraction",
+        "secret_encoding": "utf-8-exact-no-trim-or-base64",
+        "secret_minimum_bytes": 32,
+        "secret_scope": "dedicated-per-tenant-environment-purpose",
+        "binary_framing_owner": "tenant_signer_service",
+        "legacy_fallback": False,
+    }
+    assert controls["signed_receipt_fields"] == [
+        "signature_profile",
+        "approval_id",
+        "plan_hash",
+        "approved_by",
+        "approved_at",
+    ]
