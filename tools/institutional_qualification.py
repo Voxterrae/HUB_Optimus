@@ -155,6 +155,8 @@ def evaluate(intake: dict[str, Any], policy: dict[str, Any]) -> Decision:
         reasons.append("Procurement/accounts-payable ownership is not confirmed.")
     if not _bool(intake, "accepts_paid_diagnostic"):
         reasons.append("The applicant does not accept the paid diagnostic boundary.")
+    if _bool(intake, "hidden_reseller_or_commercial_beneficiary"):
+        reasons.append("Hidden commercial or reseller beneficiaries are prohibited.")
 
     enterprise_types = set(policy.get("enterprise_public_types") or [])
     if organization_type in enterprise_types:

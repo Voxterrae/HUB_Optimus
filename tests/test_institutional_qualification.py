@@ -45,6 +45,60 @@ def test_qualified_paid_request_passes() -> None:
     assert decision.owner_review_required is False
 
 
+@pytest.mark.parametrize("accepts_pov", [True, False])
+def test_paid_hidden_beneficiary_is_held(accepts_pov: bool) -> None:
+    intake = paid_intake()
+    intake["hidden_reseller_or_commercial_beneficiary"] = True
+    intake["accepts_paid_pov"] = accepts_pov
+    decision = evaluate(intake, POLICY)
+    assert decision.classification == "HOLD_UNQUALIFIED"
+    assert any("hidden" in reason.lower() for reason in decision.reasons)
+    assert decision.owner_review_required is False
+
+
+def test_paid_missing_hidden_beneficiary_answer_is_rejected() -> None:
+    intake = paid_intake()
+    del intake["hidden_reseller_or_commercial_beneficiary"]
+    with pytest.raises(QualificationError, match="hidden_reseller_or_commercial_beneficiary"):
+        evaluate(intake, POLICY)
+
+
+@pytest.mark.parametrize("value", [None, 0, 1, "false", "", [], {}])
+def test_paid_invalid_hidden_beneficiary_answer_is_rejected(value: object) -> None:
+    intake = paid_intake()
+    intake["hidden_reseller_or_commercial_beneficiary"] = value
+    with pytest.raises(QualificationError, match="hidden_reseller_or_commercial_beneficiary"):
+        evaluate(intake, POLICY)
+
+
+def test_disclosed_paid_diagnostic_request_passes() -> None:
+    intake = paid_intake()
+    intake["accepts_paid_pov"] = False
+    decision = evaluate(intake, POLICY)
+    assert decision.classification == "QUALIFIED_DIAGNOSTIC_ONLY"
+    assert decision.owner_review_required is False
+
+
+@pytest.mark.parametrize(
+    "key,classification,owner_review",
+    [
+        ("requires_ownership_or_control", "DECLINE_PROTECTED_RIGHTS", True),
+        ("requests_free_bespoke_work", "DECLINE_FREE_BESPOKE_WORK", False),
+        ("requires_core_source_transfer", "HOLD_OWNER_RIGHTS_REVIEW", True),
+        ("requests_white_label_oem_resale_or_exclusivity", "HOLD_STRATEGIC_RIGHTS_REVIEW", True),
+    ],
+)
+def test_paid_hidden_beneficiary_preserves_prior_rights_gates(
+    key: str, classification: str, owner_review: bool
+) -> None:
+    intake = paid_intake()
+    intake["hidden_reseller_or_commercial_beneficiary"] = True
+    intake[key] = True
+    decision = evaluate(intake, POLICY)
+    assert decision.classification == classification
+    assert decision.owner_review_required is owner_review
+
+
 def test_free_bespoke_work_is_declined() -> None:
     intake = paid_intake()
     intake["requests_free_bespoke_work"] = True
