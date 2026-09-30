@@ -49,13 +49,46 @@ def _string(data: dict[str, Any], key: str) -> str:
     return value.strip()
 
 
+def _validate_policy(policy: dict[str, Any]) -> None:
+    governed_flags = {
+        "free_bespoke_work_allowed": False,
+        "core_source_transfer_allowed_by_standard_qualification": False,
+        "ownership_or_control_allowed": False,
+        "white_label_oem_resale_requires_owner_review": True,
+        "paid_diagnostic_required": True,
+    }
+    common_good_flags = {
+        "requires_nonprofit": True,
+        "requires_direct_human_or_animal_benefit": True,
+        "requires_noncommercial_use": True,
+        "hidden_commercial_beneficiary_allowed": False,
+        "core_source_transfer_allowed": False,
+        "ownership_or_control_allowed": False,
+    }
+    common_good = _mapping(policy.get("common_good"), "common_good policy")
+    for data, label, expected_flags in (
+        (policy, "policy", governed_flags),
+        (common_good, "common_good policy", common_good_flags),
+    ):
+        for key, expected in expected_flags.items():
+            if _bool(data, key) is not expected:
+                raise QualificationError(f"{label}.{key} must be {str(expected).lower()}")
+
+
 def evaluate(intake: dict[str, Any], policy: dict[str, Any]) -> Decision:
     intake = _mapping(intake, "intake")
     policy = _mapping(policy, "policy")
+    _validate_policy(policy)
 
     track = _string(intake, "requested_track")
     organization_type = _string(intake, "organization_type")
     budget_band = _string(intake, "budget_band")
+    strategic_rights_key = "requests_white_label_oem_resale_or_exclusivity"
+    strategic_rights_requested = (
+        _bool(intake, strategic_rights_key)
+        if track == "paid" and strategic_rights_key in intake
+        else None
+    )
 
     if _bool(intake, "requires_ownership_or_control"):
         return Decision(
@@ -72,7 +105,6 @@ def evaluate(intake: dict[str, Any], policy: dict[str, Any]) -> Decision:
         )
 
     if track == "common_good":
-        common_good = _mapping(policy.get("common_good"), "common_good policy")
         reasons: list[str] = []
         if organization_type != "nonprofit" or not _bool(intake, "verified_nonprofit"):
             reasons.append("Verified nonprofit status is required.")
@@ -102,7 +134,14 @@ def evaluate(intake: dict[str, Any], policy: dict[str, Any]) -> Decision:
             True,
         )
 
-    if _bool(intake, "requests_white_label_oem_resale_or_exclusivity"):
+    if strategic_rights_requested is None:
+        return Decision(
+            "HOLD_STRATEGIC_RIGHTS_REVIEW",
+            ("The white-label, OEM, resale, or exclusivity answer is missing.",),
+            True,
+        )
+
+    if strategic_rights_requested:
         return Decision(
             "HOLD_STRATEGIC_RIGHTS_REVIEW",
             ("White-label, OEM, resale, or exclusivity requires a separate owner decision.",),
