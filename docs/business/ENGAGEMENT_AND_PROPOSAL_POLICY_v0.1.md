@@ -5,6 +5,8 @@
 This policy converts the commercial and public-benefit philosophy into a repeatable
 client intake, proposal, contracting, and exception process.
 
+Current pricing is controlled by [the v0.2 price book](PLATFORM_MONETIZATION_AND_PRICE_BOOK_v0.2.md): EUR 15,000 minimum for general commercial engagements and EUR 50,000 for enterprise/public engagements, unless the owner records an exception.
+
 ## 2. Classify the request first
 
 Every request must be placed in one track:
@@ -12,7 +14,7 @@ Every request must be placed in one track:
 | Track | Default | Required result |
 | --- | --- | --- |
 | Commercial company or funded organization | Paid | Qualification, then paid diagnostic or quotation |
-| Enterprise or large corporation | Paid | Minimum EUR 10,000 engagement unless owner exception |
+| Enterprise or large corporation | Paid | Minimum EUR 50,000 engagement unless owner exception |
 | Public institution or public company | Paid | Procurement-compatible paid engagement |
 | Verified qualifying human/animal welfare nonprofit | Common Good candidate | Written eligibility and pro bono scope |
 | Research or educational collaboration | Paid unless clearly unfunded and approved as Common Good | Written classification |

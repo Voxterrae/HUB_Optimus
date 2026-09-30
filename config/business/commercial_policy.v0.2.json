@@ -201,7 +201,7 @@
       "revenue_share_percent_of_net_downstream_software": 15,
       "commercial_rule": "GREATER_OF_MINIMUM_GUARANTEE_OR_REVENUE_SHARE"
     },
-    "ownership_transfered_by_embedding": false,
+    "ownership_transferred_by_embedding": false,
     "source_code_included_by_default": false,
     "exclusivity_included_by_default": false
   },

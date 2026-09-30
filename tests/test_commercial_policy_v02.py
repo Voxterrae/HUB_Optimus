@@ -103,7 +103,7 @@ def test_embedded_white_label_and_oem_are_distribution_rights() -> None:
     assert oem["annual_minimum_guarantee_eur"] == 300000
     assert oem["revenue_share_percent_of_net_downstream_software"] == 15
     assert oem["commercial_rule"] == "GREATER_OF_MINIMUM_GUARANTEE_OR_REVENUE_SHARE"
-    assert distribution["ownership_transfered_by_embedding"] is False
+    assert distribution["ownership_transferred_by_embedding"] is False
     assert distribution["source_code_included_by_default"] is False
 
 
