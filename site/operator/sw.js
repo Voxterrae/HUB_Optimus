@@ -1,9 +1,10 @@
-const CACHE_NAME = "hub-optimus-operator-v0-27";
+const CACHE_NAME = "hub-optimus-operator-v0-29";
 const OFFLINE_FALLBACK = "./index.html";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
   "./i18n.v1.js",
+  "./claim-decomposition.v1.js",
   "./learning-candidate.v1.js",
   "./learning-store.v1.js",
   "./schemas/operator_learning_candidate.v1.schema.json",
