@@ -1,4 +1,7 @@
 import importlib.util
+
+
+
 import json
 import os
 import re
@@ -31,9 +34,33 @@ STORE_HARNESS = _load_store_harness()
 
 def _learning_ui_source():
     source = OPERATOR.read_text(encoding="utf-8")
-    return source.split("// OPERATOR_LOCAL_LEARNING_1836_START", 1)[1].split(
+    learning = source.split("// OPERATOR_LOCAL_LEARNING_1836_START", 1)[1].split(
         "// OPERATOR_LOCAL_LEARNING_1836_END", 1
     )[0]
+    return """
+const SOURCE_BOUND_NORMALIZER_VERSIONS = new Set([
+  "operator-source-bound-v1",
+  "operator-source-bound-v2"
+]);
+function isSourceBoundNormalizer(version) {
+  return SOURCE_BOUND_NORMALIZER_VERSIONS.has(String(version || ""));
+}
+function currentSourceBoundV2Snapshot() {
+  return {metadata: currentCaseMetadata, claims, evidence};
+}
+function hasSourceBoundV2Markers(payload) {
+  const metadata = payload?.metadata || {};
+  return metadata.normalizer_version === "operator-source-bound-v2"
+    || Object.prototype.hasOwnProperty.call(metadata, "claim_drafting")
+    || metadata.operator_mode === "browser-local-human-confirmed-atomic-claim-draft"
+    || (payload?.claims || []).some((record) => record?.metadata?.normalized_by === "operator-source-bound-v2")
+    || (payload?.evidence || []).some((record) => record?.metadata?.normalized_by === "operator-source-bound-v2")
+    || (metadata.relationships || []).some((record) => record?.created_by === "operator-source-bound-v2");
+}
+function passesSourceBoundV2IntegrityGate(payload) {
+  return !hasSourceBoundV2Markers(payload);
+}
+""" + learning
 
 
 DOM_HARNESS = r"""
@@ -317,11 +344,13 @@ def test_learning_workspace_is_fifth_visible_localized_accessible_step():
 
 def test_learning_scripts_schema_and_offline_assets_are_versioned_in_order():
     source = OPERATOR.read_text(encoding="utf-8")
-    assert source.index("./i18n.v1.js") < source.index("./learning-candidate.v1.js")
+    assert source.index("./i18n.v1.js") < source.index("./claim-decomposition.v1.js")
+    assert source.index("./claim-decomposition.v1.js") < source.index("./learning-candidate.v1.js")
     assert source.index("./learning-candidate.v1.js") < source.index("./learning-store.v1.js")
     assert source.index("./learning-store.v1.js") < source.index("const $ =")
     service_worker = SW.read_text(encoding="utf-8")
-    assert 'hub-optimus-operator-v0-27' in service_worker
+    assert 'hub-optimus-operator-v0-29' in service_worker
+    assert '"./claim-decomposition.v1.js"' in service_worker
     for asset in (
         './learning-candidate.v1.js',
         './learning-store.v1.js',
@@ -717,3 +746,45 @@ def test_learning_data_has_no_payload_memory_share_hash_or_network_path():
     assert "buildShareSnapshot" not in learning_ui
     assert "buildPayload" not in learning_ui
     assert "buildMemoryRecord" not in learning_ui
+
+
+def test_v2_learning_revision_binds_the_validated_record_attestation():
+    _run_ui_harness(
+        r"""
+$("case_id").value = caseRecord.case_id;
+$("core_version_ref").value = caseRecord.core_version_ref;
+claims = clone(caseRecord.claims);
+evidence = clone(caseRecord.evidence);
+currentCaseMetadata = {normalizer_version: "operator-source-bound-v1", relationships: clone(caseRecord.relationships)};
+preparedDraftReady = true;
+const v1 = currentLearningCaseRecord();
+if (v1.revision_sha256 !== caseRecord.revision_sha256) throw new Error("v1 revision changed");
+
+// This projection test isolates the already validated v2 attestation from
+// the separately tested source-bound integrity validator.
+passesSourceBoundV2IntegrityGate = (payload) => payload.metadata?.projection_test_validated === true;
+currentCaseMetadata = {
+  normalizer_version: "operator-source-bound-v2",
+  relationships: clone(caseRecord.relationships),
+  projection_test_validated: true,
+  claim_drafting: {attestation_sha256: "a".repeat(64)}
+};
+const first = currentLearningCaseRecord();
+if (!first || first.source_bound_v2_attestation_sha256 !== "a".repeat(64)) throw new Error("v2 attestation missing");
+Object.assign(caseRecord, clone(first));
+const candidate = buildCandidate("learning-v2-provenance");
+if (model.evaluateFreshness(candidate, first, {hashText}).freshness !== "current") throw new Error("initial candidate not current");
+
+currentCaseMetadata.claim_drafting.attestation_sha256 = "b".repeat(64);
+const changed = currentLearningCaseRecord();
+if (JSON.stringify(first.claims) !== JSON.stringify(changed.claims)) throw new Error("test changed claim text");
+if (first.revision_sha256 === changed.revision_sha256) throw new Error("same-text provenance change remained current");
+if (model.evaluateFreshness(candidate, changed, {hashText}).freshness !== "stale") throw new Error("old candidate did not become stale");
+
+currentCaseMetadata.claim_drafting.attestation_sha256 = "";
+if (currentLearningCaseRecord() !== null) throw new Error("missing attestation accepted");
+currentCaseMetadata.claim_drafting.attestation_sha256 = "b".repeat(64);
+currentCaseMetadata.projection_test_validated = false;
+if (currentLearningCaseRecord() !== null) throw new Error("failed integrity gate accepted");
+"""
+    )

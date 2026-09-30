@@ -14,6 +14,7 @@ ICON = ROOT / "site" / "operator" / "icon.svg"
 LOCKUP = ROOT / "site" / "assets" / "brand" / "hub-optimus-logo-lockup.png"
 SW = ROOT / "site" / "operator" / "sw.js"
 OPERATOR_I18N = ROOT / "site" / "operator" / "i18n.v1.js"
+CLAIM_DECOMPOSITION = ROOT / "site" / "operator" / "claim-decomposition.v1.js"
 URL_INTAKE_SCHEMA = (
     ROOT / "ops" / "ec2" / "controlled_url_intake.v1.schema.json"
 )
@@ -152,6 +153,7 @@ context.globalThis = context;
 context.self = context;
 window.navigator.serviceWorker = undefined;
 vm.createContext(context);
+vm.runInContext(CLAIM_SOURCE, context, { filename: "claim-decomposition.v1.js" });
 vm.runInContext(SOURCE, context, { filename: "operator-inline.js" });
 
 async function submit(url, text) {
@@ -189,6 +191,16 @@ async function submit(url, text) {
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _named_function(html: str, name: str) -> str:
+    match = re.search(
+        rf"    function {re.escape(name)}\([^)]*\) \{{.*?\n    \}}",
+        html,
+        re.DOTALL,
+    )
+    assert match is not None, name
+    return match.group(0)
 
 
 def _operator_i18n_node_prelude() -> str:
@@ -256,7 +268,14 @@ def _source_bound_helpers(html: str) -> str:
         re.DOTALL,
     )
     assert match is not None
-    return match.group(1)
+    return (
+        _named_function(html, "isPlainRecord")
+        + _named_function(html, "hasOnlyRecordKeys")
+        + _named_function(html, "hasExactRecordKeys")
+        + _named_function(html, "sourceReferenceForIntake")
+        + "\n"
+        + match.group(1)
+    )
 
 
 def _controlled_intake_contract_helpers(html: str) -> str:
@@ -548,7 +567,9 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert 'id="product_analyze" type="submit"' in html
     assert 'id="product_source_preview"' in html
     assert 'id="product_confirm_source" type="checkbox"' in html
+    assert 'id="product_confirm_claims" type="checkbox"' in html
     assert '<script src="./i18n.v1.js"></script>' in html
+    assert '<script src="./claim-decomposition.v1.js"></script>' in html
     assert re.search(r'<script[^>]+src="https?://', html) is None
 
 
@@ -557,7 +578,11 @@ def test_full_public_operator_submit_never_fetches_a_supplied_url():
     html = _read(INDEX)
     scripts = re.findall(r"<script>(.*?)</script>", html, re.DOTALL)
     assert len(scripts) == 1
-    smoke = f"const SOURCE = {json.dumps(scripts[0])};\n{FULL_PAGE_HARNESS}"
+    smoke = (
+        f"const SOURCE = {json.dumps(scripts[0])};\n"
+        f"const CLAIM_SOURCE = {json.dumps(_read(CLAIM_DECOMPOSITION))};\n"
+        f"{FULL_PAGE_HARNESS}"
+    )
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
@@ -885,7 +910,7 @@ def test_operator_progress_is_immediate_and_only_network_intake_has_a_deadline()
     assert "const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;" in html
     assert 'new ControlledIntakeError("url_fetch_timeout", 504)' in html
     assert "return await Promise.race([request, deadline]);" in html
-    assert "hub-optimus-operator-v0-27" in sw
+    assert "hub-optimus-operator-v0-29" in sw
 
 
 def test_operator_draft_is_source_bound_and_conservative():
@@ -893,8 +918,9 @@ def test_operator_draft_is_source_bound_and_conservative():
     catalog = _read(OPERATOR_I18N)
 
     assert "operator-source-bound-v1" in html
+    assert "operator-source-bound-v2" in html
     assert '<bdi dir="ltr">review_profile=source-bound-v1</bdi>' not in html
-    assert 'normalizer_version: "operator-source-bound-v1"' in html
+    assert 'normalizer_version: "operator-source-bound-v2"' in html
     assert "source_text_fingerprint" in html
     assert 'type: "SUPPORTS_ATTRIBUTION"' in html
     assert 'support_scope: "attribution-only"' in html
@@ -908,11 +934,35 @@ def test_operator_draft_is_source_bound_and_conservative():
     assert "operator-topic-analysis" not in html
 
 
+def test_v2_marker_integrity_gate_precedes_every_mutating_or_trust_boundary():
+    html = _read(INDEX)
+
+    lock = _named_function(html, "sourceBoundV2StructureLocked")
+    stored = _named_function(html, "isStoredCasePayload")
+    parser = _named_function(html, "parseValidatedResultEnvelope")
+    learning = _named_function(html, "currentLearningCaseRecord")
+    build = _named_function(html, "buildPayload")
+    load = _named_function(html, "loadPayload")
+
+    assert "hasSourceBoundV2Markers(currentSourceBoundV2Snapshot())" in lock
+    assert "passesSourceBoundV2IntegrityGate(payload)" in stored
+    assert "passesSourceBoundV2IntegrityGate(envelope.analysis_result)" in parser
+    assert "passesSourceBoundV2IntegrityGate(liveSnapshot)" in learning
+    assert build.index("passesSourceBoundV2IntegrityGate(liveSnapshot)") < build.index(
+        "reconcileRecordRelationships()"
+    )
+    assert load.index("passesSourceBoundV2IntegrityGate(payload)") < load.index(
+        "invalidateShareableResult"
+    )
+
+
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
 def test_source_bound_excerpts_are_exact_distinct_and_locatable():
     helpers = _source_bound_helpers(_read(INDEX))
     smoke = (
-        _operator_i18n_node_prelude()
+        _read(CLAIM_DECOMPOSITION)
+        + "\nconst claimDraftModel = globalThis.HUB_OPTIMUS_CLAIM_DECOMPOSITION_V1;\n"
+        + _operator_i18n_node_prelude()
         + helpers
         + """
 const first = "Alpha agency published the revised procedure on Friday. Independent records have not yet been reviewed.";
@@ -937,24 +987,50 @@ if (!buildSpecificClaim(firstExcerpts[0]).includes("Alpha agency")) {
   throw new Error("claim is not bound to the first source");
 }
 const profile = buildSourceProfile(first, "news-article", "https://example.com/report");
+const selectedForClaims = profile.excerpts.map((excerpt) => ({
+  ...excerpt,
+  selection_origin: "human-confirmed"
+}));
+const proposedClaims = claimDraftModel.proposeClaimSet(selectedForClaims, {hashText: sha256Hex});
+proposedClaims.groups.forEach((group) => group.proposal_reviews.forEach((proposal) => {
+  proposal.review_disposition = "reviewed";
+}));
+const claimSet = claimDraftModel.confirmClaimSet(proposedClaims, {
+  hashText: sha256Hex,
+  expectedSourceFingerprint: profile.sourceFingerprint,
+  expectedSelectionSha256: claimDraftModel.computeSelectionSha256(selectedForClaims, {
+    hashText: sha256Hex,
+    requireHumanSelection: true
+  })
+});
 const records = buildSourceBoundRecords(profile, {
   sourceRef: "https://example.com/report",
   claimType: "external-report",
-  retrieved: true
+  retrieved: true,
+  claimSet
 });
-if (records.claims.length !== records.evidence.length || records.claims.length !== records.relationships.length) {
-  throw new Error("source-bound records are not one-to-one");
+if (records.claims.length !== 2 || records.evidence.length !== 1 || records.relationships.length !== 2) {
+  throw new Error("one excerpt did not retain two separately linked claims");
 }
-for (let index = 0; index < records.claims.length; index += 1) {
-  const claim = records.claims[index];
-  const evidence = records.evidence[index];
-  const relation = records.relationships[index];
-  if (!first.includes(evidence.text)) throw new Error("evidence is not exact source text");
-  if (evidence.supports_claim_ids[0] !== claim.claim_id) throw new Error("dangling claim support");
-  if (relation.from_ref !== evidence.evidence_id || relation.to_ref !== claim.claim_id) {
+const evidenceRecord = records.evidence[0];
+if (!first.includes(evidenceRecord.text)) throw new Error("evidence is not exact source text");
+for (const claim of records.claims) {
+  if (!evidenceRecord.supports_claim_ids.includes(claim.claim_id)) throw new Error("dangling claim support");
+  const relation = records.relationships.find((item) => item.to_ref === claim.claim_id);
+  if (!relation || relation.from_ref !== evidenceRecord.evidence_id) {
     throw new Error("dangling structural relationship");
   }
-  if (evidence.metadata.support_scope !== "attribution-only") {
+  if (claim.metadata.normalized_by !== "operator-source-bound-v2") {
+    throw new Error("claim did not use v2 provenance");
+  }
+  if (claim.metadata.source_span_unit !== "unicode-code-point"
+    || Array.from(first).slice(
+      claim.metadata.source_span_start,
+      claim.metadata.source_span_end
+    ).join("") !== claim.text) {
+    throw new Error("projected claim lost its own exact Unicode span");
+  }
+  if (evidenceRecord.metadata.support_scope !== "attribution-only") {
     throw new Error("excerpt was promoted into corroboration");
   }
 }
@@ -966,6 +1042,460 @@ for (let index = 0; index < records.claims.length; index += 1) {
         text=True,
         capture_output=True,
         check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_v2_attestation_rejects_every_structural_tamper():
+    html = _read(INDEX)
+    smoke = (
+        _read(CLAIM_DECOMPOSITION)
+        + "\nconst claimDraftModel = globalThis.HUB_OPTIMUS_CLAIM_DECOMPOSITION_V1;\n"
+        + _operator_i18n_node_prelude()
+        + _source_bound_helpers(html)
+        + _named_function(html, "reconstructedSourceBoundV2ClaimSet")
+        + _named_function(html, "hasValidSourceBoundV2Attestation")
+        + _named_function(html, "hasSourceBoundV2Markers")
+        + _named_function(html, "passesSourceBoundV2IntegrityGate")
+        + r'''
+const clone = (value) => JSON.parse(JSON.stringify(value));
+const source = "The council approved the motion. Independent verification remains pending.";
+const canonical = canonicalSource(source);
+const excerpts = sourceExcerpts(canonical.text, canonical.fingerprint).map((excerpt) => ({
+  ...excerpt,
+  selection_origin: "human-confirmed"
+}));
+const proposed = claimDraftModel.proposeClaimSet(excerpts, {hashText: sha256Hex});
+proposed.groups.forEach((group) => {
+  group.proposal_reviews.forEach((proposal, index) => {
+    proposal.review_disposition = index === 0 ? "reviewed" : "omitted";
+  });
+  const reviewedProposalId = group.proposal_reviews[0].proposal_id;
+  group.claims = group.claims.filter((claim) => claim.source_proposal_id === reviewedProposalId);
+});
+const selectionSha256 = claimDraftModel.computeSelectionSha256(excerpts, {
+  hashText: sha256Hex,
+  requireHumanSelection: true
+});
+const confirmed = claimDraftModel.confirmClaimSet(proposed, {
+  hashText: sha256Hex,
+  expectedSourceFingerprint: canonical.fingerprint,
+  expectedSelectionSha256: selectionSha256
+});
+const profile = {
+  excerpts,
+  sourceFingerprint: canonical.fingerprint
+};
+const intakeRecord = {
+  version: "operator-intake-record-v1",
+  mode: "controlled-url",
+  original_url: "https://example.com/",
+  final_url: "https://example.com/"
+};
+const records = buildSourceBoundRecords(profile, {
+  sourceRef: "https://example.com/",
+  claimType: "external-report",
+  retrieved: true,
+  claimSet: confirmed
+});
+const recordProjectionSha256 = sourceBoundV2RecordProjectionSha256({
+  intakeRecord,
+  sourceTextFingerprint: canonical.fingerprint,
+  claims: records.claims,
+  evidence: records.evidence,
+  relationships: records.relationships,
+  proposalReviews: records.proposalReviews
+});
+const payload = {
+  case_id: "case-v2-attestation",
+  core_version_ref: "main",
+  input_summary: "Human-confirmed source-bound claim draft",
+  claims: records.claims,
+  evidence: records.evidence,
+  metadata: {
+    intake_record: intakeRecord,
+    source_text_fingerprint: canonical.fingerprint,
+    normalizer_version: "operator-source-bound-v2",
+    relationships: records.relationships,
+    claim_drafting: {
+      schema_version: confirmed.schema_version,
+      selection_sha256: confirmed.confirmation.selection_sha256,
+      claim_set_sha256: confirmed.confirmation.claim_set_sha256,
+      confirmation_sha256: confirmed.confirmation.confirmation_sha256,
+      record_projection_sha256: recordProjectionSha256,
+      attestation_sha256: sourceBoundV2AttestationSha256(
+        confirmed.confirmation.confirmation_sha256,
+        recordProjectionSha256
+      ),
+      status: confirmed.confirmation.status,
+      coverage_scope: "all-selected-passages-reviewed",
+      proposal_reviews: records.proposalReviews
+    }
+  }
+};
+if (!hasValidSourceBoundV2Attestation(payload)) throw new Error("intact v2 attestation was rejected");
+if (!payload.metadata.claim_drafting.proposal_reviews.some(
+  (group) => group.proposals.some((proposal) => proposal.review_disposition === "omitted")
+)) throw new Error("explicit omission was not projected into the attested payload");
+if (!hasSourceBoundV2Markers(payload) || !passesSourceBoundV2IntegrityGate(payload)) {
+  throw new Error("intact v2 payload did not pass its marker-aware integrity gate");
+}
+for (const downgradedVersion of ["operator-source-bound-v1", "unknown", null]) {
+  const downgraded = clone(payload);
+  if (downgradedVersion === null) delete downgraded.metadata.normalizer_version;
+  else downgraded.metadata.normalizer_version = downgradedVersion;
+  if (!hasSourceBoundV2Markers(downgraded)) {
+    throw new Error("residual v2 provenance was not detected after root relabeling");
+  }
+  if (hasValidSourceBoundV2Attestation(downgraded) || passesSourceBoundV2IntegrityGate(downgraded)) {
+    throw new Error("root relabeling bypassed the v2 integrity gate");
+  }
+}
+
+const compoundDowngrade = clone(payload);
+compoundDowngrade.metadata.normalizer_version = "operator-source-bound-v1";
+delete compoundDowngrade.metadata.claim_drafting;
+delete compoundDowngrade.metadata.operator_mode;
+compoundDowngrade.claims.forEach((record) => {
+  record.metadata.normalized_by = "operator-source-bound-v1";
+});
+compoundDowngrade.evidence.forEach((record) => {
+  record.metadata.normalized_by = "operator-source-bound-v1";
+});
+compoundDowngrade.metadata.relationships.forEach((record) => {
+  record.created_by = "operator-source-bound-v1";
+});
+if (!hasSourceBoundV2Markers(compoundDowngrade)) {
+  throw new Error("compound relabeling hid retained v2 structural fields");
+}
+if (passesSourceBoundV2IntegrityGate(compoundDowngrade)) {
+  throw new Error("compound relabeling bypassed the v2 integrity gate");
+}
+
+const legacyShape = clone(compoundDowngrade);
+for (const record of legacyShape.claims) {
+  for (const key of [
+    "claim_origin", "source_quote_type", "exact_excerpt_sha256",
+    "review_state", "confirmation_sha256", "source_proposal_id",
+    "source_span_start", "source_span_end", "source_span_unit"
+  ]) delete record.metadata[key];
+}
+for (const record of legacyShape.evidence) {
+  for (const key of ["exact_excerpt_sha256", "review_state", "confirmation_sha256"]) {
+    delete record.metadata[key];
+  }
+}
+legacyShape.metadata.operator_mode = "browser-local-source-bound-draft";
+legacyShape.metadata.review_state = "pending";
+legacyShape.claims[0].metadata.review_state = "pending";
+if (hasSourceBoundV2Markers(legacyShape) || !passesSourceBoundV2IntegrityGate(legacyShape)) {
+  throw new Error("a canonical v1-shaped payload with opaque metadata was misclassified as v2");
+}
+
+const opaqueClaimMetadataCollisions = {
+  claim_origin: "external-taxonomy",
+  source_quote_type: "editorial-label",
+  review_state: "pending"
+};
+for (const [key, value] of Object.entries(opaqueClaimMetadataCollisions)) {
+  const isolated = clone(legacyShape);
+  isolated.claims[0].metadata = {[key]: value, normalized_by: "operator-source-bound-v1"};
+  if (hasSourceBoundV2Markers(isolated) || !passesSourceBoundV2IntegrityGate(isolated)) {
+    throw new Error(`isolated opaque claim metadata ${key} caused a false v2 classification`);
+  }
+}
+
+const reservedClaimMarkers = {
+  exact_excerpt_sha256: "0".repeat(64),
+  confirmation_sha256: "1".repeat(64),
+  source_proposal_id: "proposal-test",
+  source_span_start: 0,
+  source_span_end: 1,
+  source_span_unit: "unicode-code-point"
+};
+for (const [key, value] of Object.entries(reservedClaimMarkers)) {
+  const isolated = clone(legacyShape);
+  isolated.claims[0].metadata[key] = value;
+  if (!hasSourceBoundV2Markers(isolated) || passesSourceBoundV2IntegrityGate(isolated)) {
+    throw new Error(`isolated reserved v2 claim marker ${key} bypassed the integrity gate`);
+  }
+}
+for (const [key, value] of Object.entries({
+  exact_excerpt_sha256: "2".repeat(64),
+  confirmation_sha256: "3".repeat(64)
+})) {
+  const isolated = clone(legacyShape);
+  isolated.evidence[0].metadata[key] = value;
+  if (!hasSourceBoundV2Markers(isolated) || passesSourceBoundV2IntegrityGate(isolated)) {
+    throw new Error(`isolated reserved v2 evidence marker ${key} bypassed the integrity gate`);
+  }
+}
+
+const v2ClaimSpanTuple = clone(legacyShape);
+Object.assign(v2ClaimSpanTuple.claims[0].metadata, {
+  source_proposal_id: "proposal-test",
+  source_span_start: 0,
+  source_span_end: 1,
+  source_span_unit: "unicode-code-point"
+});
+if (!hasSourceBoundV2Markers(v2ClaimSpanTuple)
+  || passesSourceBoundV2IntegrityGate(v2ClaimSpanTuple)) {
+  throw new Error("the v2 per-claim source-span tuple bypassed the integrity gate");
+}
+
+const v2ClaimProvenanceTuple = clone(legacyShape);
+Object.assign(v2ClaimProvenanceTuple.claims[0].metadata, {
+  claim_origin: "mechanical-proposal",
+  source_quote_type: "exact",
+  exact_excerpt_sha256: "4".repeat(64),
+  review_state: "human-confirmed",
+  confirmation_sha256: "5".repeat(64)
+});
+if (!hasSourceBoundV2Markers(v2ClaimProvenanceTuple)
+  || passesSourceBoundV2IntegrityGate(v2ClaimProvenanceTuple)) {
+  throw new Error("the v2 claim provenance tuple bypassed the integrity gate");
+}
+
+const v2EvidenceProvenanceTuple = clone(legacyShape);
+Object.assign(v2EvidenceProvenanceTuple.evidence[0].metadata, {
+  exact_excerpt_sha256: "6".repeat(64),
+  review_state: "human-confirmed",
+  confirmation_sha256: "7".repeat(64)
+});
+if (!hasSourceBoundV2Markers(v2EvidenceProvenanceTuple)
+  || passesSourceBoundV2IntegrityGate(v2EvidenceProvenanceTuple)) {
+  throw new Error("the v2 evidence provenance tuple bypassed the integrity gate");
+}
+
+const partiallyStrippedDowngrade = clone(compoundDowngrade);
+partiallyStrippedDowngrade.claims.forEach((record) => {
+  delete record.metadata.source_span_unit;
+  delete record.metadata.confirmation_sha256;
+});
+partiallyStrippedDowngrade.evidence.forEach((record) => {
+  delete record.metadata.confirmation_sha256;
+});
+if (!hasSourceBoundV2Markers(partiallyStrippedDowngrade)
+  || passesSourceBoundV2IntegrityGate(partiallyStrippedDowngrade)) {
+  throw new Error("partially stripped v2 tuples bypassed the integrity gate");
+}
+
+const explicitMarkerCases = [
+  (item) => { item.metadata.claim_drafting = {}; },
+  (item) => { item.metadata.operator_mode = "browser-local-human-confirmed-atomic-claim-draft"; },
+  (item) => { item.claims[0].metadata.normalized_by = "operator-source-bound-v2"; },
+  (item) => { item.evidence[0].metadata.normalized_by = "operator-source-bound-v2"; },
+  (item) => { item.metadata.relationships[0].created_by = "operator-source-bound-v2"; }
+];
+for (const addMarker of explicitMarkerCases) {
+  const isolated = clone(legacyShape);
+  addMarker(isolated);
+  if (!hasSourceBoundV2Markers(isolated) || passesSourceBoundV2IntegrityGate(isolated)) {
+    throw new Error("an isolated explicit v2 marker bypassed the integrity gate");
+  }
+}
+
+const mutations = [
+  (item) => { item.claims[0].text += " altered"; },
+  (item) => { item.claims[0].claim_id = `claim-${"0".repeat(64)}`; },
+  (item) => { item.evidence[0].text += " altered"; },
+  (item) => { item.evidence[0].evidence_id = "evidence-999"; item.metadata.relationships[0].from_ref = "evidence-999"; },
+  (item) => { item.evidence[0].source_type = "operator-provided-excerpt"; },
+  (item) => { item.evidence[0].source_ref = "https://tampered.example"; item.claims[0].source_ref = "https://tampered.example"; },
+  (item) => {
+    item.metadata.intake_record.original_url = "https://tampered.example/";
+    item.metadata.intake_record.final_url = "https://tampered.example/";
+    item.evidence.forEach((record) => { record.source_ref = "https://tampered.example/"; });
+    item.claims.forEach((record) => { record.source_ref = "https://tampered.example/"; });
+  },
+  (item) => { item.evidence[0].metadata.selection_origin = "mechanical-proposal"; },
+  (item) => { item.claims[0].metadata.passage_scope = "partial-source-passage"; },
+  (item) => { item.evidence[0].metadata.intake_record_ref = "metadata.other"; },
+  (item) => { item.evidence[0].supports_claim_ids.pop(); },
+  (item) => { item.metadata.relationships[0].relationship_id = "relation-tampered"; },
+  (item) => { item.metadata.relationships[0].to_ref = `claim-${"f".repeat(64)}`; },
+  (item) => { item.metadata.claim_drafting.proposal_reviews[0].proposals[0].review_disposition = "omitted"; },
+  (item) => { item.metadata.claim_drafting.confirmation_sha256 = "0".repeat(64); }
+];
+for (const mutate of mutations) {
+  const tampered = clone(payload);
+  mutate(tampered);
+  if (hasValidSourceBoundV2Attestation(tampered)) {
+    throw new Error("tampered v2 payload retained a valid human attestation");
+  }
+}
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_v2_claim_state_and_learning_revision_survive_all_interface_languages():
+    html = _read(INDEX)
+    learning_model = ROOT / "site" / "operator" / "learning-candidate.v1.js"
+    smoke = (
+        _read(CLAIM_DECOMPOSITION)
+        + _read(learning_model)
+        + _operator_i18n_node_prelude()
+        + _source_bound_helpers(html)
+        + _named_function(html, "claimDraftDisplayType")
+        + _named_function(html, "claimDraftProposal")
+        + _named_function(html, "claimDraftProposalStatus")
+        + _named_function(html, "renderClaimDraftGroups")
+        + r'''
+const claimDraftModel = globalThis.HUB_OPTIMUS_CLAIM_DECOMPOSITION_V1;
+const learningModel = globalThis.HUB_OPTIMUS_LEARNING_CANDIDATE_V1;
+const source = "The source attributes one decision to the council. A second review remains pending.";
+const canonical = canonicalSource(source);
+const excerpts = sourceExcerpts(canonical.text, canonical.fingerprint).map((excerpt) => ({
+  ...excerpt,
+  selection_origin: "human-confirmed"
+}));
+const proposed = claimDraftModel.proposeClaimSet(excerpts, {hashText: sha256Hex});
+proposed.groups[0].claims[0].text = "The source attributes a decision to the council.";
+proposed.groups[0].claims[0].origin = "human-edited";
+proposed.groups[0].claims[0].source_quote_type = "paraphrase";
+proposed.groups[0].claims[0].draft_id = claimDraftModel.computeDraftId({
+  source_text_fingerprint: canonical.fingerprint,
+  excerpt_id: proposed.groups[0].excerpt_id,
+  source_span_start: proposed.groups[0].claims[0].source_span_start,
+  source_span_end: proposed.groups[0].claims[0].source_span_end,
+  source_span_unit: proposed.groups[0].claims[0].source_span_unit,
+  text: proposed.groups[0].claims[0].text
+}, {hashText: sha256Hex});
+proposed.groups.forEach((group) => group.proposal_reviews.forEach((proposal) => {
+  proposal.review_disposition = "reviewed";
+}));
+const selectionSha256 = claimDraftModel.computeSelectionSha256(excerpts, {
+  hashText: sha256Hex,
+  requireHumanSelection: true
+});
+const confirmed = claimDraftModel.confirmClaimSet(proposed, {
+  hashText: sha256Hex,
+  expectedSourceFingerprint: canonical.fingerprint,
+  expectedSelectionSha256: selectionSha256
+});
+const records = buildSourceBoundRecords({excerpts}, {
+  sourceRef: "https://example.com",
+  claimType: "external-report",
+  retrieved: false,
+  claimSet: confirmed
+});
+const caseRecord = {
+  case_id: "case-language-stability",
+  core_version_ref: "main",
+  claims: records.claims.map((claim) => ({
+    claim_id: claim.claim_id,
+    text: claim.text,
+    source_ref: claim.source_ref
+  })),
+  evidence: records.evidence.map((item) => ({
+    evidence_id: item.evidence_id,
+    text: item.text,
+    source_ref: item.source_ref,
+    limitations: item.limitations
+  })),
+  relationships: records.relationships.map((item) => ({
+    type: item.type,
+    from_ref: item.from_ref,
+    to_ref: item.to_ref
+  })),
+  revision_sha256: "0".repeat(64)
+};
+caseRecord.revision_sha256 = learningModel.computeCaseRevision(caseRecord, {hashText: sha256Hex});
+const baseline = JSON.stringify({confirmed, records, revision: caseRecord.revision_sha256});
+let currentClaimDraftSet = confirmed;
+const groupContainer = {innerHTML: ""};
+function $(id) {
+  if (id === "product_claim_draft_groups") return groupContainer;
+  throw new Error(`unexpected DOM lookup: ${id}`);
+}
+function escapeHtml(value) { return String(value ?? ""); }
+
+for (const locale of operatorI18n.supportedLocales) {
+  activeOperatorLanguage = locale;
+  renderClaimDraftGroups();
+  if (!groupContainer.innerHTML.includes(opText("claimDraftExcerpt", {number: 1}))) {
+    throw new Error(`claim editor did not rerender in ${locale}`);
+  }
+  const firstClaim = confirmed.groups[0].claims[0];
+  const visibleSpan = opText("claimDraftSourceSpan");
+  const visibleInterval = `<bdi dir="ltr">[${firstClaim.source_span_start}, ${firstClaim.source_span_end}) · ${firstClaim.source_span_unit}</bdi>`;
+  if (!groupContainer.innerHTML.includes(visibleSpan)
+      || !groupContainer.innerHTML.includes(visibleInterval)
+      || !groupContainer.innerHTML.includes('data-claim-source-span="0"')) {
+    throw new Error(`claim source span was not inspectable in ${locale}`);
+  }
+  const validation = claimDraftModel.validateClaimSet(confirmed, {
+    hashText: sha256Hex,
+    requireConfirmed: true,
+    expectedSourceFingerprint: canonical.fingerprint,
+    expectedSelectionSha256: selectionSha256
+  });
+  if (!validation.valid) throw new Error(`confirmed set became invalid in ${locale}`);
+  const revision = learningModel.computeCaseRevision(caseRecord, {hashText: sha256Hex});
+  if (revision !== caseRecord.revision_sha256) throw new Error(`learning revision changed in ${locale}`);
+  if (JSON.stringify({confirmed, records, revision}) !== baseline) {
+    throw new Error(`canonical v2 state changed in ${locale}`);
+  }
+}
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_human_edit_never_silently_becomes_an_exact_quote():
+    html = _read(INDEX)
+    smoke = (
+        _read(CLAIM_DECOMPOSITION)
+        + _source_bound_helpers(html)
+        + _named_function(html, "claimDraftId")
+        + _named_function(html, "claimDraftProposal")
+        + _named_function(html, "updateClaimDraftText")
+        + r'''
+const claimDraftModel = globalThis.HUB_OPTIMUS_CLAIM_DECOMPOSITION_V1;
+const source = "The motion was NOT approved. A second review remains pending.";
+const canonical = canonicalSource(source);
+const excerpts = sourceExcerpts(canonical.text, canonical.fingerprint).map((excerpt) => ({
+  ...excerpt,
+  selection_origin: "human-confirmed"
+}));
+let currentClaimDraftSet = claimDraftModel.proposeClaimSet(excerpts, {hashText: sha256Hex});
+let currentConfirmedClaimSet = null;
+const original = structuredClone(currentClaimDraftSet.groups[0].claims[0]);
+currentClaimDraftSet.groups[0].proposal_reviews[0].review_disposition = "reviewed";
+function invalidateClaimDraftConfirmation() { currentConfirmedClaimSet = null; }
+function renderClaimDraftValidation() {}
+function $(id) {
+  if (id === "product_claim_draft_groups") return {querySelector() { return null; }};
+  return null;
+}
+updateClaimDraftText(0, 0, "approved.");
+const edited = currentClaimDraftSet.groups[0].claims[0];
+if (edited.origin !== "human-edited" || edited.source_quote_type !== "paraphrase") {
+  throw new Error("human-edited substring was silently labelled exact");
+}
+if (edited.source_proposal_id !== original.source_proposal_id
+  || edited.source_span_start !== original.source_span_start
+  || edited.source_span_end !== original.source_span_end) {
+  throw new Error("human edit lost its reviewed source span or proposal lineage");
+}
+if (edited.draft_id === original.draft_id) throw new Error("material edit retained the old claim ID");
+if (currentClaimDraftSet.groups[0].proposal_reviews[0].review_disposition !== "pending") {
+  throw new Error("human edit did not reset proposal review");
+}
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1261,6 +1791,7 @@ let currentRetrievedSourceText = "";
 let currentRetrievedSourceUrl = "";
 let currentSourceSelectionState = null;
 let currentConfirmedSourceSelection = null;
+function clearClaimDrafting() {}
 '''
         + _source_selection_dom_helpers(html)
         + r'''
@@ -1330,6 +1861,7 @@ def test_payload_output_and_ephemeral_summary_all_require_the_confirmed_selectio
     memory = re.search(r"function buildMemoryRecord\(\) \{(.*?)\n    \}", html, re.DOTALL)
     assert normalized is not None and output is not None and memory is not None
     assert "confirmedSourceExcerptsFor(raw)" in normalized.group(1)
+    assert "confirmedClaimSetFor(confirmedExcerpts)" in normalized.group(1)
     assert "excerpts: confirmedExcerpts" in normalized.group(1)
     for block in (output.group(1), memory.group(1)):
         assert "confirmedSourceExcerptsFor(sourceText) || []" in block
@@ -1630,7 +2162,9 @@ const fields = {
   product_source_url: field(),
   product_source_selection: field(),
   product_confirm_source: field(),
-  product_source_preview: field()
+  product_source_preview: field(),
+  product_confirm_claims: field(),
+  product_claim_draft_groups: field({querySelector() { return null; }})
 };
 const $ = (id) => fields[id];
 let intakeState = {
@@ -1651,6 +2185,7 @@ let activeIntakeRequestToken = 0;
 let activeIntakeAbortController = null;
 let selectionMode = null;
 let confirmed = false;
+let claimsConfirmed = false;
 let outputCount = 0;
 let memoryCount = 0;
 let retrievalCount = 0;
@@ -1702,6 +2237,13 @@ function sourceSelectionSnapshotIsCurrent(raw, mode) {
 function confirmedSourceExcerptsFor() {
   return confirmed ? [{text: "exact confirmed passage"}] : null;
 }
+function confirmedClaimSetFor() {
+  return claimsConfirmed ? {confirmation: {status: "human-confirmed"}} : null;
+}
+function renderClaimDraftValidation() {
+  fields.product_confirm_claims.disabled = false;
+  return {valid: true};
+}
 function renderSourceSelectionValidation() {
   fields.product_confirm_source.disabled = false;
   return {ok: true, excerpts: [{text: "exact confirmed passage"}]};
@@ -1716,6 +2258,7 @@ function clearRetrievedSourcePreview() {
   currentRetrievedSourceUrl = "";
   selectionMode = null;
   confirmed = false;
+  claimsConfirmed = false;
   fields.product_source_preview.hidden = true;
 }
 function renderUrlIntakeFallback(url, error) {
@@ -1745,8 +2288,14 @@ async function readControlledUrlText(url, {signal} = {}) {
   confirmed = true;
   fields.product_confirm_source.checked = true;
   await runProductAnalyze();
+  if (retrievalCount !== 1 || outputCount || memoryCount || preparedDraftReady) {
+    throw new Error("URL passage confirmation did not stop at atomic-claim review");
+  }
+  claimsConfirmed = true;
+  fields.product_confirm_claims.checked = true;
+  await runProductAnalyze();
   if (retrievalCount !== 1 || outputCount !== 1 || memoryCount !== 1 || !preparedDraftReady) {
-    throw new Error("URL confirmation did not produce exactly one ephemeral draft");
+    throw new Error("URL claim confirmation did not produce exactly one ephemeral draft");
   }
 
   intakeState = {
@@ -1764,8 +2313,14 @@ async function readControlledUrlText(url, {signal} = {}) {
   confirmed = true;
   fields.product_confirm_source.checked = true;
   await runProductAnalyze();
+  if (outputCount !== 1 || memoryCount !== 1 || preparedDraftReady) {
+    throw new Error("text passage confirmation did not stop at atomic-claim review");
+  }
+  claimsConfirmed = true;
+  fields.product_confirm_claims.checked = true;
+  await runProductAnalyze();
   if (outputCount !== 2 || memoryCount !== 2 || !preparedDraftReady) {
-    throw new Error("text confirmation did not produce exactly one additional ephemeral draft");
+    throw new Error("text claim confirmation did not produce exactly one additional ephemeral draft");
   }
 
   controlledIntakeEnabled = false;
@@ -1793,8 +2348,14 @@ async function readControlledUrlText(url, {signal} = {}) {
   confirmed = true;
   fields.product_confirm_source.checked = true;
   await runProductAnalyze();
+  if (retrievalCount !== 1 || outputCount !== 2 || memoryCount !== 2 || preparedDraftReady) {
+    throw new Error("public URL plus pasted text did not stop at atomic-claim review");
+  }
+  claimsConfirmed = true;
+  fields.product_confirm_claims.checked = true;
+  await runProductAnalyze();
   if (retrievalCount !== 1 || outputCount !== 3 || memoryCount !== 3 || !preparedDraftReady) {
-    throw new Error("public URL plus pasted text did not produce one local draft");
+    throw new Error("public URL plus pasted text claims did not produce one local draft");
   }
 
   intakeState = {
@@ -1955,7 +2516,7 @@ def test_public_url_and_complete_text_stay_local_with_unverified_attribution():
     source_text = re.search(r'<textarea id="product_source_text"[^>]*>', html)
     assert source_text is not None
     assert "maxlength=" not in source_text.group(0)
-    assert 'sourceBoundDraftWasActive = currentCaseMetadata.normalizer_version === "operator-source-bound-v1"' in html
+    assert "hasSourceBoundV2Markers(currentSourceBoundV2Snapshot())" in html
     assert "claims = [];" in html
     assert "evidence = [];" in html
     assert 'data-op-i18n="msgDraftInvalidatedTitle"' in html
@@ -2267,6 +2828,228 @@ def test_advanced_saved_draft_has_an_explicit_privacy_lifecycle():
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_clear_all_atomically_discards_active_v2_without_touching_saved_history():
+    html = _read(INDEX)
+    clear_all = _named_function(html, "clearAll")
+    smoke = r'''
+const sentinel = "SECRET-V2-SENTINEL";
+const saved = new Map([
+  ["hub_optimus_operator_case_v1", "saved-draft-remains"],
+  ["hub_optimus_learning", "learning-history-remains"]
+]);
+let aborts = 0;
+let abortObservedStaleState = false;
+let previewClearObservedStaleState = false;
+let shareEnabled = true;
+let syncOptions = null;
+let renderCount = 0;
+let clearConfirmed = false;
+let currentCaseMetadata = {
+  normalizer_version: "operator-source-bound-v2",
+  claim_drafting: {confirmation_sha256: "a".repeat(64)}
+};
+let claims = [{claim_id: "claim-v2", text: sentinel}];
+let evidence = [{evidence_id: "evidence-v2", text: sentinel}];
+let currentIntakeRecord = {mode: "controlled-url"};
+let currentRetrievedSourceText = sentinel;
+let currentRetrievedSourceUrl = "https://example.test/secret";
+let currentMemoryRecord = {claim: sentinel};
+let currentIntakeFailure = {code: sentinel};
+let currentAdvancedNormalizerPayload = {secret: sentinel};
+let preparedDraftReady = true;
+let recordSequences = {claim: 9, evidence: 9};
+let currentSourceSelectionState = {secret: sentinel};
+let currentConfirmedSourceSelection = {secret: sentinel};
+let currentClaimDraftSet = {secret: sentinel};
+let currentConfirmedClaimSet = {secret: sentinel};
+let intakeGeneration = 4;
+let activeIntakeRequestToken = 99;
+let activeIntakeAbortController = {abort() {
+  aborts += 1;
+  abortObservedStaleState = Boolean(
+    activeIntakeAbortController || activeIntakeRequestToken ||
+    Object.keys(currentCaseMetadata).length || claims.length || evidence.length ||
+    currentIntakeRecord || currentRetrievedSourceText || currentRetrievedSourceUrl ||
+    currentMemoryRecord || currentIntakeFailure || currentAdvancedNormalizerPayload ||
+    preparedDraftReady || currentSourceSelectionState || currentConfirmedSourceSelection ||
+    currentClaimDraftSet || currentConfirmedClaimSet ||
+    recordSequences.claim || recordSequences.evidence
+  );
+  activeIntakeAbortController = {abort() {}};
+  activeIntakeRequestToken = 777;
+  intakeGeneration = 999;
+  currentCaseMetadata = {normalizer_version: "operator-source-bound-v2"};
+  currentIntakeRecord = {secret: sentinel};
+  currentRetrievedSourceText = sentinel;
+  currentRetrievedSourceUrl = "https://example.test/reinjected";
+  currentMemoryRecord = {secret: sentinel};
+  currentIntakeFailure = {secret: sentinel};
+  currentAdvancedNormalizerPayload = {secret: sentinel};
+  preparedDraftReady = true;
+  currentSourceSelectionState = {secret: sentinel};
+  currentConfirmedSourceSelection = {secret: sentinel};
+  currentClaimDraftSet = {secret: sentinel};
+  currentConfirmedClaimSet = {secret: sentinel};
+  claims = [{claim_id: "reinjected", text: sentinel}];
+  evidence = [{evidence_id: "reinjected", text: sentinel}];
+  recordSequences = {claim: 88, evidence: 99};
+  throw new Error("hostile synchronous abort listener");
+}};
+const element = (value = "") => ({
+  value,
+  checked: false,
+  textContent: sentinel,
+  innerHTML: sentinel,
+  replaceChildren() { this.textContent = ""; this.innerHTML = ""; }
+});
+const fields = Object.fromEntries([
+  "claim_requires", "case_id", "core_version_ref", "signal_source_type",
+  "operational_signal", "intake_channel", "product_output", "normalizer_readout",
+  "case_json", "analyze_command", "result_input", "result_view",
+  "product_confirm_source", "product_confirm_claims", "product_source_preview",
+  "product_claim_drafting", "product_source_preview_text", "product_source_selection",
+  "product_claim_draft_groups", "product_source_url", "product_source_text",
+  "audit_source_type", "audit_source_url", "audit_source_text"
+].map((id) => [id, element(sentinel)]));
+const document = {querySelectorAll() { return []; }};
+function $(id) { return fields[id]; }
+function confirm() { return clearConfirmed; }
+function opText(key) { return key; }
+function setMemoryActionsEnabled(enabled) { shareEnabled = enabled; }
+function renderMemoryStatus() {}
+function clearRetrievedSourcePreview() {
+  previewClearObservedStaleState = Boolean(
+    currentRetrievedSourceText || currentRetrievedSourceUrl ||
+    currentSourceSelectionState || currentConfirmedSourceSelection ||
+    currentClaimDraftSet || currentConfirmedClaimSet
+  );
+  currentRetrievedSourceText = sentinel;
+  currentRetrievedSourceUrl = "https://example.test/preview-reinjected";
+  currentSourceSelectionState = {secret: sentinel};
+  currentConfirmedSourceSelection = {secret: sentinel};
+  currentClaimDraftSet = {secret: sentinel};
+  currentConfirmedClaimSet = {secret: sentinel};
+  fields.product_source_preview_text.textContent = sentinel;
+  fields.product_source_selection.value = sentinel;
+  fields.product_claim_draft_groups.textContent = sentinel;
+  throw new Error("simulated preview DOM cleanup failure");
+}
+function resetProductProgress() {}
+function syncProductInputState(options) {
+  syncOptions = options;
+  if (Object.keys(currentCaseMetadata).length || claims.length || evidence.length) {
+    throw new Error("clear attempted synchronization before removing v2 state");
+  }
+}
+function renderClaims() {
+  if (Object.keys(currentCaseMetadata).length || claims.length) {
+    throw new Error("claims rendered against stale v2 metadata");
+  }
+  renderCount += 1;
+}
+function renderEvidence() {
+  if (Object.keys(currentCaseMetadata).length || evidence.length) {
+    throw new Error("evidence rendered against stale v2 metadata");
+  }
+  renderCount += 1;
+}
+function updateJson() { fields.case_json.textContent = JSON.stringify({metadata: currentCaseMetadata}); }
+''' + clear_all + r'''
+const cancelledSnapshot = JSON.stringify({
+  currentCaseMetadata, claims, evidence, currentIntakeRecord,
+  currentRetrievedSourceText, currentRetrievedSourceUrl, currentMemoryRecord,
+  currentIntakeFailure, currentAdvancedNormalizerPayload, preparedDraftReady,
+  currentSourceSelectionState, currentConfirmedSourceSelection,
+  currentClaimDraftSet, currentConfirmedClaimSet, intakeGeneration,
+  activeIntakeRequestToken, recordSequences
+});
+clearAll();
+if (JSON.stringify({
+  currentCaseMetadata, claims, evidence, currentIntakeRecord,
+  currentRetrievedSourceText, currentRetrievedSourceUrl, currentMemoryRecord,
+  currentIntakeFailure, currentAdvancedNormalizerPayload, preparedDraftReady,
+  currentSourceSelectionState, currentConfirmedSourceSelection,
+  currentClaimDraftSet, currentConfirmedClaimSet, intakeGeneration,
+  activeIntakeRequestToken, recordSequences
+}) !== cancelledSnapshot || aborts !== 0) {
+  throw new Error("cancelled clear mutated active state");
+}
+clearConfirmed = true;
+clearAll();
+if (aborts !== 1 || activeIntakeAbortController !== null || activeIntakeRequestToken !== 0) {
+  throw new Error("active intake was not invalidated exactly once before reset");
+}
+if (abortObservedStaleState || previewClearObservedStaleState) {
+  throw new Error("a callback observed source-bound state before atomic invalidation");
+}
+if (intakeGeneration !== 5) {
+  throw new Error("clear did not invalidate the intake generation exactly once");
+}
+if (Object.keys(currentCaseMetadata).length || claims.length || evidence.length) {
+  throw new Error("active v2 records survived clear");
+}
+if (currentIntakeRecord || currentIntakeFailure || currentRetrievedSourceText || currentRetrievedSourceUrl) {
+  throw new Error("active intake or retrieved source state survived clear");
+}
+if (currentMemoryRecord || currentAdvancedNormalizerPayload || preparedDraftReady || shareEnabled) {
+  throw new Error("shareable or learning-ready v2 state survived clear");
+}
+if (currentSourceSelectionState || currentConfirmedSourceSelection
+  || currentClaimDraftSet || currentConfirmedClaimSet) {
+  throw new Error("source or claim confirmation state survived clear");
+}
+if (recordSequences.claim !== 0 || recordSequences.evidence !== 0) {
+  throw new Error("record sequences survived clear");
+}
+if (syncOptions?.invalidateRetrieval || syncOptions?.resetRetrievedSource
+  || syncOptions?.resetIntakeRecord !== false
+  || syncOptions?.preserveSourceSelectionConfirmation !== true
+  || renderCount !== 2) {
+  throw new Error("clear did not complete its sanitized render lifecycle");
+}
+for (const id of ["product_output", "normalizer_readout", "result_input", "result_view"]) {
+  const stale = id === "result_input"
+    ? String(fields[id].value).includes(sentinel)
+    : (String(fields[id].textContent).includes(sentinel)
+      || String(fields[id].innerHTML).includes(sentinel));
+  if (stale) {
+    throw new Error(`stale output survived in ${id}`);
+  }
+}
+if (String(fields.product_source_selection.value).includes(sentinel)) {
+  throw new Error("sensitive source selection survived clear");
+}
+if (fields.product_source_url.value || fields.product_source_text.value
+  || fields.audit_source_url.textContent.includes(sentinel)
+  || fields.audit_source_text.textContent.includes(sentinel)) {
+  throw new Error("sensitive primary or audit source projection survived clear");
+}
+for (const id of ["product_source_preview_text", "product_claim_draft_groups"]) {
+  if (String(fields[id].textContent).includes(sentinel)
+    || String(fields[id].innerHTML).includes(sentinel)) {
+    throw new Error(`sensitive source preview survived in ${id}`);
+  }
+}
+if (!fields.product_source_preview.hidden || !fields.product_claim_drafting.hidden
+  || !fields.product_confirm_source.disabled || !fields.product_confirm_claims.disabled
+  || fields.product_confirm_source.checked || fields.product_confirm_claims.checked) {
+  throw new Error("sensitive source review controls did not return to their closed state");
+}
+if (fields.case_json.textContent.includes(sentinel) || fields.analyze_command.textContent.includes(sentinel)) {
+  throw new Error("stale JSON or command survived clear");
+}
+if (saved.get("hub_optimus_operator_case_v1") !== "saved-draft-remains"
+  || saved.get("hub_optimus_learning") !== "learning-history-remains") {
+  throw new Error("clear deleted separately persisted history");
+}
+'''
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
 def test_advanced_saved_draft_can_be_loaded_deleted_and_rejects_corruption():
     html = _read(INDEX)
     functions = []
@@ -2280,8 +3063,10 @@ def test_advanced_saved_draft_can_be_loaded_deleted_and_rejects_corruption():
         "isUniqueNonEmptyStringList",
         "isOptionalNonEmptyString",
         "isStoredClaimRecord",
-        "isStoredEvidenceRecord",
-        "isStoredCasePayload",
+            "isStoredEvidenceRecord",
+            "hasSourceBoundV2Markers",
+            "passesSourceBoundV2IntegrityGate",
+            "isStoredCasePayload",
         "hasValidRecordIdentityAndReferences",
         "parseStoredDraft",
         "loadDraft",
@@ -2345,6 +3130,7 @@ function buildPayload() {
   };
 }
 function value() { return ""; }
+function hasValidSourceBoundV2Attestation() { return false; }
 let claims = [{claim_id: "claim-001"}];
 let evidence = [{evidence_id: "evidence-001"}];
 let loaded = null;
@@ -2386,6 +3172,69 @@ const duplicateNarrativePayload = {
 };
 if (!isStoredCasePayload(duplicateNarrativePayload)) {
   throw new Error("schema-valid repeated narrative strings were rejected");
+}
+const canonicalV1Payload = {
+  case_id: "case-source-bound-v1",
+  core_version_ref: "main",
+  input_summary: "Canonical source-bound v1 compatibility fixture",
+  claims: [{
+    claim_id: "claim-001",
+    text: "The source records a reviewed statement.",
+    source_ref: "operator-pasted-text",
+    metadata: {
+      excerpt_id: "excerpt-001",
+      source_text_fingerprint: `sha256:${"1".repeat(64)}`,
+      span_start: 0,
+      span_end: 40,
+      span_unit: "unicode-code-point",
+      passage_scope: "complete-candidate-passage",
+      selection_origin: "human-confirmed",
+      support_scope: "attribution-only",
+      intake_record_ref: "metadata.intake_record",
+      normalized_by: "operator-source-bound-v1",
+      review_state: "opaque-v1-extension"
+    }
+  }],
+  evidence: [{
+    evidence_id: "evidence-001",
+    text: "The source records a reviewed statement.",
+    source_ref: "operator-pasted-text",
+    supports_claim_ids: ["claim-001"],
+    contradicts_claim_ids: [],
+    metadata: {
+      excerpt_id: "excerpt-001",
+      source_text_fingerprint: `sha256:${"1".repeat(64)}`,
+      span_start: 0,
+      span_end: 40,
+      span_unit: "unicode-code-point",
+      normalized_by: "operator-source-bound-v1",
+      review_state: "opaque-v1-extension"
+    }
+  }],
+  metadata: {
+    normalizer_version: "operator-source-bound-v1",
+    operator_mode: "browser-local-source-bound-draft",
+    review_state: "opaque-v1-extension",
+    relationships: [{
+      relationship_id: "relation-001",
+      type: "SUPPORTS_ATTRIBUTION",
+      from_ref: "evidence-001",
+      to_ref: "claim-001",
+      status: "candidate",
+      created_by: "operator-source-bound-v1"
+    }]
+  }
+};
+if (hasSourceBoundV2Markers(canonicalV1Payload)
+  || !passesSourceBoundV2IntegrityGate(canonicalV1Payload)
+  || !isStoredCasePayload(canonicalV1Payload)) {
+  throw new Error("canonical v1 payload with opaque metadata failed compatibility validation");
+}
+loaded = null;
+stored.set(storageKey, JSON.stringify({version: localDraftVersion, payload: canonicalV1Payload}));
+loadDraft();
+if (!loaded || loaded.case_id !== canonicalV1Payload.case_id) {
+  throw new Error("canonical v1 payload did not traverse the saved-draft loader");
 }
 if (isStoredEvidenceRecord({
   evidence_id: "evidence-duplicate-ids",
@@ -2484,6 +3333,9 @@ function $(id) { return fields[id]; }
 function value(id) { return fields[id]?.value?.trim() || ""; }
 function lines() { return []; }
 function reconcileRecordRelationships() {}
+function currentSourceBoundV2Snapshot() { return {metadata: currentCaseMetadata, claims, evidence}; }
+function hasSourceBoundV2Markers() { return false; }
+function passesSourceBoundV2IntegrityGate() { return true; }
 function invalidateShareableResult() {}
 function syncRecordSequences() {}
 function renderClaims() {}
@@ -2562,8 +3414,11 @@ def test_every_case_edit_invalidates_sharing_and_share_counts_records():
     assert '$("result_input").addEventListener("input"' in html
     assert "claim_count: claimRecords.length" in html
     assert "evidence_count: evidenceRecords.length" in html
-    assert '...shareRecordLines("claim", "shareClaims", claimRecords, record.claim)' in html
-    assert '...shareRecordLines("evidence", "shareEvidence", evidenceRecords, record.evidence)' in html
+    assert 'shareRecordLines("claim", "shareClaims", claimRecords, record.claim)' in html
+    assert 'shareRecordLines("evidence", "shareEvidence", evidenceRecords, record.evidence)' in html
+    assert "sourceBoundV2ShareRecordLines" in html
+    assert "supports_claim_ids" in html
+    assert "claim_confirmation_sha256" in html
     assert 'pluralMessage("shareOmitted"' in html
 
 
@@ -2628,6 +3483,70 @@ if (withoutIsolates(fetched[1]) !== "Retrieved URL: https://final.example/") {
     assert completed.returncode == 0, completed.stderr
 
 
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_v2_exact_share_records_are_lossless_through_480_unicode_code_points():
+    html = _read(INDEX)
+    smoke = (
+        _operator_i18n_node_prelude()
+        + _named_function(html, "sourceBoundV2ShareRecordLines")
+        + r'''
+function sizedRecord(size, tail) {
+  const prefix = "🙂 العربية\nA  B ";
+  const needed = size - Array.from(prefix).length - Array.from(tail).length;
+  if (needed < 0) throw new Error("invalid fixture size");
+  return `${prefix}${"x".repeat(needed)}${tail}`;
+}
+for (const size of [360, 361, 480]) {
+  const exactEvidence = sizedRecord(size, `E${size}`);
+  const exactClaim = sizedRecord(size, `C${size}`);
+  if (Array.from(exactEvidence).length !== size || Array.from(exactClaim).length !== size) {
+    throw new Error("fixture is not code-point exact");
+  }
+  const record = {
+    claims: [{id: `claim-${size}`, text: exactClaim, source_quote_type: "exact"}],
+    evidence_records: [{
+      id: `evidence-${size}`,
+      text: exactEvidence,
+      supports_claim_ids: [`claim-${size}`]
+    }],
+    claim_confirmation_sha256: "a".repeat(64)
+  };
+  for (const locale of operatorI18n.supportedLocales) {
+    activeOperatorLanguage = locale;
+    const shared = sourceBoundV2ShareRecordLines(record).join("\n");
+    if (!shared.includes(exactEvidence) || !shared.includes(exactClaim)) {
+      throw new Error(`exact ${size}-point content changed in ${locale}`);
+    }
+    if (!shared.includes(`E${size}`) || !shared.includes(`C${size}`)) {
+      throw new Error(`exact tail was truncated in ${locale}`);
+    }
+    if (!shared.includes("\nA  B ")) {
+      throw new Error(`exact whitespace was normalized in ${locale}`);
+    }
+    if (!shared.includes(opText("claimDraftExact"))
+      || !shared.includes(`confirmation_sha256=${"a".repeat(64)}`)) {
+      throw new Error(`exact label or confirmation checksum missing in ${locale}`);
+    }
+  }
+}
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert re.search(
+        r"async function shareMemoryLink\(\).*?buildHumanShareText\(record\)",
+        html,
+        re.DOTALL,
+    )
+    assert re.search(
+        r"function shareMemoryWhatsapp\(\).*?buildHumanShareText\(record\).*?encodeURIComponent\(shareText\)",
+        html,
+        re.DOTALL,
+    )
+
+
 def test_public_url_only_fallback_is_immediate_and_points_to_private_operator():
     html = _read(INDEX)
     catalog = _read(OPERATOR_I18N)
@@ -2646,7 +3565,7 @@ def test_public_url_only_fallback_is_immediate_and_points_to_private_operator():
     assert "URL recorded locally only" in catalog
 
 
-def test_operator_install_assets_use_institutional_mark_and_cache_v027():
+def test_operator_install_assets_use_institutional_mark_and_cache_v029():
     icon = _read(ICON)
     sw = _read(SW)
 
@@ -2656,20 +3575,23 @@ def test_operator_install_assets_use_institutional_mark_and_cache_v027():
         icon,
         re.IGNORECASE,
     ) is None
-    assert "hub-optimus-operator-v0-27" in sw
+    assert "hub-optimus-operator-v0-29" in sw
     assert "./index.html" in sw
     assert "../assets/brand/hub-optimus-logo-lockup.png" in sw
     assert "./og.svg" in sw
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
-def test_operator_service_worker_refetches_v027_assets_and_deletes_v026():
+def test_operator_service_worker_refetches_v029_assets_and_deletes_older_versions():
     sw = _read(SW)
     smoke = r'''
 const vm = require("node:vm");
 const source = process.env.SW_SOURCE;
 const listeners = {};
-const cacheNames = new Set(["hub-optimus-operator-v0-26"]);
+const cacheNames = new Set([
+  "hub-optimus-operator-v0-26",
+  "hub-optimus-operator-v0-27"
+]);
 const installedRequests = [];
 const deleted = [];
 let skipWaitingCalls = 0;
@@ -2709,7 +3631,7 @@ vm.runInContext(source, context);
   let installWork;
   listeners.install({waitUntil(work) { installWork = work; }});
   await installWork;
-  if (!installedRequests.length) throw new Error("no v0-27 assets installed");
+  if (!installedRequests.length) throw new Error("no v0-29 assets installed");
   if (installedRequests.some((request) => request.cache !== "reload")) {
     throw new Error("an install request can reuse stale HTTP-cache bytes");
   }
@@ -2721,8 +3643,11 @@ vm.runInContext(source, context);
   if (!deleted.includes("hub-optimus-operator-v0-26")) {
     throw new Error("v0-26 cache was not deleted");
   }
-  if (!cacheNames.has("hub-optimus-operator-v0-27")) {
-    throw new Error("v0-27 cache was not retained");
+  if (!deleted.includes("hub-optimus-operator-v0-27")) {
+    throw new Error("v0-27 cache was not deleted");
+  }
+  if (!cacheNames.has("hub-optimus-operator-v0-29")) {
+    throw new Error("v0-29 cache was not retained");
   }
   if (claimCalls !== 1) throw new Error("updated worker did not claim clients");
 })().catch((error) => {
@@ -2845,9 +3770,11 @@ def test_advanced_result_viewer_rejects_arbitrary_or_stale_output_fail_closed(tm
         "isUniqueNonEmptyStringList",
         "isOptionalNonEmptyString",
         "isStoredClaimRecord",
-        "isStoredEvidenceRecord",
-        "hasValidRecordIdentityAndReferences",
-        "isSafeJsonValue",
+            "isStoredEvidenceRecord",
+            "hasValidRecordIdentityAndReferences",
+            "hasSourceBoundV2Markers",
+            "passesSourceBoundV2IntegrityGate",
+            "isSafeJsonValue",
         "isStoredDecisionTraceRecord",
         "isStoredAuditLogRecord",
         "isCompleteAnalysisClaimRecord",
@@ -2893,6 +3820,7 @@ function pluralMessage(key, count) { return `${key}:${count}`; }
 function operationalSignalLabel(signal) { return signal; }
 function refreshFlow(rendered) { flowRendered = rendered; }
 function alert(message) { notices.push(message); }
+function hasValidSourceBoundV2Attestation() { return false; }
 function buildPayload() {
   return {
     case_id: "case-001",
@@ -2981,6 +3909,10 @@ const invalidCases = [
     ...validEnvelope.analysis_result,
     evidence: [{...validEnvelope.analysis_result.evidence[0], supports_claim_ids: ["claim-missing"]}]
   }},
+  {...validEnvelope, analysis_result: {
+    ...validEnvelope.analysis_result,
+    metadata: {normalizer_version: "operator-source-bound-v2"}
+  }},
   validEnvelope.analysis_result
 ];
 for (const invalid of invalidCases) {
@@ -3035,6 +3967,7 @@ if (renderResult() !== false || notices.at(-1) !== "advancedInvalidResultJson") 
     )
     assert parser is not None
     assert "error.message" not in parser.group(0)
+    assert "passesSourceBoundV2IntegrityGate" in parser.group(0)
     assert 'alert(opText("advancedInvalidResultJson"));' in html
     assert 'advancedInvalidResultJson", { message:' not in html
 
