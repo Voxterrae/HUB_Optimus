@@ -47,7 +47,7 @@ These hashes identify the local workaround, not an upstream release or signed ow
 
 ## Handoff
 
-The later biometric prerequisite below supersedes the earlier diagnostic workflow. Do not make another device read, including a harmless shell probe, on the assumption that an online connector authenticates the person. Resolve capabilities without accessing device contents; resume device operations only through a verified authorization gate that meets the requested condition. Never infer full Android access from a working terminal.
+The later biometric prerequisite below governs unattended access. Issue #1933 subsequently records the owner's explicit supervised-session clarification and bounded audit authorization. An online connector alone does not authenticate the person. Supervised authorization is not proof of a biometric gate, and a working terminal does not establish full Android access.
 
 The private Android follow-up needs user-visible app settings and a consensual call test. Keep those results out of the public repository unless explicitly minimized and authorized.
 
@@ -80,3 +80,7 @@ The user requested availability conditioned on biometric approval for every phon
 [SECURITY_REQUIREMENTS.md](SECURITY_REQUIREMENTS.md) is a proposed implementation boundary, not a deployed security feature. The owner-authority handoff remains controlling and unchanged because this follow-up does not alter repository identity or governance controls.
 
 At commit `628d7c611eb406c2388555bf94d60e53498ca6c5`, pytest, benchmarks, PowerShell tooling, guard, environment, link and risk checks passed; founder-authority checks failed, including an explicit report of unsigned commits. Those observations apply only to that checkpoint. Every subsequent head needs its own checks and verified history. No merge has been performed.
+
+## Integration reconciliation: 2026-09-30
+
+The owner has authorized integration of the existing PR queue. The historical pause above is retained as a dated observation; issue #1933 records the subsequent supervised-session clarification. This PR contributes only the five documentation files. The separately described executable audit and authorization-verifier prototype are not included here. No biometric gate, unattended service or new device permissions are deployed by this merge. The Android device is currently offline, so the 2026-09-28 observations have not been reattested on it. Repository work uses the owner's existing authenticated Windows session and verified signing path; it does not certify biometric enforcement.

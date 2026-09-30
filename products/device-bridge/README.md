@@ -23,7 +23,7 @@ The provider URL is a service entry point, not a device-specific API endpoint. D
 
 ## Current access prerequisite
 
-The user now requires biometric approval before **any** device read or modification. The existing connector does not enforce that condition. Further direct device access and unattended startup are paused; this is an operator restriction, not an installed technical lock. Existing connector credentials and ADB authorization have not been revoked. See [security requirements](SECURITY_REQUIREMENTS.md) for the implementation and verification gap.
+The user now requires biometric approval before **any** device read or modification. The existing connector does not enforce that condition. Unattended device access and unattended startup remain paused; this is an operator restriction, not an installed technical lock. The owner subsequently authorized the supervised session recorded in issue #1933; that bounded authorization does not establish biometric enforcement. Existing connector credentials and ADB authorization have not been revoked. See [security requirements](SECURITY_REQUIREMENTS.md) for the implementation and verification gap.
 
 ## Evidence and limits
 

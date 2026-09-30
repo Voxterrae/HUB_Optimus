@@ -188,3 +188,53 @@ def test_schema_file_defines_required_contract() -> None:
     assert props["max_rounds"].get("minimum", 0) >= 1, (
         "schema must require max_rounds >= 1 (max_rounds.minimum >= 1)"
     )
+
+
+@pytest.mark.parametrize(
+    "alias_kind", ["same_path", "relative_path", "parent_alias", "symlink", "hardlink"]
+)
+def test_output_alias_rejected_without_modifying_input(
+    tmp_path: Path, alias_kind: str
+) -> None:
+    source = tmp_path / "scenario.json"
+    original = EXAMPLE.read_bytes()
+    source.write_bytes(original)
+    if alias_kind == "same_path":
+        output = source
+    elif alias_kind == "relative_path":
+        output = Path(os.path.relpath(source, REPO_ROOT))
+    elif alias_kind == "parent_alias":
+        child = tmp_path / "child"
+        child.mkdir()
+        output = child / ".." / source.name
+    else:
+        output = tmp_path / "output.json"
+        try:
+            if alias_kind == "symlink":
+                output.symlink_to(source)
+            else:
+                os.link(source, output)
+        except (OSError, NotImplementedError) as exc:
+            pytest.skip(f"{alias_kind} unavailable on this filesystem: {exc}")
+
+    proc = _run_cli(str(source), "--output", str(output), "--seed", "42")
+
+    assert source.read_bytes() == original
+    assert proc.returncode == 2
+    assert proc.stdout == ""
+    assert "[input-error]" in proc.stderr
+    assert "Traceback" not in proc.stderr
+
+
+def test_distinct_existing_output_can_still_be_overwritten(tmp_path: Path) -> None:
+    source = tmp_path / "scenario.json"
+    original = EXAMPLE.read_bytes()
+    source.write_bytes(original)
+    output = tmp_path / "output.json"
+    output.write_text("previous result", encoding="utf-8")
+
+    proc = _run_cli(str(source), "--output", str(output), "--seed", "42")
+
+    assert proc.returncode == 0
+    assert source.read_bytes() == original
+    assert isinstance(json.loads(output.read_text(encoding="utf-8"))["history"], list)
