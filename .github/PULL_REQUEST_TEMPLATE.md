@@ -53,7 +53,7 @@ Related to #
 
 For changes to AI models, agents, connectors, automation, delegated permissions,
 or downstream use, complete the
-[AI Governance Review v0.1](../templates/governance/AI_GOVERNANCE_REVIEW_v0.1.md).
+[AI Governance Review v0.1](https://github.com/Voxterrae/HUB_Optimus/blob/main/templates/governance/AI_GOVERNANCE_REVIEW_v0.1.md).
 
 - Review record reference, or justified `not applicable`:
 - Full head SHA covered by the record:
