@@ -57,8 +57,8 @@ Solo Benjamin Gerrit Hoff puede autorizar cambios relativos a:
 - la gobernanza constitucional y la autoridad humana final;
 - la política de propiedad intelectual y licencias;
 - la administración del repositorio y sus reglas de protección;
-- cualquier cesión, participación, copropiedad, licencia exclusiva o cambio de
-  control.
+- la preservación de la titularidad y del control de HUB_Optimus, sujeta a la
+  condición permanente de no transferencia del apartado 4.1.
 
 Ninguna otra persona, cuenta, empresa, colaborador, empleado, contratista,
 contribuidor, sistema de IA, proveedor o título técnico dispone de autoridad
@@ -67,6 +67,42 @@ independiente para modificar estos elementos.
 Los terceros pueden presentar ideas, incidencias, revisiones o pull requests.
 Una propuesta no modifica HUB_Optimus hasta que Benjamin Gerrit Hoff la revise y
 autorice mediante el proceso protegido del repositorio.
+
+## 4.1. Condición permanente de no transferencia
+
+HUB_Optimus es la herramienta matriz de Benjamin Gerrit Hoff. Como condición
+permanente de gobernanza del proyecto, no se autoriza su venta, traspaso,
+regalo, cesión de titularidad, copropiedad ni transferencia de control o de la
+autoridad humana final a otra persona, cuenta, empresa, proveedor o sistema de
+IA.
+
+La administración técnica, la prestación de servicios, las colaboraciones, las
+joint ventures y las licencias de uso no podrán emplearse para transferir la
+propiedad o el control de la herramienta matriz ni para sustituir a Benjamin
+Gerrit Hoff como autoridad humana final. El procedimiento de modificación de
+esta Carta no constituye una excepción a esta condición.
+
+El acceso a una cuenta, los permisos administrativos, un nombre mostrado, una
+declaración en un chat, un commit o una firma automática de GitHub no acreditan
+por sí solos el consentimiento del propietario. Una cuenta comprometida no
+adquiere ni transmite autoridad legítima sobre HUB_Optimus.
+
+Ante indicios de compromiso de cuenta o suplantación, los operadores deberán
+suspender el reconocimiento de los cambios controvertidos de identidad,
+titularidad, control o autoridad y conservar como referencia la última versión
+protegida y aprobada por el propietario cuya autenticidad esté verificada. Una
+recuperación deberá identificar esa versión, dejar un registro visible del
+incidente y verificar la identidad del propietario por evidencia independiente
+de la cuenta comprometida antes de reanudar el proceso protegido. Este es un
+deber de gobernanza; no se afirma que exista ya un bloqueo automático de
+incidentes.
+
+Esta condición conserva los derechos preexistentes de terceros, las licencias
+ya otorgadas y la atribución real de las contribuciones. No crea copropiedad
+para asistentes de IA ni reclama derechos sobre software, servicios o
+infraestructura de terceros. Tampoco convierte el repositorio público en un
+almacenamiento confidencial ni garantiza que sea imposible copiarlo o
+comprometer una cuenta.
 
 ## 5. Colaboraciones y joint ventures
 
@@ -127,9 +163,11 @@ En la fecha de ratificación no existe delegación general de propiedad,
 autoridad constitucional o derecho independiente de modificación a favor de
 ninguna otra persona.
 
-Cualquier delegación futura deberá constar en un instrumento escrito específico,
-con alcance, duración, condiciones, revocación y verificación de identidad. Un
-rol técnico, permiso temporal o colaboración no constituye esa delegación.
+Cualquier delegación operativa futura deberá constar en un instrumento escrito
+específico, con alcance, duración, condiciones, revocación y verificación de
+identidad. No podrá transferir la propiedad de la herramienta matriz ni la
+autoridad humana final, conforme al apartado 4.1. Un rol técnico, permiso temporal
+o colaboración no constituye esa delegación.
 
 ---
 
@@ -152,7 +190,42 @@ constitutional authority over HUB_Optimus.
 
 Only Benjamin Gerrit Hoff may authorize amendments concerning founder identity,
 project ownership, constitutional governance, repository administration,
-licensing posture, control, assignment, co-ownership, or exclusive rights.
+licensing posture, and preservation of title and control, subject to the
+permanent non-transfer condition in section 4.1.
+
+HUB_Optimus is Benjamin Gerrit Hoff's foundational tool. As a permanent
+project-governance condition, its sale, transfer, gift, assignment of title,
+co-ownership, or transfer of control or final human authority to another
+person, account, company, provider, or AI system is not authorized.
+
+Technical administration, services, collaborations, joint ventures, and use
+licenses must not be used to transfer ownership or control of the parent
+platform or replace Benjamin Gerrit Hoff as final human authority. The
+Charter's amendment procedure is not an exception to this condition.
+
+Account access, administrative permissions, a displayed name, a chat statement,
+a commit, or an automatic GitHub signature do not by themselves establish the
+owner's consent. A compromised account neither acquires nor conveys legitimate
+authority over HUB_Optimus.
+
+On indications of account compromise or impersonation, operators must suspend
+recognition of disputed identity, title, control, or authority changes and
+retain as their reference the last protected, owner-approved version whose
+authenticity has been verified. Recovery must identify that version, visibly
+record the incident, and verify the owner's identity through evidence
+independent of the compromised account before the protected process resumes.
+This is a governance duty; no automatic incident-blocking mechanism is asserted
+to be active.
+
+This condition preserves pre-existing third-party rights, previously granted
+licenses, and accurate contribution attribution. It creates no co-ownership for
+AI assistants and claims no rights over third-party software, services, or
+infrastructure. It does not make the public repository confidential or
+guarantee that copying it or compromising an account is impossible.
+
+Any future operational delegation must be written, scoped, time-bounded,
+revocable, and identity-verified. It cannot transfer parent-platform ownership or
+final human authority.
 
 HUB_Optimus may collaborate or form a joint venture with any suitable party only
 under an explicit written agreement approved by Benjamin Gerrit Hoff on fair,
@@ -189,8 +262,48 @@ Entscheidungsbefugnis über HUB_Optimus.
 
 Nur Benjamin Gerrit Hoff kann Änderungen an Gründeridentität,
 Projekteigentum, verfassungsrechtlicher Governance, Repository-Verwaltung,
-Lizenzierung, Kontrolle, Abtretung, Miteigentum oder ausschließlichen Rechten
-autorisieren.
+Lizenzierung und Wahrung von Eigentümerschaft und Kontrolle autorisieren,
+vorbehaltlich der dauerhaften Nichtübertragungsbedingung in Abschnitt 4.1.
+
+HUB_Optimus ist das grundlegende Werkzeug von Benjamin Gerrit Hoff. Als
+dauerhafte Governance-Bedingung des Projekts sind Verkauf, Übertragung,
+Schenkung, Abtretung der Eigentümerschaft, Miteigentum sowie die Übertragung
+von Kontrolle oder letzter menschlicher Entscheidungsbefugnis an eine andere
+Person, ein Konto, ein Unternehmen, einen Anbieter oder ein KI-System nicht
+autorisiert.
+
+Technische Verwaltung, Dienstleistungen, Zusammenarbeit, Joint Ventures und
+Nutzungslizenzen dürfen nicht dazu verwendet werden, Eigentum oder Kontrolle
+über die übergeordnete Plattform zu übertragen oder Benjamin Gerrit Hoff als
+letzte menschliche Entscheidungsinstanz zu ersetzen. Das Änderungsverfahren
+dieser Charta stellt keine Ausnahme von dieser Bedingung dar.
+
+Kontozugriff, Administratorrechte, ein angezeigter Name, eine Chat-Aussage, ein
+Commit oder eine automatische GitHub-Signatur belegen für sich allein keine
+Zustimmung des Eigentümers. Ein kompromittiertes Konto erwirbt oder überträgt
+keine legitime Entscheidungsbefugnis über HUB_Optimus.
+
+Bei Anzeichen einer Kontokompromittierung oder Identitätstäuschung müssen
+Betreiber die Anerkennung strittiger Änderungen an Identität, Eigentümerschaft,
+Kontrolle oder Entscheidungsbefugnis aussetzen und die letzte geschützte, vom
+Eigentümer genehmigte Version mit verifizierter Authentizität als Referenz
+bewahren. Eine Wiederherstellung muss diese Version benennen, den Vorfall
+sichtbar dokumentieren und die Identität des Eigentümers durch Nachweise
+unabhängig vom kompromittierten Konto verifizieren, bevor das geschützte
+Verfahren fortgesetzt wird. Dies ist eine Governance-Pflicht; ein bereits
+aktiver automatischer Mechanismus zur Blockierung solcher Vorfälle wird nicht
+behauptet.
+
+Diese Bedingung wahrt bestehende Rechte Dritter, bereits erteilte Lizenzen und
+die zutreffende Zuordnung von Beiträgen. Sie begründet kein Miteigentum für
+KI-Assistenten und beansprucht keine Rechte an Software, Diensten oder
+Infrastruktur Dritter. Sie macht das öffentliche Repository nicht vertraulich
+und garantiert nicht, dass Kopieren oder Kontokompromittierung unmöglich sind.
+
+Jede künftige operative Delegation muss schriftlich, klar abgegrenzt, zeitlich
+begrenzt, widerrufbar und identitätsgeprüft sein. Sie darf weder Eigentum an der
+übergeordneten Plattform noch die letzte menschliche Entscheidungsbefugnis
+übertragen.
 
 HUB_Optimus kann mit geeigneten Parteien zusammenarbeiten oder ein Joint Venture
 eingehen, jedoch ausschließlich auf Grundlage einer ausdrücklichen schriftlichen
@@ -236,3 +349,6 @@ This Charter may be amended only by Benjamin Gerrit Hoff through the protected
 owner-authorization process. No AI system may interpret an informal instruction
 as sufficient authority to weaken, transfer, delete, or replace the founder,
 ownership, or final-authority clauses.
+
+The amendment procedure is not an exception to the permanent non-transfer
+condition in section 4.1. Governance amendment record: issue `#1945`.

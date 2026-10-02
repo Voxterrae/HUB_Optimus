@@ -17,6 +17,25 @@ future products.
 The constitutional authority boundary is defined in
 [`docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md`](docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
 
+## Permanent non-transfer condition
+
+HUB_Optimus is Benjamin Gerrit Hoff's foundational tool. Its sale, transfer,
+gift, assignment of title, co-ownership, or transfer of control or final human
+authority is not authorized under the permanent condition in section 4.1 of the
+[Founder Ownership and Authority Charter](docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
+
+Technical administration, services, collaborations, joint ventures, and use
+licenses cannot transfer the parent platform or replace its final human
+authority. Account access, administrative permissions, or an automatic GitHub
+signature alone do not establish owner consent. A compromised account does not
+acquire or convey legitimate authority.
+
+Operators must follow the Charter's disputed-authority-change and independently
+verified recovery requirements. This governance condition preserves existing
+third-party rights, previously granted licenses, and accurate contribution
+attribution. It establishes no AI ownership and does not guarantee that copying
+a public repository or compromising an account is impossible.
+
 ## Public visibility does not grant unrestricted rights
 
 HUB_Optimus is developed in a publicly visible repository with restricted
@@ -69,7 +88,9 @@ integration.
 
 HUB_Optimus may collaborate or form a joint venture with any suitable party only
 through an explicit written agreement approved by Benjamin Gerrit Hoff on fair,
-transparent, reciprocal, and clearly scoped terms.
+transparent, reciprocal, and clearly scoped terms. Such an agreement cannot
+transfer ownership or control of the parent platform or final human authority,
+as required by the permanent condition above.
 
 No informal communication, access grant, issue, commit, pull request, meeting,
 or service relationship creates an implied joint venture or transfer of rights.

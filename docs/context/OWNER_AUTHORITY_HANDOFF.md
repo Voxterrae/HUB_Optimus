@@ -14,12 +14,41 @@ Plane, governed connectors, decision-intelligence systems, and future products.
 
 Only Benjamin Gerrit Hoff may authorize changes to founder identity, ownership,
 constitutional governance, licensing posture, repository administration,
-control, assignment, co-ownership, or the HUB_Optimus parent-platform
-definition.
+preservation of title and control, or the HUB_Optimus parent-platform
+definition, subject to the Charter's permanent non-transfer condition.
 
 External contributors and AI systems may propose changes through visible GitHub
 issues and pull requests. They hold no independent ownership, merge,
 constitutional, repository-administration, or modification authority.
+
+## Permanent non-transfer and account-compromise boundary
+
+HUB_Optimus must not be sold, transferred, given away, assigned into another
+ownership, made co-owned, or placed under another final human authority.
+Technical administration, services, collaborations, joint ventures, and use
+licenses cannot transfer ownership or control of the parent platform. The
+Charter's amendment procedure is not an exception. See section 4.1 of
+`docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md`; amendment record: issue
+`#1945`.
+
+Account access, administrator permissions, displayed names, informal statements,
+commits, and automatic GitHub signatures alone do not establish genuine owner
+consent. A compromised account does not acquire or convey legitimate authority.
+
+On indications of compromise or impersonation, operators must suspend
+recognition of disputed identity, title, control, or authority changes and retain
+the last protected, owner-approved version whose authenticity is verified.
+Recovery must identify that version, visibly record the incident and verify the
+owner's identity through evidence independent of the compromised account before
+the protected process resumes. No automated incident freeze is asserted by this
+documentary rule.
+
+The owner manifest remains `RATIFICATION_PROPOSED`; hardware-backed owner-key
+enrollment is pending and no fingerprint is enrolled. This amendment does not
+activate a key or assert an independent owner signature. Preserve third-party
+rights, existing licenses and actual contributor attribution. AI assistance
+creates no ownership or independent authority. Repository wording does not
+guarantee that a public repository cannot be copied or an account compromised.
 
 ## Anti-impersonation rule
 
