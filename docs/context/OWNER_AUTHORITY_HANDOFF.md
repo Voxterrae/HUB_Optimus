@@ -118,21 +118,26 @@ change the machine-readable record, which remains RATIFICATION_PROPOSED.
 Hardware-backed key enrollment is still pending. No key enrollment or new
 ratification is asserted by this documentation reconciliation.
 
-The authenticated 2026-09-14 ruleset audit confirms:
+The authenticated read-only 2026-10-03 refresh at
+`main@bb9a343ab76000c06ad199e29fbdcceb9ec82f18` confirms the current
+rules below. It supersedes the 2026-09-14 publisher snapshot preserved in history:
 
 - one active main ruleset, 11665521, Protect main - owner governed;
 - no bypass actors;
 - owner-only Option A: native approval count zero and CODEOWNER review disabled;
 - signed commits, linear history, squash-only merge and resolved conversations;
 - deletion and non-fast-forward protection;
-- strict required checks from GitHub Actions integration 15368:
+- six strict required contexts from GitHub Actions integration 15368:
   founder-authority-bootstrap, pytest, PowerShell tooling, guard,
-  Risk classification, lychee and founder-authority.
+  Risk classification and lychee;
+- required founder-authority from dedicated App 4705710.
 
 The detailed dated settings evidence is in
 [the protection checklist](../governance/GITHUB_SETTINGS_PROTECTION_CHECKLIST.md).
-Issue #1906 retains the dedicated-publisher and exact-authorization work; the
-App canary is observational and does not replace the required publisher.
+The existing App canary job publishes the required dedicated-App context on
+the exact head and live test-merge candidate; its historical job name does not
+make the required publisher optional. Issue #1906 retains remaining
+exact-authorization work and is not closed by this settings observation.
 Hardware enrollment/status follow-up remains in #1743 and #1881.
 
 Live permissions and settings remain mutable. Documentation neither changes
