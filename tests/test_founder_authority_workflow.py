@@ -291,10 +291,17 @@ def test_client_without_dedicated_identity_cannot_publish(
     monkeypatch.delenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", raising=False)
     monkeypatch.delenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", raising=False)
     client = WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
-    requests = []
-    def responses(path, *, method="GET", payload=None):
+    requests: list[tuple[str, str]] = []
+
+    def responses(
+        path: str,
+        *,
+        method: str = "GET",
+        payload: dict[str, object] | None = None,
+    ) -> dict[str, object]:
         requests.append((method, path))
         return {"id": 101}
+
     monkeypatch.setattr(client, "repository_request", responses)
     with pytest.raises(WORKFLOW.WorkflowError, match="dedicated App"):
         if operation == "create":
@@ -545,7 +552,9 @@ def test_initial_check_creation_failure_returns_nonzero(
     assert WORKFLOW.main() == 1
 
 
-def test_default_publication_refuses_generic_client(monkeypatch, tmp_path):
+def test_default_publication_refuses_generic_client(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
+) -> None:
     configure(monkeypatch, tmp_path)
     monkeypatch.setattr(FakeClient, "strict_check_publisher", False)
     assert WORKFLOW.run() == 1
@@ -554,8 +563,8 @@ def test_default_publication_refuses_generic_client(monkeypatch, tmp_path):
 
 
 def test_validation_only_checks_targets_and_policy_without_api_writes(
-    monkeypatch, tmp_path
-):
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
+) -> None:
     configure(monkeypatch, tmp_path)
     monkeypatch.setattr(FakeClient, "strict_check_publisher", False)
     assert WORKFLOW.run(publish_checks=False) == 0
@@ -569,7 +578,9 @@ def test_validation_only_checks_targets_and_policy_without_api_writes(
     }
 
 
-def test_validation_only_cli_preserves_read_only_contract(monkeypatch, tmp_path):
+def test_validation_only_cli_preserves_read_only_contract(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
+) -> None:
     configure(monkeypatch, tmp_path)
     monkeypatch.setattr(FakeClient, "strict_check_publisher", False)
     assert WORKFLOW.main(["--validate-only"]) == 0
@@ -587,8 +598,10 @@ def test_validation_only_cli_preserves_read_only_contract(monkeypatch, tmp_path)
     ],
 )
 def test_validation_only_rejects_stale_or_missing_targets(
-    monkeypatch, tmp_path, changed
-):
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    changed: dict[str, str | None],
+) -> None:
     configure(monkeypatch, tmp_path)
     FakeClient.pull_responses = [pull_payload(), pull_payload(**changed)]
     assert WORKFLOW.run(publish_checks=False) == 1
@@ -596,17 +609,23 @@ def test_validation_only_rejects_stale_or_missing_targets(
     assert FakeClient.instances[0].finalized_checks == []
 
 
-def test_validation_only_preserves_semantic_failure(monkeypatch, tmp_path):
+def test_validation_only_preserves_semantic_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
+) -> None:
     configure(monkeypatch, tmp_path)
-    def denied(*args):
+
+    def denied(*args: Any) -> None:
         raise WORKFLOW.GuardError("owner authorization denied")
+
     monkeypatch.setattr(WORKFLOW, "evaluate", denied)
     assert WORKFLOW.run(publish_checks=False) == 1
     assert FakeClient.instances[0].created_checks == []
     assert FakeClient.instances[0].finalized_checks == []
 
 
-def test_validation_only_rejects_semantic_evidence_change(monkeypatch, tmp_path):
+def test_validation_only_rejects_semantic_evidence_change(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
+) -> None:
     configure(monkeypatch, tmp_path, evidence_values=[
         {"commits": [], "reviews": [], "governance_issues": [1906]},
         {"commits": [], "reviews": [{"state": "CHANGES_REQUESTED"}],
@@ -617,10 +636,14 @@ def test_validation_only_rejects_semantic_evidence_change(monkeypatch, tmp_path)
     assert FakeClient.instances[0].finalized_checks == []
 
 
-def test_validation_only_rejects_transport_failure(monkeypatch, tmp_path):
+def test_validation_only_rejects_transport_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
+) -> None:
     configure(monkeypatch, tmp_path)
-    def unavailable(*args, **kwargs):
+
+    def unavailable(*args: Any, **kwargs: Any) -> None:
         raise WORKFLOW.WorkflowError("evidence unavailable")
+
     monkeypatch.setattr(FakeClient, "repository_request", unavailable)
     assert WORKFLOW.run(publish_checks=False) == 1
     assert FakeClient.instances[0].created_checks == []
