@@ -33,7 +33,8 @@ project. Only he may authorize changes to:
 - constitutional governance and final authority;
 - protected repository authority and administration;
 - licensing posture and scoped product rights, subject to the permanent
-  parent-platform non-transfer condition in Charter section 4.1;
+  parent-platform non-transfer condition in section 4.1 of the
+  [Founder Ownership and Authority Charter](FOUNDER_OWNERSHIP_AND_AUTHORITY.md);
 - a joint venture or other transfer of economic or governance participation.
 
 ## Repository identity
