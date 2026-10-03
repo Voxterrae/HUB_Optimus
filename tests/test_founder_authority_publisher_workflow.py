@@ -17,7 +17,7 @@ def workflow_jobs() -> dict[str, object]:
     return jobs
 
 
-def test_required_legacy_job_remains_isolated_and_unchanged() -> None:
+def test_required_bootstrap_is_isolated_and_read_only() -> None:
     jobs = workflow_jobs()
     legacy = jobs["founder-authority"]
     assert isinstance(legacy, dict)
@@ -37,7 +37,7 @@ def test_required_legacy_job_remains_isolated_and_unchanged() -> None:
         "PYTHONPATH": ".",
     }
     assert validation["run"] == (
-        "python .github/scripts/founder_authority_workflow.py"
+        "python .github/scripts/founder_authority_workflow.py --validate-only"
     )
 
 
@@ -98,3 +98,14 @@ def test_app_canary_pins_expected_identity_and_installation() -> None:
         "${{ steps.founder-authority-app-token.outputs.app-slug }}"
     ) in text
     assert text.count("python .github/scripts/founder_authority_workflow.py") == 2
+
+
+def test_generic_workflow_token_cannot_write_check_runs() -> None:
+    document = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+    permissions = document["permissions"]
+    assert permissions == {
+        "contents": "read", "issues": "read", "pull-requests": "read"
+    }
+    bootstrap = document["jobs"]["founder-authority"]
+    effective = bootstrap.get("permissions", permissions)
+    assert effective.get("checks", "none") == "none"

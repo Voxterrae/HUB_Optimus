@@ -11,7 +11,6 @@ permissions:
   contents: read
   issues: read
   pull-requests: read
-  checks: write
 
 concurrency:
   group: founder-authority-${{ github.event.pull_request.number }}
@@ -37,7 +36,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PYTHONPATH: .
-        run: python .github/scripts/founder_authority_workflow.py
+        run: python .github/scripts/founder_authority_workflow.py --validate-only
 
   founder-authority-app-canary:
     name: founder-authority-app-canary
@@ -94,9 +93,9 @@ jobs:
             exit 1
           fi
 
-      # Shadow-only during migration. This job is deliberately non-required and
-      # tolerant of failure until the App has emitted a recent, verified check
-      # and the ruleset source is switched in a later protected change.
+      # The dedicated App is the required founder-authority publisher. The
+      # historical canary job name remains for continuity; generic Actions
+      # validation cannot publish this context.
       - name: Validate with dedicated founder-authority App canary
         shell: bash
         env:

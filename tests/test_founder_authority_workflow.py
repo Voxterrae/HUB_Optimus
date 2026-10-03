@@ -284,37 +284,31 @@ def test_github_client_rejects_wrong_check_target(
         client.create_check(HEAD_SHA, target_label="pull-request head")
 
 
-def test_github_client_without_publisher_env_preserves_legacy_contract(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize("operation", ["create", "finalize"])
+def test_client_without_dedicated_identity_cannot_publish(
+    monkeypatch: pytest.MonkeyPatch, operation: str
 ) -> None:
     monkeypatch.delenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", raising=False)
     monkeypatch.delenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", raising=False)
     client = WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
-    requests: list[tuple[str, str, dict[str, object] | None]] = []
+    requests: list[tuple[str, str]] = []
 
-    def legacy_responses(
+    def responses(
         path: str,
         *,
         method: str = "GET",
         payload: dict[str, object] | None = None,
-    ) -> object:
-        requests.append((method, path, payload))
-        if method == "POST":
-            return {"id": 101}
-        return None
+    ) -> dict[str, object]:
+        requests.append((method, path))
+        return {"id": 101}
 
-    monkeypatch.setattr(client, "repository_request", legacy_responses)
-
-    assert client.strict_check_publisher is False
-    assert client.expected_check_app_id is None
-    assert client.expected_check_app_slug is None
-    check_run_id = client.create_check(HEAD_SHA, target_label="pull-request head")
-    client.finalize_check(check_run_id, success=True, summary="passed")
-
-    create_payload = requests[0][2]
-    assert isinstance(create_payload, dict)
-    assert "external_id" not in create_payload
-    assert requests[1][0:2] == ("PATCH", "check-runs/101")
+    monkeypatch.setattr(client, "repository_request", responses)
+    with pytest.raises(WORKFLOW.WorkflowError, match="dedicated App"):
+        if operation == "create":
+            client.create_check(HEAD_SHA, target_label="pull-request head")
+        else:
+            client.finalize_check(101, success=True, summary="passed")
+    assert requests == []
 
 
 @pytest.mark.parametrize(
@@ -556,6 +550,16 @@ def test_initial_check_creation_failure_returns_nonzero(
     configure(monkeypatch, tmp_path)
 
     assert WORKFLOW.main() == 1
+
+
+def test_default_publication_refuses_generic_client(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
+) -> None:
+    configure(monkeypatch, tmp_path)
+    monkeypatch.setattr(FakeClient, "strict_check_publisher", False)
+    assert WORKFLOW.run() == 1
+    assert FakeClient.instances[0].created_checks == []
+    assert FakeClient.instances[0].finalized_checks == []
 
 
 def test_validation_only_checks_targets_and_policy_without_api_writes(
