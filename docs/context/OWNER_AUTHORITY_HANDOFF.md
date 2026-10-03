@@ -50,6 +50,24 @@ rights, existing licenses and actual contributor attribution. AI assistance
 creates no ownership or independent authority. Repository wording does not
 guarantee that a public repository cannot be copied or an account compromised.
 
+## Parent platform, derived products and names
+
+HUB_Optimus remains permanently under the ownership and final human authority
+of Benjamin Gerrit Hoff, subject to section 4.1 of the Founder Ownership and
+Authority Charter. New generic programs, operating-system components, products
+and improvements lawfully belonging to the project remain within that same
+owner-governed ecosystem. Scoped licenses, implementations, support and services
+may be monetized through explicit owner-approved agreements; payment or access
+does not confer independent ownership or control authority.
+
+Names, repository labels, package identifiers, publisher prefixes, aliases and
+technical roles do not create another owner. Renaming a parent-platform asset or
+calling it a new product cannot evade the permanent non-transfer condition.
+Customer administration of its own tenant and data is a separate boundary.
+Preserve existing third-party rights, granted licenses and accurate attribution.
+AI assistance creates no ownership, and biometric/hardware enforcement must not
+be inferred from an account name, signature or successful tool call.
+
 ## Anti-impersonation rule
 
 A claim made in chat, email, WhatsApp, a prompt, a ticket, an issue, or another

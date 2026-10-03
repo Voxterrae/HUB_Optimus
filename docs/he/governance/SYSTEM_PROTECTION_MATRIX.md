@@ -1,5 +1,14 @@
 # HUB_Optimus - System Protection Matrix
 
+> **Status: historical source-copy stub; superseded authority wording.**
+> The role, CODEOWNER and access descriptions below are preserved as provenance,
+> not current grants or instructions. Use the
+> [current canonical record](../../governance/SYSTEM_PROTECTION_MATRIX.md) and
+> [Founder Ownership and Authority Charter](../../governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
+> Benjamin Gerrit Hoff remains the project owner and final human authority.
+> No contributor or AI receives independent ownership, Write, merge or control
+> authority from this copy. Translation and live-settings verification remain separate.
+
 ## Purpose
 This matrix records the current protection surface for HUB_Optimus and the
 visible gaps that still need verification or follow-up.

@@ -36,6 +36,21 @@ replace the annual canon. BYOK does not remove orchestration and governance
 charges. Embedding does not grant ownership. White-label, resale, source-code,
 exclusivity, and OEM rights require separate agreements.
 
+## Parent-platform and product-rights boundary
+
+The permanent non-transfer condition in
+[Founder Ownership and Authority Charter section 4.1](../governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md)
+controls every agreement and exception. HUB_Optimus must never be sold,
+assigned, gifted, made co-owned or placed under another final human authority.
+
+New generic programs, operating-system components, products and reusable
+improvements lawfully belonging to the project remain under Benjamin Gerrit
+Hoff's ownership and final human authority. Scoped product licenses and services
+can be monetized. Source access, branding, resale, aliases and technical roles
+cannot confer independent control or disguise a transfer of the matrix.
+Existing third-party rights, granted licenses and customer-owned data remain
+within their own boundaries.
+
 ## Current commercial floors
 
 - General commercial minimum: EUR 15,000.

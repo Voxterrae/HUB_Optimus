@@ -41,6 +41,19 @@ change, live required checks, explicit owner record, and applicable
 cryptographic gate are all satisfied. Draft PR `#1862` is historical proposal
 provenance rather than the current merge gate.
 
+## Parent-platform and product boundary
+
+The permanent parent-platform non-transfer condition entered protected main
+through issue #1945 and PR #1946 at
+`bb9a343ab76000c06ad199e29fbdcceb9ec82f18`.
+Use OWNER_AUTHORITY_HANDOFF for the controlling consequence: lawfully owned
+new generic programs, operating-system components, products and improvements
+remain under Benjamin Gerrit Hoff's ownership and final human authority.
+Scoped product licenses and services may be monetized; names, aliases, package
+IDs, commercial agreements or technical access cannot transfer the matrix
+or create independent project authority. Preserve existing third-party rights,
+granted licenses, contributor credit and customer-owned data.
+
 ## CODEOWNERS and review policy
 
 `@Voxterrae` is the sole repository-wide CODEOWNER. CODEOWNERS records
@@ -99,13 +112,20 @@ base and fails closed. For protected changes it checks:
 The adapter merged through PR `#1907` at
 `5cb923c38e8ec0f45468c29268c79dcc3b06b822` publishes `founder-authority`
 on the exact pull-request head and revalidated live test-merge candidate.
-A missing, pending, cancelled, or failed check is not approval. The active
-ruleset requires both `founder-authority` and `founder-authority-bootstrap`
-from GitHub Actions integration `15368`. This records the observed mechanism,
-not a dedicated trusted publisher: issue `#1906` remains open for publisher
-identity and exact-authorization hardening. PR `#1919` introduced the separate
-shadow-only App canary at `dc16281fe91d255939bf017798e5924ab52e0e7c`.
-It remains non-required and does not change the required-check source.
+A missing, pending, cancelled, or failed check is not approval. The read-only
+2026-10-03 audit at `main@bb9a343ab76000c06ad199e29fbdcceb9ec82f18`
+confirmed that ruleset 11665521 requires `founder-authority` from dedicated
+App `4705710`; the other six contexts use GitHub Actions App `15368`.
+The existing App canary job publishes the required dedicated-App context on
+the exact head and live test-merge candidate. Its historical job name does not
+make the required publisher optional or create another owner.
+
+Actions defaults are already `read/false`; automated PR approval is disabled.
+All 15 current main workflows declare explicit permissions and external actions
+are pinned to immutable commits. This settings observation does not enroll an
+owner hardware key, certify all installed Apps, or settle all follow-up in
+#1743, #1881 and #1906. The detailed dated refresh is in
+`docs/governance/GITHUB_SETTINGS_PROTECTION_CHECKLIST.md`.
 
 ## Operating discipline
 

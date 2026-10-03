@@ -7,7 +7,29 @@ GitHub setting, workflow, CODEOWNERS entry, authority rule, or runtime behavior.
 A successful check is technical evidence; it does not grant merge or deployment
 permission.
 
-## Verification context
+## Current limited refresh — 2026-10-03 UTC
+
+Baseline: `main@bb9a343ab76000c06ad199e29fbdcceb9ec82f18`.
+Authenticated owner CLI GETs observed the following. The older 2026-09-14
+tables below remain dated history and do not override this refresh.
+
+| Surface | Current observation |
+| --- | --- |
+| Repository identity/access | Voxterrae / immutable ID 249308740; sole collaborator/admin; no invitations, deploy keys or webhooks. |
+| Main ruleset | 11665521 active; no bypass actors; signatures, PRs, linear history, squash, conversation resolution, strict checks, deletion and force-push protection retained. |
+| Required publisher | `founder-authority` requires dedicated App 4705710; the six other required contexts use Actions App 15368. |
+| Actions defaults | `default_workflow_permissions=read`; `can_approve_pull_request_reviews=false`, already applied under #1931. |
+| Source workflow inventory | All 15 current workflows explicitly declare permissions; external actions are pinned to immutable commit IDs. |
+| Repository scanning switches | Secret Scanning and Push Protection enabled; no alert or credential values read. |
+| Owner-key state | Manifest unchanged: RATIFICATION_PROPOSED, hardware-backed enrollment pending, no enrolled fingerprint. |
+
+The connected integration's installation was visible; a complete inventory of
+all installed Apps was not established. Related repositories and external
+tenant/account authority require their own evidence. Current access observations
+do not prove absence of compromise, biometric enforcement or legal title.
+No setting, permission, App, key or deployment is changed by this refresh.
+
+## Historical verification context — 2026-09-14
 
 - Repository: `Voxterrae/HUB_Optimus`; default branch: `main`.
 - Read-only inspection date: **2026-09-14 (UTC)**.

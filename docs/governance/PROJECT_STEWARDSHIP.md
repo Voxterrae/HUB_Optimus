@@ -32,7 +32,8 @@ project. Only he may authorize changes to:
 - the definition of HUB_Optimus as the parent tool/platform;
 - constitutional governance and final authority;
 - protected repository authority and administration;
-- licensing posture, control, assignment, co-ownership, or exclusive rights;
+- licensing posture and scoped product rights, subject to the permanent
+  parent-platform non-transfer condition in Charter section 4.1;
 - a joint venture or other transfer of economic or governance participation.
 
 ## Repository identity
@@ -54,6 +55,13 @@ solutions.
 A customer, user company, collaborator, contributor, employee, contractor, or
 service provider does not acquire ownership or constitutional authority over
 HUB_Optimus merely because a system is built for or with them.
+
+New generic programs, operating-system components, products and reusable
+improvements lawfully belonging to the project remain under Benjamin Gerrit
+Hoff's ownership and final human authority. Product licenses and services may
+be monetized within explicit owner-approved scopes. Neither a product name,
+technical role nor a client agreement transfers control of the parent platform.
+Existing third-party rights and granted licenses remain intact.
 
 ## Contributors, advisers, and technical specialists
 
