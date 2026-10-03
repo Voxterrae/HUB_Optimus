@@ -87,6 +87,7 @@ def check_response(
 
 
 class FakeClient:
+    strict_check_publisher = True
     pull_responses: list[dict[str, Any]] = []
     create_failure_at: int | None = None
     finalize_failures_remaining: dict[int, int] = {}
@@ -283,37 +284,24 @@ def test_github_client_rejects_wrong_check_target(
         client.create_check(HEAD_SHA, target_label="pull-request head")
 
 
-def test_github_client_without_publisher_env_preserves_legacy_contract(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize("operation", ["create", "finalize"])
+def test_client_without_dedicated_identity_cannot_publish(
+    monkeypatch: pytest.MonkeyPatch, operation: str
 ) -> None:
     monkeypatch.delenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", raising=False)
     monkeypatch.delenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", raising=False)
     client = WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
-    requests: list[tuple[str, str, dict[str, object] | None]] = []
-
-    def legacy_responses(
-        path: str,
-        *,
-        method: str = "GET",
-        payload: dict[str, object] | None = None,
-    ) -> object:
-        requests.append((method, path, payload))
-        if method == "POST":
-            return {"id": 101}
-        return None
-
-    monkeypatch.setattr(client, "repository_request", legacy_responses)
-
-    assert client.strict_check_publisher is False
-    assert client.expected_check_app_id is None
-    assert client.expected_check_app_slug is None
-    check_run_id = client.create_check(HEAD_SHA, target_label="pull-request head")
-    client.finalize_check(check_run_id, success=True, summary="passed")
-
-    create_payload = requests[0][2]
-    assert isinstance(create_payload, dict)
-    assert "external_id" not in create_payload
-    assert requests[1][0:2] == ("PATCH", "check-runs/101")
+    requests = []
+    def responses(path, *, method="GET", payload=None):
+        requests.append((method, path))
+        return {"id": 101}
+    monkeypatch.setattr(client, "repository_request", responses)
+    with pytest.raises(WORKFLOW.WorkflowError, match="dedicated App"):
+        if operation == "create":
+            client.create_check(HEAD_SHA, target_label="pull-request head")
+        else:
+            client.finalize_check(101, success=True, summary="passed")
+    assert requests == []
 
 
 @pytest.mark.parametrize(
@@ -555,3 +543,85 @@ def test_initial_check_creation_failure_returns_nonzero(
     configure(monkeypatch, tmp_path)
 
     assert WORKFLOW.main() == 1
+
+
+def test_default_publication_refuses_generic_client(monkeypatch, tmp_path):
+    configure(monkeypatch, tmp_path)
+    monkeypatch.setattr(FakeClient, "strict_check_publisher", False)
+    assert WORKFLOW.run() == 1
+    assert FakeClient.instances[0].created_checks == []
+    assert FakeClient.instances[0].finalized_checks == []
+
+
+def test_validation_only_checks_targets_and_policy_without_api_writes(
+    monkeypatch, tmp_path
+):
+    configure(monkeypatch, tmp_path)
+    monkeypatch.setattr(FakeClient, "strict_check_publisher", False)
+    assert WORKFLOW.run(publish_checks=False) == 0
+    client = FakeClient.instances[0]
+    assert client.created_checks == []
+    assert client.finalized_checks == []
+    assert client.pull_index == 3
+    evidence = json.loads((tmp_path / "evidence.json").read_text())
+    assert evidence["evaluation_targets"] == {
+        "head_sha": HEAD_SHA, "base_sha": BASE_SHA, "merge_commit_sha": MERGE_SHA
+    }
+
+
+def test_validation_only_cli_preserves_read_only_contract(monkeypatch, tmp_path):
+    configure(monkeypatch, tmp_path)
+    monkeypatch.setattr(FakeClient, "strict_check_publisher", False)
+    assert WORKFLOW.main(["--validate-only"]) == 0
+    assert FakeClient.instances[0].created_checks == []
+    assert FakeClient.instances[0].finalized_checks == []
+
+
+@pytest.mark.parametrize(
+    "changed",
+    [
+        {"head_sha": OTHER_HEAD_SHA},
+        {"base_sha": OTHER_BASE_SHA},
+        {"merge_sha": OTHER_MERGE_SHA},
+        {"merge_sha": None},
+    ],
+)
+def test_validation_only_rejects_stale_or_missing_targets(
+    monkeypatch, tmp_path, changed
+):
+    configure(monkeypatch, tmp_path)
+    FakeClient.pull_responses = [pull_payload(), pull_payload(**changed)]
+    assert WORKFLOW.run(publish_checks=False) == 1
+    assert FakeClient.instances[0].created_checks == []
+    assert FakeClient.instances[0].finalized_checks == []
+
+
+def test_validation_only_preserves_semantic_failure(monkeypatch, tmp_path):
+    configure(monkeypatch, tmp_path)
+    def denied(*args):
+        raise WORKFLOW.GuardError("owner authorization denied")
+    monkeypatch.setattr(WORKFLOW, "evaluate", denied)
+    assert WORKFLOW.run(publish_checks=False) == 1
+    assert FakeClient.instances[0].created_checks == []
+    assert FakeClient.instances[0].finalized_checks == []
+
+
+def test_validation_only_rejects_semantic_evidence_change(monkeypatch, tmp_path):
+    configure(monkeypatch, tmp_path, evidence_values=[
+        {"commits": [], "reviews": [], "governance_issues": [1906]},
+        {"commits": [], "reviews": [{"state": "CHANGES_REQUESTED"}],
+         "governance_issues": [1906]},
+    ])
+    assert WORKFLOW.run(publish_checks=False) == 1
+    assert FakeClient.instances[0].created_checks == []
+    assert FakeClient.instances[0].finalized_checks == []
+
+
+def test_validation_only_rejects_transport_failure(monkeypatch, tmp_path):
+    configure(monkeypatch, tmp_path)
+    def unavailable(*args, **kwargs):
+        raise WORKFLOW.WorkflowError("evidence unavailable")
+    monkeypatch.setattr(FakeClient, "repository_request", unavailable)
+    assert WORKFLOW.run(publish_checks=False) == 1
+    assert FakeClient.instances[0].created_checks == []
+    assert FakeClient.instances[0].finalized_checks == []

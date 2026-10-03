@@ -120,6 +120,14 @@ The existing App canary job publishes the required dedicated-App context on
 the exact head and live test-merge candidate. Its historical job name does not
 make the required publisher optional or create another owner.
 
+The required bootstrap job now uses API-read-only `--validate-only` evaluation.
+Its generic GITHUB_TOKEN has no Checks write permission and cannot create or
+finalize custom founder-authority checks. Default publication requires the
+configured exact dedicated-App identity; no generic fallback remains.
+The six Actions job contexts, including the bootstrap, remain required under
+the unchanged ruleset. Removing that bootstrap requirement is a separate
+migration step, pending App-only hosted validation and owner-governed review.
+
 Actions defaults are already `read/false`; automated PR approval is disabled.
 All 15 current main workflows declare explicit permissions and external actions
 are pinned to immutable commits. This settings observation does not enroll an

@@ -136,8 +136,12 @@ The detailed dated settings evidence is in
 [the protection checklist](../governance/GITHUB_SETTINGS_PROTECTION_CHECKLIST.md).
 The existing App canary job publishes the required dedicated-App context on
 the exact head and live test-merge candidate; its historical job name does not
-make the required publisher optional. Issue #1906 retains remaining
-exact-authorization work and is not closed by this settings observation.
+make the required publisher optional. The generic bootstrap now runs the same
+live policy in API-read-only `--validate-only` mode, with no Checks write
+permission. Only configured dedicated-App execution can create/finalize custom
+founder-authority checks; the required bootstrap Actions job remains intact.
+Issue #1906 retains App-only hosted validation, any later bootstrap-requirement
+removal and remaining exact-authorization work; this cleanup does not close it.
 Hardware enrollment/status follow-up remains in #1743 and #1881.
 
 Live permissions and settings remain mutable. Documentation neither changes

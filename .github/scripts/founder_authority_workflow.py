@@ -10,6 +10,7 @@ and semantic evidence remain unchanged.
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import pathlib
@@ -265,10 +266,10 @@ class GitHubClient:
         return require_mapping(result.get("data"), "GitHub GraphQL data")
 
     def create_check(self, target_sha: str, *, target_label: str) -> int:
-        external_id: str | None = None
-        if self.strict_check_publisher:
-            target_sha = require_sha(target_sha, f"{target_label} target SHA")
-            external_id = f"founder-authority:v1:{target_label}:{target_sha}"
+        if not self.strict_check_publisher:
+            raise WorkflowError("dedicated App publisher identity is required")
+        target_sha = require_sha(target_sha, f"{target_label} target SHA")
+        external_id = f"founder-authority:v1:{target_label}:{target_sha}"
         payload: dict[str, Any] = {
             "name": CHECK_NAME,
             "head_sha": target_sha,
@@ -281,8 +282,7 @@ class GitHubClient:
                 ),
             },
         }
-        if external_id is not None:
-            payload["external_id"] = external_id
+        payload["external_id"] = external_id
         check = self.repository_request(
             "check-runs",
             method="POST",
@@ -292,10 +292,6 @@ class GitHubClient:
         check_run_id = require_int(
             check.get("id"), f"created {target_label} check-run ID"
         )
-        if not self.strict_check_publisher:
-            return check_run_id
-
-        assert external_id is not None
         try:
             self.require_expected_check(
                 check,
@@ -332,6 +328,8 @@ class GitHubClient:
         success: bool,
         summary: str,
     ) -> None:
+        if not self.strict_check_publisher:
+            raise WorkflowError("dedicated App publisher identity is required")
         conclusion = "success" if success else "failure"
         title = (
             "Founder Authority Guard passed"
@@ -343,14 +341,6 @@ class GitHubClient:
             "conclusion": conclusion,
             "output": {"title": title, "summary": summary[-60000:]},
         }
-        if not self.strict_check_publisher:
-            self.repository_request(
-                f"check-runs/{check_run_id}",
-                method="PATCH",
-                payload=payload,
-            )
-            return
-
         target = self.created_check_targets.get(check_run_id)
         if target is None:
             raise WorkflowError(
@@ -726,7 +716,7 @@ def finalize_created_checks(
     return [*errors, *revocation_errors]
 
 
-def run() -> int:
+def run(*, publish_checks: bool = True) -> int:
     event = load_event()
     repository = require_mapping(event.get("repository"), "repository payload")
     event_pull = require_mapping(event.get("pull_request"), "pull_request payload")
@@ -747,28 +737,31 @@ def run() -> int:
     summary = "Founder Authority Guard failed before producing a result."
 
     try:
+        if publish_checks and not client.strict_check_publisher:
+            raise WorkflowError("dedicated App publisher identity is required")
         initial = live_pull_snapshot(
             client,
             pull_number,
             expected_head_sha=expected_head_sha,
             expected_base_sha=expected_base_sha,
         )
-        checks.append(
-            (
-                "exact pull-request head",
-                client.create_check(
-                    initial["head_sha"], target_label="exact pull-request head"
-                ),
+        if publish_checks:
+            checks.append(
+                (
+                    "exact pull-request head",
+                    client.create_check(
+                        initial["head_sha"], target_label="exact pull-request head"
+                    ),
+                )
             )
-        )
-        checks.append(
-            (
-                "live test merge commit",
-                client.create_check(
-                    initial["merge_sha"], target_label="live test merge commit"
-                ),
+            checks.append(
+                (
+                    "live test merge commit",
+                    client.create_check(
+                        initial["merge_sha"], target_label="live test merge commit"
+                    ),
+                )
             )
-        )
 
         manifest = require_mapping(
             json.loads(MANIFEST_PATH.read_text(encoding="utf-8")),
@@ -843,17 +836,26 @@ def run() -> int:
         success = False
         summary = f"{summary}\n" + "\n".join(finalization_errors)
 
+    if not publish_checks:
+        summary = f"mode=validate-only; no check-run writes\n{summary}"
     print(summary, file=sys.stdout if success else sys.stderr)
     return 0 if success else 1
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--validate-only",
+        action="store_true",
+        help="validate live authority evidence without creating or finalizing check runs",
+    )
+    args = parser.parse_args([] if argv is None else argv)
     try:
-        return run()
+        return run(publish_checks=not args.validate_only)
     except (OSError, WorkflowError, urllib.error.URLError) as exc:
         print(f"FOUNDER_AUTHORITY_GUARD: FAIL CLOSED: {exc}", file=sys.stderr)
         return 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))
