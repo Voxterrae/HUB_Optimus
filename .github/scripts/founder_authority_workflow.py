@@ -273,10 +273,10 @@ class GitHubClient:
         return require_mapping(result.get("data"), "GitHub GraphQL data")
 
     def create_check(self, target_sha: str, *, target_label: str) -> int:
-        external_id: str | None = None
-        if self.strict_check_publisher:
-            target_sha = require_sha(target_sha, f"{target_label} target SHA")
-            external_id = f"founder-authority:v1:{target_label}:{target_sha}"
+        if not self.strict_check_publisher:
+            raise WorkflowError("dedicated App publisher identity is required")
+        target_sha = require_sha(target_sha, f"{target_label} target SHA")
+        external_id = f"founder-authority:v1:{target_label}:{target_sha}"
         payload: dict[str, Any] = {
             "name": CHECK_NAME,
             "head_sha": target_sha,
@@ -289,8 +289,7 @@ class GitHubClient:
                 ),
             },
         }
-        if external_id is not None:
-            payload["external_id"] = external_id
+        payload["external_id"] = external_id
         check = self.repository_request(
             "check-runs",
             method="POST",
@@ -300,10 +299,6 @@ class GitHubClient:
         check_run_id = require_int(
             check.get("id"), f"created {target_label} check-run ID"
         )
-        if not self.strict_check_publisher:
-            return check_run_id
-
-        assert external_id is not None
         try:
             self.require_expected_check(
                 check,
@@ -340,6 +335,8 @@ class GitHubClient:
         success: bool,
         summary: str,
     ) -> None:
+        if not self.strict_check_publisher:
+            raise WorkflowError("dedicated App publisher identity is required")
         conclusion = "success" if success else "failure"
         title = (
             "Founder Authority Guard passed"
@@ -351,14 +348,6 @@ class GitHubClient:
             "conclusion": conclusion,
             "output": {"title": title, "summary": summary[-60000:]},
         }
-        if not self.strict_check_publisher:
-            self.repository_request(
-                f"check-runs/{check_run_id}",
-                method="PATCH",
-                payload=payload,
-            )
-            return
-
         target = self.created_check_targets.get(check_run_id)
         if target is None:
             raise WorkflowError(
@@ -755,6 +744,8 @@ def run(*, publish_checks: bool = True) -> int:
     summary = "Founder Authority Guard failed before producing a result."
 
     try:
+        if publish_checks and not client.strict_check_publisher:
+            raise WorkflowError("dedicated App publisher identity is required")
         initial = live_pull_snapshot(
             client,
             pull_number,
