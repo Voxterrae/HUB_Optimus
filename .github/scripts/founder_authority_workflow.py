@@ -111,6 +111,13 @@ class GitHubClient:
             if self.strict_check_publisher
             else None
         )
+        if (
+            self.expected_check_app_id == 15368
+            or self.expected_check_app_slug == "github-actions"
+        ):
+            raise WorkflowError(
+                "generic GitHub Actions cannot be the founder-authority publisher"
+            )
         self.created_check_targets: dict[int, tuple[str, str]] = {}
 
     def require_expected_check(

@@ -625,3 +625,16 @@ def test_validation_only_rejects_transport_failure(monkeypatch, tmp_path):
     assert WORKFLOW.run(publish_checks=False) == 1
     assert FakeClient.instances[0].created_checks == []
     assert FakeClient.instances[0].finalized_checks == []
+
+
+@pytest.mark.parametrize(
+    ("app_id", "app_slug"),
+    [("15368", "founder-authority"), ("4242", "github-actions")],
+)
+def test_generic_actions_identity_cannot_be_configured_as_dedicated(
+    monkeypatch: pytest.MonkeyPatch, app_id: str, app_slug: str
+) -> None:
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_ID", app_id)
+    monkeypatch.setenv("FOUNDER_AUTHORITY_EXPECTED_APP_SLUG", app_slug)
+    with pytest.raises(WORKFLOW.WorkflowError, match="generic GitHub Actions"):
+        WORKFLOW.GitHubClient("test-token", "Voxterrae/HUB_Optimus")
