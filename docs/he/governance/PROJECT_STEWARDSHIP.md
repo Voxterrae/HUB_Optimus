@@ -1,5 +1,14 @@
 # HUB_Optimus Project Stewardship
 
+> **Status: historical source-copy stub; superseded authority wording.**
+> The role, CODEOWNER and access descriptions below are preserved as provenance,
+> not current grants or instructions. Use the
+> [current canonical record](../../governance/PROJECT_STEWARDSHIP.md) and
+> [Founder Ownership and Authority Charter](../../governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
+> Benjamin Gerrit Hoff remains the project owner and final human authority.
+> No contributor or AI receives independent ownership, Write, merge or control
+> authority from this copy. Translation and live-settings verification remain separate.
+
 ## Purpose
 
 This document records the human authority, technical stewardship, and review

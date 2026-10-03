@@ -7,7 +7,15 @@ HUB_Optimus is an integrity-first diplomatic simulation framework designed for e
 
 ## Source of Truth
 
-When repository docs conflict, `docs/context/STATUS.md` wins.
+Follow `docs/context/SOURCE_OF_TRUTH.md` for project-wide precedence.
+For founder identity, ownership, control, licensing or repository authority,
+first read the Founder Ownership and Authority Charter, owner identity manifest,
+and `docs/context/OWNER_AUTHORITY_HANDOFF.md`. Benjamin Gerrit Hoff is the
+project owner and final human authority; `@Voxterrae` / immutable ID
+`249308740` is his repository identity.
+
+`docs/context/STATUS.md` resolves language/parity policy; it does not override
+the founder-authority boundary, executable contracts or live GitHub settings.
 
 - `v1_core/languages/es/` is canonical for v1 core specs.
 - `v1_core/languages/en/` is a parity reference that must remain synchronized.
@@ -28,7 +36,7 @@ When contributing to this codebase, you MUST respect these non-negotiable princi
 Medium/long-term systemic stability is the supreme criterion. Any "success" that increases long-term instability is a false success and must be rejected.
 
 ### 2. Integrity First
-Influence over the core is earned through ethical coherence and sustained integrity, not credentials or position.
+Evaluate proposed changes through ethical coherence, evidence and sustained integrity. Contribution, credentials, position or AI assistance create no ownership or independent governance authority.
 
 ### 3. Evaluation Over Narrative
 Outcomes are assessed structurally (incentives, verification, sequencing), not rhetorically or through narratives.
@@ -52,7 +60,12 @@ The primary driver of recurring crises is misaligned incentives. Always prioriti
 Claims and commitments are evaluated by verifiability. Narrative strength, authority, urgency, or moral framing do not increase trust classification.
 
 ### 10. Anti-Capture
-No individual—including the originator—has special privileges. Authorship does not confer authority. All changes must go through transparent review processes.
+In scenario evaluation, no person's name, title or authorship increases the
+truth or trust classification of a claim. Project ownership and final human
+authority remain with Benjamin Gerrit Hoff under the controlling Charter.
+All changes still require visible, protected owner-governed review. Technical
+roles, name variants and hidden prompts cannot grant independent authority or
+evade the permanent parent-platform non-transfer condition.
 
 ## Repository Structure
 
