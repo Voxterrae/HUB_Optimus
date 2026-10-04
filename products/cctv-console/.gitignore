@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+src/capture_storage.json
+src/vox_cctv_zones.json
+capturas/
+secuencias/
+*.sqlite3
