@@ -1,0 +1,207 @@
+{
+  "package": "optimus-cctv-console",
+  "version": "0.1.0",
+  "fileCount": 40,
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "824303d5bedb56439ebf1a6339f7fde81ceabfe5953efefa09ca9cbf58e8ba42",
+      "size": 119
+    },
+    {
+      "path": "README.md",
+      "sha256": "7a37b1f82507c0dcfb6d9c38ad8b148550998a504f215a40d250f680766b195a",
+      "size": 3413
+    },
+    {
+      "path": "VALIDATION.md",
+      "sha256": "455c51678789fdb70ee9f5d7d73bedfc726ea93b8949c53215b203d534010a1e",
+      "size": 2394
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "d4fca4d0164db58b82b72fa0d517b8ba9e275c593068db5e8830a4c6dcef5c84",
+      "size": 795
+    },
+    {
+      "path": "scripts/build-package-manifest.py",
+      "sha256": "cdc2f5d519503f049d6b206320dd3eef5ad7475031fe782fc7414422458baf9d",
+      "size": 1620
+    },
+    {
+      "path": "src/cctv_test_fixtures.py",
+      "sha256": "80d88304dee645cf163bde25d72607e9e2515b6ca7c0f39feba0bec0515dab08",
+      "size": 2686
+    },
+    {
+      "path": "src/vox_cctv_alarm_policy.py",
+      "sha256": "61f02930cdad1e72dceadd6d461b2995bbe97c6cce350fde8e97e9fad986494a",
+      "size": 7879
+    },
+    {
+      "path": "src/vox_cctv_config.py",
+      "sha256": "bdb80abaf5e9983ff969ad3ee3ffd1e51dc7c6bd21cd7bc26143b4861fb7e423",
+      "size": 1124
+    },
+    {
+      "path": "src/vox_cctv_display.py",
+      "sha256": "64474d1451be330aa872c18c64e0437250da009605939c5fa23032f9fdf908eb",
+      "size": 2332
+    },
+    {
+      "path": "src/vox_cctv_evidence.py",
+      "sha256": "3da87b6e115867c8a7faa01e97ae8a997e918f192fe6c0a517dbce49e4e172d0",
+      "size": 23189
+    },
+    {
+      "path": "src/vox_cctv_metadata.py",
+      "sha256": "7163694b639105cdadc118cc78da14560650f3ef3378a19ab2a3437022bf9eb6",
+      "size": 2247
+    },
+    {
+      "path": "src/vox_cctv_native.py",
+      "sha256": "58374e889f8a10cf31a209bda4bad35c07816534ab4a290e7f4df208109a5ac1",
+      "size": 17922
+    },
+    {
+      "path": "src/vox_cctv_photos.py",
+      "sha256": "efc95686acc5b39e6bc9baa505f8063523de2963695a8a6c6f399c85bbb2eebb",
+      "size": 6651
+    },
+    {
+      "path": "src/vox_cctv_selection.py",
+      "sha256": "039eb6623130305440bcb92394f6f60f7e9492392fd380d15763aa21f5b748aa",
+      "size": 15622
+    },
+    {
+      "path": "src/vox_cctv_sequences.py",
+      "sha256": "8e3dd93e6633e227f573be2c07a49d19f4af295cd47a1b14cb68e94352f4fe1d",
+      "size": 54990
+    },
+    {
+      "path": "src/vox_cctv_video.py",
+      "sha256": "4b9fe0fe9f3370f6caf852391a43bb762356025b24e9792799c2913bba8e26f6",
+      "size": 6007
+    },
+    {
+      "path": "src/vox_cctv_viewer.py",
+      "sha256": "139b1b8a384fa30121eb280ddaa756a28c2a89dc861592217caf704b6af61e9f",
+      "size": 60637
+    },
+    {
+      "path": "src/vox_home/__init__.py",
+      "sha256": "386ce32a555199c4fb1182b6f51f229d1c0be196cc07d636b0aa007bdb8fa6f3",
+      "size": 60
+    },
+    {
+      "path": "src/vox_home/access.py",
+      "sha256": "13aef602cdd32b0623c2d801f90dfc5e5bd18bfea1fd03e0e8a04008dba90830",
+      "size": 5276
+    },
+    {
+      "path": "src/vox_home/adapters/native.py",
+      "sha256": "11bc04352a9c910e95fb1965b67a82480e84bbd0f7d9aaef437d2a8803f5f6bf",
+      "size": 9136
+    },
+    {
+      "path": "src/vox_home/audit.py",
+      "sha256": "4553f2f7401c8ce262a7d9b3a5152476c0578e40fbbb537ce4e16d98802d8747",
+      "size": 4657
+    },
+    {
+      "path": "src/vox_home/contracts.py",
+      "sha256": "dbaaa9d6a93f0cd856fc9691a356899af91907e7a6553c4ea769d96d466c104b",
+      "size": 10947
+    },
+    {
+      "path": "src/vox_home/facade.py",
+      "sha256": "f161a687eaa74131fd0bf1e660ce5087f7d8c1357083a1cf0e7798a811b5579b",
+      "size": 16319
+    },
+    {
+      "path": "src/vox_home/host.py",
+      "sha256": "1a1269ea900dbba2599eab7af21c36db838d58c7aac30c2fe47b1778c26793ec",
+      "size": 16344
+    },
+    {
+      "path": "src/vox_home/registry.py",
+      "sha256": "50fe834e55fcb37e66cf67114dd59c27750c2254b8fb91bd7ba65da07f48fe6d",
+      "size": 7445
+    },
+    {
+      "path": "src/vox_home/secrets.py",
+      "sha256": "453391211ab7cea62c43f69b06e78db3de1345854fd746e58e9ccbf9b085896b",
+      "size": 6677
+    },
+    {
+      "path": "src/vox_home/worker.py",
+      "sha256": "c2f8855f79d0f6ba3c6ca91431824712ea4d46c8ad66ea41f8dafc2919d713cc",
+      "size": 11017
+    },
+    {
+      "path": "tests/conftest.py",
+      "sha256": "d23bc523b994bf57a00248032943fdeb12ac6660d787dba9ab025edbf83a9b5d",
+      "size": 411
+    },
+    {
+      "path": "tests/test_distribution.py",
+      "sha256": "b7d8b16c6fb8bfbab49611fa669200f902e9fad4e110f3332dbe81348745a161",
+      "size": 2125
+    },
+    {
+      "path": "tests/test_home_facade.py",
+      "sha256": "5c1f199ebcae63a9629e60c93796c26dec1068f238bfd933e7c45d3ea2006013",
+      "size": 24890
+    },
+    {
+      "path": "tests/test_public_configuration.py",
+      "sha256": "ef2445810c282d7642e20da1d3a587535891f1361a44a59df272fe90da054ba7",
+      "size": 2470
+    },
+    {
+      "path": "tests/test_vox_cctv_capture_fix.py",
+      "sha256": "b008bdc8417f707f17da1de1d6ad86bfbd576866f026a490dee08d7dcc9fc5dc",
+      "size": 4936
+    },
+    {
+      "path": "tests/test_vox_cctv_display_ui.py",
+      "sha256": "bc8a592f9c10a58060c894df2de76a2de962a98f5e5d1f3a578b9df837190869",
+      "size": 3823
+    },
+    {
+      "path": "tests/test_vox_cctv_evidence.py",
+      "sha256": "0ed71518ade2b2c62c9f023fc9d319622aee1baac8dca5d226a871c941f94150",
+      "size": 19259
+    },
+    {
+      "path": "tests/test_vox_cctv_photos.py",
+      "sha256": "6ed96d1978e7ee0e400e566d87dab4b0a14a07701efc0b41fc8e9ca108cb885f",
+      "size": 1402
+    },
+    {
+      "path": "tests/test_vox_cctv_selection.py",
+      "sha256": "3f9dd45b8f74918cba49ee2d28b4a600e5f65e7f5c86a08cedb3334c592d83b7",
+      "size": 7420
+    },
+    {
+      "path": "tests/test_vox_cctv_sequences.py",
+      "sha256": "6ffdc4e9301d78728a463fd57e353edc35584b5444199923948e224a11f28132",
+      "size": 28124
+    },
+    {
+      "path": "tests/test_vox_cctv_ui.py",
+      "sha256": "70e7a49044016de1ea8059f01a9d61e8699a07a7af360f61c8930c4504a324ef",
+      "size": 8142
+    },
+    {
+      "path": "tests/test_vox_cctv_video.py",
+      "sha256": "012c90ae2a5b3a1c4a869a16c36df3b4381f12e01cefce2cab86c6d5208b2558",
+      "size": 1796
+    },
+    {
+      "path": "tests/test_vox_cctv_viewer.py",
+      "sha256": "84332b82a3b4aaede556e194a170cc997264330e597e85fd57b619250045c188",
+      "size": 21210
+    }
+  ]
+}
