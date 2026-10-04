@@ -38,7 +38,7 @@ class DetailUIContracts(unittest.TestCase):
                 root.update_idletasks()
                 self.assertEqual(app.detail, 0)
                 self.assertEqual(app.camera_choice.get(), 'C1 · Zona 1')
-                self.assertIn('Configuradas: personas', app.detail_info.cget('text'))
+                self.assertIn('sin verificar en esta instalación', app.detail_info.cget('text'))
                 for state in app.states.values():
                     state.publish(original, 1920, 1080)
                 app.refresh_view()

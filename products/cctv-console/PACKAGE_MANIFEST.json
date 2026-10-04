@@ -165,8 +165,8 @@
     },
     {
       "path": "tests/test_vox_cctv_display_ui.py",
-      "sha256": "bc8a592f9c10a58060c894df2de76a2de962a98f5e5d1f3a578b9df837190869",
-      "size": 3823
+      "sha256": "72a26f760fd4bca317bd2e8015105cfa4da5998cf58c395f9105f3b3de6cf59a",
+      "size": 3835
     },
     {
       "path": "tests/test_vox_cctv_evidence.py",
