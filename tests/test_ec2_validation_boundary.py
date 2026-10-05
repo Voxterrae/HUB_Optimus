@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
-import pwd
 import shutil
 import stat
 import subprocess
@@ -14,6 +13,11 @@ import uuid
 from pathlib import Path
 
 import pytest
+
+if not sys.platform.startswith("linux"):
+    pytest.skip("EC2 validation-boundary tests require Linux", allow_module_level=True)
+
+import pwd
 
 
 ROOT = Path(__file__).resolve().parents[1]

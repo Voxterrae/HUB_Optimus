@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -370,6 +371,7 @@ def run_store_script(body: str):
         capture_output=True,
         text=True,
         env={
+            **os.environ,
             "LEARNING_MODEL": str(MODEL),
             "LEARNING_STORE": str(ADAPTER),
         },
