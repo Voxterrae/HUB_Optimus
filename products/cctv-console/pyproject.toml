@@ -17,7 +17,7 @@ optimus-cctv = "vox_cctv_viewer:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-py-modules = ["vox_cctv_config", "vox_cctv_native", "vox_cctv_viewer", "vox_cctv_alarm_policy", "vox_cctv_evidence", "vox_cctv_display", "vox_cctv_metadata", "vox_cctv_photos", "vox_cctv_video", "vox_cctv_sequences", "vox_cctv_selection"]
+py-modules = ["vox_cctv_config", "vox_cctv_native", "vox_cctv_viewer", "vox_cctv_alarm_policy", "vox_cctv_evidence", "vox_cctv_display", "vox_cctv_metadata", "vox_cctv_photos", "vox_cctv_phone", "vox_cctv_video", "vox_cctv_sequences", "vox_cctv_selection"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
