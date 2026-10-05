@@ -1,8 +1,10 @@
 import os
 import stat
+import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
 import yaml
 
 
@@ -145,6 +147,9 @@ def _run_health_summary(
     *,
     extra_env: dict[str, str] | None = None,
 ) -> tuple[subprocess.CompletedProcess[str], Path]:
+    bash = shutil.which("bash")
+    if bash is None:
+        pytest.skip("repo-health workflow execution requires bash")
     fake_bin, captured_body = _fake_commands(tmp_path)
     env = {
         **os.environ,
@@ -156,7 +161,7 @@ def _run_health_summary(
     if extra_env:
         env.update(extra_env)
     result = subprocess.run(
-        ["bash", "-c", _run_script()],
+        [bash, "-c", _run_script()],
         cwd=tmp_path,
         check=False,
         capture_output=True,

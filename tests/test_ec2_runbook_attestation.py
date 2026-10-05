@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import json
 import re
 import stat
@@ -10,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+if os.name != "posix":
+    pytest.skip("EC2 runbook-attestation tests require POSIX permissions", allow_module_level=True)
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNBOOK = ROOT / "ops" / "ec2" / "ISSUE_1831_RUNBOOK.md"

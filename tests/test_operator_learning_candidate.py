@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -97,7 +98,7 @@ function build(overrides = {}) {
         check=False,
         capture_output=True,
         text=True,
-        env={"LEARNING_MODULE": str(MODULE)},
+        env={**os.environ, "LEARNING_MODULE": str(MODULE)},
     )
     assert completed.returncode == 0, completed.stderr
     return completed.stdout
