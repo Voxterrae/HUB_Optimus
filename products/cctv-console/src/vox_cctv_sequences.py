@@ -596,12 +596,22 @@ class SequenceManager:
                 self._jobs.task_done()
 
     def _select(self, job):
-        best, best_stamp, best_score = None, None, -1.0
-        selector, selector_result, selector_error, sampled_at = None, None, None, None
+        best, best_stamp, best_distance, best_score = None, None, float('inf'), None
+        selector, selector_result, selector_error = None, None, None
         selector_samples = 0
         selector_interval = max(1.0, (job.records[-1].received - job.records[0].received) / 19)
         selector_target = job.records[0].received
         decode_error = None
+
+        def tie_quality(frame):
+            # Quality is optional and only breaks equal receipt-time distances.
+            # A bad gray sample must not suppress an available original scene.
+            try:
+                score = _frame_quality(frame)
+                return max(0.0, score) if _finite(score) else 0.0
+            except Exception:
+                return 0.0
+
         if self.frame_selector_factory is not None:
             try:
                 selector = self.frame_selector_factory()
@@ -621,10 +631,15 @@ class SequenceManager:
                     except Exception as error:
                         selector_error = type(error).__name__
                         selector = None
-                # Decode dependent pictures but sample scene quality at one fps.
-                if sampled_at is None or stamp - sampled_at >= 1.0:
-                    sampled_at = stamp
-                    score = _frame_quality(frame)
+                # All decoded receipt timestamps participate. A sharp picture
+                # later in the episode cannot replace the event's nearest scene.
+                distance = abs(stamp - job.event_received)
+                if distance < best_distance:
+                    best, best_stamp, best_distance, best_score = frame, stamp, distance, None
+                elif distance == best_distance:
+                    if best_score is None:
+                        best_score = tie_quality(best)
+                    score = tie_quality(frame)
                     if score > best_score:
                         best, best_stamp, best_score = frame, stamp, score
         except Exception as error:
@@ -641,7 +656,7 @@ class SequenceManager:
                         'event_received_monotonic': job.event_received,
                         'sequence_offset_seconds': best_stamp - job.event_received,
                         'selection': 'escena',
-                        'selection_method': 'full_scene_sharpness_exposure'}
+                        'selection_method': 'full_scene_nearest_event_receipt'}
                 except Exception as error:
                     decode_error = type(error).__name__
         if selector is not None and not self._stop.is_set():
@@ -710,6 +725,8 @@ class SequenceManager:
         if capture is not None:
             metadata['image_selection'] = {key: capture[key] for key in ('selection',
                 'sequence_offset_seconds', 'frame_age_seconds', 'width', 'height')}
+            if capture.get('selection_method') == 'full_scene_nearest_event_receipt':
+                metadata['image_selection']['selection_method'] = capture['selection_method']
         return metadata
 
     def _process_job(self, job):
@@ -918,10 +935,13 @@ class SequenceManager:
                     clip['gaps'] = [{key: row[key] for key in ('reason',
                         'from_event_offset_seconds', 'to_event_offset_seconds')} for row in clip['gaps']]
                     for field_name, field_keys in (('image_selection', ('selection',
-                            'sequence_offset_seconds', 'frame_age_seconds', 'width', 'height')),
+                            'sequence_offset_seconds', 'frame_age_seconds', 'width', 'height', 'selection_method')),
                             ('selector_status', ('body_status', 'face_status', 'detector_status', 'considered', 'error_kind'))):
                         if isinstance(clip.get(field_name), dict):
                             clip[field_name] = {key: clip[field_name].get(key) for key in field_keys}
+                    selection = clip.get('image_selection')
+                    if isinstance(selection, dict) and selection.get('selection_method') != 'full_scene_nearest_event_receipt':
+                        selection.pop('selection_method', None)
                     clip['_disk_bytes'] = size
                     saved.append(clip)
                     saved.sort(key=lambda row: row['received_epoch'], reverse=True)

@@ -18,6 +18,19 @@ def video(key=True, size=12, codec='h264', value=7):
     return MediaFrame(0xfc if key else 0xfd, codec if key else None, payload, 2 if key else 0, 1 if key else 0, 10 if key else None)
 
 
+class SceneFrame:
+    """Decoded-frame fixture; original RGB conversion keeps exact pixel bytes."""
+    width = 2
+    height = 1
+    def __init__(self, value): self.value = value
+    def reformat(self, *, format):
+        if format != 'rgb24': raise AssertionError('Only the original RGB is requested')
+        class Plane:
+            line_size = 8
+            def __bytes__(plane): return bytes([self.value]) * 6 + b'xx'
+        return SimpleNamespace(planes=[Plane()])
+
+
 class SequenceContracts(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -300,7 +313,7 @@ class SequenceContracts(unittest.TestCase):
         frame = SimpleNamespace(width=1, height=2, reformat=lambda **kw: rgb)
         self.assertEqual(sequences._original_ppm(frame), b'P6\n1 2\n255\n\x01\x02\x03\x04\x05\x06')
 
-    def test_quality_sampling_is_one_fps_and_optional_selector_failure_is_isolated(self):
+    def test_nearest_scene_requires_no_quality_scan_and_optional_selector_failure_is_isolated(self):
         self.feed(99, True)
         self.manager.trigger(self.event(), 100)
         for stamp in (100, 100.5, 101, 101.5):
@@ -318,10 +331,95 @@ class SequenceContracts(unittest.TestCase):
                 patch.object(sequences, '_frame_quality', side_effect=lambda item: quality.append(1) or 5), \
                 patch.object(sequences, '_original_ppm', return_value=b'P6\n2 1\n255\n' + bytes(6)):
             self.manager._process_job(job)
-        self.assertEqual(len(quality), 3)
+        # Scene proximity replaces the old one-fps sharpness scan. Optional
+        # detector failure must still leave the event's original scene intact.
+        self.assertEqual(len(quality), 0)
+        self.assertEqual(self.published[0][1]['sequence_offset_seconds'], 0)
         self.assertIsNotNone(self.published[0][1])
         self.assertEqual(self.manager.list_clips()[0]['selector_status']['error_kind'], 'RuntimeError')
         self.assertNotIn('private detector detail', json.dumps(self.manager.list_clips()))
+
+    def scene_job(self, stamps, *, latest_activity=100):
+        records=tuple(sequences._Record(video(index==0).payload,'h264',index==0,
+                                        stamp,2,1,10,0) for index,stamp in enumerate(sorted(stamps)))
+        return sequences._Job(uuid.uuid4().hex,0,sequences._sanitised_event(self.event()),
+                              100,time.time(),115,latest_activity,1,records,(),frozenset())
+
+    def test_far_sharp_scene_never_replaces_event_anchor_original(self):
+        before, anchor, after=SceneFrame(11),SceneFrame(22),SceneFrame(33)
+        job=self.scene_job([90,99.96,100.01,113])
+        self.now=116
+        with patch.object(sequences,'_decode_records',return_value=iter(
+                ((before,99.96),(anchor,100.01),(after,113)))), \
+                patch.object(sequences,'_frame_quality',side_effect=lambda frame:
+                             {11:2,22:1,33:100000}[frame.value]):
+            capture,error,status=self.manager._select(job)
+        self.assertIsNone(error)
+        self.assertAlmostEqual(capture['sequence_offset_seconds'],.01)
+        self.assertEqual(capture['ppm'],b'P6\n2 1\n255\n'+bytes([22])*6)
+        self.assertAlmostEqual(capture['frame_age_seconds'],15.99)
+        self.assertEqual(capture['selection_method'],'full_scene_nearest_event_receipt')
+
+    def test_missing_pre_scene_uses_nearest_available_after_event(self):
+        closest,later=SceneFrame(44),SceneFrame(55)
+        job=self.scene_job([100.25,100.75,113])
+        self.now=116
+        with patch.object(sequences,'_decode_records',return_value=iter(
+                ((later,100.75),(closest,100.25),(later,113)))), \
+                patch.object(sequences,'_frame_quality',side_effect=lambda frame:frame.value):
+            capture,error,status=self.manager._select(job)
+        self.assertEqual(capture['sequence_offset_seconds'],.25)
+        self.assertEqual(capture['ppm'],b'P6\n2 1\n255\n'+bytes([44])*6)
+
+    def test_equal_distance_uses_quality_without_moving_away_from_anchor(self):
+        before,after,later=SceneFrame(66),SceneFrame(77),SceneFrame(88)
+        job=self.scene_job([99,101,113])
+        self.now=116
+        with patch.object(sequences,'_decode_records',return_value=iter(
+                ((before,99),(after,101),(later,113)))), \
+                patch.object(sequences,'_frame_quality',side_effect=lambda frame:frame.value):
+            capture,error,status=self.manager._select(job)
+        self.assertEqual(capture['sequence_offset_seconds'],1)
+        self.assertEqual(capture['ppm'],b'P6\n2 1\n255\n'+bytes([77])*6)
+
+    def test_invalid_quality_cannot_discard_available_original_scene(self):
+        for bad_quality in (float('nan'),float('inf'),None,RuntimeError('bad quality sample')):
+            with self.subTest(quality=type(bad_quality).__name__):
+                frame=SceneFrame(99)
+                job=self.scene_job([99,101])
+                self.now=116
+                def quality(item):
+                    if isinstance(bad_quality,Exception): raise bad_quality
+                    return bad_quality
+                with patch.object(sequences,'_decode_records',return_value=iter(((frame,99),(frame,101)))), \
+                        patch.object(sequences,'_frame_quality',side_effect=quality):
+                    capture,error,status=self.manager._select(job)
+                self.assertIsNotNone(capture)
+                self.assertEqual(capture['ppm'],b'P6\n2 1\n255\n'+bytes([99])*6)
+                self.assertEqual(capture['sequence_offset_seconds'],-1)
+                self.assertIsNone(error)
+
+    def test_extended_episode_keeps_original_event_anchor_and_method_after_restart(self):
+        anchor,later=SceneFrame(101),SceneFrame(102)
+        job=self.scene_job([90,100,113,115],latest_activity=113)
+        self.now=116
+        with patch.object(sequences,'_decode_records',return_value=iter(((anchor,100),(later,113)))), \
+                patch.object(sequences,'_frame_quality',side_effect=lambda frame:frame.value):
+            self.manager._process_job(job)
+        capture=self.published[0][1]
+        self.assertEqual(capture['sequence_offset_seconds'],0)
+        self.assertEqual(capture['ppm'],b'P6\n2 1\n255\n'+bytes([101])*6)
+        clip=self.manager.list_clips()[0]
+        self.assertEqual(clip['image_selection'].get('selection_method'),'full_scene_nearest_event_receipt')
+        expected_digest=hashlib.sha256(b''.join(record.payload for record in job.records)).hexdigest()
+        self.assertEqual(clip['original_sha256'],expected_digest)
+        restored=sequences.SequenceManager('private',self.temporary.name,lambda *args:None,min_free_bytes=0)
+        try:
+            restored._load_clips()
+            self.assertEqual(restored.list_clips()[0]['image_selection'].get('selection_method'),
+                             'full_scene_nearest_event_receipt')
+            self.assertEqual(restored.list_clips()[0]['original_sha256'],expected_digest)
+        finally: restored.stop()
 
     def test_twenty_detector_samples_cover_the_entire_extended_episode(self):
         records = tuple(sequences._Record(video(index % 10 == 0).payload, 'h264',

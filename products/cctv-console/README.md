@@ -12,6 +12,19 @@ to 60 seconds while activity continues. Receipt timestamps and incomplete
 coverage are recorded. Body/face selection requires adequate image quality;
 there is no person identification or inferred hostile intent.
 
+The full-scene photo uses the original decoded frame nearest the initial event
+receipt; sharpness only breaks equal-distance ties. Body/face selection remains
+independent. Receipt proximity does not guarantee agreement with the camera's
+internal clock or prove the cause of the detector report. Existing clips and
+photos are not rewritten by this selection change.
+
+Camera and event filters repaint immediately. Recorder transitions are labelled
+Inicio/Finalizado; repeated reports remain a bounded session history, not proof
+of separate detections. Empty galleries explain their camera/event filter and
+capture limitations. Scene/body/face selection status distinguishes missing
+detectors and insufficient quality. The inspector's authorized crop and manual
+shadow display preserve the received original image.
+
 ## Install and bind one recorder
 
 Use Windows, Python 3.14 and Tk. Install in an isolated environment:
@@ -41,8 +54,42 @@ seven configured channels. Device identity is checked by the native transport.
 Data uses the local application directory by default. An installation may add
 `src/capture_storage.json` (untracked, version 1) with an absolute `directory`
 and optional absolute `vision_directory`. Inspect the disk's health first.
-Evidence quotas are 128 MiB images and 256 MiB/25 clips/48 hours video. Files
-remain local; this source distribution adds no cloud upload or public listener.
+Evidence quotas are 128 MiB images and 256 MiB/25 clips/48 hours video. Evidence
+files remain local. Optional mobile alerts carry text only; there is no image
+or recording upload or public listener.
+
+## Optional phone alerts
+
+A new installation starts unconnected. To connect and activate future alerts,
+create a dedicated Telegram bot in BotFather, enter its token in the PC's
+masked field and open the locally displayed pairing link on your own phone.
+Press Start in that private bot chat within ten minutes. A fresh, single-use
+256-bit nonce verifies the chat; entering a chat ID alone cannot enable sending.
+Keep the token and pairing link private.
+
+Pairing preserves the bot's pending message queue. A full queue without the
+verified pairing reply blocks setup and asks for a new dedicated bot; it is
+never flushed automatically.
+
+The bot token and approved bot/chat binding are stored in one exact Windows
+generic credential. The local `phone_alerts.json` stores metadata only and must
+remain untracked. A missing, invalid or mismatched binding blocks alerts.
+Conectar y activar avisos is explicit activation; an existing verified binding
+can restore on a later launch. Desconectar stops future work and requests removal
+of the local binding. Any failed persistent revocation is shown in the dialog.
+
+Only fresh recorder HumanDetect, appEventHumanDetectAlarm and CarShapeDetect
+Start reports qualify. Messages contain an allowlisted camera number, detector
+category and optional validated device time; the detector report is unconfirmed.
+They include no household labels, faces, identity, OCR, vehicle make/model,
+photos, video or chat history. Motion, face and technical reports are excluded.
+The single worker limits the queue to 16, expires queued reports after 30 seconds
+and applies a 120-second camera cooldown. Network failure does not interrupt
+local evidence capture; ambiguous sends are not retried automatically.
+
+Telegram API acceptance does not confirm physical phone delivery. A request
+already sent may arrive after disconnecting. No live pairing or delivery is
+claimed by the offline package tests.
 
 ## Verify
 
@@ -60,7 +107,9 @@ checks are skipped when their required runtime/display is absent.
 
 ## Provenance and limits
 
-Tracked by issue #1951. The deployment that preceded this source import passed
+Source-import provenance is issue #1951 and draft PR #1952; the contained
+usability and optional text-alert follow-up is tracked by issue #1955.
+The deployment that preceded this source import passed
 130 CCTV tests on Windows and a real original-stream replay check. This is
 dated external deployment evidence; it does not prove this package's deployment
 or protected-main integration. The public distribution removes live addresses,
