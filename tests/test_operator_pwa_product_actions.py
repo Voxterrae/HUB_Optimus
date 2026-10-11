@@ -586,7 +586,7 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert 'id="product_source_preview"' in html
     assert 'id="product_confirm_source" type="checkbox"' in html
     assert 'id="product_confirm_claims" type="checkbox"' in html
-    assert '<script src="./i18n.v1.js"></script>' in html
+    assert '<script src="./i18n.v1.js?v=1.4.2"></script>' in html
     assert '<script src="./claim-decomposition.v1.js"></script>' in html
     assert re.search(r'<script[^>]+src="https?://', html) is None
 
@@ -1043,7 +1043,7 @@ def test_operator_progress_is_immediate_and_only_network_intake_has_a_deadline()
     assert "const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;" in html
     assert 'new ControlledIntakeError("url_fetch_timeout", 504)' in html
     assert "return await Promise.race([request, deadline]);" in html
-    assert "hub-optimus-operator-v0-30" in sw
+    assert "hub-optimus-operator-v0-31" in sw
 
 
 def test_operator_draft_is_source_bound_and_conservative():
@@ -3705,7 +3705,7 @@ def test_public_url_only_fallback_is_immediate_and_points_to_private_operator():
     assert "Public Operator will not send it" in catalog
 
 
-def test_operator_install_assets_use_institutional_mark_and_cache_v030():
+def test_operator_install_assets_use_institutional_mark_and_cache_v031():
     icon = _read(ICON)
     sw = _read(SW)
 
@@ -3715,22 +3715,177 @@ def test_operator_install_assets_use_institutional_mark_and_cache_v030():
         icon,
         re.IGNORECASE,
     ) is None
-    assert "hub-optimus-operator-v0-30" in sw
+    assert "hub-optimus-operator-v0-31" in sw
     assert "./index.html" in sw
     assert "../assets/brand/hub-optimus-logo-lockup.png" in sw
     assert "./og.svg" in sw
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
-def test_operator_service_worker_refetches_v030_assets_and_deletes_older_versions():
-    sw = _read(SW)
-    smoke = r'''
+@pytest.mark.parametrize("scenario", ["legacy", "offline", "private"])
+def test_operator_service_worker_catalog_request_uses_current_atomic_claim_translations(scenario):
+    html = _read(INDEX)
+    script_url = re.search(r'<script src="(\./i18n\.v1\.js[^\"]*)"></script>', html)
+    assert script_url is not None
+    claim_keys = (
+        "claimDraftTitle claimDraftIntro claimDraftExcerpt claimDraftClaimLabel "
+        "claimDraftSourceSpan claimDraftAdd claimDraftRemove claimDraftOmit "
+        "claimDraftRestore claimDraftReview claimDraftPending claimDraftReviewed "
+        "claimDraftOmittedHeading claimDraftExact claimDraftParaphrase "
+        "claimDraftConfirm claimDraftRequired claimDraftValid claimDraftInvalid "
+        "claimDraftChanged claimDraftConfirmedWait claimDraftConfirmationRemovedWait "
+        "claimDraftAdvancedLocked msgClaimDraftConfirm"
+    ).split()
+    smoke = (
+        f"const source = {json.dumps(_read(SW))};\n"
+        f"const scriptUrl = {json.dumps(script_url.group(1))};\n"
+        f"const scenario = {json.dumps(scenario)};\n"
+        f"const claimKeys = {json.dumps(claim_keys)};\n"
+        + r'''
 const vm = require("node:vm");
-const source = process.env.SW_SOURCE;
+const fs = require("node:fs");
+const origin = scenario === "private" ? "https://api.huboptimus.dev" : "https://huboptimus.dev";
+const workerUrl = `${origin}/operator/sw.js`;
+const catalogUrl = new URL(scriptUrl, workerUrl).href;
+const unversionedUrl = new URL("./i18n.v1.js", workerUrl).href;
+const currentSource = fs.readFileSync(process.argv[2], "utf8");
+const legacySource = 'globalThis.HUB_OPTIMUS_OPERATOR_I18N = {version: "1.3.2", supportedLocales: ["en"], messages: {en: {}}};';
+const handlers = {};
+const stores = new Map();
+const networkRequests = [];
+let offline = false;
+let unregistered = false;
+let precachedCount = 0;
+const keyFor = (request) => new URL(typeof request === "string" ? request : request.url, workerUrl).href;
+async function network(request) {
+  if (offline) throw new Error("offline");
+  const url = keyFor(request);
+  networkRequests.push(url);
+  return new Response(new URL(url).pathname.endsWith("/i18n.v1.js") ? currentSource : "static asset");
+}
+async function openCache(name) {
+  if (!stores.has(name)) stores.set(name, new Map());
+  const entries = stores.get(name);
+  return {
+    async match(request) { return entries.get(keyFor(request))?.clone(); },
+    async put(request, response) { entries.set(keyFor(request), response.clone()); },
+    async addAll(requests) {
+      for (const request of requests) {
+        await this.put(request, await network(request));
+        precachedCount += 1;
+      }
+    }
+  };
+}
+const context = {
+  URL, Request, fetch: network,
+  caches: {
+    open: openCache,
+    async keys() { return [...stores.keys()]; },
+    async delete(name) { return stores.delete(name); },
+    async match(request) {
+      for (const entries of stores.values()) {
+        const response = entries.get(keyFor(request));
+        if (response) return response.clone();
+      }
+    }
+  },
+  self: {
+    location: {href: workerUrl, origin},
+    addEventListener(type, handler) { handlers[type] = handler; },
+    skipWaiting() {},
+    clients: {async claim() {}},
+    registration: {async unregister() { unregistered = true; }}
+  }
+};
+vm.createContext(context);
+vm.runInContext(source, context, {filename: "sw.js"});
+async function lifecycle(type) {
+  let work;
+  handlers[type]({waitUntil(value) { work = value; }});
+  await work;
+}
+async function requestCatalog(url) {
+  let responsePromise;
+  handlers.fetch({request: new Request(url), respondWith(value) { responsePromise = value; }});
+  return responsePromise ? await responsePromise : null;
+}
+async function snapshot(response) {
+  const catalogContext = {globalThis: {}};
+  vm.createContext(catalogContext);
+  vm.runInContext(await response.text(), catalogContext, {filename: "served-i18n.v1.js"});
+  const catalog = catalogContext.globalThis.HUB_OPTIMUS_OPERATOR_I18N;
+  return {
+    version: catalog.version,
+    supportedLocales: [...catalog.supportedLocales],
+    messages: Object.fromEntries(catalog.supportedLocales.map((locale) => [locale,
+      Object.fromEntries(claimKeys.map((key) => [key, catalog.messages[locale][key] ?? null]))
+    ]))
+  };
+}
+(async () => {
+  // Populate the cache used by the real handlers, so a cache-name bump alone
+  // cannot hide a reused unversioned response.
+  const activeCache = await openCache(vm.runInContext("CACHE_NAME", context));
+  await activeCache.put(unversionedUrl, new Response(legacySource));
+  let legacyVersion = null;
+  if (scenario === "legacy") {
+    legacyVersion = (await snapshot(await requestCatalog(unversionedUrl))).version;
+  } else {
+    await lifecycle("install");
+    if (scenario === "private") await lifecycle("activate");
+    offline = true;
+  }
+  const response = await requestCatalog(catalogUrl);
+  console.log(JSON.stringify({
+    legacyVersion,
+    catalog: response ? await snapshot(response) : null,
+    networkRequests,
+    precachedCount,
+    cacheCount: stores.size,
+    unregistered
+  }));
+})().catch((error) => { console.error(error); process.exitCode = 1; });
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-", str(OPERATOR_I18N)],
+        input=smoke, text=True, capture_output=True, check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    result = json.loads(completed.stdout)
+    if scenario == "private":
+        assert result["catalog"] is None
+        assert result["networkRequests"] == []
+        assert result["precachedCount"] == 0
+        assert result["cacheCount"] == 0
+        assert result["unregistered"] is True
+        return
+    if scenario == "legacy":
+        assert result["legacyVersion"] == "1.3.2"
+    else:
+        assert result["precachedCount"] > 0
+    catalog = result["catalog"]
+    assert catalog["version"] == "1.4.2"
+    assert catalog["supportedLocales"] == ["en", "es", "de", "ru", "he", "zh-Hans"]
+    for locale, messages in catalog["messages"].items():
+        for key in claim_keys:
+            assert isinstance(messages[key], str) and messages[key].strip(), (locale, key)
+            assert messages[key] != key, (locale, key)
+            if locale != "en":
+                assert messages[key] != catalog["messages"]["en"][key], (locale, key)
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
+def test_operator_service_worker_refetches_v031_assets_and_deletes_older_versions():
+    sw = _read(SW)
+    smoke = f"const source = {json.dumps(sw)};\n" + r'''
+const vm = require("node:vm");
 const listeners = {};
 const cacheNames = new Set([
   "hub-optimus-operator-v0-26",
-  "hub-optimus-operator-v0-27"
+  "hub-optimus-operator-v0-27",
+  "hub-optimus-operator-v0-30"
 ]);
 const installedRequests = [];
 const deleted = [];
@@ -3771,7 +3926,7 @@ vm.runInContext(source, context);
   let installWork;
   listeners.install({waitUntil(work) { installWork = work; }});
   await installWork;
-  if (!installedRequests.length) throw new Error("no v0-30 assets installed");
+  if (!installedRequests.length) throw new Error("no v0-31 assets installed");
   if (installedRequests.some((request) => request.cache !== "reload")) {
     throw new Error("an install request can reuse stale HTTP-cache bytes");
   }
@@ -3780,14 +3935,14 @@ vm.runInContext(source, context);
   let activateWork;
   listeners.activate({waitUntil(work) { activateWork = work; }});
   await activateWork;
-  if (!deleted.includes("hub-optimus-operator-v0-27")) {
-    throw new Error("v0-27 cache was not deleted");
+  if (!deleted.includes("hub-optimus-operator-v0-30")) {
+    throw new Error("v0-30 cache was not deleted");
   }
   if (!deleted.includes("hub-optimus-operator-v0-27")) {
     throw new Error("v0-27 cache was not deleted");
   }
-  if (!cacheNames.has("hub-optimus-operator-v0-30")) {
-    throw new Error("v0-30 cache was not retained");
+  if (!cacheNames.has("hub-optimus-operator-v0-31")) {
+    throw new Error("v0-31 cache was not retained");
   }
   if (claimCalls !== 1) throw new Error("updated worker did not claim clients");
 })().catch((error) => {
@@ -3801,7 +3956,6 @@ vm.runInContext(source, context);
         text=True,
         capture_output=True,
         check=False,
-        env={"SW_SOURCE": sw},
     )
     assert completed.returncode == 0, completed.stderr
     assert "STATIC_ASSET_URLS.has(url.href)" in sw
@@ -4153,8 +4307,8 @@ if (renderResult() !== false || notices.at(-1) !== "advancedInvalidResultJson") 
     }
     case_path.write_text(json.dumps(case_payload), encoding="utf-8")
     executable_check = python_check.replace(
-        "/tmp/hub-optimus-operator-case.json", str(case_path)
-    ).replace("/tmp/hub-optimus-operator-response.json", str(response_path))
+        "/tmp/hub-optimus-operator-case.json", case_path.as_posix()
+    ).replace("/tmp/hub-optimus-operator-response.json", response_path.as_posix())
 
     valid_result = {
         "case_id": "case-001",
