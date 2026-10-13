@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HUB Relay native request envelope v0.1 candidate",
+  "$comment": "Candidate synthetic protocol. Schema cannot detect duplicate decoded keys, enforce the 4096-byte envelope cap or distinguish lexical TTL 60000 from 60000.0/6e4. The strict Rust parser is normative for these restrictions. Valid IDs and mathematical signatures establish no enrollment or execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "payload",
+    "signatureDerHex"
+  ],
+  "properties": {
+    "payload": {
+      "$ref": "#/$defs/requestPayload"
+    },
+    "signatureDerHex": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 144,
+      "pattern": "^(?:[0-9a-f]{2})+$",
+      "not": {
+        "pattern": "[^0-9a-f]"
+      },
+      "description": "Lowercase hex transport shape only. Rust additionally requires strict minimal ECDSA DER, valid nonzero P-256 r/s, and no trailing bytes."
+    }
+  },
+  "$defs": {
+    "requestPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "requestId",
+        "operation",
+        "brokerKeyId",
+        "targetId",
+        "profileId",
+        "enrollmentGeneration",
+        "brokerStartGeneration",
+        "nonce",
+        "fields",
+        "ttlMs"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "relay.native-request.v0.1"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 32,
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "operation": {
+          "type": "string",
+          "const": "windows.runtime_inventory.v0_1"
+        },
+        "brokerKeyId": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "targetId": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 32,
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 32,
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "enrollmentGeneration": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 32,
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "brokerStartGeneration": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 32,
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "nonce": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "fields": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "string",
+              "const": "windows"
+            },
+            {
+              "type": "string",
+              "const": "powershell7"
+            },
+            {
+              "type": "string",
+              "const": "node"
+            }
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "ttlMs": {
+          "type": "integer",
+          "const": 60000
+        }
+      }
+    }
+  }
+}
