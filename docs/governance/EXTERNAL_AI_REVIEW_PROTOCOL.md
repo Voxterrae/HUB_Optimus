@@ -4,7 +4,12 @@ This protocol defines the rules and formatting for utilizing external AI models 
 
 External AI models are valuable tools for analysis, code review, and feedback. However, their outputs must remain strictly advisory. AI outputs must never bypass GitHub issue and Pull Request (PR) governance.
 
-This protocol explicitly aligns with the AI access matrix defined in [Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584).
+This protocol is subject to the [source-of-truth hierarchy](../context/SOURCE_OF_TRUTH.md)
+and the [Founder Ownership and Authority Charter](FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
+The common [AI access matrix](../rfc/ai_access_matrix.md) is a documentation proposal
+tracked by [Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584).
+Its future access lanes grant no permissions or integration authority; the manual,
+advisory boundary in this protocol remains in force.
 
 ## Principles
 
