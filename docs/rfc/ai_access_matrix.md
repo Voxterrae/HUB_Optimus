@@ -53,6 +53,9 @@ ChatGPT, Codex and GitHub Copilot follow the internal-operator lane only when
 their specific account, tools and task are authorized in that workflow.
 Otherwise they follow the same external advisory baseline as Claude, Gemini,
 Grok and any other provider. Provider branding grants no privilege.
+That external baseline is **consultative level 0**. Any model, agent, wrapper,
+subagent or orchestration workflow outside an explicitly authorized workflow
+defaults to level 0; a parent's role alone does not authorize delegation.
 
 “Allowed” means within an existing valid task and its actual permissions.
 This table is a policy proposal, not evidence that a capability is provisioned.
@@ -103,6 +106,8 @@ Any future authority, permission, publication, fiscal or production action needs
 its own explicit scope; a broad request to “connect all AI” does not define it.
 No AI may independently authorize or merge changes. Preparing a PR is not merge
 authority, and passing checks is not proof of personal owner consent.
+An AI must not approve its own work or merge a governance change it authored;
+human owner review and the applicable protected process remain required.
 
 ## 5. Data and review packets
 
@@ -160,7 +165,7 @@ here; their actual account and tool connection states remain unverified.
 | Scope verified | Dated effective tool scopes and a bounded check of the specific capability; not a global security certification |
 | Task authorized | Applicable written scope tied to the verified identity and tool route; does not prove execution |
 | Active | Dated execution evidence under that authorization; only that task and duration |
-| Suspended / expired / revoked | Scope no longer usable; record reason, time, responsible operator and remaining exposure |
+| Suspended / expired / revoked authorization | Further action is prohibited; record reason, time, responsible operator and remaining exposure. Technical access removal requires separate evidence under §8. |
 | Packet prepared / sent / response observed | Distinct events with packet/version, route, timestamps and observable evidence; none implies another event |
 
 A receipt records provider/product/model if observable, redacted account/tenant
@@ -194,6 +199,9 @@ Recheck mutable permissions before use; repository files cannot certify them.
 Model instructions and acknowledgments are advisory controls. Least-privilege
 credentials, branch protection, sandbox/network boundaries and negative checks
 require separate implementation and evidence; none is created by this matrix.
+Verify permitted and denied operations with non-sensitive fixtures in an
+authorized isolated setting. Do not mutate production solely to test a limit;
+record untested controls as unverified.
 
 ## 9. Review and adoption boundary
 
