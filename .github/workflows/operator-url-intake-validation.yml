@@ -29,11 +29,15 @@ jobs:
           set -euo pipefail
           npm install aws-cdk-lib@2.273.0 --package-lock-only --ignore-scripts --no-audit --no-fund
           npm update brace-expansion --package-lock-only --ignore-scripts --no-audit --no-fund
-          npm audit fix --package-lock-only --ignore-scripts --no-fund
+          npm audit fix --package-lock-only --ignore-scripts --no-fund --audit-level=high
           node <<'NODE'
           const fs = require('fs');
+          const {execFileSync} = require('node:child_process');
+          const expected = JSON.parse(execFileSync('git', ['show', '23ea5a6677c07dcefab60f70c6b1641a3541f0b0:ops/aws/operator-url-intake/package.json'], {encoding: 'utf8'}));
+          expected.dependencies['aws-cdk-lib'] = '^2.273.0';
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          if (JSON.stringify(pkg) !== JSON.stringify(expected)) throw new Error('Unreviewed direct dependency change');
           if (pkg.dependencies['aws-cdk-lib'] !== '^2.273.0') throw new Error('Unexpected CDK range');
           if (lock.packages['node_modules/aws-cdk-lib'].version !== '2.273.0') throw new Error('Unreviewed CDK release');
           for (const file of ['package.json', 'package-lock.json']) {
@@ -62,7 +66,10 @@ jobs:
             if (!(major in fixed) || minor < minimumMinor || (minor === minimumMinor && patch < fixed[major])) throw new Error('Affected brace dependency');
           }
           NODE
-          npm audit --json
+          # Known unpatched Moderate test-tool finding is tracked in #1976.
+          # Emit the full report; require no High/Critical findings or production findings.
+          npm audit --json --audit-level=high
+          npm audit --omit=dev --json --audit-level=low
       - name: Run existing package checks
         run: npm run check
       - name: Synthesize three existing disabled canary phases
