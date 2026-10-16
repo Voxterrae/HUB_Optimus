@@ -4,7 +4,12 @@ Aquest protocol defineix les regles i el format per utilitzar models d'IA extern
 
 Els models d'IA externs són eines valuoses per a l'anàlisi, la revisió de codi i la retroalimentació. Tanmateix, els seus resultats s'han de mantenir estrictament consultius. Els resultats de la IA no han d'eludir mai la governança d'Issues i Pull Requests (PR) de GitHub.
 
-Aquest protocol s'alinea explícitament amb la matriu d'accés d'IA definida a [Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584).
+Aquest protocol està subjecte a la [jerarquia de fonts de veritat](../../context/SOURCE_OF_TRUTH.md)
+i a la [Carta de Propietat i Autoritat del Fundador](../../governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
+La [matriu comuna d'accés d'IA](../../rfc/ai_access_matrix.md) és una proposta documental
+seguida a [Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584).
+Les seves futures vies d'accés no concedeixen permisos ni autoritat d'integració; l'àmbit
+manual i consultiu d'aquest protocol continua vigent.
 
 ## Principis
 
