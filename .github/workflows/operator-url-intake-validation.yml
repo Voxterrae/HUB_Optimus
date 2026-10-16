@@ -37,7 +37,11 @@ jobs:
           expected.dependencies['aws-cdk-lib'] = '^2.273.0';
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
-          if (JSON.stringify(pkg) !== JSON.stringify(expected)) throw new Error('Unreviewed direct dependency change');
+          const {isDeepStrictEqual} = require('node:util');
+          if (!isDeepStrictEqual(pkg, expected)) {
+            console.log('PACKAGE_DIAGNOSTIC', JSON.stringify({expected, actual: pkg}));
+            throw new Error('Unreviewed direct dependency change');
+          }
           if (pkg.dependencies['aws-cdk-lib'] !== '^2.273.0') throw new Error('Unexpected CDK range');
           if (lock.packages['node_modules/aws-cdk-lib'].version !== '2.273.0') throw new Error('Unreviewed CDK release');
           for (const file of ['package.json', 'package-lock.json']) {
