@@ -1,0 +1,78 @@
+name: Security dependency candidate 1971
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: ops/aws/operator-url-intake
+    steps:
+      - name: Checkout immutable reviewed baseline
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 23ea5a6677c07dcefab60f70c6b1641a3541f0b0
+          persist-credentials: false
+      - name: Set up reviewed Node runtime
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+      - name: Regenerate bounded dependency candidate
+        run: |
+          set -euo pipefail
+          npm install aws-cdk-lib@2.273.0 --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm update brace-expansion --package-lock-only --ignore-scripts --no-audit --no-fund
+          node <<'NODE'
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          if (pkg.dependencies['aws-cdk-lib'] !== '^2.273.0') throw new Error('Unexpected CDK range');
+          if (lock.packages['node_modules/aws-cdk-lib'].version !== '2.273.0') throw new Error('Unreviewed CDK release');
+          for (const file of ['package.json', 'package-lock.json']) {
+            const b64 = fs.readFileSync(file).toString('base64');
+            const label = file === 'package.json' ? 'PACKAGE' : 'LOCKFILE';
+            for (let i = 0; i < b64.length; i += 40000) console.log(label + '_CHUNK ' + (i / 40000) + ' ' + b64.slice(i, i + 40000));
+          }
+          NODE
+          git diff --check
+          git diff --stat -- package.json package-lock.json
+      - name: Install and inspect actual bundled dependencies
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm ls aws-cdk-lib brace-expansion
+          node <<'NODE'
+          const fs = require('fs');
+          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          const fixed = {'1':21,'2':7,'3':9,'5':12};
+          for (const [path, entry] of Object.entries(lock.packages)) {
+            if (!path.endsWith('/brace-expansion')) continue;
+            const actual = JSON.parse(fs.readFileSync(path + '/package.json', 'utf8')).version;
+            console.log('INSTALLED_BRACE', path, actual);
+            const [major, minor, patch] = actual.split('.').map(Number);
+            const minimumMinor = major === 1 || major === 2 ? 1 : 0;
+            if (!(major in fixed) || minor < minimumMinor || (minor === minimumMinor && patch < fixed[major])) throw new Error('Affected brace dependency');
+          }
+          NODE
+          npm audit --json
+      - name: Run existing package checks
+        run: npm run check
+      - name: Synthesize three existing disabled canary phases
+        run: |
+          set -euo pipefail
+          for phase in foundation controls private; do
+            npm run cdk -- synth hub-optimus-operator-infra --output "cdk.out.$phase" \
+              -c "deploymentPhase=$phase" -c publicSignupEnabled=false \
+              -c identityProviderDecision=cognito-temporary-canary \
+              -c gitCommit=0000000000000000000000000000000000000000 \
+              -c repoName=Voxterrae/HUB_Optimus -c branchName=main \
+              -c environmentName=private-canary
+          done
+          npm run verify:cdk-assets -- cdk.out.foundation cdk.out.controls cdk.out.private
