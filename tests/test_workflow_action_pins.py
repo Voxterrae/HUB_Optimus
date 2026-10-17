@@ -23,8 +23,8 @@ EXPECTED_ACTION_PINS = {
         "v7.0.0",
     ),
     "actions/setup-node": (
-        "249970729cb0ef3589644e2896645e5dc5ba9c38",
-        "v6",
+        "949feb2413d6458794dcd2491c4babbbce0c15c1",
+        "v7.1.0",
     ),
     "aws-actions/configure-aws-credentials": (
         "e1253824e5c10ff9df46874f81ed3ec929e19cfd",
