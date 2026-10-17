@@ -3,6 +3,7 @@ import io
 import json
 import re
 import socket
+import signal
 import sys
 import threading
 import time
@@ -14,6 +15,11 @@ from urllib.error import URLError
 
 import jsonschema
 import pytest
+
+HAS_POSIX_FETCH_ALARM = all(
+    hasattr(signal, attribute)
+    for attribute in ("SIGALRM", "ITIMER_REAL", "getitimer", "setitimer")
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 API_SCRIPT = ROOT / "ops" / "ec2" / "hub-api.sh"
@@ -2454,6 +2460,19 @@ def test_redirect_hops_share_one_total_deadline(
     assert request_timeouts == [8, 5, 2]
 
 
+def test_deadline_enforcement_falls_back_without_posix_alarm(hub_api, monkeypatch):
+    for name in ("SIGALRM", "ITIMER_REAL", "getitimer", "setitimer"):
+        monkeypatch.delattr(hub_api.signal, name, raising=False)
+
+    deadline = hub_api.FetchDeadline.start(1)
+    with hub_api.enforce_fetch_deadline(deadline):
+        assert deadline.remaining_seconds() > 0
+
+
+@pytest.mark.skipif(
+    not HAS_POSIX_FETCH_ALARM,
+    reason="SIGALRM deadline tests require POSIX interval timers",
+)
 def test_main_thread_alarm_interrupts_python_level_blocking_dns_probe(
     hub_api,
     monkeypatch,
@@ -2502,6 +2521,10 @@ def test_deadline_enforcement_off_main_thread_fails_cleanly(hub_api):
     assert failures[0].code == "url_fetch_unavailable"
 
 
+@pytest.mark.skipif(
+    not HAS_POSIX_FETCH_ALARM,
+    reason="SIGALRM deadline tests require POSIX interval timers",
+)
 def test_total_deadline_closes_a_slow_response(
     hub_api,
     monkeypatch,

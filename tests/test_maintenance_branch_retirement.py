@@ -368,6 +368,10 @@ def test_push_plan_has_one_atomic_transaction_and_exact_lease_per_candidate():
     assert dry_run == command[:6] + ["--dry-run"] + command[6:]
 
 
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="881-ref push exceeds the Windows CreateProcess command-line limit; covered on Linux",
+)
 def test_atomic_git_push_with_881_leases_is_all_or_nothing(tmp_path: Path):
     source = tmp_path / "source"
     remote = tmp_path / "remote.git"
@@ -417,8 +421,7 @@ def test_atomic_git_push_with_881_leases_is_all_or_nothing(tmp_path: Path):
     )
     subprocess.run(
         ["git", f"--git-dir={remote}", "update-ref", "--stdin"],
-        input=updates,
-        text=True,
+        input=updates.encode("ascii"),
         check=True,
         capture_output=True,
     )
@@ -431,8 +434,7 @@ def test_atomic_git_push_with_881_leases_is_all_or_nothing(tmp_path: Path):
 
     subprocess.run(
         ["git", f"--git-dir={remote}", "update-ref", "--stdin"],
-        input=updates,
-        text=True,
+        input=updates.encode("ascii"),
         check=True,
         capture_output=True,
     )
