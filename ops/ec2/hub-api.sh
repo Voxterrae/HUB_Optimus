@@ -211,7 +211,7 @@ class FetchDeadline(NamedTuple):
 
 @contextmanager
 def enforce_fetch_deadline(deadline: FetchDeadline):
-    """Enforce the intake budget when the host provides POSIX timers."""
+    """Require POSIX timers to enforce the synchronous intake budget."""
 
     if threading.current_thread() is not threading.main_thread():
         raise IntakeError(
@@ -224,9 +224,11 @@ def enforce_fetch_deadline(deadline: FetchDeadline):
         hasattr(signal, attribute)
         for attribute in ("SIGALRM", "ITIMER_REAL", "getitimer", "setitimer")
     ):
-        deadline.remaining_seconds()
-        yield
-        return
+        raise IntakeError(
+            503,
+            "url_fetch_unavailable",
+            "URL fetch deadline enforcement requires POSIX interval timers.",
+        )
 
     timeout_seconds = deadline.remaining_seconds()
     previous_handler = signal.getsignal(signal.SIGALRM)
