@@ -27,8 +27,8 @@ EXPECTED_ACTION_PINS = {
         "v7.1.0",
     ),
     "aws-actions/configure-aws-credentials": (
-        "e6de054238d6b7531b4efff3b6587d9aade6a06c",
-        "v6.2.3",
+        "e1253824e5c10ff9df46874f81ed3ec929e19cfd",
+        "v6.3.0",
     ),
     "actions/configure-pages": (
         "45bfe0192ca1faeb007ade9deae92b16b8254a0d",
