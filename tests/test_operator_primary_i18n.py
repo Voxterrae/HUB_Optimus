@@ -241,7 +241,7 @@ def test_operator_catalog_version_matches_locale_metadata_readme_and_cache():
     assert catalog["version"] == "1.4.2"
     assert metadata["manifest_version"] == catalog["version"]
     assert f'catalog version: `{catalog["version"]}`' in _read(LOCALE_README)
-    assert "hub-optimus-operator-v0-30" in _read(SW)
+    assert "hub-optimus-operator-v0-31" in _read(SW)
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for catalog validation")
@@ -420,8 +420,8 @@ def test_localized_manifests_share_identity_match_metadata_and_allow_all_orienta
         assert "orientation" not in manifest
 
     sw = _read(SW)
-    assert "hub-optimus-operator-v0-30" in sw
-    assert '"./i18n.v1.js"' in sw
+    assert "hub-optimus-operator-v0-31" in sw
+    assert '"./i18n.v1.js?v=1.4.2"' in sw
     assert '"./claim-decomposition.v1.js"' in sw
     for locale in LOCALES:
         assert f'"./manifest.{locale}.webmanifest"' in sw
