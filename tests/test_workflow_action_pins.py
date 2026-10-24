@@ -11,8 +11,8 @@ WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 
 EXPECTED_ACTION_PINS = {
     "actions/create-github-app-token": (
-        "bcd2ba49218906704ab6c1aa796996da409d3eb1",
-        "v3.2.0",
+        "64ab729a6294000f5aa4a4bc0b73d1f32bc45510",
+        "v3.3.0",
     ),
     "actions/checkout": (
         "3d3c42e5aac5ba805825da76410c181273ba90b1",
@@ -23,12 +23,12 @@ EXPECTED_ACTION_PINS = {
         "v7.0.0",
     ),
     "actions/setup-node": (
-        "249970729cb0ef3589644e2896645e5dc5ba9c38",
-        "v6",
+        "949feb2413d6458794dcd2491c4babbbce0c15c1",
+        "v7.1.0",
     ),
     "aws-actions/configure-aws-credentials": (
-        "e6de054238d6b7531b4efff3b6587d9aade6a06c",
-        "v6.2.3",
+        "e1253824e5c10ff9df46874f81ed3ec929e19cfd",
+        "v6.3.0",
     ),
     "actions/configure-pages": (
         "45bfe0192ca1faeb007ade9deae92b16b8254a0d",
