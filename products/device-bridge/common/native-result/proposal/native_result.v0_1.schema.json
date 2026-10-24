@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PROPOSED HUB Relay native result v0.1 (not adopted)",
+  "description": "Candidate structural projection only; protected owner disposition pending. No parser, operational admission or cryptographic authority.",
+  "$comment": "Outside JSON Schema: raw UTF-8/BOM/duplicate-name/trailing-value handling; raw payload and complete envelope 4096-byte caps; JCS; strict DER and valid SEC1 keys; signatures; expected request/key/target/profile binding; T5 enrollment and authorization. Unicode pattern rejects surrogate code points in decoded strings; UTF-8 decoding still needs a native boundary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["payload", "signatureDerHex"],
+  "properties": {
+    "payload": {"$ref": "#/$defs/payload"},
+    "signatureDerHex": {
+      "type": "string", "minLength": 2, "maxLength": 144,
+      "pattern": "^(?:[0-9a-f]{2})+$(?![\\s\\S])",
+      "description": "Hex transport shape only. Strict minimal P-256 DER must be checked separately."
+    }
+  },
+  "$defs": {
+    "hex32": {"type": "string", "pattern": "^[0-9a-f]{32}$(?![\\s\\S])"},
+    "hex64": {"type": "string", "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"},
+    "field": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "version"],
+      "properties": {
+        "state": {"enum": ["available", "missing", "unverified"]},
+        "version": {"type": ["string", "null"]}
+      },
+      "oneOf": [
+        {"properties": {
+          "state": {"const": "available"},
+          "version": {"type": "string", "minLength": 1, "maxLength": 128,
+                      "pattern": "^[^\ud800-\udfff]*$(?![\\s\\S])"}
+        }},
+        {"properties": {
+          "state": {"enum": ["missing", "unverified"]}, "version": {"type": "null"}
+        }}
+      ]
+    },
+    "inventory": {
+      "type": "object", "additionalProperties": false,
+      "required": ["windows", "powershell7", "node"],
+      "properties": {
+        "windows": {"$ref": "#/$defs/field"},
+        "powershell7": {"$ref": "#/$defs/field"},
+        "node": {"$ref": "#/$defs/field"}
+      }
+    },
+    "payload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "requestDigest", "targetId", "profileId", "state", "errorCode", "inventory"],
+      "properties": {
+        "version": {"const": "relay.native-result.v0.1"},
+        "requestDigest": {"$ref": "#/$defs/hex64"},
+        "targetId": {"$ref": "#/$defs/hex32"},
+        "profileId": {"$ref": "#/$defs/hex32"},
+        "state": {"enum": ["completed", "denied", "failed", "cancelled"]},
+        "errorCode": {"type": ["string", "null"]},
+        "inventory": {"type": ["object", "null"]}
+      },
+      "oneOf": [
+        {"properties": {"state": {"const": "completed"}, "errorCode": {"type": "null"},
+                         "inventory": {"$ref": "#/$defs/inventory"}}},
+        {"properties": {"state": {"const": "denied"}, "inventory": {"type": "null"},
+                         "errorCode": {"enum": ["NOT_AUTHORIZED", "EXPIRED", "REVOKED", "REPLAY", "BINDING_MISMATCH"]}}},
+        {"properties": {"state": {"const": "failed"}, "inventory": {"type": "null"},
+                         "errorCode": {"enum": ["COLLECTOR_FAILED", "TIMEOUT", "OVERFLOW", "INTERRUPTED"]}}},
+        {"properties": {"state": {"const": "cancelled"}, "inventory": {"type": "null"},
+                         "errorCode": {"const": "CANCELLED"}}}
+      ]
+    }
+  }
+}
