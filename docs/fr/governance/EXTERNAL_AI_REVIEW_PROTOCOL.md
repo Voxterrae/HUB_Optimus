@@ -4,12 +4,7 @@ Ce protocole définit les règles et le format d'utilisation des modèles d'IA e
 
 Les modèles d'IA externes sont des outils précieux pour l'analyse, la révision de code et le retour d'information. Cependant, leurs résultats doivent rester strictement consultatifs. Les résultats de l'IA ne doivent jamais contourner la gouvernance des Issues et des Pull Requests (PR) de GitHub.
 
-Ce protocole est soumis à la [hiérarchie des sources de vérité](../../context/SOURCE_OF_TRUTH.md)
-et à la [Charte de propriété et d'autorité du fondateur](../../governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
-La [matrice commune d'accès de l'IA](../../rfc/ai_access_matrix.md) est une proposition documentaire
-suivie dans [Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584).
-Ses futures voies d'accès n'accordent ni permissions ni autorité d'intégration ; le cadre
-manuel et consultatif de ce protocole reste en vigueur.
+Ce protocole s'aligne explicitement sur la matrice d'accès de l'IA définie dans [Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584).
 
 ## Principes
 

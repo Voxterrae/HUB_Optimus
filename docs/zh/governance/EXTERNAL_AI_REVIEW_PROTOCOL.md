@@ -4,12 +4,7 @@
 
 外部 AI 模型是用于分析、代码审查和提供反馈的宝贵工具。然而，它们的输出必须严格保持咨询性质。AI 的输出绝不能绕过 GitHub 的问题（Issue）和拉取请求（PR）治理流程。
 
-本协议受[事实来源层级](../../context/SOURCE_OF_TRUTH.md)
-及[创始人所有权与权限章程](../../governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md)约束。
-通用 [AI 访问矩阵](../../rfc/ai_access_matrix.md)是一项文档提案，
-由 [Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584) 跟踪。
-其中未来的访问途径不授予任何权限或集成授权；
-本协议的人工交换、咨询性质的边界仍然有效。
+本协议明确符合 [Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584) 中定义的 AI 访问矩阵。
 
 ## 原则
 

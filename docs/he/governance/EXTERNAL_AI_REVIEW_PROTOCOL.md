@@ -4,12 +4,7 @@
 
 מודלי AI חיצוניים הם כלים בעלי ערך לניתוח, סקירת קוד ומשוב. עם זאת, התוצרים שלהם חייבים להישאר בגדר המלצה בלבד. תוצרי AI לעולם לא יעקפו את כללי הניהול (Governance) של Issues ו-Pull Requests (PR) ב-GitHub.
 
-פרוטוקול זה כפוף ל[היררכיית מקורות האמת](../../context/SOURCE_OF_TRUTH.md)
-ול[אמנת הבעלות והסמכות של המייסד](../../governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
-[מטריצת הגישה המשותפת של AI](../../rfc/ai_access_matrix.md) היא הצעה לתיעוד,
-הנעקבת ב-[Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584).
-מסלולי הגישה העתידיים שלה אינם מעניקים הרשאות או סמכות לאינטגרציה;
-המסגרת הידנית והייעוצית של פרוטוקול זה נותרת בתוקף.
+פרוטוקול זה מתיישר במפורש עם מטריצת הגישה של AI המוגדרת ב-[Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584).
 
 ## עקרונות
 

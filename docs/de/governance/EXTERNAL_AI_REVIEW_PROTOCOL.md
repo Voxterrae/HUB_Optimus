@@ -4,12 +4,7 @@ Dieses Protokoll definiert die Regeln und Formate für die Verwendung externer K
 
 Externe KI-Modelle sind wertvolle Werkzeuge für Analysen, Code-Reviews und Feedback. Ihre Ausgaben müssen jedoch streng beratend bleiben. KI-Ausgaben dürfen niemals die Governance von GitHub-Issues und Pull Requests (PR) umgehen.
 
-Dieses Protokoll unterliegt der [Rangfolge maßgeblicher Quellen](../../context/SOURCE_OF_TRUTH.md)
-und der [Charta zu Eigentum und Entscheidungsbefugnis des Gründers](../../governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
-Die gemeinsame [KI-Zugriffsmatrix](../../rfc/ai_access_matrix.md) ist ein Dokumentationsvorschlag,
-der in [Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584) verfolgt wird.
-Ihre künftigen Zugriffswege gewähren weder Berechtigungen noch Integrationsbefugnisse; der
-manuelle, beratende Rahmen dieses Protokolls bleibt in Kraft.
+Dieses Protokoll stimmt ausdrücklich mit der KI-Zugriffsmatrix überein, die in [Voxterrae/HUB_Optimus#1584](https://github.com/Voxterrae/HUB_Optimus/issues/1584) definiert ist.
 
 ## Prinzipien
 
