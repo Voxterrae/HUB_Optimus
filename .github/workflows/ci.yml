@@ -12,7 +12,7 @@ permissions:
 jobs:
   pytest:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -40,6 +40,30 @@ jobs:
             --schema datasets/ai_risk_narratives/claim_record.schema.json \
             --report out/narrative_consistency.json \
             --summary-file "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate locked native Device Bridge contracts
+        if: ${{ hashFiles('products/device-bridge/common/native-protocol/Cargo.toml', 'products/device-bridge/common/native-result/Cargo.toml') != '' }}
+        timeout-minutes: 10
+        shell: bash
+        env:
+          CARGO_HOME: ${{ runner.temp }}/hub-native-cargo
+          CARGO_TARGET_DIR: ${{ runner.temp }}/hub-native-target
+          CARGO_INCREMENTAL: "0"
+        run: |
+          set -euo pipefail
+          unset RUSTC RUSTDOC RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER
+          unset RUSTFLAGS RUSTDOCFLAGS CARGO_ENCODED_RUSTFLAGS CARGO_ENCODED_RUSTDOCFLAGS RUSTC_BOOTSTRAP
+          rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+          for manifest in \
+            products/device-bridge/common/native-protocol/Cargo.toml \
+            products/device-bridge/common/native-result/Cargo.toml; do
+            if [[ ! -f "$manifest" ]]; then
+              continue
+            fi
+            rustup run 1.99.0 cargo fmt --manifest-path "$manifest" -- --check
+            rustup run 1.99.0 cargo test --locked --manifest-path "$manifest"
+            rustup run 1.99.0 cargo clippy --locked --manifest-path "$manifest" --all-targets -- -D warnings
+          done
 
       - name: Run tests
         run: python -m pytest -q
