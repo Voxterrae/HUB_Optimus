@@ -224,13 +224,6 @@ fn validate_signature_hex(hex: &str) -> Result<(), ProtocolError> {
     Ok(())
 }
 
-/// Validate a request payload before obtaining a signature.
-/// Success grants no enrollment, freshness, origin or admission authority.
-pub fn parse_request_payload(input: &[u8]) -> Result<RequestPayload, ProtocolError> {
-    let raw: RawRequestPayload = parse_object(input)?;
-    validate_request(raw)
-}
-
 pub fn parse_request_envelope(input: &[u8]) -> Result<RequestEnvelope, ProtocolError> {
     let raw: RawRequestEnvelope = parse_object(input)?;
     let payload = validate_request(raw.payload)?;

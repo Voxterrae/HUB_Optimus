@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -128,6 +129,7 @@ def test_smoke_evidence_ignores_text_and_every_unknown_field(
 
     result = subprocess.run(
         [
+            sys.executable,
             str(EVIDENCE),
             str(response),
             "200",
@@ -190,7 +192,7 @@ def test_controlled_failure_evidence_exposes_only_stable_error_code(
     )
 
     result = subprocess.run(
-        [str(EVIDENCE), str(response), "502", "22", "b" * 40],
+        [sys.executable, str(EVIDENCE), str(response), "502", "22", "b" * 40],
         capture_output=True,
         text=True,
         check=False,
@@ -229,7 +231,7 @@ def test_success_payload_is_rejected_without_http_200(
     )
 
     result = subprocess.run(
-        [str(EVIDENCE), str(response), "201", "0", "c" * 40],
+        [sys.executable, str(EVIDENCE), str(response), "201", "0", "c" * 40],
         capture_output=True,
         text=True,
         check=False,

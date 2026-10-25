@@ -311,6 +311,32 @@ def make_journal(tmp_path: Path, mode: str = "TEST") -> app.EvidenceJournal:
     )
 
 
+def test_journal_save_retries_windows_lock_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    journal = make_journal(tmp_path)
+    original_replace = app.os.replace
+    attempts = 0
+
+    def flaky_replace(source, target):
+        nonlocal attempts
+        attempts += 1
+        if attempts <= 20:
+            error = PermissionError(5, "Access is denied")
+            error.winerror = 5
+            raise error
+        return original_replace(source, target)
+
+    monkeypatch.setattr(app, "IS_WINDOWS", True, raising=False)
+    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(app.os, "replace", flaky_replace)
+
+    journal.check("journal-write", "PASS")
+
+    assert attempts == 21
+    assert json.loads(journal.path.read_text(encoding="utf-8"))["checks"][-1]["name"] == "journal-write"
+
+
 def rollback_authorization(journal_path: Path) -> dict[str, Any]:
     return {
         "mode": "ROLLBACK_METADATA",

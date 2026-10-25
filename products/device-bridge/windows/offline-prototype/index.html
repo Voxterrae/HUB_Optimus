@@ -19,6 +19,17 @@
     button:disabled {background: #344656; color: #becbd5; cursor: default;}
     :focus-visible {outline: 3px solid #fff3a3; outline-offset: 4px;}
     .actions {display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0;}
+    .health {margin: 24px 0;}
+    .health-origin {color: #bfced9;}
+    .health-cards {display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;}
+    .health-card {min-width: 0; padding: 16px; border: 1px solid #44576a; border-radius: 8px; background: #172432;}
+    .health-card h3 {margin: 0 0 12px; font-size: 1rem;}
+    .health-state {display: inline-block; margin: 0; padding: 4px 8px; border-radius: 4px; background: #344656;}
+    .health-state[data-state="available"] {background: #214e42; color: #c8f7df;}
+    .health-state[data-state="missing"] {background: #5a332d; color: #ffded6;}
+    .health-state[data-state="unverified"] {background: #534622; color: #fff0b8;}
+    .health-version {min-height: 1.6em; margin-bottom: 0; overflow-wrap: anywhere;}
+    @media (max-width: 640px) {.health-cards {grid-template-columns: 1fr;}}
     pre {background: #172432; border: 1px solid #44576a; padding: 16px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;}
     footer {margin-top: 28px; color: #bfced9;}
   </style>
@@ -57,6 +68,28 @@
       <button id="fixture-cancel" type="button" disabled>Cancelar</button>
     </div>
     <p id="fixture-status" role="status" aria-live="polite"></p>
+    <section class="health" aria-labelledby="fixture-health-title">
+      <h2 id="fixture-health-title">Estado del equipo y diagnósticos · Simulación</h2>
+      <p class="health-origin">Datos ficticios del escenario elegido. Diagnóstico real: no disponible.</p>
+      <div class="health-cards">
+        <article class="health-card" aria-labelledby="fixture-health-windows-title">
+          <h3 id="fixture-health-windows-title">Windows</h3>
+          <p class="health-state" id="fixture-health-windows-state">No comprobado</p>
+          <p class="health-version" id="fixture-health-windows-version" aria-label="Versión ficticia de Windows"></p>
+        </article>
+        <article class="health-card" aria-labelledby="fixture-health-powershell7-title">
+          <h3 id="fixture-health-powershell7-title">PowerShell 7</h3>
+          <p class="health-state" id="fixture-health-powershell7-state">No comprobado</p>
+          <p class="health-version" id="fixture-health-powershell7-version" aria-label="Versión ficticia de PowerShell 7"></p>
+        </article>
+        <article class="health-card" aria-labelledby="fixture-health-node-title">
+          <h3 id="fixture-health-node-title">Node</h3>
+          <p class="health-state" id="fixture-health-node-state">No comprobado</p>
+          <p class="health-version" id="fixture-health-node-version" aria-label="Versión ficticia de Node"></p>
+        </article>
+      </div>
+      <p id="fixture-health-summary" role="status" aria-live="polite">Sin resultados. Inicia y completa una simulación.</p>
+    </section>
     <h2>Resultado sintético</h2>
     <pre id="fixture-result" aria-label="Resultado sintético"></pre>
     <button id="fixture-export" type="button" disabled>Exportar JSON sintético</button>

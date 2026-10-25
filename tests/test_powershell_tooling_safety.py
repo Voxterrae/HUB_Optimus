@@ -133,10 +133,10 @@ def test_ci_requires_real_powershell_tooling_execution() -> None:
     )
     assert "# v7.0.1" in powershell_job
     assert (
-        "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97"
+        "actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"
         in powershell_job
     )
-    assert "# v7.0.0" in powershell_job
+    assert "# v7.1.0" in powershell_job
 
 
 def test_conflict_marker_patterns_detect_a_real_tracked_conflict(
