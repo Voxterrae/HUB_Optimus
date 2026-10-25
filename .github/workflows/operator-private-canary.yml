@@ -80,7 +80,7 @@ jobs:
           ref: ${{ inputs.phase == 'deactivate' && inputs.activation_sha || github.sha }}
 
       - name: Set up Node.js
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
 
@@ -107,7 +107,7 @@ jobs:
         run: npm run predeploy:attest
 
       - name: Obtain prepare-only AWS credentials
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           allowed-account-ids: '904851777129'
           aws-region: eu-west-1
@@ -448,7 +448,7 @@ jobs:
           ref: ${{ inputs.phase == 'deactivate' && inputs.activation_sha || github.sha }}
 
       - name: Set up Node.js
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
 
@@ -553,7 +553,7 @@ jobs:
           echo "security_binding=${SECURITY_BINDING}" >> "$GITHUB_OUTPUT"
 
       - name: Obtain execute-only AWS credentials
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           allowed-account-ids: '904851777129'
           aws-region: eu-west-1
@@ -777,7 +777,7 @@ jobs:
     environment: operator-private-canary-stop
     steps:
       - name: Obtain stop-only AWS credentials
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           allowed-account-ids: '904851777129'
           aws-region: eu-west-1

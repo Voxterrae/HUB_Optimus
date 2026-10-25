@@ -1,8 +1,10 @@
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -19,6 +21,26 @@ URL_INTAKE_SCHEMA = (
     ROOT / "ops" / "ec2" / "controlled_url_intake.v1.schema.json"
 )
 NODE = shutil.which("node")
+
+
+class _InlineScriptParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.scripts = []
+        self._parts = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script":
+            self._parts = [] if "src" not in dict(attrs) else None
+
+    def handle_data(self, data):
+        if self._parts is not None:
+            self._parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self._parts is not None:
+            self.scripts.append("".join(self._parts))
+            self._parts = None
 
 
 FULL_PAGE_HARNESS = r'''
@@ -494,7 +516,7 @@ if (fields.audit_source_text.textContent !== "2 characters supplied in primary i
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -522,7 +544,7 @@ if (canonicalIntakeState().sourceType !== "human-situation") {
 }
 '''
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -586,7 +608,7 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert 'id="product_source_preview"' in html
     assert 'id="product_confirm_source" type="checkbox"' in html
     assert 'id="product_confirm_claims" type="checkbox"' in html
-    assert '<script src="./i18n.v1.js"></script>' in html
+    assert '<script src="./i18n.v1.js?v=1.4.2"></script>' in html
     assert '<script src="./claim-decomposition.v1.js"></script>' in html
     assert re.search(r'<script[^>]+src="https?://', html) is None
 
@@ -594,7 +616,10 @@ def test_operator_uses_only_controlled_url_intake_fetch():
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
 def test_full_public_operator_submit_never_fetches_a_supplied_url():
     html = _read(INDEX)
-    scripts = re.findall(r"<script>(.*?)</script>", html, re.DOTALL)
+    parser = _InlineScriptParser()
+    parser.feed(html)
+    parser.close()
+    scripts = parser.scripts
     assert len(scripts) == 1
     smoke = (
         f"const SOURCE = {json.dumps(scripts[0])};\n"
@@ -604,7 +629,7 @@ def test_full_public_operator_submit_never_fetches_a_supplied_url():
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -846,7 +871,7 @@ async function expectInvalid(payload, status = 200, ok = true, requestUrl = sour
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -942,7 +967,7 @@ for (const [error, status] of Object.entries(PUBLIC_INTAKE_NGINX_ERROR_HTTP_STAT
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1007,7 +1032,7 @@ async function fetch(_endpoint, options) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1043,7 +1068,7 @@ def test_operator_progress_is_immediate_and_only_network_intake_has_a_deadline()
     assert "const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;" in html
     assert 'new ControlledIntakeError("url_fetch_timeout", 504)' in html
     assert "return await Promise.race([request, deadline]);" in html
-    assert "hub-optimus-operator-v0-30" in sw
+    assert "hub-optimus-operator-v0-31" in sw
 
 
 def test_operator_draft_is_source_bound_and_conservative():
@@ -1172,7 +1197,7 @@ for (const claim of records.claims) {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -1461,7 +1486,7 @@ for (const mutate of mutations) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1579,7 +1604,7 @@ for (const locale of operatorI18n.supportedLocales) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1628,7 +1653,7 @@ if (currentClaimDraftSet.groups[0].proposal_reviews[0].review_disposition !== "p
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1696,7 +1721,7 @@ for (const excerpt of multilingualExcerpts) {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -1837,7 +1862,7 @@ assert(!brokenUnicode.ok && brokenUnicode.code === "unicode", "broken surrogate 
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -1876,7 +1901,7 @@ for (let index = 0; index < result.length; index += 1) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1980,7 +2005,7 @@ if (currentSourceSelectionState.mode !== "operator-text" || currentRetrievedSour
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -2046,7 +2071,7 @@ for (const {source, expected} of examples) {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -2115,7 +2140,7 @@ def test_url_retrieval_discards_stale_async_responses_and_confirmation_removal()
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -2261,7 +2286,7 @@ function renderUrlIntakeFallback(url, error) {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -2519,7 +2544,7 @@ async function readControlledUrlText(url, {signal} = {}) {
 });
 '''
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -2614,7 +2639,7 @@ async function readControlledUrlText(url, {signal} = {}) {
 });
 '''
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -2722,7 +2747,7 @@ for (const language of ["en", "es", "de", "ru", "he", "zh-Hans"]) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -2820,7 +2845,7 @@ if (sourceReferenceForIntake(pasted) !== "operator-pasted-text-with-unverified-u
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -2856,7 +2881,7 @@ for (const secret of ["path-secret", "top-secret", "hidden", "private", "ST-secr
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -2907,7 +2932,7 @@ if (currentCaseMetadata.relationships.length !== 1 || currentCaseMetadata.relati
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -3184,7 +3209,7 @@ if (saved.get("hub_optimus_operator_case_v1") !== "saved-draft-remains"
 }
 '''
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -3436,7 +3461,7 @@ if (!notices.some((message) => message.includes("could not be deleted"))) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -3513,7 +3538,7 @@ if (fields.result_input.value || fields.result_view.textContent) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -3529,7 +3554,10 @@ def test_operator_memory_and_sharing_controls_remain_compatible():
     assert "setMemoryActionsEnabled" in html
     assert "buildHumanShareText" in html
     assert "buildCleanOperatorUrl" in html
-    assert "https://wa.me/" in html
+    assert (
+        'window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '
+        '"_blank", "noopener,noreferrer");'
+    ) in html
     assert "localStorage" not in re.search(
         r"async function shareMemoryLink\(\) \{(.*?)\n    \}", html, re.DOTALL
     ).group(1)
@@ -3616,7 +3644,7 @@ if (withoutIsolates(fetched[1]) !== "Retrieved URL: https://final.example/") {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -3672,7 +3700,7 @@ for (const size of [360, 361, 480]) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
     assert re.search(
@@ -3705,7 +3733,7 @@ def test_public_url_only_fallback_is_immediate_and_points_to_private_operator():
     assert "Public Operator will not send it" in catalog
 
 
-def test_operator_install_assets_use_institutional_mark_and_cache_v030():
+def test_operator_install_assets_use_institutional_mark_and_cache_v031():
     icon = _read(ICON)
     sw = _read(SW)
 
@@ -3715,22 +3743,177 @@ def test_operator_install_assets_use_institutional_mark_and_cache_v030():
         icon,
         re.IGNORECASE,
     ) is None
-    assert "hub-optimus-operator-v0-30" in sw
+    assert "hub-optimus-operator-v0-31" in sw
     assert "./index.html" in sw
     assert "../assets/brand/hub-optimus-logo-lockup.png" in sw
     assert "./og.svg" in sw
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
-def test_operator_service_worker_refetches_v030_assets_and_deletes_older_versions():
-    sw = _read(SW)
-    smoke = r'''
+@pytest.mark.parametrize("scenario", ["legacy", "offline", "private"])
+def test_operator_service_worker_catalog_request_uses_current_atomic_claim_translations(scenario):
+    html = _read(INDEX)
+    script_url = re.search(r'<script src="(\./i18n\.v1\.js[^\"]*)"></script>', html)
+    assert script_url is not None
+    claim_keys = (
+        "claimDraftTitle claimDraftIntro claimDraftExcerpt claimDraftClaimLabel "
+        "claimDraftSourceSpan claimDraftAdd claimDraftRemove claimDraftOmit "
+        "claimDraftRestore claimDraftReview claimDraftPending claimDraftReviewed "
+        "claimDraftOmittedHeading claimDraftExact claimDraftParaphrase "
+        "claimDraftConfirm claimDraftRequired claimDraftValid claimDraftInvalid "
+        "claimDraftChanged claimDraftConfirmedWait claimDraftConfirmationRemovedWait "
+        "claimDraftAdvancedLocked msgClaimDraftConfirm"
+    ).split()
+    smoke = (
+        f"const source = {json.dumps(_read(SW))};\n"
+        f"const scriptUrl = {json.dumps(script_url.group(1))};\n"
+        f"const scenario = {json.dumps(scenario)};\n"
+        f"const claimKeys = {json.dumps(claim_keys)};\n"
+        + r'''
 const vm = require("node:vm");
-const source = process.env.SW_SOURCE;
+const fs = require("node:fs");
+const origin = scenario === "private" ? "https://api.huboptimus.dev" : "https://huboptimus.dev";
+const workerUrl = `${origin}/operator/sw.js`;
+const catalogUrl = new URL(scriptUrl, workerUrl).href;
+const unversionedUrl = new URL("./i18n.v1.js", workerUrl).href;
+const currentSource = fs.readFileSync(process.argv[2], "utf8");
+const legacySource = 'globalThis.HUB_OPTIMUS_OPERATOR_I18N = {version: "1.3.2", supportedLocales: ["en"], messages: {en: {}}};';
+const handlers = {};
+const stores = new Map();
+const networkRequests = [];
+let offline = false;
+let unregistered = false;
+let precachedCount = 0;
+const keyFor = (request) => new URL(typeof request === "string" ? request : request.url, workerUrl).href;
+async function network(request) {
+  if (offline) throw new Error("offline");
+  const url = keyFor(request);
+  networkRequests.push(url);
+  return new Response(new URL(url).pathname.endsWith("/i18n.v1.js") ? currentSource : "static asset");
+}
+async function openCache(name) {
+  if (!stores.has(name)) stores.set(name, new Map());
+  const entries = stores.get(name);
+  return {
+    async match(request) { return entries.get(keyFor(request))?.clone(); },
+    async put(request, response) { entries.set(keyFor(request), response.clone()); },
+    async addAll(requests) {
+      for (const request of requests) {
+        await this.put(request, await network(request));
+        precachedCount += 1;
+      }
+    }
+  };
+}
+const context = {
+  URL, Request, fetch: network,
+  caches: {
+    open: openCache,
+    async keys() { return [...stores.keys()]; },
+    async delete(name) { return stores.delete(name); },
+    async match(request) {
+      for (const entries of stores.values()) {
+        const response = entries.get(keyFor(request));
+        if (response) return response.clone();
+      }
+    }
+  },
+  self: {
+    location: {href: workerUrl, origin},
+    addEventListener(type, handler) { handlers[type] = handler; },
+    skipWaiting() {},
+    clients: {async claim() {}},
+    registration: {async unregister() { unregistered = true; }}
+  }
+};
+vm.createContext(context);
+vm.runInContext(source, context, {filename: "sw.js"});
+async function lifecycle(type) {
+  let work;
+  handlers[type]({waitUntil(value) { work = value; }});
+  await work;
+}
+async function requestCatalog(url) {
+  let responsePromise;
+  handlers.fetch({request: new Request(url), respondWith(value) { responsePromise = value; }});
+  return responsePromise ? await responsePromise : null;
+}
+async function snapshot(response) {
+  const catalogContext = {globalThis: {}};
+  vm.createContext(catalogContext);
+  vm.runInContext(await response.text(), catalogContext, {filename: "served-i18n.v1.js"});
+  const catalog = catalogContext.globalThis.HUB_OPTIMUS_OPERATOR_I18N;
+  return {
+    version: catalog.version,
+    supportedLocales: [...catalog.supportedLocales],
+    messages: Object.fromEntries(catalog.supportedLocales.map((locale) => [locale,
+      Object.fromEntries(claimKeys.map((key) => [key, catalog.messages[locale][key] ?? null]))
+    ]))
+  };
+}
+(async () => {
+  // Populate the cache used by the real handlers, so a cache-name bump alone
+  // cannot hide a reused unversioned response.
+  const activeCache = await openCache(vm.runInContext("CACHE_NAME", context));
+  await activeCache.put(unversionedUrl, new Response(legacySource));
+  let legacyVersion = null;
+  if (scenario === "legacy") {
+    legacyVersion = (await snapshot(await requestCatalog(unversionedUrl))).version;
+  } else {
+    await lifecycle("install");
+    if (scenario === "private") await lifecycle("activate");
+    offline = true;
+  }
+  const response = await requestCatalog(catalogUrl);
+  console.log(JSON.stringify({
+    legacyVersion,
+    catalog: response ? await snapshot(response) : null,
+    networkRequests,
+    precachedCount,
+    cacheCount: stores.size,
+    unregistered
+  }));
+})().catch((error) => { console.error(error); process.exitCode = 1; });
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-", str(OPERATOR_I18N)],
+        input=smoke, text=True, encoding="utf-8", capture_output=True, check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    result = json.loads(completed.stdout)
+    if scenario == "private":
+        assert result["catalog"] is None
+        assert result["networkRequests"] == []
+        assert result["precachedCount"] == 0
+        assert result["cacheCount"] == 0
+        assert result["unregistered"] is True
+        return
+    if scenario == "legacy":
+        assert result["legacyVersion"] == "1.3.2"
+    else:
+        assert result["precachedCount"] > 0
+    catalog = result["catalog"]
+    assert catalog["version"] == "1.4.2"
+    assert catalog["supportedLocales"] == ["en", "es", "de", "ru", "he", "zh-Hans"]
+    for locale, messages in catalog["messages"].items():
+        for key in claim_keys:
+            assert isinstance(messages[key], str) and messages[key].strip(), (locale, key)
+            assert messages[key] != key, (locale, key)
+            if locale != "en":
+                assert messages[key] != catalog["messages"]["en"][key], (locale, key)
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
+def test_operator_service_worker_refetches_v031_assets_and_deletes_older_versions():
+    sw = _read(SW)
+    smoke = f"const source = {json.dumps(sw)};\n" + r'''
+const vm = require("node:vm");
 const listeners = {};
 const cacheNames = new Set([
   "hub-optimus-operator-v0-26",
-  "hub-optimus-operator-v0-27"
+  "hub-optimus-operator-v0-27",
+  "hub-optimus-operator-v0-30"
 ]);
 const installedRequests = [];
 const deleted = [];
@@ -3771,7 +3954,7 @@ vm.runInContext(source, context);
   let installWork;
   listeners.install({waitUntil(work) { installWork = work; }});
   await installWork;
-  if (!installedRequests.length) throw new Error("no v0-30 assets installed");
+  if (!installedRequests.length) throw new Error("no v0-31 assets installed");
   if (installedRequests.some((request) => request.cache !== "reload")) {
     throw new Error("an install request can reuse stale HTTP-cache bytes");
   }
@@ -3780,14 +3963,14 @@ vm.runInContext(source, context);
   let activateWork;
   listeners.activate({waitUntil(work) { activateWork = work; }});
   await activateWork;
-  if (!deleted.includes("hub-optimus-operator-v0-27")) {
-    throw new Error("v0-27 cache was not deleted");
+  if (!deleted.includes("hub-optimus-operator-v0-30")) {
+    throw new Error("v0-30 cache was not deleted");
   }
   if (!deleted.includes("hub-optimus-operator-v0-27")) {
     throw new Error("v0-27 cache was not deleted");
   }
-  if (!cacheNames.has("hub-optimus-operator-v0-30")) {
-    throw new Error("v0-30 cache was not retained");
+  if (!cacheNames.has("hub-optimus-operator-v0-31")) {
+    throw new Error("v0-31 cache was not retained");
   }
   if (claimCalls !== 1) throw new Error("updated worker did not claim clients");
 })().catch((error) => {
@@ -3798,10 +3981,10 @@ vm.runInContext(source, context);
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
-        env={"SW_SOURCE": sw},
+        env={**os.environ, "SW_SOURCE": sw},
     )
     assert completed.returncode == 0, completed.stderr
     assert "STATIC_ASSET_URLS.has(url.href)" in sw
@@ -3880,7 +4063,7 @@ globalThis.fetch = async () => {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -4089,7 +4272,7 @@ if (renderResult() !== false || notices.at(-1) !== "advancedInvalidResultJson") 
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -4126,19 +4309,20 @@ if (renderResult() !== false || notices.at(-1) !== "advancedInvalidResultJson") 
             + command.group(0)
             + "\nprocess.stdout.write(buildAnalyzeCommand());\n"
         ),
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
     assert generated.returncode == 0, generated.stderr
-    shell_syntax = subprocess.run(
-        ["bash", "-n"],
-        input=generated.stdout,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    assert shell_syntax.returncode == 0, shell_syntax.stderr
+    if shutil.which("bash") is not None:
+        shell_syntax = subprocess.run(
+            ["bash", "-n"],
+            input=generated.stdout,
+            text=True, encoding="utf-8",
+            capture_output=True,
+            check=False,
+        )
+        assert shell_syntax.returncode == 0, shell_syntax.stderr
     python_check = generated.stdout.split("python3 - <<'PY_CHECK'\n", 1)[1].rsplit(
         "\nPY_CHECK", 1
     )[0]
@@ -4153,8 +4337,8 @@ if (renderResult() !== false || notices.at(-1) !== "advancedInvalidResultJson") 
     }
     case_path.write_text(json.dumps(case_payload), encoding="utf-8")
     executable_check = python_check.replace(
-        "/tmp/hub-optimus-operator-case.json", str(case_path)
-    ).replace("/tmp/hub-optimus-operator-response.json", str(response_path))
+        "/tmp/hub-optimus-operator-case.json", case_path.as_posix()
+    ).replace("/tmp/hub-optimus-operator-response.json", response_path.as_posix())
 
     valid_result = {
         "case_id": "case-001",
@@ -4182,7 +4366,7 @@ if (renderResult() !== false || notices.at(-1) !== "advancedInvalidResultJson") 
         response_path.write_text(json.dumps(payload), encoding="utf-8")
         return subprocess.run(
             [sys.executable, "-c", executable_check],
-            text=True,
+            text=True, encoding="utf-8",
             capture_output=True,
             check=False,
         )

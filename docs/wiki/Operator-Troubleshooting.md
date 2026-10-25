@@ -1,7 +1,8 @@
 # Resolución de problemas de Operator
 
-> **Estado:** guía candidata actualizada para el RFC #1920 el 2026-08-25; no
+> **Estado:** guía candidata histórica del RFC #1920, 2026-08-25; no
 > demuestra que `v0-29` esté desplegado públicamente.
+> **Revisión documental:** 2026-10-16; [base `23ea5a6`](https://github.com/Voxterrae/HUB_Optimus/commit/23ea5a6677c07dcefab60f70c6b1641a3541f0b0).
 > **Última base pública auditada:** [`c399c94`](https://github.com/Voxterrae/HUB_Optimus/commit/c399c94e098058a723482001811c7d8491ebbd5e).
 
 | Síntoma | Causa probable | Acción |
@@ -11,7 +12,7 @@
 | URL + texto no avanza | Falta revisar o confirmar los pasajes propuestos o sus afirmaciones atómicas. | Confirma primero los pasajes; después revisa las afirmaciones, confirma el conjunto y pulsa de nuevo. |
 | Aparece “1.200 caracteres” | Es el contexto opcional, no el máximo de la fuente. | Introduce la fuente en el campo de texto principal. |
 | Hay pasajes seleccionados pero no borrador | Falta revisar o confirmar el conjunto de afirmaciones. | Conserva al menos una afirmación por extracto, confirma el conjunto y pulsa de nuevo. |
-| Aparece `401` o `403` | La futura consola privada exige sesión y rol autorizados. | El propietario o IT debe revisar Entra y los roles `HUB.Owner`/`HUB.Operator`. |
+| Aparece `401` o `403` | La frontera privada integrada en código exige sesión y rol autorizados. | El propietario o IT debe revisar Entra y los roles `HUB.Owner`/`HUB.Operator`. |
 | Aparece `429` | Límite temporal de solicitudes. | Espera antes de reintentar. |
 | Aparece `502` o un error `5xx` | Servicio privado no desplegado o no saludable. | Utiliza texto manual y revisa el estado de despliegue. |
 | Se muestra una versión antigua | Puede quedar una caché del PWA. | Recarga dos veces. Antes de borrar datos del sitio, exporta los borradores locales. |
@@ -23,4 +24,4 @@ ni capturas que los contengan.
 
 - [Operaciones EC2](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/ops/ec2/README.md)
 - [Issue #1835: frontera autenticada](https://github.com/Voxterrae/HUB_Optimus/issues/1835)
-- [PR #1844: implementación OIDC en borrador](https://github.com/Voxterrae/HUB_Optimus/pull/1844)
+- [PR #1844: código OIDC integrado; despliegue no acreditado](https://github.com/Voxterrae/HUB_Optimus/pull/1844)

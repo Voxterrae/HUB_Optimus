@@ -161,7 +161,7 @@ def test_maintenance_workflow_actions_are_pinned_to_full_commit_shas():
         ),
         (
             "actions/setup-python",
-            "5fda3b95a4ea91299a34e894583c3862153e4b97",
+            "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
         ),
     ]
     assert all(re.fullmatch(r"[0-9a-f]{40}", ref) for _, ref in actions)

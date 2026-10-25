@@ -13,6 +13,9 @@ from pathlib import Path
 
 import pytest
 
+if shutil.which("bash") is None:
+    pytest.skip("EC2 run-identity and provenance tests require bash", allow_module_level=True)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 HUB_CORE = ROOT / "ops" / "ec2" / "hub-core.sh"
