@@ -109,3 +109,26 @@ def test_generic_workflow_token_cannot_write_check_runs() -> None:
     bootstrap = document["jobs"]["founder-authority"]
     effective = bootstrap.get("permissions", permissions)
     assert effective.get("checks", "none") == "none"
+
+
+def test_review_and_pull_request_events_have_independent_concurrency() -> None:
+    document = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+    concurrency = document["concurrency"]
+    assert concurrency["cancel-in-progress"] is True
+    template = concurrency["group"]
+
+    def group(event: str, number: int) -> str:
+        rendered = template.replace("${{ github.event_name }}", event)
+        rendered = rendered.replace(
+            "${{ github.event.pull_request.number }}", str(number)
+        )
+        assert "${{" not in rendered
+        return rendered
+
+    target = group("pull_request_target", 1959)
+    review = group("pull_request_review", 1959)
+    assert target != review
+    assert target == group("pull_request_target", 1959)
+    assert review == group("pull_request_review", 1959)
+    assert target != group("pull_request_target", 1963)
+    assert review != group("pull_request_review", 1963)
