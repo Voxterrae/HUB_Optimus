@@ -53,14 +53,19 @@ cargo test --locked --target x86_64-pc-windows-gnu
 ```
 
 The toolchain file pins Rust 1.99.0 and the rustfmt/clippy components. The explicit
-GNU Windows target above is for local tests only; production target selection and
-Linux validation remain pending. `Cargo.lock` and
+GNU Windows target above is for local tests only; production target selection
+remains pending. Linux validation is recorded by exact CI run, separately from
+the local target. `Cargo.lock` and
 [DEPENDENCIES.v0_1.json](DEPENDENCIES.v0_1.json) record the approved five direct
 pins and 50 registry packages. Avoid inherited compiler wrappers, bootstrap
 overrides, injected flags or unrelated Cargo configuration; use an isolated
 task build environment when validating this candidate. These commands execute
-Rust sources and dependency build scripts locally. Existing repository Python
-CI is separate and does not establish that this Rust crate was tested.
+Rust sources and dependency build scripts locally. The required repository CI
+conditionally runs this crate's format check, locked tests and Clippy with
+all-targets and denied warnings on Ubuntu using explicit Rust 1.99.0. It isolates
+Cargo home/target directories and clears inherited compiler wrappers/flags.
+Consult the native step of the exact candidate run for results; Python test
+success alone does not establish that the Rust step executed or passed.
 
 ## Independent synthetic vectors
 
