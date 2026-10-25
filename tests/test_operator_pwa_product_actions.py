@@ -1,8 +1,10 @@
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -19,6 +21,26 @@ URL_INTAKE_SCHEMA = (
     ROOT / "ops" / "ec2" / "controlled_url_intake.v1.schema.json"
 )
 NODE = shutil.which("node")
+
+
+class _InlineScriptParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.scripts = []
+        self._parts = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script":
+            self._parts = [] if "src" not in dict(attrs) else None
+
+    def handle_data(self, data):
+        if self._parts is not None:
+            self._parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self._parts is not None:
+            self.scripts.append("".join(self._parts))
+            self._parts = None
 
 
 FULL_PAGE_HARNESS = r'''
@@ -494,7 +516,7 @@ if (fields.audit_source_text.textContent !== "2 characters supplied in primary i
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -522,7 +544,7 @@ if (canonicalIntakeState().sourceType !== "human-situation") {
 }
 '''
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -594,7 +616,10 @@ def test_operator_uses_only_controlled_url_intake_fetch():
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
 def test_full_public_operator_submit_never_fetches_a_supplied_url():
     html = _read(INDEX)
-    scripts = re.findall(r"<script>(.*?)</script>", html, re.DOTALL)
+    parser = _InlineScriptParser()
+    parser.feed(html)
+    parser.close()
+    scripts = parser.scripts
     assert len(scripts) == 1
     smoke = (
         f"const SOURCE = {json.dumps(scripts[0])};\n"
@@ -604,7 +629,7 @@ def test_full_public_operator_submit_never_fetches_a_supplied_url():
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -846,7 +871,7 @@ async function expectInvalid(payload, status = 200, ok = true, requestUrl = sour
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -942,7 +967,7 @@ for (const [error, status] of Object.entries(PUBLIC_INTAKE_NGINX_ERROR_HTTP_STAT
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1007,7 +1032,7 @@ async function fetch(_endpoint, options) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1172,7 +1197,7 @@ for (const claim of records.claims) {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -1461,7 +1486,7 @@ for (const mutate of mutations) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1579,7 +1604,7 @@ for (const locale of operatorI18n.supportedLocales) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1628,7 +1653,7 @@ if (currentClaimDraftSet.groups[0].proposal_reviews[0].review_disposition !== "p
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1696,7 +1721,7 @@ for (const excerpt of multilingualExcerpts) {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -1837,7 +1862,7 @@ assert(!brokenUnicode.ok && brokenUnicode.code === "unicode", "broken surrogate 
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -1876,7 +1901,7 @@ for (let index = 0; index < result.length; index += 1) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -1980,7 +2005,7 @@ if (currentSourceSelectionState.mode !== "operator-text" || currentRetrievedSour
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -2046,7 +2071,7 @@ for (const {source, expected} of examples) {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -2115,7 +2140,7 @@ def test_url_retrieval_discards_stale_async_responses_and_confirmation_removal()
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -2261,7 +2286,7 @@ function renderUrlIntakeFallback(url, error) {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -2519,7 +2544,7 @@ async function readControlledUrlText(url, {signal} = {}) {
 });
 '''
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -2614,7 +2639,7 @@ async function readControlledUrlText(url, {signal} = {}) {
 });
 '''
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -2722,7 +2747,7 @@ for (const language of ["en", "es", "de", "ru", "he", "zh-Hans"]) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -2820,7 +2845,7 @@ if (sourceReferenceForIntake(pasted) !== "operator-pasted-text-with-unverified-u
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -2856,7 +2881,7 @@ for (const secret of ["path-secret", "top-secret", "hidden", "private", "ST-secr
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -2907,7 +2932,7 @@ if (currentCaseMetadata.relationships.length !== 1 || currentCaseMetadata.relati
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -3184,7 +3209,7 @@ if (saved.get("hub_optimus_operator_case_v1") !== "saved-draft-remains"
 }
 '''
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -3436,7 +3461,7 @@ if (!notices.some((message) => message.includes("could not be deleted"))) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -3513,7 +3538,7 @@ if (fields.result_input.value || fields.result_view.textContent) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -3529,7 +3554,10 @@ def test_operator_memory_and_sharing_controls_remain_compatible():
     assert "setMemoryActionsEnabled" in html
     assert "buildHumanShareText" in html
     assert "buildCleanOperatorUrl" in html
-    assert "https://wa.me/" in html
+    assert (
+        'window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '
+        '"_blank", "noopener,noreferrer");'
+    ) in html
     assert "localStorage" not in re.search(
         r"async function shareMemoryLink\(\) \{(.*?)\n    \}", html, re.DOTALL
     ).group(1)
@@ -3616,7 +3644,7 @@ if (withoutIsolates(fetched[1]) !== "Retrieved URL: https://final.example/") {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -3672,7 +3700,7 @@ for (const size of [360, 361, 480]) {
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
     assert re.search(
@@ -3953,9 +3981,10 @@ vm.runInContext(source, context);
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
+        env={**os.environ, "SW_SOURCE": sw},
     )
     assert completed.returncode == 0, completed.stderr
     assert "STATIC_ASSET_URLS.has(url.href)" in sw
@@ -4034,7 +4063,7 @@ globalThis.fetch = async () => {
     completed = subprocess.run(
         [NODE, "-"],
         input=smoke,
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -4243,7 +4272,7 @@ if (renderResult() !== false || notices.at(-1) !== "advancedInvalidResultJson") 
 '''
     )
     completed = subprocess.run(
-        [NODE, "-"], input=smoke, text=True, capture_output=True, check=False
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
@@ -4280,19 +4309,20 @@ if (renderResult() !== false || notices.at(-1) !== "advancedInvalidResultJson") 
             + command.group(0)
             + "\nprocess.stdout.write(buildAnalyzeCommand());\n"
         ),
-        text=True,
+        text=True, encoding="utf-8",
         capture_output=True,
         check=False,
     )
     assert generated.returncode == 0, generated.stderr
-    shell_syntax = subprocess.run(
-        ["bash", "-n"],
-        input=generated.stdout,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    assert shell_syntax.returncode == 0, shell_syntax.stderr
+    if shutil.which("bash") is not None:
+        shell_syntax = subprocess.run(
+            ["bash", "-n"],
+            input=generated.stdout,
+            text=True, encoding="utf-8",
+            capture_output=True,
+            check=False,
+        )
+        assert shell_syntax.returncode == 0, shell_syntax.stderr
     python_check = generated.stdout.split("python3 - <<'PY_CHECK'\n", 1)[1].rsplit(
         "\nPY_CHECK", 1
     )[0]
@@ -4336,7 +4366,7 @@ if (renderResult() !== false || notices.at(-1) !== "advancedInvalidResultJson") 
         response_path.write_text(json.dumps(payload), encoding="utf-8")
         return subprocess.run(
             [sys.executable, "-c", executable_check],
-            text=True,
+            text=True, encoding="utf-8",
             capture_output=True,
             check=False,
         )
