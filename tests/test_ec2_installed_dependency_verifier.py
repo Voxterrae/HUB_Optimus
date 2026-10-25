@@ -13,6 +13,8 @@ from types import SimpleNamespace
 
 import pytest
 
+if not sys.platform.startswith("linux"):
+    pytest.skip("installed-dependency verifier tests require Linux", allow_module_level=True)
 
 ROOT = Path(__file__).resolve().parents[1]
 VERIFIER = ROOT / "ops" / "ec2" / "verify-installed-dependencies.py"
