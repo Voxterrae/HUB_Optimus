@@ -12,6 +12,7 @@ PUBLIC_ROUTES = {
     "/": SITE / "index.html",
     "/404.html": SITE / "404.html",
     "/operator/": SITE / "operator" / "index.html",
+    "/privacy/": SITE / "privacy" / "index.html",
     "/obsidian-HUB_Optimus/": SITE / "obsidian-HUB_Optimus" / "index.html",
     "/obsidian-HUB_Optimus-v1.0/": SITE / "obsidian-HUB_Optimus-v1.0" / "index.html",
     "/obsidian-HUB_Optimus-v1.1/": SITE / "obsidian-HUB_Optimus-v1.1" / "index.html",
@@ -59,6 +60,26 @@ def parse_document(path):
     parser = PublicHtmlParser()
     parser.feed(path.read_text(encoding="utf-8"))
     return parser
+
+
+def test_privacy_controls_are_reachable_from_both_existing_public_entry_points():
+    for route in ("/", "/operator/"):
+        references = parse_document(PUBLIC_ROUTES[route]).references
+        assert any(
+            tag == "a" and attribute == "href"
+            and urlsplit(urljoin(f"{PUBLIC_ORIGIN}{route}", value)).path == "/privacy/"
+            for tag, attribute, value in references
+        ), f"Privacy centre is not reachable from {route}"
+
+
+def test_shared_footer_links_target_the_public_notice_from_private_origin_too():
+    for route in ("/", "/operator/"):
+        references = parse_document(PUBLIC_ROUTES[route]).references
+        links = [value for tag, attribute, value in references
+                 if tag == "a" and attribute == "href" and value.endswith("privacy/")]
+        assert links
+        for link in links:
+            assert urljoin(f"https://api.huboptimus.dev{route}", link) == f"{PUBLIC_ORIGIN}/privacy/"
 
 
 def route_for_document(path):
