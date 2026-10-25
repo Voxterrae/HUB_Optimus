@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import fcntl
 import importlib.util
 import json
 import os
@@ -14,6 +13,11 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
+
+if not sys.platform.startswith("linux"):
+    pytest.skip("EC2 operation-lock tests require Linux", allow_module_level=True)
+
+import fcntl
 
 
 ROOT = Path(__file__).resolve().parents[1]
