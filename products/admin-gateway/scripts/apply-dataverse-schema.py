@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -15,6 +16,11 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Protocol
+
+IS_WINDOWS = os.name == "nt"
+JOURNAL_REPLACE_ATTEMPTS = 60
+JOURNAL_REPLACE_DELAY_SECONDS = 0.05
+JOURNAL_REPLACE_WINERRORS = frozenset({5, 32})
 
 PACKAGE_ROOT = Path(__file__).parents[1]
 CONTRACT_PATH = PACKAGE_ROOT / "dataverse" / "schema" / "optimus-admin-gateway.dataverse.json"
@@ -347,9 +353,37 @@ class EvidenceJournal:
         self.save()
 
     def save(self) -> None:
-        temporary = self.path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(self.data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        temporary.replace(self.path)
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=self.output_directory,
+            prefix=".metadata-apply-journal-",
+            suffix=".tmp",
+        )
+        temporary = Path(temporary_name)
+        descriptor_open = True
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                descriptor_open = False
+                stream.write(json.dumps(self.data, indent=2, ensure_ascii=False) + "\n")
+            for attempt in range(JOURNAL_REPLACE_ATTEMPTS):
+                try:
+                    os.replace(temporary, self.path)
+                except PermissionError as exc:
+                    if (
+                        not IS_WINDOWS
+                        or getattr(exc, "winerror", None) not in JOURNAL_REPLACE_WINERRORS
+                        or attempt + 1 >= JOURNAL_REPLACE_ATTEMPTS
+                    ):
+                        raise
+                    time.sleep(min(JOURNAL_REPLACE_DELAY_SECONDS * (2**attempt), 0.5))
+                else:
+                    return
+        finally:
+            if descriptor_open:
+                os.close(descriptor)
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 def load_public_artifacts() -> tuple[dict[str, Any], dict[str, Any]]:
