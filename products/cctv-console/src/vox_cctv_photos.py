@@ -51,10 +51,11 @@ def crop_original(ppm,box):
         pixels[((y+row)*width+x)*3:((y+row)*width+x+w)*3] for row in range(h))
 
 class PhotoInspector:
-    def __init__(self,master,ppm,row=None):
+    def __init__(self,master,ppm,row=None,*,authorise=None):
         import tkinter as tk
         self.tk = tk; self.original = ppm; self.row = row or {}
         self.source = ppm; self.cropped = False; self.zoom = None; self.photo = None
+        self.authorise = authorise
         dimensions(ppm)
         self.window = tk.Toplevel(master)
         self.window.title('Voxterrae · Imagen original')
@@ -99,12 +100,25 @@ class PhotoInspector:
         self.zoom=max(.05,min(4,float(value),math.sqrt(MAX_VIEW_PIXELS/(w*h))))
         self.render()
     def wheel(self,event): self.set_zoom((self.zoom or self.fit_ratio())*(1.15 if event.delta>0 else 1/1.15))
+    def access_valid(self):
+        if not self.window.winfo_exists(): return False
+        if self.authorise is not None:
+            try:
+                allowed = bool(self.authorise())
+            except Exception:
+                allowed = False
+            if not allowed:
+                self.close()
+                return False
+        return True
     def toggle_crop(self):
+        if not self.access_valid(): return
+        source=crop_original(self.original,self.row['bbox']) if not self.cropped else self.original
         self.cropped=not self.cropped
-        self.source=crop_original(self.original,self.row['bbox']) if self.cropped else self.original
+        self.source=source
         self.zoom=None; self.render()
     def render(self):
-        if not self.window.winfo_exists(): return
+        if not self.access_valid(): return
         w,h=dimensions(self.source)
         size=fit_size(w,h,self.canvas.winfo_width(),self.canvas.winfo_height()) if self.zoom is None else (max(1,int(w*self.zoom)),max(1,int(h*self.zoom)))
         display=resize_ppm(self.source,*size)

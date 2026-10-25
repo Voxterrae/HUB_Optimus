@@ -27,6 +27,7 @@ from vox_cctv_photos import PhotoInspector, dimensions as photo_dimensions, fit_
 from vox_home.access import AccessDenied
 from vox_home.facade import CoreAlarmClient, bootstrap_local_core
 from vox_cctv_metadata import camera_label, capability_info, load_zones
+from vox_cctv_phone import PhoneNotifier
 
 APP_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(APP_DIR / 'lib'))
@@ -483,6 +484,7 @@ class Viewer:
     # Optional integration remains absent for phase-0 embedders/headless fixtures.
     home_facade = None
     sequence_manager = None
+    phone_notifier = None
 
     def __init__(self, root, auth_hash, *, home_facade=None, home_context=None,
                  home_target=None, evidence_store=None, use_home_core=False):
@@ -499,6 +501,11 @@ class Viewer:
         self.epochs = {channel: 0 for channel in CHANNELS}
         self.states = {channel: CameraState(channel) for channel in CHANNELS}
         self.data_dir = Path(os.environ.get('LOCALAPPDATA', str(APP_DIR))) / 'VoxterraeCCTV'
+        self.phone_window = None
+        try:
+            self.phone_notifier = PhoneNotifier(self.data_dir.resolve() / 'phone_alerts.json')
+        except Exception:
+            self.phone_notifier = None
         self.capture_root = self.data_dir
         if use_home_core:
             try:
@@ -569,6 +576,8 @@ class Viewer:
         self.banner = tk.Label(toolbar, text='Conectando las siete cámaras…', bg='#101722', fg='#e4edf6', font=('Segoe UI', 13, 'bold'), width=1, anchor='w')
         tk.Button(toolbar, text='Vista conjunta', command=self.show_mosaic, bg='#26384e', fg='white', relief='flat', padx=15).pack(side='right', padx=8)
         tk.Button(toolbar, text='Capturas', command=self.open_gallery, bg='#26384e', fg='white', relief='flat', padx=12).pack(side='right', padx=4)
+        tk.Button(toolbar, text='Móvil', command=self.open_phone_dialog,
+            bg='#26384e', fg='white', relief='flat', padx=12).pack(side='right', padx=4)
         self.rain = tk.BooleanVar(value=policy.rain_mode)
         tk.Checkbutton(toolbar, text='Lluvia', variable=self.rain, command=self.preferences_changed,
             bg='#101722', fg='#dce8f4', selectcolor='#26384e', activebackground='#101722',
@@ -592,6 +601,8 @@ class Viewer:
         adjustment = tk.OptionMenu(self.detail_controls, self.display_mode, *MODES, command=self.display_changed)
         adjustment.configure(bg='#26384e', fg='white', activebackground='#26384e', highlightthickness=0)
         adjustment.pack(side='left', padx=8)
+        tk.Button(self.detail_controls, text='Realzar vista oscura', command=self.enhance_detail,
+            bg='#286254', fg='white', relief='flat', padx=8).pack(side='left', padx=4)
         self.detail_notice = tk.Label(self.detail_controls, text='Original · capturas conservan el original',
             bg='#101722', fg='#ffca73', font=('Segoe UI', 9), anchor='w')
         self.detail_notice.pack(side='left', fill='x', expand=True)
@@ -627,7 +638,10 @@ class Viewer:
             font=('Segoe UI', 9), relief='flat', highlightthickness=0, exportselection=False)
         self.alarm_events.pack(fill='both', expand=True)
         self.alarm_events.bind('<Double-Button-1>', self.open_event_capture)
-        tk.Label(self.info, text='Doble clic en un aviso: revisar capturas', bg='#172333', fg='#99aec4', font=('Segoe UI', 8), anchor='w').pack(fill='x')
+        self.event_history_note = tk.Label(self.info, text='', bg='#172333', fg='#99aec4',
+            font=('Segoe UI', 8), anchor='w', justify='left', wraplength=320)
+        self.event_history_note.pack(fill='x')
+        self.refresh_event_list()
         self.technical = tk.BooleanVar(value=policy.technical_sound)
         tk.Checkbutton(self.info, text='Sonido por pérdida de señal', variable=self.technical,
             command=self.preferences_changed, bg='#172333', fg='#99aec4', selectcolor='#26384e',
@@ -722,6 +736,12 @@ class Viewer:
         if self.detail is not None:
             self.versions.pop(self.detail, None)
 
+    def enhance_detail(self):
+        self.check_ui()
+        if self.detail is not None:
+            self.display_mode.set('Sombras fuertes')
+            self.display_changed()
+
     def reset_display(self):
         self.display.select('Original')
         self.display.reset()
@@ -740,8 +760,31 @@ class Viewer:
     def select_group(self, group):
         self.check_ui()
         self.event_group = group
-        self.visible_events = []
-        self.alarm_events.delete(0, 'end')
+        self.refresh_event_list(force=True)
+
+    def refresh_event_list(self, force=False):
+        """Repaint category history independently of video/gallery updates."""
+        grouped = self.alarm_state.grouped(self.event_group)
+        if force or grouped != self.visible_events or not self.alarm_events.size():
+            self.visible_events = grouped
+            self.alarm_events.delete(0, 'end')
+            for event in grouped:
+                stamp = event['time'][11:] if event['time'] else 'Hora no disponible'
+                origin = camera_label(self.zones, event['channel'])
+                transition = {'Start': 'Inicio', 'Stop': 'Finalizado', 'None': 'Aviso'}[event['status']]
+                repetitions = f" · rep. ×{event['count']}" if event['count'] > 1 else ''
+                confirmation = ' · sin confirmar' if self.event_group == 'detections' else ''
+                self.alarm_events.insert('end',
+                    f"{stamp} · {transition} · {origin} · {ALARM_LABELS[event['event']]}{repetitions}{confirmation}")
+            if not grouped:
+                self.alarm_events.insert('end', 'Todavía no hay avisos en este grupo.')
+        if hasattr(self, 'event_history_note'):
+            photos = ('Doble clic: revisar capturas.' if self.event_group == 'detections' else
+                      'Esta categoría no genera capturas automáticas.' if self.event_group == 'technical' else
+                      'Movimiento no genera capturas; los avisos de cara pueden tenerlas.')
+            self.event_history_note.configure(text='Historial de esta sesión · hasta 25 episodios por categoría.\n'
+                'Inicio / Finalizado: estado comunicado por el grabador.\n'
+                'rep. ×n: avisos agrupados; las repeticiones no confirman nuevas detecciones.\n' + photos)
 
     def open_event_capture(self, event=None):
         selected = self.alarm_events.curselection()
@@ -752,6 +795,13 @@ class Viewer:
     def receive_captures(self, now):
         for received in self.alarm_state.drain_pending():
             event = received['event']
+            if (self.phone_notifier is not None and event['status'] == 'Start' and
+                event['event'] in ('HumanDetect', 'appEventHumanDetectAlarm', 'CarShapeDetect') and
+                0 <= now - received['received_monotonic'] <= 30):
+                try:
+                    self.phone_notifier.submit(event)
+                except Exception:
+                    pass  # The local recorder and evidence remain independent.
             if event['event'] not in ('HumanDetect', 'appEventHumanDetectAlarm', 'CarShapeDetect', 'FaceDetect', 'FaceDetection'):
                 continue
             channel = event['channel']
@@ -782,6 +832,74 @@ class Viewer:
                 elif now >= activity['next']:
                     self.sequence_manager.trigger(activity['event'], now)
                     activity['next'] = now + 5
+
+    def open_phone_dialog(self):
+        self.check_ui()
+        if self.phone_window is not None and self.phone_window.winfo_exists():
+            self.phone_window.lift()
+            return
+        tk = self.tk
+        window = tk.Toplevel(self.root)
+        self.phone_window = window
+        window.title('Avisos al móvil')
+        window.configure(bg='#172333', padx=18, pady=16)
+        window.geometry('640x390')
+        tk.Label(window, text='Conectar y activar avisos en Telegram', bg='#172333', fg='#e4edf6',
+            font=('Segoe UI', 13, 'bold'), anchor='w').pack(fill='x')
+        tk.Label(window, text='Crea un bot propio en @BotFather de Telegram y pega su token aquí.\n'
+            'Después abre el enlace en tu Telegram y pulsa Iniciar.\n'
+            'Avisos de persona/vehículo, sin confirmar; máximo uno por cámara cada 2 minutos.\n'
+            'Las fotos permanecen en el ordenador.', bg='#172333', fg='#b8c9db',
+            justify='left', anchor='w', wraplength=590).pack(fill='x', pady=10)
+        token = tk.Entry(window, show='*', bg='#101722', fg='white', insertbackground='white')
+        token.pack(fill='x')
+        status = tk.Label(window, text='', bg='#172333', fg='#ffca73', anchor='w', wraplength=590)
+        status.pack(fill='x', pady=10)
+        link_value = tk.StringVar(value='')
+        tk.Entry(window, textvariable=link_value, state='readonly', readonlybackground='#101722',
+            fg='#b8c9db').pack(fill='x', pady=6)
+        def connect():
+            value = token.get().strip()
+            token.delete(0, 'end')
+            accepted = self.phone_notifier is not None and self.phone_notifier.start_pairing(value)
+            value = None
+            if not accepted:
+                status.configure(text='Revisa el token o el espacio disponible en el ordenador.')
+        tk.Button(window, text='Conectar y activar avisos', command=connect,
+            bg='#286254', fg='white', relief='flat', padx=12).pack(anchor='w', pady=6)
+        def open_link():
+            if self.phone_notifier is None:
+                return
+            url = self.phone_notifier.pairing_info().get('url')
+            if url:
+                import webbrowser
+                try:
+                    webbrowser.open(url)
+                except Exception:
+                    status.configure(text='Abre el enlace mostrado en tu Telegram.')
+        buttons = tk.Frame(window, bg='#172333')
+        buttons.pack(fill='x', pady=6)
+        tk.Button(buttons, text='Abrir enlace de Telegram', command=open_link,
+            bg='#26384e', fg='white', relief='flat', padx=12).pack(side='left')
+        def disconnect():
+            if self.phone_notifier is not None:
+                self.phone_notifier.revoke()
+        tk.Button(buttons, text='Desconectar móvil', command=disconnect,
+            bg='#26384e', fg='white', relief='flat', padx=12).pack(side='right')
+        tk.Label(window, text='El token se guarda en el almacén de credenciales de Windows.\n'
+            'Un aviso aceptado por Telegram no confirma que el teléfono lo haya mostrado.',
+            bg='#172333', fg='#99aec4', justify='left', anchor='w').pack(fill='x', pady=8)
+        def poll():
+            if self.closed or not window.winfo_exists():
+                return
+            info = self.phone_notifier.pairing_info() if self.phone_notifier is not None else {
+                'state': 'Avisos móvil no disponibles'}
+            remaining = info.get('expires_seconds')
+            state = info['state'] + (f' · enlace caduca en {remaining}s' if remaining is not None else '')
+            status.configure(text=state)
+            link_value.set(info.get('url', ''))
+            self.defer(1000, poll)
+        poll()
 
     def open_gallery(self, filter_by=None):
         self.check_ui()
@@ -817,6 +935,9 @@ class Viewer:
             bg='#26384e', fg='white', relief='flat', padx=12).pack(side='left', padx=12, pady=8)
         tk.Button(self.gallery, text='Ampliar original', command=self.open_capture_detail,
             bg='#26384e', fg='white', relief='flat', padx=12).pack(side='left', pady=8)
+        self.gallery_crop_button = tk.Button(self.gallery, text='Ver recorte detectado',
+            command=self.open_capture_crop, state='disabled', bg='#286254', fg='white', relief='flat', padx=12)
+        self.gallery_crop_button.pack(side='left', padx=8, pady=8)
         tk.Button(self.gallery, text='Ver secuencia', command=self.open_capture_sequence,
             bg='#26384e', fg='white', relief='flat', padx=12).pack(side='left', padx=8, pady=8)
         tk.Label(self.gallery, text='25 imágenes · 128 MiB · 48 h', bg='#101722',
@@ -846,11 +967,15 @@ class Viewer:
             self.gallery_list.delete(0, 'end')
             self.gallery_image.configure(image='', text='permission_denied')
             self.gallery_details.configure(text='permission_denied')
+            self.gallery_crop_button.configure(state='disabled')
             return
         if self.gallery_filter is not None:
             camera, kind = self.gallery_filter
             rows = [r for r in rows if r.get('camera', r.get('channel')) == camera and r.get('event') == kind]
-        if rows == self.gallery_rows:
+        if rows and rows == self.gallery_rows:
+            selected = self.gallery_list.curselection()
+            if selected and selected[0] < len(rows) and rows[selected[0]].get('sequence_id'):
+                self.gallery_details.configure(text=self.capture_description(rows[selected[0]]))
             return
         selected = self.gallery_list.curselection()
         selected_id = self.gallery_rows[selected[0]]['id'] if selected and selected[0] < len(self.gallery_rows) else None
@@ -860,7 +985,9 @@ class Viewer:
             stamp = display_received_time(row.get('received_at'))[:14]
             camera = row.get('camera', row.get('channel'))
             label = ALARM_LABELS.get(row.get('event'), 'Aviso')
-            self.gallery_list.insert('end', f'{stamp} · {camera_label(self.zones, camera)} · {label}')
+            target = {'escena': 'Escena completa', 'cuerpo_detectado': 'Cuerpo',
+                      'rostro_detectado': 'Rostro'}.get(row.get('selection'), 'Fotograma inicial')
+            self.gallery_list.insert('end', f'{stamp} · {target} · {camera_label(self.zones, camera)} · {label}')
         if rows:
             index = next((i for i, row in enumerate(rows) if row['id'] == selected_id), 0)
             self.gallery_list.selection_set(index)
@@ -868,8 +995,18 @@ class Viewer:
         else:
             self.gallery_photo = None
             self.gallery_original = None
-            self.gallery_image.configure(image='', text='No hay capturas para esta selección.\nLas capturas comienzan al activar esta versión.')
-            self.gallery_details.configure(text='Los avisos anteriores no tenían una foto guardada en este visor.')
+            self.gallery_image.configure(image='', text='No hay capturas para esta selección.')
+            kind = self.gallery_filter[1] if self.gallery_filter else None
+            from vox_cctv_alarm_policy import TECHNICAL, ACTIVITY
+            if kind in TECHNICAL:
+                reason = 'Los avisos técnicos no generan fotos automáticas; este historial registra estados del grabador.'
+            elif kind in ACTIVITY and kind not in ('FaceDetect', 'FaceDetection'):
+                reason = 'Este aviso de actividad no genera fotos automáticas; el movimiento no confirma una persona o vehículo.'
+            else:
+                reason = ('Solo se muestran fotos guardadas por este visor durante su ejecución. '
+                          'Un aviso puede no tener imagen reciente o su captura puede haber caducado (48 h).')
+            self.gallery_details.configure(text=reason)
+            self.gallery_crop_button.configure(state='disabled')
 
     def show_capture(self, event=None):
         self.check_ui()
@@ -885,6 +1022,8 @@ class Viewer:
             self.gallery_original = None
             self.gallery_image.configure(image='', text='permission_denied')
             self.gallery_details.configure(text='permission_denied')
+            if hasattr(self, 'gallery_crop_button'):
+                self.gallery_crop_button.configure(state='disabled')
             return
         self.gallery_photo = None
         self.gallery_original = None
@@ -892,10 +1031,18 @@ class Viewer:
             try:
                 self.gallery_original = ppm
                 self.render_gallery_photo()
+                if self.gallery_original is None:
+                    return  # Reauthorization during rendering may have refused access.
             except (self.tk.TclError, ValueError):
                 self.gallery_image.configure(image='', text='No se pudo mostrar esta imagen')
         else:
             self.gallery_image.configure(image='', text=row.get('state', 'Sin imagen disponible'))
+        if hasattr(self, 'gallery_crop_button'):
+            original = self.gallery_original
+            self.gallery_crop_button.configure(state='normal' if original and self.valid_crop(original, row) else 'disabled')
+        self.gallery_details.configure(text=self.capture_description(row))
+
+    def capture_description(self, row):
         received = display_received_time(row.get('received_at'))
         device_time = row.get('device_time') or 'No disponible'
         dimensions = f"{row['width']} × {row['height']}" if row.get('width') and row.get('height') else 'No disponible'
@@ -907,7 +1054,31 @@ class Viewer:
         moment = f" · {offset:+.2f} s respecto al aviso" if isinstance(offset, (float, int)) else ''
         explanation = ('Selección desde secuencia · ' + str(selection) + moment + ' · detección sin confirmar.'
                        if row.get('sequence_id') else 'Fotograma recibido del flujo original; las imágenes antiguas conservan su resolución anterior.')
-        self.gallery_details.configure(text=f"{origin} · {row.get('state', '')} · Imagen: {dimensions}\nGuardada: {received} · Hora de cámara: {device_time} · Edad al seleccionar: {age_text}\n{explanation}")
+        if row.get('sequence_id'):
+            clip = next((item for item in self.sequence_manager.list_clips()
+                         if item.get('id') == row['sequence_id']), None) if self.sequence_manager is not None else None
+            statuses = (clip.get('selector_status') or {}) if clip else {}
+            pending = bool(clip and clip.get('image_status') == 'selection_pending')
+            details = []
+            for key, label in (('body_status', 'Cuerpo'), ('face_status', 'Rostro')):
+                value = statuses.get(key)
+                if pending or value in ('pendiente', 'pending'):
+                    state = 'selección pendiente'
+                elif value == 'disponible':
+                    state = 'selección disponible'
+                elif value in ('sin_cuerpo_con_calidad_suficiente', 'sin_rostro_con_calidad_suficiente'):
+                    state = 'sin detección con calidad suficiente'
+                elif value in ('disabled', 'desactivado'):
+                    state = 'selección desactivada'
+                elif value in ('unavailable', 'no_disponible', 'fotograma_no_disponible'):
+                    state = 'selección no disponible'
+                else:
+                    state = 'estado no disponible'
+                details.append(f'{label}: {state}')
+            explanation += '\n' + ' · '.join(details) + '. Selecciones independientes; no establecen identidad ni vinculan rostro y cuerpo.'
+        if row.get('event') == 'CarShapeDetect':
+            explanation += '\nMatrícula/marca/modelo no disponibles; el aviso del grabador no incluye ese análisis.'
+        return f"{origin} · {row.get('state', '')} · Imagen: {dimensions}\nGuardada: {received} · Hora de cámara: {device_time} · Edad al seleccionar: {age_text}\n{explanation}"
 
     def gallery_resized(self, event=None):
         if not self.gallery_resize_pending and self.gallery is not None:
@@ -922,6 +1093,8 @@ class Viewer:
         if row is None or authorised is None:
             self.gallery_original = self.gallery_photo = None
             self.gallery_image.configure(image='', text='Captura no disponible')
+            if hasattr(self, 'gallery_crop_button'):
+                self.gallery_crop_button.configure(state='disabled')
             return
         self.gallery_original = authorised
         w, h = photo_dimensions(self.gallery_original)
@@ -944,15 +1117,53 @@ class Viewer:
         except AccessDenied:
             self.gallery_original = self.gallery_photo = None
             self.gallery_image.configure(image='', text='permission_denied')
+            self.gallery_details.configure(text='permission_denied')
+            if hasattr(self, 'gallery_crop_button'):
+                self.gallery_crop_button.configure(state='disabled')
             return None, None
         return row, ppm
+
+    @staticmethod
+    def valid_crop(ppm, row):
+        if not row.get('bbox'):
+            return False
+        try:
+            width, height = photo_dimensions(ppm)
+            box = row['bbox']
+            return (isinstance(box, (tuple, list)) and len(box) == 4 and
+                    all(type(value) is int for value in box) and min(box[:2]) >= 0 and
+                    min(box[2:]) > 0 and box[0] + box[2] <= width and box[1] + box[3] <= height)
+        except (ValueError, TypeError, AttributeError):
+            return False
+
+    def photo_access_allowed(self, identifier):
+        try:
+            rows = (self.home_facade.evidence_entries(self.home_context, time.time())
+                    if self.home_facade is not None else self.evidence.list_entries())
+            return not self.closed and any(row.get('id') == identifier for row in rows)
+        except AccessDenied:
+            return False
 
     def open_capture_detail(self, event=None):
         self.check_ui()
         row, ppm = self.authorised_selected_photo()
         if ppm:
             self.close_inspectors()
-            self.inspectors.append(PhotoInspector(self.root, ppm, row))
+            self.inspectors.append(PhotoInspector(self.root, ppm, row,
+                authorise=lambda: self.photo_access_allowed(row['id'])))
+
+    def open_capture_crop(self):
+        self.check_ui()
+        row, ppm = self.authorised_selected_photo()
+        if ppm is None or row is None or not self.valid_crop(ppm, row):
+            if hasattr(self, 'gallery_crop_button'):
+                self.gallery_crop_button.configure(state='disabled')
+            return
+        self.close_inspectors()
+        inspector = PhotoInspector(self.root, ppm, row,
+            authorise=lambda: self.photo_access_allowed(row['id']))
+        self.inspectors.append(inspector)
+        inspector.toggle_crop()
 
     def open_capture_sequence(self):
         self.check_ui()
@@ -1068,6 +1279,15 @@ class Viewer:
             'home': (self.home_facade.status() if self.home_facade is not None else
                      {'core_active': False, 'metadata': 'phase0', 'alarm_subscriptions': 0,
                       'worker_status': 'legacy'})}
+        if self.phone_notifier is not None:
+            try:
+                phone = self.phone_notifier.snapshot()
+                document['phone'] = {key: phone[key] for key in
+                    ('state', 'connected', 'queued', 'sent', 'ambiguous', 'dropped', 'in_flight')}
+            except Exception:
+                document['phone'] = {'state': 'Avisos móvil no disponibles', 'connected': False}
+        else:
+            document['phone'] = {'state': 'Avisos móvil no disponibles', 'connected': False}
         temporary = self.status_path.with_suffix('.tmp')
         try:
             self.status_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1109,6 +1329,10 @@ class Viewer:
         if self.closed:
             return
         now = time.monotonic()
+        for inspector in tuple(self.inspectors):
+            if hasattr(inspector, 'access_valid'):
+                inspector.access_valid()
+        self.refresh_event_list()
         snapshots = []
         live = 0
         for channel in CHANNELS:
@@ -1173,24 +1397,11 @@ class Viewer:
             notices.append('Pérdida de avisos (event_overflow)')
         issue = home_status.get('alarm_issue')
         if issue in issue_labels and not (issue == 'event_overflow' and notices):
-            notices.append(f'{issue_labels[issue]} ({issue})')
+            previous = alarm_live and home_status.get('worker_status') == 'ok' and not home_status.get('event_loss')
+            prefix = 'Incidencia anterior: ' if previous else ''
+            notices.append(f'{prefix}{issue_labels[issue]} ({issue})')
         alarm_text = alarm['state'] + (' · Home: ' + ' · '.join(notices) if notices else '')
         self.alarm_status.configure(text=alarm_text, fg='#6de7ad' if alarm_live and not notices else '#ffca73')
-        lines = []
-        grouped = self.alarm_state.grouped(self.event_group)
-        for event in grouped:
-            stamp = event['time'][11:] if event['time'] else 'Hora no disponible'
-            origin = camera_label(self.zones, event['channel'])
-            transition = {'Start': 'inicio', 'Stop': 'fin', 'None': 'aviso'}[event['status']]
-            repetitions = f" · ×{event['count']}" if event['count'] > 1 else ''
-            lines.append(f"{stamp} · {origin} · {ALARM_LABELS[event['event']]}{repetitions}")
-        if grouped != self.visible_events:
-            self.visible_events = grouped
-            self.alarm_events.delete(0, 'end')
-            for line in lines:
-                self.alarm_events.insert('end', line)
-        if not grouped and self.alarm_events.size() == 0:
-            self.alarm_events.insert('end', 'Todavía no hay avisos en este grupo.')
         banner = f'{live} de 7 cámaras con señal reciente'
         detections = self.alarm_state.grouped('detections')
         if self.detail is not None and detections:
@@ -1207,7 +1418,8 @@ class Viewer:
         if self.sequence_manager is not None:
             sequence_note = '\nSecuencias: 10 s previos / 15 s posteriores'
         metadata_status = ('\nHome: metadata_unavailable' if home_status.get('metadata') == 'metadata_unavailable' else '')
-        self.health.configure(text=f'{live}/7 con señal · {count} capturas\n{weather}{metadata_status}{sequence_note}\nAvisos del detector, sin confirmar.\n{capability_info()}')
+        phone_state = self.phone_notifier.snapshot()['state'] if self.phone_notifier is not None else 'Avisos móvil no disponibles'
+        self.health.configure(text=f'{live}/7 con señal · {count} capturas\n{weather}{metadata_status}{sequence_note}\n{phone_state}\nAvisos del detector, sin confirmar.\n{capability_info()}')
         if now - self.last_metrics >= 2:
             self.write_metrics(snapshots)
             self.last_metrics = now
@@ -1215,6 +1427,8 @@ class Viewer:
     def close(self):
         self.check_ui()
         self.closed = True
+        if self.phone_notifier is not None:
+            self.phone_notifier.close()
         for callback in self.pending_callbacks:
             try:
                 self.root.after_cancel(callback)

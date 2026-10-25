@@ -313,6 +313,7 @@ class BridgeBoundaryTests(unittest.TestCase):
         app.headers = {channel: Surface() for channel in viewer.CHANNELS}
         app.images = {channel: Surface() for channel in viewer.CHANNELS}
         app.detail, app.zones, app.photos, app.versions = None, {}, {}, {}
+        app.inspectors = []
         app.receive_captures, app.update_gallery = lambda now: None, lambda: None
         app.alarm_state, app.alarm_status = state, Surface()
         app.alarm_events, app.banner, app.health = Surface(), Surface(), Surface()
