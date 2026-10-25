@@ -4,6 +4,7 @@ import re
 import shutil
 import subprocess
 import sys
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,26 @@ URL_INTAKE_SCHEMA = (
     ROOT / "ops" / "ec2" / "controlled_url_intake.v1.schema.json"
 )
 NODE = shutil.which("node")
+
+
+class _InlineScriptParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.scripts = []
+        self._parts = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script":
+            self._parts = [] if "src" not in dict(attrs) else None
+
+    def handle_data(self, data):
+        if self._parts is not None:
+            self._parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self._parts is not None:
+            self.scripts.append("".join(self._parts))
+            self._parts = None
 
 
 FULL_PAGE_HARNESS = r'''
@@ -595,7 +616,10 @@ def test_operator_uses_only_controlled_url_intake_fetch():
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
 def test_full_public_operator_submit_never_fetches_a_supplied_url():
     html = _read(INDEX)
-    scripts = re.findall(r"<script>(.*?)</script>", html, re.DOTALL)
+    parser = _InlineScriptParser()
+    parser.feed(html)
+    parser.close()
+    scripts = parser.scripts
     assert len(scripts) == 1
     smoke = (
         f"const SOURCE = {json.dumps(scripts[0])};\n"
@@ -3530,7 +3554,10 @@ def test_operator_memory_and_sharing_controls_remain_compatible():
     assert "setMemoryActionsEnabled" in html
     assert "buildHumanShareText" in html
     assert "buildCleanOperatorUrl" in html
-    assert "https://wa.me/" in html
+    assert (
+        'window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '
+        '"_blank", "noopener,noreferrer");'
+    ) in html
     assert "localStorage" not in re.search(
         r"async function shareMemoryLink\(\) \{(.*?)\n    \}", html, re.DOTALL
     ).group(1)
