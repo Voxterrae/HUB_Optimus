@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+if os.name != "posix":
+    pytest.skip("EC2 legacy-adoption tests require POSIX shell semantics", allow_module_level=True)
 
 ROOT = Path(__file__).resolve().parents[1]
 ADOPT = ROOT / "ops" / "ec2" / "adopt-legacy-current.sh"

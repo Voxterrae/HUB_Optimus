@@ -4,6 +4,33 @@
   const contract = root.HUB_DEVICE_BRIDGE_CONTRACT;
   const deny = code => ({simulated: true, state: "denied", code});
   const clone = value => JSON.parse(JSON.stringify(value));
+  // Optional cards project validated fixture data; older documents keep working.
+  function renderHealth(document, result, pending = false) {
+    const fields = {windows: "Windows", powershell7: "PowerShell 7", node: "Node"};
+    const labels = {available: "Disponible", missing: "Ausente", unverified: "Sin verificar"};
+    const completed = result && result.state === "completed";
+    const review = [];
+    for (const [field, name] of Object.entries(fields)) {
+      const entry = completed ? result.data[field] : null;
+      const state = document.getElementById("fixture-health-" + field + "-state");
+      const version = document.getElementById("fixture-health-" + field + "-version");
+      if (state) {
+        state.textContent = entry ? labels[entry.state] : pending ? "Pendiente" : "No comprobado";
+        state.setAttribute("data-state", entry ? entry.state : pending ? "pending" : "unchecked");
+      }
+      if (version) version.textContent = entry && entry.state === "available" ? entry.version : "";
+      if (entry && entry.state !== "available") review.push(name);
+    }
+    const summary = document.getElementById("fixture-health-summary");
+    if (summary) {
+      summary.textContent = completed ? (review.length ?
+        "Diagnóstico de la simulación: revisa " + review.join(", ") + "." :
+        "Diagnóstico de la simulación: los tres componentes están disponibles.") : pending ?
+        "Comprobación de la simulación pendiente." : result ?
+        "Diagnóstico no disponible: la simulación fue denegada." :
+        "Sin resultados. Inicia y completa una simulación.";
+    }
+  }
   function createFixtureRun(request, scenarioId, context) {
     const checked = contract.validateRequest(request);
     const snapshot = checked.ok ? checked.request : null;
@@ -30,6 +57,7 @@
     document.getElementById("fixture-status").textContent =
       result.state === "completed" ? "Simulación completada" : "Simulación denegada: " + result.code;
     document.getElementById("fixture-export").disabled = result.state !== "completed";
+    renderHealth(document, result);
     return result;
   }
   function mountFixtureUI(document, suppliedContract, fixtures) {
@@ -46,6 +74,7 @@
       controls["fixture-export"].disabled = true;
       controls["fixture-complete"].disabled = true;
       controls["fixture-cancel"].disabled = true;
+      renderHealth(document, null);
     }
     function select() {
       clear();
@@ -74,6 +103,7 @@
       pending = createFixtureRun(fixture.request, id,
         {nowMs: 1000, startedAtMs: 1000, cancelled: false, usedApprovalIds: new Set()});
       controls["fixture-status"].textContent = "Pendiente: completa o cancela la simulación";
+      renderHealth(document, null, true);
       controls["fixture-complete"].disabled = false;
       controls["fixture-cancel"].disabled = false;
     });
