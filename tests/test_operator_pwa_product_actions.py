@@ -3878,7 +3878,7 @@ async function snapshot(response) {
     )
     completed = subprocess.run(
         [NODE, "-", str(OPERATOR_I18N)],
-        input=smoke, text=True, capture_output=True, check=False,
+        input=smoke, text=True, encoding="utf-8", capture_output=True, check=False,
     )
     assert completed.returncode == 0, completed.stderr
     result = json.loads(completed.stdout)
