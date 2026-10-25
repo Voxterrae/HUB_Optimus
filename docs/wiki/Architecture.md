@@ -1,8 +1,8 @@
 # Arquitectura
 
 > **Estado:** mapa orientativo; no acredita un despliegue.
-> **Última revisión:** 2026-08-02.
-> **Base auditada:** [`c399c94`](https://github.com/Voxterrae/HUB_Optimus/commit/c399c94e098058a723482001811c7d8491ebbd5e).
+> **Última revisión documental:** 2026-10-16.
+> **Base documental:** [`23ea5a6`](https://github.com/Voxterrae/HUB_Optimus/commit/23ea5a6677c07dcefab60f70c6b1641a3541f0b0).
 
 ## Superficies principales
 
@@ -15,7 +15,7 @@
 - **EC2:** entorno operativo privado/local, sin exposición pública acreditada.
 - **Governance:** reglas humanas de revisión, cambios y responsabilidad.
 
-## Flujo público actual
+## Flujo público documentado
 
 `GitHub main → Pages workflow → huboptimus.dev → Operator manual/local`
 
@@ -23,12 +23,12 @@ El navegador puede preparar borradores con el texto completo pegado. Una URL
 opcional permanece como atribución local no verificada y no provoca una
 petición de red. No existe una API pública de análisis certificada.
 
-## Topología privada propuesta
+## Topología privada integrada en código
 
 `NGINX :443 → oauth2-proxy/Entra → gateway limitado → hub-api localhost`
 
 Redis, oauth2-proxy, gateway y `hub-api` deben permanecer en loopback. Esta
-topología pertenece a la [PR #1844](https://github.com/Voxterrae/HUB_Optimus/pull/1844)
+topología está integrada mediante la [PR #1844](https://github.com/Voxterrae/HUB_Optimus/pull/1844)
 y todavía no está acreditada como live.
 
 ## Límites
@@ -41,6 +41,6 @@ y todavía no está acreditada como live.
 
 ## Fuentes
 
-- [Mapa completo de arquitectura](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/docs/architecture/system_architecture_map.md)
-- [Contrato de runtime](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/docs/architecture/runtime_contract.md)
-- [Jerarquía de fuentes](https://github.com/Voxterrae/HUB_Optimus/blob/c399c94e098058a723482001811c7d8491ebbd5e/docs/context/SOURCE_OF_TRUTH.md)
+- [Mapa completo de arquitectura](https://github.com/Voxterrae/HUB_Optimus/blob/23ea5a6677c07dcefab60f70c6b1641a3541f0b0/docs/architecture/system_architecture_map.md)
+- [Contrato de runtime](https://github.com/Voxterrae/HUB_Optimus/blob/23ea5a6677c07dcefab60f70c6b1641a3541f0b0/docs/architecture/runtime_contract.md)
+- [Jerarquía de fuentes](https://github.com/Voxterrae/HUB_Optimus/blob/23ea5a6677c07dcefab60f70c6b1641a3541f0b0/docs/context/SOURCE_OF_TRUTH.md)
