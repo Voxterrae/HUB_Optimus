@@ -184,7 +184,7 @@ DOM_ADAPTER = r"""
 const ui=context.HUB_DEVICE_BRIDGE_UI;
 assert.ok(ui,"Offline UI API must exist");
 assert.ok(Object.isFrozen(ui));
-function makeDocument() {
+function makeDocument(withHealth=false) {
   const elements={}; const downloads=[];
   const makeElement=id=>({
     id,value:"approved",disabled:false,handlers:{},_text:"",
@@ -197,6 +197,15 @@ function makeDocument() {
   });
   for(const id of ["fixture-scenario","fixture-run","fixture-complete","fixture-cancel",
       "fixture-export","fixture-status","fixture-result","fixture-request"]) elements[id]=makeElement(id);
+  if(withHealth) {
+    elements["fixture-health-summary"]=makeElement("fixture-health-summary");
+    for(const field of ["windows","powershell7","node"]) {
+      for(const part of ["state","version"]) {
+        const id="fixture-health-"+field+"-"+part;
+        elements[id]=makeElement(id);
+      }
+    }
+  }
   return {
     elements,downloads,getElementById:id=>elements[id],
     createElement(tag){
@@ -205,6 +214,41 @@ function makeDocument() {
     },
     body:{appendChild(){}}
   };
+}
+"""
+
+
+HEALTH_ASSERTIONS = r"""
+const healthFields=["windows","powershell7","node"];
+const healthLabels={windows:"Windows",powershell7:"PowerShell 7",node:"Node"};
+function assertHealthNoData(doc,state) {
+  for(const field of healthFields) {
+    assert.equal(doc.elements["fixture-health-"+field+"-state"].textContent,state,
+      field+" must show the current simulation state");
+    assert.equal(doc.elements["fixture-health-"+field+"-version"].textContent,"",
+      field+" must release the previous version");
+  }
+  assert.match(doc.elements["fixture-health-summary"].textContent,/simulaci[oó]n/i,
+    "Health summary must identify synthetic evidence");
+}
+function assertHealthMatches(doc,result) {
+  assert.equal(result.state,"completed");
+  const labels={available:"Disponible",missing:"Ausente",unverified:"Sin verificar"};
+  for(const field of healthFields) {
+    const datum=result.data[field];
+    assert.equal(doc.elements["fixture-health-"+field+"-state"].textContent,labels[datum.state],
+      field+" must project its own validated result state");
+    assert.equal(doc.elements["fixture-health-"+field+"-version"].textContent,
+      datum.state==="available" ? datum.version : "",
+      field+" must project only its own available version");
+    if(datum.state!=="available") {
+      assert.ok(doc.elements["fixture-health-summary"].textContent.includes(healthLabels[field]),
+        field+" must be identified for review");
+      assert.match(doc.elements["fixture-health-summary"].textContent,/revis/i);
+    }
+  }
+  assert.match(doc.elements["fixture-health-summary"].textContent,/simulaci[oó]n/i,
+    "Completed health summary must remain synthetic");
 }
 """
 
@@ -340,4 +384,205 @@ doc.elements["fixture-result"].textContent="x".repeat(4097);
 doc.elements["fixture-export"].click();assert.equal(blobs.length,1);
 doc.elements["fixture-result"].textContent=JSON.stringify({...exported,simulated:false});
 doc.elements["fixture-export"].click();assert.equal(blobs.length,1);
+""", ui=True)
+
+
+def test_health_cards_release_no_versions_before_explicit_completion():
+    run_js(DOM_ADAPTER + HEALTH_ASSERTIONS + r"""
+const doc=makeDocument(true);
+ui.mountFixtureUI(doc,contract,fixtures);
+assertHealthNoData(doc,"No comprobado");
+doc.elements["fixture-run"].click();
+assertHealthNoData(doc,"Pendiente");
+assert.equal(doc.elements["fixture-result"].textContent,"");
+assert.equal(doc.elements["fixture-export"].disabled,true);
+assert.equal(doc.downloads.length,0);
+""", ui=True)
+
+
+@pytest.mark.parametrize("scenario", ["approved", "missing_runtime", "unverified_runtime"])
+def test_completed_health_cards_match_the_displayed_fixture(scenario):
+    run_js(DOM_ADAPTER + HEALTH_ASSERTIONS + "const scenarioId=" + json.dumps(scenario) + r""";
+const doc=makeDocument(true);
+ui.mountFixtureUI(doc,contract,fixtures);
+doc.elements["fixture-scenario"].value=scenarioId;
+doc.elements["fixture-scenario"].handlers.change();
+doc.elements["fixture-run"].click();
+doc.elements["fixture-complete"].click();
+const displayed=JSON.parse(doc.elements["fixture-result"].textContent);
+assertHealthMatches(doc,displayed);
+assert.deepEqual(displayed,clone(contract.evaluateFixture(request(),scenarioId,fresh())));
+assert.equal(doc.elements["fixture-export"].disabled,false);
+assert.equal(doc.downloads.length,0);
+denied(contract.requestRealExecution(request()),"EXECUTOR_DISABLED");
+""", ui=True)
+
+
+@pytest.mark.parametrize("field", ["windows", "powershell7", "node"])
+@pytest.mark.parametrize("state", ["available", "missing", "unverified"])
+def test_health_renderer_projects_each_field_state(field, state):
+    run_js(DOM_ADAPTER + HEALTH_ASSERTIONS + "const field=" + json.dumps(field) +
+           "; const state=" + json.dumps(state) + r""";
+const doc=makeDocument(true);
+const result=clone(contract.evaluateFixture(request(),"approved",fresh()));
+result.data[field]=state==="available" ? {state,version:"literal-"+field} : {state};
+assert.equal(contract.validateResult(result).ok,true);
+ui.renderFixtureResult(doc,result);
+assertHealthMatches(doc,result);
+assert.equal(doc.elements["fixture-result"].textContent,JSON.stringify(result,null,2));
+""", ui=True)
+
+
+@pytest.mark.parametrize(("scenario", "code"), [
+    ("missing_approval", "APPROVAL_MISSING"), ("expired", "APPROVAL_EXPIRED"),
+    ("invalid_signature", "APPROVAL_INVALID"), ("changed_request", "REQUEST_CHANGED"),
+    ("changed_target", "TARGET_CHANGED"), ("replayed", "APPROVAL_REPLAYED"),
+    ("cancelled", "CANCELLED"), ("timeout", "TIMED_OUT"),
+])
+def test_health_denials_clear_previously_completed_versions(scenario, code):
+    run_js(DOM_ADAPTER + HEALTH_ASSERTIONS + "const scenarioId=" + json.dumps(scenario) +
+           "; const code=" + json.dumps(code) + r""";
+const doc=makeDocument(true);
+ui.mountFixtureUI(doc,contract,fixtures);
+doc.elements["fixture-run"].click(); doc.elements["fixture-complete"].click();
+assert.equal(JSON.parse(doc.elements["fixture-result"].textContent).state,"completed");
+// Direct denial rendering must clear cards even without a selection reset.
+ui.renderFixtureResult(doc,contract.evaluateFixture(request(),scenarioId,fresh()));
+denied(JSON.parse(doc.elements["fixture-result"].textContent),code);
+assertHealthNoData(doc,"No comprobado");
+assert.equal(doc.elements["fixture-export"].disabled,true);
+doc.elements["fixture-export"].click();
+assert.equal(doc.downloads.length,0);
+""", ui=True)
+
+
+@pytest.mark.parametrize("transition", ["restart", "change", "unknown", "cancel"])
+def test_health_transitions_cannot_retain_a_previous_inventory(transition):
+    run_js(DOM_ADAPTER + HEALTH_ASSERTIONS + "const transition=" + json.dumps(transition) + r""";
+const doc=makeDocument(true);
+ui.mountFixtureUI(doc,contract,fixtures);
+doc.elements["fixture-run"].click(); doc.elements["fixture-complete"].click();
+assert.equal(JSON.parse(doc.elements["fixture-result"].textContent).state,"completed");
+if(transition==="change" || transition==="unknown") {
+  doc.elements["fixture-scenario"].value=transition==="change" ? "missing_runtime" : "unknown";
+  doc.elements["fixture-scenario"].handlers.change();
+  assertHealthNoData(doc,"No comprobado");
+  assert.equal(doc.elements["fixture-result"].textContent,"");
+  if(transition==="unknown") assert.equal(doc.elements["fixture-run"].disabled,true);
+} else {
+  doc.elements["fixture-run"].click();
+  assertHealthNoData(doc,"Pendiente");
+  if(transition==="cancel") {
+    doc.elements["fixture-cancel"].click();
+    assertHealthNoData(doc,"No comprobado");
+    const cancelled=doc.elements["fixture-result"].textContent;
+    denied(JSON.parse(cancelled),"CANCELLED");
+    doc.elements["fixture-complete"].click();
+    assert.equal(doc.elements["fixture-result"].textContent,cancelled);
+    assertHealthNoData(doc,"No comprobado");
+  }
+}
+assert.equal(doc.elements["fixture-export"].disabled,true);
+doc.elements["fixture-export"].click(); assert.equal(doc.downloads.length,0);
+""", ui=True)
+
+
+@pytest.mark.parametrize("version", ["", "😀" * 128, "<img src=x onerror=alert(1)>"])
+def test_health_versions_remain_literal_available_values(version):
+    run_js(DOM_ADAPTER + HEALTH_ASSERTIONS + "const version=" + json.dumps(version) + r""";
+const doc=makeDocument(true);
+for(const field of healthFields) {
+  const result=clone(contract.evaluateFixture(request(),"approved",fresh()));
+  result.data[field].version=version;
+  assert.equal(contract.validateResult(result).ok,true);
+  ui.renderFixtureResult(doc,result);
+  assertHealthMatches(doc,result);
+  assert.equal(JSON.parse(doc.elements["fixture-result"].textContent).data[field].version,version);
+}
+""", ui=True)
+
+
+@pytest.mark.parametrize("invalidity", ["extra", "real", "oversized", "unknown_field"])
+def test_health_invalid_results_clear_every_card(invalidity):
+    run_js(DOM_ADAPTER + HEALTH_ASSERTIONS + "const invalidity=" + json.dumps(invalidity) + r""";
+const doc=makeDocument(true);
+const valid=clone(contract.evaluateFixture(request(),"approved",fresh()));
+ui.renderFixtureResult(doc,valid);
+const bad=clone(valid);
+if(invalidity==="extra") bad.checkedAt="invented";
+if(invalidity==="real") bad.simulated=false;
+if(invalidity==="oversized") bad.data.node.version="é".repeat(2200);
+if(invalidity==="unknown_field") bad.data.disk={state:"available",version:"fictional"};
+const rendered=ui.renderFixtureResult(doc,bad);
+denied(rendered,invalidity==="oversized" ? "RESULT_TOO_LARGE" : "INVALID_RESULT");
+assertHealthNoData(doc,"No comprobado");
+assert.equal(doc.elements["fixture-export"].disabled,true);
+assert.equal(Object.hasOwn(JSON.parse(doc.elements["fixture-result"].textContent),"data"),false);
+""", ui=True)
+
+
+@pytest.mark.parametrize("scenario", ["approved", "missing_runtime", "unverified_runtime"])
+def test_health_export_remains_the_exact_closed_displayed_result(scenario):
+    run_js(DOM_ADAPTER + HEALTH_ASSERTIONS + "const scenarioId=" + json.dumps(scenario) + r""";
+const blobs=[];
+context.URL.createObjectURL=blob=>{blobs.push(blob);return "blob:fixture";};
+const doc=makeDocument(true);
+ui.mountFixtureUI(doc,contract,fixtures);
+doc.elements["fixture-scenario"].value=scenarioId;
+doc.elements["fixture-scenario"].handlers.change();
+doc.elements["fixture-run"].click(); doc.elements["fixture-complete"].click();
+const displayed=doc.elements["fixture-result"].textContent;
+const result=JSON.parse(displayed);
+assertHealthMatches(doc,result);
+doc.elements["fixture-export"].click();
+assert.equal(blobs.length,1);
+assert.equal(blobs[0].parts.join(""),displayed);
+assert.deepEqual(result,clone(contract.evaluateFixture(request(),scenarioId,fresh())));
+assert.deepEqual(Object.keys(result).sort(),["data","simulated","state"]);
+assert.deepEqual(Object.keys(result.data).sort(),["node","powershell7","windows"]);
+assert.equal(result.simulated,true);
+assert.ok(new TextEncoder().encode(displayed).length<=4096);
+doc.elements["fixture-result"].textContent=JSON.stringify({...result,checkedAt:"invented"});
+doc.elements["fixture-export"].click(); assert.equal(blobs.length,1);
+""", ui=True)
+
+
+def test_health_all_scenarios_remain_synthetic_without_ambient_capabilities():
+    run_js(DOM_ADAPTER + HEALTH_ASSERTIONS + r"""
+for(const scenarioId of fixtures.scenarioIds) {
+  const doc=makeDocument(true);
+  ui.mountFixtureUI(doc,contract,fixtures);
+  doc.elements["fixture-scenario"].value=scenarioId;
+  doc.elements["fixture-scenario"].handlers.change();
+  doc.elements["fixture-run"].click(); doc.elements["fixture-complete"].click();
+  const displayed=JSON.parse(doc.elements["fixture-result"].textContent);
+  assert.equal(displayed.simulated,true);
+  assert.equal(contract.validateResult(displayed).ok,true);
+  if(displayed.state==="completed") assertHealthMatches(doc,displayed);
+  else {
+    assertHealthNoData(doc,"No comprobado");
+    assert.equal(doc.elements["fixture-export"].disabled,true);
+  }
+  doc.elements["fixture-export"].click();
+  assert.equal(doc.downloads.length,displayed.state==="completed" ? 1 : 0);
+  denied(contract.requestRealExecution(request()),"EXECUTOR_DISABLED");
+}
+""", ui=True)
+
+
+def test_health_enhancement_preserves_legacy_documents_and_public_ui_api():
+    run_js(DOM_ADAPTER + r"""
+const globalsBefore=Object.keys(context).sort();
+assert.deepEqual(Object.keys(ui).sort(),["createFixtureRun","mountFixtureUI","renderFixtureResult"]);
+const doc=makeDocument();
+assert.equal(doc.getElementById("fixture-health-summary"),undefined);
+ui.mountFixtureUI(doc,contract,fixtures);
+doc.elements["fixture-run"].click(); doc.elements["fixture-complete"].click();
+const expected=clone(contract.evaluateFixture(request(),"approved",fresh()));
+assert.deepEqual(JSON.parse(doc.elements["fixture-result"].textContent),expected);
+doc.elements["fixture-export"].click(); assert.equal(doc.downloads.length,1);
+ui.renderFixtureResult(doc,{simulated:true,state:"denied",code:"CANCELLED"});
+assert.equal(doc.elements["fixture-export"].disabled,true);
+assert.deepEqual(Object.keys(context).sort(),globalsBefore);
+assert.ok(Object.isFrozen(ui));
 """, ui=True)

@@ -326,6 +326,24 @@
         "docs/rfc/whatsapp_claim_intake_adapter_boundary.md"
       ],
       "note": "No bot, webhook, connector, automated messaging intake, or provider integration is implemented."
+    },
+    {
+      "id": "ai-access-matrix",
+      "path": "docs/rfc/ai_access_matrix.md",
+      "title": "AI Access Matrix",
+      "lifecycle": "Draft",
+      "proposal_issue": 1584,
+      "record_pr": null,
+      "decision_pr": null,
+      "implementation_prs": [],
+      "owner": null,
+      "ratifier": null,
+      "evidence_paths": [
+        "docs/rfc/ai_access_matrix.md",
+        "docs/governance/EXTERNAL_AI_REVIEW_PROTOCOL.md",
+        "docs/context/OWNER_AUTHORITY_HANDOFF.md"
+      ],
+      "note": "Documentation proposal prepared against main@23ea5a6677c07dcefab60f70c6b1641a3541f0b0 on 2026-10-15 under #1584. No ratification, provider connection, automated integration, new tool permission, or implementation is recorded. The historical registry baseline and existing decision records are not re-certified by this added proposal."
     }
   ]
 }

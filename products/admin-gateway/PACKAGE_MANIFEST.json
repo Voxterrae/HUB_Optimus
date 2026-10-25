@@ -190,8 +190,8 @@
     },
     {
       "path": "scripts/apply-dataverse-schema.py",
-      "sha256": "1c588127cb1a3d3ab527c9301ed67ea397fcc6de076eb020a56c5a2c427e8c89",
-      "size": 86782
+      "sha256": "959def15c78209cc511fcc839b07c6c6b0eb86787542ad0d189ca7beb743de64",
+      "size": 88007
     },
     {
       "path": "scripts/build-dataverse-schema-plan.py",
@@ -285,8 +285,8 @@
     },
     {
       "path": "tests/test_dataverse_schema_applicator.py",
-      "sha256": "cf3b3ebfa8d982d9030869932662e90886b7250f3ba155682f6b7bb59f3b462c",
-      "size": 49148
+      "sha256": "890a08a1f37051404f49aca92f931473e7ed8dfea4c41580de28ebd4158ea1fc",
+      "size": 49997
     },
     {
       "path": "tests/test_dataverse_schema_contract.py",
