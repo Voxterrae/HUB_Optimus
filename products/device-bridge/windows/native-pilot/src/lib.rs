@@ -1,4 +1,5 @@
-//! Experimental Windows software CNG primitive; no enrollment or release authority.
+//! Experimental Windows CNG and unregistered HTTP.sys resources; no enrollment or release authority.
 #![cfg(windows)]
 
+pub mod approval_https;
 pub mod identity;
