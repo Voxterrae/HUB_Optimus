@@ -265,7 +265,94 @@ from the child allow-list. Native errors include 1347 (anonymous token), 234
 native statuses. The new peer cases create no CNG keys. No real revert failure,
 non-completing driver, primary-token replacement or PID reuse was induced.
 
+## Private file-security descriptor prerequisite
+
+`security_descriptor` is private and dormant. It inspects an already-open
+file/directory handle with `GetSecurityInfo`, copies the owner/DACL snapshot,
+and compares exact metadata expectations. It opens no path and changes no
+filesystem object. A match produces no protected root, authenticated service
+identity, creation receipt, owned key, store, enrollment or release authority.
+The observation can become stale immediately; it is not an effective-access
+calculation or an isolation guarantee.
+
+The application copy/parser accepts at most 64 KiB. `GetSecurityInfo` allocates
+its buffer before that check, so the bound does not limit Windows' own
+allocation. Explicit `LocalFree` cleanup preserves a primary failure and any
+cleanup failure; Drop is only best effort. The parser reads bounded byte slices,
+without typed unaligned dereferences or Windows calls on arbitrary test bytes.
+It supports revision-1 self-relative descriptors, revision-2/4 ACLs and standard
+allow ACEs containing revision-1 SIDs with at most 15 subauthorities. Offsets,
+counts, sizes, overlap and supported layouts are checked. Absent/NULL/unprotected
+DACLs, unexpected owners, ACE flags including inheritance, unsupported ACE
+types, and missing/additional/changed grants deny. Equivalent allow-ACE ordering
+matches. Duplicate or split grants to the same SID deliberately deny instead of
+being combined; this is a conservative accepted-shape rule, not a claim of full
+Windows access-check equivalence.
+
+The candidate root **metadata** rule expects SYSTEM ownership, SYSTEM full
+access `0x001f01ff` and an expected service grant of `0x001200ab`: read control,
+synchronize, list/read data, add file/write data, read extended attributes,
+traverse/execute and read attributes. It excludes add-subdirectory, root delete,
+delete-child, write attributes, write DACL and write owner. Any future need for
+broader rights requires review. The expected service input must have the
+`S-1-5-80` prefix plus five DWORD subauthorities; SYSTEM, Everyone and All Services
+are rejected. This is structural validation only: another fabricated service SID
+has the same shape. Raw SID shape or equality does not authenticate the virtual
+service account or prove that the selected service is running.
+The `ADD_FILE` bit is also `FILE_WRITE_DATA`; excluding `WRITE_ATTRIBUTES` alone
+does **not** exclude reparse mutation.
+
+Publication remains blocked. A bounded native probe on this host retained a
+directory handle with real read-data access and no write/delete sharing, then
+successfully opened that same directory with only `FILE_WRITE_ATTRIBUTES` and
+set an owned junction. Its file identity stayed unchanged. Both fresh empty
+fixtures were deleted through retained identity-checked handles and verified
+absent. This matches Microsoft's
+[sharing-mode exception for attribute access](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew)
+and [reparse mutation access rules](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4aeefef8-92c3-4abc-af7a-a610caf8a165).
+That short separate probe is not a credited Rust-suite test. No sharing-only
+ancestor guard, traversal, staging, rename or publication API is implemented.
+Trusted ancestor protection, any handle-relative publication design and its
+native validation remain separate gates.
+
+New descriptor tests use exclusively created zero-content local NTFS files and
+explicit fixture ACLs. Test-only fixture selection is not a production root
+selector. Cleanup uses each retained creation handle, verifies volume/file ID,
+deletes that exact object, closes the handle and checks the exact path is absent.
+No recursive cleanup or persistent key creation is added. A user-owned fixture
+matching its test policy must fail the SYSTEM-owner rule. The current-token
+attribute-write probe and the owner's ability to change its own DACL illustrate
+why metadata equality does not prove distinct-principal isolation.
+The fixture ACL includes `SYNCHRONIZE`, so a synchronous open's implicit request
+for that right cannot masquerade as an attribute-write denial. A separate empty
+regular-file control using `0x001200ab` allows a `FILE_WRITE_DATA` open, without
+writing any content; it demonstrates the shared bit, not safe directory mutation.
+Windows normalized duplicate allow entries and removed file inheritance flags
+in the native fixtures. Tests inspect the resulting shape; raw-parser cases
+separately establish duplicate and flag rejection without claiming those bytes
+were retained by NTFS. No OS buffer-free failure is deliberately induced.
+
+Descriptor coverage consists of 16 cases: 11 native file cases and five
+deterministic parser/policy/error-accounting cases. The native cases include
+equivalent ACE ordering, user-owner versus SYSTEM-owner rejection, null and
+unprotected DACLs, changed/broad grants, a stored unsupported deny ACE, the
+normalization controls, attribute denial followed by an owner DACL change,
+the write-data-bit control, and `GetSecurityInfo` denial without `READ_CONTROL`.
+The full crate expects 45 active cases and the existing one ignored subprocess
+fixture entry; that entry is exercised explicitly by its native parent tests.
+The existing guarded launcher, capacity reserves, raw-output capture and
+already-running HTTP prerequisite remain mandatory on this host.
+
+Actual SYSTEM-owned root provisioning, service identity/profile, virtual-account
+DPAPI/KSP persistence, distinct-principal denial, immutable sealing,
+antirollback/freshness, crash/power-loss durability, protected reference recovery,
+enrollment, T6/T7 and HTTP.sys/Schannel TLS remain open gates.
+
 ## Rollback
+
+For the descriptor increment, revert only `src/security_descriptor.rs`,
+`src/security_descriptor/tests.rs`, its registration in `src/lib.rs` and this
+README section. It creates no persistent application resources or authority.
 
 For this bootstrap increment, revert only its five reviewed paths: `Cargo.toml`,
 `src/lib.rs`, `src/bootstrap_peer.rs`, `src/bootstrap_peer/tests.rs` and this README.
