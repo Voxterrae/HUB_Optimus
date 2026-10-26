@@ -36,17 +36,18 @@ owned persistent object without an application recovery path.
 
 There is no `EnrolledBrokerKey`, `VerifiedEnrollment`, trusted pending/store
 producer, request-signing authority, collector, durable replay/admission/release,
-listener, certificate, network connection or production channel activation.
-Protected principal/token and ACL/bootstrap, validated enrollment, T6 durable
+network listener, certificate, network connection or production channel activation.
+Protected principal/token and production ACL/bootstrap, validated enrollment, T6 durable
 storage and T7 collection remain separate gates. The existing protocol, result,
 fixtures and their dependencies are unchanged. TLS and chat-to-Windows MCP remain
 unavailable.
 
 ## Dependency and rights boundary
 
-The target-Windows dependency is exactly `windows-sys 0.61.2`, with only
-`Win32_Foundation`, `Win32_Security_Cryptography` and
-`Win32_Networking_HttpServer`. The unchanged lock contains two registry
+The target-Windows dependency is exactly `windows-sys 0.61.2`, with
+`Win32_Foundation`, `Win32_Security_Cryptography`, `Win32_Networking_HttpServer`,
+`Win32_Security_Authorization`, `Win32_Storage_FileSystem`, `Win32_System_IO`,
+`Win32_System_Pipes` and `Win32_System_Threading`. The unchanged lock contains two registry
 packages: `windows-sys 0.61.2` and `windows-link 0.2.1`; their complete registry
 checksums are recorded in `Cargo.lock`. No new backend, DER codec or Android
 component is included. Original contributions follow the root
@@ -165,10 +166,110 @@ is no claim that every private certificate must always fail. See the
 [HTTP_SSL_CLIENT_CERT_INFO documentation](https://learn.microsoft.com/en-us/windows/win32/api/http/ns-http-http_ssl_client_cert_info)
 and the existing [T5 proposal](../../common/enrolled-key/proposal/README.md).
 
+## Private process-bound bootstrap prerequisite
+
+`bootstrap_peer` is private and dormant. Its module-level `dead_code` allowance
+is limited to this prerequisite, which has no production caller or public API.
+It neither constructs nor imports a broker key, enrollment, stored reference,
+receipt, or admission/release authority. The existing CNG and HTTP.sys modules
+and external contracts remain independent.
+
+A trusted launcher must already own each expected peer's process handle. The
+primitive duplicates that handle down to query-limited-information plus
+synchronize rights, clears inheritance, and retains the resulting handle and a
+query-only primary-token handle. It captures the kernel PID, creation time,
+token ID, user SID, logon/group SIDs and attributes, authentication LUID,
+session, restricted SIDs, privileges, integrity, elevation, app-container and
+mandatory-policy context. Terminal checks re-query both the held primary token
+and the process's current primary token. Group and privilege lists are compared
+directly; the ever-filtered `TokenHasRestrictions` flag is not treated as
+`IsTokenRestricted` or as an automatic rejection of an expected UAC context.
+This host returns a one-byte `TokenHasRestrictions` value despite the documented
+DWORD layout. The query uses initialized DWORD storage and permits only that
+observed byte layout or the documented four bytes for this one class; every
+other supported scalar requires exactly four bytes. Pipe-supplied identities never select
+or open an expected process. Handles stay held throughout the exchange.
+
+The server creates a random local pipe name with 256 random bits, one message
+instance, `FILE_FLAG_FIRST_PIPE_INSTANCE`, `PIPE_REJECT_REMOTE_CLIENTS` and
+overlapped I/O. Its explicit protected DACL grants only the expected logon SID
+the individual client mask `0x00120183`. That mask excludes bit `0x4`,
+`FILE_CREATE_PIPE_INSTANCE`; no `FILE_GENERIC_WRITE` grant is made. All endpoint,
+event and retained process/token handles are noninheritable. The client opens
+with `SECURITY_SQOS_PRESENT | SECURITY_IDENTIFICATION` and verifies the kernel
+server PID against its independently held expected server before its first byte.
+The server compares the kernel client PID with its held expected client.
+
+Every message is exactly 96 bytes: magic `HUBBSP01` (8 bytes), version `1`
+(1 byte), role (1 byte), reserved zero (6 bytes), ceremony ID (16 bytes), server
+nonce (32 bytes), and client nonce (32 bytes). Roles are hello `1`, challenge `2`,
+finish `3`, terminal `4`. The ceremony ID is conveyed by the trusted launcher;
+each side draws its own fresh nonce from the Windows system RNG. Hello alone
+uses an all-zero server nonce. Every other field, role and correlation is exact;
+zero nonces, oversized/truncated messages and a replayed hello as finish deny.
+There are no keys, secrets, filenames, certificates or receipt payloads.
+Consuming endpoints support one exchange and return a private terminal transcript.
+This transcript is not creation provenance or durable replay/admission evidence.
+
+On one fresh dedicated server thread, each exact hello and final inbound frame
+is immediately followed by `ImpersonateNamedPipeClient`, a real thread-token
+query, exact identification-level/context comparison with independently captured
+primary evidence, and `RevertToSelf`. A zero `TokenIsAppContainer` value on an
+identification token is not an independent app-container exclusion proof; this
+primitive relies on the held primary context and the other message checks.
+The native function binds the last message
+read on that thread. Preexisting impersonation denies without clearing it.
+A failed revert terminates the hosting process. See Microsoft's
+[message impersonation documentation](https://learn.microsoft.com/en-us/windows/win32/api/namedpipeapi/nf-namedpipeapi-impersonatenamedpipeclient).
+
+The end-to-end deadline must be positive and at most ten seconds. Overlapped
+timeouts request cancellation and observe completion before releasing the
+buffer, event or `OVERLAPPED`; cancellation alone is insufficient. A canceled
+operation has an additional bounded one-second drain. If completion cannot be
+proven within it, the hosting process terminates with the buffers still alive.
+No thread is detached. See Microsoft's
+[cancellation lifetime requirements](https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex).
+
+The native fixture is a trusted parent/child launch under the same user/logon,
+with an explicit handle-inheritance allow-list. Its process binding checks do
+not prove distinct-principal isolation, real PID reuse, service readiness, a
+protected broker principal, or protection against administrator/same-user code
+with process-modification rights. Production launch, protected principal and
+ACL bootstrap, authority construction, enrollment, T6 storage, T7 collection,
+and HTTP.sys/Schannel TLS remain separate approved-spec gates. No service,
+account/profile, permanent root, URL, network listener, certificate, trust,
+firewall or VPN is provisioned by this module or its tests.
+
+On 2026-10-26 in the Windows GNU environment above, the targeted bootstrap suite
+passed 14 active cases: 13 native behavior cases and one deterministic frame
+policy case. One subprocess fixture entry is intentionally ignored by the main
+harness and invoked explicitly with `--ignored --exact` by the native parent
+cases; it is not counted as a passing security case. The complete crate suite
+passed 29 active cases with that same one ignored fixture entry, including the
+15 existing CNG/HTTP.sys cases. Clippy with warnings denied and format check passed. Native output
+was captured explicitly, hashed before decoding and checked for the exact counts;
+the full suite observed HTTP already `Running` before and after launch.
+
+The tests cover a held parent/child exchange, a different same-SID client,
+substituted server rejection before any hello, a dead held expected process and
+live replacement, anonymous identification denial, privilege-only filtering and
+an additional real restricting logon SID. Both altered-token cases reach the
+server's actual last-message context comparison and require its specific denial.
+They also cover malformed hello/final/challenge fields, oversized/truncated input,
+replayed hello, second connection and second server instance rejection, bounded
+connect/read cancellation, disconnect and peer exit, exact preservation of a
+preexisting impersonation token, and an inheritable event deliberately omitted
+from the child allow-list. Native errors include 1347 (anonymous token), 234
+(overlong message), 5 (second instance), 995 (canceled operation after drain) and
+109 (broken pipe); frame/context denials are application policy, not fabricated
+native statuses. The new peer cases create no CNG keys. No real revert failure,
+non-completing driver, primary-token replacement or PID reuse was induced.
+
 ## Rollback
 
-For this resource increment, revert only its four reviewed paths: `Cargo.toml`,
-`src/lib.rs`, `src/approval_https.rs` and this README. After protected
+For this bootstrap increment, revert only its five reviewed paths: `Cargo.toml`,
+`src/lib.rs`, `src/bootstrap_peer.rs`, `src/bootstrap_peer/tests.rs` and this README.
+The HTTP.sys foundation remains independent. After protected
 integration, use a focused reviewed revert. Code removal does not delete
 persistent CNG keys: delete only references owned by the test or application
 while they remain available. Never enumerate or delete unrelated containers.
