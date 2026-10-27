@@ -20,6 +20,20 @@ fn wide(s: &str) -> Vec<u16> {
 fn require(ok: bool, reason: &'static str) -> Result<()> {
     if ok { Ok(()) } else { Err(denial(reason)) }
 }
+fn cleanup_identity_check(
+    observed: Result<Facts>,
+    original: Option<&Facts>,
+    blocked: bool,
+) -> Result<()> {
+    let observed = observed?;
+    let valid = original.is_some_and(|o| {
+        observed.identity() == o.identity()
+            && observed.kind == o.kind
+            && observed.tag == 0
+            && observed.attributes & FILE_ATTRIBUTE_REPARSE_POINT == 0
+    }) && !blocked;
+    require(valid, "fixture cleanup identity/tag/dependency refusal")
+}
 fn open_fixture(path: &Path, rights: u32) -> Result<OwnedHandle> {
     let h = unsafe {
         CreateFileW(
@@ -440,16 +454,12 @@ impl Fixture {
                 );
                 continue;
             };
-            let observed = facts(h.as_raw_handle());
-            let valid = observed.as_ref().is_ok_and(|v| {
-                e.original.as_ref().is_some_and(|o| {
-                    v.identity() == o.identity()
-                        && v.kind == o.kind
-                        && v.tag == 0
-                        && v.attributes & FILE_ATTRIBUTE_REPARSE_POINT == 0
-                })
-            }) && !blocked.iter().any(|p| p.starts_with(&e.path));
-            let deleted = if valid {
+            let verified = cleanup_identity_check(
+                facts(h.as_raw_handle()),
+                e.original.as_ref(),
+                blocked.iter().any(|p| p.starts_with(&e.path)),
+            );
+            let deleted = verified.and_then(|()| {
                 let info = FILE_DISPOSITION_INFO { DeleteFile: true };
                 if unsafe {
                     SetFileInformationByHandle(
@@ -464,9 +474,7 @@ impl Fixture {
                 } else {
                     Ok(())
                 }
-            } else {
-                Err(denial("fixture cleanup identity/tag/dependency refusal"))
-            };
+            });
             if deleted.is_err() {
                 blocked.push(e.path.clone());
             }
@@ -876,7 +884,7 @@ fn race_outcome(
     expected: (u64, [u8; 16]),
     target: (u64, [u8; 16]),
     active_name_changes: bool,
-) -> Result<()> {
+) -> Result<Option<Error>> {
     match result {
         Ok(()) => *original += 1,
         Err(e) => {
@@ -907,6 +915,11 @@ fn race_outcome(
             let query_unavailable = path_refusal(&e.primary) || e.cleanup.iter().any(path_refusal);
             if known_mismatch && !query_unavailable {
                 *mismatch += 1;
+                if !e.cleanup.is_empty() {
+                    // Return the complete bounded diagnostic for immediate logging,
+                    // separately from the single counted mismatch outcome.
+                    return Ok(Some(e));
+                }
             } else {
                 let identity = if known_mismatch {
                     "known-comparison"
@@ -919,7 +932,12 @@ fn race_outcome(
             }
         }
     }
-    Ok(())
+    Ok(None)
+}
+fn log_mismatch_diagnostic(diagnostic: Option<Error>) {
+    if let Some(error) = diagnostic {
+        println!("KNOWN_MISMATCH diagnostic={error:?}");
+    }
 }
 fn name_fixture(f: &mut Fixture) -> Result<(usize, usize, usize)> {
     let parent = f.child(0, "parent", ExpectedKind::Directory)?;
@@ -975,7 +993,8 @@ fn native_deterministic_precheck_open_name_replacement() {
                     e.observed.original.identity(),
                     comparison_held.observed.original.identity(),
                     false,
-                );
+                )
+                .map(log_mismatch_diagnostic);
                 println!(
                     "DETERMINISTIC_NAMES original={original} mismatch={mismatch} refusals={refusals:?}"
                 );
@@ -1090,7 +1109,8 @@ fn native_bounded_concurrent_file_name_replacement() {
                             e.observed.original.identity(),
                             comparison_held.observed.original.identity(),
                             active,
-                        );
+                        )
+                        .map(log_mismatch_diagnostic);
                     }
                     stop.store(true, Ordering::Release);
                     if done_rx.recv_timeout(Duration::from_secs(3)).is_err() {
@@ -1508,6 +1528,104 @@ fn all_secondary_failures_are_preserved() {
             Failure::Denied("second close")
         ]
     );
+}
+
+#[test]
+fn known_mismatch_retains_secondary_drift_diagnostic_once() {
+    let expected = (7, [11; 16]);
+    let comparison = (7, [22; 16]);
+    let error = || Error {
+        primary: Failure::IdentityMismatch {
+            expected,
+            observed: comparison,
+        },
+        cleanup: vec![
+            Failure::Denied("observed metadata changed"),
+            Failure::Denied("observed metadata changed"),
+            Failure::Denied("observed metadata changed"),
+        ],
+    };
+    let mut original = 0;
+    let mut mismatch = 0;
+    let mut refusals = BTreeMap::new();
+    for count in 1..=2 {
+        let diagnostic = race_outcome(
+            Err(error()),
+            &mut original,
+            &mut mismatch,
+            &mut refusals,
+            expected,
+            comparison,
+            false,
+        )
+        .unwrap();
+        assert_eq!((original, mismatch, refusals.len()), (0, count, 0));
+        assert_eq!(
+            original + mismatch + refusals.values().sum::<usize>(),
+            count
+        );
+        assert_eq!(diagnostic, Some(error()));
+    }
+}
+
+#[test]
+fn fixture_cleanup_preserves_query_then_close_failures() {
+    let query = || Error {
+        primary: Failure::Native("GetFileInformationByHandleEx", 5),
+        cleanup: vec![
+            Failure::Denied("query secondary first"),
+            Failure::Denied("query secondary second"),
+        ],
+    };
+    let original = sample();
+    let mut deletion_called = false;
+    let deleted = cleanup_identity_check(Err(query()), Some(&original), false).map(|()| {
+        deletion_called = true;
+    });
+    assert!(!deletion_called);
+    assert!(deleted.is_err()); // The fixture harness blocks dependencies on this result.
+    let checked = finish(
+        deleted,
+        Err(Error {
+            primary: Failure::Native("CloseHandle", 6),
+            cleanup: vec![Failure::Denied("close secondary")],
+        }),
+    )
+    .unwrap_err();
+    assert_eq!(checked.primary, query().primary);
+    assert_eq!(
+        checked.cleanup,
+        vec![
+            Failure::Denied("query secondary first"),
+            Failure::Denied("query secondary second"),
+            Failure::Native("CloseHandle", 6),
+            Failure::Denied("close secondary"),
+        ]
+    );
+    // A successful query retains the distinct identity/tag/dependency refusal.
+    assert!(cleanup_identity_check(Ok(original.clone()), Some(&original), false).is_ok());
+    for (observed, blocked) in [
+        (original.clone(), true),
+        (
+            Facts {
+                id: [99; 16],
+                ..original.clone()
+            },
+            false,
+        ),
+        (
+            Facts {
+                tag: MOUNT_TAG,
+                ..original.clone()
+            },
+            false,
+        ),
+    ] {
+        assert_eq!(
+            cleanup_identity_check(Ok(observed), Some(&original), blocked).unwrap_err(),
+            denial("fixture cleanup identity/tag/dependency refusal")
+        );
+    }
 }
 
 #[test]
