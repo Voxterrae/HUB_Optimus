@@ -517,6 +517,50 @@ create-only installation, immutable payload evidence and real service/profile
 isolation remain separate gates. This prerequisite does not yet fulfil the
 operational protected service-folder goal or authorize Android installation.
 
+## Private OS-ancestor descriptor policy
+
+The [owner adoption of the ancestor proposal](https://github.com/Voxterrae/HUB_Optimus/pull/2012#issuecomment-6455986873)
+authorizes this first bounded policy slice. The private
+`OwnerDaclSnapshot::matches_os_ancestor_policy` diagnostic checks one opaque
+snapshot and returns only `Result<()>`. It has no production caller or
+`ancestor_chain` integration. The existing strict application parser and
+`DescriptorPolicy::root_shape` remain unchanged.
+
+The safe byte parser accepts 20..=65536-byte revision-1 self-relative snapshots,
+non-null revision-2/4 DACLs, and completely parsed ordinary ALLOW/DENY entries.
+It validates aligned offsets, owner/group/SID extents, nonoverlap, ACE counts,
+sizes and zero-filled ACL slack, and refuses unexpected SACL data. Protected
+and unprotected OS DACLs may match. Only exact SYSTEM, BUILTIN Administrators
+and the proposal's exact TrustedInstaller SID may own the descriptor or receive
+self-applicable mutating ALLOWs. No observed ACL, name lookup or group-membership
+input expands that set.
+
+Generic masks expand using the proposal's exact file mapping. Zero masks and
+bits outside `0x001f01ff` refuse in every entry, including trusted, DENY and IO
+entries. Untrusted current-object ALLOWs may contain only `0x001200ad`, including
+ADD_SUBDIRECTORY; any mutation bit in `0x000d0152` refuses. Each ALLOW is checked
+independently in original order, with no DENY subtraction. Safe duplicate or
+split entries may match. Only OI/CI/NP/IO/INHERITED flags are supported; NP/IO
+require OI or CI. Valid IO entries supply no current-object grant after full
+validation. CREATOR_OWNER/GROUP require valid IO ordinary entries; other
+creator-authority placeholders, OWNER_RIGHTS, PRINCIPAL_SELF and the null SID
+refuse everywhere. Unsupported types refuse even in IO entries.
+
+The new deterministic fixtures contain only synthetic byte arrays and call no
+Windows API on those bytes. They cover exact trusted identities and mutations,
+safe/forbidden rights, exact generic expansion outputs and combinations,
+inheritance/flag controls, DENY ordering, special trustees, malformed layouts,
+64 KiB bounds and strict application-policy regression controls. Execution
+results are recorded separately by the guarded test supervisor; this section
+does not claim a new native host acceptance result.
+
+An empty non-null DACL may match the nonmutation diagnostic and proves no
+creation capability. No AccessCheck, approved volume, retained-chain acceptance,
+root acquisition, privileged bootstrap, service binding, provisioning or
+activation follows. ProgramData observations remain observational, with no
+selected-location acceptance or fallback. Android remains deferred. The later
+approved-volume/bootstrap composition and native evidence gates remain open.
+
 ## Rollback
 
 For the descriptor increment, revert only `src/security_descriptor.rs`,
