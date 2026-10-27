@@ -348,6 +348,66 @@ DPAPI/KSP persistence, distinct-principal denial, immutable sealing,
 antirollback/freshness, crash/power-loss durability, protected reference recovery,
 enrollment, T6/T7 and HTTP.sys/Schannel TLS remain open gates.
 
+## Private personal SCM/process binding prerequisite
+
+`service_identity` is dormant and private. `HeldScmProcessBinding` owns a local
+SCM CONNECT handle, a fixed `HUBRelayBrokerPersonal` service handle with only
+QUERY_CONFIG and QUERY_STATUS, and retained noninheritable query/synchronize
+process and query-only primary-token handles through `ExpectedPeer`. It returns
+no authenticated-service authority, protected root, key, enrollment or receipt.
+The fixed principal is `NT SERVICE\HUBRelayBrokerPersonal`; a service SID in a
+group never substitutes for actual primary TokenUser equality. A separately
+held, measured transport peer must have a different TokenUser.
+
+The internal unmeasured build/test candidate expects OWN_PROCESS exactly,
+DEMAND_START exactly, and the quoted command
+`"C:\Program Files\HUB_Relay\Personal\personal_broker_service.exe"` with no
+arguments. This literal is an expectation, not known-folder resolution, an
+installation plan, protected payload or human approval. There is no consumer.
+The observed full process path must match exactly; no disk hash is taken and
+neither pathname nor SCM configuration proves which approved bytes were loaded.
+[SCM configuration may describe the next start](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-queryserviceconfigw),
+so it cannot replace live retained process/token checks.
+
+The candidate configured required-privileges list is empty. An explicit
+QueryServiceConfig2 REQUIRED_PRIVILEGES query must succeed and return a bounded
+valid MULTI_SZ; null or unsupported layouts conservatively deny. The actual
+token inventory must contain exactly the locally resolved SeChangeNotifyPrivilege
+with ENABLED_BY_DEFAULT and ENABLED, with no other privileges, even disabled
+ones. USED_FOR_ACCESS is deliberately retained and its appearance also denies.
+This strict starting policy has not been measured on the personal service;
+mismatches require reviewed policy adjustment, never an observed allowlist.
+An empty configured list alone does not restrict the OS default inventory.
+
+Configuration buffers are capped at 8192 bytes, allocated from the explicit
+sizing result, and parsed only within the supplied allocation, excluding
+alignment padding. Interior pointer bounds/alignment, UTF-16 and MULTI_SZ
+termination are checked. The API defines pcbBytesNeeded for insufficient-buffer
+failure, not as a successful-query byte count. Unknown query errors never become
+empty configuration. All base config fields and required privileges are retained
+for equality checks; other optional configuration such as failure actions is
+not queried and no claim is made about it.
+
+Capture and every revalidation require RUNNING with a nonzero matching PID,
+unchanged creation time and token ID, session zero, exact intended local SID,
+no AppContainer or unsupported restriction context, unchanged full held/current
+primary context (groups, restricted SIDs, privilege attributes, integrity,
+authentication and scalar fields), and repeat SCM configuration/status checks.
+Calling-thread impersonation denies without clearing it. These snapshots cannot
+prove atomic SCM stability or that other service threads never impersonate.
+Explicit cleanup preserves primary and cleanup failures; SCM handles use
+CloseServiceHandle. Drop is a best-effort fallback.
+
+Tests separate synthetic policy acceptance from native read-only SCM absence
+and owned-process/token observations. The fixed-service absence case requires
+exact ERROR_SERVICE_DOES_NOT_EXIST (1060); unexpected existence fails without
+mutation. Native child tests create only their own hidden subprocesses and
+reap them. Ignored child entries are helpers, not independent security passes.
+Real personal-service success, actual config parsing on that service, loaded
+profile, KSP/DPAPI persistence, cross-principal isolation, service replacement,
+PID reuse and primary-token replacement remain uninduced. No service lifecycle,
+account, root, profile, key or machine configuration is modified.
+
 ## Rollback
 
 For the descriptor increment, revert only `src/security_descriptor.rs`,

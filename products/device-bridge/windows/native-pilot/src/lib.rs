@@ -11,3 +11,7 @@ mod bootstrap_peer;
 // Dormant metadata prerequisite, never a protected-root or authority producer.
 #[allow(dead_code)]
 mod security_descriptor;
+
+// Private dormant SCM observation; grants no service or storage authority.
+#[allow(dead_code)]
+mod service_identity;
