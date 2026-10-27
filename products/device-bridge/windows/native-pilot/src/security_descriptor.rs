@@ -52,12 +52,22 @@ enum Failure {
     Policy(Denial),
 }
 #[derive(Debug)]
-struct Error {
+pub(super) struct Error {
     primary: Failure,
     cleanup: Vec<Failure>,
 }
 type Result<T> = std::result::Result<T, Error>;
 impl Error {
+    pub(super) fn has_cleanup_failure(&self) -> bool {
+        !self.cleanup.is_empty()
+            || matches!(
+                self.primary,
+                Failure::Native {
+                    operation: "LocalFree",
+                    ..
+                }
+            )
+    }
     fn new(primary: Failure) -> Self {
         Self {
             primary,
@@ -107,6 +117,30 @@ impl Drop for NativeAllocation {
 /// Borrow a live handle; never open a path, change the object, or retain its
 /// identity. The returned snapshot can be stale immediately after this call.
 fn inspect(handle: &OwnedHandle) -> Result<DescriptorFacts> {
+    capture_transform(handle, parse_snapshot)
+}
+
+/// Ordered opaque bytes returned by the OS. No policy, grants or effective access.
+#[derive(Clone, PartialEq, Eq)]
+pub(super) struct OwnerDaclSnapshot(Vec<u8>);
+impl OwnerDaclSnapshot {
+    fn copy(bytes: &[u8]) -> Result<Self> {
+        if !(20..=MAX_SNAPSHOT).contains(&bytes.len()) {
+            return deny(Denial::Bounds);
+        }
+        Ok(Self(bytes.to_vec()))
+    }
+}
+pub(super) fn observe_owner_dacl(handle: &OwnedHandle) -> Result<OwnerDaclSnapshot> {
+    capture_transform(handle, OwnerDaclSnapshot::copy)
+}
+
+// Transform BEFORE checked release: preserve strict parser error precedence and
+// aggregate release failure even when parsing fails. Never parse arbitrary bytes via FFI.
+fn capture_transform<T>(
+    handle: &OwnedHandle,
+    transform: impl FnOnce(&[u8]) -> Result<T>,
+) -> Result<T> {
     let mut raw = null_mut();
     let status = unsafe {
         GetSecurityInfo(
@@ -138,7 +172,7 @@ fn inspect(handle: &OwnedHandle) -> Result<DescriptorFacts> {
             return deny(Denial::Bounds);
         }
         let snapshot = unsafe { std::slice::from_raw_parts(raw.cast::<u8>(), length) }.to_vec();
-        parse_snapshot(&snapshot)
+        transform(&snapshot)
     })();
     finish(result, allocation.release())
 }

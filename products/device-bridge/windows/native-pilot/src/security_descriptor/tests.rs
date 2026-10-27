@@ -171,7 +171,22 @@ impl Fixture {
         );
         let parent = std::env::var_os("HUB_RELAY_NTFS_FIXTURE_PARENT")
             .map(PathBuf::from)
-            .unwrap_or_else(std::env::temp_dir);
+            .expect("explicit guarded descriptor fixture parent");
+        let work = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .ancestors()
+            .nth(6)
+            .unwrap();
+        let previous = work.join("20261027-hub-relay-relative-ntfs/ntfs-fixtures");
+        assert!(
+            parent == previous
+                || crate::relative_ntfs::tests::guarded_parent(&parent, work, "ntfs-fixtures")
+        );
+        let canonical = std::fs::canonicalize(&parent).expect("fixture parent resolution");
+        let extended = PathBuf::from(format!(
+            r"\\?\{}",
+            parent.to_str().unwrap().replace('/', r"\")
+        ));
+        assert_eq!(canonical, extended, "descriptor parent reparse escape");
         let parent_text = parent.to_str().unwrap();
         assert!(parent.is_absolute() && !parent_text.starts_with("\\\\"));
         let mut volume_path = [0u16; 1024];
@@ -839,4 +854,137 @@ fn parser_duplicate_and_inherited_grants_are_denied() {
             Denial::AceFlags,
         );
     }
+}
+
+impl OwnerDaclSnapshot {
+    pub(crate) fn fixture_ace_headers(&self) -> Vec<(u8, u8)> {
+        assert!(self.0.len() >= 20);
+        let dacl = u32::from_le_bytes(self.0[16..20].try_into().unwrap()) as usize;
+        assert!(dacl >= 20 && dacl <= self.0.len() - 8);
+        let size = u16::from_le_bytes(self.0[dacl + 2..dacl + 4].try_into().unwrap()) as usize;
+        assert!(size >= 8 && size <= self.0.len() - dacl);
+        let end = dacl + size;
+        let count = u16::from_le_bytes(self.0[dacl + 4..dacl + 6].try_into().unwrap());
+        let mut at = dacl + 8;
+        let mut headers = vec![];
+        for _ in 0..count {
+            assert!(at + 4 <= end);
+            let size = u16::from_le_bytes(self.0[at + 2..at + 4].try_into().unwrap()) as usize;
+            assert!(size >= 4 && size <= end - at);
+            headers.push((self.0[at], self.0[at + 1]));
+            at += size;
+        }
+        headers
+    }
+}
+#[test]
+fn opaque_native_ordered_deny_and_inherited_bytes_preserve_strict_refusal() {
+    let mut owned = crate::relative_ntfs::tests::Fixture::ancestor().unwrap();
+    let mut sentinel = None;
+    let outcome = catch_unwind(AssertUnwindSafe(|| {
+        sentinel = Some(owned.sentinel(0, "outside", 0x63).unwrap());
+        let parent = owned.os_child(0, "Inheritance parent").unwrap();
+        owned
+            .set_dacl(
+                parent,
+                "D:P(D;OICI;0x2;;;WD)(A;OICI;FA;;;WD)(A;OICI;FA;;;SY)",
+            )
+            .unwrap();
+        // The OS inherits the parent's ACEs during creation; no synthetic ID flag.
+        let child = owned.os_child(parent, "Inherited child").unwrap();
+        let handle = owned.input(child).unwrap();
+        let checked = catch_unwind(AssertUnwindSafe(|| {
+            let observed = observe_owner_dacl(&handle).unwrap();
+            let again = observe_owner_dacl(&handle).unwrap();
+            assert!(observed == again);
+            let headers = observed.fixture_ace_headers();
+            println!("OPAQUE_NATIVE ordered ACE headers={headers:?}");
+            assert_eq!(
+                headers.iter().map(|&(kind, _)| kind).collect::<Vec<_>>(),
+                vec![1, 0, 0],
+                "native deny then allow order"
+            );
+            assert!(
+                headers.iter().all(|&(_, flags)| flags & 0x10 != 0),
+                "native inherited precondition"
+            );
+            let refusal = inspect(&handle).unwrap_err();
+            assert!(!refusal.has_cleanup_failure(), "strict cleanup={refusal:?}");
+            assert_eq!(refusal.primary, Failure::Policy(Denial::UnsupportedAce));
+        }));
+        let closed = close(handle);
+        assert!(
+            closed.is_ok(),
+            "operation={checked:?}; observation close={closed:?}"
+        );
+        if let Err(panic) = checked {
+            resume_unwind(panic);
+        }
+    }));
+    let unchanged = sentinel.map(|index| owned.verify_sentinel(index));
+    let cleanup = owned.cleanup();
+    assert!(
+        cleanup.is_ok(),
+        "operation={outcome:?}; sentinel={unchanged:?}; cleanup={cleanup:?}"
+    );
+    assert!(matches!(unchanged, Some(Ok(()))), "sentinel={unchanged:?}");
+    if let Err(panic) = outcome {
+        resume_unwind(panic);
+    }
+}
+#[test]
+fn opaque_copy_keeps_every_byte_without_interpreting_unsupported_aces() {
+    let mut first = image();
+    first[40] = 1;
+    first[41] = 0x10;
+    let snapshot = OwnerDaclSnapshot::copy(&first).unwrap();
+    assert_eq!(snapshot.0, first);
+    assert_eq!(
+        parse_snapshot(&snapshot.0).unwrap_err().primary,
+        Failure::Policy(Denial::UnsupportedAce)
+    );
+    let mut changed = first.clone();
+    changed[44] ^= 1;
+    assert!(snapshot != OwnerDaclSnapshot::copy(&changed).unwrap());
+    assert!(OwnerDaclSnapshot::copy(&[0; 19]).is_err());
+    assert!(OwnerDaclSnapshot::copy(&vec![0; 65536]).is_ok());
+    assert!(OwnerDaclSnapshot::copy(&vec![0; 65537]).is_err());
+}
+#[test]
+fn strict_parse_error_precedes_and_retains_release_failure() {
+    let mut unsupported = image();
+    unsupported[40] = 1;
+    let result = finish(
+        parse_snapshot(&unsupported),
+        Err(Error::new(Failure::Native {
+            operation: "LocalFree",
+            status: 5,
+        })),
+    );
+    let error = result.unwrap_err();
+    assert_eq!(error.primary, Failure::Policy(Denial::UnsupportedAce));
+    assert_eq!(
+        error.cleanup,
+        vec![Failure::Native {
+            operation: "LocalFree",
+            status: 5
+        }]
+    );
+}
+
+#[test]
+fn primary_release_failure_is_cleanup_failure() {
+    let primary = Error::new(Failure::Native {
+        operation: "LocalFree",
+        status: 5,
+    });
+    assert!(primary.has_cleanup_failure());
+    let ordinary = Error::new(Failure::Native {
+        operation: "GetSecurityInfo",
+        status: 5,
+    });
+    assert!(!ordinary.has_cleanup_failure());
+    let secondary = finish::<()>(deny(Denial::UnsupportedAce), Err(primary)).unwrap_err();
+    assert!(secondary.has_cleanup_failure());
+    assert_eq!(secondary.primary, Failure::Policy(Denial::UnsupportedAce));
 }
