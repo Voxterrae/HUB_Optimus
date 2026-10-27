@@ -408,6 +408,72 @@ profile, KSP/DPAPI persistence, cross-principal isolation, service replacement,
 PID reuse and primary-token replacement remain uninduced. No service lifecycle,
 account, root, profile, key or machine configuration is modified.
 
+## Private relative NTFS metadata prerequisite
+
+`relative_ntfs` is dormant and private. An `ObservedDirectory` consumes an
+already-owned handle, verifies its granted rights and duplicates down to exactly
+`FILE_READ_ATTRIBUTES | READ_CONTROL | SYNCHRONIZE`. An independently captured
+`HeldObjectExpectation` remains alive through the lifetime of each child result
+and any checked consuming conversion into a stepped directory observation.
+Neither object supplies protected-root, approved-name, service or key authority.
+There is no public raw-handle escape, serialized identity, path constructor,
+content read, mutation, provisioning or production caller.
+
+Each native open uses one bounded internal ASCII component, a retained parent
+as `OBJECT_ATTRIBUTES.RootDirectory`, `OBJ_CASE_INSENSITIVE | OBJ_DONT_REPARSE`,
+`FILE_OPEN`, and `FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT`.
+Metadata access shares READ and DELETE but not WRITE. The result must be a
+completed `STATUS_SUCCESS` with independent IOSB success, `FILE_OPENED` and a
+valid handle. Unsupported flags/statuses deny without retry or absolute-path
+fallback. Generated declarations come from the already pinned `windows-sys`
+package with only `Wdk_Foundation` and `Wdk_Storage_FileSystem` added.
+
+File ID, standard metadata and attribute/tag queries require local fixed NTFS,
+the intended type, no delete-pending state, no reparse tag/attribute, matching
+volume and exactly one link for regular files. A bounded normalized volume-GUID
+path is observed only to determine the drive type; it is never reopened or used
+as prefix-containment proof. Parent and independent expectation checks run
+before and after the native open. Calling-thread impersonation denies without
+clearing it. Identity mismatch reports the observed IDs without reading content.
+IDs and matching metadata confer no authority. Sharing does not freeze names or
+prevent in-place tag conversion, and pre/post equality cannot detect ABA.
+
+Synchronous calls unexpectedly reporting pending work, or successful calls
+leaving the IOSB untouched, terminate the host while the native buffers remain
+alive. Terminal errors retain call NTSTATUS and IOSB separately and close any
+acquired handle with checked error aggregation. The classification is tested;
+actual fatal termination and a stalled driver are deliberately uninduced.
+
+Native host validation uses only fresh user-owned fixtures beneath the exact
+private task directory, at most 1 MiB of
+content, and identity-checked DELETE handles with checked cleanup even after
+expected assertion failures. Junction targets and sentinel files are owned by
+the same run; sentinel hashes use independently retained fixture read handles,
+never the metadata primitive. Deterministic precheck/open replacement and
+bounded concurrency use ordinary names of two independently held owned files.
+Every successful name change is journaled; names are restored before checked
+cleanup. Only agreement with the original held object or explicit refusal is
+acceptable; an observed comparison identity must be refused. Counters report
+actual identities/statuses, not inferred target encounters or independent tests.
+During observed concurrent name changes, only the exact normalized-path query
+operation with FILE_NOT_FOUND, PATH_NOT_FOUND or ACCESS_DENIED may be counted as
+a query refusal. Primary and secondary details are retained in full. A failed
+query has no inferred identity; any explicit mismatch must identify the held
+original and comparison objects. Unknown identities, operations, out-of-family
+errors and actual close failures still fail. PATH_NOT_FOUND is prospective
+test coverage, not a previously observed result. Positive same-path child opens
+are required before the worker and after name restoration, outside race counters.
+The retained-parent rename case captures and renames an empty parent, then
+creates its child and independent expectation plus a distinct replacement
+directory. It does not claim a child expectation held across directory rename.
+Static leaf, stepped-ancestor and empty-parent junction refusal remain separate
+cases. Populated-directory conversion was an unsupported fixture precondition;
+concurrent in-place reparse conversion remains unproved. These host observations
+do not establish universal traversal/containment or absence of ABA. Symlink
+privilege is not exercised. Actual SYSTEM/service-root
+success, isolation, profile/DPAPI/KSP, publication, durability and activation
+readiness remain separate gates.
+
 ## Rollback
 
 For the descriptor increment, revert only `src/security_descriptor.rs`,
