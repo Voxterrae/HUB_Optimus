@@ -25,6 +25,8 @@ use windows_sys::Win32::Security::{
     PSECURITY_DESCRIPTOR,
 };
 
+mod os_ancestor;
+
 const MAX_SNAPSHOT: usize = 65_536;
 const SYSTEM_SID: &[u8] = &[1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0];
 
@@ -124,6 +126,11 @@ fn inspect(handle: &OwnedHandle) -> Result<DescriptorFacts> {
 #[derive(Clone, PartialEq, Eq)]
 pub(super) struct OwnerDaclSnapshot(Vec<u8>);
 impl OwnerDaclSnapshot {
+    /// Private diagnostic only; no effective-access or retained-chain authority.
+    pub(super) fn matches_os_ancestor_policy(&self) -> Result<()> {
+        os_ancestor::compare(&self.0)
+    }
+
     fn copy(bytes: &[u8]) -> Result<Self> {
         if !(20..=MAX_SNAPSHOT).contains(&bytes.len()) {
             return deny(Denial::Bounds);
