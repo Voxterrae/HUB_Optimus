@@ -44,9 +44,14 @@ enum Failure {
     },
 }
 #[derive(Debug, PartialEq, Eq)]
-struct Error {
+pub(super) struct Error {
     primary: Failure,
     cleanup: Vec<Failure>,
+}
+impl Error {
+    pub(super) fn has_cleanup_failure(&self) -> bool {
+        !self.cleanup.is_empty() || matches!(self.primary, Failure::Native("CloseHandle", _))
+    }
 }
 type Result<T> = std::result::Result<T, Error>;
 fn failure(primary: Failure) -> Error {
@@ -80,7 +85,7 @@ fn close(h: OwnedHandle) -> Result<()> {
         Ok(())
     }
 }
-fn no_impersonation() -> Result<()> {
+pub(super) fn no_impersonation() -> Result<()> {
     let mut raw = null_mut();
     if unsafe { OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, 1, &mut raw) } != 0 {
         if raw.is_null() || raw == INVALID_HANDLE_VALUE {
@@ -493,7 +498,10 @@ fn native_open(
     parent: &ObservedDirectory<'_>,
     component: &InternalComponent,
 ) -> Result<OwnedHandle> {
-    let mut name = component.0.clone();
+    native_open_units(&parent.observed, &component.0)
+}
+fn native_open_units(parent: &Observation, component: &[u16]) -> Result<OwnedHandle> {
+    let mut name = component.to_vec();
     let bytes = unicode_bytes(name.len())?;
     let unicode = UNICODE_STRING {
         Length: bytes,
@@ -502,7 +510,7 @@ fn native_open(
     };
     let attributes = OBJECT_ATTRIBUTES {
         Length: size_of::<OBJECT_ATTRIBUTES>() as u32,
-        RootDirectory: parent.observed.handle.as_raw_handle(),
+        RootDirectory: parent.handle.as_raw_handle(),
         ObjectName: &unicode,
         Attributes: OBJ_CASE_INSENSITIVE | OBJ_DONT_REPARSE,
         SecurityDescriptor: null(),
@@ -594,5 +602,151 @@ fn open_inner<'a>(
         }
     }
 }
+// Separate observation-only sibling surface. It has no independently expected
+// identity and cannot produce HeldChildMetadata or a protected root.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(super) struct OsPathComponent(Vec<u16>);
+impl OsPathComponent {
+    pub(super) fn new(units: &[u16]) -> Result<Self> {
+        if units.is_empty() || units.len() > 255 {
+            return Err(denial("OS component bounds"));
+        }
+        let text = String::from_utf16(units).map_err(|_| denial("OS component UTF16"))?;
+        if text == "."
+            || text == ".."
+            || text.ends_with(['.', ' '])
+            || text.chars().any(|c| c < ' ' || "\\/:*?\"<>|~".contains(c))
+        {
+            return Err(denial("OS component shape"));
+        }
+        let base = text.split('.').next().unwrap_or("").to_ascii_uppercase();
+        let numbered = base
+            .strip_prefix("COM")
+            .or_else(|| base.strip_prefix("LPT"));
+        if ["CON", "PRN", "AUX", "NUL", "CLOCK$", "CONIN$", "CONOUT$"].contains(&base.as_str())
+            || numbered.is_some_and(|n| {
+                matches!(
+                    n,
+                    "1" | "2"
+                        | "3"
+                        | "4"
+                        | "5"
+                        | "6"
+                        | "7"
+                        | "8"
+                        | "9"
+                        | "\u{b9}"
+                        | "\u{b2}"
+                        | "\u{b3}"
+                )
+            })
+        {
+            return Err(denial("OS DOS basename"));
+        }
+        unicode_bytes(units.len())?;
+        Ok(Self(units.to_vec()))
+    }
+    pub(super) fn units(&self) -> &[u16] {
+        &self.0
+    }
+}
+
+pub(super) struct DirectoryObservation(Observation);
+impl DirectoryObservation {
+    pub(super) fn open_volume(root: &[u16]) -> Result<Self> {
+        no_impersonation()?;
+        let generated = volume_root(root, root.len().saturating_sub(1))?;
+        if generated != root {
+            return Err(denial("exact volume GUID root required"));
+        }
+        let raw = unsafe {
+            CreateFileW(
+                root.as_ptr(),
+                METADATA_RIGHTS,
+                FILE_SHARE_READ | FILE_SHARE_DELETE,
+                null(),
+                OPEN_EXISTING,
+                FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+                null_mut(),
+            )
+        };
+        if raw == INVALID_HANDLE_VALUE {
+            return Err(last("CreateFileW volume root"));
+        }
+        Self::capture(unsafe { OwnedHandle::from_raw_handle(raw) })
+    }
+    fn capture(input: OwnedHandle) -> Result<Self> {
+        Observation::capture(input, Some(ExpectedKind::Directory)).map(Self)
+    }
+    #[cfg(test)]
+    pub(super) fn fixture_input(input: OwnedHandle) -> Result<Self> {
+        Self::capture(input)
+    }
+    pub(super) fn child(&self, component: &OsPathComponent) -> Result<Self> {
+        self.recheck()?;
+        let mut retained = None;
+        let result = native_open_units(&self.0, component.units()).and_then(|h| {
+            let observed = Self::capture(h)?;
+            retained = Some(observed);
+            validate(
+                &retained.as_ref().unwrap().0.original,
+                ExpectedKind::Directory,
+                Some(self.0.original.volume),
+            )
+        });
+        let checked = finish(result, self.recheck());
+        match checked {
+            Ok(()) => Ok(retained.unwrap()),
+            Err(e) => match retained {
+                Some(v) => finish(Err(e), v.close()),
+                None => Err(e),
+            },
+        }
+    }
+    pub(super) fn recheck(&self) -> Result<()> {
+        self.0.recheck()
+    }
+    pub(super) fn close(self) -> Result<()> {
+        self.0.close()
+    }
+    pub(super) fn security(
+        &self,
+    ) -> std::result::Result<
+        crate::security_descriptor::OwnerDaclSnapshot,
+        crate::security_descriptor::Error,
+    > {
+        crate::security_descriptor::observe_owner_dacl(&self.0.handle)
+    }
+    pub(super) fn normalized_path(&self) -> Result<Vec<u16>> {
+        let mut buffer = vec![0; MAX_PATH_UNITS + 1];
+        let length = unsafe {
+            GetFinalPathNameByHandleW(
+                self.0.handle.as_raw_handle(),
+                buffer.as_mut_ptr(),
+                buffer.len() as u32,
+                VOLUME_NAME_GUID | FILE_NAME_NORMALIZED,
+            )
+        } as usize;
+        if length == 0 {
+            return Err(last("GetFinalPathNameByHandleW"));
+        }
+        volume_root(&buffer, length)?;
+        buffer.truncate(length);
+        Ok(buffer)
+    }
+    #[cfg(test)]
+    pub(super) fn exact_rights_live(&self) -> Result<()> {
+        let mut flags = 0;
+        if unsafe { GetHandleInformation(self.0.handle.as_raw_handle(), &mut flags) } == 0 {
+            return Err(last("GetHandleInformation"));
+        }
+        if flags & HANDLE_FLAG_INHERIT != 0
+            || granted_access(self.0.handle.as_raw_handle())? != METADATA_RIGHTS
+        {
+            return Err(denial("observation rights or inheritance"));
+        }
+        self.recheck()
+    }
+}
 #[cfg(test)]
-mod tests;
+pub(super) mod tests;

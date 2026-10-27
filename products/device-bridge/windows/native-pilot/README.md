@@ -474,6 +474,49 @@ privilege is not exercised. Actual SYSTEM/service-root
 success, isolation, profile/DPAPI/KSP, publication, durability and activation
 readiness remain separate gates.
 
+## Private Windows ancestor observations
+
+`ancestor_chain` is a dormant private observer of the fixed ProgramData and
+64-bit ProgramFiles known folders. It rejects thread impersonation, uses flags
+zero/null token and balances same-thread COM initialization and path allocation.
+Five private Windows function declarations and four constants match the cached
+`windows-sys 0.61.2` and `windows-link 0.2.1` ABI/DLL/link definitions, preserving
+the original dependency features and lock. They avoid enabling broad Shell,
+COM and Globalization modules; actual linking/export availability still requires
+guarded native validation. Non-64-bit known-folder resolution remains refused.
+The copied drive path is bounded to 32767 UTF-16 units, each OS component to 255,
+and the retained chain to 128 steps including its volume root. Spaces and valid
+Unicode are preserved; ambiguous namespaces, DOS/short-shaped names, alternate
+separators, dot components and malformed UTF-16 refuse without repair.
+
+A native drive-to-volume GUID mapping is observed, then a local fixed NTFS root
+and every directory component are retained using metadata-only, noninheritable
+handles. The observation-only relative helper shares the original native opener
+and fatal-pending handling, but supplies no independent expected-object claim.
+Original matched-child expectations and strict product descriptor rules remain
+unchanged. Every step compares its complete normalized volume-GUID component
+sequence by Windows ordinal comparison, and retains actual bounded owner/DACL
+bytes in their original order. Unsupported ACEs remain opaque observations;
+they never become policy grants. Parse-before-release ordering and checked
+cleanup errors remain preserved for strict descriptor inspection.
+
+Metadata, full paths and opaque bytes are rechecked before/after traversal and
+explicitly on demand; known-folder and drive mapping are queried again. Checked
+close walks retained handles in reverse and preserves all failures. These
+observations can become stale immediately, conservatively reject equivalent
+encodings, and do not exclude ABA or establish an atomic security boundary.
+No actual product subtree is observed, adopted or created. No permissions are
+changed by the observer and there is no service, network or public API wiring.
+
+Tests use only newly owned bounded fixtures with sentinel verification and
+identity-checked reverse cleanup. Fixed OS chains are read-only and their
+observed/refused outcomes are labelled separately; a refusal is not acceptance.
+Fatal pending termination remains deliberately uninduced. OS-ancestor owner/
+trustee policy, approved-volume identity, trusted acquisition, privileged
+create-only installation, immutable payload evidence and real service/profile
+isolation remain separate gates. This prerequisite does not yet fulfil the
+operational protected service-folder goal or authorize Android installation.
+
 ## Rollback
 
 For the descriptor increment, revert only `src/security_descriptor.rs`,

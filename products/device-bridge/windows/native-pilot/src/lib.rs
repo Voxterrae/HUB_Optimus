@@ -19,3 +19,7 @@ mod service_identity;
 // Private metadata agreement only; no protected-root or content capability.
 #[allow(dead_code)]
 mod relative_ntfs;
+
+// Dormant retained ancestor observations; no storage authority.
+#[allow(dead_code)]
+mod ancestor_chain;

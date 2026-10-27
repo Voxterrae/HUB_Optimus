@@ -104,16 +104,24 @@ struct Entry {
     digest: Option<[u8; 32]>,
     content_len: usize,
 }
-struct Fixture {
+pub(crate) struct Fixture {
     entries: Vec<Entry>,
     root: PathBuf,
     total: usize,
 }
 impl Fixture {
     fn new() -> Result<Self> {
+        Self::new_at(
+            "HUB_RELAY_RELATIVE_NTFS_FIXTURE_PARENT",
+            "relative-fixtures",
+        )
+    }
+    pub(crate) fn ancestor() -> Result<Self> {
+        Self::new_at("HUB_RELAY_ANCESTOR_FIXTURE_PARENT", "ancestor-fixtures")
+    }
+    fn new_at(variable: &str, leaf: &str) -> Result<Self> {
         let parent = PathBuf::from(
-            std::env::var_os("HUB_RELAY_RELATIVE_NTFS_FIXTURE_PARENT")
-                .ok_or_else(|| denial("fixture parent missing"))?,
+            std::env::var_os(variable).ok_or_else(|| denial("fixture parent missing"))?,
         );
         // The guarded task location is derived from this delivery checkout;
         // no machine/user pathname is committed and there is no temp fallback.
@@ -123,14 +131,16 @@ impl Fixture {
             .ok_or_else(|| denial("fixture delivery layout"))?;
         let approved = work.join("20261027-hub-relay-relative-ntfs/relative-fixtures");
         require(
-            parent == approved && parent.is_absolute(),
+            (parent == approved && leaf == "relative-fixtures"
+                || guarded_parent(&parent, work, leaf))
+                && parent.is_absolute(),
             "exact approved fixture parent",
         )?;
         let canonical =
             std::fs::canonicalize(&parent).map_err(|_| denial("fixture parent resolution"))?;
         let extended = PathBuf::from(format!(
             r"\\?\{}",
-            approved
+            parent
                 .to_str()
                 .ok_or_else(|| denial("fixture path text"))?
                 .replace('/', r"\")
@@ -297,7 +307,12 @@ impl Fixture {
         InternalComponent::new(name)?;
         self.create(&self.entries[parent].path.join(name), kind, &[])
     }
-    fn sentinel(&mut self, parent: usize, name: &'static str, byte: u8) -> Result<usize> {
+    pub(crate) fn sentinel(
+        &mut self,
+        parent: usize,
+        name: &'static str,
+        byte: u8,
+    ) -> Result<usize> {
         InternalComponent::new(name)?;
         self.create(
             &self.entries[parent].path.join(name),
@@ -305,10 +320,106 @@ impl Fixture {
             &[byte; 32],
         )
     }
+    pub(crate) fn os_child(&mut self, parent: usize, name: &str) -> Result<usize> {
+        require(
+            !name.is_empty() && !name.contains(['\\', '/', ':']) && name != "." && name != "..",
+            "owned fixture component",
+        )?;
+        self.create(
+            &self.entries[parent].path.join(name),
+            ExpectedKind::Directory,
+            &[],
+        )
+    }
+    pub(crate) fn prepare_junction(&mut self, index: usize) -> Result<()> {
+        self.control(index)
+    }
+    pub(crate) fn junction(&mut self, index: usize, target: usize) -> Result<()> {
+        if self.entries[index].control.is_none() {
+            self.control(index)?;
+        }
+        let bytes = junction_buffer(&self.entries[target].path)?;
+        set_junction(
+            self.entries[index]
+                .control
+                .as_ref()
+                .unwrap()
+                .as_raw_handle(),
+            &bytes,
+        )
+    }
+    pub(crate) fn set_dacl(&self, index: usize, sddl: &str) -> Result<()> {
+        use windows_sys::Win32::Security::Authorization::*;
+        use windows_sys::Win32::Security::*;
+        let h = open_fixture(
+            &self.entries[index].path,
+            WRITE_DAC | READ_CONTROL | FILE_READ_ATTRIBUTES,
+        )?;
+        let result = (|| {
+            let before = facts(h.as_raw_handle())?;
+            require(
+                Some(before.identity())
+                    == self.entries[index].original.as_ref().map(Facts::identity),
+                "DACL fixture identity",
+            )?;
+            validate(&before, ExpectedKind::Directory, None)?;
+            let mut sd = null_mut();
+            let converted = unsafe {
+                ConvertStringSecurityDescriptorToSecurityDescriptorW(
+                    wide(sddl).as_ptr(),
+                    1,
+                    &mut sd,
+                    null_mut(),
+                )
+            };
+            let applied = (|| {
+                if converted == 0 {
+                    return Err(last("fixture ConvertStringSD"));
+                }
+                if sd.is_null() {
+                    return Err(denial("fixture descriptor output"));
+                }
+                let mut present = 0;
+                let mut acl = null_mut();
+                let mut defaulted = 0;
+                if unsafe { GetSecurityDescriptorDacl(sd, &mut present, &mut acl, &mut defaulted) }
+                    == 0
+                {
+                    return Err(last("fixture GetDacl"));
+                }
+                require(present != 0 && !acl.is_null(), "fixture explicit DACL")?;
+                let status = unsafe {
+                    SetSecurityInfo(
+                        h.as_raw_handle(),
+                        SE_FILE_OBJECT,
+                        DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
+                        null_mut(),
+                        null_mut(),
+                        acl,
+                        null_mut(),
+                    )
+                };
+                if status != 0 {
+                    return Err(failure(Failure::Native("fixture SetSecurityInfo", status)));
+                }
+                require(
+                    facts(h.as_raw_handle())?.identity() == before.identity(),
+                    "DACL same identity",
+                )
+            })();
+            let freed = if sd.is_null() || unsafe { LocalFree(sd) }.is_null() {
+                Ok(())
+            } else {
+                Err(last("fixture LocalFree"))
+            };
+            finish(applied, freed)
+        })();
+        finish(result, close(h))
+    }
     fn raw(&self, i: usize) -> HANDLE {
         self.entries[i].handle.as_ref().unwrap().as_raw_handle()
     }
-    fn input(&self, i: usize) -> Result<OwnedHandle> {
+    pub(crate) fn input(&self, i: usize) -> Result<OwnedHandle> {
         let h = open_fixture(&self.entries[i].path, METADATA_RIGHTS)?;
         match facts(h.as_raw_handle()).and_then(|f| {
             require(
@@ -368,7 +479,7 @@ impl Fixture {
             Err(e) => finish(Err(e), close(h)),
         }
     }
-    fn verify_sentinel(&self, i: usize) -> Result<()> {
+    pub(crate) fn verify_sentinel(&self, i: usize) -> Result<()> {
         let e = &self.entries[i];
         let h = e
             .reader
@@ -407,7 +518,7 @@ impl Fixture {
         );
         Ok(())
     }
-    fn cleanup(&mut self) -> Result<()> {
+    pub(crate) fn cleanup(&mut self) -> Result<()> {
         let mut result = Ok(());
         let mut blocked: Vec<PathBuf> = vec![];
         let mut deleted_paths = vec![];
@@ -1292,7 +1403,7 @@ fn native_wrong_kind_denies_after_open() {
         })
     });
 }
-fn thread_token_id() -> Result<(u32, i32)> {
+pub(crate) fn thread_token_id() -> Result<(u32, i32)> {
     use windows_sys::Win32::Security::{GetTokenInformation, TOKEN_STATISTICS, TokenStatistics};
     let mut raw = null_mut();
     if unsafe { OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, 1, &mut raw) } == 0 {
@@ -1787,4 +1898,55 @@ fn name_race_refusal_preserves_unknown_identities_and_cleanup_failures() {
         (original, mismatch, refusals.values().sum::<usize>()),
         (1, 1, accepted_refusals)
     );
+}
+
+// Test-only allowlist: exact task, one versioned run directory and one fixture leaf.
+pub(crate) fn guarded_parent(parent: &Path, work: &Path, leaf: &str) -> bool {
+    let runs = work.join("20261027-hub-relay-ancestor-chain/runs");
+    let Ok(tail) = parent.strip_prefix(runs) else {
+        return false;
+    };
+    let pieces: Vec<_> = tail.iter().collect();
+    if pieces.len() != 2 || pieces[1] != leaf {
+        return false;
+    }
+    let Some(label) = pieces[0].to_str() else {
+        return false;
+    };
+    let Some((name, version)) = label.rsplit_once("-v") else {
+        return false;
+    };
+    !name.is_empty()
+        && name.as_bytes()[0].is_ascii_lowercase()
+        && name
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+        && version.len() >= 3
+        && version.bytes().all(|b| b.is_ascii_digit())
+}
+
+pub(crate) fn expected_refusal(error: &Error, wanted: &str) -> bool {
+    if error.has_cleanup_failure() {
+        return false;
+    }
+    match (wanted, &error.primary) {
+        ("missing", Failure::Completion("NtCreateFile", c)) => c.call as u32 == 0xc0000034,
+        ("access", Failure::Completion("NtCreateFile", c)) => c.call as u32 == 0xc0000022,
+        ("reparse", Failure::Completion("NtCreateFile", c)) => c.call as u32 == 0xc000050b,
+        ("reparse", Failure::Denied("reparse metadata")) => true,
+        ("impersonation", Failure::Denied("calling-thread impersonation")) => true,
+        _ => false,
+    }
+}
+
+#[test]
+fn primary_close_failure_is_cleanup_failure() {
+    let primary = failure(Failure::Native("CloseHandle", 6));
+    assert!(primary.has_cleanup_failure());
+    assert!(!expected_refusal(&primary, "missing"));
+    let ordinary = failure(Failure::Native("GetFinalPathNameByHandleW", 5));
+    assert!(!ordinary.has_cleanup_failure());
+    let secondary = finish::<()>(Err(denial("original")), Err(primary)).unwrap_err();
+    assert!(secondary.has_cleanup_failure());
+    assert_eq!(secondary.primary, Failure::Denied("original"));
 }
