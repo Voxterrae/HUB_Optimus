@@ -51,7 +51,11 @@ body:
     id: logs
     attributes:
       label: Relevant output or logs
-      description: Paste any error messages or logs.
+      description: >-
+        Paste only redacted error messages or logs. Do not include credentials,
+        personal data, private infrastructure details, or other sensitive material.
+        For suspected vulnerabilities or sensitive disclosures, follow
+        [SECURITY.md](https://github.com/Voxterrae/HUB_Optimus/blob/main/SECURITY.md).
       render: text
     validations:
       required: false
