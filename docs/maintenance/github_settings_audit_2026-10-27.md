@@ -69,4 +69,3 @@ Keep #1743, #1906 and #1974 open for their exact remaining gates. No merge,
 deployment, settings change, permission change, App installation, physical-key
 enrollment, release edit or branch deletion follows from this documentation
 refresh.
-
