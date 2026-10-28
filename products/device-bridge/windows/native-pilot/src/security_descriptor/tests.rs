@@ -857,6 +857,11 @@ fn parser_duplicate_and_inherited_grants_are_denied() {
 }
 
 impl OwnerDaclSnapshot {
+    // Bounded copy only; synthetic bytes never reach a native descriptor getter.
+    pub(crate) fn fixture_snapshot(bytes: &[u8]) -> Result<Self> {
+        Self::copy(bytes)
+    }
+
     pub(crate) fn fixture_ace_headers(&self) -> Vec<(u8, u8)> {
         assert!(self.0.len() >= 20);
         let dacl = u32::from_le_bytes(self.0[16..20].try_into().unwrap()) as usize;
