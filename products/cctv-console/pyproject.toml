@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optimus-cctv-console"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["av==19.0.1"]
+description = "Local recorder console with bounded original-stream event evidence"
+
+[project.optional-dependencies]
+vision = ["opencv-python-headless==4.13.0.92", "numpy==2.5.3"]
+
+[project.scripts]
+optimus-cctv = "vox_cctv_viewer:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["vox_cctv_config", "vox_cctv_native", "vox_cctv_viewer", "vox_cctv_alarm_policy", "vox_cctv_evidence", "vox_cctv_display", "vox_cctv_metadata", "vox_cctv_photos", "vox_cctv_video", "vox_cctv_sequences", "vox_cctv_selection"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["vox_home*"]
