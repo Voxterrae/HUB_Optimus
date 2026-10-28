@@ -15,6 +15,7 @@ import json
 import os
 import pathlib
 import sys
+import time
 import urllib.error
 import urllib.request
 from typing import Any
@@ -31,6 +32,8 @@ API_VERSION = "2022-11-28"
 CHECK_NAME = "founder-authority"
 EVIDENCE_PATH = pathlib.Path("founder-authority-evidence.json")
 MANIFEST_PATH = pathlib.Path("config/governance/owner_identity.v1.json")
+MERGEABILITY_MAX_ATTEMPTS = 4
+MERGEABILITY_RETRY_SECONDS = 2
 
 
 class WorkflowError(RuntimeError):
@@ -622,29 +625,49 @@ def live_pull_snapshot(
     expected_base_sha: str,
     expected_merge_sha: str | None = None,
 ) -> dict[str, Any]:
-    pull = require_mapping(
-        client.repository_request(f"pulls/{pull_number}"),
-        f"live pull request #{pull_number}",
-    )
-    if pull.get("state") != "open" or pull.get("merged") is not False:
-        raise WorkflowError("pull request must remain open and unmerged")
-
-    head = require_mapping(pull.get("head"), "live pull-request head")
-    base = require_mapping(pull.get("base"), "live pull-request base")
-    head_sha = require_sha(head.get("sha"), "live pull-request head SHA")
-    base_sha = require_sha(base.get("sha"), "live pull-request base SHA")
-    merge_sha = require_sha(
-        pull.get("merge_commit_sha"), "live test merge commit SHA"
-    )
-
-    if head_sha != expected_head_sha:
-        raise WorkflowError(
-            f"pull-request head changed: expected {expected_head_sha}, got {head_sha}"
+    # Only explicit null/null means GitHub is still computing this snapshot.
+    # Four requests allow at most six seconds of deliberate pauses, in addition
+    # to the existing HTTP timeouts; this is not a wall-clock deadline.
+    for attempt in range(MERGEABILITY_MAX_ATTEMPTS):
+        pull = require_mapping(
+            client.repository_request(f"pulls/{pull_number}"),
+            f"live pull request #{pull_number}",
         )
-    if base_sha != expected_base_sha:
-        raise WorkflowError(
-            f"pull-request base changed: expected {expected_base_sha}, got {base_sha}"
+        if pull.get("state") != "open" or pull.get("merged") is not False:
+            raise WorkflowError("pull request must remain open and unmerged")
+
+        head = require_mapping(pull.get("head"), "live pull-request head")
+        base = require_mapping(pull.get("base"), "live pull-request base")
+        head_sha = require_sha(head.get("sha"), "live pull-request head SHA")
+        base_sha = require_sha(base.get("sha"), "live pull-request base SHA")
+        if head_sha != expected_head_sha:
+            raise WorkflowError(
+                f"pull-request head changed: expected {expected_head_sha}, got {head_sha}"
+            )
+        if base_sha != expected_base_sha:
+            raise WorkflowError(
+                f"pull-request base changed: expected {expected_base_sha}, got {base_sha}"
+            )
+
+        if "mergeable" not in pull or "merge_commit_sha" not in pull:
+            raise WorkflowError("live pull request must include mergeability fields")
+        mergeable = pull["mergeable"]
+        if mergeable is not None and type(mergeable) is not bool:
+            raise WorkflowError("live pull-request mergeable must be boolean or null")
+        if mergeable is False:
+            raise WorkflowError("live pull request is not mergeable")
+        if mergeable is None and pull["merge_commit_sha"] is None:
+            if attempt + 1 == MERGEABILITY_MAX_ATTEMPTS:
+                raise WorkflowError("live pull-request mergeability remained pending")
+            time.sleep(MERGEABILITY_RETRY_SECONDS)
+            continue
+        if mergeable is not True:
+            raise WorkflowError("live pull-request mergeability is unresolved")
+        merge_sha = require_sha(
+            pull["merge_commit_sha"], "live test merge commit SHA"
         )
+        break
+
     if expected_merge_sha is not None and merge_sha != expected_merge_sha:
         raise WorkflowError(
             f"test merge commit changed: expected {expected_merge_sha}, got {merge_sha}"
@@ -659,10 +682,14 @@ def live_pull_snapshot(
     parents = merge_commit.get("parents")
     if not isinstance(parents, list):
         raise WorkflowError("live test merge commit parents must be an array")
+    if len(parents) != 2:
+        raise WorkflowError("live test merge commit must have exactly two parents")
     parent_shas = [
-        require_sha(item.get("sha"), "test merge parent SHA")
+        require_sha(
+            require_mapping(item, "test merge parent").get("sha"),
+            "test merge parent SHA",
+        )
         for item in parents
-        if isinstance(item, dict)
     ]
     if parent_shas != [base_sha, head_sha]:
         raise WorkflowError(
