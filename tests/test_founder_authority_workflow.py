@@ -3,10 +3,13 @@ from __future__ import annotations
 import importlib.util
 import json
 import pathlib
+import time
 import types
 from typing import Any
 
 import pytest
+
+from tools import founder_authority_guard as GUARD
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 MODULE_PATH = ROOT / ".github" / "scripts" / "founder_authority_workflow.py"
@@ -40,6 +43,7 @@ def pull_payload(
     head_sha: str = HEAD_SHA,
     base_sha: str = BASE_SHA,
     merge_sha: str | None = MERGE_SHA,
+    mergeable: bool | None = True,
     body: str = "Related to #1906",
 ) -> dict[str, Any]:
     return {
@@ -51,6 +55,7 @@ def pull_payload(
         "head": {"sha": head_sha, "ref": "feature"},
         "base": {"sha": base_sha, "ref": "main"},
         "merge_commit_sha": merge_sha,
+        "mergeable": mergeable,
     }
 
 
@@ -478,6 +483,296 @@ def test_missing_merge_candidate_produces_no_false_success(
     client = FakeClient.instances[0]
     assert client.created_checks == []
     assert client.finalized_checks == []
+
+
+@pytest.mark.parametrize("publish_checks", [True, False])
+@pytest.mark.parametrize("pending_at", [0, 1, 2])
+@pytest.mark.parametrize("pending_count", [1, 3])
+def test_pending_mergeability_converges_on_the_same_targets(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    publish_checks: bool,
+    pending_at: int,
+    pending_count: int,
+) -> None:
+    pauses: list[float] = []
+    monkeypatch.setattr(time, "sleep", pauses.append)
+    FakeClient.pull_responses = (
+        [pull_payload()] * pending_at
+        + [pull_payload(mergeable=None, merge_sha=None)] * pending_count
+        + [pull_payload()]
+    )
+    configure(monkeypatch, tmp_path)
+
+    assert WORKFLOW.run(publish_checks=publish_checks) == 0
+    client = FakeClient.instances[0]
+    assert pauses == [2] * pending_count
+    assert client.pull_index == 3 + pending_count
+    assert client.created_checks == (
+        [(101, HEAD_SHA), (102, MERGE_SHA)] if publish_checks else []
+    )
+    assert conclusions(client) == (["success", "success"] if publish_checks else [])
+    evidence = json.loads((tmp_path / "evidence.json").read_text(encoding="utf-8"))
+    assert evidence["evaluation_targets"] == {
+        "head_sha": HEAD_SHA, "base_sha": BASE_SHA, "merge_commit_sha": MERGE_SHA
+    }
+
+
+@pytest.mark.parametrize("publish_checks", [True, False])
+@pytest.mark.parametrize("pending_at", [0, 1, 2])
+def test_pending_mergeability_exhaustion_rejects_a_fifth_response(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    publish_checks: bool,
+    pending_at: int,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    pauses: list[float] = []
+    monkeypatch.setattr(time, "sleep", pauses.append)
+    FakeClient.pull_responses = (
+        [pull_payload()] * pending_at
+        + [pull_payload(mergeable=None, merge_sha=None)] * 4
+        + [pull_payload()]
+    )
+    configure(monkeypatch, tmp_path)
+
+    assert WORKFLOW.run(publish_checks=publish_checks) == 1
+    client = FakeClient.instances[0]
+    assert client.pull_index == pending_at + 4
+    assert pauses == [2, 2, 2]
+    assert "mergeability remained pending" in capsys.readouterr().err
+    assert conclusions(client) == (
+        ["failure", "failure"] if publish_checks and pending_at else []
+    )
+
+
+@pytest.mark.parametrize("after_pending", [False, True])
+@pytest.mark.parametrize(
+    ("updates", "message"),
+    [
+        ({"state": "closed"}, "open and unmerged"),
+        ({"merged": True}, "open and unmerged"),
+        ({"merged": None}, "open and unmerged"),
+        ({"merged": 0}, "open and unmerged"),
+        ({"head": {"sha": OTHER_HEAD_SHA}}, "head changed"),
+        ({"base": {"sha": OTHER_BASE_SHA}}, "base changed"),
+        ({"head": {"sha": "invalid"}}, "hexadecimal SHA"),
+        ({"base": None}, "must be an object"),
+        ({"mergeable": False}, "not mergeable"),
+        ({"mergeable": "true"}, "boolean or null"),
+        ({"mergeable": 0}, "boolean or null"),
+        ({"mergeable": 1}, "boolean or null"),
+        ({"mergeable": []}, "boolean or null"),
+        ({"mergeable": {}}, "boolean or null"),
+        ({"mergeable": None}, "mergeability is unresolved"),
+        ({"mergeable": None, "merge_commit_sha": "invalid"}, "mergeability is unresolved"),
+        ({"merge_commit_sha": None}, "must be a non-empty string"),
+        ({"merge_commit_sha": "invalid"}, "hexadecimal SHA"),
+        ({"merge_commit_sha": HEAD_SHA}, "must differ from head and base"),
+        ({"merge_commit_sha": BASE_SHA}, "must differ from head and base"),
+    ],
+)
+def test_invalid_snapshot_is_not_retried(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    after_pending: bool,
+    updates: dict[str, Any],
+    message: str,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    pauses: list[float] = []
+    monkeypatch.setattr(time, "sleep", pauses.append)
+    invalid = pull_payload()
+    invalid.update(updates)
+    FakeClient.pull_responses = (
+        [pull_payload(mergeable=None, merge_sha=None)] * int(after_pending)
+        + [invalid, pull_payload()]
+    )
+    configure(monkeypatch, tmp_path)
+
+    assert WORKFLOW.run() == 1
+    client = FakeClient.instances[0]
+    assert client.pull_index == 1 + int(after_pending)
+    assert pauses == ([2] if after_pending else [])
+    assert client.created_checks == []
+    assert message in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("missing_field", ["mergeable", "merge_commit_sha"])
+@pytest.mark.parametrize("after_pending", [False, True])
+def test_missing_mergeability_fields_cannot_start_or_extend_a_retry(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    missing_field: str,
+    after_pending: bool,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    pauses: list[float] = []
+    monkeypatch.setattr(time, "sleep", pauses.append)
+    invalid = pull_payload(mergeable=None, merge_sha=None)
+    del invalid[missing_field]
+    FakeClient.pull_responses = (
+        [pull_payload(mergeable=None, merge_sha=None)] * int(after_pending)
+        + [invalid, pull_payload()]
+    )
+    configure(monkeypatch, tmp_path)
+
+    assert WORKFLOW.run() == 1
+    assert FakeClient.instances[0].pull_index == 1 + int(after_pending)
+    assert FakeClient.instances[0].created_checks == []
+    assert pauses == ([2] if after_pending else [])
+    assert "include mergeability fields" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("publish_checks", [True, False])
+@pytest.mark.parametrize("pending_at", [1, 2])
+def test_pending_revalidation_cannot_accept_a_different_merge_candidate(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    publish_checks: bool,
+    pending_at: int,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    pauses: list[float] = []
+    monkeypatch.setattr(time, "sleep", pauses.append)
+    FakeClient.pull_responses = (
+        [pull_payload()] * pending_at
+        + [pull_payload(mergeable=None, merge_sha=None)]
+        + [pull_payload(merge_sha=OTHER_MERGE_SHA)]
+    )
+    configure(monkeypatch, tmp_path)
+
+    assert WORKFLOW.run(publish_checks=publish_checks) == 1
+    assert pauses == [2]
+    assert conclusions(FakeClient.instances[0]) == (
+        ["failure", "failure"] if publish_checks else []
+    )
+    assert "test merge commit changed" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("parents", "message"),
+    [
+        ([{"sha": BASE_SHA}, {"sha": OTHER_HEAD_SHA}], "parents do not match"),
+        ([{"sha": HEAD_SHA}, {"sha": BASE_SHA}], "parents do not match"),
+        ([{"sha": BASE_SHA}, None, {"sha": HEAD_SHA}], "exactly two"),
+        ([{"sha": BASE_SHA}, "invalid", {"sha": HEAD_SHA}], "exactly two"),
+        ([{"sha": BASE_SHA}, [], {"sha": HEAD_SHA}], "exactly two"),
+        ([{"sha": BASE_SHA}, {"sha": HEAD_SHA}, {"sha": OTHER_HEAD_SHA}], "exactly two"),
+        ([{"sha": BASE_SHA}], "exactly two"),
+        ([], "exactly two"),
+        ([None, {"sha": HEAD_SHA}], "must be an object"),
+        ([{"sha": BASE_SHA}, {}], "must be a non-empty string"),
+        ([{"sha": BASE_SHA}, {"sha": "invalid"}], "hexadecimal SHA"),
+        ({"base": BASE_SHA, "head": HEAD_SHA}, "must be an array"),
+    ],
+)
+def test_resolved_candidate_still_requires_exact_merge_parents(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    parents: Any,
+    message: str,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    pauses: list[float] = []
+    monkeypatch.setattr(time, "sleep", pauses.append)
+    FakeClient.pull_responses = [
+        pull_payload(mergeable=None, merge_sha=None), pull_payload()
+    ]
+    configure(monkeypatch, tmp_path)
+    original_request = FakeClient.repository_request
+
+    def wrong_parents(self: FakeClient, path: str, **kwargs: Any) -> Any:
+        if path.startswith("commits/"):
+            return {"parents": parents}
+        return original_request(self, path, **kwargs)
+
+    monkeypatch.setattr(FakeClient, "repository_request", wrong_parents)
+
+    assert WORKFLOW.run() == 1
+    assert pauses == [2]
+    assert FakeClient.instances[0].created_checks == []
+    assert message in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("updates", "message"),
+    [
+        ({"state": "closed"}, "open and unmerged"),
+        ({"merged": True}, "open and unmerged"),
+        ({"head": {"sha": OTHER_HEAD_SHA}}, "head changed"),
+        ({"base": {"sha": OTHER_BASE_SHA}}, "base changed"),
+        ({"head": None}, "must be an object"),
+        ({"base": {"sha": "invalid"}}, "hexadecimal SHA"),
+    ],
+)
+def test_pending_response_validates_state_and_targets_before_waiting(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    updates: dict[str, Any],
+    message: str,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    pauses: list[float] = []
+    monkeypatch.setattr(time, "sleep", pauses.append)
+    invalid = pull_payload(mergeable=None, merge_sha=None)
+    invalid.update(updates)
+    FakeClient.pull_responses = [invalid, pull_payload()]
+    configure(monkeypatch, tmp_path)
+
+    assert WORKFLOW.run() == 1
+    assert FakeClient.instances[0].pull_index == 1
+    assert FakeClient.instances[0].created_checks == []
+    assert pauses == []
+    assert message in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("publish_checks", [True, False])
+@pytest.mark.parametrize("verified", [True, False])
+def test_retry_preserves_real_commit_verification_policy(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    publish_checks: bool,
+    verified: bool,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    pauses: list[float] = []
+    monkeypatch.setattr(time, "sleep", pauses.append)
+    owner = {"login": "Voxterrae", "id": 249308740}
+    evidence = {
+        "repository": {"full_name": "Voxterrae/HUB_Optimus", "owner": owner},
+        "pull_request": {
+            "number": 1907, "author": owner, "body": "Related to #1906",
+            "head_sha": HEAD_SHA, "head_ref": "feature", "base_ref": "main",
+        },
+        "changed_files": [".github/scripts/founder_authority_workflow.py"],
+        "commits": [{
+            "sha": HEAD_SHA, "author": owner, "committer": owner,
+            "verification": {"verified": verified, "reason": "valid" if verified else "unsigned"},
+            "signature": None,
+        }],
+        "reviews": [],
+        "governance_issues": [{
+            "number": 1906, "exists": True, "is_pull_request": False,
+            "state": "open", "labels": ["governance"], "author": owner,
+        }],
+    }
+    configure(monkeypatch, tmp_path, evidence_values=[evidence])
+    monkeypatch.setattr(WORKFLOW, "MANIFEST_PATH", ROOT / "config/governance/owner_identity.v1.json")
+    monkeypatch.setattr(WORKFLOW, "load_owner_identity", GUARD.load_owner_identity)
+    monkeypatch.setattr(WORKFLOW, "evaluate", GUARD.evaluate)
+    FakeClient.pull_responses = [
+        pull_payload(mergeable=None, merge_sha=None), pull_payload()
+    ]
+
+    assert WORKFLOW.run(publish_checks=publish_checks) == (0 if verified else 1)
+    assert pauses == [2]
+    assert conclusions(FakeClient.instances[0]) == (
+        (["success", "success"] if verified else ["failure", "failure"])
+        if publish_checks else []
+    )
+    if not verified:
+        assert "all commits must be verified" in capsys.readouterr().err
 
 
 def test_second_check_creation_failure_marks_first_check_failed(
