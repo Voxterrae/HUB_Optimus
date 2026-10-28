@@ -1,4 +1,4 @@
-//! Dormant observations of two fixed Windows known-folder ancestor chains.
+//! Dormant observations and a fixed ProgramFiles OS-policy chain diagnostic.
 //! Ordered owner/DACL bytes, namespace and metadata equality confer no authority.
 //! Equality is not atomic, trusted initial acquisition, effective access or ABA exclusion.
 use crate::relative_ntfs::{self, DirectoryObservation, OsPathComponent};
@@ -391,17 +391,50 @@ impl ResolvedAnchor {
         self.volume.agrees(&now.volume)
     }
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum SnapshotMode {
+    ObservationOnly,
+    ProgramFilesOsPolicy,
+}
+impl SnapshotMode {
+    fn check_snapshot(
+        self,
+        current: &OwnerDaclSnapshot,
+        previous: Option<&OwnerDaclSnapshot>,
+    ) -> Result<()> {
+        if self == Self::ProgramFilesOsPolicy {
+            current.matches_os_ancestor_policy()?;
+        }
+        if previous.is_some_and(|saved| saved != current) {
+            return Err(denied("owner/DACL bytes changed"));
+        }
+        Ok(())
+    }
+}
+// Shared indexed traversal, not a filesystem backend or acquisition selector.
+fn check_indexed_steps(count: usize, mut check: impl FnMut(usize) -> Result<()>) -> Result<()> {
+    for index in 0..count {
+        check(index).map_err(|e| e.at_step(index))?;
+    }
+    Ok(())
+}
 struct RetainedStep {
     directory: DirectoryObservation,
     path: GuidPath,
     security: OwnerDaclSnapshot,
+    mode: SnapshotMode,
 }
 impl RetainedStep {
-    fn capture(directory: DirectoryObservation, path: GuidPath) -> Result<Self> {
+    fn capture(
+        directory: DirectoryObservation,
+        path: GuidPath,
+        mode: SnapshotMode,
+    ) -> Result<Self> {
         let result = (|| {
             directory.recheck()?;
             path.agrees(&GuidPath::parse(&directory.normalized_path()?)?)?;
             let security = directory.security()?;
+            mode.check_snapshot(&security, None)?;
             directory.recheck()?;
             Ok(security)
         })();
@@ -410,6 +443,7 @@ impl RetainedStep {
                 directory,
                 path,
                 security,
+                mode,
             }),
             Err(e) => finish(Err(e), directory.close().map_err(Error::from)),
         }
@@ -418,10 +452,8 @@ impl RetainedStep {
         self.directory.recheck()?;
         self.path
             .agrees(&GuidPath::parse(&self.directory.normalized_path()?)?)?;
-        if self.security != self.directory.security()? {
-            return Err(denied("owner/DACL bytes changed"));
-        }
-        Ok(())
+        let current = self.directory.security()?;
+        self.mode.check_snapshot(&current, Some(&self.security))
     }
 }
 struct ObservedAncestorChain {
@@ -431,6 +463,15 @@ struct ObservedAncestorChain {
 impl ObservedAncestorChain {
     fn observe(anchor: PersonalAnchor) -> Result<Self> {
         let source = ResolvedAnchor::resolve(anchor)?;
+        Self::acquire(source, SnapshotMode::ObservationOnly)
+    }
+    // Fixed read-only diagnostic: no caller-selected anchor, path, policy or
+    // trust input. Stops at the known folder and returns no protected authority.
+    fn observe_program_files_os_policy() -> Result<Self> {
+        let source = ResolvedAnchor::resolve(PersonalAnchor::ProgramFiles)?;
+        Self::acquire(source, SnapshotMode::ProgramFilesOsPolicy)
+    }
+    fn acquire(source: ResolvedAnchor, mode: SnapshotMode) -> Result<Self> {
         let root: Vec<_> = source.volume.root.iter().copied().chain(Some(0)).collect();
         let directory =
             DirectoryObservation::open_volume(&root).map_err(|e| Error::from(e).at_step(0))?;
@@ -439,6 +480,7 @@ impl ObservedAncestorChain {
             source.volume.clone(),
             &source.path.components.clone(),
             Some(source),
+            mode,
         )
     }
     fn walk(
@@ -446,9 +488,10 @@ impl ObservedAncestorChain {
         root: GuidPath,
         components: &[OsPathComponent],
         source: Option<ResolvedAnchor>,
+        mode: SnapshotMode,
     ) -> Result<Self> {
         let mut chain = Self {
-            steps: vec![RetainedStep::capture(directory, root).map_err(|e| e.at_step(0))?],
+            steps: vec![RetainedStep::capture(directory, root, mode).map_err(|e| e.at_step(0))?],
             source,
         };
         let result = (|| {
@@ -461,9 +504,9 @@ impl ObservedAncestorChain {
                     .directory
                     .child(component)
                     .map_err(|e| Error::from(e).at_step(index))?;
-                chain
-                    .steps
-                    .push(RetainedStep::capture(child, expected).map_err(|e| e.at_step(index))?);
+                chain.steps.push(
+                    RetainedStep::capture(child, expected, mode).map_err(|e| e.at_step(index))?,
+                );
                 chain.recheck_steps()?;
             }
             chain.recheck()
@@ -475,10 +518,7 @@ impl ObservedAncestorChain {
     }
     fn recheck_steps(&self) -> Result<()> {
         relative_ntfs::no_impersonation()?;
-        for (index, step) in self.steps.iter().enumerate() {
-            step.recheck().map_err(|e| e.at_step(index))?;
-        }
-        Ok(())
+        check_indexed_steps(self.steps.len(), |index| self.steps[index].recheck())
     }
     fn recheck(&self) -> Result<()> {
         self.recheck_steps()?;
@@ -496,6 +536,14 @@ impl ObservedAncestorChain {
     }
     #[cfg(test)]
     fn fixture(input: std::os::windows::io::OwnedHandle, names: &[&str]) -> Result<Self> {
+        Self::fixture_with_mode(input, names, SnapshotMode::ObservationOnly)
+    }
+    #[cfg(test)]
+    fn fixture_with_mode(
+        input: std::os::windows::io::OwnedHandle,
+        names: &[&str],
+        mode: SnapshotMode,
+    ) -> Result<Self> {
         let directory = DirectoryObservation::fixture_input(input)?;
         let parsed = (|| {
             let root = GuidPath::parse(&directory.normalized_path()?)?;
@@ -508,7 +556,7 @@ impl ObservedAncestorChain {
             Ok((root, components))
         })();
         match parsed {
-            Ok((root, components)) => Self::walk(directory, root, &components, None),
+            Ok((root, components)) => Self::walk(directory, root, &components, None, mode),
             Err(e) => finish(Err(e), directory.close().map_err(Error::from)),
         }
     }

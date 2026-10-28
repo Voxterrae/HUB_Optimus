@@ -508,11 +508,29 @@ encodings, and do not exclude ABA or establish an atomic security boundary.
 No actual product subtree is observed, adopted or created. No permissions are
 changed by the observer and there is no service, network or public API wiring.
 
+The separate private no-argument `observe_program_files_os_policy` diagnostic
+resolves only 64-bit ProgramFiles, with no caller-selected root, policy or trust
+input and no fallback. It retains the same metadata-only OS chain through that
+anchor, with a fixed internal mode on every root/intermediate/anchor step. The
+actual owner/DACL snapshot must match the unchanged OS-ancestor policy before
+retention and at every pre/post-walk or explicit recheck, before byte equality.
+Even safe-to-safe descriptor drift refuses. Capture failures close the newly
+owned observation; walk failures preserve Security errors and reverse checked
+cleanup. Existing `observe(anchor)` and test `fixture` routes remain observation
+only, including stable unsafe or unsupported opaque descriptor bytes. Neither
+successful policy checks nor observed paths/GUIDs approve a volume, bootstrap
+identity, protected root, service, product child or operational activation.
+
 Tests use only newly owned bounded fixtures with sentinel verification and
 identity-checked reverse cleanup. Fixed OS chains are read-only and their
 observed/refused outcomes are labelled separately; a refusal is not acceptance.
-Fatal pending termination remains deliberately uninduced. OS-ancestor owner/
-trustee policy, approved-volume identity, trusted acquisition, privileged
+Synthetic composition tests share the production snapshot check and indexed
+recheck loop; root/intermediate/anchor prefix cases prove policy/index handling,
+not native trusted acquisition. Native user-owned fixtures prove policy rejection
+and checked cleanup only, without changing owners, privileges or trusted SIDs.
+The fixed real ProgramFiles route reports diagnostic acceptance or refusal;
+neither is operational acceptance. Fatal pending termination remains deliberately
+uninduced. Approved-volume identity, trusted acquisition, privileged
 create-only installation, immutable payload evidence and real service/profile
 isolation remain separate gates. This prerequisite does not yet fulfil the
 operational protected service-folder goal or authorize Android installation.
@@ -522,8 +540,10 @@ operational protected service-folder goal or authorize Android installation.
 The [owner adoption of the ancestor proposal](https://github.com/Voxterrae/HUB_Optimus/pull/2012#issuecomment-6455986873)
 authorizes this first bounded policy slice. The private
 `OwnerDaclSnapshot::matches_os_ancestor_policy` diagnostic checks one opaque
-snapshot and returns only `Result<()>`. It has no production caller or
-`ancestor_chain` integration. The existing strict application parser and
+snapshot and returns only `Result<()>`. The
+[approved integration slice](https://github.com/Voxterrae/HUB_Optimus/pull/2013#issuecomment-6471387501)
+composes it into the private fixed ProgramFiles ancestor diagnostic above.
+The existing strict application parser and
 `DescriptorPolicy::root_shape` remain unchanged.
 
 The safe byte parser accepts 20..=65536-byte revision-1 self-relative snapshots,
@@ -555,7 +575,7 @@ results are recorded separately by the guarded test supervisor; this section
 does not claim a new native host acceptance result.
 
 An empty non-null DACL may match the nonmutation diagnostic and proves no
-creation capability. No AccessCheck, approved volume, retained-chain acceptance,
+creation capability. No AccessCheck, approved volume, operational acceptance,
 root acquisition, privileged bootstrap, service binding, provisioning or
 activation follows. ProgramData observations remain observational, with no
 selected-location acceptance or fallback. Android remains deferred. The later

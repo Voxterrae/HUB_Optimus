@@ -2,6 +2,281 @@ use super::*;
 use crate::relative_ntfs::tests::Fixture;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
+// Independent synthetic layout/SID literals. These cases test composition, not
+// native ownership, traversal, volume approval or service isolation.
+const SYNTHETIC_SYSTEM: &[u8] = &[1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0];
+const SYNTHETIC_EVERYONE: &[u8] = &[1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0];
+
+fn synthetic_snapshot(owner: &[u8], kind: u8, mask: u32) -> OwnerDaclSnapshot {
+    let dacl = 20 + owner.len();
+    let mut bytes = vec![1, 0, 4, 128]; // revision 1, DACL present, self-relative
+    bytes.extend(20u32.to_le_bytes());
+    bytes.extend([0; 8]); // absent group and SACL
+    bytes.extend((dacl as u32).to_le_bytes());
+    bytes.extend(owner);
+    bytes.extend([2, 0, 28, 0, 1, 0, 0, 0]); // one ordinary 20-byte ACE
+    bytes.extend([kind, 0, 20, 0]);
+    bytes.extend(mask.to_le_bytes());
+    bytes.extend(SYNTHETIC_EVERYONE);
+    OwnerDaclSnapshot::fixture_snapshot(&bytes).unwrap()
+}
+fn safe_snapshot() -> OwnerDaclSnapshot {
+    synthetic_snapshot(SYNTHETIC_SYSTEM, 0, 0x0012_00ad)
+}
+fn invalid_snapshots() -> Vec<OwnerDaclSnapshot> {
+    vec![
+        OwnerDaclSnapshot::fixture_snapshot(&[0; 20]).unwrap(),
+        synthetic_snapshot(SYNTHETIC_EVERYONE, 0, 0x0012_00ad),
+        synthetic_snapshot(SYNTHETIC_SYSTEM, 0, 0x0012_00af),
+        synthetic_snapshot(SYNTHETIC_SYSTEM, 5, 0x0012_00ad),
+    ]
+}
+
+#[test]
+fn policy_mode_accepts_valid_capture_and_stable_snapshot() {
+    let safe = safe_snapshot();
+    SnapshotMode::ProgramFilesOsPolicy
+        .check_snapshot(&safe, None)
+        .unwrap();
+    SnapshotMode::ProgramFilesOsPolicy
+        .check_snapshot(&safe, Some(&safe))
+        .unwrap();
+}
+#[test]
+fn policy_mode_refuses_stable_invalid_snapshots_before_equality() {
+    for (case, invalid) in invalid_snapshots().iter().enumerate() {
+        for previous in [None, Some(invalid)] {
+            let result = SnapshotMode::ProgramFilesOsPolicy.check_snapshot(invalid, previous);
+            assert!(
+                matches!(
+                    result,
+                    Err(Error {
+                        primary: Failure::Security(_),
+                        ..
+                    })
+                ),
+                "policy mode must refuse invalid snapshot case={case} during capture or stable recheck: {result:?}"
+            );
+        }
+    }
+}
+#[test]
+fn observation_mode_retains_opaque_stable_invalid_snapshots() {
+    for invalid in invalid_snapshots() {
+        SnapshotMode::ObservationOnly
+            .check_snapshot(&invalid, None)
+            .unwrap();
+        SnapshotMode::ObservationOnly
+            .check_snapshot(&invalid, Some(&invalid))
+            .unwrap();
+    }
+}
+#[test]
+fn policy_mode_rejects_safe_to_safe_drift_and_keeps_policy_failure_primary() {
+    let safe = safe_snapshot();
+    let other_safe = synthetic_snapshot(SYNTHETIC_SYSTEM, 0, 0x0012_00a9);
+    for mode in [
+        SnapshotMode::ObservationOnly,
+        SnapshotMode::ProgramFilesOsPolicy,
+    ] {
+        assert!(matches!(
+            mode.check_snapshot(&other_safe, Some(&safe)),
+            Err(Error {
+                primary: Failure::Denied("owner/DACL bytes changed"),
+                ..
+            })
+        ));
+    }
+    let invalid = synthetic_snapshot(SYNTHETIC_SYSTEM, 0, 2);
+    let result = SnapshotMode::ProgramFilesOsPolicy.check_snapshot(&invalid, Some(&safe));
+    assert!(
+        matches!(
+            result,
+            Err(Error {
+                primary: Failure::Security(_),
+                ..
+            })
+        ),
+        "current policy failure must precede descriptor drift: {result:?}"
+    );
+}
+#[test]
+fn policy_mode_checks_root_intermediate_anchor_and_preserves_original_index() {
+    let safe = safe_snapshot();
+    let invalid = synthetic_snapshot(SYNTHETIC_SYSTEM, 0, 2);
+    // The shared production indexed loop is exercised as the retained prefix
+    // grows root -> intermediate -> anchor. It does not emulate filesystem opens.
+    for count in 1..=3 {
+        let mut visited = vec![];
+        check_indexed_steps(count, |index| {
+            visited.push(index);
+            SnapshotMode::ProgramFilesOsPolicy.check_snapshot(&safe, Some(&safe))
+        })
+        .unwrap();
+        assert_eq!(visited, (0..count).collect::<Vec<_>>());
+        for failed_at in 0..count {
+            let mut visited = vec![];
+            let result = check_indexed_steps(count, |index| {
+                visited.push(index);
+                let current = if index == failed_at { &invalid } else { &safe };
+                SnapshotMode::ProgramFilesOsPolicy.check_snapshot(current, Some(current))
+            });
+            assert!(
+                matches!(
+                    result,
+                    Err(Error { step: Some(index), primary: Failure::Security(_), .. }) if index == failed_at
+                ),
+                "retained prefix={count}; failure={failed_at}; result={result:?}"
+            );
+            assert_eq!(visited, (0..=failed_at).collect::<Vec<_>>());
+        }
+    }
+}
+#[test]
+fn policy_security_primary_and_reverse_cleanup_failures_survive() {
+    let invalid = synthetic_snapshot(SYNTHETIC_EVERYONE, 0, 0x0012_00ad);
+    let result = finish(
+        SnapshotMode::ProgramFilesOsPolicy
+            .check_snapshot(&invalid, None)
+            .map_err(|e| e.at_step(2)),
+        finish(
+            Err(error(Failure::Native("leaf CloseHandle", 6))),
+            Err(error(Failure::Native("root CloseHandle", 5))),
+        ),
+    );
+    let error = result.unwrap_err();
+    assert_eq!(error.step, Some(2));
+    assert!(matches!(error.primary, Failure::Security(_)));
+    assert!(error.has_cleanup_failure());
+    assert!(matches!(
+        error.cleanup.as_slice(),
+        [
+            Failure::Native("leaf CloseHandle", 6),
+            Failure::Native("root CloseHandle", 5)
+        ]
+    ));
+}
+
+fn policy_refusal(result: Result<()>, expected_step: usize) -> Result<()> {
+    match result {
+        Err(e)
+            if e.step == Some(expected_step)
+                && matches!(&e.primary, Failure::Security(_))
+                && !e.has_cleanup_failure() =>
+        {
+            println!(
+                "OWNED_POLICY_FIXTURE REFUSED step={expected_step}; checked cleanup; no positive OS evidence"
+            );
+            Ok(())
+        }
+        Err(e) => Err(e),
+        Ok(()) => Err(denied("untrusted fixture unexpectedly matched OS policy")),
+    }
+}
+
+#[test]
+fn native_policy_capture_refuses_user_owned_fixture_with_checked_cleanup() {
+    case(|f| {
+        let leaf = f.os_child(0, "Anchor")?;
+        let sentinel = f.sentinel(leaf, "unchanged", 0x58)?;
+        let legacy = ObservedAncestorChain::fixture(f.input(0)?, &["Anchor"])?;
+        let precondition = if legacy.steps.iter().all(|step| {
+            step.mode == SnapshotMode::ObservationOnly
+                && step.security.matches_os_ancestor_policy().is_err()
+        }) {
+            legacy.recheck()
+        } else {
+            Err(denied("fixture must remain untrusted and observation-only"))
+        };
+        finish(precondition, legacy.close())?;
+
+        let attempted = match ObservedAncestorChain::fixture_with_mode(
+            f.input(0)?,
+            &["Anchor"],
+            SnapshotMode::ProgramFilesOsPolicy,
+        ) {
+            Ok(chain) => finish(
+                Err(denied("unexpected policy fixture acceptance")),
+                chain.close(),
+            ),
+            Err(e) => Err(e),
+        };
+        f.verify_sentinel(sentinel)?;
+        policy_refusal(attempted, 0)
+    });
+}
+
+#[test]
+fn native_policy_child_failure_closes_child_and_retained_observation_ancestors() {
+    case(|f| {
+        let middle = f.os_child(0, "Middle")?;
+        let leaf = f.os_child(middle, "Anchor")?;
+        let sentinel = f.sentinel(leaf, "unchanged", 0x59)?;
+        // These ancestors deliberately retain legacy observation mode; native
+        // user ownership cannot manufacture a positive policy chain fixture.
+        let chain = ObservedAncestorChain::fixture(f.input(0)?, &["Middle"])?;
+        let attempted = (|| {
+            let parent = chain.steps.last().unwrap();
+            let name = OsPathComponent::new(&utf16("Anchor"))?;
+            let expected = parent.path.append(&name)?;
+            let child = parent.directory.child(&name)?;
+            match RetainedStep::capture(child, expected, SnapshotMode::ProgramFilesOsPolicy)
+                .map_err(|e| e.at_step(2))
+            {
+                Err(e) => Err(e),
+                Ok(step) => finish(
+                    Err(denied("unexpected policy child acceptance")),
+                    step.directory.close().map_err(Error::from),
+                ),
+            }
+        })();
+        let checked = finish(attempted, chain.close());
+        f.verify_sentinel(sentinel)?;
+        policy_refusal(checked, 2)
+    });
+}
+
+#[test]
+fn native_fixed_program_files_os_policy_diagnostic_labels_acceptance_or_refusal() {
+    let acquire: fn() -> Result<ObservedAncestorChain> =
+        ObservedAncestorChain::observe_program_files_os_policy;
+    match acquire() {
+        Ok(chain) => {
+            let count = chain.steps.len();
+            let outcome = catch_unwind(AssertUnwindSafe(|| {
+                let source = chain.source.as_ref().expect("fixed known-folder source");
+                assert_eq!(source.anchor, PersonalAnchor::ProgramFiles);
+                assert_eq!(count, source.path.components.len() + 1);
+                assert!(
+                    chain
+                        .steps
+                        .iter()
+                        .all(|step| { step.mode == SnapshotMode::ProgramFilesOsPolicy })
+                );
+                chain.recheck()
+            }));
+            let closed = chain.close();
+            assert!(closed.is_ok(), "policy diagnostic close failed: {closed:?}");
+            match outcome {
+                Ok(result) => result.unwrap(),
+                Err(panic) => std::panic::resume_unwind(panic),
+            }
+            println!(
+                "REAL_PROGRAM_FILES_OS_POLICY DIAGNOSTIC_ACCEPTED steps={count}; no approved volume/bootstrap/root/service authority"
+            );
+        }
+        Err(e) => {
+            assert!(
+                !e.has_cleanup_failure(),
+                "policy diagnostic cleanup failed: {e:?}"
+            );
+            println!(
+                "REAL_PROGRAM_FILES_OS_POLICY DIAGNOSTIC_REFUSED {e:?}; not acceptance or operational readiness"
+            );
+        }
+    }
+}
+
 #[test]
 fn native_owned_multilevel_space_unicode_chain() {
     let mut fixture = Fixture::ancestor().expect("exclusive owned ancestor fixture");
@@ -195,6 +470,14 @@ fn native_impersonation_refuses_without_clearing_token() {
         }
         let before = crate::relative_ntfs::tests::thread_token_id();
         let result = ResolvedAnchor::resolve(PersonalAnchor::ProgramData);
+        let policy_result: Result<()> =
+            match ObservedAncestorChain::observe_program_files_os_policy() {
+                Ok(chain) => finish(
+                    Err(denied("policy route accepted impersonation")),
+                    chain.close(),
+                ),
+                Err(e) => Err(e),
+            };
         let after = crate::relative_ntfs::tests::thread_token_id();
         if unsafe { RevertToSelf() } == 0 {
             std::process::abort();
@@ -203,6 +486,13 @@ fn native_impersonation_refuses_without_clearing_token() {
         assert_eq!(before.unwrap(), after.unwrap());
         assert!(matches!(
             result,
+            Err(Error {
+                primary: Failure::Relative(ref e),
+                ..
+            }) if crate::relative_ntfs::tests::expected_refusal(e, "impersonation")
+        ));
+        assert!(matches!(
+            policy_result,
             Err(Error {
                 primary: Failure::Relative(ref e),
                 ..
