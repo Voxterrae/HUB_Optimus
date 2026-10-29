@@ -608,7 +608,7 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert 'id="product_source_preview"' in html
     assert 'id="product_confirm_source" type="checkbox"' in html
     assert 'id="product_confirm_claims" type="checkbox"' in html
-    assert '<script src="./i18n.v1.js?v=1.4.2"></script>' in html
+    assert '<script src="./i18n.v1.js?v=1.4.3"></script>' in html
     assert '<script src="./claim-decomposition.v1.js"></script>' in html
     assert re.search(r'<script[^>]+src="https?://', html) is None
 
@@ -1068,7 +1068,7 @@ def test_operator_progress_is_immediate_and_only_network_intake_has_a_deadline()
     assert "const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;" in html
     assert 'new ControlledIntakeError("url_fetch_timeout", 504)' in html
     assert "return await Promise.race([request, deadline]);" in html
-    assert "hub-optimus-operator-v0-31" in sw
+    assert "hub-optimus-operator-v0-32" in sw
 
 
 def test_operator_draft_is_source_bound_and_conservative():
@@ -3721,7 +3721,7 @@ def test_public_url_only_fallback_is_immediate_and_points_to_private_operator():
 
     assert "Authenticated URL intake required" in catalog
     assert "Public Operator did not send this URL" in catalog
-    assert "Sign in to private Operator" in catalog
+    assert "Private URL intake (activation pending)" in catalog
     assert "no request was sent" in catalog
     assert (
         'const PRIVATE_OPERATOR_LOGIN_URL = "https://api.huboptimus.dev/oauth2/start?'
@@ -3743,7 +3743,7 @@ def test_operator_install_assets_use_institutional_mark_and_cache_v031():
         icon,
         re.IGNORECASE,
     ) is None
-    assert "hub-optimus-operator-v0-31" in sw
+    assert "hub-optimus-operator-v0-32" in sw
     assert "./index.html" in sw
     assert "../assets/brand/hub-optimus-logo-lockup.png" in sw
     assert "./og.svg" in sw
@@ -3894,7 +3894,7 @@ async function snapshot(response) {
     else:
         assert result["precachedCount"] > 0
     catalog = result["catalog"]
-    assert catalog["version"] == "1.4.2"
+    assert catalog["version"] == "1.4.3"
     assert catalog["supportedLocales"] == ["en", "es", "de", "ru", "he", "zh-Hans"]
     for locale, messages in catalog["messages"].items():
         for key in claim_keys:
@@ -3954,7 +3954,7 @@ vm.runInContext(source, context);
   let installWork;
   listeners.install({waitUntil(work) { installWork = work; }});
   await installWork;
-  if (!installedRequests.length) throw new Error("no v0-31 assets installed");
+  if (!installedRequests.length) throw new Error("no v0-32 assets installed");
   if (installedRequests.some((request) => request.cache !== "reload")) {
     throw new Error("an install request can reuse stale HTTP-cache bytes");
   }
@@ -3969,8 +3969,8 @@ vm.runInContext(source, context);
   if (!deleted.includes("hub-optimus-operator-v0-27")) {
     throw new Error("v0-27 cache was not deleted");
   }
-  if (!cacheNames.has("hub-optimus-operator-v0-31")) {
-    throw new Error("v0-31 cache was not retained");
+  if (!cacheNames.has("hub-optimus-operator-v0-32")) {
+    throw new Error("v0-32 cache was not retained");
   }
   if (claimCalls !== 1) throw new Error("updated worker did not claim clients");
 })().catch((error) => {

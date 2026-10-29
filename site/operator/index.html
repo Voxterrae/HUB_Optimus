@@ -1364,7 +1364,7 @@
           <input id="product_source_url" name="source_url" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" dir="ltr" aria-describedby="product_source_url_hint product_source_url_disclosure product_private_intake_hint" placeholder="https://example.com/news-or-github-source" data-op-i18n-placeholder="sourceUrlPlaceholder">
           <p class="field-hint" id="product_source_url_hint" data-op-i18n="sourceUrlAccessHint">The authenticated private Operator can send this URL to controlled intake. Public Operator does not send it; paste the relevant source text below instead.</p>
           <p class="field-hint" id="product_source_url_disclosure" data-op-i18n="sourceUrlPrivacyDisclosure">On the public Operator, an exact URL supplied with source text stays local as unverified attribution; explicit share actions can include it. On the authenticated private Operator, retrieval sends that exact URL, including its path, query and fragment, to controlled intake. Do not use private or signed links, tokens, one-time passwords or personal data.</p>
-          <p class="field-hint" id="product_private_intake_hint"><a href="https://api.huboptimus.dev/oauth2/start?rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F" rel="noopener noreferrer" data-op-i18n="privateIntakeLink">Open authenticated URL intake</a> · <span data-op-i18n="privateIntakeHint">Automatic retrieval is limited to authorized owner/team accounts. Public Operator continues to support pasted source text without sending the URL.</span></p>
+          <p class="field-hint" id="product_private_intake_hint"><a href="https://api.huboptimus.dev/oauth2/start?rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F" rel="noopener noreferrer" data-op-i18n="privateIntakeLink">Private URL intake (activation pending)</a> · <span data-op-i18n="privateIntakeHint">Private URL retrieval is pending activation and will be limited to authorized owner/team accounts. Paste the source text below to complete the public flow locally, without sending the URL.</span></p>
         </div>
         <div class="field">
           <label for="signal_source_type" data-op-i18n="sourceTypeLabel">Source type</label>
@@ -1828,7 +1828,7 @@
     </footer>
   </main>
 
-  <script src="./i18n.v1.js?v=1.4.2"></script>
+  <script src="./i18n.v1.js?v=1.4.3"></script>
   <script src="./claim-decomposition.v1.js"></script>
   <script src="./learning-candidate.v1.js"></script>
   <script src="./learning-store.v1.js"></script>
