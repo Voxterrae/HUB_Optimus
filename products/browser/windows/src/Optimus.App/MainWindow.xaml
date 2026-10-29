@@ -1,0 +1,65 @@
+<Window x:Class="Optimus.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:core="clr-namespace:Optimus.Core;assembly=Optimus.Core" Title="Optimus 0.2 · Alpha privada" Icon="Assets/optimus.ico" Width="1400" Height="920" MinWidth="420" MinHeight="300" FontSize="18" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}">
+<DockPanel>
+ <StackPanel DockPanel.Dock="Top">
+  <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+   <StackPanel Orientation="Horizontal">
+    <Button Content="Atrás" Click="Back_Click" AutomationProperties.Name="Atrás"/>
+    <Button Content="Adelante" Click="Forward_Click"/>
+    <Button Content="Recargar" Click="Reload_Click"/>
+    <Button Content="Inicio" Click="Home_Click"/>
+    <Button Content="Nueva pestaña" Click="NewTab_Click"/>
+    <Button Content="Nueva privada" Click="NewPrivate_Click"/>
+    <Button Content="Cerrar pestaña" Click="CloseTab_Click"/>
+    <Button Content="Recuperar pestaña" Click="RecoverTab_Click"/>
+    <Button Content="Marcadores" Click="Bookmarks_Click"/>
+    <Button Content="Ayuda" Click="Help_Click"/>
+   </StackPanel>
+  </ScrollViewer>
+  <StackPanel Orientation="Horizontal"><Image Source="{StaticResource OptimusLogo}" Width="30" Height="30" Margin="8,0"/><TextBlock x:Name="ModeLabel" Text="Normal" VerticalAlignment="Center" Margin="6"/><Button x:Name="OpenPendingPrivate" Content="Abrir destino en privado" Click="OpenPendingPrivate_Click" Visibility="Collapsed"/></StackPanel>
+  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <TextBox x:Name="Address" FlowDirection="LeftToRight" AutomationProperties.Name="Dirección o búsqueda" ToolTip="Dirección o búsqueda · Ctrl+L" KeyDown="Address_KeyDown"/>
+   <Button Grid.Column="1" Content="Ir" Click="Go_Click"/>
+  </Grid>
+  <Expander Header="Opciones · privacidad, búsqueda y apariencia">
+  <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+   <StackPanel Orientation="Horizontal">
+    <TextBlock Text="Buscar con" VerticalAlignment="Center" Margin="6"/>
+    <ComboBox x:Name="SearchChoice" Width="180" AutomationProperties.Name="Proveedor de búsqueda" SelectionChanged="Search_Changed" SelectedValuePath="Tag"><ComboBoxItem Content="Optimus Search" Tag="{x:Static core:SearchProvider.Optimus}"/><ComboBoxItem Content="DuckDuckGo" Tag="{x:Static core:SearchProvider.DuckDuckGo}"/><ComboBoxItem Content="Google" Tag="{x:Static core:SearchProvider.Google}"/></ComboBox>
+    <TextBlock Text="Tamaño y zoom" VerticalAlignment="Center" Margin="6"/>
+    <ComboBox x:Name="ScaleChoice" Width="150" AutomationProperties.Name="Tamaño y zoom" SelectionChanged="Scale_Changed"><ComboBoxItem Content="100 %"/><ComboBoxItem Content="125 %"/><ComboBoxItem Content="150 %"/><ComboBoxItem Content="200 %"/></ComboBox>
+    <CheckBox x:Name="ContrastChoice" Content="Contraste alto" Click="Appearance_Click" Margin="8,0"/>
+    <CheckBox x:Name="RestoreChoice" Content="Restaurar direcciones al abrir" Click="Restore_Click" Margin="8,0"/>
+    <Button Content="Privacidad y búsqueda" Click="PrivacySettings_Click"/>
+    <Button Content="Abrir sitio actual en privado" Click="CurrentPrivate_Click"/>
+    <Button Content="Descargas" Click="Downloads_Click"/>
+    <Button Content="Revocar permisos" Click="RevokePermissions_Click"/>
+    <Button Content="Borrar datos de sitios" Click="ClearData_Click"/>
+   </StackPanel>
+  </ScrollViewer>
+  </Expander>
+ </StackPanel>
+ <Border DockPanel.Dock="Bottom" BorderThickness="0,1,0,0" BorderBrush="Gray" Padding="8"><ScrollViewer MaxHeight="96" VerticalScrollBarVisibility="Auto"><TextBlock x:Name="Status" Text="Alpha privada 0.2. Privado limita guardado local; no ofrece anonimato." TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/></ScrollViewer></Border>
+ <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition x:Name="HelpColumn" Width="0"/></Grid.ColumnDefinitions>
+  <TabControl x:Name="Tabs" SelectionChanged="Tabs_Changed" AutomationProperties.Name="Pestañas"/>
+  <Border x:Name="HelpPanel" Grid.Column="1" BorderThickness="1,0,0,0" BorderBrush="Gray" Padding="10" Visibility="Collapsed">
+   <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel>
+    <Button Content="Cerrar ayuda" Click="HideHelp_Click" HorizontalAlignment="Right"/>
+    <TextBlock Text="Guía local basada en reglas" FontWeight="Bold" TextWrapping="Wrap"/>
+    <TextBlock Text="IA remota no conectada. Conexión privada pendiente de validar. No se envían preguntas ni fragmentos." TextWrapping="Wrap" Margin="0,6"/>
+    <TextBox x:Name="Question" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="88" AutomationProperties.Name="Pregunta a la guía local"/>
+    <Button Content="Consultar guía local" Click="Ask_Click"/>
+    <TextBox x:Name="GuideAnswer" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" BorderThickness="0" MinHeight="100" AutomationProperties.Name="Respuesta de la guía local"/>
+    <TextBlock x:Name="ProposalText" TextWrapping="Wrap"/>
+    <StackPanel Orientation="Horizontal"><Button x:Name="ConfirmProposal" Content="Confirmar acción" Click="Confirm_Click" IsEnabled="False"/><Button Content="Cancelar acción" Click="Cancel_Click"/></StackPanel>
+    <Separator Margin="0,10"/>
+    <TextBlock Text="Vista previa de texto compartido" FontWeight="Bold" TextWrapping="Wrap"/>
+    <Button Content="Revisar selección de esta página" Click="PreviewSelection_Click"/>
+    <Button Content="Revisar texto pegado" Click="PreviewPaste_Click"/>
+    <TextBox x:Name="ShareText" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="130" AutomationProperties.Name="Texto de la vista previa, editable, revisión limitada a 8000 caracteres" TextChanged="ShareText_Changed"/>
+    <TextBlock x:Name="ShareAttribution" TextWrapping="Wrap" Text="Destinatario: ninguno; envío desactivado."/>
+    <Button Content="Enviar fragmento · desactivado" IsEnabled="False"/>
+    <Button Content="Cancelar vista previa" Click="CancelShare_Click"/>
+   </StackPanel></ScrollViewer>
+  </Border>
+ </Grid>
+</DockPanel></Window>
