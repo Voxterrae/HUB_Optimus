@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-30",
+  "source_commit": "62c871b34de76cda23590c7411f2b9c6264baa23",
+  "issue": 2019,
+  "source_import_base": "79c1d95d65e0f8b903039249cd8ce890b1ffe111",
+  "scope": "New web companion and exact static Pages artifact; native and React import untouched",
+  "static_file_count": 10,
+  "assets": "Existing Optimus and HUB operator SVGs preserved byte-for-byte; original provenance in products/browser/demo/assets/provenance.json",
+  "files": [
+    {
+      "path": "products/browser/web/.gitignore",
+      "sha256": "3d8929fa2b94978c760a7d1766a73e88e8646ff8c245378670ba483a5cb7c019",
+      "source": ".gitignore"
+    },
+    {
+      "path": "products/browser/web/README.md",
+      "sha256": "b132473cedfc7215ca230e04cd5abfbdc19047307d72fc04c866ba218059edf2",
+      "source": "README.md"
+    },
+    {
+      "path": "products/browser/web/dist/app.mjs",
+      "sha256": "5c788461efb25c8d91b9a581832fe968c670d21e43b13d696afc8593f09c1893",
+      "source": "dist/app.mjs"
+    },
+    {
+      "path": "site/browser/app.mjs",
+      "sha256": "5c788461efb25c8d91b9a581832fe968c670d21e43b13d696afc8593f09c1893",
+      "source": "dist/app.mjs"
+    },
+    {
+      "path": "products/browser/web/dist/assets/hub-optimus-operator-icon.svg",
+      "sha256": "5db211be97c00543df44840f7193607698e23b0850ef5b4d42fdce6ef9f84488",
+      "source": "dist/assets/hub-optimus-operator-icon.svg"
+    },
+    {
+      "path": "site/browser/assets/hub-optimus-operator-icon.svg",
+      "sha256": "5db211be97c00543df44840f7193607698e23b0850ef5b4d42fdce6ef9f84488",
+      "source": "dist/assets/hub-optimus-operator-icon.svg"
+    },
+    {
+      "path": "products/browser/web/dist/assets/optimus.svg",
+      "sha256": "3758496c27511fb0e7162e89369824a449eb61ec7877f41ab65d877e9b0d4089",
+      "source": "dist/assets/optimus.svg"
+    },
+    {
+      "path": "site/browser/assets/optimus.svg",
+      "sha256": "3758496c27511fb0e7162e89369824a449eb61ec7877f41ab65d877e9b0d4089",
+      "source": "dist/assets/optimus.svg"
+    },
+    {
+      "path": "products/browser/web/dist/core.mjs",
+      "sha256": "1f045203e6367d87c213a7925bd19f4122b94e7a2d063e0ab93901f1428db08c",
+      "source": "dist/core.mjs"
+    },
+    {
+      "path": "site/browser/core.mjs",
+      "sha256": "1f045203e6367d87c213a7925bd19f4122b94e7a2d063e0ab93901f1428db08c",
+      "source": "dist/core.mjs"
+    },
+    {
+      "path": "products/browser/web/dist/i18n.mjs",
+      "sha256": "9e6c67fc7f3a9d71123dabd111d99594184780d99bd47acab556e45427b23309",
+      "source": "dist/i18n.mjs"
+    },
+    {
+      "path": "site/browser/i18n.mjs",
+      "sha256": "9e6c67fc7f3a9d71123dabd111d99594184780d99bd47acab556e45427b23309",
+      "source": "dist/i18n.mjs"
+    },
+    {
+      "path": "products/browser/web/dist/index.html",
+      "sha256": "4b677d47ede4f0f9dd8483d2035b29d54da04f925c1b8c6323636ae38ce7359e",
+      "source": "dist/index.html"
+    },
+    {
+      "path": "site/browser/index.html",
+      "sha256": "4b677d47ede4f0f9dd8483d2035b29d54da04f925c1b8c6323636ae38ce7359e",
+      "source": "dist/index.html"
+    },
+    {
+      "path": "products/browser/web/dist/manifest.webmanifest",
+      "sha256": "4d8061b231c82911f6d02e96eac4e5127dd75a7f36dfce80bba6461bf630abba",
+      "source": "dist/manifest.webmanifest"
+    },
+    {
+      "path": "site/browser/manifest.webmanifest",
+      "sha256": "4d8061b231c82911f6d02e96eac4e5127dd75a7f36dfce80bba6461bf630abba",
+      "source": "dist/manifest.webmanifest"
+    },
+    {
+      "path": "products/browser/web/dist/staticwebapp.config.json",
+      "sha256": "cb7f7388e4812cd09f9c7386a23e5961ca99e7413bc434f6067c07eb9c7fd83a",
+      "source": "dist/staticwebapp.config.json"
+    },
+    {
+      "path": "site/browser/staticwebapp.config.json",
+      "sha256": "cb7f7388e4812cd09f9c7386a23e5961ca99e7413bc434f6067c07eb9c7fd83a",
+      "source": "dist/staticwebapp.config.json"
+    },
+    {
+      "path": "products/browser/web/dist/styles.css",
+      "sha256": "b3c6ea9b669457badc806154db5b046fd0de6d75b3c9485e4bea3474c98318e0",
+      "source": "dist/styles.css"
+    },
+    {
+      "path": "site/browser/styles.css",
+      "sha256": "b3c6ea9b669457badc806154db5b046fd0de6d75b3c9485e4bea3474c98318e0",
+      "source": "dist/styles.css"
+    },
+    {
+      "path": "products/browser/web/dist/voice.mjs",
+      "sha256": "9282f7aa315a777907726ced118248406b90d5141f09022ea47230486ebc5a8a",
+      "source": "dist/voice.mjs"
+    },
+    {
+      "path": "site/browser/voice.mjs",
+      "sha256": "9282f7aa315a777907726ced118248406b90d5141f09022ea47230486ebc5a8a",
+      "source": "dist/voice.mjs"
+    },
+    {
+      "path": "products/browser/web/docs/AI_GOVERNANCE_REVIEW.md",
+      "sha256": "12d52d51bb2b113d057821e4bca886e1b64d20bfe6662f6e8a7fa0a686a05ecf",
+      "source": "docs/AI_GOVERNANCE_REVIEW.md"
+    },
+    {
+      "path": "products/browser/web/docs/DECISIONS.md",
+      "sha256": "e0c87e59382c8151d2cab88da31c83c005611889c102fb25cc3a4c4c362da3b7",
+      "source": "docs/DECISIONS.md"
+    },
+    {
+      "path": "products/browser/web/docs/TECHNICAL_OPERATIONS.md",
+      "sha256": "634c81fbcc9c4b41006f80d408b2dd35dd8fad92ead5d431315012cf26242d0d",
+      "source": "docs/TECHNICAL_OPERATIONS.md"
+    },
+    {
+      "path": "products/browser/web/docs/VALIDATION.md",
+      "sha256": "7e84a9b9f2a8604592fdce1782a6e92fcf9aa911025f4656aa9e385060ab34d9",
+      "source": "docs/VALIDATION.md"
+    },
+    {
+      "path": "products/browser/web/docs/superpowers/plans/2026-10-30-accessible-web-pilot.md",
+      "sha256": "a5348ecfa70981de78bb7fd3830c0b0f3679145a656dc59022418f122ee88e6b",
+      "source": "docs/superpowers/plans/2026-10-30-accessible-web-pilot.md"
+    },
+    {
+      "path": "products/browser/web/docs/superpowers/specs/2026-10-30-accessible-web-pilot-design.md",
+      "sha256": "6fa19040b84c3e7f3de4bd29eed0ed0319b61d7de2efcf6f4a2cd46cbf60a271",
+      "source": "docs/superpowers/specs/2026-10-30-accessible-web-pilot-design.md"
+    },
+    {
+      "path": "products/browser/web/ops/azure/README.md",
+      "sha256": "416474e9ace8861b89ee7ae467aac42b8d2705fb3d263029143e1b7fdab97e5e",
+      "source": "ops/azure/README.md"
+    },
+    {
+      "path": "products/browser/web/ops/azure/azuredeploy.json",
+      "sha256": "401f9912da8e56aed2ba50ce102184837c683e97b26ae5875fa1df5728238496",
+      "source": "ops/azure/azuredeploy.json"
+    },
+    {
+      "path": "products/browser/web/tests/core.test.mjs",
+      "sha256": "bc8b046e00c1797024eae4f22721d6bea2320102672e40178e154dfd6caf0184",
+      "source": "tests/core.test.mjs"
+    },
+    {
+      "path": "products/browser/web/tests/i18n.test.mjs",
+      "sha256": "f9a41278ba1394e1651409685405e14564eb6c26b210a2266d5ff42459783ec0",
+      "source": "tests/i18n.test.mjs"
+    },
+    {
+      "path": "products/browser/web/tests/voice.test.mjs",
+      "sha256": "8bb86cfa1fbb8dfb6ac7b63e45a28fe8ecc02b2180b0ced45ed6b02abf0e8a5a",
+      "source": "tests/voice.test.mjs"
+    }
+  ]
+}
