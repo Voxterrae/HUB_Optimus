@@ -11,6 +11,7 @@ EVIDENCE_REF = "8426b08e5f88b650c4d79e41d3ce3afd7d42746b"
 PUBLIC_ROUTES = {
     "/": SITE / "index.html",
     "/404.html": SITE / "404.html",
+    "/browser/": SITE / "browser" / "index.html",
     "/operator/": SITE / "operator" / "index.html",
     "/obsidian-HUB_Optimus/": SITE / "obsidian-HUB_Optimus" / "index.html",
     "/obsidian-HUB_Optimus-v1.0/": SITE / "obsidian-HUB_Optimus-v1.0" / "index.html",
