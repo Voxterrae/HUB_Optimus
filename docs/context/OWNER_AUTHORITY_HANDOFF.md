@@ -144,6 +144,11 @@ Issue #1906 retains App-only hosted validation, any later bootstrap-requirement
 removal and remaining exact-authorization work; this cleanup does not close it.
 Hardware enrollment/status follow-up remains in #1743 and #1881.
 
+The dedicated App publisher must not use job-level or step-level error
+tolerance: a failed authority evaluation or publication must also fail the
+workflow. This preserves visibility of failure without changing the seven
+required contexts, source App bindings, owner identity, or approval policy.
+
 Live permissions and settings remain mutable. Documentation neither changes
 access nor proves current collaborator rights. Preserve the authority and
 third-party-rights boundaries above and re-audit before future settings changes.

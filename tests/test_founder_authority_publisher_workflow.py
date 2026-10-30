@@ -41,18 +41,21 @@ def test_required_bootstrap_is_isolated_and_read_only() -> None:
     )
 
 
-def test_app_canary_is_separate_tolerated_pinned_and_least_privilege() -> None:
+def test_app_publisher_is_separate_fail_closed_pinned_and_least_privilege() -> None:
     text = WORKFLOW.read_text(encoding="utf-8")
     jobs = workflow_jobs()
     canary = jobs["founder-authority-app-canary"]
     assert isinstance(canary, dict)
     assert canary["name"] == "founder-authority-app-canary"
-    assert canary["continue-on-error"] is True
+    # The dedicated App publishes a required protection check. Its errors
+    # must also fail the workflow rather than produce an overall green run.
+    assert canary.get("continue-on-error", False) is False
     assert canary["permissions"] == {"contents": "read"}
     assert "needs" not in canary
 
     steps = canary["steps"]
     assert isinstance(steps, list)
+    assert all(step.get("continue-on-error", False) is False for step in steps)
     checkout = steps[0]
     assert checkout["name"] == "Checkout trusted base policy"
     assert checkout["with"] == {
