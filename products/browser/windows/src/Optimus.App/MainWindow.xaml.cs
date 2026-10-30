@@ -42,19 +42,24 @@ public partial class MainWindow : Window
   InitializeComponent();Width=Math.Min(1400,SystemParameters.WorkArea.Width);Height=Math.Min(920,SystemParameters.WorkArea.Height);permissions=new(this,SetStatus);downloads=new(this,SetStatus);
   var loaded=settingsStore.Load();settings=loaded.Settings;privacy=new(settings.PrivacyRules);
   SearchChoice.SelectedValue=settings.SearchProvider;ScaleChoice.SelectedIndex=ScaleIndex(settings.TextScale);ContrastChoice.IsChecked=settings.HighContrast;RestoreChoice.IsChecked=settings.RestoreSession;
-  ApplyAppearance();ready=true;
+  ApplyAppearance();InitializeChrome();ready=true;
   if(loaded.Error!=null)SetStatus(loaded.Error);
   Loaded+=async(_,_)=>await StartAsync(loaded.Error);
   Closing+=Window_Closing;
   Address.TextChanged+=(_,_)=>{if(ready&&Address.IsKeyboardFocusWithin)Active?.CancelSearch();};
   timer.Tick+=(_,_)=>{if(help.Expired) {Revoke();SetStatus("La propuesta caducó a los 60 segundos. Vuelve a consultar la guía para revisarla.");}};timer.Start();
-  CommandBindings.Add(new CommandBinding(ApplicationCommands.New,async(_,_)=>await AddTabAsync()));
+  CommandBindings.Add(new CommandBinding(ApplicationCommands.New,async(_,_)=>{ClosePanels(false);await AddTabAsync();}));
   PreviewKeyDown+=(_,e)=>
   {
-   if(Keyboard.Modifiers==(ModifierKeys.Control|ModifierKeys.Shift)&&e.Key==Key.N){_=AddTabAsync(null,true);e.Handled=true;}
+   if(Keyboard.Modifiers==(ModifierKeys.Control|ModifierKeys.Shift)&&e.Key==Key.N){ClosePanels(false);_=AddTabAsync(null,true);e.Handled=true;}
+   if(Keyboard.Modifiers==ModifierKeys.Control && e.Key==Key.W){CloseTab_Click(this,new RoutedEventArgs());e.Handled=true;}
+   if(e.Key==Key.F5){Reload_Click(this,new RoutedEventArgs());e.Handled=true;}
+   if(Keyboard.Modifiers==ModifierKeys.Alt && e.SystemKey==Key.Home){Home_Click(this,new RoutedEventArgs());e.Handled=true;}
+   if(Keyboard.Modifiers==ModifierKeys.Alt && e.SystemKey==Key.Left){Back_Click(this,new RoutedEventArgs());e.Handled=true;}
+   if(Keyboard.Modifiers==ModifierKeys.Alt && e.SystemKey==Key.Right){Forward_Click(this,new RoutedEventArgs());e.Handled=true;}
    if(Keyboard.Modifiers==ModifierKeys.Control && e.Key==Key.L){Address.Focus();Address.SelectAll();e.Handled=true;}
    if(e.Key==Key.F1){ShowHelp();e.Handled=true;}
-   if(e.Key==Key.Escape){Revoke();ClearPreview();SetStatus("Acción y vista previa canceladas.");}
+   if(e.Key==Key.Escape){ClosePanels();Revoke();ClearPreview();SetStatus("Acción y vista previa canceladas.");}
   };
  }
  private async Task StartAsync(string? loadError)
@@ -102,7 +107,9 @@ public partial class MainWindow : Window
   if(url!=null&&Uri.TryCreate(url,UriKind.Absolute,out var target))
   {var decision=privacy.Evaluate(target,isPrivate);if(decision==PrivacyAction.Block){SetStatus("Destino bloqueado por una regla local.");return null;}isPrivate=decision==PrivacyAction.Private;}
   var creationPolicy=policyGeneration;
+  if(!cleanupOwner)ClosePanels(false);
   var tab=new BrowserTab(t=>_=RecoverAsync(t),isPrivate,()=>privacy,()=>policyGeneration,()=>settings.Bookmarks,isPrivate?privateSession.Name:"Default",t=>Owns(t)&&Active==t&&!closing&&!clearingData&&!profileGate.IsBlocked,lifetime.Token,token=>searchHost.ConnectAsync(settings.SearxEndpoint,token));
+  tab.HelpRequested+=_=>ShowHelp();tab.BookmarksRequested+=_=>Bookmarks_Click(this,new RoutedEventArgs());
   tab.Changed+=TabChanged;tab.Invalidated+=t=>{if(Active==t){Revoke();ClearPreview();ClearPendingPrivate();ClearHelpContent();}};tab.Notice+=SetStatus;tab.SafetyFailed+=_=>BlockAllTabsForRestart();
   tab.OpenRequested+=(t,address)=>{if(Active==t)NavigateKnownGet(t,address);};
   tab.PrivateOpeningOffered+=(t,address,lease)=>{if(Owns(t)&&Active==t&&t.IsCurrent(lease)){pendingPrivate=(t,address,lease);OpenPendingPrivate.ToolTip=address;OpenPendingPrivate.Visibility=Visibility.Visible;SetStatus("Destino protegido cancelado. Abrir destino en privado inicia una navegación nueva GET; no repite el formulario o redirección.");}};
@@ -149,6 +156,7 @@ public partial class MainWindow : Window
  private void Go()
  {
   if(closing||clearingData||profileGate.IsBlocked){SetStatus("El perfil está ocupado o requiere reiniciar antes de buscar o navegar.");return;}
+  ClosePanels(false);
   var input=Address.Text;
   var result=NavigationPolicy.Resolve(input,settings.SearchProvider==SearchProvider.Optimus?SearchProvider.DuckDuckGo:settings.SearchProvider);
   if(settings.SearchProvider==SearchProvider.Optimus&&result.IsSearch)
@@ -167,7 +175,7 @@ public partial class MainWindow : Window
   {
    var lease=tab.Capture();_=RunTabOperationAsync(async()=>{if(!Owns(tab)||!tab.IsCurrent(lease)||Active!=tab)return;var current=privacy.Evaluate(resolved.Uri!);if(current==PrivacyAction.Block)return;await CreateTabAsync(resolved.Uri!.AbsoluteUri,true);});return;
   }
-  tab.Navigate(resolved.Uri!.AbsoluteUri);
+  ClosePanels(false);tab.Navigate(resolved.Uri!.AbsoluteUri);
  }
  private void BlockAllTabsForRestart()
  {
@@ -181,7 +189,7 @@ public partial class MainWindow : Window
   var pending=pendingPrivate;ClearPendingPrivate();if(pending is not {} p||!Owns(p.Tab)||Active!=p.Tab||!p.Tab.IsCurrent(p.Lease))return;
   NavigateKnownGet(p.Tab,p.Url);
  }
- private async void NewPrivate_Click(object sender,RoutedEventArgs e)=>await AddTabAsync(null,true);
+ private async void NewPrivate_Click(object sender,RoutedEventArgs e){ClosePanels(false);await AddTabAsync(null,true);}
  private async void CurrentPrivate_Click(object sender,RoutedEventArgs e)
  {var tab=Active;if(tab?.CurrentUri is not {} uri||tab.IsHome){SetStatus("Abre primero una página para iniciar una navegación nueva en privado.");return;}var lease=tab.Capture();await RunTabOperationAsync(async()=>{if(Owns(tab)&&Active==tab&&tab.IsCurrent(lease))await CreateTabAsync(uri.AbsoluteUri,true);});}
  private async void PrivacySettings_Click(object sender,RoutedEventArgs e)
@@ -207,11 +215,11 @@ public partial class MainWindow : Window
  }
  private void Go_Click(object sender,RoutedEventArgs e)=>Go();
  private void Address_KeyDown(object sender,KeyEventArgs e){if(e.Key==Key.Enter){Go();e.Handled=true;}}
- private void Back_Click(object sender,RoutedEventArgs e)=>EngineAction(()=>{if(Active?.Core?.CanGoBack==true)Active.Core.GoBack();else SetStatus("No hay una página anterior en esta pestaña.");});
- private void Forward_Click(object sender,RoutedEventArgs e)=>EngineAction(()=>{if(Active?.Core?.CanGoForward==true)Active.Core.GoForward();else SetStatus("No hay una página siguiente.");});
- private void Reload_Click(object sender,RoutedEventArgs e)=>EngineAction(()=>{if(Active?.Core!=null&&!Active.IsHome)Active.Core.Reload();else SetStatus("Abre una página o usa Nueva pestaña para reintentar el motor.");});
- private void Home_Click(object sender,RoutedEventArgs e)=>EngineAction(()=>Active?.GoHome());
- private async void NewTab_Click(object sender,RoutedEventArgs e)=>await AddTabAsync();
+ private void Back_Click(object sender,RoutedEventArgs e)=>NavigateChrome(()=>{if(Active?.Core?.CanGoBack==true)Active.Core.GoBack();else SetStatus("No hay una página anterior en esta pestaña.");});
+ private void Forward_Click(object sender,RoutedEventArgs e)=>NavigateChrome(()=>{if(Active?.Core?.CanGoForward==true)Active.Core.GoForward();else SetStatus("No hay una página siguiente.");});
+ private void Reload_Click(object sender,RoutedEventArgs e)=>NavigateChrome(()=>{if(Active?.Core!=null&&!Active.IsHome)Active.Core.Reload();else SetStatus("Abre una página o usa Nueva pestaña para reintentar el motor.");});
+ private void Home_Click(object sender,RoutedEventArgs e){ClosePanels(false);EngineAction(()=>Active?.GoHome());}
+ private async void NewTab_Click(object sender,RoutedEventArgs e){ClosePanels(false);await AddTabAsync();}
  private async void RecoverTab_Click(object sender,RoutedEventArgs e){if(closedTabs.TryPop(out var url))await AddTabAsync(url);else SetStatus("No hay pestañas cerradas en esta sesión.");}
  private async void CloseTab_Click(object sender,RoutedEventArgs e)
  {
@@ -242,8 +250,8 @@ public partial class MainWindow : Window
  private static async Task ClearLiveProfileAsync(BrowserTab tab,CoreWebView2BrowsingDataKinds kinds)
  {var profile=tab.Core?.Profile??throw new InvalidOperationException("No hay control vivo para borrar el perfil.");await profile.ClearBrowsingDataAsync(kinds);}
  private void Help_Click(object sender,RoutedEventArgs e)=>ShowHelp();
- private void ShowHelp(){HelpColumn.Width=new GridLength(Math.Min(480,Math.Max(240,ActualWidth*0.36)));HelpPanel.Visibility=Visibility.Visible;Question.Focus();}
- private void HideHelp_Click(object sender,RoutedEventArgs e){Revoke();ClearPreview();HelpColumn.Width=new GridLength(0);HelpPanel.Visibility=Visibility.Collapsed;Address.Focus();}
+ private void ShowHelp(){RememberPanelFocus();SettingsPanel.Visibility=Visibility.Collapsed;HelpPanel.Visibility=Visibility.Visible;UpdateChromeLayout();Question.Focus();}
+ private void HideHelp_Click(object sender,RoutedEventArgs e)=>ClosePanels();
  private void Ask_Click(object sender,RoutedEventArgs e)
  {
   var context=Active?.Context??new BrowserContext(Guid.Empty,0,"inicio");
@@ -308,7 +316,7 @@ public partial class MainWindow : Window
   if(result==BookmarkSaveResult.Saved)SetStatus("Marcador guardado. Ábrelo desde Marcadores.");
   else if(result==BookmarkSaveResult.AlreadyExists)SetStatus("Esta página ya está en Marcadores.");
  }
- private void Bookmarks_Click(object sender,RoutedEventArgs e)=>NativeDialogs.ShowBookmarks(this,settings.Bookmarks,AddBookmark,url=>{if(Active is {} tab)NavigateKnownGet(tab,url);},()=>{SaveSettings();});
+ private void Bookmarks_Click(object sender,RoutedEventArgs e){ClosePanels(false);NativeDialogs.ShowBookmarks(this,settings.Bookmarks,AddBookmark,url=>{if(Active is {} tab)NavigateKnownGet(tab,url);},()=>{SaveSettings();});}
  private void Search_Changed(object sender,SelectionChangedEventArgs e){if(!ready)return;settings=settings with {SearchProvider=(SearchProvider)SearchChoice.SelectedValue};SaveSettings();}
  private void Scale_Changed(object sender,SelectionChangedEventArgs e){if(!ready)return;settings=settings with {TextScale=new[]{1d,1.25,1.5,2}[Math.Max(0,ScaleChoice.SelectedIndex)]};ApplyAppearance();SaveSettings();}
  private void Appearance_Click(object sender,RoutedEventArgs e){settings=settings with {HighContrast=ContrastChoice.IsChecked==true};ApplyAppearance();SaveSettings();}
@@ -317,6 +325,9 @@ public partial class MainWindow : Window
  {
   FontSize=18*settings.TextScale;
   NativeDialogs.ApplyContrast(this,settings.HighContrast);
+  NativeTheme.Apply(this,settings.HighContrast,settings.TextScale);
+  RefreshOwnedAppearance(this);
+  UpdateChromeLayout();
   foreach(TabItem item in Tabs.Items){if(item.Tag is BrowserTab {IsFullyInitialized:true} t)t.View.ZoomFactor=settings.TextScale;}
  }
  private void Restore_Click(object sender,RoutedEventArgs e)
@@ -402,6 +413,7 @@ public partial class MainWindow : Window
   });
  }
 
+ private void NavigateChrome(Action action){ClosePanels(false);EngineAction(action);}
  private void EngineAction(Action action){if(closing||clearingData||profileGate.IsBlocked){SetStatus("El perfil está ocupado o requiere reiniciar Optimus antes de navegar.");return;}try{action();}catch(Exception e) when(IsEngineError(e)){SetStatus("El motor no pudo completar la acción. Reintenta o recupera la pestaña.");}}
  private void SetStatus(string text){if(!Dispatcher.CheckAccess()){Dispatcher.Invoke(()=>SetStatus(text));return;}Status.Text=text;}
 }
