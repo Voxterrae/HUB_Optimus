@@ -21,6 +21,15 @@ EXCLUDED = {'.git', '.superpowers', 'bin', 'obj', 'artifacts', 'tooling', '__pyc
 PRIVATE_DIRS = {'userdata', 'user-data', 'user_data', 'browserdata', 'browser-data', 'profiles', 'profile', 'logs', 'secrets', '.ssh', '.aws', '.azure'}
 RESERVED = {'source', 'leeme.txt', 'validacion.md', 'decisiones.md', 'sha256sums.txt'}
 SECRET_EXT = {'.pfx', '.p12', '.key', '.pem', '.keystore', '.jks'}
+# Official microsoft.aspnetcore.app.runtime.win-x64/10.0.14 NuGet payloads,
+# runtimes/win-x64/lib/net10.0; only these publication-relative paths qualify.
+# A runtime update must review and repin bytes, never broaden secret patterns.
+OFFICIAL_RUNTIME_FILES = {
+    'search/microsoft.aspnetcore.authentication.bearertoken.dll':
+        '8610b42bb97e9df002694aafe2364ecd21810bc2d0652cb0cbf267628d06ce7d',
+    'search/microsoft.extensions.configuration.usersecrets.dll':
+        '9b8e836f6fe0db69b4c5b7bbfab5445e886560099000e625078dfa9ac271f0f1',
+}
 KEY_PATTERNS = [
     re.compile(rb'\bsk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{20,}'),
     re.compile(rb'\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{30,})'),
@@ -78,7 +87,7 @@ def safe_path(name):
     return path
 
 
-def check_name(name):
+def check_name(name, *, publication_sha256=None):
     parts = [p.lower() for p in safe_path(name).parts]
     leaf = parts[-1]
     if any(p in PRIVATE_DIRS for p in parts):
@@ -87,7 +96,9 @@ def check_name(name):
             or (leaf.startswith('.env') and leaf != '.env.example')
             or re.search(r'(?:credentials?|secrets?|tokens?|passwords?)(?:[._-]|$)', leaf)
             or leaf in {'id_rsa', 'id_ed25519', 'cookies', 'login data', 'history', 'web data'}):
-        raise PackagingError(f'Suspicious secret filename refused: {name}')
+        if (publication_sha256 is None
+                or OFFICIAL_RUNTIME_FILES.get(name.casefold()) != publication_sha256):
+            raise PackagingError(f'Suspicious secret filename refused: {name}')
 
 
 def check_text(data, name):
@@ -229,14 +240,17 @@ def collect_binary(binary):
         name = path.relative_to(binary).as_posix()
         if path.is_symlink():
             raise PackagingError(f'Symlink refused: {name}')
-        check_name(name)
         if path.is_dir():
+            check_name(name)
             continue
         if safe_path(name).parts[0].lower() in RESERVED:
             raise PackagingError(f'Reserved package path collision: {name}')
         if any(p.lower() in EXCLUDED for p in safe_path(name).parts):
             raise PackagingError(f'Build/source directory in binary publication: {name}')
-        files[name] = read_file(binary, name)
+        data = read_file(binary, name)
+        check_name(name, publication_sha256=hashlib.sha256(data).hexdigest()
+                   if name.casefold() in OFFICIAL_RUNTIME_FILES else None)
+        files[name] = data
     validate_binary(files)
     normalized = [name.casefold() for name in files]
     if len(set(normalized)) != len(normalized):

@@ -1,6 +1,8 @@
 """Integration checks: real git fixtures and CLI; never execute synthetic PE files."""
 import hashlib
 import importlib.util
+import contextlib
+import io
 import json
 from pathlib import Path
 import struct
@@ -8,10 +10,15 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 SCRIPT = Path(__file__).with_name('package_optimus.py')
 PREFIX = 'Optimus_Browser_0.3.0_alpha/'
+RUNTIME_FIXTURES = {
+    'Search/Microsoft.AspNetCore.Authentication.BearerToken.dll': b'synthetic bearer runtime fixture\n',
+    'Search/Microsoft.Extensions.Configuration.UserSecrets.dll': b'synthetic user secrets runtime fixture\n',
+}
 
 class PackagingTests(unittest.TestCase):
     def setUp(self):
@@ -116,6 +123,114 @@ class PackagingTests(unittest.TestCase):
         result = subprocess.run(args,capture_output=True,text=True)
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertIn('Required publication file missing', result.stderr)
+
+    def runtime_fixture_packager(self):
+        # Replace only pinned bytes for portable tests; all real validation runs.
+        spec = importlib.util.spec_from_file_location('runtime_packager', SCRIPT)
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        fixture_hashes = {name.casefold(): hashlib.sha256(data).hexdigest()
+                          for name, data in RUNTIME_FIXTURES.items()}
+        patcher = patch.object(module, 'OFFICIAL_RUNTIME_FILES', fixture_hashes, create=True)
+        patcher.start(); self.addCleanup(patcher.stop)
+        return module
+
+    def test_runtime_digest_pins_match_official_10_0_14_payloads(self):
+        # Security pin data is independent of the synthetic bytes used below.
+        spec = importlib.util.spec_from_file_location('pinned_packager', SCRIPT)
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        self.assertEqual(module.OFFICIAL_RUNTIME_FILES, {
+            'search/microsoft.aspnetcore.authentication.bearertoken.dll':
+                '8610b42bb97e9df002694aafe2364ecd21810bc2d0652cb0cbf267628d06ce7d',
+            'search/microsoft.extensions.configuration.usersecrets.dll':
+                '9b8e836f6fe0db69b4c5b7bbfab5445e886560099000e625078dfa9ac271f0f1',
+        })
+
+    def call_packager(self, module, mode='verify'):
+        args = ['--verify-publication', str(self.bin)] if mode == 'verify' else [
+            '--source-root', str(self.src), '--search-source-root', str(self.search),
+            '--binary-root', str(self.bin), '--output-dir', str(self.root/'out'),
+            '--metadata', str(self.meta)]
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as errors:
+            result = module.main(args)
+        return result, errors.getvalue()
+
+    def test_accepts_exact_runtime_paths_and_payloads_in_both_cli_modes(self):
+        # Catches the actual runtime filename false positives and case-sensitive lookup.
+        module = self.runtime_fixture_packager()
+        for name, data in RUNTIME_FIXTURES.items():
+            (self.bin/name).write_bytes(data)
+        for mode in ('verify', 'package'):
+            result, errors = self.call_packager(module, mode)
+            self.assertEqual(result, 0, errors)
+        with zipfile.ZipFile(self.root/'out'/'Optimus_Browser_Windows_0.3.0_alpha.zip') as archive:
+            for name, data in RUNTIME_FIXTURES.items():
+                self.assertEqual(archive.read(PREFIX+name), data)
+        for name in RUNTIME_FIXTURES:
+            (self.bin/name).rename(self.bin/name.upper().replace('SEARCH/', 'Search/'))
+        result, errors = self.call_packager(module)
+        self.assertEqual(result, 0, errors)
+
+    def test_rejects_runtime_wrong_bytes_and_same_basename_elsewhere(self):
+        # Catches trusting only the path, only the hash, a basename or a substring.
+        module = self.runtime_fixture_packager()
+        for name, data in RUNTIME_FIXTURES.items():
+            for wrong_name, wrong_data in ((name, data+b'changed'),
+                    (Path(name).name, data), ('Search/nested/'+Path(name).name, data),
+                    ('OtherSearch/'+Path(name).name, data), ('Source/'+name, data)):
+                with self.subTest(name=wrong_name):
+                    target = self.bin/wrong_name; target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(wrong_data)
+                    try:
+                        result, errors = self.call_packager(module)
+                        self.assertEqual(result, 1, errors)
+                    finally:
+                        target.unlink()
+                        while target.parent != self.bin and not any(target.parent.iterdir()):
+                            target = target.parent; target.rmdir()
+
+    def test_runtime_exception_does_not_apply_to_sources_or_private_files(self):
+        # Catches reusing the publication exception in either source/privacy scan.
+        module = self.runtime_fixture_packager()
+        for source in (self.src, self.search):
+            for name, data in RUNTIME_FIXTURES.items():
+                with self.subTest(source=source, name=name):
+                    self.track(name, data.decode(), source)
+                    result, errors = self.call_packager(module, 'package')
+                    self.assertEqual(result, 1, errors)
+                    self.assertIn('Suspicious secret filename', errors)
+                    subprocess.run(['git','-C',str(source),'rm','-q','-f','--',name], check=True)
+        for name in ('Search/service.token', 'Search/.env', 'Search/profile/history.db'):
+            with self.subTest(private=name):
+                target = self.bin/name; target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(next(iter(RUNTIME_FIXTURES.values())))
+                try:
+                    result, errors = self.call_packager(module)
+                    self.assertEqual(result, 1, errors)
+                finally:
+                    target.unlink()
+                    if target.parent.name == 'profile': target.parent.rmdir()
+
+    def test_runtime_exception_preserves_file_and_content_checks(self):
+        # Catches bypassing symlink, empty/regular-file and content scans on exact paths.
+        module = self.runtime_fixture_packager()
+        name, data = next(iter(RUNTIME_FIXTURES.items()))
+        target = self.bin/name
+        for kind in ('symlink', 'directory', 'empty', 'credential'):
+            with self.subTest(kind=kind):
+                content = b'password='+b'A'*32 if kind == 'credential' else b''
+                with patch.dict(module.OFFICIAL_RUNTIME_FILES, {name.casefold(): hashlib.sha256(content).hexdigest()}):
+                    if kind == 'symlink':
+                        outside = self.root/'runtime.dll'; outside.write_bytes(data)
+                        target.symlink_to(outside)
+                    elif kind == 'directory': target.mkdir()
+                    else: target.write_bytes(content)
+                    try:
+                        result, errors = self.call_packager(module)
+                        self.assertEqual(result, 1, errors)
+                        if kind == 'credential': self.assertIn('Potential credential content', errors)
+                    finally:
+                        if target.is_dir() and not target.is_symlink(): target.rmdir()
+                        else: target.unlink()
 
     def test_rejects_missing_bundled_index_before_verifying_or_packaging(self):
         # Catches accepting a release whose default offline corpus was omitted.

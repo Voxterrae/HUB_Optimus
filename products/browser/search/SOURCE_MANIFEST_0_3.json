@@ -2,7 +2,7 @@
   "schema_version": 1,
   "release": "0.3.0-alpha",
   "issue": "https://github.com/Voxterrae/HUB_Optimus/issues/2021",
-  "public_base_commit": "79c1d95d65e0f8b903039249cd8ce890b1ffe111",
+  "public_base_commit": "1221bcd1ef53c8cd3d87496c36659164098602bb",
   "reviewed_head_record": "Final public head and human review pending in the stacked draft PR and issue2021 after the final push. This file does not embed its own commit ID.",
   "scope": "Windows and shared local search only; historical import manifest unchanged. No web-demo/Linux/root-policy files.",
   "self_hash_excluded": "products/browser/search/SOURCE_MANIFEST_0_3.json",
@@ -80,13 +80,13 @@
     },
     {
       "path": "products/browser/search/docs/AI_GOVERNANCE_REVIEW.md",
-      "bytes": 9667,
-      "sha256": "0e5477f4dbe9152a3c490d841f247d1a84c43f406791647fb2d50230cc1c4fd6"
+      "bytes": 10172,
+      "sha256": "5f97c8858aec064666228ef6944f8a7eea3f1cbbb0ae7cebcc78e6f84bf35b97"
     },
     {
       "path": "products/browser/search/docs/DECISIONS.md",
-      "bytes": 2749,
-      "sha256": "d7579cda034d692f06bb8ef2b7a0f596340219ba71700caa8fc294826ed056a6"
+      "bytes": 3575,
+      "sha256": "93c0eb1832bccd3d02a1617b89d7598dbfcb0ff8d3a12eafa248cd16a354d6d0"
     },
     {
       "path": "products/browser/search/docs/PROTOCOL.md",
@@ -95,8 +95,8 @@
     },
     {
       "path": "products/browser/search/docs/VALIDATION.md",
-      "bytes": 5053,
-      "sha256": "822425087b38094f12089a769291b23e669ca0531be33fa0cb2f8e22c5b5fa52"
+      "bytes": 5422,
+      "sha256": "8d3710d037a295168da3bf6bba0b742b23085b17807033b731edbe24361e861c"
     },
     {
       "path": "products/browser/search/docs/superpowers/plans/2026-10-30-windows-search.md",
@@ -505,18 +505,19 @@
     },
     {
       "path": "products/browser/windows/tools/release/README.md",
-      "bytes": 8018,
-      "sha256": "7f5e01b8835acec095b78f3d0b88bdc3c796f5c23495dab9f96bfeaea4cb5d86"
+      "bytes": 9620,
+      "sha256": "9dc18567ac483446926707ab7887d137a29f2d58a7b52658964dd3bc70649cf0"
     },
     {
       "path": "products/browser/windows/tools/release/package_optimus.py",
-      "bytes": 18993,
-      "sha256": "b44c8c9cb67cee56b5989baf6e234659ef66c994e007b63cebef542e780dc974"
+      "bytes": 19873,
+      "sha256": "969ab1505a37476850f6f0c58a985c2872735f646e6b8c3499857d8cd3c644bf"
     },
     {
       "path": "products/browser/windows/tools/release/test_package_optimus.py",
-      "bytes": 17431,
-      "sha256": "f3aecec0c24feb37fd02ca1f9fbd716c701cefda6c31557f426938c380f2f1cf"
+      "bytes": 24217,
+      "sha256": "05f05bada59436c8d26cd75af0889e44274b667150da8c2eb96936c6da5b4159"
     }
-  ]
+  ],
+  "original_content_base_commit": "79c1d95d65e0f8b903039249cd8ce890b1ffe111"
 }
