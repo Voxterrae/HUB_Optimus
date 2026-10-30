@@ -120,6 +120,12 @@ The existing App canary job publishes the required dedicated-App context on
 the exact head and live test-merge candidate. Its historical job name does not
 make the required publisher optional or create another owner.
 
+The dedicated App publisher job must not tolerate errors at job or step level.
+A policy, identity, freshness, token, or publication failure must fail the
+workflow as well as the dedicated App check; the historical canary name does
+not make those failures optional. The publisher workflow regression test
+enforces this boundary. Required contexts and App bindings remain unchanged.
+
 The required bootstrap job now uses API-read-only `--validate-only` evaluation.
 Its generic GITHUB_TOKEN has no Checks write permission and cannot create or
 finalize custom founder-authority checks. Default publication requires the
