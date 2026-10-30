@@ -2,6 +2,8 @@
 
 Related to #2017.
 
+Actualización 30 de octubre de 2026: el incremento [Windows 0.3](windows/README.md) y [Search compartido](search/README.md) se coordina en #2021. El texto de importación 0.2 que sigue y sus hashes son históricos; consultar [validación 0.3](search/docs/VALIDATION.md) para evidencia nueva.
+
 Este módulo preserva las fuentes existentes de **Optimus para Windows 0.2 alpha** y la **demo adaptable de interfaz**. Es una propuesta de incorporación; su presencia en una rama o PR no acredita aprobación, despliegue ni conformidad de accesibilidad.
 
 | Componente | Estado verificable | Ubicación |

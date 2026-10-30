@@ -19,20 +19,26 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
     private readonly TextBlock _privacy = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 8) };
     private readonly StackPanel _results = new();
     private CancellationTokenSource? _pending;
-    private string? _endpoint;
+    private readonly ComboBox _scope = new() { MinHeight = 44, Margin = new Thickness(0, 0, 0, 8) };
+    private readonly Func<CancellationToken, Task<SearchHostConnection>> _connect;
+    private readonly CancellationToken _hostLifetime;
+    private OptimusSearchScope Scope => (OptimusSearchScope)Math.Max(0, _scope.SelectedIndex);
     private long _generation;
     private bool _disposed;
 
-    public OptimusSearchView(Action<string> openUrl, Func<IReadOnlyList<Bookmark>> bookmarks,Func<bool> eligible,CancellationToken hostLifetime)
+    public OptimusSearchView(Action<string> openUrl, Func<IReadOnlyList<Bookmark>> bookmarks,Func<bool> eligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connect)
     {
         _openUrl = openUrl;
+        _connect = connect;
+        _hostLifetime = hostLifetime;
         _bookmarks = bookmarks;
         _client = new HttpClient(new HttpClientHandler
         {
             AllowAutoRedirect = false,
             UseCookies = false,
             UseDefaultCredentials = false,
-            Credentials = null
+            Credentials = null,
+            UseProxy = false
         });
         _submissions = new SearchSubmissionGate(new OptimusSearchService(_client),eligible,hostLifetime);
         SetResourceReference(BackgroundProperty, SystemColors.WindowBrushKey);
@@ -40,7 +46,12 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
 
         var body = new StackPanel { MaxWidth = 900, Margin = new Thickness(24) };
         body.Children.Add(new TextBlock { Text = "Optimus Search", FontSize = 28, FontWeight = FontWeights.SemiBold });
-        _privacy.Text = "Wikipedia y marcadores. Al pulsar Buscar, Wikipedia recibe tu consulta y conexión. No es una búsqueda de toda la web. Optimus no guarda las consultas ni los resultados. El proveedor puede aplicar sus propias políticas de registro.";
+        _scope.Items.Add("Web"); _scope.Items.Add("Índice Optimus"); _scope.Items.Add("Wikipedia"); _scope.SelectedIndex = 0;
+        System.Windows.Automation.AutomationProperties.SetName(_scope, "Fuente de búsqueda");
+        body.Children.Add(_scope);
+        _scope.SelectionChanged += (_, _) => { Invalidate(); _results.Children.Clear(); UpdatePrivacy(); _status.Text = "Fuente cambiada. Pulsa Buscar para consultar."; };
+        _query.TextChanged += (_, _) => { Invalidate(); _results.Children.Clear(); _status.Text = "Consulta modificada. Pulsa Buscar para consultar."; };
+        UpdatePrivacy();
         body.Children.Add(_privacy);
         var form = new Grid();
         form.ColumnDefinitions.Add(new ColumnDefinition());
@@ -51,12 +62,12 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         var submit = new Button { Content = "Buscar", MinWidth = 100, MinHeight = 44 };
         Grid.SetColumn(submit, 1);
         form.Children.Add(submit);
-        submit.Click += async (_, _) => await SearchAsync(_query.Text, _endpoint);
+        submit.Click += async (_, _) => await SearchAsync(_query.Text, Scope);
         _query.KeyDown += async (_, e) =>
         {
             if (e.Key != Key.Enter) return;
             e.Handled = true;
-            await SearchAsync(_query.Text, _endpoint);
+            await SearchAsync(_query.Text, Scope);
         };
         body.Children.Add(form);
         _status.Text = "Escribe una consulta y pulsa Buscar.";
@@ -66,24 +77,32 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         Content = new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     }
 
-    public async Task SearchAsync(string query, string? endpoint, CancellationToken token = default)
+    public async Task SearchAsync(string query, OptimusSearchScope scope, CancellationToken token = default)
     {
         if(!CanSubmit)return;
         Invalidate();
-        var generation = _generation;
-        _endpoint = endpoint;
+        _scope.SelectedIndex = (int)scope;
         _query.Text = query;
-        _privacy.Text = endpoint is null
-            ? "Wikipedia y marcadores. Al pulsar Buscar, Wikipedia recibe tu consulta y conexión. No es una búsqueda de toda la web. Optimus no guarda las consultas ni los resultados. El proveedor puede aplicar sus propias políticas de registro."
-            : "SearXNG y marcadores. Al pulsar Buscar, la instancia configurada recibe tu consulta y conexión y puede consultar proveedores externos. Optimus no guarda las consultas ni los resultados. El proveedor puede aplicar sus propias políticas de registro.";
+        var generation = _generation;
+        UpdatePrivacy();
         _results.Children.Clear();
-        _status.Text = endpoint is null ? "Buscando en Wikipedia y marcadores…" : "Buscando en SearXNG y marcadores…";
-        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(token);
+        _status.Text = scope switch { OptimusSearchScope.Index => "Buscando en el índice local…", OptimusSearchScope.Wikipedia => "Buscando en Wikipedia…", _ => "Preparando la búsqueda Web local…" };
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(token, _hostLifetime);
         _pending = cancellation;
         try
         {
             // Host supplies an empty list in private tabs. Capture before the first await.
-            var response = await _submissions.SearchAsync(query, _bookmarks().ToArray(), endpoint, cancellation.Token);
+            if (string.IsNullOrWhiteSpace(query) || query.Length > 500) { _status.Text = "Escribe una consulta de 1 a 500 caracteres."; return; }
+            var bookmarks = _bookmarks().ToArray();
+            OptimusSearchTarget target = new(scope, null, null);
+            if (scope != OptimusSearchScope.Wikipedia)
+            {
+                var connection = await _connect(cancellation.Token);
+                if (!CanSubmit || generation != _generation || cancellation.IsCancellationRequested) return;
+                if (connection.Error is {} error) { _status.Text = error; return; }
+                target = connection.Target with { Scope = scope };
+            }
+            var response = await _submissions.SearchAsync(query, bookmarks, target, cancellation.Token);
             if (response is null || !CanSubmit || generation != _generation || cancellation.IsCancellationRequested) return;
             _status.Text = response.Provider + " · " + (response.Error ?? (response.Results.Count == 0 ? "Sin resultados." : $"{response.Results.Count} resultados."));
             foreach (var result in response.Results)
@@ -97,7 +116,7 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
                 System.Windows.Automation.AutomationProperties.SetName(open, "Abrir: " + result.Title);
                 open.Click += (_, _) =>
                 {
-                    if (CanSubmit && generation == _generation && !cancellation.IsCancellationRequested) _openUrl(result.Url);
+                    if (CanSubmit && generation == _generation) _openUrl(result.Url);
                 };
                 row.Children.Add(open);
                 _results.Children.Add(row);
@@ -117,6 +136,13 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         }
     }
 
+    private void UpdatePrivacy() => _privacy.Text = Scope switch
+    {
+        OptimusSearchScope.Index => "Índice Optimus: búsqueda local, sin red. Solo incluye los documentos importados; no cubre toda la web. Los marcadores de esta pestaña se combinan localmente. No se guardan consultas ni resultados.",
+        OptimusSearchScope.Wikipedia => "Wikipedia explícita y marcadores locales. Wikipedia recibe tu consulta y conexión y puede aplicar sus políticas de registro. No se guardan consultas ni resultados.",
+        _ => "Web: el servicio local consulta el servidor SearXNG del operador, que puede consultar proveedores externos y aplicar sus políticas de registro. Si no está configurado, se muestra un error. No se guardan consultas ni resultados."
+    };
+
     public void FocusQuery() { if (CanSubmit) { _query.Focus(); _query.SelectAll(); } }
 
     public void Disable()
@@ -135,6 +161,7 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
     private void Invalidate()
     {
         _generation++;
+        _submissions.Invalidate();
         _pending?.Cancel();
         _pending = null;
     }

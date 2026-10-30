@@ -40,8 +40,8 @@ internal sealed class PrivacySettingsDialog : Window
    }catch(ArgumentException e){error.Text=e.Message;}
   };
   remove.Click+=(_,_)=>{if(list.SelectedIndex>=0){candidate.RemoveAt(list.SelectedIndex);Refresh();error.Text="Regla quitada de la lista. Pulsa Guardar para aplicar el cambio.";}else error.Text="Selecciona una regla para quitarla.";};
-  body.Children.Add(new TextBlock {Text="Búsqueda web opcional · servidor SearXNG del operador",FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,16,0,0)});
-  body.Children.Add(new TextBlock {Text="Déjalo vacío para usar Wikipedia y marcadores. Un servidor configurado recibe tus consultas y conexión. Se admite HTTPS; HTTP solo en este equipo (localhost). Optimus no elige un servidor público por ti.",TextWrapping=TextWrapping.Wrap});
+  body.Children.Add(new TextBlock {Text="Búsqueda Web · servidor SearXNG del operador",FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,16,0,0)});
+  body.Children.Add(new TextBlock {Text="Vacío deja la Web sin configurar. El servicio local usa este servidor para búsquedas Web; Índice Optimus funciona sin red y Wikipedia se elige expresamente. Se admite HTTPS o HTTP en este equipo. Guardar reinicia solo el servicio iniciado por Optimus; un servicio independiente debe configurarse y reiniciarse aparte. Optimus no elige un servidor público por ti.",TextWrapping=TextWrapping.Wrap});
   var endpoint=new TextBox {Text=settings.SearxEndpoint??""};System.Windows.Automation.AutomationProperties.SetName(endpoint,"Servidor SearXNG opcional");body.Children.Add(endpoint);body.Children.Add(error);
   var save=new Button {Content="Guardar y cerrar páginas actuales"};body.Children.Add(save);save.Click+=(_,_)=>
   {

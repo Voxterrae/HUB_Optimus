@@ -13,6 +13,9 @@ public partial class MainWindow : Window
 {
  private readonly SettingsStore settingsStore=new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Optimus","private-pilot","settings-v02.json"),Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Optimus","private-pilot","settings.json"));
  private BrowserSettings settings=new();
+ private readonly System.Net.Http.HttpClient searchConnectionClient = new(new System.Net.Http.HttpClientHandler { AllowAutoRedirect=false, UseCookies=false, UseDefaultCredentials=false, Credentials=null, UseProxy=false });
+ private readonly SearchHostLauncher searchHost;
+
  private readonly HelpController help=new();
  private readonly PermissionController permissions;
  private readonly DownloadController downloads;
@@ -35,6 +38,7 @@ public partial class MainWindow : Window
  private readonly DispatcherTimer timer=new() {Interval=TimeSpan.FromMilliseconds(500)};
  public MainWindow()
  {
+  searchHost=new(searchConnectionClient,AppContext.BaseDirectory,Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
   InitializeComponent();Width=Math.Min(1400,SystemParameters.WorkArea.Width);Height=Math.Min(920,SystemParameters.WorkArea.Height);permissions=new(this,SetStatus);downloads=new(this,SetStatus);
   var loaded=settingsStore.Load();settings=loaded.Settings;privacy=new(settings.PrivacyRules);
   SearchChoice.SelectedValue=settings.SearchProvider;ScaleChoice.SelectedIndex=ScaleIndex(settings.TextScale);ContrastChoice.IsChecked=settings.HighContrast;RestoreChoice.IsChecked=settings.RestoreSession;
@@ -42,6 +46,7 @@ public partial class MainWindow : Window
   if(loaded.Error!=null)SetStatus(loaded.Error);
   Loaded+=async(_,_)=>await StartAsync(loaded.Error);
   Closing+=Window_Closing;
+  Address.TextChanged+=(_,_)=>{if(ready&&Address.IsKeyboardFocusWithin)Active?.CancelSearch();};
   timer.Tick+=(_,_)=>{if(help.Expired) {Revoke();SetStatus("La propuesta caducó a los 60 segundos. Vuelve a consultar la guía para revisarla.");}};timer.Start();
   CommandBindings.Add(new CommandBinding(ApplicationCommands.New,async(_,_)=>await AddTabAsync()));
   PreviewKeyDown+=(_,e)=>
@@ -97,7 +102,7 @@ public partial class MainWindow : Window
   if(url!=null&&Uri.TryCreate(url,UriKind.Absolute,out var target))
   {var decision=privacy.Evaluate(target,isPrivate);if(decision==PrivacyAction.Block){SetStatus("Destino bloqueado por una regla local.");return null;}isPrivate=decision==PrivacyAction.Private;}
   var creationPolicy=policyGeneration;
-  var tab=new BrowserTab(t=>_=RecoverAsync(t),isPrivate,()=>privacy,()=>policyGeneration,()=>settings.Bookmarks,isPrivate?privateSession.Name:"Default",t=>Owns(t)&&Active==t&&!closing&&!clearingData&&!profileGate.IsBlocked,lifetime.Token);
+  var tab=new BrowserTab(t=>_=RecoverAsync(t),isPrivate,()=>privacy,()=>policyGeneration,()=>settings.Bookmarks,isPrivate?privateSession.Name:"Default",t=>Owns(t)&&Active==t&&!closing&&!clearingData&&!profileGate.IsBlocked,lifetime.Token,token=>searchHost.ConnectAsync(settings.SearxEndpoint,token));
   tab.Changed+=TabChanged;tab.Invalidated+=t=>{if(Active==t){Revoke();ClearPreview();ClearPendingPrivate();ClearHelpContent();}};tab.Notice+=SetStatus;tab.SafetyFailed+=_=>BlockAllTabsForRestart();
   tab.OpenRequested+=(t,address)=>{if(Active==t)NavigateKnownGet(t,address);};
   tab.PrivateOpeningOffered+=(t,address,lease)=>{if(Owns(t)&&Active==t&&t.IsCurrent(lease)){pendingPrivate=(t,address,lease);OpenPendingPrivate.ToolTip=address;OpenPendingPrivate.Visibility=Visibility.Visible;SetStatus("Destino protegido cancelado. Abrir destino en privado inicia una navegación nueva GET; no repite el formulario o redirección.");}};
@@ -147,7 +152,7 @@ public partial class MainWindow : Window
   var input=Address.Text;
   var result=NavigationPolicy.Resolve(input,settings.SearchProvider==SearchProvider.Optimus?SearchProvider.DuckDuckGo:settings.SearchProvider);
   if(settings.SearchProvider==SearchProvider.Optimus&&result.IsSearch)
-  {if(input.Trim().Length>500){SetStatus("La consulta admite hasta 500 caracteres.");return;}if(Active is {} searchTab)_=searchTab.SearchAsync(input.Trim(),settings.SearxEndpoint);return;}
+  {if(input.Trim().Length>500){SetStatus("La consulta admite hasta 500 caracteres.");return;}if(Active is {} searchTab)_=searchTab.SearchAsync(input.Trim(),OptimusSearchScope.Web);return;}
   if(!result.Allowed){SetStatus(result.Error!);return;}
   if(Active==null){_=AddTabAsync(result.Uri!.AbsoluteUri);return;}
   NavigateKnownGet(Active,result.Uri!.AbsoluteUri);if(Active.IsFullyInitialized)Active.View.Focus();
@@ -194,7 +199,7 @@ public partial class MainWindow : Window
     await Task.WhenAll(tabs.Select(t=>t.QuiesceAsync())).WaitAsync(lifetime.Token);lifetime.Check();
     settings=settings with {PrivacyRules=dialog.Rules,SearxEndpoint=dialog.Endpoint};closedTabs.Clear();
     foreach(var tab in tabs){CheckOwned(tab);tab.PolicyChanged();tab.NavigationReady=tab.IsFullyInitialized;}
-    if(SaveSettings())SetStatus("Reglas actualizadas. Los documentos y búsquedas se cerraron. Privado permanece hasta cerrar cada pestaña.");
+    if(SaveSettings())SetStatus("Reglas actualizadas. Los documentos y búsquedas se cerraron. " + searchHost.ConfigureUpstream(settings.SearxEndpoint));
    }
    catch(Exception ex) when(IsEngineError(ex)){await profileGate.RunAsync(Task.FromException(ex),()=>{},TimeSpan.FromSeconds(1));foreach(var tab in tabs){if(Tabs.Items.Contains(tab.Item))Tabs.Items.Remove(tab.Item);tab.Dispose();}SetStatus("No se pudo detener todos los documentos. Se cerraron las pestañas; vuelve a abrir Optimus antes de continuar.");}
    finally{clearingData=false;}
@@ -379,7 +384,7 @@ public partial class MainWindow : Window
  private async void Window_Closing(object? sender,CancelEventArgs e)
  {
   if(closed)return;e.Cancel=true;if(closing)return;
-  closing=true;foreach(var item in Tabs.Items.Cast<TabItem>())if(item.Tag is BrowserTab tab)tab.DisableSearch();lifetime.Dispose();timer.Stop();permissions.Revoke();Revoke();ClearPreview();downloads.CancelAll();
+  closing=true;searchHost.Dispose();if(searchHost.ShutdownError is {} shutdownError)MessageBox.Show(this,shutdownError,"Cierre de Optimus Search",MessageBoxButton.OK,MessageBoxImage.Warning);searchConnectionClient.Dispose();foreach(var item in Tabs.Items.Cast<TabItem>())if(item.Tag is BrowserTab tab)tab.DisableSearch();lifetime.Dispose();timer.Stop();permissions.Revoke();Revoke();ClearPreview();downloads.CancelAll();
   // Creation/destruction serialize, while cancellation prevents late creation from resuming.
   await tabOperations.RunAsync(async()=>
   {

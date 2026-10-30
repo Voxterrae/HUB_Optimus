@@ -11,7 +11,7 @@ import unittest
 import zipfile
 
 SCRIPT = Path(__file__).with_name('package_optimus.py')
-PREFIX = 'Optimus_Browser_0.2.0_alpha/'
+PREFIX = 'Optimus_Browser_0.3.0_alpha/'
 
 class PackagingTests(unittest.TestCase):
     def setUp(self):
@@ -20,6 +20,10 @@ class PackagingTests(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.src = self.root / 'source'
         self.bin = self.root / 'publish'
+        self.search = self.root / 'search'
+        self.search.mkdir()
+        subprocess.run(['git', 'init', '-q', str(self.search)], check=True)
+        self.track('src/Optimus.Search/Program.cs', '// search source\n', self.search)
         self.src.mkdir(); self.bin.mkdir()
         subprocess.run(['git', 'init', '-q', str(self.src)], check=True)
         self.track('Program.cs', '// synthetic source\n')
@@ -29,37 +33,169 @@ class PackagingTests(unittest.TestCase):
         struct.pack_into('<I', pe, 60, 64)
         pe[64:68] = b'PE\0\0'; struct.pack_into('<H', pe, 68, 0x8664)
         (self.bin/'Optimus.exe').write_bytes(pe)
-        for name in ('Optimus.dll', 'Microsoft.Web.WebView2.Core.dll'):
+        for name in ('Optimus.dll', 'Optimus.deps.json', 'Microsoft.Web.WebView2.Core.dll', 'PresentationFramework.dll', 'coreclr.dll', 'hostpolicy.dll', 'System.Private.CoreLib.dll'):
             (self.bin/name).write_bytes(b'synthetic managed assembly')
-        (self.bin/'Optimus.runtimeconfig.json').write_text(json.dumps({'runtimeOptions': {'tfm':'net8.0', 'includedFrameworks':[{'name':'Microsoft.NETCore.App','version':'8.0.0'}]}}))
+        (self.bin/'Optimus.runtimeconfig.json').write_text(json.dumps({'runtimeOptions': {'tfm':'net10.0', 'includedFrameworks':[{'name':'Microsoft.NETCore.App','version':'10.0.14'}, {'name':'Microsoft.WindowsDesktop.App','version':'10.0.14'}]}}))
+        host = self.bin/'Search'; host.mkdir()
+        (host/'Optimus.SearchHost.exe').write_bytes(pe)
+        self.catalog = {'schemaVersion':1, 'documents':[{'url':'https://example.org/help/'+part, 'title':'Ayuda '+part, 'content':'Contenido público de ayuda local.', 'source':'Ayuda Optimus', 'updatedUtc':'2026-10-30T00:00:00Z'} for part in ('one','two','three')]}
+        (host/'index.json').write_text(json.dumps(self.catalog))
+        for name in ('Optimus.SearchHost.dll', 'Optimus.SearchHost.deps.json', 'Microsoft.AspNetCore.dll', 'Microsoft.AspNetCore.Server.Kestrel.Core.dll', 'coreclr.dll', 'hostpolicy.dll', 'System.Private.CoreLib.dll'):
+            (host/name).write_bytes(b'synthetic runtime payload')
+        (host/'Optimus.SearchHost.runtimeconfig.json').write_text(json.dumps({'runtimeOptions': {'tfm':'net10.0', 'includedFrameworks':[{'name':'Microsoft.NETCore.App','version':'10.0.14'}, {'name':'Microsoft.AspNetCore.App','version':'10.0.14'}]}}))
+        for name in ('GUIA_0_3.md', 'Search/README.md', 'Search/docs/PROTOCOL.md', 'Search/docs/VALIDATION.md', 'Search/docs/AI_GOVERNANCE_REVIEW.md'):
+            target = self.bin/name; target.parent.mkdir(parents=True, exist_ok=True); target.write_text('Synthetic help fixture.')
+        notices = self.bin/'third-party'; notices.mkdir()
+        for name in ('NETCore.LICENSE.txt', 'NETCore.THIRD-PARTY-NOTICES.txt', 'WindowsDesktop.LICENSE.txt', 'Microsoft-WebView2-LICENSE.txt', 'Microsoft-WebView2-NOTICE.txt', 'ASPNetCore.LICENSE.txt', 'ASPNetCore.THIRD-PARTY-NOTICES.txt'):
+            (notices/name).write_text('Synthetic notice fixture; not a vendor license.')
         self.meta = self.root/'meta.json'
-        self.meta.write_text(json.dumps({'source_commit':'a'*40,'native_tests':'Synthetic test record; Windows not run.','companion_tests':'Synthetic fixture only.','companion_url':'https://example.com/companion','plugin_id':'synthetic-fixture','validation':'Windows execution pending.','decisions':'Private unsigned alpha.'}))
-    def track(self, name, text):
-        path = self.src/name; path.parent.mkdir(parents=True, exist_ok=True)
+        self.meta.write_text(json.dumps({'source_commit':'a'*40,'search_source_commit':'b'*40,'search_tests':'Synthetic host fixture only.','native_tests':'Synthetic test record; Windows not run.','companion_tests':'Synthetic fixture only.','companion_url':'https://example.com/companion','plugin_id':'synthetic-fixture','validation':'Windows execution pending.','decisions':'Private unsigned alpha.'}))
+    def track(self, name, text, source=None):
+        source = source or self.src
+        path = source/name; path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text)
-        subprocess.run(['git','-C',str(self.src),'add','--',name], check=True)
+        subprocess.run(['git','-C',str(source),'add','--',name], check=True)
     def run_cli(self, out='out'):
-        return subprocess.run([sys.executable,str(SCRIPT),'--source-root',str(self.src),'--binary-root',str(self.bin),'--output-dir',str(self.root/out),'--metadata',str(self.meta)], capture_output=True, text=True)
+        return subprocess.run([sys.executable,str(SCRIPT),'--source-root',str(self.src),'--search-source-root',str(self.search),'--binary-root',str(self.bin),'--output-dir',str(self.root/out),'--metadata',str(self.meta)], capture_output=True, text=True)
     def test_reproducible_package_and_complete_hashes(self):
         # Catches nondeterminism, untracked/build inclusion, and incomplete manifests.
         (self.src/'untracked.txt').write_text('must not ship')
         result = self.run_cli(); self.assertEqual(result.returncode, 0, result.stderr)
         result = self.run_cli('out2'); self.assertEqual(result.returncode, 0, result.stderr)
-        name = 'Optimus_Browser_Windows_0.2.0_alpha.zip'
+        name = 'Optimus_Browser_Windows_0.3.0_alpha.zip'
         archive = self.root/'out'/name
         self.assertEqual(archive.read_bytes(), (self.root/'out2'/name).read_bytes())
         self.assertEqual((archive.with_suffix('.zip.sha256')).read_text().split()[0], hashlib.sha256(archive.read_bytes()).hexdigest())
         with zipfile.ZipFile(archive) as z:
             names = z.namelist()
             self.assertEqual(names, sorted(names))
-            self.assertIn(PREFIX+'Source/Program.cs', names)
-            self.assertNotIn(PREFIX+'Source/bin/ignored.txt', names)
-            self.assertNotIn(PREFIX+'Source/untracked.txt', names)
+            self.assertIn(PREFIX+'Source/Windows/Program.cs', names)
+            self.assertIn(PREFIX+'Source/Search/src/Optimus.Search/Program.cs', names)
+            self.assertIn(PREFIX+'Search/Optimus.SearchHost.exe', names)
+            self.assertEqual(json.loads(z.read(PREFIX+'Search/index.json')), self.catalog)
+            self.assertIn(b'Commit servicio', z.read(PREFIX+'VALIDACION.md'))
+            self.assertNotIn(PREFIX+'Source/Windows/bin/ignored.txt', names)
+            self.assertNotIn(PREFIX+'Source/Windows/untracked.txt', names)
             manifest = z.read(PREFIX+'SHA256SUMS.txt').decode().splitlines()
             self.assertEqual(len(manifest), len(names)-1)
             for line in manifest:
                 digest, path = line.split('  ', 1)
                 self.assertEqual(hashlib.sha256(z.read(PREFIX+path)).hexdigest(), digest)
+    def test_rejects_missing_or_invalid_host_runtime_and_notices(self):
+        # Catches a native-only ZIP, wrong-host architecture and stripped runtimes/notices.
+        required = ('GUIA_0_3.md', 'Search/README.md', 'Search/docs/PROTOCOL.md', 'Search/Optimus.SearchHost.exe', 'Search/Optimus.SearchHost.dll',
+                    'Search/Optimus.SearchHost.deps.json', 'Search/coreclr.dll',
+                    'Search/Microsoft.AspNetCore.Server.Kestrel.Core.dll',
+                    'coreclr.dll', 'PresentationFramework.dll',
+                    'third-party/ASPNetCore.LICENSE.txt', 'third-party/ASPNetCore.THIRD-PARTY-NOTICES.txt',
+                    'third-party/NETCore.THIRD-PARTY-NOTICES.txt', 'third-party/WindowsDesktop.LICENSE.txt',
+                    'third-party/Microsoft-WebView2-NOTICE.txt')
+        for name in required:
+            with self.subTest(missing=name):
+                target = self.bin/name; original = target.read_bytes(); target.unlink()
+                try:
+                    result = self.run_cli()
+                    self.assertEqual(result.returncode, 1, result.stderr)
+                    self.assertIn('Required publication file missing', result.stderr)
+                finally:
+                    target.write_bytes(original)
+        target = self.bin/'Search/Optimus.SearchHost.exe'
+        data = bytearray(target.read_bytes()); struct.pack_into('<H', data,68,0x14c)
+        target.write_bytes(data)
+        result = self.run_cli()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('AMD64', result.stderr)
+
+    def test_verifies_publication_without_source_or_metadata(self):
+        # Catches a build checker that cannot validate the actual publication independently.
+        args = [sys.executable,str(SCRIPT),'--verify-publication',str(self.bin)]
+        result = subprocess.run(args,capture_output=True,text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Verified publication', result.stdout)
+        (self.bin/'Search/Optimus.SearchHost.exe').unlink()
+        result = subprocess.run(args,capture_output=True,text=True)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn('Required publication file missing', result.stderr)
+
+    def test_rejects_missing_bundled_index_before_verifying_or_packaging(self):
+        # Catches accepting a release whose default offline corpus was omitted.
+        (self.bin/'Search/index.json').unlink()
+        for mode in ('verify', 'package'):
+            with self.subTest(mode=mode):
+                result = self.run_cli() if mode == 'package' else subprocess.run([sys.executable,str(SCRIPT),'--verify-publication',str(self.bin)],capture_output=True,text=True)
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertIn('Search/index.json', result.stderr)
+                self.assertFalse((self.root/'out'/'Optimus_Browser_Windows_0.3.0_alpha.zip').exists())
+
+    def test_rejects_invalid_bundled_index_before_verifying_or_packaging(self):
+        # Catches treating an existing corrupt, empty or out-of-contract corpus as valid.
+        document = self.catalog['documents'][0]
+        cases = {
+            'malformed JSON': '{broken',
+            'wrong root': '[]',
+            'unsupported schema': json.dumps({'schemaVersion':2,'documents':[document]}),
+            'missing documents': '{"schemaVersion":1}',
+            'empty corpus': '{"schemaVersion":1,"documents":[]}',
+            'invalid document': '{"schemaVersion":1,"documents":[null]}',
+            'missing content': json.dumps({'schemaVersion':1,'documents':[{key:value for key,value in document.items() if key != 'content'}]}),
+            'unsafe URL': json.dumps({'schemaVersion':1,'documents':[{**document,'url':'javascript:alert(1)'}]}),
+            'long title': json.dumps({'schemaVersion':1,'documents':[{**document,'title':'a'*241}]}),
+            'large content': json.dumps({'schemaVersion':1,'documents':[{**document,'content':'a'*(64*1024+1)}]}),
+            'invalid UTC': json.dumps({'schemaVersion':1,'documents':[{**document,'updatedUtc':'not-a-date'}]}),
+            'too many documents': json.dumps({'schemaVersion':1,'documents':[document]*1001}),
+            'oversized file': json.dumps(self.catalog)+' '*(16*1024*1024),
+        }
+        for label, content in cases.items():
+            for mode in ('verify', 'package'):
+                with self.subTest(case=label, mode=mode):
+                    (self.bin/'Search/index.json').write_text(content)
+                    result = self.run_cli() if mode == 'package' else subprocess.run([sys.executable,str(SCRIPT),'--verify-publication',str(self.bin)],capture_output=True,text=True)
+                    self.assertEqual(result.returncode, 1, result.stderr)
+                    self.assertIn('Search/index.json', result.stderr)
+                    self.assertNotIn('Traceback', result.stderr)
+                    self.assertFalse((self.root/'out'/'Optimus_Browser_Windows_0.3.0_alpha.zip').exists())
+
+    def test_rejects_host_framework_dependent_or_wrong_runtime_version(self):
+        # Catches a host that requires an installed ASP.NET runtime or the wrong TFM.
+        target = self.bin/'Search/Optimus.SearchHost.runtimeconfig.json'
+        original = target.read_bytes()
+        for config in ({'runtimeOptions':{'tfm':'net10.0','framework':{'name':'Microsoft.AspNetCore.App','version':'10.0.14'}}},
+                       {'runtimeOptions':{'tfm':'net8.0','includedFrameworks':[{'name':'Microsoft.NETCore.App','version':'8.0.0'}, {'name':'Microsoft.AspNetCore.App','version':'8.0.0'}]}},
+                       {'runtimeOptions':{'tfm':'net10.0','includedFrameworks':[{'name':'Microsoft.NETCore.App','version':'10.0.14'}]}},
+                       {'runtimeOptions':{'tfm':'net10.0','includedFrameworks':[{'name':'Microsoft.NETCore.App','version':'10.0.14'}, {'name':'Microsoft.AspNetCore.App','version':'10.0.15'}]}}):
+            with self.subTest(config=config):
+                target.write_text(json.dumps(config))
+                result = self.run_cli()
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertIn('runtimeconfig', result.stderr)
+        target.write_bytes(original)
+
+    def test_rejects_private_search_sources_and_qa_publication(self):
+        # Catches omissions of the second source privacy scan and QA/runtime spill.
+        for name, text in [('service.token', 'A'*64), ('profile/history.db','private'), ('Config.cs','// key '+'sk-proj-'+'A'*48)]:
+            with self.subTest(source=name):
+                self.track(name, text, self.search)
+                self.assertEqual(self.run_cli().returncode, 1)
+                subprocess.run(['git','-C',str(self.search),'rm','-q','-f','--',name],check=True)
+        for name in ('QA/trace.txt', 'Search/artifacts/test.log', 'Search/service.token', 'Search/profiles/data.txt'):
+            with self.subTest(binary=name):
+                target = self.bin/name; target.parent.mkdir(parents=True,exist_ok=True); target.write_text('private runtime output')
+                self.assertEqual(self.run_cli().returncode, 1)
+                target.unlink()
+                while target.parent != self.bin and not any(target.parent.iterdir()):
+                    target = target.parent; target.rmdir()
+
+    def test_requires_search_source_root_and_search_provenance(self):
+        # Catches silently packaging no host source or publishing undocumented provenance.
+        args = [sys.executable,str(SCRIPT),'--source-root',str(self.src),'--binary-root',str(self.bin),'--output-dir',str(self.root/'out'),'--metadata',str(self.meta)]
+        result = subprocess.run(args,capture_output=True,text=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('--search-source-root', result.stderr)
+        meta = json.loads(self.meta.read_text()); del meta['search_source_commit']; self.meta.write_text(json.dumps(meta))
+        result = self.run_cli()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('search_source_commit', result.stderr)
+
     def test_rejects_wrong_machine_missing_runtime_or_empty_payload(self):
         # Catches shipping an incompatible apphost, framework-dependent build, or truncation.
         for case in ('machine','runtime','empty','missing'):

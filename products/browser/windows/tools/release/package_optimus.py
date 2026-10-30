@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Deterministic, fail-closed packaging for the private Optimus Windows alpha."""
 import argparse
+from datetime import datetime, timedelta
 import hashlib
 import json
 import os
@@ -11,12 +12,13 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+from urllib.parse import urlsplit
 
-VERSION = '0.2.0_alpha'
+VERSION = '0.3.0_alpha'
 ROOT = f'Optimus_Browser_{VERSION}'
 ARCHIVE = f'Optimus_Browser_Windows_{VERSION}.zip'
-EXCLUDED = {'.git', '.superpowers', 'bin', 'obj', 'artifacts', 'tooling', '__pycache__'}
-PRIVATE_DIRS = {'userdata', 'user-data', 'user_data', 'browserdata', 'browser-data', 'profiles', 'logs', 'secrets', '.ssh', '.aws', '.azure'}
+EXCLUDED = {'.git', '.superpowers', 'bin', 'obj', 'artifacts', 'tooling', '__pycache__', '.pytest_cache', 'qa', 'testresults'}
+PRIVATE_DIRS = {'userdata', 'user-data', 'user_data', 'browserdata', 'browser-data', 'profiles', 'profile', 'logs', 'secrets', '.ssh', '.aws', '.azure'}
 RESERVED = {'source', 'leeme.txt', 'validacion.md', 'decisiones.md', 'sha256sums.txt'}
 SECRET_EXT = {'.pfx', '.p12', '.key', '.pem', '.keystore', '.jks'}
 KEY_PATTERNS = [
@@ -27,40 +29,38 @@ KEY_PATTERNS = [
     re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'),
     re.compile(rb'(?i)(?:api[_-]?key|client[_-]?secret|access[_-]?token|password)\s*[=:]\s*[\"\']?([A-Za-z0-9_+/=-]{20,})'),
 ]
-LEEME = '''OPTIMUS BROWSER — 0.2.0 alpha privada para Windows x64
+LEEME = '''OPTIMUS BROWSER — 0.3.0 alpha privada para Windows x64
 
-Es una alpha privada compilada y sin firma digital. El usuario confirmó que la
-versión 0.1 abre en Windows. La ejecución de esta 0.2 y sus aceptaciones de
-accesibilidad, privacidad y seguridad siguen pendientes; los tests y la
-compilación en Linux no las sustituyen.
+Alpha sin firma digital. La ejecución de esta 0.3 en Windows y sus aceptaciones
+de accesibilidad, privacidad y seguridad siguen pendientes; las comprobaciones
+Linux y las cabeceras PE no las sustituyen.
 
 USO
 1. Descomprime todo el ZIP en una carpeta propia.
-2. Ejecuta Optimus.exe desde esa carpeta.
-3. SmartScreen puede mostrar Windows protegió su PC por ser una alpha sin firma.
-   Comprueba que procede de esta entrega y que figura Optimus.exe. Para una
-   prueba consciente, Más información permite Ejecutar de todas formas si la
-   política del equipo lo admite. Mantén activadas las protecciones de Windows.
-No hay instalación automática ni cambio automático del navegador predeterminado.
-.NET está incluido en esta publicación autocontenida. Se necesita Microsoft Edge
-WebView2 Evergreen Runtime instalado por separado en Windows.
+2. Ejecuta Optimus.exe desde esa carpeta, conservando el subdirectorio Search/.
+3. Comprueba el origen y SHA256SUMS.txt. Si SmartScreen bloquea una alpha sin
+   firma, sigue la política del equipo y mantén las protecciones de Windows.
+No hay instalación automática ni cambio del navegador predeterminado.
+Los runtimes .NET, Windows Desktop y ASP.NET Core están incluidos.
+Microsoft Edge WebView2 Evergreen Runtime se instala por separado en Windows.
 
-ALCANCE
-Incluye identidad Optimus, modo privado manual, reglas locales configurables y
-búsqueda integrada de Wikipedia y marcadores. Una instancia SearXNG configurada
-por el operador amplía la búsqueda web. No incluye un índice mundial propio.
-Lee Source/docs/GUIA_0_2.md para límites, configuración y pruebas.
+BÚSQUEDA
+Web usa el servicio local Optimus y un SearXNG controlado por el operador.
+Sin configurar ese proveedor, Web informa la falta de configuración.
+Índice Optimus busca solo el catálogo importado explícitamente y funciona offline.
+Wikipedia es una opción explícita; no hay sustitución silenciosa de fuentes.
+No es un índice mundial ni un rastreador. No incluye IA generativa conectada.
+Consulta GUIA_0_3.md y Source/Windows/docs/GUIA_0_3.md.
 El modo privado no da anonimato ni protección adicional ante malware.
-La guía local funciona mediante reglas. La IA generativa nativa todavía no está
-conectada. El componente acompañante se identifica en VALIDACION.md; su código
-se mantiene en su repositorio externo y no se incluye aquí.
+Nunca copies el perfil de usuario ni service.token a esta carpeta de entrega.
 
 CONTENIDO Y VALIDACIÓN
-Source/ contiene archivos versionados seleccionados del proyecto nativo.
+Search/ contiene Optimus.SearchHost.exe y su runtime autocontenido.
+Source/Windows y Source/Search contienen las fuentes Git seleccionadas.
 VALIDACION.md registra las evidencias declaradas y sus límites.
-DECISIONES.md registra las decisiones de esta entrega.
-SHA256SUMS.txt permite verificar todos los demás archivos del paquete.
-No distribuyas credenciales ni datos personales en esta alpha.
+DECISIONES.md registra decisiones. third-party/ conserva los avisos de terceros.
+SHA256SUMS.txt cubre todos los demás archivos; el hash externo cubre el ZIP.
+El componente acompañante externo se identifica en VALIDACION.md; no se copia.
 '''
 
 class PackagingError(ValueError):
@@ -123,35 +123,107 @@ def read_file(base, name):
 
 def load_metadata(path):
     data = json.loads(path.read_text(encoding='utf-8'))
-    for field in ('source_commit', 'native_tests', 'companion_tests', 'companion_url', 'plugin_id', 'validation', 'decisions'):
+    for field in ('source_commit', 'search_source_commit', 'search_tests', 'native_tests', 'companion_tests', 'companion_url', 'plugin_id', 'validation', 'decisions'):
         if not isinstance(data.get(field), str) or not data[field].strip():
             raise PackagingError(f'Metadata field must be nonempty text: {field}')
         check_text(data[field].encode(), f'metadata.{field}')
-    if not re.fullmatch(r'[0-9a-fA-F]{40}|[0-9a-fA-F]{64}', data['source_commit']):
-        raise PackagingError('source_commit must be a full git object ID')
+    for field in ('source_commit', 'search_source_commit'):
+        if not re.fullmatch(r'[0-9a-fA-F]{40}|[0-9a-fA-F]{64}', data[field]):
+            raise PackagingError(f'{field} must be a full git object ID')
     if not re.fullmatch(r'https://[^\s<>]+', data['companion_url']):
         raise PackagingError('companion_url must be an HTTPS URL')
     return data
 
 
+def validate_bundled_index(data):
+    # This is release acceptance, not a replacement for the host's real import.
+    # A nonempty default corpus is promised by this alpha's frozen layout.
+    try:
+        if len(data) > 16 * 1024 * 1024:
+            raise ValueError()
+        catalog = json.loads(data.decode('utf-8'))
+        if (not isinstance(catalog, dict) or type(catalog.get('schemaVersion')) is not int
+                or catalog['schemaVersion'] != 1 or not isinstance(catalog.get('documents'), list)
+                or not 1 <= len(catalog['documents']) <= 1000):
+            raise ValueError()
+        for document in catalog['documents']:
+            if (not isinstance(document, dict)
+                    or any(not isinstance(document.get(field), str)
+                           for field in ('url', 'title', 'content', 'source', 'updatedUtc'))):
+                raise ValueError()
+            url = document['url']
+            parsed = urlsplit(url)
+            if (len(url.encode('utf-16-le')) // 2 > 2048 or not parsed.hostname
+                    or parsed.scheme not in ('http', 'https') or parsed.username is not None
+                    or parsed.password is not None or '\\' in url
+                    or any(ord(c) < 32 or ord(c) == 127 for c in url)):
+                raise ValueError()
+            parsed.port  # Validate the optional port without using it.
+            if (not document['title'].strip() or len(document['title'].encode('utf-16-le')) // 2 > 240
+                    or len(document['content'].encode('utf-8')) > 64 * 1024):
+                raise ValueError()
+            stamp = datetime.fromisoformat(document['updatedUtc'].replace('Z', '+00:00'))
+            if stamp.utcoffset() != timedelta(0):
+                raise ValueError()
+    except (ValueError, TypeError, KeyError, OverflowError, RecursionError):
+        raise PackagingError('Search/index.json must contain a valid nonempty schemaVersion 1 catalog within documented limits') from None
+
+
 def validate_binary(files):
-    for name in ('Optimus.exe', 'Optimus.dll', 'Optimus.runtimeconfig.json', 'Microsoft.Web.WebView2.Core.dll'):
+    required = ['Microsoft.Web.WebView2.Core.dll', 'PresentationFramework.dll', 'GUIA_0_3.md', 'Search/index.json',
+                'Search/README.md', 'Search/docs/PROTOCOL.md', 'Search/docs/VALIDATION.md', 'Search/docs/AI_GOVERNANCE_REVIEW.md']
+    for prefix, assembly in (('', 'Optimus'), ('Search/', 'Optimus.SearchHost')):
+        required.extend(prefix + assembly + suffix for suffix in ('.exe', '.dll', '.deps.json', '.runtimeconfig.json'))
+        required.extend(prefix + name for name in ('coreclr.dll', 'hostpolicy.dll', 'System.Private.CoreLib.dll'))
+    required.extend('Search/' + name for name in ('Microsoft.AspNetCore.dll', 'Microsoft.AspNetCore.Server.Kestrel.Core.dll'))
+    required.extend('third-party/' + name for name in (
+        'NETCore.LICENSE.txt', 'NETCore.THIRD-PARTY-NOTICES.txt', 'WindowsDesktop.LICENSE.txt',
+        'Microsoft-WebView2-LICENSE.txt', 'Microsoft-WebView2-NOTICE.txt',
+        'ASPNetCore.LICENSE.txt', 'ASPNetCore.THIRD-PARTY-NOTICES.txt'))
+    for name in required:
         if name not in files:
             raise PackagingError(f'Required publication file missing: {name}')
-    pe = files['Optimus.exe']
-    if len(pe) < 64 or pe[:2] != b'MZ':
-        raise PackagingError('Optimus.exe is not a PE apphost')
-    offset = struct.unpack_from('<I', pe, 60)[0]
-    if offset + 6 > len(pe) or pe[offset:offset+4] != b'PE\x00\x00' or struct.unpack_from('<H', pe, offset+4)[0] != 0x8664:
-        raise PackagingError('Optimus.exe must have PE machine AMD64 (x64)')
-    options = json.loads(files['Optimus.runtimeconfig.json']).get('runtimeOptions', {})
-    frameworks = options.get('includedFrameworks')
-    if (options.get('framework') or options.get('frameworks') or not isinstance(frameworks, list)
-            or not any(isinstance(f, dict) and f.get('name') == 'Microsoft.NETCore.App' and f.get('version') for f in frameworks)):
-        raise PackagingError('runtimeconfig must declare includedFrameworks for self-contained .NET')
+    validate_bundled_index(files['Search/index.json'])
+    for prefix, assembly, framework in (('', 'Optimus', 'Microsoft.WindowsDesktop.App'),
+                                         ('Search/', 'Optimus.SearchHost', 'Microsoft.AspNetCore.App')):
+        name = prefix + assembly + '.exe'
+        pe = files[name]
+        if len(pe) < 64 or pe[:2] != b'MZ':
+            raise PackagingError(f'{name} is not a PE apphost')
+        offset = struct.unpack_from('<I', pe, 60)[0]
+        if offset + 6 > len(pe) or pe[offset:offset+4] != b'PE\x00\x00' or struct.unpack_from('<H', pe, offset+4)[0] != 0x8664:
+            raise PackagingError(f'{name} must have PE machine AMD64 (x64)')
+        name = prefix + assembly + '.runtimeconfig.json'
+        options = json.loads(files[name]).get('runtimeOptions', {})
+        frameworks = options.get('includedFrameworks')
+        if (options.get('framework') or options.get('frameworks')
+                or not isinstance(options.get('tfm'), str) or not re.fullmatch(r'net10\.0(?:-windows.*)?', options['tfm'])
+                or not isinstance(frameworks, list)
+                or any(not any(isinstance(f, dict) and f.get('name') == expected
+                               and isinstance(f.get('version'), str) and re.fullmatch(r'10\.0\.\d+', f['version'])
+                               and (expected != 'Microsoft.AspNetCore.App' or f['version'] == '10.0.14')
+                               for f in frameworks) for expected in ('Microsoft.NETCore.App', framework))):
+            raise PackagingError(f'{name} must declare includedFrameworks for self-contained .NET 10 and {framework}')
 
 
-def collect(source, binary, metadata):
+def collect_source(files, source, prefix):
+    result = subprocess.run(['git', '-C', str(source), 'ls-files', '-z', '--cached'], check=True, capture_output=True)
+    source_names = result.stdout.decode('utf-8').split('\x00')
+    selected = 0
+    for name in sorted(set(filter(None, source_names))):
+        parts = safe_path(name).parts
+        if any(p.lower() in EXCLUDED for p in parts):
+            continue
+        check_name(name)
+        if any('gateway' in p.lower() for p in parts[:-1]):
+            raise PackagingError(f'Gateway source directory refused: {name}')
+        files[prefix+name] = read_file(source, name)
+        selected += 1
+    if not selected:
+        raise PackagingError(f'No tracked source files found: {prefix}')
+
+
+def collect_binary(binary):
     files = {}
     for path in sorted(binary.rglob('*')):
         name = path.relative_to(binary).as_posix()
@@ -166,22 +238,21 @@ def collect(source, binary, metadata):
             raise PackagingError(f'Build/source directory in binary publication: {name}')
         files[name] = read_file(binary, name)
     validate_binary(files)
-    result = subprocess.run(['git', '-C', str(source), 'ls-files', '-z', '--cached'], check=True, capture_output=True)
-    source_names = result.stdout.decode('utf-8').split('\x00')
-    for name in sorted(set(filter(None, source_names))):
-        parts = safe_path(name).parts
-        if any(p.lower() in EXCLUDED for p in parts):
-            continue
-        check_name(name)
-        # Gateway code is externally git-backed and must not be vendored here.
-        if any('gateway' in p.lower() for p in parts[:-1]):
-            raise PackagingError(f'Gateway source directory refused: {name}')
-        files['Source/'+name] = read_file(source, name)
-    if not any(n.startswith('Source/') for n in files):
-        raise PackagingError('No tracked source files found')
+    normalized = [name.casefold() for name in files]
+    if len(set(normalized)) != len(normalized):
+        raise PackagingError('Case-insensitive publication path collision')
+    return files
+
+
+def collect(source, search_source, binary, metadata):
+    files = collect_binary(binary)
+    collect_source(files, source, 'Source/Windows/')
+    collect_source(files, search_source, 'Source/Search/')
     files['LEEME.txt'] = LEEME.encode('utf-8')
     files['VALIDACION.md'] = (f"# Validación declarada — {VERSION}\n\n"
         f"Commit nativo: `{metadata['source_commit']}`\n\n"
+        f"Commit servicio: `{metadata['search_source_commit']}`\n\n"
+        f"## Pruebas del servicio\n\n{metadata['search_tests']}\n\n"
         f"## Pruebas nativas\n\n{metadata['native_tests']}\n\n"
         f"## Componente acompañante\n\n{metadata['companion_tests']}\n\n"
         f"Repositorio: {metadata['companion_url']}\n\nPlugin: `{metadata['plugin_id']}`\n\n"
@@ -230,16 +301,30 @@ def verify_zip(path):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    for arg in ('source-root', 'binary-root', 'output-dir', 'metadata'):
-        parser.add_argument('--'+arg, type=Path, required=True)
+    parser.add_argument('--verify-publication', type=Path, help='Validate an existing publish tree without execution')
+    for arg in ('source-root', 'search-source-root', 'binary-root', 'output-dir', 'metadata'):
+        parser.add_argument('--'+arg, type=Path)
     args = parser.parse_args(argv)
+    if args.verify_publication is None:
+        for name in ('source_root', 'search_source_root', 'binary_root', 'output_dir', 'metadata'):
+            if getattr(args, name) is None:
+                parser.error('--'+name.replace('_', '-')+' is required for packaging')
+    elif any(getattr(args, name) is not None for name in ('source_root', 'search_source_root', 'binary_root', 'output_dir', 'metadata')):
+        parser.error('--verify-publication cannot be combined with packaging arguments')
     try:
-        source, binary, output = (p.resolve() for p in (args.source_root, args.binary_root, args.output_dir))
-        if not source.is_dir() or not binary.is_dir():
+        if args.verify_publication is not None:
+            binary = args.verify_publication.resolve()
+            if not binary.is_dir():
+                raise PackagingError('Binary root must exist')
+            files = collect_binary(binary)
+            print(f'Verified publication ({len(files)} files); no executable was run')
+            return 0
+        source, search_source, binary, output = (p.resolve() for p in (args.source_root, args.search_source_root, args.binary_root, args.output_dir))
+        if not all(p.is_dir() for p in (source, search_source, binary)):
             raise PackagingError('Source and binary roots must exist')
-        if output.is_relative_to(source) or output.is_relative_to(binary):
+        if any(output.is_relative_to(p) for p in (source, search_source, binary)):
             raise PackagingError('Output must be outside the input roots')
-        files = collect(source, binary, load_metadata(args.metadata))
+        files = collect(source, search_source, binary, load_metadata(args.metadata))
         output.mkdir(parents=True, exist_ok=True)
         target = output/ARCHIVE
         with tempfile.TemporaryDirectory(prefix='.optimus-package-', dir=output) as stage:

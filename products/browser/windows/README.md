@@ -1,35 +1,33 @@
-# Optimus Windows 0.2 alpha — snapshot de fuentes
+# Optimus Windows 0.3 alpha — búsqueda compartida
 
-Navegador nativo WPF con WebView2. Esta incorporación conserva el código del artefacto 0.2 sin cambiar su comportamiento. Es una alpha sin firma; la validación de esta versión ejecutándose en Windows sigue pendiente.
+WPF/WebView2 con servicio local .NET 10 en `../search`. Web es la fuente predeterminada mediante ese servicio; Índice Optimus consulta un catálogo finito offline y Wikipedia es una elección explícita. El SearXNG web lo configura el operador. Alpha sin firma; ejecución y accesibilidad de esta versión en Windows pendientes.
 
-Incluye navegación con pestañas, marcadores, permisos explícitos, reglas locales de bloqueo o apertura privada, perfiles privados, guía local y una búsqueda limitada mediante Wikipedia/marcadores, con SearXNG opcional configurado por el operador. El asistente generativo remoto, idiomas adicionales, voz y dispositivos IoT no están conectados.
+Lee [GUIA_0_3.md](docs/GUIA_0_3.md) para uso, token, configuración y límites, [el protocolo](../search/docs/PROTOCOL.md) y [la validación 0.3](../search/docs/VALIDATION.md). La guía local funciona mediante reglas; no hay asistente generativo conectado, voz ni IoT.
 
-## Compilación y pruebas
+## Compilar y comprobar
 
-Trabajar desde este directorio. El SDK está fijado en `global.json` a .NET 10.0.403 con actualización de parche permitida. La aplicación requiere Windows x64 y WebView2 Evergreen para ejecutarse.
+Desde este directorio, con SDK .NET 10.0.403 (`global.json`):
 
 ```sh
 dotnet run --project tests/Optimus.Core.Tests -c Release
 dotnet run --project tests/Optimus.Search.Tests -c Release
 dotnet run --project tests/Optimus.Privacy.Tests -c Release
-dotnet build Optimus.slnx -c Release -p:EnableWindowsTargeting=true -m:1
+dotnet run --project ../search/tests/Optimus.Search.Tests -c Release
 python3 -m unittest discover -s tools/release -v
+dotnet build Optimus.slnx -c Release -p:EnableWindowsTargeting=true -m:1
 ```
 
-Publicación autocontenida, sin ejecutar el producto:
+Publicación autocontenida Windows x64 de ambos ejecutables, sin ejecutarlos:
 
 ```sh
 dotnet publish src/Optimus.App/Optimus.App.csproj -c Release -r win-x64 --self-contained true -p:EnableWindowsTargeting=true -m:1 -o artifacts/win-x64
+dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.0-alpha -m:1 -o artifacts/win-x64/Search
 ```
 
-Los scripts PowerShell originales producen, en cambio, una publicación dependiente del runtime de escritorio instalado. No debe confundirse esa salida con la entrega ZIP 0.2 autocontenida. Sus comandos no se han ejecutado en esta importación.
+Después hay que copiar ayuda y avisos exactamente como describe [el empaquetador](tools/release/README.md), y comprobar la publicación antes de generar el ZIP. Los scripts PowerShell `scripts/Build-Optimus.ps1` y `scripts/Verify-Optimus.ps1` automatizan tests, publicación/compilación y comprobaciones. `Build` requiere Python y copia documentación y avisos de terceros; ambos ejecutables son autocontenidos. Los scripts no se han ejecutado en el entorno Linux sin PowerShell.
 
-Limitación heredada del script: copia `PILOTO.md` pero omite la guía enlazada `GUIA_0_2.md`. Si se distribuye esa salida, hay que incluir también la guía; desde este directorio:
+.NET/WPF/ASP.NET Core se distribuyen con avisos de terceros. WebView2 Evergreen se necesita por separado en Windows. Ningún comando de compilación instala el producto, firma ejecutables o acredita accesibilidad.
 
-```powershell
-Copy-Item docs/GUIA_0_2.md artifacts/win-x64/GUIA_0_2.md
-```
+## Procedencia
 
-La utilidad `tools/release/package_optimus.py` empaqueta una publicación ya construida; requiere metadatos verdaderos de una entrega nueva. No instala ni firma la aplicación.
-
-Consulta [la guía 0.2](docs/GUIA_0_2.md), [el piloto](docs/PILOTO.md), [la validación de la importación](../VALIDATION.md) y [la procedencia](../SOURCE_MANIFEST.json). Los avisos de terceros permanecen en `docs/third-party/`.
+[SOURCE_MANIFEST.json](../SOURCE_MANIFEST.json) y [VALIDATION.md](../VALIDATION.md) son registros históricos de la importación 0.2: sus hashes no describen los archivos modificados para 0.3. El [registro 0.3](../search/docs/VALIDATION.md) recoge el estado del incremento; el integrador generará hashes finales nuevos después de ensamblar los commits. El nuevo ZIP conserva `Source/Windows/` y `Source/Search/` como hermanos para reproducir las referencias relativas. No modifica el ZIP original ni sus hashes.

@@ -53,15 +53,16 @@ internal sealed class BrowserTab : IDisposable
  private bool disposed,internalBlank;
  private readonly OperationLifetime lifetime=new();
  public bool IsDisposed=>lifetime.IsDisposed;
- public BrowserTab(Action<BrowserTab> recover,bool isPrivate,Func<PrivacyPolicy> policy,Func<long> policyGeneration,Func<IReadOnlyList<Bookmark>> bookmarks,string profileName,Func<BrowserTab,bool> searchEligible,CancellationToken hostLifetime)
+ public BrowserTab(Action<BrowserTab> recover,bool isPrivate,Func<PrivacyPolicy> policy,Func<long> policyGeneration,Func<IReadOnlyList<Bookmark>> bookmarks,string profileName,Func<BrowserTab,bool> searchEligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connectSearch)
  {
   controllerOwnership=new ControllerOwnership(()=>View.Dispose());
   this.profileName=profileName;IsPrivate=isPrivate;this.policy=policy;this.policyGeneration=policyGeneration;
-  search=new OptimusSearchView(url=>OpenRequested?.Invoke(this,url),()=>IsPrivate?Array.Empty<Bookmark>():bookmarks(),()=>!IsDisposed&&searchEligible(this),hostLifetime) {Visibility=Visibility.Collapsed};
+  search=new OptimusSearchView(url=>OpenRequested?.Invoke(this,url),()=>IsPrivate?Array.Empty<Bookmark>():bookmarks(),()=>!IsDisposed&&searchEligible(this),hostLifetime,connectSearch) {Visibility=Visibility.Collapsed};
   Item=new TabItem {Header=ModeTitle("Inicio"),Content=Host,Tag=this};Host.Children.Add(View);Host.Children.Add(home);Host.Children.Add(failure);Host.Children.Add(search);
   home.Children.Add(new System.Windows.Controls.Image {Source=(System.Windows.Media.ImageSource)Application.Current.FindResource("OptimusLogo"),Height=72,HorizontalAlignment=HorizontalAlignment.Left,Margin=new Thickness(0,0,0,16)});
   home.Children.Add(new TextBlock {Text="Bienvenido a Optimus",FontSize=30,TextWrapping=TextWrapping.Wrap});
-  home.Children.Add(new TextBlock {Text="Escribe una dirección o una búsqueda arriba. La ayuda local funciona sin cuenta. Optimus Search consulta Wikipedia y marcadores; puedes elegir una búsqueda externa en Opciones.",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,14,0,14)});
+  home.Children.Add(new TextBlock {Text="Escribe una dirección o una búsqueda arriba. La ayuda local funciona sin cuenta. Optimus Search permite elegir Web, Índice Optimus o Wikipedia; la Web requiere el servidor del operador.",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,14,0,14)});
+  var openSearch=new Button {Content="Abrir Optimus Search",MinHeight=44,HorizontalAlignment=HorizontalAlignment.Left};openSearch.Click+=(_,_)=>ShowSearch();home.Children.Add(openSearch);
   home.Children.Add(new TextBlock {Text="Enlaces de inicio · candidatos sin atribución oficial",FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap});
   foreach(var (label,url) in new[]{("Portal de administración · administracion.gob.es","https://administracion.gob.es/")})
   {var b=new Button {Content=label,HorizontalAlignment=HorizontalAlignment.Left};b.Click+=(_,_)=>OpenRequested?.Invoke(this,url);home.Children.Add(b);}
@@ -177,11 +178,15 @@ internal sealed class BrowserTab : IDisposable
   try {GoHome();await completion.Task.WaitAsync(TimeSpan.FromSeconds(5));}
   finally {core.NavigationCompleted-=Completed;}
  }
- public async Task SearchAsync(string query,string? endpoint)
+ public void ShowSearch()
  {
   if(!search.CanSubmit)return;
-  GoHome();IsSearch=true;home.Visibility=Visibility.Collapsed;search.Visibility=Visibility.Visible;Item.Header=ModeTitle("Optimus Search");Changed?.Invoke(this);
-  search.FocusQuery();await search.SearchAsync(query,endpoint,lifetime.Token);
+  GoHome();IsSearch=true;home.Visibility=Visibility.Collapsed;search.Visibility=Visibility.Visible;Item.Header=ModeTitle("Optimus Search");Changed?.Invoke(this);search.FocusQuery();
+ }
+ public async Task SearchAsync(string query,OptimusSearchScope scope=OptimusSearchScope.Web)
+ {
+  if(!search.CanSubmit)return;
+  ShowSearch();await search.SearchAsync(query,scope,lifetime.Token);
  }
  public void CancelSearch()=>Invalidate();
  public void DisableSearch(){search.Disable();Invalidate();}

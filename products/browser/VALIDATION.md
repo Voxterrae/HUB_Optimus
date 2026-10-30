@@ -1,5 +1,9 @@
 # Validación de importación — 30 de octubre de 2026
 
+## Nota histórica — incremento del 30 de octubre de 2026
+
+Este registro y SOURCE_MANIFEST.json describen los bytes de la importación 0.2 en #2018. No certifican la identidad de los archivos modificados después para 0.3 en #2021. Consultar [la validación nueva](search/docs/VALIDATION.md); sus hashes finales se generan por separado después de integrar. Los hashes originales permanecen intactos.
+
 ## Alcance
 
 Importación de fuentes existentes para revisión en #2017. No se han activado integraciones ni modificado el comportamiento del navegador, el sitio principal o el asistente privado.
