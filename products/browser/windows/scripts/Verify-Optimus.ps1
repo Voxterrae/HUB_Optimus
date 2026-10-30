@@ -36,5 +36,5 @@ try {
     $actual = @(Get-ChildItem $Artifact -Recurse -File | Where-Object FullName -ne $manifest)
     if ($actual.Count -ne $covered.Count) { throw 'Cobertura incompleta del manifiesto.' }
     foreach ($file in $actual) { if (!$covered.Contains($file.FullName)) { throw 'Archivo sin hash en publicación.' } }
-    Write-Host 'Pruebas, compilaciones, estructura de publicación y hashes verificados. Ejecución, firma y accesibilidad en Windows pendientes; consulta GUIA_0_3_1.md.'
+    Write-Host 'Pruebas, compilaciones, estructura de publicación y hashes verificados. Ejecución, firma y accesibilidad en Windows pendientes; consulta GUIA_0_3_2.md.'
 } finally { Pop-Location }

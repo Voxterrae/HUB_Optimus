@@ -92,15 +92,14 @@ public sealed class SearchHostLauncher : IDisposable
                         independent = false;
                     }
                 }
-                var healthy = false;
-                for (var attempt = 0; attempt < 20; attempt++)
+                // Cold startup shares the existing global deadline, including token creation.
+                while (true)
                 {
                     token.ThrowIfCancellationRequested();
                     bearer = await VerifiedTokenAsync(token).ConfigureAwait(false);
-                    if (bearer is not null) { healthy = true; break; }
+                    if (bearer is not null) break;
                     await Task.Delay(100, token).ConfigureAwait(false);
                 }
-                if (!healthy) { lock (sync) if (startedHere) StopOwned(); return Failure("El servicio local de búsqueda no respondió a tiempo."); }
             }
             token.ThrowIfCancellationRequested();
             // Return only the token snapshot whose possession was proved, never a later profile-file value.

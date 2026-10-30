@@ -1,4 +1,4 @@
-<Window x:Class="Optimus.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:core="clr-namespace:Optimus.Core;assembly=Optimus.Core" Title="Optimus · 0.3.1 alpha" Icon="Assets/optimus.ico" Width="1400" Height="920" MinWidth="420" MinHeight="420" FontSize="{DynamicResource OptimusBodySize}" Background="{DynamicResource OptimusPageBrush}" Foreground="{DynamicResource OptimusTextBrush}">
+<Window x:Class="Optimus.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:core="clr-namespace:Optimus.Core;assembly=Optimus.Core" Title="Optimus · 0.3.2 alpha" Icon="Assets/optimus.ico" Width="1400" Height="920" MinWidth="420" MinHeight="420" FontSize="{DynamicResource OptimusBodySize}" Background="{DynamicResource OptimusPageBrush}" Foreground="{DynamicResource OptimusTextBrush}">
  <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <Border Background="{DynamicResource OptimusPanelBrush}" BorderBrush="{DynamicResource OptimusBorderBrush}" BorderThickness="0,0,0,1" Padding="8">
    <StackPanel>
@@ -81,11 +81,11 @@
       <CheckBox x:Name="RestoreChoice" Click="Restore_Click"><TextBlock Text="Restaurar direcciones al abrir Optimus" TextWrapping="Wrap"/></CheckBox>
       <TextBlock Text="Esta opción guarda direcciones de pestañas normales. Las privadas no se restauran." Foreground="{DynamicResource OptimusMutedBrush}" TextWrapping="Wrap" FontSize="{DynamicResource OptimusSmallSize}" Margin="3,4,0,12"/>
       <WrapPanel><Button Content="Abrir sitio actual en privado" Click="CurrentPrivate_Click"/><Button Content="Descargas" Click="Downloads_Click"/><Button Content="Revocar permisos" Click="RevokePermissions_Click"/><Button Content="Borrar datos de sitios" Click="ClearData_Click"/></WrapPanel>
-      <TextBlock Text="Optimus 0.3.1 alpha · Sin firma. Privado limita el guardado local; no ofrece anonimato." TextWrapping="Wrap" FontSize="{DynamicResource OptimusSmallSize}" Foreground="{DynamicResource OptimusMutedBrush}" Margin="0,28,0,12"/>
+      <TextBlock Text="Optimus 0.3.2 alpha · Sin firma. Privado limita el guardado local; no ofrece anonimato." TextWrapping="Wrap" FontSize="{DynamicResource OptimusSmallSize}" Foreground="{DynamicResource OptimusMutedBrush}" Margin="0,28,0,12"/>
      </StackPanel></ScrollViewer>
     </Border>
    </Grid>
   </Grid>
-  <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource OptimusBorderBrush}" Background="{DynamicResource OptimusPanelBrush}" Padding="12,7"><ScrollViewer MaxHeight="110" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><TextBlock x:Name="Status" Text="Optimus 0.3.1 alpha · Listo para empezar." TextWrapping="Wrap" FontSize="{DynamicResource OptimusSmallSize}" Foreground="{DynamicResource OptimusMutedBrush}" AutomationProperties.LiveSetting="Polite"/></ScrollViewer></Border>
+  <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource OptimusBorderBrush}" Background="{DynamicResource OptimusPanelBrush}" Padding="12,7"><ScrollViewer MaxHeight="110" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><TextBlock x:Name="Status" Text="Optimus 0.3.2 alpha · Listo para empezar." TextWrapping="Wrap" FontSize="{DynamicResource OptimusSmallSize}" Foreground="{DynamicResource OptimusMutedBrush}" AutomationProperties.LiveSetting="Polite"/></ScrollViewer></Border>
  </Grid>
 </Window>

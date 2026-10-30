@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -14,9 +15,12 @@ public static class TokenStore
     }
     public static async Task<string> LoadOrCreateAsync(string path, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var full = Path.GetFullPath(path);
         if (File.Exists(full)) return await ReadAsync(full, cancellationToken);
         Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+        using var guard = await AcquireCreationGuardAsync(full + ".lock", cancellationToken);
+        if (File.Exists(full)) return await ReadAsync(full, cancellationToken);
         var temporary = full + "." + Guid.NewGuid().ToString("N") + ".tmp";
         var token = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
         try
@@ -35,6 +39,44 @@ public static class TokenStore
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
+    private static async Task<FileStream> AcquireCreationGuardAsync(string path, CancellationToken cancellationToken)
+    {
+        var started = Stopwatch.GetTimestamp();
+        var options = new FileStreamOptions { Mode = FileMode.OpenOrCreate, Access = FileAccess.ReadWrite, Share = FileShare.None };
+        if (!OperatingSystem.IsWindows()) options.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (Stopwatch.GetElapsedTime(started) >= TimeSpan.FromSeconds(5))
+                throw new IOException("Timed out waiting for token creation.");
+            FileStream guard;
+            try { guard = new FileStream(path, options); }
+            catch (IOException ex) when (IsLockContention(ex))
+            {
+                await Task.Delay(25, cancellationToken);
+                continue;
+            }
+            try
+            {
+                if (!OperatingSystem.IsWindows() && (File.GetUnixFileMode(path) & (UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute)) != 0)
+                    throw new InvalidDataException("Token creation guard permissions are not private.");
+                // Unix FileShare locking can be disabled or unsupported; never publish without verified exclusion.
+                try { using var probe = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None); }
+                catch (IOException ex) when (IsLockContention(ex))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    // Keep this empty sidecar permanently: unlinking it could split competing owners across inodes.
+                    return guard;
+                }
+                throw new InvalidDataException("Token creation requires exclusive file locking.");
+            }
+            catch { guard.Dispose(); throw; }
+        }
+    }
+    private static bool IsLockContention(IOException exception) => OperatingSystem.IsWindows()
+        ? (exception.HResult & 0xffff) is 32 or 33
+        : exception.HResult is 11 or 35; // EWOULDBLOCK on Linux and macOS.
+
     private static async Task<string> ReadAsync(string path, CancellationToken cancellationToken)
     {
         await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 128, FileOptions.Asynchronous);
