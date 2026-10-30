@@ -1,4 +1,4 @@
-# Empaquetador Optimus Browser 0.3.1 alpha
+# Empaquetador Optimus Browser 0.3.2 alpha
 
 Python 3.9+ de biblioteca estándar y `git` en PATH. Empaqueta una publicación ya compilada; no ejecuta, instala ni firma el producto. El ZIP original 0.2 y su manifest de importación permanecen como evidencia histórica.
 
@@ -17,21 +17,23 @@ Ambas raíces de fuentes son obligatorias y pueden ser subdirectorios de un úni
 
 La salida debe estar fuera de todas las entradas. El éxito devuelve 0; validación fallida 1 y argumentos inválidos 2. Primero crea/verifica un ZIP temporal; un rechazo no reemplaza una entrega anterior. Produce:
 
-- `Optimus_Browser_Windows_0.3.1_alpha.zip`
-- `Optimus_Browser_Windows_0.3.1_alpha.zip.sha256`
+- `Optimus_Browser_Windows_0.3.2_alpha.zip`
+- `Optimus_Browser_Windows_0.3.2_alpha.zip.sha256`
 
 ## Layout congelado de esta entrega
 
-Todo queda bajo `Optimus_Browser_0.3.1_alpha/`:
+Todo queda bajo `Optimus_Browser_0.3.2_alpha/`:
 
 | Ruta | Contenido |
 | --- | --- |
 | `Optimus.exe`, `Optimus.dll`, runtime | Navegador nativo autocontenido Windows x64. |
 | `Search/Optimus.SearchHost.exe`, DLL y runtime | Servicio separado autocontenido Windows x64. |
 | `Search/index.json` | Tres ayudas públicas, importadas por el CLI real desde Source/Search/catalog/optimus-help.json. Corpus finito, no resultados web. |
+| `Diagnostics/Optimus.Windows.Smoke.exe`, DLL y runtime | Diagnóstico autocontenido; no es ejecución Windows ya realizada. |
+| `Test-OptimusWindows.ps1` | Entrada Windows PowerShell 5.1; servicio aislado por defecto, GUI solo en usuario desechable. |
 | `Source/Windows/` | Archivos Git seleccionados del módulo Windows. |
 | `Source/Search/` | Archivos Git seleccionados del módulo Search. |
-| `GUIA_0_3_1.md`, `Search/README.md`, `Search/docs/` | Ayuda, protocolo, evidencia y revisión IA. |
+| `GUIA_0_3_2.md`, `Search/README.md`, `Search/docs/` | Ayuda, protocolo, evidencia y revisión IA. |
 | `third-party/` | Avisos originales .NET, WPF, WebView2 y avisos oficiales ASP.NET Core. |
 | `LEEME.txt`, `VALIDACION.md`, `DECISIONES.md` | Uso, evidencias declaradas y decisiones generadas. |
 | `SHA256SUMS.txt` | Todos los demás archivos interiores, ordenados por ruta. |
@@ -40,11 +42,12 @@ La estructura `Source/Windows` y `Source/Search` es nueva respecto a `Source/` d
 
 ## Preparar publicación
 
-`../../scripts/Build-Optimus.ps1` automatiza estos pasos desde Windows con PowerShell y Python. Desde Linux se pueden publicar ambos apphosts sin ejecutarlos:
+`../../scripts/Build-Optimus.ps1` automatiza estos pasos desde Windows con PowerShell y Python. Desde Linux se pueden publicar los tres apphosts sin ejecutarlos:
 
 ```sh
 dotnet publish src/Optimus.App/Optimus.App.csproj -c Release -r win-x64 --self-contained true -p:EnableWindowsTargeting=true -m:1 -o /ruta/a/publish-win-x64
-dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.1-alpha -m:1 -o /ruta/a/publish-win-x64/Search
+dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.2-alpha -m:1 -o /ruta/a/publish-win-x64/Search
+dotnet publish scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj -c Release -r win-x64 --self-contained true -p:EnableWindowsTargeting=true -m:1 -o /ruta/a/publish-win-x64/Diagnostics
 ```
 
 Después importar la ayuda con el host ejecutado desde fuentes (no ejecutar un PE Windows en Linux):
@@ -53,13 +56,15 @@ Después importar la ayuda con el host ejecutado desde fuentes (no ejecutar un P
 dotnet run --project ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -- index --input "$PWD/../search/catalog/optimus-help.json" --output /ruta/a/publish-win-x64/Search/index.json
 ```
 
-Después copiar `docs/GUIA_0_3_1.md` al raíz de publicación, `docs/third-party/` como `third-party/`, `../search/README.md` a `Search/README.md` y los documentos Search `PROTOCOL.md`, `VALIDATION.md`, `AI_GOVERNANCE_REVIEW.md` a `Search/docs/`. Puede incluirse `PILOTO.md` como lista histórica, sin presentarlo como aceptación 0.3. No copiar directorios de perfiles, tokens, catálogos privados, logs, informes QA ni herramientas de compilación.
+Después copiar `scripts/Test-OptimusWindows.ps1` y `docs/GUIA_0_3_2.md` al raíz de publicación, `docs/third-party/` como `third-party/`, `../search/README.md` a `Search/README.md` y los documentos Search `PROTOCOL.md`, `VALIDATION.md`, `AI_GOVERNANCE_REVIEW.md` a `Search/docs/`. Puede incluirse `PILOTO.md` como lista histórica, sin presentarlo como aceptación 0.3. No copiar directorios de perfiles, tokens, catálogos privados, logs, informes QA ni herramientas de compilación.
 
 ```sh
 python3 tools/release/package_optimus.py --verify-publication /ruta/a/publish-win-x64
 ```
 
 Esta comprobación independiente valida archivos, apphosts y runtimes sin metadatos ni repositorios. No prueba su ejecución. `BUILD-SHA256SUMS.txt` es el manifest de la publicación PowerShell; tiene nombre distinto del `SHA256SUMS.txt` final para evitar colisiones. `Verify-Optimus.ps1` exige cobertura completa del manifest de publicación y vuelve a ejecutar suites y compilaciones; no lanza el producto Windows.
+
+Para comprobar procedencia con `-SourceCommit`, publica los tres ejecutables con el mismo `-p:SourceRevisionId=<SHA completo>` de un árbol revisado. El diagnóstico exige el SHA en ProductVersion de cada apphost; una cadena en los metadatos de empaquetado no lo demuestra.
 
 ## Metadatos
 
@@ -81,8 +86,8 @@ El operador debe aportar evidencia verdadera. El empaquetador no comprueba que l
 
 ## Rechazos e integridad
 
-- Exige apphosts `Optimus.exe` y `Search/Optimus.SearchHost.exe` con firma PE AMD64. Exige DLL, deps.json y runtimeconfig de ambos, coreclr/hostpolicy/System.Private.CoreLib en ambos directorios, PresentationFramework, WebView2 Core y ensamblados ASP.NET/Kestrel. No impone AMD64 a ensamblados administrados AnyCPU.
-- Ambos runtimeconfig deben declarar .NET 10 autocontenido mediante includedFrameworks: NETCore más WindowsDesktop o ASP.NET Core según el ejecutable; rechaza framework/frameworks dependientes de runtime instalado. Es una comprobación estructural mínima, no certificación funcional del runtime completo.
+- Exige apphosts `Optimus.exe`, `Search/Optimus.SearchHost.exe` y `Diagnostics/Optimus.Windows.Smoke.exe` con firma PE AMD64. Exige DLL, deps.json y runtimeconfig de los tres, coreclr/hostpolicy/System.Private.CoreLib en los tres directorios, PresentationFramework, WebView2 Core y ensamblados ASP.NET/Kestrel. No impone AMD64 a ensamblados administrados AnyCPU.
+- Los tres runtimeconfig deben declarar .NET 10 autocontenido mediante includedFrameworks: NETCore más WindowsDesktop o ASP.NET Core según el ejecutable; rechaza framework/frameworks dependientes de runtime instalado. Es una comprobación estructural mínima, no certificación funcional del runtime completo.
 - Exige guía, documentación Search y los siete avisos .NET/WPF/WebView2/ASP.NET. Los avisos ASP.NET comprometidos son bytes oficiales v10.0.14; Build y el empaquetador fallan si el host publicado usa otra versión hasta actualizar avisos/procedencia y la validación de versión. Ver [procedencia](../../docs/third-party/ASPNetCore.PROVENANCE.md).
 - Solo selecciona nombres Git de ambas fuentes; omite `.git`, `.superpowers`, bin, obj, artifacts, tooling, __pycache__, .pytest_cache, QA y TestResults. En la publicación rechaza esos directorios en vez de omitirlos. No incorpora el gateway externo.
 - Rechaza archivos vacíos, symlinks en cualquier componente, traversal, rutas absolutas/incompatibles con Windows, colisiones sin distinción de mayúsculas y entradas binarias que intenten reemplazar documentos generados o Source/.

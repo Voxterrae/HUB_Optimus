@@ -6,6 +6,14 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using Optimus.Search;
 
+// Workers exercise the production token store in independent processes without emitting token bytes.
+if (args is ["--token-race-worker", var workerTokenPath, var workerReadyPath, var workerStartPath, var workerVerifyPath])
+    return await RunTokenWorker(workerTokenPath, workerReadyPath, workerStartPath, workerVerifyPath);
+if (args is ["--token-unlocked-worker", var unlockedTokenPath]) {
+    try {await TokenStore.LoadOrCreateAsync(unlockedTokenPath);return 1;}
+    catch(InvalidDataException){return File.Exists(unlockedTokenPath)?2:0;}
+}
+
 var tests = new List<(string Name, Func<Task> Run)>();
 void Test(string name, Func<Task> run) => tests.Add((name, run));
 void Equal<T>(T want, T got) { if (!EqualityComparer<T>.Default.Equals(want, got)) throw new Exception($"Expected {want}; got {got}"); }
@@ -184,8 +192,77 @@ Test("web API successful loopback provider fixture returns Optimus protocol and 
     var result=json.RootElement.GetProperty("results")[0];Equal("https://example.org/result",result.GetProperty("url").GetString());Equal("SearXNG",result.GetProperty("source").GetString());Equal("<b>inert remote text</b>",result.GetProperty("content").GetString());
 });
 Test("token concurrent creation converges and never overwrites invalid files", async () => {
-    var path=FilePath("race/service.token");var tokens=await Task.WhenAll(Enumerable.Range(0,8).Select(_=>TokenStore.LoadOrCreateAsync(path)));True(tokens.All(t=>t==tokens[0]));
+    for(var round=0;round<20;round++) {
+        var concurrentPath=FilePath($"race-{round}/service.token");
+        var tokens=await Task.WhenAll(Enumerable.Range(0,8).Select(_=>TokenStore.LoadOrCreateAsync(concurrentPath)));
+        True(tokens.All(t=>t==tokens[0]));True(tokens.All(t=>t==File.ReadAllText(concurrentPath)));
+        Equal(0,Directory.GetFiles(Path.GetDirectoryName(concurrentPath)!,"*.tmp").Length);
+    }
+    var path=FilePath("race-0/service.token");
     await File.WriteAllTextAsync(path,new string('x',65));await Reject(()=>TokenStore.LoadOrCreateAsync(path));Equal(65,(await File.ReadAllTextAsync(path)).Length);
+});
+Test("independent processes converge on the published token without disclosing it", async () => {
+    var directory=FilePath("process-race");Directory.CreateDirectory(directory);
+    var path=Path.Combine(directory,"service.token");var startPath=Path.Combine(directory,"start");var verifyPath=Path.Combine(directory,"verify");
+    var processes=new List<Process>();
+    try {
+        for(var worker=0;worker<8;worker++) {
+            var start=DotnetStart(System.Reflection.Assembly.GetExecutingAssembly().Location,
+                ["--token-race-worker",path,Path.Combine(directory,$"ready-{worker}"),startPath,verifyPath]);
+            processes.Add(Process.Start(start)!);
+        }
+        using var readyTimeout=new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        await Task.WhenAll(Enumerable.Range(0,8).Select(worker=>WaitForFile(Path.Combine(directory,$"ready-{worker}"),readyTimeout.Token)));
+        await File.WriteAllTextAsync(startPath,"start");
+        var loaded=await Task.WhenAll(processes.Select(process=>process.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(15))));
+        True(loaded.All(line=>line=="loaded"));
+        await File.WriteAllTextAsync(verifyPath,"verify");
+        foreach(var process in processes) {
+            await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(15));Equal(0,process.ExitCode);
+            Equal("",await process.StandardOutput.ReadToEndAsync());Equal("",await process.StandardError.ReadToEndAsync());
+        }
+        True(TokenStore.IsValid(await File.ReadAllTextAsync(path)));
+        Equal(0,Directory.GetFiles(directory,"*.tmp").Length);
+    } finally {
+        foreach(var process in processes) {
+            if(!process.HasExited) {process.Kill(true);await process.WaitForExitAsync();}
+            process.Dispose();
+        }
+    }
+});
+Test("token creation waiting for another owner cancels without publishing", async () => {
+    var path=FilePath("cancelled-creator/service.token");Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+    using(var held=HoldTokenGuard(path)) {
+        using var cancellation=new CancellationTokenSource(TimeSpan.FromMilliseconds(150));var cancelled=false;
+        try {await TokenStore.LoadOrCreateAsync(path,cancellation.Token);}catch(OperationCanceledException){cancelled=true;}
+        True(cancelled);True(!File.Exists(path));Equal(0,Directory.GetFiles(Path.GetDirectoryName(path)!,"*.tmp").Length);
+    }
+    True(TokenStore.IsValid(await TokenStore.LoadOrCreateAsync(path)));True(File.Exists(path+".lock"));
+});
+Test("token creation fails within a bounded wait while another owner retains its guard", async () => {
+    var path=FilePath("busy-creator/service.token");Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+    using var held=HoldTokenGuard(path);
+    var watch=Stopwatch.StartNew();var rejected=false;
+    try {await TokenStore.LoadOrCreateAsync(path);}catch(IOException){rejected=true;}
+    True(rejected);True(watch.Elapsed<TimeSpan.FromSeconds(10));True(!File.Exists(path));True(File.Exists(path+".lock"));
+    Equal(0,Directory.GetFiles(Path.GetDirectoryName(path)!,"*.tmp").Length);
+});
+if(!OperatingSystem.IsWindows()) Test("token creation fails closed when runtime file locking is disabled", async () => {
+    var path=FilePath("unlocked-creator/service.token");
+    var start=DotnetStart(System.Reflection.Assembly.GetExecutingAssembly().Location,["--token-unlocked-worker",path]);
+    start.Environment["DOTNET_SYSTEM_IO_DISABLEFILELOCKING"]="1";
+    using var process=Process.Start(start)!;
+    try {
+        await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));Equal(0,process.ExitCode);True(!File.Exists(path));
+        Equal("",await process.StandardOutput.ReadToEndAsync());Equal("",await process.StandardError.ReadToEndAsync());
+    } finally {if(!process.HasExited){process.Kill(true);await process.WaitForExitAsync();}}
+});
+if(!OperatingSystem.IsWindows()) Test("token creation rejects a guard file accessible to other users", async () => {
+    if(OperatingSystem.IsWindows()) return;
+    var path=FilePath("exposed-guard/service.token");Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+    await File.WriteAllTextAsync(path+".lock","");File.SetUnixFileMode(path+".lock",UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.GroupRead);
+    await Reject(()=>TokenStore.LoadOrCreateAsync(path));True(!File.Exists(path));
+    Equal(UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.GroupRead,File.GetUnixFileMode(path+".lock"));
 });
 Test("CLI starts real loopback service and explicit missing index fails closed", async () => {
     var missing=await RunCli(["--index-file",FilePath("not-present.json"),"--token-file",FilePath("missing/service.token")]);Equal(2,missing.Code);True(!File.Exists(FilePath("missing/service.token")));
@@ -305,8 +382,36 @@ static async Task<(int Code,string Output)> RunCli(string[] args)
 
 static ProcessStartInfo CliStart(string[] args)
 {
+    return DotnetStart(typeof(SearchServer).Assembly.Location,args);
+}
+
+static ProcessStartInfo DotnetStart(string assembly, string[] args)
+{
     var start=new ProcessStartInfo(Path.Combine(Environment.GetEnvironmentVariable("DOTNET_ROOT")!,OperatingSystem.IsWindows()?"dotnet.exe":"dotnet")) {RedirectStandardError=true,RedirectStandardOutput=true,UseShellExecute=false};
-    start.ArgumentList.Add(typeof(SearchServer).Assembly.Location);foreach(var arg in args)start.ArgumentList.Add(arg);return start;
+    start.ArgumentList.Add(assembly);foreach(var arg in args)start.ArgumentList.Add(arg);return start;
+}
+
+static FileStream HoldTokenGuard(string path)
+{
+    var options=new FileStreamOptions{Mode=FileMode.OpenOrCreate,Access=FileAccess.ReadWrite,Share=FileShare.None};
+    if(!OperatingSystem.IsWindows()) options.UnixCreateMode=UnixFileMode.UserRead|UnixFileMode.UserWrite;
+    return new FileStream(path+".lock",options);
+}
+
+static async Task WaitForFile(string path,CancellationToken cancellationToken)
+{
+    while(!File.Exists(path)) await Task.Delay(10,cancellationToken);
+}
+
+static async Task<int> RunTokenWorker(string path,string readyPath,string startPath,string verifyPath)
+{
+    try {
+        using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await File.WriteAllTextAsync(readyPath,"ready",timeout.Token);await WaitForFile(startPath,timeout.Token);
+        var token=await TokenStore.LoadOrCreateAsync(path,timeout.Token);Console.WriteLine("loaded");
+        await WaitForFile(verifyPath,timeout.Token);
+        return TokenStore.Matches(token,await File.ReadAllTextAsync(path,timeout.Token))?0:1;
+    } catch {return 2;}
 }
 
 sealed class Upstream : IAsyncDisposable

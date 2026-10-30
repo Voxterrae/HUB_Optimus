@@ -1,0 +1,71 @@
+# DORMANT PROPOSAL: this file is outside .github/workflows and cannot run here.
+# Activation requires the protected owner process described in ci/README.md.
+name: Optimus isolated Windows acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      gui:
+        description: Attempt GUI/UIAutomation on a clean interactive runner (blocked if unavailable)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  windows-smoke:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    env:
+      OPTIMUS_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: products/browser/windows
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1; existing repository pin
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Toolchain preflight (no installation)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $head = & git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $head -ne $env:OPTIMUS_SOURCE_COMMIT) { throw 'Checkout source head mismatch.' }
+          $version = & dotnet --version
+          if ($LASTEXITCODE -ne 0 -or $version -ne '10.0.403') { throw 'Required .NET SDK 10.0.403 absent; provision the isolated runner through protected review.' }
+          "head=$head`nsdk=$version`nos=$([Environment]::OSVersion.VersionString)" | Set-Content "$env:RUNNER_TEMP/optimus-toolchain.txt"
+      - name: Build production suites and self-contained executables
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function CheckExit { if ($LASTEXITCODE -ne 0) { throw 'Native build/test/import failed.' } }
+          foreach ($suite in @('Optimus.Core.Tests', 'Optimus.Search.Tests', 'Optimus.Privacy.Tests')) {
+            dotnet run --project "tests/$suite" -c Release; CheckExit
+          }
+          dotnet run --project ../search/tests/Optimus.Search.Tests -c Release; CheckExit
+          # Packaging's Linux path/symlink/CON fixtures are not run on Windows.
+          $output = "$env:RUNNER_TEMP/optimus-publication"
+          dotnet publish src/Optimus.App/Optimus.App.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o $output; CheckExit
+          dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.2-alpha -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Search"; CheckExit
+          dotnet publish scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Diagnostics"; CheckExit
+          dotnet run --project ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -- index --input ../search/catalog/optimus-help.json --output "$output/Search/index.json"; CheckExit
+      - name: Real packaged host acceptance through Windows PowerShell 5.1
+        run: |
+          & "$env:SystemRoot/System32/WindowsPowerShell/v1.0/powershell.exe" -NoProfile -File scripts/Test-OptimusWindows.ps1 -Publication "$env:RUNNER_TEMP/optimus-publication" -EvidenceDirectory "$env:RUNNER_TEMP/optimus-service-evidence" -SourceCommit $env:OPTIMUS_SOURCE_COMMIT
+          if ($LASTEXITCODE -ne 0) { throw 'Windows service acceptance failed; retain negative evidence.' }
+      - name: Optional GUI acceptance (no runtime installation)
+        if: ${{ inputs.gui }}
+        run: |
+          # Helper preflights absent default profiles, free port, desktop and WebView2.
+          & "$env:SystemRoot/System32/WindowsPowerShell/v1.0/powershell.exe" -NoProfile -File scripts/Test-OptimusWindows.ps1 -Publication "$env:RUNNER_TEMP/optimus-publication" -EvidenceDirectory "$env:RUNNER_TEMP/optimus-gui-evidence" -SourceCommit $env:OPTIMUS_SOURCE_COMMIT -Gui
+          if ($LASTEXITCODE -ne 0) { throw 'GUI failed or blocked; this is not a passing desktop run.' }
+      - name: Retain only sanitized acceptance evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2, official release pin
+        with:
+          name: optimus-windows-acceptance-${{ env.OPTIMUS_SOURCE_COMMIT }}
+          retention-days: 3
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/optimus-toolchain.txt
+            ${{ runner.temp }}/optimus-service-evidence/*.json
+            ${{ runner.temp }}/optimus-gui-evidence/*.json
+            ${{ runner.temp }}/optimus-gui-evidence/owned-window.png

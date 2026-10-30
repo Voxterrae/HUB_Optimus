@@ -1,3 +1,5 @@
+> **Arranque y diagnóstico 0.3.2 — 30/10/2026:** corrección del plazo de arranque en frío y diagnóstico Windows autocontenido. [Guía 0.3.2](docs/GUIA_0_3_2.md). La ejecución real de servicio/interfaz en Windows sigue pendiente; la propuesta CI está inactiva.
+
 > **Diseño nativo 0.3.1 — 30/10/2026:** el ejecutable incorpora la identidad visual, el inicio con buscador, las tarjetas y los paneles adaptables. [Guía 0.3.1](docs/GUIA_0_3_1.md). El comportamiento del servicio de búsqueda 0.3 se conserva; la aceptación Windows/accesibilidad sigue pendiente.
 
 # Optimus Windows 0.3 alpha — búsqueda compartida
@@ -19,14 +21,15 @@ python3 -m unittest discover -s tools/release -v
 dotnet build Optimus.slnx -c Release -p:EnableWindowsTargeting=true -m:1
 ```
 
-Publicación autocontenida Windows x64 de ambos ejecutables, sin ejecutarlos:
+Publicación autocontenida Windows x64 del navegador, servicio y diagnóstico, sin ejecutarlos:
 
 ```sh
 dotnet publish src/Optimus.App/Optimus.App.csproj -c Release -r win-x64 --self-contained true -p:EnableWindowsTargeting=true -m:1 -o artifacts/win-x64
-dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.0-alpha -m:1 -o artifacts/win-x64/Search
+dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.2-alpha -m:1 -o artifacts/win-x64/Search
+dotnet publish scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj -c Release -r win-x64 --self-contained true -p:EnableWindowsTargeting=true -m:1 -o artifacts/win-x64/Diagnostics
 ```
 
-Después hay que copiar ayuda y avisos exactamente como describe [el empaquetador](tools/release/README.md), y comprobar la publicación antes de generar el ZIP. Los scripts PowerShell `scripts/Build-Optimus.ps1` y `scripts/Verify-Optimus.ps1` automatizan tests, publicación/compilación y comprobaciones. `Build` requiere Python y copia documentación y avisos de terceros; ambos ejecutables son autocontenidos. Los scripts no se han ejecutado en el entorno Linux sin PowerShell.
+Después hay que copiar ayuda y avisos exactamente como describe [el empaquetador](tools/release/README.md), y comprobar la publicación antes de generar el ZIP. Los scripts PowerShell `scripts/Build-Optimus.ps1` y `scripts/Verify-Optimus.ps1` automatizan tests, publicación/compilación y comprobaciones. `Build` requiere Python y copia documentación y avisos de terceros; los tres ejecutables son autocontenidos. Los scripts no se han ejecutado en el entorno Linux sin PowerShell.
 
 .NET/WPF/ASP.NET Core se distribuyen con avisos de terceros. WebView2 Evergreen se necesita por separado en Windows. Ningún comando de compilación instala el producto, firma ejecutables o acredita accesibilidad.
 
