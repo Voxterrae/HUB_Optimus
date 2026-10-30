@@ -1,58 +1,107 @@
-# Empaquetador Optimus Browser 0.2.0 alpha
+# Empaquetador Optimus Browser 0.3.0 alpha
 
-Utilidad Python 3.9+ de biblioteca estándar. Requiere `git` en PATH; no necesita ejecutar el producto ni disponer de Windows. Está destinada a una publicación Windows x64 autocontenida ya compilada y a un repositorio Git del navegador nativo. No compila, instala ni publica nada.
+Python 3.9+ de biblioteca estándar y `git` en PATH. Empaqueta una publicación ya compilada; no ejecuta, instala ni firma el producto. El ZIP original 0.2 y su manifest de importación permanecen como evidencia histórica.
 
-```bash
-python package_optimus.py \
-  --source-root /ruta/al/repositorio-nativo \
+Desde `products/browser/windows`:
+
+```sh
+python3 tools/release/package_optimus.py \
+  --source-root "$PWD" \
+  --search-source-root "$PWD/../search" \
   --binary-root /ruta/a/publish-win-x64 \
   --output-dir /ruta/a/entrega \
   --metadata /ruta/a/metadata.json
 ```
 
-El directorio de salida debe estar fuera de las dos entradas. Una ejecución correcta devuelve 0; los errores devuelven 1 (los argumentos inválidos devuelven 2). La entrega se reemplaza solo después de construir y verificar el ZIP temporal. Una ejecución rechazada conserva cualquier entrega anterior: no debe confundirse con una entrega nueva.
+Ambas raíces de fuentes son obligatorias y pueden ser subdirectorios de un único repositorio Git. `git ls-files --cached` determina sus nombres; se leen los bytes actuales del árbol de trabajo, no los de un commit declarado. Revisar el estado Git y registrar diferencias intencionadas antes de distribuir. Los IDs de metadatos no certifican por sí solos un árbol limpio.
 
-Produce exactamente estos dos archivos de entrega:
+La salida debe estar fuera de todas las entradas. El éxito devuelve 0; validación fallida 1 y argumentos inválidos 2. Primero crea/verifica un ZIP temporal; un rechazo no reemplaza una entrega anterior. Produce:
 
-- `Optimus_Browser_Windows_0.2.0_alpha.zip`
-- `Optimus_Browser_Windows_0.2.0_alpha.zip.sha256`
+- `Optimus_Browser_Windows_0.3.0_alpha.zip`
+- `Optimus_Browser_Windows_0.3.0_alpha.zip.sha256`
 
-El ZIP contiene una única carpeta `Optimus_Browser_0.2.0_alpha/`: publicación binaria en su raíz, código nativo seleccionado en `Source/`, `LEEME.txt`, `VALIDACION.md`, `DECISIONES.md` y `SHA256SUMS.txt`. La lista de hashes cubre todos los archivos salvo ella misma, ordenados por ruta relativa. El hash externo cubre el ZIP entero. El LEEME informa que es una alpha privada compilada sin firma, que .NET está incluido y que WebView2 Evergreen debe estar instalado por separado. Indica descomprimir y ejecutar `Optimus.exe`, sin instalación automática ni cambio automático del navegador predeterminado. Describe la guía local mediante reglas, la IA generativa nativa aún sin conectar y la ejecución Windows y aceptaciones de accesibilidad y seguridad pendientes.
+## Layout congelado de esta entrega
 
-## Esquema de metadatos
+Todo queda bajo `Optimus_Browser_0.3.0_alpha/`:
 
-`--metadata` recibe la ruta de un objeto JSON UTF-8. Todos estos campos son cadenas obligatorias y no vacías. Los campos adicionales se ignoran; no se empaqueta el JSON original.
-
-| Campo | Contenido requerido |
+| Ruta | Contenido |
 | --- | --- |
-| `source_commit` | Identificador completo Git hexadecimal de 40 o 64 caracteres del código nativo. |
-| `native_tests` | Comandos y resultados reales de comprobaciones nativas, con sus límites. |
-| `companion_tests` | Comandos y resultados reales del componente acompañante, con sus límites. |
-| `companion_url` | URL HTTPS del repositorio o referencia externa del componente acompañante. |
-| `plugin_id` | Identificador real del plugin correspondiente a esta entrega. |
-| `validation` | Texto Markdown de evidencias, plataforma, fecha y comprobaciones pendientes. |
-| `decisions` | Texto Markdown de decisiones de esta entrega. |
+| `Optimus.exe`, `Optimus.dll`, runtime | Navegador nativo autocontenido Windows x64. |
+| `Search/Optimus.SearchHost.exe`, DLL y runtime | Servicio separado autocontenido Windows x64. |
+| `Search/index.json` | Tres ayudas públicas, importadas por el CLI real desde Source/Search/catalog/optimus-help.json. Corpus finito, no resultados web. |
+| `Source/Windows/` | Archivos Git seleccionados del módulo Windows. |
+| `Source/Search/` | Archivos Git seleccionados del módulo Search. |
+| `GUIA_0_3.md`, `Search/README.md`, `Search/docs/` | Ayuda, protocolo, evidencia y revisión IA. |
+| `third-party/` | Avisos originales .NET, WPF, WebView2 y avisos oficiales ASP.NET Core. |
+| `LEEME.txt`, `VALIDACION.md`, `DECISIONES.md` | Uso, evidencias declaradas y decisiones generadas. |
+| `SHA256SUMS.txt` | Todos los demás archivos interiores, ordenados por ruta. |
 
-El operador debe aportar evidencias verdaderas y no introducir secretos, datos personales ni resultados inventados. El empaquetador no comprueba que los comandos declarados se hayan ejecutado ni que la URL o el plugin existan. Nunca atribuye una ejecución real en Windows. No modifica el repositorio.
+La estructura `Source/Windows` y `Source/Search` es nueva respecto a `Source/` de 0.2; conserva las referencias relativas entre proyectos. No se presenta como identidad de bytes con el ZIP 0.2. El integrador debe generar un manifest 0.3 nuevo de las fuentes finales; nunca reescribir los hashes originales como si describieran archivos modificados.
 
-`git ls-files --cached` determina los nombres seleccionados; sus contenidos se leen del árbol de trabajo actual. Por tanto, `source_commit` identifica la referencia declarada, pero **no certifica que el árbol esté limpio o coincida con ese commit**. Antes de la entrega final hay que registrar el commit real y revisar el estado del árbol; cualquier diferencia intencionada debe quedar explicada en `validation`. Esto permite incluir los cambios aprobados sin inventar un commit o descartar modificaciones silenciosamente.
+## Preparar publicación
 
-## Reglas y límites
+`../../scripts/Build-Optimus.ps1` automatiza estos pasos desde Windows con PowerShell y Python. Desde Linux se pueden publicar ambos apphosts sin ejecutarlos:
 
-- Exige `Optimus.exe`, `Optimus.dll`, `Optimus.runtimeconfig.json` y `Microsoft.Web.WebView2.Core.dll` en la raíz de publicación. Todos los archivos seleccionados deben tener contenido.
-- Inspecciona la firma PE y la máquina AMD64 del apphost `Optimus.exe`. No impone AMD64 a los ensamblados .NET administrados, que pueden tener cabecera PE AnyCPU. Exige `runtimeOptions.includedFrameworks` con `Microsoft.NETCore.App` y versión, y rechaza `framework`/`frameworks` dependientes del runtime instalado. No certifica la integridad funcional del runtime completo ni ejecuta ensamblados.
-- Omite directorios de fuente `.git`, `.superpowers`, `bin`, `obj`, `artifacts`, `tooling` y `__pycache__`. Solo incluye nombres devueltos por Git; los archivos no versionados no entran. Rechaza directorios de código gateway: debe mantenerse en su repositorio externo.
-- Rechaza enlaces simbólicos, rutas absolutas, traversal, rutas incompatibles con Windows, colisiones de nombres sin distinción de mayúsculas y archivos binarios que intenten reemplazar documentos generados o `Source/`.
-- Rechaza nombres de credenciales, certificados privados y claves (`.pfx`, `.key`, etc.), archivos `.env` y variantes; `.env.example` se permite únicamente si existe entre los archivos seleccionados y supera el escaneo. Rechaza directorios conocidos de perfiles, datos de navegador y logs.
-- Escanea contenido de todas las entradas y metadatos con patrones de claves conocidas, claves privadas y asignaciones sospechosas; incluye texto UTF-8 y UTF-16. Nunca imprime la coincidencia de una credencial. Los patrones son una comprobación adicional y no sustituyen una revisión humana de privacidad y secretos.
-- Verifica CRC del ZIP, rutas y cobertura/hash íntegros del manifiesto antes de entregar. Fija fechas ZIP, permisos y orden. Mismos bytes de entrada y misma versión de Python/zlib generan el mismo ZIP; no se promete igualdad entre versiones diferentes del compresor.
+```sh
+dotnet publish src/Optimus.App/Optimus.App.csproj -c Release -r win-x64 --self-contained true -p:EnableWindowsTargeting=true -m:1 -o /ruta/a/publish-win-x64
+dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.0-alpha -m:1 -o /ruta/a/publish-win-x64/Search
+```
 
-No contiene ProductCode ni genera un instalador. El código del componente acompañante no se copia.
+Después importar la ayuda con el host ejecutado desde fuentes (no ejecutar un PE Windows en Linux):
+
+```sh
+dotnet run --project ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -- index --input "$PWD/../search/catalog/optimus-help.json" --output /ruta/a/publish-win-x64/Search/index.json
+```
+
+Después copiar `docs/GUIA_0_3.md` al raíz de publicación, `docs/third-party/` como `third-party/`, `../search/README.md` a `Search/README.md` y los documentos Search `PROTOCOL.md`, `VALIDATION.md`, `AI_GOVERNANCE_REVIEW.md` a `Search/docs/`. Puede incluirse `PILOTO.md` como lista histórica, sin presentarlo como aceptación 0.3. No copiar directorios de perfiles, tokens, catálogos privados, logs, informes QA ni herramientas de compilación.
+
+```sh
+python3 tools/release/package_optimus.py --verify-publication /ruta/a/publish-win-x64
+```
+
+Esta comprobación independiente valida archivos, apphosts y runtimes sin metadatos ni repositorios. No prueba su ejecución. `BUILD-SHA256SUMS.txt` es el manifest de la publicación PowerShell; tiene nombre distinto del `SHA256SUMS.txt` final para evitar colisiones. `Verify-Optimus.ps1` exige cobertura completa del manifest de publicación y vuelve a ejecutar suites y compilaciones; no lanza el producto Windows.
+
+## Metadatos
+
+Objeto JSON UTF-8; todas estas cadenas son obligatorias y no vacías. Campos extra se ignoran; no se copia el JSON original.
+
+| Campo | Contenido |
+| --- | --- |
+| `source_commit` | ID Git hexadecimal completo de 40/64 caracteres para Windows. |
+| `search_source_commit` | ID Git completo para Search; puede ser el mismo en el monorepo. |
+| `native_tests` | Comandos/resultados nativos realmente ejecutados y límites. |
+| `search_tests` | Comandos/resultados del servicio realmente ejecutados y límites. |
+| `companion_tests` | Evidencia real del acompañante externo, o estado pendiente explícito. |
+| `companion_url` | URL HTTPS del repositorio/referencia externa del acompañante. |
+| `plugin_id` | Identificador real si se incluye un plugin; si esta entrega nativa no incluye ninguno, declarar explícitamente `No se incluye plugin de ChatGPT`. Nunca inventar un ID. |
+| `validation` | Fecha/plataforma, evidencia, diferencias intencionadas y comprobaciones pendientes. |
+| `decisions` | Decisiones de esta entrega. |
+
+El operador debe aportar evidencia verdadera. El empaquetador no comprueba que los comandos declarados se ejecutaran ni que el plugin o la URL existan. No inventar IDs, tests, aceptación Windows ni resultados web. Una fixture no es evidencia general de Internet.
+
+## Rechazos e integridad
+
+- Exige apphosts `Optimus.exe` y `Search/Optimus.SearchHost.exe` con firma PE AMD64. Exige DLL, deps.json y runtimeconfig de ambos, coreclr/hostpolicy/System.Private.CoreLib en ambos directorios, PresentationFramework, WebView2 Core y ensamblados ASP.NET/Kestrel. No impone AMD64 a ensamblados administrados AnyCPU.
+- Ambos runtimeconfig deben declarar .NET 10 autocontenido mediante includedFrameworks: NETCore más WindowsDesktop o ASP.NET Core según el ejecutable; rechaza framework/frameworks dependientes de runtime instalado. Es una comprobación estructural mínima, no certificación funcional del runtime completo.
+- Exige guía, documentación Search y los siete avisos .NET/WPF/WebView2/ASP.NET. Los avisos ASP.NET comprometidos son bytes oficiales v10.0.14; Build y el empaquetador fallan si el host publicado usa otra versión hasta actualizar avisos/procedencia y la validación de versión. Ver [procedencia](../../docs/third-party/ASPNetCore.PROVENANCE.md).
+- Solo selecciona nombres Git de ambas fuentes; omite `.git`, `.superpowers`, bin, obj, artifacts, tooling, __pycache__, .pytest_cache, QA y TestResults. En la publicación rechaza esos directorios en vez de omitirlos. No incorpora el gateway externo.
+- Rechaza archivos vacíos, symlinks en cualquier componente, traversal, rutas absolutas/incompatibles con Windows, colisiones sin distinción de mayúsculas y entradas binarias que intenten reemplazar documentos generados o Source/.
+- Rechaza perfiles y datos de navegador, credenciales, service.token, claves/certificados privados y `.env` (salvo `.env.example` versionado y escaneado). Escanea entradas y metadatos con patrones de secretos UTF-8/UTF-16 sin mostrar coincidencias. Es una barrera adicional; no sustituye revisión humana de privacidad.
+- Dos DLL oficiales ASP.NET Core 10.0.14 coinciden con el patrón genérico de nombres secretos. La única excepción exige ruta relativa completa de publicación (sin distinción de mayúsculas) **y** SHA-256 exacto de esta tabla. Proceden del paquete NuGet oficial `microsoft.aspnetcore.app.runtime.win-x64/10.0.14`, bajo `runtimes/win-x64/lib/net10.0/`; la publicación real se comparó byte por byte con el paquete restaurado. No aplica a fuentes, otro directorio, solo el nombre base ni bytes distintos. Conserva los controles de rutas, directorios privados, archivos regulares no vacíos, symlinks y contenido. Una actualización del runtime falla hasta revisar versión, procedencia, avisos y estos hashes; no debe ampliarse el patrón de excepción.
+
+| Ruta de publicación | SHA-256 del DLL oficial 10.0.14 |
+| --- | --- |
+| `Search/Microsoft.AspNetCore.Authentication.BearerToken.dll` | `8610b42bb97e9df002694aafe2364ecd21810bc2d0652cb0cbf267628d06ce7d` |
+| `Search/Microsoft.Extensions.Configuration.UserSecrets.dll` | `9b8e836f6fe0db69b4c5b7bbfab5445e886560099000e625078dfa9ac271f0f1` |
+
+- Verifica CRC, rutas y cobertura/hash completos antes de entregar. Fija fechas, permisos y orden ZIP. Mismos bytes y misma versión Python/zlib producen el mismo ZIP; no promete igualdad entre compresores distintos.
 
 ## Pruebas
 
-```bash
-python -m unittest discover -s /ruta/a/release_tools -v
+```sh
+python3 -m unittest discover -s tools/release -v
 ```
 
-Las pruebas usan repositorios Git temporales y cabeceras PE sintéticas no ejecutables. Comprueban integración real de la CLI, reproducibilidad, hashes, selección de fuentes y rechazo de entradas peligrosas. No son una prueba de ejecución del navegador en Windows.
+Repositorios Git temporales y PE sintéticos no ejecutables ejercitan la CLI real, selección de dos fuentes, rechazo de host/runtime/avisos/documentación ausentes, privacidad, arquitectura, reproducibilidad e integridad. Nunca se ejecutan los PE sintéticos.
+
+Los tests portables de las dos DLL usan payloads sintéticos conocidos y sustituyen los hashes solo dentro del test, llamando a la CLI en el mismo proceso. Verifican aceptación exacta en ambos modos, rechazo al cambiar bytes/rutas, protección de ambas fuentes, archivos privados, symlinks, archivos vacíos y contenido secreto. Otra prueba fija los dos hashes oficiales; la validación de una publicación real usa los bytes y hashes de producción sin sustituciones. No se versionan DLL de prueba.
