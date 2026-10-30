@@ -4,7 +4,11 @@ Fecha de entrega: 2026-10-30. Esta evidencia corresponde al nuevo módulo estát
 
 ## Verificación automatizada
 
-`node --test tests/*.test.mjs`: **51 pruebas, 51 correctas**, sin fallos, cancelaciones, omisiones ni tareas pendientes. Desglose:23 núcleo,5 idiomas,23 voz. Se comprobaron también sintaxis de los cuatro módulos con `node --check` y `git diff --check`.
+`node --test tests/*.test.mjs`: **53 pruebas, 53 correctas**, sin fallos, cancelaciones, omisiones ni tareas pendientes. Desglose:23 núcleo,5 idiomas,23 voz,2 de ayuda hablada en la aplicación. Se comprobaron también sintaxis de los cuatro módulos con `node --check` y `git diff --check`.
+
+El P2 de ayuda hablada se reprodujo antes del arreglo: con interfaz inglesa y voz española se preparaba texto inglés, y con interfaz española y voz inglesa se preparaba texto español. Las dos pruebas de `tests/app.test.mjs` fallaron por esa diferencia de texto (RED) y pasaron después (GREEN). Importan `app.mjs` y ejecutan sus manejadores reales de selección y lectura, junto con las traducciones y `VoiceController` de producción. Verifican el texto completo, el locale de la petición y de la voz elegida, y que el idioma visible no cambie. El DOM mínimo y las APIs de síntesis son dobles de los límites del navegador; no son pruebas de audio físico, voces instaladas o navegador real. El espejo `site/browser/` conserva los mismos bytes que `dist/`.
+
+La suite Node también se ejecuta desde `tests/test_browser_web_node_suite.py`, descubierto por el `python -m pytest -q` existente de CI. El adaptador exige Node, enumera los archivos `*.test.mjs` y propaga cualquier fallo; no omite la regresión si falta el runtime. Se verificó que este recorrido pytest falla con el comportamiento anterior y pasa con la corrección. Los controles remotos se comprueban por separado sobre el SHA final.
 
 Las pruebas ejercitan funciones de producción: hosts/opciones de búsqueda, IDs y URLs válidos, consultas/resultados acotados, streams reales y límite1MiB, cancelación y plazo10s incluso ante transporte que ignora AbortSignal; persistencia opt-in, esquema, máximo50 enlaces, título120 y URL2048, errores y borrado de clave propia; rechazo HTTP/redirección/cuerpo ausente/tamaño anunciado con aborto y cancelación de recursos antes de resolver el error, exclusión de borradores sin terminar de la persistencia; seis diccionarios y parámetros; voz explícitamente local y ciclo de reconocimiento, permisos,30s, cancelación y reentrancia. No prueban un micrófono físico ni la disponibilidad de paquetes del sistema.
 

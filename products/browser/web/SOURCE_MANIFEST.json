@@ -20,12 +20,12 @@
     },
     {
       "path": "products/browser/web/dist/app.mjs",
-      "sha256": "5c788461efb25c8d91b9a581832fe968c670d21e43b13d696afc8593f09c1893",
+      "sha256": "91e8474817afc3260fb797ab047bf92cf052a9b3f24956eeae84f8de94f40d83",
       "source": "dist/app.mjs"
     },
     {
       "path": "site/browser/app.mjs",
-      "sha256": "5c788461efb25c8d91b9a581832fe968c670d21e43b13d696afc8593f09c1893",
+      "sha256": "91e8474817afc3260fb797ab047bf92cf052a9b3f24956eeae84f8de94f40d83",
       "source": "dist/app.mjs"
     },
     {
@@ -125,7 +125,7 @@
     },
     {
       "path": "products/browser/web/docs/DECISIONS.md",
-      "sha256": "e0c87e59382c8151d2cab88da31c83c005611889c102fb25cc3a4c4c362da3b7",
+      "sha256": "b0d4a1741260db03d7a06464af3d29190d8a2d6a8afa00522b6325eae8bbbe4d",
       "source": "docs/DECISIONS.md"
     },
     {
@@ -135,7 +135,7 @@
     },
     {
       "path": "products/browser/web/docs/VALIDATION.md",
-      "sha256": "7e84a9b9f2a8604592fdce1782a6e92fcf9aa911025f4656aa9e385060ab34d9",
+      "sha256": "7b7acc697ba7b5361d02bc4f79426d9d51ce320fa64d1b19a10dee4a2920bab8",
       "source": "docs/VALIDATION.md"
     },
     {
@@ -159,6 +159,11 @@
       "source": "ops/azure/azuredeploy.json"
     },
     {
+      "path": "products/browser/web/tests/app.test.mjs",
+      "sha256": "00c77a781abac79fb0901a093ca34f64bf0e02798ad571ec2b3d7f775b540f92",
+      "source": "tests/app.test.mjs"
+    },
+    {
       "path": "products/browser/web/tests/core.test.mjs",
       "sha256": "bc8b046e00c1797024eae4f22721d6bea2320102672e40178e154dfd6caf0184",
       "source": "tests/core.test.mjs"
@@ -172,6 +177,11 @@
       "path": "products/browser/web/tests/voice.test.mjs",
       "sha256": "8bb86cfa1fbb8dfb6ac7b63e45a28fe8ecc02b2180b0ced45ed6b02abf0e8a5a",
       "source": "tests/voice.test.mjs"
+    },
+    {
+      "path": "products/browser/web/tests/test_browser_web_node_suite.py",
+      "sha256": "14bc856204afabf0fb97f2b4711019321cfc4ff3e95699b2d45e286b79794584",
+      "source": "tests/test_browser_web_node_suite.py"
     }
   ]
 }
