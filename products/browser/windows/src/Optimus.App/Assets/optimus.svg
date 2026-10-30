@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Optimus</title>
+  <desc id="desc">An open mint octagon and a pale northeast point on a dark rounded square.</desc>
+  <rect width="256" height="256" rx="56" fill="#14232E"/>
+  <path d="M 88,40 L 148,40 L 112,76 L 104,76 L 76,104 L 76,152 L 104,180 L 152,180 L 180,152 L 180,112 L 216,76 L 216,168 L 168,216 L 88,216 L 40,168 L 40,88 Z" fill="#54E0C1"/>
+  <path d="M 168,40 L 216,40 L 216,88 Z" fill="#F2FAF8"/>
+</svg>

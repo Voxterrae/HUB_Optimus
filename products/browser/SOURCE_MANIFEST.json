@@ -1,0 +1,403 @@
+{
+  "schema_version": 1,
+  "issue": "https://github.com/Voxterrae/HUB_Optimus/issues/2017",
+  "native_source": {
+    "artifact": "Optimus_Browser_Windows_0.2.0_alpha.zip",
+    "archive_sha256": "e4eccc2fc9a9d3ebdd37020bb6132ec865ddd997ffe7e6257d108fc783be2a9d",
+    "original_source_commit": "2b3191b9956603977d897ef97e5d11ec7f010122",
+    "selected_files": 59,
+    "omitted_source_files": 25
+  },
+  "demo_source": {
+    "project_id": "466697303898607616",
+    "component_id": "466697341487947776",
+    "revision_id": "466698922518265856",
+    "preview_url": "https://designs.magicpath.ai/v1/clear-creek-5865"
+  },
+  "files": [
+    {
+      "path": "windows/.gitignore",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/.gitignore",
+      "bytes": 110,
+      "sha256": "176525e3542d5b4878d599e798f397d69deca54be3cdeef178be02c9d52aaff4"
+    },
+    {
+      "path": "windows/Directory.Build.props",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/Directory.Build.props",
+      "bytes": 203,
+      "sha256": "f6b5f360536cfd175deb6e76c551c2f832f4b7b8a934e0515f1a7a73e053237d"
+    },
+    {
+      "path": "windows/Optimus.slnx",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/Optimus.slnx",
+      "bytes": 196,
+      "sha256": "9f4cf32e6611e7a895ba337fdf193070835f9f496d124b81e6dc2df42a98c7ef"
+    },
+    {
+      "path": "windows/docs/GUIA_0_2.md",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/docs/GUIA_0_2.md",
+      "bytes": 5919,
+      "sha256": "7a7732c6716881b2fd04376d96320c3b17cec4b42b995fec6205ad148b4d57ca"
+    },
+    {
+      "path": "windows/docs/PILOTO.md",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/docs/PILOTO.md",
+      "bytes": 16308,
+      "sha256": "77930ae7f4e34af53761e76df8008a42243fb93c4754baac50cfabf5920b2b20"
+    },
+    {
+      "path": "windows/docs/third-party/Microsoft-WebView2-LICENSE.txt",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/docs/third-party/Microsoft-WebView2-LICENSE.txt",
+      "bytes": 1487,
+      "sha256": "0af8f1b807512aae39c2ac1aa4d0cae65cabecb6fd554b8439a5162a0d6eca55"
+    },
+    {
+      "path": "windows/docs/third-party/Microsoft-WebView2-NOTICE.txt",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/docs/third-party/Microsoft-WebView2-NOTICE.txt",
+      "bytes": 3894,
+      "sha256": "106423785c5b7eba0a8e61d1837f2132e9c828e20ad530f565d981c1df60dd90"
+    },
+    {
+      "path": "windows/docs/third-party/NETCore.LICENSE.txt",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/docs/third-party/NETCore.LICENSE.txt",
+      "bytes": 1139,
+      "sha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b"
+    },
+    {
+      "path": "windows/docs/third-party/NETCore.THIRD-PARTY-NOTICES.txt",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/docs/third-party/NETCore.THIRD-PARTY-NOTICES.txt",
+      "bytes": 78041,
+      "sha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21"
+    },
+    {
+      "path": "windows/docs/third-party/WindowsDesktop.LICENSE.txt",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/docs/third-party/WindowsDesktop.LICENSE.txt",
+      "bytes": 1137,
+      "sha256": "a89886665765362eb77e0f8e26602c924520041d1711b2eedc136434fe4d01ab"
+    },
+    {
+      "path": "windows/global.json",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/global.json",
+      "bytes": 59,
+      "sha256": "41e1e017878c51c1c14c1de2151a24c3b303ea644182ad81f9f98a16318a877c"
+    },
+    {
+      "path": "windows/scripts/Build-Optimus.ps1",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/scripts/Build-Optimus.ps1",
+      "bytes": 1933,
+      "sha256": "485bafaf8f06982ab83f97ec4fd44a210e508de4963fadc41b167146652d0bcb"
+    },
+    {
+      "path": "windows/scripts/Verify-Optimus.ps1",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/scripts/Verify-Optimus.ps1",
+      "bytes": 1685,
+      "sha256": "29c72ceba10288bd820144801e5febb6c6feaf55d07eeb52006b33d65a3edd62"
+    },
+    {
+      "path": "windows/src/Optimus.App/App.xaml",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/App.xaml",
+      "bytes": 1145,
+      "sha256": "b68ac3f4d42064b3768cc78452af9fd49e528190d7136fcade3de2b2d906d19c"
+    },
+    {
+      "path": "windows/src/Optimus.App/App.xaml.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/App.xaml.cs",
+      "bytes": 88,
+      "sha256": "b5fea501e9ab6d14756106eb57991549b19c3dea47a4d2363fa7a49f52d5e3f0"
+    },
+    {
+      "path": "windows/src/Optimus.App/Assets/OptimusBrand.xaml",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/Assets/OptimusBrand.xaml",
+      "bytes": 1308,
+      "sha256": "829c6807feb815406fa5ec098461c38b2906d035d9a2ed4f8bfb35b939e90bee"
+    },
+    {
+      "path": "windows/src/Optimus.App/Assets/optimus.ico",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/Assets/optimus.ico",
+      "bytes": 13530,
+      "sha256": "bfe79fa917255a47d68d42f2fd40423c892a8cffba9da85507ee344bae8e3ff6"
+    },
+    {
+      "path": "windows/src/Optimus.App/Assets/optimus.png",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/Assets/optimus.png",
+      "bytes": 6911,
+      "sha256": "2cddf2ba81757b03e7defeaa28f8aa271a0dfc970f2c22d4d2a6000af7bdfc26"
+    },
+    {
+      "path": "windows/src/Optimus.App/Assets/optimus.svg",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/Assets/optimus.svg",
+      "bytes": 565,
+      "sha256": "3758496c27511fb0e7162e89369824a449eb61ec7877f41ab65d877e9b0d4089"
+    },
+    {
+      "path": "windows/src/Optimus.App/BrowserTab.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/BrowserTab.cs",
+      "bytes": 15735,
+      "sha256": "3b373fefa30684f8429b80733fd95ae064b082e8c5ee9de64b79c5ace216f966"
+    },
+    {
+      "path": "windows/src/Optimus.App/DownloadController.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/DownloadController.cs",
+      "bytes": 4101,
+      "sha256": "9893a6d2bed7f674f038cd365dce6409e90169475f04cfd4c640abaf55ec697a"
+    },
+    {
+      "path": "windows/src/Optimus.App/HelpController.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/HelpController.cs",
+      "bytes": 2895,
+      "sha256": "010d3cd63c00d2fecfd03fadd69fb0565bdee5474fb073de41c70c080f7d1da2"
+    },
+    {
+      "path": "windows/src/Optimus.App/MainWindow.xaml",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/MainWindow.xaml",
+      "bytes": 6334,
+      "sha256": "2376fe207f261a3ec47c53cdac81610c0d7bf865189f62d9663e79e2b868bb4d"
+    },
+    {
+      "path": "windows/src/Optimus.App/MainWindow.xaml.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/MainWindow.xaml.cs",
+      "bytes": 31718,
+      "sha256": "3db737685633a8b708ba2c728c4f7512f4b31f02e7203529defdfd346bb2485d"
+    },
+    {
+      "path": "windows/src/Optimus.App/NativeDialogs.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/NativeDialogs.cs",
+      "bytes": 2530,
+      "sha256": "63f88ec3c21ff2c190686444aef23ea11ebb0a77d39230149b4bcc9e6b5c1b43"
+    },
+    {
+      "path": "windows/src/Optimus.App/NativePromptQueue.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/NativePromptQueue.cs",
+      "bytes": 926,
+      "sha256": "ce19115de31fa1c35b242fc55c26b394e87aa1fd6e5a45fbdf839c04a54fe5dc"
+    },
+    {
+      "path": "windows/src/Optimus.App/Optimus.App.csproj",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/Optimus.App.csproj",
+      "bytes": 661,
+      "sha256": "cbd8e4f242b163d06ab5bd53857f52f99db18a5217428f1a8072b202d400c0e3"
+    },
+    {
+      "path": "windows/src/Optimus.App/OptimusSearchView.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/OptimusSearchView.cs",
+      "bytes": 7633,
+      "sha256": "f8ddfa5be3133afc0524c303a5c7fc4fcc71f481c8cfd37a3a1b1f021cccafd5"
+    },
+    {
+      "path": "windows/src/Optimus.App/PermissionController.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/PermissionController.cs",
+      "bytes": 2332,
+      "sha256": "3836a7a86b1de7767971a4c5a74067e58b1310c195e86213b882da3ef63564f5"
+    },
+    {
+      "path": "windows/src/Optimus.App/PrivacyBarrier.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/PrivacyBarrier.cs",
+      "bytes": 1930,
+      "sha256": "fb17e6cceb11bbf4d984cc801d2a9766d296d8b113372d4bf422e84836eb7704"
+    },
+    {
+      "path": "windows/src/Optimus.App/PrivacySettingsDialog.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/PrivacySettingsDialog.cs",
+      "bytes": 6340,
+      "sha256": "a9aae4d1ffb7d8245f9166a4680eff42af5c17487bf6843dbd410625a466923a"
+    },
+    {
+      "path": "windows/src/Optimus.Core/ActionProposals.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/ActionProposals.cs",
+      "bytes": 1864,
+      "sha256": "37570bb0d3daf196fbaea25b54b33a689d34754aed4d364e07c4614c36e4a10c"
+    },
+    {
+      "path": "windows/src/Optimus.Core/BrowserSettings.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/BrowserSettings.cs",
+      "bytes": 498,
+      "sha256": "eeadcc27791319b786aa543937cf09966838dcf378bbce4c1f3991751cda658a"
+    },
+    {
+      "path": "windows/src/Optimus.Core/Contracts.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/Contracts.cs",
+      "bytes": 740,
+      "sha256": "e10bb7dba650ecc460fc91c4eee0e445a366527f7895499a51a886f8d47b5aaf"
+    },
+    {
+      "path": "windows/src/Optimus.Core/ControllerOwnership.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/ControllerOwnership.cs",
+      "bytes": 1054,
+      "sha256": "c1e3aa88fa38ce269afc048c7d025086b39f6addfa27ccfae276e52eba435459"
+    },
+    {
+      "path": "windows/src/Optimus.Core/ControllerReadiness.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/ControllerReadiness.cs",
+      "bytes": 974,
+      "sha256": "9fe59083729a8034ddfd91b038332c456148fb5f46f1bc53d4502245a642a953"
+    },
+    {
+      "path": "windows/src/Optimus.Core/LifecyclePolicies.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/LifecyclePolicies.cs",
+      "bytes": 3056,
+      "sha256": "86f1c8a2fd8f01f577b52f1118091e666f1cae8d8d0bdfd6c53537e7f9646216"
+    },
+    {
+      "path": "windows/src/Optimus.Core/LocalGuide.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/LocalGuide.cs",
+      "bytes": 2210,
+      "sha256": "2c1a34c5bd2bbbefc47935da929baf57185b89ad6feef04f5171da0324a70831"
+    },
+    {
+      "path": "windows/src/Optimus.Core/NavigationPolicy.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/NavigationPolicy.cs",
+      "bytes": 1971,
+      "sha256": "a4abea8a4458b2607a2890a098f8ee1045fb1401a81af8450deb5162dc1b17ca"
+    },
+    {
+      "path": "windows/src/Optimus.Core/NavigationSnapshot.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/NavigationSnapshot.cs",
+      "bytes": 843,
+      "sha256": "5f4f98cdb7345dba45bea5c9898223956211186bf61fedee613523e05fa084b2"
+    },
+    {
+      "path": "windows/src/Optimus.Core/OfficialSiteRegistry.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/OfficialSiteRegistry.cs",
+      "bytes": 951,
+      "sha256": "a5a354541d7dadf980ef1ff678ac65528b81e67bd4fb64cd7ecd449e6e45ede3"
+    },
+    {
+      "path": "windows/src/Optimus.Core/Optimus.Core.csproj",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/Optimus.Core.csproj",
+      "bytes": 117,
+      "sha256": "91275edd3790c4f0cb484653195ccd8ad6af2f1a0a69b84fdb26b88c0b52407f"
+    },
+    {
+      "path": "windows/src/Optimus.Core/PrivacyPolicy.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/PrivacyPolicy.cs",
+      "bytes": 4299,
+      "sha256": "cfa0712a56eb2aa5e3e07b28d5b74306ad691541457f2fdd2eb014dc12872e79"
+    },
+    {
+      "path": "windows/src/Optimus.Core/ProfileCleanupCoordinator.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/ProfileCleanupCoordinator.cs",
+      "bytes": 1605,
+      "sha256": "fc8040868dbf20eb5e63b9f1ae38bff68e29bcbdcd6bd740a7c402a695ba65d4"
+    },
+    {
+      "path": "windows/src/Optimus.Core/SearchModels.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/SearchModels.cs",
+      "bytes": 209,
+      "sha256": "7bde730697b80b1e9f0c8d3ec0ede91b85ffff596836f5849ce1e4bca70357d1"
+    },
+    {
+      "path": "windows/src/Optimus.Core/SearchService.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/SearchService.cs",
+      "bytes": 8063,
+      "sha256": "a648a55f1944d52cd1eaee71d5da607f70968498cce4e9c59ec3e36be7a9ba2c"
+    },
+    {
+      "path": "windows/src/Optimus.Core/SearchSubmissionGate.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/SearchSubmissionGate.cs",
+      "bytes": 1241,
+      "sha256": "9a31bb2e31eef7bc672e9c6e90bb0a1423d70e38b89aef1a6c0ee84ae843a082"
+    },
+    {
+      "path": "windows/src/Optimus.Core/SettingsStore.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/SettingsStore.cs",
+      "bytes": 3032,
+      "sha256": "70c610022e5f22c890025d92427ae0d13f5fd8ff691d554d539dfc895e8e4939"
+    },
+    {
+      "path": "windows/src/Optimus.Core/Sharing.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.Core/Sharing.cs",
+      "bytes": 679,
+      "sha256": "e017826059df19566381b68539f9f3419075317cc4205cb7fc9545f2edae499a"
+    },
+    {
+      "path": "windows/tests/Optimus.Core.Tests/Optimus.Core.Tests.csproj",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/tests/Optimus.Core.Tests/Optimus.Core.Tests.csproj",
+      "bytes": 240,
+      "sha256": "4e578b176ca01799795ca8ae28b3e5acca8a63467c468e36b2619daa3a7a5d96"
+    },
+    {
+      "path": "windows/tests/Optimus.Core.Tests/Program.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/tests/Optimus.Core.Tests/Program.cs",
+      "bytes": 15507,
+      "sha256": "5efa41748a699f9411527e1c4cebc9ab5bba02b2c4b5f2293727c7ed69fb4a32"
+    },
+    {
+      "path": "windows/tests/Optimus.Privacy.Tests/Optimus.Privacy.Tests.csproj",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/tests/Optimus.Privacy.Tests/Optimus.Privacy.Tests.csproj",
+      "bytes": 240,
+      "sha256": "4e578b176ca01799795ca8ae28b3e5acca8a63467c468e36b2619daa3a7a5d96"
+    },
+    {
+      "path": "windows/tests/Optimus.Privacy.Tests/Program.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/tests/Optimus.Privacy.Tests/Program.cs",
+      "bytes": 15114,
+      "sha256": "ba0b5a13ce1ce7cde47e80a6c3c41f36ee537cb621b97e2ea762b5deef6e76c9"
+    },
+    {
+      "path": "windows/tests/Optimus.Search.Tests/Optimus.Search.Tests.csproj",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/tests/Optimus.Search.Tests/Optimus.Search.Tests.csproj",
+      "bytes": 247,
+      "sha256": "70484029611c7c441f78ada71f921f9abf7705101c83fc8d83278bbdfe501e66"
+    },
+    {
+      "path": "windows/tests/Optimus.Search.Tests/Program.cs",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/tests/Optimus.Search.Tests/Program.cs",
+      "bytes": 14788,
+      "sha256": "aa2088e4d4d1e81b2f44b46d78661448ee1b1aac87f72cfb90d310b48d526b3e"
+    },
+    {
+      "path": "windows/tools/brand/generate_assets.py",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/tools/brand/generate_assets.py",
+      "bytes": 3969,
+      "sha256": "8654d29ee8bd4131c73f81e7a62727213aa09013db1f0d5fe29c54a37d34c3c8"
+    },
+    {
+      "path": "windows/tools/release/README.md",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/tools/release/README.md",
+      "bytes": 5950,
+      "sha256": "d3d5e2e2a03ab3f1f3836b324cce158ba714a3c03404844ed849cb3f7dbdaf21"
+    },
+    {
+      "path": "windows/tools/release/package_optimus.py",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/tools/release/package_optimus.py",
+      "bytes": 13637,
+      "sha256": "34f8f73a1ad053e8a786c81e8b39ba0c1d39fe0a1641ff3b427b438123747e76"
+    },
+    {
+      "path": "windows/tools/release/test_package_optimus.py",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/tools/release/test_package_optimus.py",
+      "bytes": 6709,
+      "sha256": "a903de3847088688073e48d79a40a55164f1cd087f37ead5eed9536497507e3f"
+    },
+    {
+      "path": "demo/assets/hub-optimus-operator-icon.svg",
+      "bytes": 2127,
+      "sha256": "5db211be97c00543df44840f7193607698e23b0850ef5b4d42fdce6ef9f84488",
+      "source_repository": "Voxterrae/HUB_Optimus",
+      "source_ref": "98fadc6853bec78755cf20cbc35c8462f36c4c0a",
+      "source_path": "site/operator/icon.svg"
+    },
+    {
+      "path": "demo/assets/optimus.svg",
+      "bytes": 565,
+      "sha256": "3758496c27511fb0e7162e89369824a449eb61ec7877f41ab65d877e9b0d4089",
+      "source_zip_path": "Optimus_Browser_0.2.0_alpha/Source/src/Optimus.App/Assets/optimus.svg",
+      "same_bytes_as": "windows/src/Optimus.App/Assets/optimus.svg"
+    },
+    {
+      "path": "demo/assets/provenance.json",
+      "bytes": 684,
+      "sha256": "4d01421caeb930cd1697c16b94ffbcde0e6a4b1f23bff687f84b3cb8e8e88e93"
+    },
+    {
+      "path": "demo/components/OptimusExperience.css",
+      "bytes": 32889,
+      "sha256": "7d8d7367fb369775f387b2a7686525f508fb20e820858dd41ce2a581852a8f56"
+    },
+    {
+      "path": "demo/components/OptimusTuInternetMSHumano.tsx",
+      "bytes": 24896,
+      "sha256": "0927ff2bef153f2b65c482e4283125dd4188597b195f1218383507149437d952"
+    }
+  ]
+}
