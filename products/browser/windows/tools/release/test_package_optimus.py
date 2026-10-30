@@ -14,7 +14,7 @@ from unittest.mock import patch
 import zipfile
 
 SCRIPT = Path(__file__).with_name('package_optimus.py')
-PREFIX = 'Optimus_Browser_0.3.0_alpha/'
+PREFIX = 'Optimus_Browser_0.3.1_alpha/'
 RUNTIME_FIXTURES = {
     'Search/Microsoft.AspNetCore.Authentication.BearerToken.dll': b'synthetic bearer runtime fixture\n',
     'Search/Microsoft.Extensions.Configuration.UserSecrets.dll': b'synthetic user secrets runtime fixture\n',
@@ -50,7 +50,7 @@ class PackagingTests(unittest.TestCase):
         for name in ('Optimus.SearchHost.dll', 'Optimus.SearchHost.deps.json', 'Microsoft.AspNetCore.dll', 'Microsoft.AspNetCore.Server.Kestrel.Core.dll', 'coreclr.dll', 'hostpolicy.dll', 'System.Private.CoreLib.dll'):
             (host/name).write_bytes(b'synthetic runtime payload')
         (host/'Optimus.SearchHost.runtimeconfig.json').write_text(json.dumps({'runtimeOptions': {'tfm':'net10.0', 'includedFrameworks':[{'name':'Microsoft.NETCore.App','version':'10.0.14'}, {'name':'Microsoft.AspNetCore.App','version':'10.0.14'}]}}))
-        for name in ('GUIA_0_3.md', 'Search/README.md', 'Search/docs/PROTOCOL.md', 'Search/docs/VALIDATION.md', 'Search/docs/AI_GOVERNANCE_REVIEW.md'):
+        for name in ('GUIA_0_3_1.md', 'Search/README.md', 'Search/docs/PROTOCOL.md', 'Search/docs/VALIDATION.md', 'Search/docs/AI_GOVERNANCE_REVIEW.md'):
             target = self.bin/name; target.parent.mkdir(parents=True, exist_ok=True); target.write_text('Synthetic help fixture.')
         notices = self.bin/'third-party'; notices.mkdir()
         for name in ('NETCore.LICENSE.txt', 'NETCore.THIRD-PARTY-NOTICES.txt', 'WindowsDesktop.LICENSE.txt', 'Microsoft-WebView2-LICENSE.txt', 'Microsoft-WebView2-NOTICE.txt', 'ASPNetCore.LICENSE.txt', 'ASPNetCore.THIRD-PARTY-NOTICES.txt'):
@@ -69,7 +69,7 @@ class PackagingTests(unittest.TestCase):
         (self.src/'untracked.txt').write_text('must not ship')
         result = self.run_cli(); self.assertEqual(result.returncode, 0, result.stderr)
         result = self.run_cli('out2'); self.assertEqual(result.returncode, 0, result.stderr)
-        name = 'Optimus_Browser_Windows_0.3.0_alpha.zip'
+        name = 'Optimus_Browser_Windows_0.3.1_alpha.zip'
         archive = self.root/'out'/name
         self.assertEqual(archive.read_bytes(), (self.root/'out2'/name).read_bytes())
         self.assertEqual((archive.with_suffix('.zip.sha256')).read_text().split()[0], hashlib.sha256(archive.read_bytes()).hexdigest())
@@ -90,7 +90,7 @@ class PackagingTests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(z.read(PREFIX+path)).hexdigest(), digest)
     def test_rejects_missing_or_invalid_host_runtime_and_notices(self):
         # Catches a native-only ZIP, wrong-host architecture and stripped runtimes/notices.
-        required = ('GUIA_0_3.md', 'Search/README.md', 'Search/docs/PROTOCOL.md', 'Search/Optimus.SearchHost.exe', 'Search/Optimus.SearchHost.dll',
+        required = ('GUIA_0_3_1.md', 'Search/README.md', 'Search/docs/PROTOCOL.md', 'Search/Optimus.SearchHost.exe', 'Search/Optimus.SearchHost.dll',
                     'Search/Optimus.SearchHost.deps.json', 'Search/coreclr.dll',
                     'Search/Microsoft.AspNetCore.Server.Kestrel.Core.dll',
                     'coreclr.dll', 'PresentationFramework.dll',
@@ -162,7 +162,7 @@ class PackagingTests(unittest.TestCase):
         for mode in ('verify', 'package'):
             result, errors = self.call_packager(module, mode)
             self.assertEqual(result, 0, errors)
-        with zipfile.ZipFile(self.root/'out'/'Optimus_Browser_Windows_0.3.0_alpha.zip') as archive:
+        with zipfile.ZipFile(self.root/'out'/'Optimus_Browser_Windows_0.3.1_alpha.zip') as archive:
             for name, data in RUNTIME_FIXTURES.items():
                 self.assertEqual(archive.read(PREFIX+name), data)
         for name in RUNTIME_FIXTURES:
@@ -240,7 +240,7 @@ class PackagingTests(unittest.TestCase):
                 result = self.run_cli() if mode == 'package' else subprocess.run([sys.executable,str(SCRIPT),'--verify-publication',str(self.bin)],capture_output=True,text=True)
                 self.assertEqual(result.returncode, 1, result.stderr)
                 self.assertIn('Search/index.json', result.stderr)
-                self.assertFalse((self.root/'out'/'Optimus_Browser_Windows_0.3.0_alpha.zip').exists())
+                self.assertFalse((self.root/'out'/'Optimus_Browser_Windows_0.3.1_alpha.zip').exists())
 
     def test_rejects_invalid_bundled_index_before_verifying_or_packaging(self):
         # Catches treating an existing corrupt, empty or out-of-contract corpus as valid.
@@ -268,7 +268,7 @@ class PackagingTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 1, result.stderr)
                     self.assertIn('Search/index.json', result.stderr)
                     self.assertNotIn('Traceback', result.stderr)
-                    self.assertFalse((self.root/'out'/'Optimus_Browser_Windows_0.3.0_alpha.zip').exists())
+                    self.assertFalse((self.root/'out'/'Optimus_Browser_Windows_0.3.1_alpha.zip').exists())
 
     def test_rejects_host_framework_dependent_or_wrong_runtime_version(self):
         # Catches a host that requires an installed ASP.NET runtime or the wrong TFM.

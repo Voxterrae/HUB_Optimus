@@ -20,7 +20,8 @@ internal static class NativeDialogs
  public static void ApplyContrast(Window window,bool enabled)
  {
   // Scoped resources affect native controls; site colors remain under site/Windows control.
+  enabled|=SystemParameters.HighContrast;NativeTheme.Apply(window,enabled,window.FontSize/18);
   foreach(var (key,normal,high) in new[]{(SystemColors.WindowBrushKey,SystemColors.WindowBrush,Brushes.Black),(SystemColors.WindowTextBrushKey,SystemColors.WindowTextBrush,Brushes.White),(SystemColors.ControlBrushKey,SystemColors.ControlBrush,Brushes.Black),(SystemColors.ControlTextBrushKey,SystemColors.ControlTextBrush,Brushes.White),(SystemColors.HighlightBrushKey,SystemColors.HighlightBrush,Brushes.Yellow),(SystemColors.HighlightTextBrushKey,SystemColors.HighlightTextBrush,Brushes.Black)})
-  {if(enabled)window.Resources[key]=high;else window.Resources.Remove(key);}
+  {if(enabled)window.Resources[key]=SystemParameters.HighContrast?normal:high;else window.Resources.Remove(key);}
  }
 }

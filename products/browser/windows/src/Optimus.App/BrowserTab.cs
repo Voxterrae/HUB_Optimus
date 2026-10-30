@@ -47,8 +47,10 @@ internal sealed class BrowserTab : IDisposable
  public event Action<string>? Notice;
  public event Action<BrowserTab>? SafetyFailed;
  public event Action<BrowserTab,string>? OpenRequested;
+ public event Action<BrowserTab>? HelpRequested;
+ public event Action<BrowserTab>? BookmarksRequested;
  public event Action<BrowserTab,string,NavigationLease>? PrivateOpeningOffered;
- private readonly StackPanel home=new() {Margin=new Thickness(30)};
+ private readonly NativeHomeView home;
  private readonly StackPanel failure=new() {Margin=new Thickness(30),Visibility=Visibility.Collapsed};
  private bool disposed,internalBlank;
  private readonly OperationLifetime lifetime=new();
@@ -58,15 +60,8 @@ internal sealed class BrowserTab : IDisposable
   controllerOwnership=new ControllerOwnership(()=>View.Dispose());
   this.profileName=profileName;IsPrivate=isPrivate;this.policy=policy;this.policyGeneration=policyGeneration;
   search=new OptimusSearchView(url=>OpenRequested?.Invoke(this,url),()=>IsPrivate?Array.Empty<Bookmark>():bookmarks(),()=>!IsDisposed&&searchEligible(this),hostLifetime,connectSearch) {Visibility=Visibility.Collapsed};
+  home=new NativeHomeView(IsPrivate,(query,scope)=>SearchAsync(query,scope),()=>ShowSearch(OptimusSearchScope.Index),()=>BookmarksRequested?.Invoke(this),()=>HelpRequested?.Invoke(this));
   Item=new TabItem {Header=ModeTitle("Inicio"),Content=Host,Tag=this};Host.Children.Add(View);Host.Children.Add(home);Host.Children.Add(failure);Host.Children.Add(search);
-  home.Children.Add(new System.Windows.Controls.Image {Source=(System.Windows.Media.ImageSource)Application.Current.FindResource("OptimusLogo"),Height=72,HorizontalAlignment=HorizontalAlignment.Left,Margin=new Thickness(0,0,0,16)});
-  home.Children.Add(new TextBlock {Text="Bienvenido a Optimus",FontSize=30,TextWrapping=TextWrapping.Wrap});
-  home.Children.Add(new TextBlock {Text="Escribe una dirección o una búsqueda arriba. La ayuda local funciona sin cuenta. Optimus Search permite elegir Web, Índice Optimus o Wikipedia; la Web requiere el servidor del operador.",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,14,0,14)});
-  var openSearch=new Button {Content="Abrir Optimus Search",MinHeight=44,HorizontalAlignment=HorizontalAlignment.Left};openSearch.Click+=(_,_)=>ShowSearch();home.Children.Add(openSearch);
-  home.Children.Add(new TextBlock {Text="Enlaces de inicio · candidatos sin atribución oficial",FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap});
-  foreach(var (label,url) in new[]{("Portal de administración · administracion.gob.es","https://administracion.gob.es/")})
-  {var b=new Button {Content=label,HorizontalAlignment=HorizontalAlignment.Left};b.Click+=(_,_)=>OpenRequested?.Invoke(this,url);home.Children.Add(b);}
-  home.Children.Add(new TextBlock {Text=(IsPrivate?"Privado: no se guardan direcciones en la sesión. No ofrece anonimato; marcadores y descargas explícitos pueden conservarse. ":"Normal: cookies y datos de sitios pueden persistir. ")+" Optimus no guarda un historial general; la restauración de direcciones requiere activar la opción. La comprobación de reputación se solicita al motor; Windows puede modificar su funcionamiento.",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,20,0,0)});
   failure.Children.Add(new TextBlock {Text="El motor de esta pestaña se detuvo. Recuperarla vuelve a abrir la última dirección; el texto no guardado puede perderse.",TextWrapping=TextWrapping.Wrap});
   var retry=new Button {Content="Recuperar esta pestaña"};retry.Click+=(_,_)=>recover(this);failure.Children.Add(retry);
   View.Visibility=Visibility.Hidden;
@@ -188,12 +183,17 @@ internal sealed class BrowserTab : IDisposable
   if(!search.CanSubmit)return;
   ShowSearch();await search.SearchAsync(query,scope,lifetime.Token);
  }
+ public void ShowSearch(OptimusSearchScope scope)
+ {
+  if(!search.CanSubmit)return;
+  ShowSearch();search.SetScope(scope);search.FocusQuery();
+ }
  public void CancelSearch()=>Invalidate();
  public void DisableSearch(){search.Disable();Invalidate();}
  public void PolicyChanged(){Invalidate();addressSnapshot=new();GoHome();}
  private string ModeTitle(string title)=>(IsPrivate?"Privado · ":"Normal · ")+ShortTitle(title);
  private void ShowPage() {IsSearch=false;search.Visibility=Visibility.Collapsed;IsHome=false;home.Visibility=Visibility.Collapsed;failure.Visibility=Visibility.Collapsed;View.Visibility=Visibility.Visible;}
- public void Invalidate() {Epoch++;navigationEpoch.Invalidate();search.Cancel();Invalidated?.Invoke(this);}
+ public void Invalidate() {Epoch++;navigationEpoch.Invalidate();search.Cancel();home.ClearQuery();Invalidated?.Invoke(this);}
  private static string ShortTitle(string text)=>text.Length>24?text[..24]+"…":text;
  private void DisposeController()=>controllerOwnership.Retire();
  public void Dispose() {if(disposed)return;readiness.Dispose();lifetime.Dispose();navigationEpoch.Dispose();NavigationReady=false;Invalidate();search.Dispose();disposed=true;DisposeController();}

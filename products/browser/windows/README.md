@@ -1,3 +1,5 @@
+> **Diseño nativo 0.3.1 — 30/10/2026:** el ejecutable incorpora la identidad visual, el inicio con buscador, las tarjetas y los paneles adaptables. [Guía 0.3.1](docs/GUIA_0_3_1.md). El comportamiento del servicio de búsqueda 0.3 se conserva; la aceptación Windows/accesibilidad sigue pendiente.
+
 # Optimus Windows 0.3 alpha — búsqueda compartida
 
 WPF/WebView2 con servicio local .NET 10 en `../search`. Web es la fuente predeterminada mediante ese servicio; Índice Optimus consulta un catálogo finito offline y Wikipedia es una elección explícita. El SearXNG web lo configura el operador. Alpha sin firma; ejecución y accesibilidad de esta versión en Windows pendientes.

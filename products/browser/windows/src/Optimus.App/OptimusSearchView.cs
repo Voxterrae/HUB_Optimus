@@ -17,6 +17,7 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
     private readonly TextBox _query = new() { MaxLength = 500, MinHeight = 44, VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
     private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 12) };
     private readonly TextBlock _privacy = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 8) };
+    private readonly TextBlock _privacyDetails = new() { TextWrapping = TextWrapping.Wrap };
     private readonly StackPanel _results = new();
     private CancellationTokenSource? _pending;
     private readonly ComboBox _scope = new() { MinHeight = 44, Margin = new Thickness(0, 0, 0, 8) };
@@ -41,25 +42,42 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
             UseProxy = false
         });
         _submissions = new SearchSubmissionGate(new OptimusSearchService(_client),eligible,hostLifetime);
-        SetResourceReference(BackgroundProperty, SystemColors.WindowBrushKey);
-        SetResourceReference(ForegroundProperty, SystemColors.WindowTextBrushKey);
-
-        var body = new StackPanel { MaxWidth = 900, Margin = new Thickness(24) };
-        body.Children.Add(new TextBlock { Text = "Optimus Search", FontSize = 28, FontWeight = FontWeights.SemiBold });
+        NativeSurface.Surface(this);
+        NativeSurface.Input(_query);
+        NativeSurface.Input(_scope);
+        _query.Margin = new Thickness(0, 0, 0, 12);
+        _query.MinHeight = 60;
+        _scope.Margin = new Thickness(0);
+        _status.SetResourceReference(TextBlock.ForegroundProperty, "OptimusMutedBrush");
+        _status.SetResourceReference(TextBlock.FontSizeProperty, "OptimusBodySize");
+        foreach (var text in new[] { _privacy, _privacyDetails })
+        {
+            text.SetResourceReference(TextBlock.ForegroundProperty, "OptimusMutedBrush");
+            text.SetResourceReference(TextBlock.FontSizeProperty, "OptimusSmallSize");
+        }
+        var body = new StackPanel { MaxWidth = 1000, Margin = new Thickness(40, 32, 40, 32) };
+        var title = NativeSurface.Text("Encuentra tu próximo paso.", "OptimusTitleSize");
+        title.FontWeight = FontWeights.SemiBold;
+        body.Children.Add(title);
+        var subtitle = NativeSurface.Text("Optimus Search · elige una fuente y busca con intención.", "OptimusBodySize", "OptimusMutedBrush");
+        subtitle.Margin = new Thickness(0, 12, 0, 24);
+        body.Children.Add(subtitle);
+        var searchPanel = new StackPanel();
+        searchPanel.Children.Add(_query);
         _scope.Items.Add("Web"); _scope.Items.Add("Índice Optimus"); _scope.Items.Add("Wikipedia"); _scope.SelectedIndex = 0;
         System.Windows.Automation.AutomationProperties.SetName(_scope, "Fuente de búsqueda");
-        body.Children.Add(_scope);
         _scope.SelectionChanged += (_, _) => { Invalidate(); _results.Children.Clear(); UpdatePrivacy(); _status.Text = "Fuente cambiada. Pulsa Buscar para consultar."; };
         _query.TextChanged += (_, _) => { Invalidate(); _results.Children.Clear(); _status.Text = "Consulta modificada. Pulsa Buscar para consultar."; };
         UpdatePrivacy();
-        body.Children.Add(_privacy);
         var form = new Grid();
         form.ColumnDefinitions.Add(new ColumnDefinition());
         form.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        form.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        form.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         _query.ToolTip = "Consulta: hasta 500 caracteres. Pulsa Intro para buscar.";
         System.Windows.Automation.AutomationProperties.SetName(_query, "Consulta de Optimus Search");
-        form.Children.Add(_query);
-        var submit = new Button { Content = "Buscar", MinWidth = 100, MinHeight = 44 };
+        form.Children.Add(_scope);
+        var submit = NativeSurface.Button("Buscar", "Buscar en la fuente elegida", true);
         Grid.SetColumn(submit, 1);
         form.Children.Add(submit);
         submit.Click += async (_, _) => await SearchAsync(_query.Text, Scope);
@@ -69,12 +87,34 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
             e.Handled = true;
             await SearchAsync(_query.Text, Scope);
         };
-        body.Children.Add(form);
+        searchPanel.Children.Add(form);
+        searchPanel.Children.Add(_privacy);
+        var detailHeader = NativeSurface.Text("Detalles de la fuente y privacidad", "OptimusSmallSize");
+        detailHeader.MinHeight = 44;
+        detailHeader.VerticalAlignment = VerticalAlignment.Center;
+        var privacyDetail = new Expander { Header = detailHeader, MinHeight = 44, Content = _privacyDetails };
+        System.Windows.Automation.AutomationProperties.SetName(privacyDetail, "Detalles de la fuente y privacidad");
+        searchPanel.Children.Add(privacyDetail);
+        body.Children.Add(NativeSurface.Card(searchPanel, new Thickness(24)));
         _status.Text = "Escribe una consulta y pulsa Buscar.";
         System.Windows.Automation.AutomationProperties.SetLiveSetting(_status, System.Windows.Automation.AutomationLiveSetting.Polite);
         body.Children.Add(_status);
         body.Children.Add(_results);
         Content = new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        double previousWidth = -1, previousScale = -1;
+        void Reflow()
+        {
+            var scale = Math.Max(1, _query.FontSize / 18);
+            if (previousWidth == ActualWidth && previousScale == scale) return;
+            previousWidth = ActualWidth; previousScale = scale;
+            var compact = ActualWidth / scale < 680;
+            body.Margin = compact ? new Thickness(18, 24, 18, 24) : new Thickness(40, 32, 40, 32);
+            Grid.SetRow(submit, compact ? 1 : 0); Grid.SetColumn(submit, compact ? 0 : 1);
+            Grid.SetColumnSpan(_scope, compact ? 2 : 1); Grid.SetColumnSpan(submit, compact ? 2 : 1);
+            submit.Margin = compact ? new Thickness(0, 12, 0, 0) : new Thickness(12, 0, 0, 0);
+        }
+        SizeChanged += (_, _) => Reflow();
+        LayoutUpdated += (_, _) => Reflow();
     }
 
     public async Task SearchAsync(string query, OptimusSearchScope scope, CancellationToken token = default)
@@ -107,19 +147,28 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
             _status.Text = response.Provider + " · " + (response.Error ?? (response.Results.Count == 0 ? "Sin resultados." : $"{response.Results.Count} resultados."));
             foreach (var result in response.Results)
             {
-                var row = new StackPanel { Margin = new Thickness(0, 0, 0, 16) };
+                var row = new StackPanel();
                 // Untrusted strings are plain Text values, never XAML, HTML or document markup.
-                row.Children.Add(new TextBlock { Text = result.Title, FontSize = 18, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
-                row.Children.Add(new TextBlock { Text = result.Source + " · " + result.Url, TextWrapping = TextWrapping.Wrap });
-                row.Children.Add(new TextBlock { Text = result.Snippet, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 4) });
-                var open = new Button { Content = "Abrir resultado", MinHeight = 44, MinWidth = 140, HorizontalAlignment = HorizontalAlignment.Left };
+                var heading = NativeSurface.Text(result.Title);
+                heading.FontWeight = FontWeights.SemiBold;
+                row.Children.Add(heading);
+                var address = NativeSurface.Text(result.Source + " · " + result.Url, "OptimusSmallSize", "OptimusAccentBrush");
+                address.Margin = new Thickness(0, 8, 0, 0);
+                row.Children.Add(address);
+                var snippet = NativeSurface.Text(result.Snippet, "OptimusBodySize", "OptimusMutedBrush");
+                snippet.Margin = new Thickness(0, 12, 0, 16);
+                row.Children.Add(snippet);
+                var open = NativeSurface.Button("Abrir resultado", "Abrir: " + result.Title);
+                open.HorizontalAlignment = HorizontalAlignment.Stretch;
                 System.Windows.Automation.AutomationProperties.SetName(open, "Abrir: " + result.Title);
                 open.Click += (_, _) =>
                 {
                     if (CanSubmit && generation == _generation) _openUrl(result.Url);
                 };
                 row.Children.Add(open);
-                _results.Children.Add(row);
+                var card = NativeSurface.Card(row, new Thickness(24));
+                card.Margin = new Thickness(0, 0, 0, 16);
+                _results.Children.Add(card);
             }
         }
         catch (OperationCanceledException)
@@ -136,12 +185,24 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         }
     }
 
-    private void UpdatePrivacy() => _privacy.Text = Scope switch
+    private void UpdatePrivacy()
+    {
+        _privacy.Text = Scope switch
+        {
+            OptimusSearchScope.Index => "Índice local · solo documentos importados, sin red.",
+            OptimusSearchScope.Wikipedia => "Wikipedia · esta fuente recibe tu consulta y conexión.",
+            _ => "Web · usa el servidor del operador; requiere configuración."
+        };
+        _privacyDetails.Text = Scope switch
     {
         OptimusSearchScope.Index => "Índice Optimus: búsqueda local, sin red. Solo incluye los documentos importados; no cubre toda la web. Los marcadores de esta pestaña se combinan localmente. No se guardan consultas ni resultados.",
         OptimusSearchScope.Wikipedia => "Wikipedia explícita y marcadores locales. Wikipedia recibe tu consulta y conexión y puede aplicar sus políticas de registro. No se guardan consultas ni resultados.",
         _ => "Web: el servicio local consulta el servidor SearXNG del operador, que puede consultar proveedores externos y aplicar sus políticas de registro. Si no está configurado, se muestra un error. No se guardan consultas ni resultados."
-    };
+        };
+    }
+
+    /// <summary>Select an empty search form without connecting or submitting a query.</summary>
+    public void SetScope(OptimusSearchScope scope) => _scope.SelectedIndex = (int)scope;
 
     public void FocusQuery() { if (CanSubmit) { _query.Focus(); _query.SelectAll(); } }
 
