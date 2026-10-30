@@ -41,7 +41,8 @@ jobs:
   founder-authority-app-canary:
     name: founder-authority-app-canary
     if: github.event.pull_request.base.ref == 'main'
-    continue-on-error: true
+    # This job publishes a required protection check; publication failures
+    # must fail the workflow as well as the dedicated App check.
     permissions:
       contents: read
     runs-on: ubuntu-latest
