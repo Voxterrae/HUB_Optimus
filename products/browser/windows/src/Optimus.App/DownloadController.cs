@@ -44,7 +44,7 @@ internal sealed class DownloadController(Window owner,Action<string> status)
    window=new Window {Owner=owner,Title="Descargas · Optimus",Width=Math.Min(800,SystemParameters.WorkArea.Width),Height=Math.Min(500,SystemParameters.WorkArea.Height),FontSize=owner.FontSize,Content=new ScrollViewer {Content=rows,VerticalScrollBarVisibility=ScrollBarVisibility.Auto}};
    window.Closing+=(_,e)=>{e.Cancel=true;window.Hide();};
   }
-  window.FontSize=owner.FontSize;NativeDialogs.ApplyContrast(window,owner.Resources.Contains(SystemColors.WindowBrushKey));window.Show();window.Activate();
+  window.FontSize=owner.FontSize;NativeTheme.Inherit(window,owner);window.Show();window.Activate();
  }
  public void CancelAll() {prompts.Revoke();foreach(var (op,_) in downloads) {try{if(op.State==CoreWebView2DownloadState.InProgress)op.Cancel();}catch(Exception e) when(e is InvalidOperationException or System.Runtime.InteropServices.COMException){}}}
  private static string SafeName(string path)

@@ -41,7 +41,7 @@ public partial class MainWindow : Window
   searchHost=new(searchConnectionClient,AppContext.BaseDirectory,Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
   InitializeComponent();Width=Math.Min(1400,SystemParameters.WorkArea.Width);Height=Math.Min(920,SystemParameters.WorkArea.Height);permissions=new(this,SetStatus);downloads=new(this,SetStatus);
   var loaded=settingsStore.Load();settings=loaded.Settings;privacy=new(settings.PrivacyRules);
-  SearchChoice.SelectedValue=settings.SearchProvider;ScaleChoice.SelectedIndex=ScaleIndex(settings.TextScale);ContrastChoice.IsChecked=settings.HighContrast;RestoreChoice.IsChecked=settings.RestoreSession;
+  ThemeChoice.SelectedValue=settings.Theme;EasyChoice.IsChecked=settings.EasyMode;SearchChoice.SelectedValue=settings.SearchProvider;ScaleChoice.SelectedIndex=ScaleIndex(settings.TextScale);ContrastChoice.IsChecked=settings.HighContrast;RestoreChoice.IsChecked=settings.RestoreSession;
   ApplyAppearance();InitializeChrome();ready=true;
   if(loaded.Error!=null)SetStatus(loaded.Error);
   Loaded+=async(_,_)=>await StartAsync(loaded.Error);
@@ -125,7 +125,7 @@ public partial class MainWindow : Window
     await core.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.BrowsingHistory).WaitAsync(lifetime.Token);CheckOwned(tab);
     historyClearedProfiles.Add(profileKey);
    }
-   tab.NavigationReady=!cleanupOwner&&creationPolicy==policyGeneration;tab.View.ZoomFactor=settings.TextScale;
+   tab.NavigationReady=!cleanupOwner&&creationPolicy==policyGeneration;tab.View.ZoomFactor=CurrentAppearance.TextScale;
    if(url!=null&&!cleanupOwner&&creationPolicy==policyGeneration)tab.Navigate(url);TabChanged(tab);return tab;
   }
   catch(OperationCanceledException)
@@ -319,16 +319,22 @@ public partial class MainWindow : Window
  private void Bookmarks_Click(object sender,RoutedEventArgs e){ClosePanels(false);NativeDialogs.ShowBookmarks(this,settings.Bookmarks,AddBookmark,url=>{if(Active is {} tab)NavigateKnownGet(tab,url);},()=>{SaveSettings();});}
  private void Search_Changed(object sender,SelectionChangedEventArgs e){if(!ready)return;settings=settings with {SearchProvider=(SearchProvider)SearchChoice.SelectedValue};SaveSettings();}
  private void Scale_Changed(object sender,SelectionChangedEventArgs e){if(!ready)return;settings=settings with {TextScale=new[]{1d,1.25,1.5,2}[Math.Max(0,ScaleChoice.SelectedIndex)]};ApplyAppearance();SaveSettings();}
+ private void Theme_Changed(object sender,SelectionChangedEventArgs e){if(!ready)return;settings=settings with {Theme=(ThemePreference)ThemeChoice.SelectedValue};ApplyAppearance();SaveSettings();}
+ private void Easy_Click(object sender,RoutedEventArgs e){if(!ready)return;settings=settings with {EasyMode=EasyChoice.IsChecked==true};ApplyAppearance();SaveSettings();}
  private void Appearance_Click(object sender,RoutedEventArgs e){settings=settings with {HighContrast=ContrastChoice.IsChecked==true};ApplyAppearance();SaveSettings();}
  private static int ScaleIndex(double value)=>value>=2?3:value>=1.5?2:value>=1.25?1:0;
+ private AppearanceState CurrentAppearance=>AppearancePolicy.Resolve(settings,NativeTheme.SystemDark(),SystemParameters.HighContrast);
+ private bool? appliedEasyMode;
  private void ApplyAppearance()
  {
-  FontSize=18*settings.TextScale;
-  NativeDialogs.ApplyContrast(this,settings.HighContrast);
-  NativeTheme.Apply(this,settings.HighContrast,settings.TextScale);
+  var state=CurrentAppearance;
+  NativeTheme.Apply(this,state);
+  if(appliedEasyMode!=state.EasyMode){AdvancedOptions.IsExpanded=!state.EasyMode;appliedEasyMode=state.EasyMode;}
+  AppearanceInfo.Text=$"Tamaño aplicado: {state.TextScale*100:0} %."+(state.EasyMode&&settings.TextScale<1.25?" Modo fácil aplica un mínimo de 125 %; se conserva tu tamaño manual.":"")+(state.Palette is AppearancePalette.SystemHighContrast or AppearancePalette.HighContrast?" El contraste alto tiene prioridad sobre el tema.":"");
   RefreshOwnedAppearance(this);
+  RefreshMenuAppearance();
   UpdateChromeLayout();
-  foreach(TabItem item in Tabs.Items){if(item.Tag is BrowserTab {IsFullyInitialized:true} t)t.View.ZoomFactor=settings.TextScale;}
+  foreach(TabItem item in Tabs.Items){if(item.Tag is BrowserTab {IsFullyInitialized:true} t)t.View.ZoomFactor=state.TextScale;}
  }
  private void Restore_Click(object sender,RoutedEventArgs e)
  {
