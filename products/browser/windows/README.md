@@ -1,3 +1,5 @@
+> **Apariencia nativa 0.3.3 — 31/10/2026:** temas Claro/Oscuro/Sistema y Modo fácil optativo, con tamaño manual conservado y alto contraste independiente. [Guía 0.3.3](docs/GUIA_0_3_3.md), [validación](docs/VALIDATION_0_3_3.md) y [decisiones](docs/DECISIONS_0_3_3.md). La ejecución real en Windows y la aceptación de accesibilidad siguen pendientes; la propuesta CI está inactiva.
+
 > **Arranque y diagnóstico 0.3.2 — 30/10/2026:** corrección del plazo de arranque en frío y diagnóstico Windows autocontenido. [Guía 0.3.2](docs/GUIA_0_3_2.md). La ejecución real de servicio/interfaz en Windows sigue pendiente; la propuesta CI está inactiva.
 
 > **Diseño nativo 0.3.1 — 30/10/2026:** el ejecutable incorpora la identidad visual, el inicio con buscador, las tarjetas y los paneles adaptables. [Guía 0.3.1](docs/GUIA_0_3_1.md). El comportamiento del servicio de búsqueda 0.3 se conserva; la aceptación Windows/accesibilidad sigue pendiente.
@@ -25,7 +27,7 @@ Publicación autocontenida Windows x64 del navegador, servicio y diagnóstico, s
 
 ```sh
 dotnet publish src/Optimus.App/Optimus.App.csproj -c Release -r win-x64 --self-contained true -p:EnableWindowsTargeting=true -m:1 -o artifacts/win-x64
-dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.2-alpha -m:1 -o artifacts/win-x64/Search
+dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.3-alpha -m:1 -o artifacts/win-x64/Search
 dotnet publish scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj -c Release -r win-x64 --self-contained true -p:EnableWindowsTargeting=true -m:1 -o artifacts/win-x64/Diagnostics
 ```
 

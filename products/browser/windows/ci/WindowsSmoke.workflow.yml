@@ -44,7 +44,7 @@ jobs:
           # Packaging's Linux path/symlink/CON fixtures are not run on Windows.
           $output = "$env:RUNNER_TEMP/optimus-publication"
           dotnet publish src/Optimus.App/Optimus.App.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o $output; CheckExit
-          dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.2-alpha -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Search"; CheckExit
+          dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.3-alpha -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Search"; CheckExit
           dotnet publish scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Diagnostics"; CheckExit
           dotnet run --project ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -- index --input ../search/catalog/optimus-help.json --output "$output/Search/index.json"; CheckExit
       - name: Real packaged host acceptance through Windows PowerShell 5.1

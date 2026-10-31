@@ -14,7 +14,7 @@ import tempfile
 import zipfile
 from urllib.parse import urlsplit
 
-VERSION = '0.3.2_alpha'
+VERSION = '0.3.3_alpha'
 ROOT = f'Optimus_Browser_{VERSION}'
 ARCHIVE = f'Optimus_Browser_Windows_{VERSION}.zip'
 EXCLUDED = {'.git', '.superpowers', 'bin', 'obj', 'artifacts', 'tooling', '__pycache__', '.pytest_cache', 'qa', 'testresults'}
@@ -38,9 +38,9 @@ KEY_PATTERNS = [
     re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'),
     re.compile(rb'(?i)(?:api[_-]?key|client[_-]?secret|access[_-]?token|password)\s*[=:]\s*[\"\']?([A-Za-z0-9_+/=-]{20,})'),
 ]
-LEEME = '''OPTIMUS BROWSER — 0.3.2 alpha privada para Windows x64
+LEEME = '''OPTIMUS BROWSER — 0.3.3 alpha privada para Windows x64
 
-Alpha sin firma digital. La ejecución de esta 0.3.2 en Windows y sus aceptaciones
+Alpha sin firma digital. La ejecución de esta 0.3.3 en Windows y sus aceptaciones
 de accesibilidad, privacidad y seguridad siguen pendientes; las comprobaciones
 Linux y las cabeceras PE no las sustituyen.
 
@@ -59,14 +59,14 @@ Sin configurar ese proveedor, Web informa la falta de configuración.
 Índice Optimus busca solo el catálogo importado explícitamente y funciona offline.
 Wikipedia es una opción explícita; no hay sustitución silenciosa de fuentes.
 No es un índice mundial ni un rastreador. No incluye IA generativa conectada.
-Consulta GUIA_0_3_2.md y Source/Windows/docs/GUIA_0_3_2.md.
+Consulta GUIA_0_3_3.md y Source/Windows/docs/GUIA_0_3_3.md.
 El modo privado no da anonimato ni protección adicional ante malware.
 Nunca copies el perfil de usuario ni service.token a esta carpeta de entrega.
 
 CONTENIDO Y VALIDACIÓN
 Search/ contiene Optimus.SearchHost.exe y su runtime autocontenido.
 Diagnostics/ y Test-OptimusWindows.ps1 permiten comprobar el servicio en Windows.
-GUI solo en un usuario/VM desechable; consulta GUIA_0_3_2.md.
+GUI solo en un usuario/VM desechable; consulta GUIA_0_3_3.md.
 Source/Windows y Source/Search contienen las fuentes Git seleccionadas.
 VALIDACION.md registra las evidencias declaradas y sus límites.
 DECISIONES.md registra decisiones. third-party/ conserva los avisos de terceros.
@@ -183,7 +183,7 @@ def validate_bundled_index(data):
 
 
 def validate_binary(files):
-    required = ['Microsoft.Web.WebView2.Core.dll', 'PresentationFramework.dll', 'GUIA_0_3_2.md', 'Test-OptimusWindows.ps1', 'Diagnostics/Optimus.Core.dll', 'Diagnostics/PresentationFramework.dll', 'Diagnostics/UIAutomationClient.dll', 'Diagnostics/UIAutomationTypes.dll', 'Search/index.json',
+    required = ['Microsoft.Web.WebView2.Core.dll', 'PresentationFramework.dll', 'GUIA_0_3_3.md', 'Test-OptimusWindows.ps1', 'Diagnostics/Optimus.Core.dll', 'Diagnostics/PresentationFramework.dll', 'Diagnostics/UIAutomationClient.dll', 'Diagnostics/UIAutomationTypes.dll', 'Search/index.json',
                 'Search/README.md', 'Search/docs/PROTOCOL.md', 'Search/docs/VALIDATION.md', 'Search/docs/AI_GOVERNANCE_REVIEW.md']
     for prefix, assembly in (('', 'Optimus'), ('Search/', 'Optimus.SearchHost'), ('Diagnostics/', 'Optimus.Windows.Smoke')):
         required.extend(prefix + assembly + suffix for suffix in ('.exe', '.dll', '.deps.json', '.runtimeconfig.json'))

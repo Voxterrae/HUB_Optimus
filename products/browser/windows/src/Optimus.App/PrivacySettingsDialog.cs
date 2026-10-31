@@ -13,7 +13,7 @@ internal sealed class PrivacySettingsDialog : Window
   body.Children.Add(new TextBlock {Text="Elige qué sitios se abren en privado o se bloquean. Bloquear tiene prioridad. Guardar cierra las páginas actuales y cancela ayuda y búsquedas; puedes perder texto no guardado.",TextWrapping=TextWrapping.Wrap});
   body.Children.Add(new TextBlock {Text="Lista inicial editable: pornhub.com, xvideos.com y xnxx.com se abren en privado, incluidos sus subdominios. No es una lista completa ni una clasificación; configurar una regla no visita el sitio.",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,10,0,10)});
   var candidate=settings.PrivacyRules.ToList();var list=new ListBox {Height=190};System.Windows.Automation.AutomationProperties.SetName(list,"Reglas de sitios web");body.Children.Add(list);
-  void Refresh(){list.Items.Clear();foreach(var rule in candidate)list.Items.Add(new ListBoxItem {MinHeight=44,Content=new TextBlock {Text=$"{rule.Domain} · {(rule.Action==PrivacyAction.Block?"Bloquear":"Abrir en privado")} · {(rule.IncludeSubdomains?"incluye subdominios":"solo este dominio")}",TextWrapping=TextWrapping.Wrap},Tag=rule});}
+  void Refresh(){list.Items.Clear();foreach(var rule in candidate)list.Items.Add(new ListBoxItem {MinHeight=44,Content=NativeDialogs.ListRowText($"{rule.Domain} · {(rule.Action==PrivacyAction.Block?"Bloquear":"Abrir en privado")} · {(rule.IncludeSubdomains?"incluye subdominios":"solo este dominio")}"),Tag=rule});}
   body.Children.Add(new TextBlock {Text="Sitio web",Margin=new Thickness(0,10,0,0)});
   var site=new TextBox {ToolTip="Por ejemplo: example.org o https://example.org"};System.Windows.Automation.AutomationProperties.SetName(site,"Sitio web para la regla");body.Children.Add(site);
   var destination=new TextBlock {Text="Escribe un sitio para revisar el dominio antes de añadirlo.",TextWrapping=TextWrapping.Wrap};body.Children.Add(destination);
@@ -48,6 +48,6 @@ internal sealed class PrivacySettingsDialog : Window
    try{PrivacyPolicy.ValidateRules(candidate);var address=string.IsNullOrWhiteSpace(endpoint.Text)?null:endpoint.Text.Trim();if(address!=null&&!OptimusSearchService.IsValidEndpoint(address))throw new ArgumentException("Servidor no válido: usa HTTPS sin usuario, contraseña, consulta ni fragmento. HTTP solo localhost.");Rules=candidate;Endpoint=address;DialogResult=true;}
    catch(ArgumentException e){error.Text=e.Message;}
   };
-  var cancel=new Button {Content="Cancelar"};cancel.Click+=(_,_)=>DialogResult=false;body.Children.Add(cancel);Refresh();NativeDialogs.ApplyContrast(this,settings.HighContrast);
+  var cancel=new Button {Content="Cancelar"};cancel.Click+=(_,_)=>DialogResult=false;body.Children.Add(cancel);Refresh();NativeTheme.Inherit(this,owner);
  }
 }

@@ -30,14 +30,14 @@ public partial class MainWindow
  {
   foreach(Window child in owner.OwnedWindows)
   {
-   child.FontSize=FontSize;NativeDialogs.ApplyContrast(child,settings.HighContrast);
+   NativeTheme.Inherit(child,owner);
    RefreshOwnedAppearance(child);
   }
  }
  private void UpdateChromeLayout()
  {
   if(SidebarColumn is null)return;
-  var effective=ActualWidth/Math.Max(1,settings.TextScale);
+  var effective=ActualWidth/CurrentAppearance.TextScale;
   var compact=effective<980;
   SidebarColumn.Width=new GridLength(compact?0:176);
   Sidebar.Visibility=compact?Visibility.Collapsed:Visibility.Visible;
@@ -73,11 +73,18 @@ public partial class MainWindow
   RememberPanelFocus();Revoke();ClearPreview();HelpPanel.Visibility=Visibility.Collapsed;HelpColumn.Width=new GridLength(0);SettingsPanel.Visibility=Visibility.Visible;Tabs.Visibility=Visibility.Collapsed;
   ScaleChoice.Focus();
  }
+ private void Theme_Click(object sender,RoutedEventArgs e)
+ {Settings_Click(sender,e);panelReturnFocus=ThemeButton;ThemeChoice.Focus();}
  private void CloseSettings_Click(object sender,RoutedEventArgs e)=>ClosePanels();
  private void Menu_Click(object sender,RoutedEventArgs e)
  {
   var menu=MenuButton.ContextMenu!;
-  foreach(var key in new[]{"OptimusPageBrush","OptimusPanelBrush","OptimusRaisedBrush","OptimusBorderBrush","OptimusTextBrush","OptimusMutedBrush","OptimusWarmBrush","OptimusAccentBrush","OptimusOnAccentBrush","OptimusBodySize","OptimusSmallSize","OptimusTitleSize"})menu.Resources[key]=FindResource(key);
+  RefreshMenuAppearance();
   menu.PlacementTarget=MenuButton;menu.Placement=PlacementMode.Bottom;menu.IsOpen=true;
+ }
+ private void RefreshMenuAppearance()
+ {
+  var menu=MenuButton.ContextMenu!;
+  foreach(var key in new[]{"OptimusPageBrush","OptimusPanelBrush","OptimusRaisedBrush","OptimusBorderBrush","OptimusTextBrush","OptimusMutedBrush","OptimusWarmBrush","OptimusAccentBrush","OptimusOnAccentBrush","OptimusBodySize","OptimusSmallSize","OptimusTitleSize"})menu.Resources[key]=FindResource(key);
  }
 }

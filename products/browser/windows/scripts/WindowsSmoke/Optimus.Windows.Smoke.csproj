@@ -5,7 +5,7 @@
     <UseWPF>true</UseWPF>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>Optimus.Windows.Smoke</AssemblyName>
-    <Version>0.3.2-alpha</Version>
+    <Version>0.3.3-alpha</Version>
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../../src/Optimus.Core/Optimus.Core.csproj" /></ItemGroup>
 </Project>
