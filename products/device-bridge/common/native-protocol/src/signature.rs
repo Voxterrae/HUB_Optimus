@@ -18,6 +18,33 @@ impl fmt::Display for SignatureError {
     }
 }
 impl std::error::Error for SignatureError {}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ApprovalMatchError {
+    RequestSignature(SignatureError),
+    ApprovalSignature(SignatureError),
+    PendingMismatch,
+}
+
+impl fmt::Display for ApprovalMatchError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::RequestSignature(error) => write!(f, "request signature: {error}"),
+            Self::ApprovalSignature(error) => write!(f, "approval signature: {error}"),
+            Self::PendingMismatch => f.write_str("approval refers to a different pending request"),
+        }
+    }
+}
+
+impl std::error::Error for ApprovalMatchError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::RequestSignature(error) | Self::ApprovalSignature(error) => Some(error),
+            Self::PendingMismatch => None,
+        }
+    }
+}
+
 const REQUEST_DOMAIN: &[u8] = b"HUB-RELAY-REQUEST-v0.1";
 const APPROVAL_DOMAIN: &[u8] = b"HUB-RELAY-APPROVAL-v0.1";
 
@@ -131,6 +158,26 @@ pub fn verify_approval_signature(
         approval_signing_bytes(envelope.request()).map_err(|_| SignatureError::Canonicalization)?;
     key.verify(&bytes, &signature)
         .map_err(|_| SignatureError::VerificationFailed)
+}
+
+/// Verify both signatures and match the complete nested payload to the caller's
+/// pending request. The caller must independently obtain the pending envelope
+/// and role keys from trusted local state. Enrollment, freshness, biometric
+/// evidence, replay admission, and execution are separate checks.
+pub fn verify_approval_for_pending_request(
+    pending: &RequestEnvelope,
+    broker_public_key_sec1: &[u8],
+    approval: &ApprovalEnvelope,
+    approver_public_key_sec1: &[u8],
+) -> Result<(), ApprovalMatchError> {
+    verify_request_signature(pending, broker_public_key_sec1)
+        .map_err(ApprovalMatchError::RequestSignature)?;
+    verify_approval_signature(approval, approver_public_key_sec1)
+        .map_err(ApprovalMatchError::ApprovalSignature)?;
+    if approval.request() != pending.payload() {
+        return Err(ApprovalMatchError::PendingMismatch);
+    }
+    Ok(())
 }
 
 #[cfg(test)]

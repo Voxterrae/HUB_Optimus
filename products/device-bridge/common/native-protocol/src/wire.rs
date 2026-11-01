@@ -47,7 +47,7 @@ impl<'de, T: Deserialize<'de>> Deserialize<'de> for JsonObject<T> {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct RawRequestPayload {
     version: String,
@@ -89,7 +89,7 @@ struct RawApprovalEnvelope {
 
 /// A request whose closed wire shape and field restrictions have been checked.
 /// Its references and nonce carry no enrollment, freshness or entropy proof.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(transparent)]
 pub struct RequestPayload {
     raw: RawRequestPayload,

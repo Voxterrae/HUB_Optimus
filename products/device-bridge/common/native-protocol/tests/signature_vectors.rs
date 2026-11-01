@@ -1,6 +1,8 @@
 use hub_relay_native_protocol::{
+    ApprovalMatchError, SignatureError,
     approval_digest, approval_signing_bytes, parse_approval_envelope, parse_request_envelope,
-    request_digest, request_signing_bytes, verify_approval_signature, verify_request_signature,
+    request_digest, request_signing_bytes, verify_approval_for_pending_request,
+    verify_approval_signature, verify_request_signature,
 };
 use serde_json::{Value, json};
 
@@ -233,5 +235,79 @@ fn changed_request_has_different_approval_digest_without_claiming_admission() {
     assert_ne!(
         request_digest(original.request()).unwrap(),
         request_digest(changed.request()).unwrap()
+    );
+}
+
+#[test]
+fn valid_signatures_for_distinct_pending_requests_cannot_be_crossed() {
+    let vector = fixture();
+    let broker = key(&vector, "broker");
+    let approver = key(&vector, "approver");
+    let pair = |v: &Value, sig: &str| {
+        (
+            parse_request_envelope(&envelope(v, "request", sig)).unwrap(),
+            parse_approval_envelope(&envelope(v, "approval", sig)).unwrap(),
+        )
+    };
+    let (pending_a, approval_a) = pair(&vector, "signatureLowSDerHex");
+
+    // Only the nonce differs. Using the public fixture scalars 1 and 2,
+    // Node crypto.sign("sha256", domain || NUL || JCS(payload), key)
+    // signed the modified request and approval respectively.
+    let mut other = vector.clone();
+    other["request"]["payload"]["nonce"] = json!("a".repeat(64));
+    other["approval"]["payload"]["request"] = other["request"]["payload"].clone();
+    other["request"]["otherSignature"] = json!(concat!(
+        "3045022100beead2e208c7e41d435346a6896d25654e2f0a44d303bc241762df045a373f420",
+        "220517faa752a34f1516be826c33623803f4d80f78c2e4825d744f8d18158d55951"
+    ));
+    other["approval"]["otherSignature"] = json!(concat!(
+        "3046022100aa388cfa208953cce195e23acd26b0032e005985fd16261c1432113934b73b91",
+        "022100d428f20d606b6c60f4dc3d8a1223e6de31ecd014b029e6e2f15fdfb830789f96"
+    ));
+    let (pending_b, approval_b) = pair(&other, "otherSignature");
+
+    for (pending, approval) in [(&pending_a, &approval_a), (&pending_b, &approval_b)] {
+        assert_eq!(
+            verify_approval_for_pending_request(pending, &broker, approval, &approver),
+            Ok(())
+        );
+    }
+    for (pending, approval) in [(&pending_a, &approval_b), (&pending_b, &approval_a)] {
+        assert_eq!(
+            verify_approval_for_pending_request(pending, &broker, approval, &approver),
+            Err(ApprovalMatchError::PendingMismatch)
+        );
+    }
+}
+
+#[test]
+fn matching_payload_still_requires_both_role_signatures() {
+    let vector = fixture();
+    let broker = key(&vector, "broker");
+    let approver = key(&vector, "approver");
+    let request = |name| {
+        parse_request_envelope(&envelope(&vector, name, "signatureLowSDerHex")).unwrap()
+    };
+    let approval = |name| {
+        parse_approval_envelope(&envelope(&vector, name, "signatureLowSDerHex")).unwrap()
+    };
+    assert_eq!(
+        verify_approval_for_pending_request(
+            &request("wrongRequestDomain"),
+            &broker,
+            &approval("approval"),
+            &approver,
+        ),
+        Err(ApprovalMatchError::RequestSignature(SignatureError::VerificationFailed))
+    );
+    assert_eq!(
+        verify_approval_for_pending_request(
+            &request("request"),
+            &broker,
+            &approval("wrongApprovalDomain"),
+            &approver,
+        ),
+        Err(ApprovalMatchError::ApprovalSignature(SignatureError::VerificationFailed))
     );
 }
