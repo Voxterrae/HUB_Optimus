@@ -15,6 +15,17 @@ static class IdentityProofTests
     private const string Health = "{\"name\":\"OptimusSearch\",\"version\":1}";
     public static void Register(Action<string, Func<Task>> test)
     {
+        test("profile-authenticated TLS completes before fixture health HTTP", async () =>
+        {
+            await using var listener = new Listener((stream, headers) => Send(stream, Health, null));
+            using var client = Client();
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            using var response = await client.GetAsync(OptimusSearchTarget.LocalEndpoint + "/health", deadline.Token);
+            Require(response.StatusCode == HttpStatusCode.OK && await response.Content.ReadAsStringAsync(deadline.Token) == Health, "Authenticated TLS must deliver the real health body");
+            Require(listener.Requests.Count == 1, "The fixture must receive HTTP after a successful TLS handshake");
+            Undisclosed(listener.Requests);
+        });
+
         // Removing proof verification would disclose a target to a name/version port squatter.
         foreach (var mode in new[] { "missing", "random", "malformed", "wrong-token", "unknown-marker" })
             test("real TLS launcher rejects " + mode + " identity without bearer or query disclosure", async () =>
@@ -103,15 +114,30 @@ static class IdentityProofTests
         test("actual search rejects listener replacement after verified health without bearer or query", async () =>
         {
             using var profile = new Profile(Token);
-            var real = await SearchServer.StartAsync(new(17831, Token), new LocalSearchIndex([]));
             using var client = Client(); using var launcher = new SearchHostLauncher(client, profile.Directory, profile.Directory);
-            var connection = await launcher.ConnectAsync(null, default);
-            Require(connection.Error is null, "Legitimate identity must connect");
-            await real.DisposeAsync();
-            await using var impostor = new Listener((stream, headers) => Send(stream, "{\"results\":[],\"optimus\":{\"version\":1,\"scope\":\"web\",\"webConfigured\":true,\"indexedDocuments\":0}}", null), Certificate(new string('b', 64)));
+            var connection = await WithActualService(async _ =>
+            {
+                var verified = await launcher.ConnectAsync(null, default);
+                Require(verified.Error is null, "Legitimate identity must connect");
+                return verified;
+            });
+            using var replacementCertificate = Certificate(new string('b', 64));
+            await using var impostor = new Listener((stream, headers) => Send(stream, "{\"results\":[],\"optimus\":{\"version\":1,\"scope\":\"web\",\"webConfigured\":true,\"indexedDocuments\":0}}", null), replacementCertificate);
             var result = await new OptimusSearchService(client).SearchAsync("private query", [], connection.Target, default);
             Require(result.Error is not null, "Replacement must be rejected");
             Require(impostor.Requests.All(r => !r.Contains("Authorization", StringComparison.OrdinalIgnoreCase) && !r.Contains("private") && !r.Contains(Token)), "Replacement stole bearer/query after verified health");
+        });
+
+        test("failed actual service assertion releases its fixed listener before the next test", async () =>
+        {
+            var assertion = new Exception("Forced assertion before service disposal");
+            var failed = false;
+            try { await WithActualService<bool>(_ => throw assertion); }
+            catch (Exception ex) when (ReferenceEquals(ex, assertion)) { failed = true; }
+            Require(failed, "The callback assertion must actually fail after starting the service");
+            var replacement = new TcpListener(IPAddress.Loopback, 17831);
+            try { replacement.Start(); }
+            finally { replacement.Stop(); }
         });
 
         foreach (var mode in new[] { "missing", "malformed", "wrong-token", "wrong-port", "copied-proof" })
@@ -202,6 +228,11 @@ static class IdentityProofTests
         if (mode != "missing") request.CertificateExtensions.Add(new X509Extension("1.3.6.1.4.1.57264.2021.1", copiedProof ?? (mode == "malformed" ? new byte[31] : HMACSHA256.HashData(Encoding.ASCII.GetBytes(token), Encoding.ASCII.GetBytes(message))), false));
         return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
     }
+    private static async Task<T> WithActualService<T>(Func<SearchServer, Task<T>> run)
+    {
+        await using var server = await SearchServer.StartAsync(new(17831, Token), new LocalSearchIndex([]));
+        return await run(server);
+    }
     private static string Proof(string token, int port, string nonce) => Convert.ToHexStringLower(HMACSHA256.HashData(Encoding.ASCII.GetBytes(token), Encoding.ASCII.GetBytes($"OptimusSearch/v1|127.0.0.1:{port}|{nonce}")));
     private static HttpClient Client() => LocalSearchTransport.CreateClient(Token);
     private static string? Header(string headers, string name) => headers.Split("\r\n").FirstOrDefault(line => line.StartsWith(name + ":", StringComparison.OrdinalIgnoreCase))?[(name.Length + 1)..].Trim();
@@ -229,13 +260,16 @@ static class IdentityProofTests
         private readonly CancellationTokenSource stopping = new();
         private readonly Task serving;
         private readonly X509Certificate2? ownedCertificate;
+        private Task? disposal;
         public ConcurrentQueue<string> Requests { get; } = new();
         public Listener(Func<Stream, string, Task> respond, X509Certificate2? certificate = null)
         {
             if (certificate is null) certificate = ownedCertificate = Certificate(Token);
-            listener.Start();
+            try { listener.Start(); }
+            catch { listener.Stop(); stopping.Dispose(); ownedCertificate?.Dispose(); throw; }
             serving = Task.Run(async () =>
             {
+                var reportedHandshakeFailure = false;
                 try
                 {
                     while (!stopping.IsCancellationRequested)
@@ -243,7 +277,15 @@ static class IdentityProofTests
                         using var peer = await listener.AcceptTcpClientAsync(stopping.Token);
                         await using var stream = new SslStream(peer.GetStream(), false);
                         try { await stream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions { ServerCertificate = certificate, EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13 }, stopping.Token); }
-                        catch (Exception ex) when (ex is AuthenticationException or IOException or CryptographicException) { continue; }
+                        catch (Exception ex) when (ex is AuthenticationException or IOException or CryptographicException)
+                        {
+                            if (!reportedHandshakeFailure)
+                            {
+                                Console.WriteLine("TLS fixture handshake failed: " + TestFailureDiagnostics.Describe(ex));
+                                reportedHandshakeFailure = true;
+                            }
+                            continue;
+                        }
                         var bytes = new List<byte>(); var one = new byte[1];
                         while (bytes.Count < 16384 && await stream.ReadAsync(one, stopping.Token) > 0)
                         {
@@ -258,6 +300,11 @@ static class IdentityProofTests
                 catch (Exception ex) when (ex is OperationCanceledException or IOException or SocketException or ObjectDisposedException) { }
             });
         }
-        public async ValueTask DisposeAsync() { stopping.Cancel(); listener.Stop(); await serving.WaitAsync(TimeSpan.FromSeconds(3)); stopping.Dispose(); ownedCertificate?.Dispose(); }
+        public ValueTask DisposeAsync() => new(disposal ??= DisposeCoreAsync());
+        private async Task DisposeCoreAsync()
+        {
+            try { stopping.Cancel(); listener.Stop(); await serving.WaitAsync(TimeSpan.FromSeconds(3)); }
+            finally { listener.Stop(); stopping.Dispose(); ownedCertificate?.Dispose(); }
+        }
     }
 }
