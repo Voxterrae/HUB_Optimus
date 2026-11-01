@@ -48,8 +48,11 @@ try {
 using System;
 using System.Threading;
 public static class Fixture {
-    public static void Main() {
+    public static void Main(string[] args) {
         string mode=Environment.GetEnvironmentVariable("HUB_RELAY_OWNED_FIXTURE");
+        if (mode=="arguments") {
+            Environment.Exit(args.Length==3 && args[0]=="endslash\\" && args[1]=="space value" && args[2]=="" ? 0 : 3); return;
+        }
         if (mode=="timeout") {Thread.Sleep(5000); return;}
         if (mode=="stderr") {byte[] b=new byte[8192]; for(int i=0;i<100;++i) Console.OpenStandardError().Write(b,0,b.Length); return;}
         if (mode=="flood") {byte[] b=new byte[8192]; for(int i=0;i<5000;++i) Console.OpenStandardOutput().Write(b,0,b.Length); return;}
@@ -60,6 +63,17 @@ public static class Fixture {
     $fixtureExe=Join-Path $ScratchDirectory 'fixture.exe'
     & (Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe') /nologo /target:exe ('/out:'+$fixtureExe) $fixture *> $null
     if ($LASTEXITCODE -ne 0) { throw 'Owned child fixture compile failed.' }
+    # Exercise the actual build-child function with terminal backslash, space
+    # and empty arguments. Parse only this reviewed local script definition.
+    $tokens=$null; $parseErrors=$null
+    $buildAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'Build-RelayInventory.ps1'),[ref]$tokens,[ref]$parseErrors)
+    if ($parseErrors.Count -ne 0) { throw 'Build recipe parse failed.' }
+    $functions=@($buildAst.FindAll({param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq 'Invoke-BuildChild'},$false))
+    if ($functions.Count -ne 1) { throw 'Build child definition missing.' }
+    . ([scriptblock]::Create($functions[0].Extent.Text))
+    $script:crate=[IO.Directory]::GetParent($PSScriptRoot).FullName
+    [void](Invoke-BuildChild $fixtureExe @('endslash\','space value','') @{ HUB_RELAY_OWNED_FIXTURE='arguments' })
+    Write-Output 'Build child argument fixture: 1 passed.'
     $saved=[Environment]::GetEnvironmentVariable('HUB_RELAY_OWNED_FIXTURE')
     try {
         foreach ($mode in @('complete','timeout','flood','stderr')) {
