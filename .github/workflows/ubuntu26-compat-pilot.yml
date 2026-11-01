@@ -1,0 +1,419 @@
+name: Ubuntu 26 compatibility pilot
+'on':
+  pull_request:
+    branches:
+    - main
+    types:
+    - opened
+    - synchronize
+    - reopened
+    paths:
+    - .github/workflows/ubuntu26-compat-pilot.yml
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+concurrency:
+  group: ubuntu26-compat-2064
+  cancel-in-progress: false
+jobs:
+  pilot-pytest:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+    - name: Require actual Ubuntu 26.04
+      shell: bash
+      run: |
+        set -euo pipefail
+        . /etc/os-release
+        test "$ID" = ubuntu
+        test "$VERSION_ID" = 26.04
+        printf "OS=%s %s\n" "$ID" "$VERSION_ID"
+        python --version
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+        ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
+    - name: Setup Python
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+      with:
+        python-version: '3.12'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements-dev.txt
+    - name: Check docs encoding (mojibake guard)
+      run: python tools/check_mojibake.py .
+    - name: Narrative consistency check
+      run: |
+        python tools/check_narrative_consistency.py \
+          --input datasets/ai_risk_narratives/seed_claims.json \
+          --schema datasets/ai_risk_narratives/claim_record.schema.json \
+          --report out/narrative_consistency.json \
+          --summary-file "$GITHUB_STEP_SUMMARY"
+    - name: Validate locked native Device Bridge contracts
+      if: ${{ hashFiles('products/device-bridge/common/native-protocol/Cargo.toml', 'products/device-bridge/common/native-result/Cargo.toml') != '' }}
+      timeout-minutes: 10
+      shell: bash
+      env:
+        CARGO_HOME: ${{ runner.temp }}/hub-native-cargo
+        CARGO_TARGET_DIR: ${{ runner.temp }}/hub-native-target
+        CARGO_INCREMENTAL: '0'
+      run: |
+        set -euo pipefail
+        unset RUSTC RUSTDOC RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER
+        unset RUSTFLAGS RUSTDOCFLAGS CARGO_ENCODED_RUSTFLAGS CARGO_ENCODED_RUSTDOCFLAGS RUSTC_BOOTSTRAP
+        rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+        for manifest in \
+          products/device-bridge/common/native-protocol/Cargo.toml \
+          products/device-bridge/common/native-result/Cargo.toml; do
+          if [[ ! -f "$manifest" ]]; then
+            continue
+          fi
+          rustup run 1.99.0 cargo fmt --manifest-path "$manifest" -- --check
+          rustup run 1.99.0 cargo test --locked --manifest-path "$manifest"
+          rustup run 1.99.0 cargo clippy --locked --manifest-path "$manifest" --all-targets -- -D warnings
+        done
+    - name: Run tests
+      run: python -m pytest -q
+    name: Ubuntu 26 / pytest
+    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == 'cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907'
+  pilot-powershell-tooling:
+    name: Ubuntu 26 / PowerShell tooling
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+    - name: Require actual Ubuntu 26.04
+      shell: bash
+      run: |
+        set -euo pipefail
+        . /etc/os-release
+        test "$ID" = ubuntu
+        test "$VERSION_ID" = 26.04
+        printf "OS=%s %s\n" "$ID" "$VERSION_ID"
+        python --version
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
+        persist-credentials: false
+    - name: Require PowerShell 7
+      shell: bash
+      run: |
+        if ! command -v pwsh >/dev/null 2>&1; then
+          echo "::error::PowerShell 7 (pwsh) is required for tooling certification"
+          exit 1
+        fi
+        pwsh -NoProfile -NonInteractive -Command '
+          if ($PSVersionTable.PSVersion.Major -lt 7) {
+            Write-Error "PowerShell 7 or newer is required"
+            exit 1
+          }
+        '
+    - name: Setup Python
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+      with:
+        python-version: '3.12'
+    - name: Install test dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements-dev.txt
+    - name: Run PowerShell tooling behavior tests
+      run: python -m pytest -q tests/test_powershell_tooling_safety.py
+    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == 'cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907'
+  pilot-ec2-locked-environment:
+    name: Ubuntu 26 / EC2 locked environment
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+    - name: Require actual Ubuntu 26.04
+      shell: bash
+      run: |
+        set -euo pipefail
+        . /etc/os-release
+        test "$ID" = ubuntu
+        test "$VERSION_ID" = 26.04
+        printf "OS=%s %s\n" "$ID" "$VERSION_ID"
+        python --version
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+        ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
+    - name: Setup reviewed EC2 Python ABI
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+      with:
+        python-version: '3.12'
+    - name: Verify dependency locks
+      run: bash ops/ec2/dependency-lock-digest.sh "$GITHUB_WORKSPACE"
+    - name: Certify reproducible offline dependency installs
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        python_bin="$(command -v python)"
+        node_bin="$(command -v node)"
+        case "$python_bin" in
+          /*) ;;
+          *)
+            echo "::error::setup-python did not provide an absolute interpreter path"
+            exit 1
+            ;;
+        esac
+        python_bin="$(readlink -f -- "$python_bin")"
+        case "$node_bin" in
+          /*) ;;
+          *)
+            echo "::error::runner did not provide an absolute Node path"
+            exit 1
+            ;;
+        esac
+        node_bin="$(readlink -f -- "$node_bin")"
+        node_dir="$(dirname -- "$node_bin")"
+        test -x "$node_bin"
+
+        workspace="$GITHUB_WORKSPACE"
+        wheelhouse="$RUNNER_TEMP/hub-ec2-wheelhouse"
+        corrupt_wheelhouse="$RUNNER_TEMP/hub-ec2-wheelhouse-corrupt"
+        corrupt_release="$RUNNER_TEMP/hub-ec2-corrupt-release"
+        release_a="$RUNNER_TEMP/hub-ec2-release-a"
+        release_b="$RUNNER_TEMP/hub-ec2-release-b"
+
+        create_release() {
+          local release="$1"
+          mkdir -p "$release/ops/ec2"
+          cp -- "$workspace/ops/ec2/requirements-runtime.lock" \
+            "$release/ops/ec2/requirements-runtime.lock"
+          cp -- "$workspace/ops/ec2/requirements-validation.lock" \
+            "$release/ops/ec2/requirements-validation.lock"
+          "$python_bin" -I -m venv "$release/.venv"
+        }
+
+        sealed_offline_install() {
+          local release="$1"
+          local links="$2"
+          env -i \
+            HOME="$release" \
+            LANG=C.UTF-8 \
+            PATH=/usr/bin:/bin \
+            PYTHONNOUSERSITE=1 \
+            "$python_bin" -I \
+              "$workspace/ops/ec2/verify-installed-dependencies.py" \
+              install-offline \
+              "$release" \
+              "$python_bin" \
+              "$dependency_digest" \
+              "$links"
+        }
+
+        mkdir -p "$wheelhouse"
+        env -i \
+          HOME="$RUNNER_TEMP/hub-ec2-download-home" \
+          LANG=C.UTF-8 \
+          PATH=/usr/bin:/bin \
+          PIP_CONFIG_FILE=/dev/null \
+          PIP_DISABLE_PIP_VERSION_CHECK=1 \
+          PIP_NO_CACHE_DIR=1 \
+          PIP_NO_INPUT=1 \
+          PYTHONNOUSERSITE=1 \
+          "$python_bin" -I -m pip download \
+            --disable-pip-version-check \
+            --index-url https://pypi.org/simple \
+            --isolated \
+            --no-cache-dir \
+            --no-deps \
+            --no-input \
+            --only-binary=:all: \
+            --require-hashes \
+            --dest "$wheelhouse" \
+            --requirement "$workspace/ops/ec2/requirements-validation.lock"
+
+        mapfile -t downloaded_wheels < <(
+          find "$wheelhouse" -maxdepth 1 -type f -name '*.whl' -print \
+            | LC_ALL=C sort
+        )
+        if [ "${#downloaded_wheels[@]}" -eq 0 ]; then
+          echo "::error::allowlisted download produced no wheels"
+          exit 1
+        fi
+
+        dependency_digest="$(
+          bash "$workspace/ops/ec2/dependency-lock-digest.sh" "$workspace"
+        )"
+
+        mkdir -p "$corrupt_wheelhouse"
+        cp -a -- "$wheelhouse/." "$corrupt_wheelhouse/"
+        corrupt_wheel="$corrupt_wheelhouse/$(basename "${downloaded_wheels[0]}")"
+        printf 'intentional-hash-corruption\n' >> "$corrupt_wheel"
+        create_release "$corrupt_release"
+        corrupt_log="$RUNNER_TEMP/hub-ec2-corrupt-wheel.log"
+        if sealed_offline_install \
+          "$corrupt_release" "$corrupt_wheelhouse" \
+          >"$corrupt_log" 2>&1; then
+          echo "::error::pip accepted a wheel whose reviewed hash was corrupted"
+          exit 1
+        fi
+        if ! grep -Fq \
+          'THESE PACKAGES DO NOT MATCH THE HASHES FROM THE REQUIREMENTS FILE' \
+          "$corrupt_log"; then
+          cat "$corrupt_log" >&2
+          echo "::error::corrupt-wheel install failed for a reason other than hash rejection"
+          exit 1
+        fi
+
+        create_release "$release_a"
+        create_release "$release_b"
+        test "$(
+          bash "$workspace/ops/ec2/dependency-lock-digest.sh" "$release_a"
+        )" = "$dependency_digest"
+        test "$(
+          bash "$workspace/ops/ec2/dependency-lock-digest.sh" "$release_b"
+        )" = "$dependency_digest"
+        token_a="$(
+          sealed_offline_install "$release_a" "$wheelhouse"
+        )"
+        token_b="$(
+          sealed_offline_install "$release_b" "$wheelhouse"
+        )"
+
+        inventory_a="$RUNNER_TEMP/hub-ec2-inventory-a.json"
+        inventory_b="$RUNNER_TEMP/hub-ec2-inventory-b.json"
+        env -i \
+          HOME="$release_a" \
+          LANG=C.UTF-8 \
+          PATH=/usr/bin:/bin \
+          PYTHONNOUSERSITE=1 \
+          "$release_a/.venv/bin/python" -I \
+            "$workspace/ops/ec2/verify-installed-dependencies.py" \
+            verify "$release_a" "$python_bin" "$dependency_digest" "$token_a" \
+            > "$inventory_a"
+        env -i \
+          HOME="$release_b" \
+          LANG=C.UTF-8 \
+          PATH=/usr/bin:/bin \
+          PYTHONNOUSERSITE=1 \
+          "$release_b/.venv/bin/python" -I \
+            "$workspace/ops/ec2/verify-installed-dependencies.py" \
+            verify "$release_b" "$python_bin" "$dependency_digest" "$token_b" \
+            > "$inventory_b"
+        if ! cmp -s -- "$inventory_a" "$inventory_b"; then
+          diff -u -- "$inventory_a" "$inventory_b" || true
+          echo "::error::fresh offline installs produced different inventories"
+          exit 1
+        fi
+
+        cd "$workspace"
+        env -i \
+          HOME="$release_a" \
+          LANG=C.UTF-8 \
+          PATH="$node_dir:/usr/bin:/bin" \
+          PYTHONNOUSERSITE=1 \
+          "$release_a/.venv/bin/python" -m pytest -q
+    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == 'cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907'
+  pilot-founder-authority:
+    name: Ubuntu 26 / founder-authority-bootstrap
+    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == 'cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+    - name: Require actual Ubuntu 26.04
+      shell: bash
+      run: |
+        set -euo pipefail
+        . /etc/os-release
+        test "$ID" = ubuntu
+        test "$VERSION_ID" = 26.04
+        printf "OS=%s %s\n" "$ID" "$VERSION_ID"
+        python --version
+    - name: Checkout trusted base policy
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
+        fetch-depth: 1
+        persist-credentials: false
+    - name: Validate exact pull-request head from trusted base
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        PYTHONPATH: .
+      run: python .github/scripts/founder_authority_workflow.py --validate-only
+  pilot-founder-authority-app-canary:
+    name: Ubuntu 26 / founder-authority-app-canary
+    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == 'cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907'
+    permissions:
+      contents: read
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+    - name: Require actual Ubuntu 26.04
+      shell: bash
+      run: |
+        set -euo pipefail
+        . /etc/os-release
+        test "$ID" = ubuntu
+        test "$VERSION_ID" = 26.04
+        printf "OS=%s %s\n" "$ID" "$VERSION_ID"
+        python --version
+    - name: Checkout trusted base policy
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
+        fetch-depth: 1
+        persist-credentials: false
+    - name: Create repository-scoped founder-authority App token
+      id: founder-authority-app-token
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+      with:
+        client-id: ${{ vars.FOUNDER_AUTHORITY_APP_CLIENT_ID }}
+        private-key: ${{ secrets.FOUNDER_AUTHORITY_APP_PRIVATE_KEY }}
+        permission-checks: write
+        permission-contents: read
+        permission-issues: read
+        permission-pull-requests: read
+    - name: Verify exact founder-authority App installation
+      shell: bash
+      env:
+        ACTUAL_APP_SLUG: ${{ steps.founder-authority-app-token.outputs.app-slug }}
+        EXPECTED_APP_ID: ${{ vars.FOUNDER_AUTHORITY_APP_ID }}
+        EXPECTED_APP_SLUG: ${{ vars.FOUNDER_AUTHORITY_APP_SLUG }}
+        ACTUAL_INSTALLATION_ID: ${{ steps.founder-authority-app-token.outputs.installation-id }}
+        EXPECTED_INSTALLATION_ID: ${{ vars.FOUNDER_AUTHORITY_APP_INSTALLATION_ID }}
+      run: |
+        set -euo pipefail
+        if [[ ! "${EXPECTED_APP_ID}" =~ ^[1-9][0-9]*$ ]]; then
+          echo "::error::FOUNDER_AUTHORITY_APP_ID must be a positive decimal integer."
+          exit 1
+        fi
+        if [ -z "${EXPECTED_APP_SLUG}" ] || [ "${ACTUAL_APP_SLUG}" != "${EXPECTED_APP_SLUG}" ]; then
+          echo "::error::Unexpected founder-authority GitHub App slug."
+          exit 1
+        fi
+        if [[ ! "${EXPECTED_INSTALLATION_ID}" =~ ^[1-9][0-9]*$ ]]; then
+          echo "::error::FOUNDER_AUTHORITY_APP_INSTALLATION_ID must be a positive decimal integer."
+          exit 1
+        fi
+        if [ "${ACTUAL_INSTALLATION_ID}" != "${EXPECTED_INSTALLATION_ID}" ]; then
+          echo "::error::Unexpected founder-authority GitHub App installation."
+          exit 1
+        fi
+    - name: Publish isolated App trial checks on exact head and merge candidate
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ steps.founder-authority-app-token.outputs.token }}
+        FOUNDER_AUTHORITY_EXPECTED_APP_ID: ${{ vars.FOUNDER_AUTHORITY_APP_ID }}
+        FOUNDER_AUTHORITY_EXPECTED_APP_SLUG: ${{ vars.FOUNDER_AUTHORITY_APP_SLUG }}
+        PYTHONPATH: .
+      run: |
+        python - <<'PY'
+        import runpy
+
+        # Use the pinned trusted implementation; only isolate the check namespace.
+        module = runpy.run_path('.github/scripts/founder_authority_workflow.py', run_name='ubuntu26_pilot')
+        run = module['run']
+        assert run.__globals__['CHECK_NAME'] == 'founder-authority'
+        run.__globals__['CHECK_NAME'] = 'founder-authority-ubuntu26-pilot'
+        raise SystemExit(run())
+        PY
