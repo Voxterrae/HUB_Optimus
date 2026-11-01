@@ -87,10 +87,12 @@ public static class HubRelayPrivateDirectory {
         }
     }
     private static IntPtr OpenDirectory(string path, Lease lease) {
-        // READ_CONTROL | FILE_READ_ATTRIBUTES | SYNCHRONIZE; READ/WRITE sharing,
+        // READ_CONTROL | FILE_READ_ATTRIBUTES | FILE_LIST_DIRECTORY | SYNCHRONIZE;
+        // LIST access participates in share checks; no enumeration is performed.
+        // READ/WRITE sharing,
         // deliberately no FILE_SHARE_DELETE. OPEN_REPARSE_POINT never follows
         // a leaf reparse object. Every parent handle stays retained through write.
-        IntPtr handle=CreateFileW(path,0x120080,3,IntPtr.Zero,3,0x02200000,IntPtr.Zero);
+        IntPtr handle=CreateFileW(path,0x120081,3,IntPtr.Zero,3,0x02200000,IntPtr.Zero);
         if (handle==IntPtr.Zero || handle==new IntPtr(-1)) throw new InvalidOperationException("Private namespace open failed");
         lease.Add(handle);
         AttributeTag info;
