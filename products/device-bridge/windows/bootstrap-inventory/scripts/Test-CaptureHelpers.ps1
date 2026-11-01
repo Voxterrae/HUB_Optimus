@@ -21,6 +21,7 @@ try {
     $lease.Dispose()
     if (-not $lease.CleanupComplete) { throw 'Lease cleanup failed.' }
     $lease=$null
+    if (-not (Get-Acl -LiteralPath $destination).AreAccessRulesProtected) { throw 'Private DACL was not protected.' }
     [IO.Directory]::Move($destination,$destination+'-moved')
     $refused=$false
     try { $unexpected=[HubRelayPrivateDirectory]::Create($destination+'-moved',$identity); $unexpected.Dispose() } catch { $refused=$true }

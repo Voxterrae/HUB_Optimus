@@ -111,7 +111,7 @@ public static class HubRelayPrivateDirectory {
         if (!freed) throw new InvalidOperationException("Private namespace unavailable");
         return new RawSecurityDescriptor(bytes,0);
     }
-    private static void CheckDescriptor(RawSecurityDescriptor descriptor, HashSet<string> trusted, bool finalParent) {
+    private static void CheckDescriptor(RawSecurityDescriptor descriptor, HashSet<string> trusted) {
         if (descriptor.Owner==null || !trusted.Contains(descriptor.Owner.Value) || descriptor.DiscretionaryAcl==null
             || (descriptor.ControlFlags & ControlFlags.DiscretionaryAclPresent)==0)
             throw new InvalidOperationException("Private namespace owner or DACL unsupported");
@@ -121,10 +121,11 @@ public static class HubRelayPrivateDirectory {
                 throw new InvalidOperationException("Private namespace ACE unsupported");
             if (ace.AceQualifier==AceQualifier.AccessDenied || trusted.Contains(ace.SecurityIdentifier.Value)) continue;
             bool applies=(ace.AceFlags & AceFlags.InheritOnly)==0;
-            bool inheritedByNewDirectory=finalParent && (ace.AceFlags & AceFlags.ContainerInherit)!=0;
             // DENY entries never subtract ALLOW grants. Allow add-subdirectory
             // alone: presquatting the final requested name makes creation fail.
-            if ((applies || inheritedByNewDirectory) && (unchecked((uint)ace.AccessMask) & 0x500D0152U)!=0)
+            // The new directory receives an atomic PROTECTED DACL; inherit-only
+            // entries cannot mutate this existing parent or flow into that child.
+            if (applies && (unchecked((uint)ace.AccessMask) & 0x500D0152U)!=0)
                 throw new InvalidOperationException("Private namespace grants untrusted mutation");
         }
     }
@@ -138,7 +139,7 @@ public static class HubRelayPrivateDirectory {
             DirectoryInfo directory=Directory.GetParent(destination);
             while (directory!=null) { chain.Add(directory.FullName); directory=directory.Parent; }
             chain.Reverse();
-            for (int i=0;i<chain.Count;++i) CheckDescriptor(ReadDescriptor(OpenDirectory(chain[i],lease)),trusted,i==chain.Count-1);
+            for (int i=0;i<chain.Count;++i) CheckDescriptor(ReadDescriptor(OpenDirectory(chain[i],lease)),trusted);
             DirectorySecurity security=new DirectorySecurity();
             security.SetOwner(user); security.SetAccessRuleProtection(true,false);
             foreach (SecurityIdentifier principal in new SecurityIdentifier[] { user,new SecurityIdentifier("S-1-5-18") })
@@ -151,7 +152,10 @@ public static class HubRelayPrivateDirectory {
                 if (!CreateDirectoryW(destination,ref attributes)) throw new InvalidOperationException("Private namespace unavailable");
             } finally { Marshal.FreeHGlobal(native); }
             HashSet<string> privatePrincipals=new HashSet<string>(StringComparer.Ordinal) {userSid,"S-1-5-18"};
-            CheckDescriptor(ReadDescriptor(OpenDirectory(destination,lease)),privatePrincipals,true);
+            RawSecurityDescriptor created=ReadDescriptor(OpenDirectory(destination,lease));
+            if ((created.ControlFlags & ControlFlags.DiscretionaryAclProtected)==0)
+                throw new InvalidOperationException("Private descriptor protection unavailable");
+            CheckDescriptor(created,privatePrincipals);
             return lease;
         } catch { lease.Dispose(); throw; }
     }
