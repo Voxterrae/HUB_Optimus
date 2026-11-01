@@ -41,6 +41,7 @@ function Invoke-BuildChild([string]$Executable, [string[]]$Arguments, [hashtable
     } finally { $child.Dispose() }
 }
 
+$buildPhase = 'preflight'
 try {
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT -or -not [Environment]::Is64BitProcess) { throw 'Unsupported platform' }
     foreach ($name in @('RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER', 'RUSTC')) {
@@ -65,6 +66,7 @@ try {
     $linker = (Get-Command link.exe -CommandType Application -ErrorAction Stop).Source
     $git = (Get-Command git.exe -CommandType Application -ErrorAction Stop).Source
     $python = (Get-Command $PythonExecutable -CommandType Application -ErrorAction Stop).Source
+    $buildPhase = 'source'
     $actualSource = (Invoke-BuildChild $git @('-C', $sourceRoot, 'rev-parse', 'HEAD') @{}).Trim()
     if ($actualSource -cne $SourceCommit) { throw 'Source mismatch' }
     [void](Invoke-BuildChild $git @('-C', $sourceRoot, 'diff', '--quiet', 'HEAD', '--', $crate, 'IP_NOTICE.md') @{})
@@ -72,6 +74,7 @@ try {
     if (-not [string]::IsNullOrWhiteSpace($untracked)) { throw 'Uncommitted source refused' }
     $actualPolicy = (Get-FileHash -LiteralPath (Join-Path $crate 'src/os_policy.rs') -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actualPolicy -cne $PolicySha256) { throw 'Policy mismatch' }
+    $buildPhase = 'toolchain'
     $installed = Invoke-BuildChild $rustup @('toolchain', 'list') @{}
     if ($installed -notmatch '(?m)^1\.99\.0-x86_64-pc-windows-msvc(?:\s|$)') { throw 'Pinned toolchain must already be installed' }
     $rustVersion = (Invoke-BuildChild $rustc @('+1.99.0', '--version') @{}).Trim()
@@ -83,6 +86,7 @@ try {
     if ([string]::IsNullOrEmpty($sdkObserved) -or $sdkObserved.TrimEnd('\') -cne $SdkVersion) { throw 'SDK mismatch' }
     $sdkRoot = [Environment]::GetEnvironmentVariable('WindowsSdkDir')
     if ([string]::IsNullOrEmpty($sdkRoot) -or -not [IO.File]::Exists((Join-Path $sdkRoot ('Include/' + $SdkVersion + '/um/Windows.h')))) { throw 'SDK unavailable' }
+    $buildPhase = 'output'
     [void](New-Item -ItemType Directory -Path $output -ErrorAction Stop)
     $stage = Join-Path $output 'stage'
     [void](New-Item -ItemType Directory -Path $stage -ErrorAction Stop)
@@ -97,8 +101,10 @@ try {
         CARGO_ENCODED_RUSTFLAGS = ($rustOptions -join [char]31);
         CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER = $linker
     }
+    $buildPhase = 'offline_compile'
     [void](Invoke-BuildChild $cargo @('+1.99.0', 'build', '--locked', '--offline', '--release', '--target', 'x86_64-pc-windows-msvc',
         '--manifest-path', (Join-Path $crate 'Cargo.toml')) $childEnvironment)
+    $buildPhase = 'stage'
     Copy-Item -LiteralPath (Join-Path $targetDirectory 'x86_64-pc-windows-msvc/release/hub-relay-bootstrap-inventory.exe') -Destination (Join-Path $stage 'hub-relay-bootstrap-inventory.exe')
     foreach ($name in @('README.md', 'THIRD_PARTY_NOTICES.txt', 'activation-plan.template.json')) {
         Copy-Item -LiteralPath (Join-Path $crate $name) -Destination (Join-Path $stage $name)
@@ -111,6 +117,7 @@ try {
     foreach ($name in @('verify_inventory.py', 'package_inventory.py')) {
         Copy-Item -LiteralPath (Join-Path $crate ('tools/' + $name)) -Destination (Join-Path $stage ('tools/' + $name))
     }
+    $buildPhase = 'package'
     [void](Invoke-BuildChild $python @((Join-Path $crate 'tools/package_inventory.py'), '--stage', $stage,
         '--output', (Join-Path $output 'hub-relay-bootstrap-inventory-windows-amd64.zip'), '--source-commit', $SourceCommit,
         '--policy-sha256', $PolicySha256, '--rustc-version', $rustVersion, '--cargo-version', $cargoVersion,
@@ -118,6 +125,6 @@ try {
     Write-Output 'Diagnostic bundle built; artifact metadata are unverified claims; activation blocked.'
     exit 0
 } catch {
-    Write-Output 'Diagnostic build or package validation failed; no authority established.'
+    Write-Output ('Diagnostic build or package validation failed at fixed phase ' + $buildPhase + '; no authority established.')
     exit 1
 }
