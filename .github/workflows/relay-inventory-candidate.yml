@@ -127,7 +127,14 @@ jobs:
           $policy = (Get-FileHash -LiteralPath (Join-Path $crate 'src/os_policy.rs') -Algorithm SHA256).Hash.ToLowerInvariant()
           $build = Join-Path $env:RUNNER_TEMP 'relay-diagnostic-build'
           & (Join-Path $crate 'scripts/Build-RelayInventory.ps1') -SourceCommit '${{ github.sha }}' -PolicySha256 $policy -LinkerVersion $linkVersion -SdkVersion $sdkVersion -OutputDirectory $build
-          if ($LASTEXITCODE -ne 0) { throw 'Diagnostic build failed.' }
+          if ($LASTEXITCODE -ne 0) {
+            $compiled = Join-Path $build 'target/x86_64-pc-windows-msvc/release/hub-relay-bootstrap-inventory.exe'
+            if (Test-Path -LiteralPath $compiled) {
+              # Own generated artifact static DLL names only; no host observations.
+              & dumpbin.exe /dependents $compiled | Where-Object { $_ -match '^\s+[A-Za-z0-9_.-]+\.dll$' } | ForEach-Object { $_.Trim() }
+            }
+            throw 'Diagnostic build failed.'
+          }
           $bundle = Join-Path $env:RUNNER_TEMP 'relay-diagnostic-extracted'
           Expand-Archive -LiteralPath (Join-Path $build 'hub-relay-bootstrap-inventory-windows-amd64.zip') -DestinationPath $bundle
           python -B (Join-Path $bundle 'tools/package_inventory.py') --verify $bundle
