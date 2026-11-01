@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 ENTRY = ROOT / "hub-relay" / "server.py"
+TOKEN = "A" * 43  # Synthetic capability accepted only by injected test stores.
 spec = importlib.util.spec_from_file_location("relay_candidate", ENTRY)
 relay = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(relay)
@@ -58,6 +59,10 @@ class FakeBackend:
 
 def sample():
     return relay.diagnostics(FakeBackend())
+
+
+def permitted_server(collector=sample):
+    return relay.Server(collector=collector, permission_store=Mock(consume=Mock(return_value=True)))
 
 
 class CollectorContract(unittest.TestCase):
@@ -132,14 +137,68 @@ class LifecycleContract(unittest.TestCase):
         tools = server.handle(request("tools/list"))["result"]["tools"]
         self.assertEqual([item["name"] for item in tools], [relay.TOOL_NAME])
         self.assertFalse(tools[0]["inputSchema"]["additionalProperties"])
+        self.assertEqual(set(tools[0]["inputSchema"]["properties"]), {"permission"})
+        self.assertEqual(tools[0]["inputSchema"]["properties"]["permission"]["type"], "string")
+        self.assertFalse(tools[0]["annotations"]["readOnlyHint"])
+        self.assertFalse(tools[0]["annotations"]["idempotentHint"])
         self.assertIn("No biometric", tools[0]["description"])
         collector.assert_not_called()
 
+    def test_permission_validation_precedes_store_and_collection(self):
+        store, collector = Mock(), Mock()
+        server = relay.Server(collector=collector, permission_store=store)
+        ready(server)
+        invalid = [None, True, 3, [], {}, "", "A" * 42, "A" * 44,
+                   "A" * 42 + "!", "A" * 42 + "\n", "A" * 42 + "é"]
+        for token in invalid:
+            with self.subTest(token=token):
+                result = server.handle(call({"permission": token}))
+                self.assertEqual(result["error"]["code"], -32602)
+                if type(token) is str and token:
+                    self.assertNotIn(token, json.dumps(result))
+        self.assertEqual(server.handle(call({"permission": TOKEN, "path": "E:"}))["error"]["code"], -32602)
+        store.consume.assert_not_called()
+        collector.assert_not_called()
+
+    def test_metadata_cannot_supply_permission(self):
+        store, collector = Mock(), Mock()
+        server = relay.Server(collector=collector, permission_store=store)
+        ready(server)
+        message = call()
+        message["params"]["_meta"] = {"permission": TOKEN}
+        self.assertTrue(server.handle(message)["result"]["isError"])
+        store.consume.assert_not_called()
+        collector.assert_not_called()
+
+    def test_permission_is_consumed_before_collector_and_not_echoed(self):
+        ordering = []
+        store = Mock(consume=Mock(side_effect=lambda token: ordering.append("consumed") or True))
+        collector = Mock(side_effect=lambda: ordering.append("collected") or sample())
+        server = relay.Server(collector=collector, permission_store=store)
+        ready(server)
+        response = server.handle(call({"permission": TOKEN}))
+        self.assertEqual(ordering, ["consumed", "collected"])
+        store.consume.assert_called_once_with(TOKEN)
+        self.assertNotIn(TOKEN, json.dumps(response))
+
+    def test_denied_or_failing_store_never_collects_or_exposes_details(self):
+        for outcome in [False, RuntimeError("PRIVATE-SECRET-PATH-" + TOKEN)]:
+            store = Mock(consume=Mock(side_effect=outcome if isinstance(outcome, Exception) else None,
+                                      return_value=outcome))
+            collector = Mock()
+            server = relay.Server(collector=collector, permission_store=store)
+            ready(server)
+            response = server.handle(call({"permission": TOKEN}))
+            self.assertNotIn("PRIVATE", json.dumps(response))
+            self.assertNotIn(TOKEN, json.dumps(response))
+            self.assertTrue("error" in response or response.get("result", {}).get("isError"))
+            collector.assert_not_called()
+
     def test_synthetic_success_is_bounded_and_truthful(self):
         collector = Mock(side_effect=sample)
-        server = relay.Server(collector=collector, local_enabled=True)
+        server = permitted_server(collector)
         ready(server)
-        response = server.handle(call())
+        response = server.handle(call({"permission": TOKEN}))
         result = response["result"]
         self.assertFalse(result["isError"])
         self.assertEqual(result["structuredContent"], sample())
@@ -148,17 +207,18 @@ class LifecycleContract(unittest.TestCase):
         collector.assert_called_once_with()
 
     def test_omitted_arguments_and_optional_meta_are_supported(self):
-        server = relay.Server(collector=sample, local_enabled=True)
+        server = permitted_server()
         ready(server)
         self.assertIn("result", server.handle(request("tools/list", {"_meta": {"test": 1}})))
         response = server.handle(request("tools/call", {
             "name": relay.TOOL_NAME, "_meta": {"progressToken": "test"},
         }))
-        self.assertFalse(response["result"]["isError"])
+        self.assertTrue(response["result"]["isError"])
+        self.assertEqual(response["result"]["content"][0]["text"], "LOCAL_PILOT_DISABLED")
 
     def test_no_argument_can_expand_scope(self):
         collector = Mock(side_effect=sample)
-        server = relay.Server(collector=collector, local_enabled=True)
+        server = permitted_server(collector)
         ready(server)
         for value in [[], "", True, 1, {"path": "E:\\"}, {"command": "whoami"},
                       {"device": "xiaomi"}, {"approved": True}, {"local_enabled": True},
@@ -169,7 +229,7 @@ class LifecycleContract(unittest.TestCase):
 
     def test_early_and_invalid_initialized_notifications_cannot_enable(self):
         collector = Mock(side_effect=sample)
-        server = relay.Server(collector=collector, local_enabled=True)
+        server = permitted_server(collector)
         server.handle({"jsonrpc": "2.0", "method": "notifications/initialized"})
         self.assertIn("error", server.handle(call()))
         server.handle(initialize())
@@ -186,11 +246,11 @@ class LifecycleContract(unittest.TestCase):
     def test_versions_and_text_compatibility(self):
         for version in ["2024-11-05", "2025-03-26", "2025-06-18", "2099-01-01"]:
             with self.subTest(version=version):
-                server = relay.Server(collector=sample, local_enabled=True)
+                server = permitted_server()
                 response = ready(server, version)
                 selected = response["result"]["protocolVersion"]
                 self.assertEqual(selected, "2025-06-18")
-                result = server.handle(call())["result"]
+                result = server.handle(call({"permission": TOKEN}))["result"]
                 self.assertEqual(json.loads(result["content"][0]["text"]), sample())
                 self.assertEqual("structuredContent" in result, selected == "2025-06-18")
 
@@ -205,7 +265,7 @@ class LifecycleContract(unittest.TestCase):
 
     def test_null_arguments_and_bad_metadata_do_not_invoke_collector(self):
         collector = Mock()
-        server = relay.Server(collector=collector, local_enabled=True)
+        server = permitted_server(collector)
         ready(server)
         message = call()
         message["params"]["arguments"] = None
@@ -217,7 +277,7 @@ class LifecycleContract(unittest.TestCase):
 
     def test_unknown_methods_and_tools_have_no_capabilities(self):
         collector = Mock()
-        server = relay.Server(collector=collector, local_enabled=True)
+        server = permitted_server(collector)
         ready(server)
         for method in ["shell/exec", "resources/read", "roots/list", "PRIVATE-SECRET-PATH"]:
             response = server.handle(request(method))
@@ -229,9 +289,9 @@ class LifecycleContract(unittest.TestCase):
 
     def test_collector_failures_never_expose_details_or_partial_data(self):
         for failure in [RuntimeError("PRIVATE-SECRET-PATH"), relay.DiagnosticError("UNSUPPORTED_PLATFORM")]:
-            server = relay.Server(collector=Mock(side_effect=failure), local_enabled=True)
+            server = permitted_server(Mock(side_effect=failure))
             ready(server)
-            result = server.handle(call())["result"]
+            result = server.handle(call({"permission": TOKEN}))["result"]
             self.assertTrue(result["isError"])
             self.assertNotIn("PRIVATE", json.dumps(result))
             self.assertNotIn("structuredContent", result)
@@ -247,9 +307,9 @@ class LifecycleContract(unittest.TestCase):
         altered["systemVolume"]["drive"] = "E:"
         values.append(altered)
         for value in values:
-            server = relay.Server(collector=lambda: value, local_enabled=True)
+            server = permitted_server(lambda: value)
             ready(server)
-            result = server.handle(call())["result"]
+            result = server.handle(call({"permission": TOKEN}))["result"]
             self.assertTrue(result["isError"])
             self.assertNotIn("SECRET", json.dumps(result))
 
@@ -309,10 +369,11 @@ class TransportContract(unittest.TestCase):
         self.assertTrue(all(len(json.dumps(value).encode()) <= 4096 for value in output))
 
     def test_invalid_startup_flag_never_starts_collector(self):
-        completed = subprocess.run([sys.executable, "-I", "-B", str(ENTRY), "--approved=true"],
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10)
-        self.assertEqual(completed.returncode, 2)
-        self.assertEqual(completed.stdout, b"")
+        for flag in ["--approved=true", "--local-supervised-diagnostics"]:
+            completed = subprocess.run([sys.executable, "-I", "-B", str(ENTRY), flag],
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10)
+            self.assertEqual(completed.returncode, 2)
+            self.assertEqual(completed.stdout, b"")
 
 
 class PackageContract(unittest.TestCase):

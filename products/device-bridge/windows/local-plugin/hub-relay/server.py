@@ -1,13 +1,26 @@
-"""Bounded MCP stdio candidate; disabled unless explicitly enabled at startup.
+"""Bounded MCP stdio candidate; each diagnostic needs a one-use local grant.
 
-The opt-in flag is a local operating profile, not authentication. This candidate
-does not enforce biometrics or implement the HUB_Relay native protocol.
+This local profile does not authenticate chat identities, enforce biometrics,
+or implement the HUB_Relay native protocol.
 """
 
+import importlib.util
 import json
 import math
+from pathlib import Path
 import shutil
 import sys
+
+
+# Explicit sibling loading supports Python -I without adding import search paths.
+try:
+    _permission_spec = importlib.util.spec_from_file_location(
+        "hub_relay_permissions", Path(__file__).absolute().with_name("permissions.py"))
+    permissions = importlib.util.module_from_spec(_permission_spec)
+    _permission_spec.loader.exec_module(permissions)
+except Exception:
+    sys.stderr.write("HUB_RELAY_STARTUP_ERROR\n")
+    raise SystemExit(1) from None
 
 
 MAX_INPUT_BYTES = 16384
@@ -185,9 +198,9 @@ def _empty_params(params):
 
 
 class Server:
-    def __init__(self, collector=diagnostics, local_enabled=False):
+    def __init__(self, collector=diagnostics, permission_store=None):
         self.collector = collector
-        self.local_enabled = local_enabled is True
+        self.permission_store = permission_store
         self.state = "new"
         self.protocol_version = None
 
@@ -251,7 +264,7 @@ class Server:
             return {"protocolVersion": self.protocol_version,
                     "capabilities": {"tools": {"listChanged": False}},
                     "serverInfo": {"name": "hub-relay-local-diagnostics",
-                                   "version": "0.1.0"}}
+                                   "version": "0.2.0"}}
         if method not in ("tools/list", "tools/call"):
             raise ProtocolError(-32601, "Method not found")
         if self.state != "ready":
@@ -260,23 +273,38 @@ class Server:
             _empty_params(params)
             tool = {
                 "name": TOOL_NAME,
-                "description": "Local supervised Windows version and C: capacity. "
-                               "Disabled by default. No biometric authentication; "
+                "description": "Read-only Windows version and C: capacity measurements. "
+                               "Durably consumes one local permission. No biometric authentication; "
                                "not the native HUB_Relay protocol.",
-                "inputSchema": {"type": "object", "properties": {},
+                "inputSchema": {"type": "object", "properties": {
+                                    "permission": {"type": "string", "minLength": 43,
+                                                   "maxLength": 43,
+                                                   "pattern": "^" + permissions.TOKEN_PATTERN + "$"}},
                                 "additionalProperties": False},
                 "annotations": {
-                    "readOnlyHint": True, "destructiveHint": False,
-                    "idempotentHint": True, "openWorldHint": False,
+                    "readOnlyHint": False, "destructiveHint": False,
+                    "idempotentHint": False, "openWorldHint": False,
                 },
             }
             return {"tools": [tool]}
         if (set(params) not in ({"name"}, {"name", "arguments"})
                 or params.get("name") != TOOL_NAME):
             raise ProtocolError(-32602, "Invalid params")
-        _empty_params(params.get("arguments", {}))
-        if not self.local_enabled:
+        arguments = params.get("arguments", {})
+        if type(arguments) is not dict or set(arguments) not in (set(), {"permission"}):
+            raise ProtocolError(-32602, "Invalid params")
+        if not arguments:
             return _tool_error("LOCAL_PILOT_DISABLED")
+        if not permissions.valid_token(arguments["permission"]):
+            raise ProtocolError(-32602, "Invalid params")
+        try:
+            store = self.permission_store
+            if store is None:
+                store = permissions.from_environment()
+            if store.consume(arguments["permission"]) is not True:
+                return _tool_error("PERMISSION_DENIED")
+        except Exception:
+            return _tool_error("PERMISSION_STORE_UNAVAILABLE")
         try:
             result = _validate_collector_result(self.collector())
         except DiagnosticError as error:
@@ -322,11 +350,10 @@ class Server:
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
-    if argv not in ([], ["--local-supervised-diagnostics"]):
-        sys.stderr.write("Usage: server.py [--local-supervised-diagnostics]\n")
+    if argv:
+        sys.stderr.write("Usage: server.py\n")
         return 2
-    return Server(local_enabled=bool(argv)).run(sys.stdin.buffer, sys.stdout.buffer,
-                                                sys.stderr)
+    return Server().run(sys.stdin.buffer, sys.stdout.buffer, sys.stderr)
 
 
 if __name__ == "__main__":
