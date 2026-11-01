@@ -1,0 +1,106 @@
+name: Optimus isolated real-Web acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Complete lowercase 40-hex product SHA; no branch or tag input
+        type: string
+        required: true
+        default: 0790e0977c170ff8507bb73e0ec7b6e166755892
+permissions:
+  contents: read
+concurrency:
+  group: optimus-real-web-acceptance-2062
+  cancel-in-progress: false
+jobs:
+  real-web:
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' &&
+          github.repository == 'Voxterrae/HUB_Optimus' &&
+          github.repository_id == '1115264109' &&
+          github.event.repository.private == false &&
+          github.ref == 'refs/heads/main' &&
+          github.actor_id == '249308740' &&
+          github.actor == 'Voxterrae' &&
+          github.triggering_actor == 'Voxterrae' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      OPTIMUS_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      OPTIMUS_WORKFLOW_COMMIT: ${{ github.workflow_sha }}
+      OPTIMUS_SEARX_COMMIT: 8b35dcd2e312d1d30fcfcbf6a9d01bda6fc52192
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Validate exact source before any checkout
+        working-directory: ${{ runner.temp }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$OPTIMUS_SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo 'Blocked: complete lowercase product SHA required.'; exit 2; }
+          [[ "$OPTIMUS_WORKFLOW_COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo 'Blocked: workflow provenance unavailable.'; exit 2; }
+      - name: Checkout reviewed harness separately
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: harness
+          persist-credentials: false
+      - name: Checkout exact product
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_commit }}
+          path: product
+          persist-credentials: false
+      - name: Checkout official SearXNG source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: searxng/searxng
+          ref: 8b35dcd2e312d1d30fcfcbf6a9d01bda6fc52192
+          path: searxng
+          persist-credentials: false
+      - name: Verify toolchain and immutable checkouts
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(git -C product rev-parse HEAD)" == "$OPTIMUS_SOURCE_COMMIT" ]]
+          [[ "$(git -C harness rev-parse HEAD)" == "$OPTIMUS_WORKFLOW_COMMIT" ]]
+          [[ "$(git -C searxng rev-parse HEAD)" == "$OPTIMUS_SEARX_COMMIT" ]]
+          [[ "$(cd product/products/browser/search && dotnet --version)" == '10.0.403' ]]
+          python3 -c 'import sys; assert sys.version_info >= (3, 11)'
+      - name: Prepare disposable direct-pinned upstream dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/optimus-searx-venv"
+          "$RUNNER_TEMP/optimus-searx-venv/bin/python" -m pip install --no-cache-dir --report "$RUNNER_TEMP/optimus-pip-report.json" -r searxng/requirements.txt > "$RUNNER_TEMP/optimus-pip-install.log" 2>&1
+      - name: Build real product host and harness against product Core
+        shell: bash
+        run: |
+          set -euo pipefail
+          export NUGET_PACKAGES="$RUNNER_TEMP/optimus-nuget"
+          export DOTNET_CLI_HOME="$RUNNER_TEMP/optimus-dotnet"
+          cd "$GITHUB_WORKSPACE/product/products/browser/search"
+          dotnet publish src/Optimus.Search/Optimus.Search.csproj -c Release --self-contained false "-p:SourceRevisionId=$OPTIMUS_SOURCE_COMMIT" -o "$RUNNER_TEMP/optimus-real-web-host"
+          dotnet build "$GITHUB_WORKSPACE/harness/products/browser/search/tools/RealWebSmoke/RealWebSmoke.csproj" -c Release "-p:OptimusProductRoot=$GITHUB_WORKSPACE/product" "-p:SourceRevisionId=$OPTIMUS_SOURCE_COMMIT" -o "$RUNNER_TEMP/optimus-real-web-probe"
+          dotnet "$RUNNER_TEMP/optimus-real-web-probe/RealWebSmoke.dll" --self-test
+      - name: Run two fixed typed-client queries and record sanitized outcome
+        shell: bash
+        run: |
+          set -uo pipefail
+          python3 harness/products/browser/search/tools/real_web_smoke.py --product-root "$GITHUB_WORKSPACE/product" --harness-root "$GITHUB_WORKSPACE/harness" --searx-root "$GITHUB_WORKSPACE/searxng" --searx-python "$RUNNER_TEMP/optimus-searx-venv/bin/python" --host "$RUNNER_TEMP/optimus-real-web-host/Optimus.SearchHost.dll" --probe "$RUNNER_TEMP/optimus-real-web-probe/RealWebSmoke.dll" --source "$OPTIMUS_SOURCE_COMMIT" --workflow "$OPTIMUS_WORKFLOW_COMMIT" --dependency-report "$RUNNER_TEMP/optimus-pip-report.json" > "$RUNNER_TEMP/optimus-real-web-result.json"
+          outcome=$?
+          if [[ -f "$RUNNER_TEMP/optimus-real-web-result.json" ]]; then
+            cat "$RUNNER_TEMP/optimus-real-web-result.json"
+            {
+              echo '# Optimus isolated real-Web acceptance'
+              echo 'Two fixed logical queries; failures, empty/irrelevant output and cleanup failures remain blocked.'
+              echo 'No artifacts/cache uploaded. No persistent service, public endpoint or production-Web acceptance.'
+              echo '```json'
+              cat "$RUNNER_TEMP/optimus-real-web-result.json"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$outcome"

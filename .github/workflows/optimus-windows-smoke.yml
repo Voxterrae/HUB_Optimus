@@ -9,7 +9,7 @@ on:
         description: Complete lowercase 40-hex product SHA to test in this disposable runner
         type: string
         required: true
-        default: 4c9ee43aa2a435abc18a6c63399fb2a99a698e58
+        default: 0790e0977c170ff8507bb73e0ec7b6e166755892
       gui:
         description: Attempt GUI/UIAutomation on a clean interactive runner (blocked if unavailable)
         type: boolean
