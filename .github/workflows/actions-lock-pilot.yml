@@ -20,9 +20,6 @@ jobs:
       PILOT_BASE_SHA: 5b1f5989a6626ad1abe9ba84ef42595bd77f4c16
       PILOT_SOURCE_BLOB: 658e026485e6386f727ea367825328e4fda2a4db
       PILOT_WORKFLOW: .github/workflows/link-check.yml
-      GH_ACTIONS_LOCK_REPO_ROOT: ${{ runner.temp }}/actions-lock-pilot-stage
-      ACTIONS_LOCK_BIN: ${{ runner.temp }}/gh-actions-lock-v0.4.0
-      PILOT_EVIDENCE: ${{ runner.temp }}/actions-lock-pilot-evidence
 
     steps:
       - name: Read the exact reviewed baseline
@@ -34,6 +31,8 @@ jobs:
 
       - name: Download the official generator and check its bytes
         shell: bash
+        env:
+          ACTIONS_LOCK_BIN: ${{ runner.temp }}/gh-actions-lock-v0.4.0
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --location --max-time 60 --retry 2 \
@@ -50,6 +49,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_HOST: github.com
+          GH_ACTIONS_LOCK_REPO_ROOT: ${{ runner.temp }}/actions-lock-pilot-stage
+          ACTIONS_LOCK_BIN: ${{ runner.temp }}/gh-actions-lock-v0.4.0
+          PILOT_EVIDENCE: ${{ runner.temp }}/actions-lock-pilot-evidence
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$PILOT_BASE_SHA"
