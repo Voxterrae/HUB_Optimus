@@ -88,6 +88,11 @@ extract the generated ZIP to a new local directory first and run its capture scr
 
 ## Verify the extracted files and capture privately
 
+Use PowerShell7 and Python3.12+ on native Windows AMD64. The release uses the
+Microsoft VC140/UCRT runtime and Windows COM/core components named exactly in
+`manifest.json` static imports; these must already be available on the host.
+The bundle contains no DLLs and performs no prerequisite installation.
+
 ```powershell
 python -B tools/package_inventory.py --verify '<extracted bundle folder>'
 .\scripts\Run-RelayInventory.ps1 -PrivateCaptureDirectory '<new private evidence folder>'
