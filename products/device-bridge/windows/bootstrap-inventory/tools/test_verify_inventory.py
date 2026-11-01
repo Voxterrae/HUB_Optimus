@@ -202,13 +202,34 @@ class ReceiptTests(unittest.TestCase):
         error["completion"] = None; self.reject(value)
         value = receipt(); value["errors"] = [cleanup] * 256; value["cleanup"]="failed"; self.reject(value)
 
-    def test_nt_informational_success_is_not_a_native_failure(self):
+    def test_nt_informational_statuses_preserve_native_terminal_refusals(self):
+        # The collector accepts only exact STATUS_SUCCESS. Other nonpending
+        # raw statuses remain native terminal evidence, even when NT_SUCCESS.
+        for call, io in ((1, 0), (0, 1), (0x40000000, 0), (0, 0x40000000),
+                         (0x7FFFFFFF, 0), (0, 0x7FFFFFFF)):
+            with self.subTest(call=call, io_status=io):
+                value=receipt(); error=value["errors"][0]
+                error.update(operation="NtCreateFile",domain="ntstatus",code=call,reason=None,
+                             completion=dict(call=call,io_status=io,information="99"))
+                self.assertEqual(verifier.parse_receipt(raw(value)), value)
+                error["code"]=call ^ 1; self.reject(value)
+                error.update(domain="internal",code=None,reason="malformed"); self.reject(value)
         value=receipt(); error=value["errors"][0]
-        error.update(operation="NtCreateFile",domain="internal",reason="malformed",
-                     completion=dict(call=0x40000000,io_status=0,information="99"))
-        verifier.parse_receipt(raw(value))
-        error.update(domain="ntstatus",reason=None,code=0x40000000)
+        error.update(operation="NtQueryInformationFile",domain="ntstatus",code=0,reason=None,
+                     completion=dict(call=0,io_status=0,information="99"))
         self.reject(value)
+        error.update(domain="internal",code=None,reason="malformed")
+        self.assertEqual(verifier.parse_receipt(raw(value)), value)
+
+    def test_nt_status_domain_still_rejects_pending_and_unwritten_completions(self):
+        for call, io, information in ((0x103, 0, 4), (0, 0x103, 4),
+                                       (0xC0000022, 0x103, 0),
+                                       (0, 0xC0000001, (1 << 64) - 1),
+                                       (1, 0xC0000001, (1 << 64) - 1)):
+            value=receipt(); error=value["errors"][0]
+            error.update(operation="NtQueryInformationFile",domain="ntstatus",code=call,reason=None,
+                         completion=dict(call=call,io_status=io,information=str(information)))
+            self.reject(value)
 
     def test_normalized_native_root_without_terminal_slash(self):
         value=receipt(True)

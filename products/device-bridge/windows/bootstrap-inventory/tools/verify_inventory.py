@@ -263,8 +263,10 @@ def _error(value):
         if (value["operation"] not in _NT or call == 0x103 or io == 0x103
                 or (call < 0x80000000 and io == 0xC0000001 and info == _U64_MAX)): _reject()
         if value["domain"] == "ntstatus":
-            if value["code"] != call or (call < 0x80000000 and io < 0x80000000): _reject()
-        elif value["domain"] != "internal" or value["reason"] != "malformed" or call >= 0x80000000 or io >= 0x80000000: _reject()
+            # The collector requires exact STATUS_SUCCESS, not NT_SUCCESS.
+            # Other terminal statuses retain their original native domain.
+            if value["code"] != call or (call == 0 and io == 0): _reject()
+        elif value["domain"] != "internal" or value["reason"] != "malformed" or call != 0 or io != 0: _reject()
     elif value["domain"] == "ntstatus": _reject()
     if value["kind"] == "receipt":
         if value != _RECEIPT_ERROR: _reject()
