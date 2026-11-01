@@ -150,6 +150,7 @@ mod native {
         let result=(|| {
             if granted(ctx,source,scope)?&METADATA_RIGHTS!=METADATA_RIGHTS { return Err(scope.error(Operation::Validate,Reason::Policy)); }
             scope.check(ctx,Operation::DuplicateHandle)?;
+            ctx.before_acquire(ResourceKind::Directory).map_err(|e|scope.attach(e))?;
             let mut raw=null_mut();
             if unsafe {DuplicateHandle(GetCurrentProcess(),ctx.raw(source),GetCurrentProcess(),&mut raw,METADATA_RIGHTS,0,0)}==0 { return Err(scope.last(Operation::DuplicateHandle)); }
             if raw.is_null() || raw==INVALID_HANDLE_VALUE { return Err(scope.error(Operation::DuplicateHandle,Reason::Malformed)); }
@@ -163,6 +164,7 @@ mod native {
     }
     fn open_root(ctx: &mut Context<'_>,root: &[u16;50],scope: Scope) -> Result<usize> {
         scope.check(ctx,Operation::CreateFileW)?;
+        ctx.before_acquire(ResourceKind::Directory).map_err(|e|scope.attach(e))?;
         let raw=unsafe {CreateFileW(root.as_ptr(),METADATA_RIGHTS,FILE_SHARE_READ|FILE_SHARE_DELETE,null(),OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,null_mut())};
         if raw==INVALID_HANDLE_VALUE { return Err(scope.last(Operation::CreateFileW)); }
         if raw.is_null() { return Err(scope.error(Operation::CreateFileW,Reason::Malformed)); }
@@ -177,6 +179,7 @@ mod native {
         let attrs=OBJECT_ATTRIBUTES {Length:size_of::<OBJECT_ATTRIBUTES>() as u32,RootDirectory:ctx.raw(parent),ObjectName:&unicode,Attributes:OBJ_CASE_INSENSITIVE|OBJ_DONT_REPARSE,SecurityDescriptor:null(),SecurityQualityOfService:null()};
         let mut raw=null_mut(); let mut io=iosb();
         scope.check(ctx,Operation::NtCreateFile)?;
+        ctx.before_acquire(ResourceKind::Directory).map_err(|e|scope.attach(e))?;
         let call=unsafe {nt::NtCreateFile(&mut raw,METADATA_RIGHTS,&attrs,&mut io,null(),0,FILE_SHARE_READ|FILE_SHARE_DELETE,nt::FILE_OPEN,nt::FILE_SYNCHRONOUS_IO_NONALERT|nt::FILE_OPEN_REPARSE_POINT,null(),0)};
         let c=completion(call,&io); let valid=!raw.is_null() && raw!=INVALID_HANDLE_VALUE;
         // A rejected terminal call can still return an owned handle. Register it
@@ -184,7 +187,7 @@ mod native {
         // it once during reverse cleanup. Pending aborts before that registration.
         match classify_completion(c,1,valid) {
             CompletionClass::FatalPending=>std::process::abort(),
-            CompletionClass::Reject=>{ if valid {ctx.defer(raw,ResourceKind::Directory);} return Err(scope.attach(completion_error(scope.phase,Operation::NtCreateFile,c))); }
+            CompletionClass::Reject=>{ if valid {let _=ctx.defer(raw,ResourceKind::Directory);} return Err(scope.attach(completion_error(scope.phase,Operation::NtCreateFile,c))); }
             CompletionClass::Complete=>{}
         }
         let source=ctx.acquire(raw,ResourceKind::Directory).map_err(|e|scope.attach(e))?;
@@ -403,6 +406,43 @@ mod native {
         if records.len()!=state.count || records.is_empty() || records.len()>MAX_ANCESTORS { return Err(scope.error(Operation::Validate,Reason::Malformed)); }
         check_parts(ctx,state,anchor,records,Phase::Recheck)
     }
+    #[cfg(test)]
+    mod completion_tests {
+        use super::*;
+        use std::process::Command;
+
+        #[test]
+        fn pending_aborts_with_native_storage_live() {
+            const SELECTOR: &str="HUB_RELAY_INVENTORY_FATAL_PENDING_FIXTURE";
+            if let Some(case)=std::env::var_os(SELECTOR) {
+                struct Guard<'a>(&'a mut [u8]);
+                impl Drop for Guard<'_> {
+                    fn drop(&mut self) {
+                        std::hint::black_box(&mut self.0);
+                        eprintln!("unexpected_native_storage_unwind");
+                    }
+                }
+                let mut native_storage=[0u8;4096];
+                let guard=Guard(&mut native_storage);
+                std::hint::black_box(&guard);
+                let mut io=iosb();
+                if case.as_os_str()==std::ffi::OsStr::new("pending") {io.Anonymous.Status=0x103;}
+                let status=terminal(Scope {phase:Phase::Capture,index:Some(0)},Operation::NtQueryInformationFile,completion(0,&io),4,true);
+                std::hint::black_box(&guard);
+                panic!("unexpected terminal return: {:?}",status);
+            }
+            for case in ["pending","unwritten"] {
+                let output=Command::new(std::env::current_exe().unwrap())
+                    .args(["--exact","directories::native::completion_tests::pending_aborts_with_native_storage_live","--nocapture"])
+                    .env(SELECTOR,case).output().unwrap();
+                assert!(!output.status.success(),"fatal fixture must abort its owned child");
+                assert!(!output.stderr.windows(b"unexpected_native_storage_unwind".len()).any(|w|w==b"unexpected_native_storage_unwind"));
+                assert!(!output.stderr.windows(b"unexpected terminal return".len()).any(|w|w==b"unexpected terminal return"));
+                assert!(!output.stdout.windows(b"hub_relay.bootstrap_inventory".len()).any(|w|w==b"hub_relay.bootstrap_inventory"));
+            }
+        }
+    }
+
 }
 
 #[cfg(all(test,windows,target_arch="x86_64"))]
@@ -428,7 +468,7 @@ mod native_tests {
             let before=arena.used();
             recheck(&mut ctx,&directories)?;
             stable_arena=before==arena.used();
-            process::recheck(&mut ctx,&process_state)
+            process::recheck(&mut ctx,&mut process_state)
         })();
         if let Err(error)=result {ctx.errors.primary(error);}
         let _=ctx.finish_cleanup();
@@ -438,5 +478,10 @@ mod native_tests {
         assert!(!ctx.errors.unrepresentable());
         assert!(directories.anchor.is_some());
         assert!(directories.ancestors.is_some_and(|records|!records.is_empty() && records.len()<=MAX_ANCESTORS));
+        let retained=directories.ancestors.unwrap().len();
+        assert_eq!(ctx.resources.peak(crate::windows::ResourceKind::Directory),retained+1);
+        assert!(ctx.resources.peak(crate::windows::ResourceKind::ProcessToken)<=4);
+        assert_eq!(ctx.resources.live(crate::windows::ResourceKind::Directory),0);
+        assert_eq!(ctx.resources.live(crate::windows::ResourceKind::ProcessToken),0);
     }
 }

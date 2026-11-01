@@ -56,12 +56,13 @@ impl Arena {
         if alignment > align_of::<u64>() || !alignment.is_power_of_two() {
             return Err(budget());
         }
+        // Empty views have no readable bytes and need no arena padding even
+        // when the last occupied byte is not aligned for the requested type.
+        if bytes == 0 { return Ok(ptr::NonNull::<u64>::dangling().as_ptr().cast()); }
         let start = self.used.get().checked_add(alignment - 1)
             .ok_or_else(budget)? & !(alignment - 1);
         let end = start.checked_add(bytes).ok_or_else(budget)?;
         if end > self.capacity || bytes > isize::MAX as usize { return Err(budget()); }
-        // Zero-length views consume no padding; they carry no readable bytes.
-        if bytes == 0 { return Ok(ptr::NonNull::<u64>::dangling().as_ptr().cast()); }
         self.used.set(end);
         self.peak.set(self.peak.get().max(end));
         // SAFETY: end is within the original allocation; no operation ever
@@ -115,7 +116,7 @@ impl Arena {
 
     // The only writable view covers a fresh, unpublished UTF-8 range. Both
     // passes decode the same borrowed input; valid scalars initialize all bytes.
-    // SAFETY contract: target must identify a writable, disjoint range of bytes
+    // SAFETY contract: target must identify a writable, disjoint range of length
     // bytes, remain allocated for 'a, and never be mutated after this returns a
     // view. Only path/text call this, with a reservation borrowed from self.
     unsafe fn write_utf8<'a>(target: *mut u8, bytes: usize, utf16: &[u16]) -> Result<&'a str> {

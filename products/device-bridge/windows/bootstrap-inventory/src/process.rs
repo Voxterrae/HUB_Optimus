@@ -371,6 +371,7 @@ mod native {
     fn open_primary(ctx: &mut Context<'_>, process_slot: usize, phase: Phase) -> Result<usize> {
         let mut handle = std::ptr::null_mut();
         ctx.check(Operation::OpenProcessToken, phase)?;
+        ctx.before_acquire(ResourceKind::ProcessToken)?;
         if unsafe { OpenProcessToken(ctx.raw(process_slot), 0x0008, &mut handle) } == 0 {
             return Err(last_error(phase, Operation::OpenProcessToken));
         }
@@ -380,6 +381,7 @@ mod native {
     fn thread<'a>(ctx: &mut Context<'a>, state: &mut State<'a>, phase: Phase) -> Result<()> {
         let mut handle = std::ptr::null_mut();
         ctx.check(Operation::OpenThreadToken, phase)?;
+        ctx.before_acquire(ResourceKind::ProcessToken)?;
         if unsafe { OpenThreadToken(GetCurrentThread(), 0x0008, 1, &mut handle) } == 0 {
             let code = unsafe { GetLastError() };
             state.thread_context = ThreadContext::Unknown;
@@ -405,6 +407,7 @@ mod native {
         }
         let mut handle = std::ptr::null_mut();
         ctx.check(Operation::DuplicateHandle, Phase::Capture)?;
+        ctx.before_acquire(ResourceKind::ProcessToken)?;
         if unsafe { DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
             &mut handle, 0x1000, 0, 0) } == 0 { // QUERY_LIMITED_INFORMATION; no SYNCHRONIZE/options.
             return Err(last_error(Phase::Capture, Operation::DuplicateHandle));

@@ -169,7 +169,7 @@ fn errors(values:&[Error]) -> Result<(bool,bool)> {
                     && completion.call as i32>=0 && completion.io_status as i32>=0)?,
                 _=>return Err(bad()),
             }
-        } else if nt && error.domain==Domain::Ntstatus {return Err(bad());}
+        } else if error.domain==Domain::Ntstatus {return Err(bad());}
     }
     bounded(receipt || values.len()<=255)?;
     Ok((cleanup,receipt))

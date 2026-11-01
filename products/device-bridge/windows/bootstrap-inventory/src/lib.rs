@@ -9,3 +9,5 @@ pub mod directories;
 pub mod os_policy;
 #[cfg(windows)]
 pub mod windows;
+
+pub mod collector;
