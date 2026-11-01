@@ -196,7 +196,7 @@ overlapped I/O. Its explicit protected DACL grants only the expected logon SID
 the individual client mask `0x00120183`. That mask excludes bit `0x4`,
 `FILE_CREATE_PIPE_INSTANCE`; no `FILE_GENERIC_WRITE` grant is made. All endpoint,
 event and retained process/token handles are noninheritable. The client opens
-with `SECURITY_SQOS_PRESENT | SECURITY_IDENTIFICATION` and verifies the kernel
+with `SECURITY_SQOS_PRESENT | SECURITY_IDENTIFICATION | SECURITY_CONTEXT_TRACKING` and verifies the kernel
 server PID against its independently held expected server before its first byte.
 The server compares the kernel client PID with its held expected client.
 
@@ -217,7 +217,7 @@ query, exact identification-level/context comparison with independently captured
 primary evidence, and `RevertToSelf`. A zero `TokenIsAppContainer` value on an
 identification token is not an independent app-container exclusion proof; this
 primitive relies on the held primary context and the other message checks.
-The native function binds the last message
+The impersonation query exposes the OS-presented context of the last message
 read on that thread. Preexisting impersonation denies without clearing it.
 A failed revert terminates the hosting process. See Microsoft's
 [message impersonation documentation](https://learn.microsoft.com/en-us/windows/win32/api/namedpipeapi/nf-namedpipeapi-impersonatenamedpipeclient).
@@ -273,3 +273,28 @@ The HTTP.sys foundation remains independent. After protected
 integration, use a focused reviewed revert. Code removal does not delete
 persistent CNG keys: delete only references owned by the test or application
 while they remain available. Never enumerate or delete unrelated containers.
+
+## Cooperative-client SQOS regression
+
+[Issue #2044](https://github.com/Voxterrae/HUB_Optimus/issues/2044) tracks the
+focused correction of [#2003's static-tracking finding](https://github.com/Voxterrae/HUB_Optimus/pull/2003#discussion_r4383495003).
+The cooperative client selects dynamic context tracking so authentication after
+HELLO and FINISH can observe a later context change. A pipe server cannot impose
+these SQOS flags on another client. An arbitrary client selecting static tracking
+can still cause Windows to present its opening context. The held process and
+primary-token, kernel PID and exact-level checks remain required; they do not
+establish arbitrary-client last-message freshness or executable provenance.
+
+New native regressions obtain the pipe through the actual Client::connect path,
+then switch to separately filtered or restricted tokens after connect before
+HELLO, or between CHALLENGE and FINISH. Positive controls use an equivalent
+context in a distinct token. Altered-token fixtures retain that token through
+the server acknowledgement or closure; they do not race an immediate reversion.
+
+The branch-scoped Windows2022/Rust1.99 workflow compiles the crate but executes
+only bootstrap_peer::tests. Native assertion details stay in disposable private
+files; public logs contain only fixed test names and count summaries. The single
+ignored subprocess entry is invoked explicitly by parent tests and is not counted
+as a passing security case. Actual exact-head runs and outcomes belong in the
+associated PR, separately from the historical GNU evidence above. No CNG or
+HTTP.sys tests, key, service, root creation, or activation are included.
