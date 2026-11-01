@@ -824,8 +824,8 @@ fn native_second_instance_and_handle_noninheritance() {
             PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED,
             PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_REJECT_REMOTE_CLIENTS,
             1,
-            96,
-            96,
+            FRAME_LEN as u32,
+            FRAME_LEN as u32,
             0,
             std::ptr::null(),
         )
