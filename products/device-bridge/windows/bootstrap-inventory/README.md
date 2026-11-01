@@ -39,7 +39,8 @@ The separate build/verification/capture tools use explicit local file paths.
 - The owned arena capacity is not a total heap/RSS limit. Allocator metadata,
   Rust/stdio infrastructure and bounded/identified OS-owned allocations remain
   outside that logical arena ledger. Native calls can block beyond the10s
-  observation budget; this is an acceptance budget, not cancellation.
+  observation budget; this is an acceptance budget, not cancellation. A backwards
+  wall-clock observation also conservatively refuses; no clock supplies authority.
 - Pending NT completion or the retained unwritten-IOSB sentinel aborts without
   unwinding or a valid receipt while native storage is live. Checked cleanup
   runs in reverse acquisition order and consumes each closer exactly once.
