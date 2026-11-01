@@ -91,7 +91,7 @@ public static class HubRelayPrivateDirectory {
         // deliberately no FILE_SHARE_DELETE. OPEN_REPARSE_POINT never follows
         // a leaf reparse object. Every parent handle stays retained through write.
         IntPtr handle=CreateFileW(path,0x120080,3,IntPtr.Zero,3,0x02200000,IntPtr.Zero);
-        if (handle==IntPtr.Zero || handle==new IntPtr(-1)) throw new InvalidOperationException("Private namespace unavailable");
+        if (handle==IntPtr.Zero || handle==new IntPtr(-1)) throw new InvalidOperationException("Private namespace open failed");
         lease.Add(handle);
         AttributeTag info;
         if (!GetFileInformationByHandleEx(handle,9,out info,8) || (info.Attributes & 0x410)!=0x10 || info.Tag!=0)
@@ -114,18 +114,18 @@ public static class HubRelayPrivateDirectory {
     private static void CheckDescriptor(RawSecurityDescriptor descriptor, HashSet<string> trusted, bool finalParent) {
         if (descriptor.Owner==null || !trusted.Contains(descriptor.Owner.Value) || descriptor.DiscretionaryAcl==null
             || (descriptor.ControlFlags & ControlFlags.DiscretionaryAclPresent)==0)
-            throw new InvalidOperationException("Private namespace unavailable");
+            throw new InvalidOperationException("Private namespace owner or DACL unsupported");
         foreach (GenericAce entry in descriptor.DiscretionaryAcl) {
             CommonAce ace=entry as CommonAce;
             if (ace==null || ace.IsCallback || (ace.AceQualifier!=AceQualifier.AccessAllowed && ace.AceQualifier!=AceQualifier.AccessDenied))
-                throw new InvalidOperationException("Private namespace unavailable");
+                throw new InvalidOperationException("Private namespace ACE unsupported");
             if (ace.AceQualifier==AceQualifier.AccessDenied || trusted.Contains(ace.SecurityIdentifier.Value)) continue;
             bool applies=(ace.AceFlags & AceFlags.InheritOnly)==0;
             bool inheritedByNewDirectory=finalParent && (ace.AceFlags & AceFlags.ContainerInherit)!=0;
             // DENY entries never subtract ALLOW grants. Allow add-subdirectory
             // alone: presquatting the final requested name makes creation fail.
             if ((applies || inheritedByNewDirectory) && (unchecked((uint)ace.AccessMask) & 0x500D0152U)!=0)
-                throw new InvalidOperationException("Private namespace unavailable");
+                throw new InvalidOperationException("Private namespace grants untrusted mutation");
         }
     }
     public static Lease Create(string destination, string userSid) {
