@@ -115,4 +115,32 @@ mod tests{
   assert_eq!(ctx.resources.live(crate::windows::ResourceKind::ProcessToken),0);
   assert!(!ctx.errors.unrepresentable());
  }
+ #[cfg(all(windows,target_arch="x86_64",target_env="msvc"))]
+ #[test]fn every_checked_native_boundary_refuses_and_consumes_owned_handles(){
+  let steps={
+   let arena=Arena::new(PRODUCTION_CAPACITY).unwrap();let output=arena.output(OUTPUT_CAPACITY).unwrap();
+   let mut refusal=[0;REFUSAL_CAPACITY];let mut ctx=crate::windows::Context::new(&arena);
+   assert!(pipeline(&mut ctx,output,&mut refusal,&mut std::io::sink()).is_ok());ctx.operation_count()
+  };
+  assert!(steps>0&&steps<=1024);
+  for step in 1..=steps {
+   let arena=Arena::new(PRODUCTION_CAPACITY).unwrap();let output=arena.output(OUTPUT_CAPACITY).unwrap();
+   let mut refusal=[0;REFUSAL_CAPACITY];let mut ctx=crate::windows::Context::new(&arena);ctx.fail_on(step);
+   assert_eq!(pipeline(&mut ctx,output,&mut refusal,&mut std::io::sink()),Ok(Outcome::Refused));
+   assert_eq!(ctx.resources.live(crate::windows::ResourceKind::Directory),0);
+   assert_eq!(ctx.resources.live(crate::windows::ResourceKind::ProcessToken),0);
+   assert!(!ctx.errors.unrepresentable());
+  }
+ }
+ #[cfg(all(windows,target_arch="x86_64",target_env="msvc"))]
+ #[test]fn reported_close_failure_never_becomes_observed_or_retried(){
+  let arena=Arena::new(PRODUCTION_CAPACITY).unwrap();let output=arena.output(OUTPUT_CAPACITY).unwrap();
+  let mut refusal=[0;REFUSAL_CAPACITY];let mut ctx=crate::windows::Context::new(&arena);ctx.inject_reported_close_failure();
+  assert_eq!(pipeline(&mut ctx,output,&mut refusal,&mut std::io::sink()),Ok(Outcome::Refused));
+  assert!(ctx.errors.cleanup_failed());
+  assert_eq!(ctx.resources.live(crate::windows::ResourceKind::Directory),0);
+  assert_eq!(ctx.resources.live(crate::windows::ResourceKind::ProcessToken),0);
+  let count=ctx.errors.as_slice().len();ctx.finish_cleanup();assert_eq!(ctx.errors.as_slice().len(),count);
+ }
+
 }

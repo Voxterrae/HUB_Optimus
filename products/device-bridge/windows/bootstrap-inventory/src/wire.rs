@@ -163,10 +163,12 @@ fn errors(values:&[Error]) -> Result<(bool,bool)> {
             match error.domain {
                 Domain::Ntstatus=>{
                     require(error.code==Some(completion.call))?;
-                    require((completion.call as i32)<0 || (completion.io_status as i32)<0)?;
+                    // Acquisition accepts exact STATUS_SUCCESS only. Preserve
+                    // unexpected informational statuses as native evidence too.
+                    require(completion.call!=0 || completion.io_status!=0)?;
                 },
                 Domain::Internal=>require(error.reason==Some(Reason::Malformed)
-                    && completion.call as i32>=0 && completion.io_status as i32>=0)?,
+                    && completion.call==0 && completion.io_status==0)?,
                 _=>return Err(bad()),
             }
         } else if error.domain==Domain::Ntstatus {return Err(bad());}
