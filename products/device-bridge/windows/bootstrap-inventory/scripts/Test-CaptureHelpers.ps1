@@ -37,7 +37,12 @@ try {
     $refused=$false
     try { $unexpected=[HubRelayPrivateDirectory]::Create((Join-Path $unsafe 'child'),$identity); $unexpected.Dispose() } catch { $refused=$true }
     if (-not $refused) { throw 'Writable parent accepted.' }
-    Write-Output 'Private namespace fixtures: 4 passed.'
+    $junction=Join-Path $ScratchDirectory 'junction'
+    [void](New-Item -ItemType Junction -Path $junction -Target ($destination+'-moved'))
+    $refused=$false
+    try { $unexpected=[HubRelayPrivateDirectory]::Create((Join-Path $junction 'child'),$identity); $unexpected.Dispose() } catch { $refused=$true }
+    if (-not $refused) { throw 'Reparse namespace accepted.' }
+    Write-Output 'Private namespace fixtures: 5 passed.' 
     $fixture=Join-Path $ScratchDirectory 'fixture.cs'
     @'
 using System;
@@ -46,6 +51,7 @@ public static class Fixture {
     public static void Main() {
         string mode=Environment.GetEnvironmentVariable("HUB_RELAY_OWNED_FIXTURE");
         if (mode=="timeout") {Thread.Sleep(5000); return;}
+        if (mode=="stderr") {byte[] b=new byte[8192]; for(int i=0;i<100;++i) Console.OpenStandardError().Write(b,0,b.Length); return;}
         if (mode=="flood") {byte[] b=new byte[8192]; for(int i=0;i<5000;++i) Console.OpenStandardOutput().Write(b,0,b.Length); return;}
         Console.Write("{}");
     }
@@ -56,17 +62,23 @@ public static class Fixture {
     if ($LASTEXITCODE -ne 0) { throw 'Owned child fixture compile failed.' }
     $saved=[Environment]::GetEnvironmentVariable('HUB_RELAY_OWNED_FIXTURE')
     try {
-        foreach ($mode in @('complete','timeout','flood')) {
+        foreach ($mode in @('complete','timeout','flood','stderr')) {
             [Environment]::SetEnvironmentVariable('HUB_RELAY_OWNED_FIXTURE',$mode)
             $output=Join-Path $ScratchDirectory ($mode+'.bin')
-            $result=[HubRelayCapture]::Run($fixtureExe,$output,(Join-Path $ScratchDirectory ($mode+'.err')),1)
+            $errorOutput=Join-Path $ScratchDirectory ($mode+'.err')
+            $seconds=if ($mode -eq 'timeout') {1} else {15}
+            $result=[HubRelayCapture]::Run($fixtureExe,$output,$errorOutput,$seconds)
             if ($mode -eq 'complete') {
                 if (-not $result.Complete -or $result.ExitCode -ne 0 -or ([IO.FileInfo]::new($output)).Length -ne 2) { throw 'Complete transfer failed.' }
             } elseif ($result.Complete) { throw 'Incomplete transfer accepted.' }
-            if (([IO.FileInfo]::new($output)).Length -gt 33554432) { throw 'Transfer cap exceeded.' }
+            $retained=([IO.FileInfo]::new($output)).Length
+            $retainedErrors=([IO.FileInfo]::new($errorOutput)).Length
+            if ($retained -gt 33554432 -or $retainedErrors -gt 65536) { throw 'Transfer cap exceeded.' }
+            if ($mode -eq 'flood' -and $retained -ne 33554432) { throw 'Stdout overflow cap was not reached.' }
+            if ($mode -eq 'stderr' -and $retainedErrors -ne 65536) { throw 'Stderr overflow cap was not reached.' }
         }
     } finally { [Environment]::SetEnvironmentVariable('HUB_RELAY_OWNED_FIXTURE',$saved) }
-    Write-Output 'Capture transfer fixtures: 3 passed.'
+    Write-Output 'Capture transfer fixtures: 4 passed.'
 } finally {
     if ($null -ne $lease) {$lease.Dispose(); if (-not $lease.CleanupComplete) {throw 'Lease cleanup failed.'}}
 }
