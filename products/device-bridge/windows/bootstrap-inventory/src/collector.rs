@@ -120,13 +120,15 @@ mod tests{
   let steps={
    let arena=Arena::new(PRODUCTION_CAPACITY).unwrap();let output=arena.output(OUTPUT_CAPACITY).unwrap();
    let mut refusal=[0;REFUSAL_CAPACITY];let mut ctx=crate::windows::Context::new(&arena);
-   assert!(pipeline(&mut ctx,output,&mut refusal,&mut std::io::sink()).is_ok());ctx.operation_count()
+   assert_eq!(pipeline(&mut ctx,output,&mut refusal,&mut std::io::sink()),Ok(Outcome::Observed));ctx.operation_count()
   };
   assert!(steps>0&&steps<=1024);
   for step in 1..=steps {
    let arena=Arena::new(PRODUCTION_CAPACITY).unwrap();let output=arena.output(OUTPUT_CAPACITY).unwrap();
    let mut refusal=[0;REFUSAL_CAPACITY];let mut ctx=crate::windows::Context::new(&arena);ctx.fail_on(step);
    assert_eq!(pipeline(&mut ctx,output,&mut refusal,&mut std::io::sink()),Ok(Outcome::Refused));
+   assert_eq!(ctx.operation_count(),step);
+   assert_eq!(ctx.errors.as_slice()[0].reason,Some(Reason::Unsupported));
    assert_eq!(ctx.resources.live(crate::windows::ResourceKind::Directory),0);
    assert_eq!(ctx.resources.live(crate::windows::ResourceKind::ProcessToken),0);
    assert!(!ctx.errors.unrepresentable());
