@@ -96,7 +96,9 @@ python -B tools/package_inventory.py --verify '<extracted bundle folder>'
 The capture helper verifies artifact equality, creates the evidence directory
 with a private user/SYSTEM descriptor atomically, validates/retains its parent
 namespace by handle, and retains directory handles without delete sharing during
-writes. A parent namespace writable by an untrusted principal refuses. Existing
+writes. These capture-namespace handles request directory-list access so they
+participate in Windows sharing checks, but perform no enumeration. The collector
+keeps its separate exact metadata-only access mask. A parent namespace writable by an untrusted principal refuses. Existing
 destinations, reparse/unsupported routes or unknown ACL layouts refuse. This does
 not isolate against the same unrestricted principal, administrators, SYSTEM,
 kernel compromise or later privileged mutation.
