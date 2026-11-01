@@ -36,7 +36,7 @@ public sealed class SettingsStore(string path,string? legacyPath=null)
  {var policy=new PrivacyPolicy(s.PrivacyRules);return s with {SessionUrls=s.RestoreSession?s.SessionUrls.Where(url=>policy.CanPersist(url)).ToList():[]};}
  private static void Validate(BrowserSettings s)
  {
-  if(!Enum.IsDefined(s.SearchProvider)||!double.IsFinite(s.TextScale)||s.TextScale<1||s.TextScale>2||s.Bookmarks==null||s.SessionUrls==null || s.Bookmarks.Count>5000||s.SessionUrls.Count>100) throw new ArgumentException("Ajustes inválidos");
+  if(!Enum.IsDefined(s.Theme)||!Enum.IsDefined(s.SearchProvider)||!double.IsFinite(s.TextScale)||s.TextScale<1||s.TextScale>2||s.Bookmarks==null||s.SessionUrls==null || s.Bookmarks.Count>5000||s.SessionUrls.Count>100) throw new ArgumentException("Ajustes inválidos");
   if(s.PrivacyRules==null)throw new ArgumentException("Reglas inválidas");
   PrivacyPolicy.ValidateRules(s.PrivacyRules);
   if(s.SearxEndpoint!=null&&!OptimusSearchService.IsValidEndpoint(s.SearxEndpoint))throw new ArgumentException("Endpoint de búsqueda no válido.");
