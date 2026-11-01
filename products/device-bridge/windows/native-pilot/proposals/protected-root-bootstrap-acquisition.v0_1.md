@@ -62,13 +62,29 @@ of their actual bounds and cleanup behavior. No right is broadened on access den
 | Process facts | `GetProcessId`, `GetProcessTimes`, `QueryFullProcessImageNameW` with flags `0` and `PROCESS_NAME_NATIVE`, and `IsWow64Process2`, using that retained process handle. No process wait is needed, so no `SYNCHRONIZE` request. |
 | Primary token | `OpenProcessToken` with `TOKEN_QUERY` (`0x0008`); `GetTokenInformation` for the classes below. No duplicate, adjustment, assignment or source-query rights. |
 | Thread context | `OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, ...)`; retain and inspect a returned token, then refuse further collection. Only `ERROR_NO_TOKEN` establishes observed nonimpersonation; other errors refuse. |
-| Known folder | `CoInitializeEx(NULL, COINIT_MULTITHREADED)` and `SHGetKnownFolderPath` with the fixed ID, flags zero, token NULL. Copy bounded UTF-16; always `CoTaskMemFree` a returned allocation. Balance successful COM initialization, including `S_FALSE`, with `CoUninitialize`. |
+| Known folder | `CoInitializeEx(NULL, COINIT_MULTITHREADED)` and `SHGetKnownFolderPath` with the fixed ID, only `KF_FLAG_DONT_VERIFY` (`0x00004000`), token NULL. Copy bounded UTF-16; always `CoTaskMemFree` a returned allocation. Balance successful COM initialization, including `S_FALSE`, with `CoUninitialize`. |
 | Directory chain | Existing volume-root open and relative `NtCreateFile` observation path, with `READ_CONTROL \| FILE_READ_ATTRIBUTES \| SYNCHRONIZE` (`0x00120080`), noninheritable handles, `FILE_OPEN`, no mutation or backup-intent rights. Retain existing no-reparse and terminal-completion checks. |
 | Object and volume | `GetFileInformationByHandleEx` with `FileIdInfo`, `FileStandardInfo`, `FileAttributeTagInfo`; `GetFileType`; `GetVolumeInformationByHandleW`; `GetFinalPathNameByHandleW` with normalized GUID and NT-device formats. Use the retained metadata handles. |
 | Mount observation | `GetVolumeNameForVolumeMountPointW` on the known-folder drive root; `GetDriveTypeW` on the observed GUID root. These name-based results are compared with handle observations, not accepted as independently trusted identities. |
 | Owner/DACL | `GetSecurityInfo(SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION \| DACL_SECURITY_INFORMATION)` using `READ_CONTROL`; checked copy, then `LocalFree`. No SACL query or security privilege. |
 | Privilege names | `LookupPrivilegeNameW` with system name NULL, for each captured LUID; bounded local lookup, no remote account or domain lookup. |
 | Timing | `GetSystemTimeAsFileTime` for diagnostic UTC timestamps; monotonic elapsed time from the standard library. Wall-clock time is not freshness authority. |
+
+The existing `ancestor_chain::known_folder` passes flags zero. It cannot be reused
+verbatim for this collector: Shell then verifies existence before the collector
+can reject an unexpected route. Microsoft documents that verification may reach a
+[network location](https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/ne-shlobj_core-known_folder_flag).
+Use the fixed `KF_FLAG_DONT_VERIFY` route for both capture and recheck; never add
+CREATE, INIT, DEFAULT_PATH or a fallback. Reject UNC, device/relative syntax and
+malformed drive paths before mapping or opening. Existence and no-reparse checks
+belong to the retained local NTFS walk. This suppresses Shell's existence probe;
+it is not a general guarantee against network activity by Windows components.
+Changing the future collector's adapter does not silently amend the adopted
+diagnostic helper or claim native validation of this revised API composition.
+
+Directory-handle reduction also calls `GetHandleInformation` to reject inheritance
+and `NtQueryInformationFile(FileAccessInformation)` to check the exact granted
+metadata mask. Preserve both checks without requesting additional rights.
 
 Microsoft documents [process duplication](https://learn.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-duplicatehandle),
 [process-token access](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocesstoken)
@@ -175,7 +191,7 @@ excluding terminator; reject malformed encoding. `Luid={low:u32,high:i32}`.
 | `ancestors` | Root-to-anchor array of `{index:u32,path:path,native_path:path,volume_serial64:u64s,file_id:hex(16),attributes:u32,reparse_tag:u32,delete_pending:bool,owner_dacl:bytes,policy_result:string}`; policy result `match` or `refused`. |
 | `recheck` | `equal`, `changed` or `not_completed`, covering process identity, primary token, thread context, mapping and every retained ancestor. |
 | `product_collision`, `service_collision`, `service_sid_binding` | Fixed `not_observed`, `not_observed`, `external_evidence_required`. |
-| `errors` | Ordered array of `{kind:string,phase:string,operation:string,domain:string,code:u32_or_null,reason:string_or_null,ancestor_index:u32_or_null}` with the closed enums below; no arbitrary error text. |
+| `errors` | Ordered array of `{kind:string,phase:string,operation:string,domain:string,code:u32_or_null,reason:string_or_null,ancestor_index:u32_or_null,completion:Completion_or_null}` with the closed enums below; no arbitrary error text. |
 | `cleanup` | `complete` or `failed`; errors retain each cleanup failure after the primary failure. |
 
 Each token record contains `type:u32`, `impersonation_level:u32_or_null`,
@@ -194,12 +210,16 @@ partial records. Refusal may null unavailable/omitted observation records; compl
 records retain every field. An observed receipt requires nonnull process/primary
 token/anchor/ancestors, `thread_context=no_token`, null thread token, `recheck=equal`,
 `cleanup=complete` and empty errors. Refused requires at least one error.
+An observed receipt also requires 1..128 complete ancestors with consecutive
+indices from zero, all `policy_result=match`, no reparse or delete-pending state,
+and consistent root/anchor volume identity. Empty arrays or self-reported match
+strings do not satisfy the actual policy, namespace or token validation.
 Arrays are complete or their entire top-level observation record is null.
 
 Error enums: `kind` = `primary`, `cleanup`, `receipt`; `phase` = `initial`,
 `capture`, `recheck`, `cleanup`, `serialize`; `domain` = `win32`, `hresult`,
 `ntstatus`, `internal`. `operation` is exactly one of `DuplicateHandle`,
-`GetProcessId`, `GetProcessTimes`, `QueryFullProcessImageNameW`, `IsWow64Process2`,
+`GetHandleInformation`, `GetProcessId`, `GetProcessTimes`, `QueryFullProcessImageNameW`, `IsWow64Process2`,
 `OpenProcessToken`, `OpenThreadToken`, `GetTokenInformation`, `CoInitializeEx`,
 `SHGetKnownFolderPath`, `CreateFileW`, `NtCreateFile`, `NtQueryInformationFile`,
 `GetFileInformationByHandleEx`,
@@ -212,17 +232,45 @@ errors require `code=null` and `reason` exactly `unsupported`, `malformed`,
 `bound`, `policy`, `impersonation`, `app_container`, `token_changed`, `drift`,
 `budget` or `receipt_bound`. Index is null or 0..127 for the affected ancestor.
 
-Allow at most one primary and one receipt error; cleanup errors have phase `cleanup`.
+`Completion={call:u32,io_status:u32,information:u64s}` retains the independent
+raw call status, IOSB status and IOSB Information from the existing terminal NT
+classifier. Every error has the `completion` key. It is nonnull for terminal
+completion rejection by `NtCreateFile` or `NtQueryInformationFile`, otherwise
+null. An `ntstatus` error's `code` equals `completion.call`, even when the call
+returned success but the IOSB failed. If both statuses succeeded but the returned
+length, disposition or handle shape is invalid, use internal `reason=malformed`
+with that same completion. Never collapse these independent values into one
+status, or infer IOSB success from call success. Fatal-pending classification
+still aborts with native storage live and emits no valid receipt.
+
+Allow at most one primary and one receipt error; cleanup errors have phase `cleanup`
+and operation `CloseHandle` or `LocalFree`. A first failure while closing may be
+the primary error with that same phase/operation. `cleanup=failed` is required
+exactly when either form records a cleanup failure; otherwise use `complete`.
 Keep the primary error first if present, then every cleanup error in occurrence
 order, then any receipt error; never replace an earlier error with `receipt_bound`.
+Reserve the last of the 256 error slots for the optional receipt error: acquisition
+and cleanup together may retain at most 255 errors. A 256-entry receipt therefore
+has its receipt error last. Exhausting the acquisition/cleanup reserve emits no
+valid receipt; do not drop an error or append a 257th entry.
 On output overflow, null all five observation records and append one
-`{kind:receipt,phase:serialize,operation:serialize,domain:internal,code:null,reason:receipt_bound,ancestor_index:null}`
+`{kind:receipt,phase:serialize,operation:serialize,domain:internal,code:null,reason:receipt_bound,ancestor_index:null,completion:null}`
 error, retaining metadata, context/recheck outcomes and every existing error.
 The complete minimum refused shape is shown below; C is the complete collector
 record, T0/T1/D are the collected u64s timings, X/R/K are the retained thread,
 recheck and cleanup enums, and E is the complete nonempty error array:
 `{schema:"hub_relay.bootstrap_inventory.v0.1",mode:"diagnostic_only",outcome:"refused",activation:"blocked",loaded_image_provenance:"not_established",collector:C,started_utc:T0,finished_utc:T1,elapsed_ms:D,process:null,primary_token:null,thread_token:null,thread_context:X,anchor:null,ancestors:null,recheck:R,product_collision:"not_observed",service_collision:"not_observed",service_sid_binding:"external_evidence_required",errors:E,cleanup:K}`.
 This is typed notation; serialize every property name as a quoted JSON string.
+
+Receipt integrity is diagnostic evidence integrity, not authenticated origin.
+A consumer must require one complete strict UTF-8 JSON document, no duplicate
+keys, trailing data or truncated fields, all bounds and cross-field invariants,
+and a separately recorded complete output transfer and collector exit outcome.
+A parseable JSON prefix alone cannot certify successful delivery. If retained,
+hash the exact complete private bytes and bind their byte length and outcome in
+an independently retained review record; do not embed a self-authorizing digest.
+A digest detects change relative to that independent record, not a forgery by
+the producing process. Raw receipts and host-derived digests remain private.
 
 ## Bounds, lifetime and failure rules
 
@@ -232,6 +280,14 @@ Token buffers and each descriptor copy are limited to 65,536 bytes; each SID to
 68 bytes; each group-like array to 2,048 entries; privileges to 256 entries and
 each privilege name to 256 UTF-16 units. Oversized but valid Windows data refuses.
 These conservative caps limit local copying/parsing, not all Windows allocations.
+The 32 MiB limit below is a wire-output limit, not a process working-set promise.
+Before collector implementation is accepted, review a live-allocation ledger
+covering retained descriptor/path copies, both token captures, comparison views,
+temporary native buffers, JSON/hex expansion and refusal reserves. Charge owned
+allocations before copying with fallible reservation; identify any separately
+bounded OS allocations. No measured aggregate heap limit is established here.
+An offline reference codec does not settle the future native collector's aggregate
+allocation budget.
 
 Use at most one size query and one bounded retrieval per variable token class;
 growth or inconsistent returned length refuses. Validate alignment, header size,
@@ -242,8 +298,12 @@ Never infer readable memory from a claimed count or `IsValidSid` alone.
 Bound serialized output to 32 MiB, including JSON escaping and hex expansion,
 and errors to 256 entries. Before acquisition reserve all error slots and 128 KiB
 for the minimum refused envelope above. Stop collection on the first failure;
-retain at most 128 directory handles, four process/token handles and one descriptor
-allocation, with no cleanup retries. Their errors plus primary/receipt errors fit
+retain at most 128 directory observations, four process/token handles and one
+descriptor allocation, with no cleanup retries. The existing down-duplication
+briefly owns both input and reduced directory handles: at the final acquisition,
+127 retained ancestors plus those two handles gives a peak of 129 live directory
+handles. Include that transient handle in the resource/error ledger; do not
+describe the retained count as a 128-live-handle bound. Their errors plus primary/receipt errors fit
 the reserve. Preserve all errors when discarding oversized observation data; if
 reserve allocation or final output fails, emit no valid receipt. Individual bounds
 do not override the aggregate bound.
@@ -327,9 +387,9 @@ These are requirements for subsequent work, not executed results.
 | Order / evidence class | Required evidence and result |
 | --- | --- |
 | 1. Source review | Fixed no-argument route, no mutating imports/call paths, no authority constructor/deserializer; parent policy and application descriptors unchanged. |
-| 2. Mocked parser/receipt tests | Exact-limit and limit-plus-one cases for every bound; malformed offsets, SID extents, arithmetic overflow, size growth, truncation, unknown layouts/fields/enums, null rules and JSON escaping refuse without partial success. Oversized observations preserve the primary and all cleanup errors in a complete minimum refused receipt. |
+| 2. Mocked parser/receipt tests | Exact-limit and limit-plus-one cases for every bound; malformed offsets, SID extents, arithmetic overflow, size growth, truncation, unknown layouts/fields/enums, null rules, empty/nonconsecutive ancestors and JSON escaping refuse without partial success. GetHandleInformation failure is representable. Distinct call/IOSB statuses and unexpected Information remain distinct. Oversized observations preserve the primary and all cleanup errors/completions in a complete minimum refused receipt. |
 | 3. Mocked token/API tests | Preserve disabled/deny-only/all attribute bits and duplicate entries; impersonation, anonymous/access errors and unsupported classes refuse. ModifiedId change between capture brackets and replacement of the process token while the old handle remains stable each refuse; reopen/close failures refuse. No privilege adjustment, identity fallback or ABA-exclusion claim. |
-| 4. Mocked lifecycle tests | Inject failure at every acquisition/query/recheck/close; reverse cleanup, primary plus cleanup errors, output failure and fatal-pending behavior remain distinct. |
+| 4. Mocked lifecycle tests | Inject failure at every acquisition/query/recheck/close; reverse cleanup, primary plus cleanup errors, output failure and fatal-pending behavior remain distinct. Assert the 128-retained/129-live directory peak and four-process/token ceiling. Known-folder capture/recheck use only DONT_VERIFY; invalid/remote syntax is rejected before mapping/opening. |
 | 5. Separately authorized native read-only evidence | Exact built artifact/host, actual access masks, complete bounded token capture, native architecture, fixed NTFS chain, owner/DACL policy and checked cleanup. No root/service/key creation; preserve the existing 2 GiB capacity floor. |
 | 6. Native negative evidence in separately owned fixtures | Wrong volume/mapping, reparse, rename, descriptor drift, token modification during capture, persistent primary-token replacement, denial and exceeded budget refuse. Mocked success is not native evidence; do not mutate OS ancestors for tests. |
 | 7. Independent launch/provenance decision | Approved mechanism and measured positive/negative evidence satisfy the closed image gate; otherwise stop before activation-bundle acceptance. |
