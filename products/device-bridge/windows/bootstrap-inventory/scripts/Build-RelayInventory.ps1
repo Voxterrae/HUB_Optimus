@@ -62,13 +62,11 @@ try {
     }
     $drive = [IO.DriveInfo]::new([IO.Path]::GetPathRoot($output))
     if ($drive.DriveType -ne [IO.DriveType]::Fixed -or $drive.AvailableFreeSpace -lt 2147483648) { throw 'Capacity floor not met' }
-    $cargo = (Get-Command cargo.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
-    $rustc = (Get-Command rustc.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
     $rustup = (Get-Command rustup.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
     $linker = (Get-Command link.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
     $git = (Get-Command git.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
     $python = (Get-Command $PythonExecutable -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
-    foreach ($tool in @($cargo,$rustc,$rustup,$linker,$git,$python)) {
+    foreach ($tool in @($rustup,$linker,$git,$python)) {
         if ($tool -isnot [string] -or -not [IO.File]::Exists($tool)) { throw 'Resolved build executable unavailable' }
     }
     $buildPhase = 'source_head'
@@ -82,14 +80,18 @@ try {
     $buildPhase = 'source_policy'
     $actualPolicy = (Get-FileHash -LiteralPath (Join-Path $crate 'src/os_policy.rs') -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actualPolicy -cne $PolicySha256) { throw 'Policy mismatch' }
-    $buildPhase = 'toolchain'
+    $buildPhase = 'toolchain_installed'
     $installed = Invoke-BuildChild $rustup @('toolchain', 'list') @{}
     if ($installed -notmatch '(?m)^1\.99\.0-x86_64-pc-windows-msvc(?:\s|$)') { throw 'Pinned toolchain must already be installed' }
-    $rustVersion = (Invoke-BuildChild $rustc @('+1.99.0', '--version') @{}).Trim()
-    $cargoVersion = (Invoke-BuildChild $cargo @('+1.99.0', '--version') @{}).Trim()
+    $buildPhase = 'toolchain_rustc'
+    $rustVersion = (Invoke-BuildChild $rustup @('run', '1.99.0', 'rustc', '--version') @{}).Trim()
+    $buildPhase = 'toolchain_cargo'
+    $cargoVersion = (Invoke-BuildChild $rustup @('run', '1.99.0', 'cargo', '--version') @{}).Trim()
     if ($rustVersion -notmatch '^rustc 1\.99\.0 ' -or $cargoVersion -notmatch '^cargo 1\.99\.0 ') { throw 'Toolchain mismatch' }
+    $buildPhase = 'toolchain_linker'
     $linkText = Invoke-BuildChild $linker @('/?') @{}
     if ($linkText -notmatch ('Version\s+' + [regex]::Escape($LinkerVersion) + '(\s|$)')) { throw 'Linker mismatch' }
+    $buildPhase = 'toolchain_sdk'
     $sdkObserved = [Environment]::GetEnvironmentVariable('WindowsSDKVersion')
     if ([string]::IsNullOrEmpty($sdkObserved) -or $sdkObserved.TrimEnd('\') -cne $SdkVersion) { throw 'SDK mismatch' }
     $sdkRoot = [Environment]::GetEnvironmentVariable('WindowsSdkDir')
@@ -110,7 +112,7 @@ try {
         CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER = $linker
     }
     $buildPhase = 'offline_compile'
-    [void](Invoke-BuildChild $cargo @('+1.99.0', 'build', '--locked', '--offline', '--release', '--target', 'x86_64-pc-windows-msvc',
+    [void](Invoke-BuildChild $rustup @('run', '1.99.0', 'cargo', 'build', '--locked', '--offline', '--release', '--target', 'x86_64-pc-windows-msvc',
         '--manifest-path', (Join-Path $crate 'Cargo.toml')) $childEnvironment)
     $buildPhase = 'stage'
     Copy-Item -LiteralPath (Join-Path $targetDirectory 'x86_64-pc-windows-msvc/release/hub-relay-bootstrap-inventory.exe') -Destination (Join-Path $stage 'hub-relay-bootstrap-inventory.exe')
