@@ -37,7 +37,7 @@ jobs:
         shell: pwsh
         working-directory: products/browser/windows
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1; existing repository pin
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: 178e52efbc84428653e004b8c9f02cda30fc74b0
