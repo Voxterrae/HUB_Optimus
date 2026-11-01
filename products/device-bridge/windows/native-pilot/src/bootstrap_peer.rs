@@ -35,7 +35,7 @@ const MAX_EXCHANGE_MS: u128 = 10_000;
 const LOGON_ID: u32 = 0xc000_0000;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(super) enum Error {
+enum Error {
     Native(&'static str, u32),
     TokenInfo {
         class: i32,
@@ -339,7 +339,7 @@ impl TokenContext {
     }
 }
 
-pub(super) struct ExpectedPeer {
+struct ExpectedPeer {
     process: OwnedHandle,
     token: OwnedHandle,
     pid: u32,
@@ -372,30 +372,9 @@ fn token_id(token: HANDLE) -> Result<(u32, i32)> {
 }
 
 impl ExpectedPeer {
-    pub(super) fn process_handle(&self) -> HANDLE {
-        raw(&self.process)
-    }
-    pub(super) fn user(&self) -> &[u8] {
-        &self.context.user
-    }
-    pub(super) fn stamp(&self) -> (u32, u64, (u32, i32)) {
-        (self.pid, self.creation, self.token_id)
-    }
-    pub(super) fn session(&self) -> u32 {
-        self.context.scalar[0]
-    }
-    pub(super) fn unsupported_restrictions(&self) -> bool {
-        self.context.scalar[1] != 0
-            || self.context.scalar[2] != 0
-            || !self.context.restricted.is_empty()
-    }
-    pub(super) fn privileges(&self) -> &[(u32, i32, u32)] {
-        &self.context.privileges
-    }
-
     // Trusted launcher supplies an already owned handle, never a pipe PID/name.
     // Always duplicate DOWN to the minimum query+synchronize rights and clear inheritance.
-    pub(super) fn from_owned(input: OwnedHandle) -> Result<Self> {
+    fn from_owned(input: OwnedHandle) -> Result<Self> {
         let process = combine(duplicate(raw(&input), false), [input])?;
         let token = match process_token(raw(&process)) {
             Ok(token) => token,
@@ -434,16 +413,7 @@ impl ExpectedPeer {
         Ok(peer)
     }
 
-    pub(super) fn recheck(&self) -> Result<()> {
-        for handle in [&self.process, &self.token] {
-            let mut flags = 0;
-            if unsafe { GetHandleInformation(raw(handle), &mut flags) } == 0 {
-                return Err(last("GetHandleInformation retained peer"));
-            }
-            if flags & HANDLE_FLAG_INHERIT != 0 {
-                return Err(Error::Denied("inheritable retained peer handle"));
-            }
-        }
+    fn recheck(&self) -> Result<()> {
         match unsafe { WaitForSingleObject(raw(&self.process), 0) } {
             WAIT_TIMEOUT => (),
             WAIT_OBJECT_0 => return Err(Error::Denied("process exited")),
@@ -486,19 +456,17 @@ impl ExpectedPeer {
         self.recheck()
     }
 
-    pub(super) fn close(self) -> Result<()> {
+    fn close(self) -> Result<()> {
         combine(Ok(()), [self.token, self.process])
     }
 }
 
 // Never clear a token owned by someone else. Any non-NO_TOKEN error also denies.
-pub(super) fn no_impersonation() -> Result<()> {
+fn no_impersonation() -> Result<()> {
     let mut token = null_mut();
     if unsafe { OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, 1, &mut token) } != 0 {
-        return combine(
-            Err(Error::Denied("preexisting impersonation")),
-            [owned(token)?],
-        );
+        close_checked(owned(token)?)?;
+        return Err(Error::Denied("preexisting impersonation"));
     }
     let code = unsafe { GetLastError() };
     if code == ERROR_NO_TOKEN {
@@ -951,13 +919,7 @@ impl Client {
             no_impersonation()?;
             valid_deadline(deadline)?;
             expected.recheck()?;
-            // This cooperative client tracks its later message contexts. The
-            // server cannot impose SQOS tracking on an arbitrary pipe client.
-            let pipe = open_pipe(
-                name,
-                deadline,
-                SECURITY_IDENTIFICATION | SECURITY_CONTEXT_TRACKING,
-            )?;
+            let pipe = open_pipe(name, deadline, SECURITY_IDENTIFICATION)?;
             if let Err(error) = expected.bind_pipe(&pipe, false) {
                 return combine(Err(error), [pipe]);
             }
