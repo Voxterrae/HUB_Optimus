@@ -109,7 +109,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Python conformance failed.' }
       - name: Exercise owned namespace and transfer fixtures
         run: |
-          & products/device-bridge/windows/bootstrap-inventory/scripts/Test-CaptureHelpers.ps1 -ScratchDirectory (Join-Path $env:RUNNER_TEMP 'relay-helper-fixtures')
+          & products/device-bridge/windows/bootstrap-inventory/scripts/Test-CaptureHelpers.ps1 -ScratchDirectory (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'relay-helper-fixtures')
           if ($LASTEXITCODE -ne 0) { throw 'Capture helper fixtures failed.' }
       - name: Build release bundle offline and capture privately
         run: |
@@ -132,10 +132,10 @@ jobs:
           Expand-Archive -LiteralPath (Join-Path $build 'hub-relay-bootstrap-inventory-windows-amd64.zip') -DestinationPath $bundle
           python -B (Join-Path $bundle 'tools/package_inventory.py') --verify $bundle
           if ($LASTEXITCODE -ne 0) { throw 'Extracted package failed integrity validation.' }
-          & (Join-Path $bundle 'scripts/Run-RelayInventory.ps1') -PrivateCaptureDirectory (Join-Path $env:RUNNER_TEMP 'relay-private-capture')
+          & (Join-Path $bundle 'scripts/Run-RelayInventory.ps1') -PrivateCaptureDirectory (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'relay-private-capture')
           if ($LASTEXITCODE -ne 0) { throw 'Whole diagnostic capture failed; private details remain local.' }
           # Parse validated private output but publish only the fixed enum.
-          $receipt = Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'relay-private-capture/receipt.json') -Raw | ConvertFrom-Json
+          $receipt = Get-Content -LiteralPath (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'relay-private-capture/receipt.json') -Raw | ConvertFrom-Json
           if ($receipt.outcome -cnotin @('observed','refused')) { throw 'Unexpected diagnostic outcome.' }
           Write-Output ('Whole release diagnostic capture: ' + $receipt.outcome + '; activation blocked.')
           & (Join-Path $bundle 'hub-relay-bootstrap-inventory.exe') unexpected-argument *> $null
