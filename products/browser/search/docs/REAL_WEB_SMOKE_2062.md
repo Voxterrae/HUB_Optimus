@@ -11,8 +11,10 @@ The separate ranking correction remains under issue2061.
 1. An owner-only `workflow_dispatch` on protected main checks repository name,
    immutable repository/user IDs, owner login and public visibility. The standard
    Ubuntu24.04 job has `contents:read` and a 15-minute limit. Its sole input is a
-   complete lowercase 40-hex product SHA, validated before any checkout.
-2. Check out the harness at `github.workflow_sha`, the product at the input SHA,
+   complete lowercase 40-hex product SHA that only confirms the literal reviewed
+   source pin. Every other commit, even a well-formed SHA, is rejected before
+   checkout. Executable source is never selected by a dispatch input.
+2. Check out the harness at `github.workflow_sha`, the product at the literal reviewed SHA,
    and official SearXNG at `8b35dcd2e312d1d30fcfcbf6a9d01bda6fc52192`
    separately. Build the host from the product and the probe against the product's
    public Core project through mandatory `OptimusProductRoot`. Both builds carry
@@ -70,7 +72,7 @@ integration verifies component provenance and exercises the real host and typed
 TLS client with a synthetic upstream. Those results are not real Mwmbl or SearXNG
 relevance evidence.
 
-Observed locally: 41 Python checks, 26 probe self-tests and six real-host synthetic
+Observed locally: 44 Python checks, 26 probe self-tests and six real-host synthetic
 scenarios passed. The latter cover a relevant positive pair, deceptive domain,
 empty results, unresponsive engine, HTTP429 and SIGTERM cancellation. Rejected
 first results prevent the second logical query; all six confirmed normal owned
@@ -84,15 +86,22 @@ symlinked-venv regression first failed, then passed after preserving the
 interpreter path. Sending SIGINT or SIGTERM to the actual wrapper first left its
 children alive; both cases now verify probe shutdown before upstream shutdown
 and a blocked cancellation report. These three regressions are included in the
-41 Python checks. Finer allowlisted preflight stage names remain a minor
+initial41 Python checks. CodeQL then exposed the untrusted-source/main-cache
+boundary: syntax validation did not authorize a commit. Three new regressions
+first failed, then passed after both manual workflows pinned checkout and build
+identity literally and treated the input only as confirmation. The final44
+checks include an actual Bash rejection of a different valid40-hex SHA and
+literal-source invariants for both workflows. New candidates require another
+protected pin update; owner/main/public and other existing guards remain. Finer allowlisted preflight stage names remain a minor
 diagnostic follow-up; generic execution-blocked still fails closed.
 
 No local upstream installation or external search is part of this preparation.
 Independent review, current required CI, protected integration and an exact-SHA
 cloud execution remain separate steps. Both manual test workflows default to the native-accepted product
 `0790e0977c170ff8507bb73e0ec7b6e166755892` (Windows run41359258852:182/182,
-packaged service/GUI, normal cleanup). The Windows workflow changes only that
-default input line; all its existing gates remain identical. The six local
+packaged service/GUI, normal cleanup). Both workflows now fix that source literally in checkout and build metadata;
+the confirmation input cannot select another commit. All existing authorization,
+runner, permission, timeout and profile safeguards remain. The six local
 synthetic host scenarios above used historical product `cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907`;
 they do not validate the new product or establish real-Web relevance.
 
