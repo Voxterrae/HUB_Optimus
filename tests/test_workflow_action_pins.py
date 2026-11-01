@@ -38,6 +38,10 @@ EXPECTED_ACTION_PINS = {
         "fc324d3547104276b827a68afc52ff2a11cc49c9",
         "v5.0.0",
     ),
+    "actions/upload-artifact": (
+        "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+        "v7.0.2",
+    ),
     "actions/deploy-pages": (
         "368f82528645a54fb793d4d04e342629a3f51346",
         "v5.0.1",
