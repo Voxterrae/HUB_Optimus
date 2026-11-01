@@ -403,3 +403,27 @@ the exact PR head and checks. Integration grants no temporary Cognito identity
 exception and lifts no #1831 or #1835 gate: exact merged-SHA authorization,
 identity, roles/bootstrap, current cost/credit headroom, confirmed alerts,
 private-window approval and rollback evidence remain required before AWS.
+
+## Optimus Windows 0.3.3 integration boundary
+
+Issue #2045 and PR #2047 carry the current Windows/Search integration record.
+The module is reconstructed from validated source
+`5ed8785c5be011dba943371d87de4c4dd074a2c5` on current main, with the
+Windows and Search source blobs preserved exactly. The unsigned feature-stack
+commits remain historical proposal provenance rather than commits introduced
+by this integration. Existing contributor attribution and third-party notices
+remain in place; verified GitHub commits do not constitute hardware attestation.
+
+Use the exact product SHA, component ProductVersion verification and separate
+service/GUI reports in #2045 for native acceptance of an integration candidate.
+The upstream cold runs 41331622526 and 41332021001 validate their stated source;
+source equivalence or Linux tests alone do not prove a later native execution.
+The manual protected workflow remains owner-only, read-only and isolated.
+
+The local help index is finite; no operational SearXNG/public-web coverage is
+inferred. Windows CNG signing keys are nonexportable and explicitly deleted on
+normal owned-host shutdown, but abrupt termination or deletion failure may leave
+an orphan key. Physical Windows10/11, spoken Narrator/NVDA, complete cookie
+isolation, binary signing and public distribution retain their own acceptance
+gates. Founder ownership, licensing posture and the controlling
+OWNER_AUTHORITY_HANDOFF boundary are unchanged.
