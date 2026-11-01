@@ -1,0 +1,77 @@
+name: Relay inventory candidate conformance
+on:
+  push:
+    branches:
+      - codex/relay-inventory-candidate-20261101
+    paths:
+      - .github/workflows/relay-inventory-candidate.yml
+      - products/device-bridge/windows/bootstrap-inventory/**
+permissions:
+  contents: read
+concurrency:
+  group: relay-inventory-${{ github.ref }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: pwsh
+jobs:
+  tests:
+    name: Inventory ${{ matrix.slice }} (Windows)
+    if: >-
+      github.repository == 'Voxterrae/HUB_Optimus' &&
+      github.actor == 'Voxterrae' && github.actor_id == '249308740' &&
+      github.event.repository.private == false
+    strategy:
+      fail-fast: false
+      matrix:
+        slice: [core, native]
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Capacity floor and fixed compiler
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $drive = (Get-Item -LiteralPath $env:RUNNER_TEMP).PSDrive
+          if ($drive.Free -lt 2147483648) { throw 'Disposable runner below 2 GiB.' }
+          rustup toolchain install 1.99.0 --profile minimal
+          if ($LASTEXITCODE -ne 0) { throw 'Fixed toolchain install failed.' }
+          rustup run 1.99.0 rustc --version
+          if ($LASTEXITCODE -ne 0) { throw 'Fixed compiler unavailable.' }
+      - name: Compile and run portable arena and wire conformance
+        if: matrix.slice == 'core'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $binary = Join-Path $env:RUNNER_TEMP 'relay-inventory-core.exe'
+          rustup run 1.99.0 rustc --edition=2024 --test products/device-bridge/windows/bootstrap-inventory/tests/core_tests.rs -o $binary
+          if ($LASTEXITCODE -ne 0) { throw 'Inventory core compilation failed.' }
+          & $binary
+          if ($LASTEXITCODE -ne 0) { throw 'Inventory core conformance failed.' }
+      - name: Compile native library first
+        if: matrix.slice == 'native'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          rustup run 1.99.0 cargo test --manifest-path products/device-bridge/windows/bootstrap-inventory/Cargo.toml --target-dir "${env:RUNNER_TEMP}/relay-inventory-target" --locked --lib --no-run
+          if ($LASTEXITCODE -ne 0) { throw 'Inventory native library compilation failed.' }
+      - name: Run all diagnostic candidate tests with private native details
+        if: matrix.slice == 'native'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $privateLog = Join-Path $env:RUNNER_TEMP 'relay-inventory-native-private.txt'
+          try {
+            rustup run 1.99.0 cargo test --manifest-path products/device-bridge/windows/bootstrap-inventory/Cargo.toml --target-dir "${env:RUNNER_TEMP}/relay-inventory-target" --locked --offline --all-targets -- --test-threads=1 *> $privateLog
+            $testExit = $LASTEXITCODE
+            $lines = @(Get-Content -LiteralPath $privateLog)
+            $safe = @($lines | Where-Object { $_ -match '^test [A-Za-z0-9_:]+ \.\.\. (ok|FAILED|ignored)$' -or $_ -match '^test result: (ok|FAILED)\. [0-9]+ passed; [0-9]+ failed; [0-9]+ ignored;' })
+            $safe | ForEach-Object { Write-Output $_ }
+            if ($safe.Count -eq 0) { throw 'No attributable diagnostic test result.' }
+            if ($testExit -ne 0) { throw 'Diagnostic tests failed; native details remain private.' }
+            if (@($safe | Where-Object { $_ -match ' \.\.\. ignored$' }).Count -ne 0) { throw 'Unexpected ignored diagnostic case.' }
+          } finally {
+            Remove-Item -LiteralPath $privateLog -Force -ErrorAction SilentlyContinue
+          }
