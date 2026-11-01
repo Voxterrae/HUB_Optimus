@@ -6,6 +6,19 @@ using System.Text.Json;
 var tests = new List<(string Name, Func<Task> Run)>();
 void Test(string name, Func<Task> run) => tests.Add((name, run));
 void Check(bool value, string message) { if (!value) throw new Exception(message); }
+Test("failure diagnostics expose native TLS codes without exception messages or paths", () => {
+    const string sensitive = "token=0123456789abcdef query=private C:\\profile\\private-key";
+    var native = new System.ComponentModel.Win32Exception(unchecked((int)0x8009030E), sensitive);
+    var failure = new System.Security.Authentication.AuthenticationException(sensitive, native);
+    failure.Data["private-key"] = sensitive;
+    var diagnostic = TestFailureDiagnostics.Describe(failure);
+    Check(diagnostic.Contains("System.Security.Authentication.AuthenticationException") && diagnostic.Contains("System.ComponentModel.Win32Exception") && diagnostic.Contains("NativeErrorCode=0x8009030E") && diagnostic.Contains("HResult=0x"), "TLS root types and native code must be visible");
+    Check(!diagnostic.Contains("token=") && !diagnostic.Contains("private") && !diagnostic.Contains("C:\\"), "Exception messages and data must never enter diagnostics");
+    Exception chain = native;
+    for (var i = 0; i < 12; i++) chain = new Exception(sensitive, chain);
+    Check(TestFailureDiagnostics.Describe(chain).Split(" -> ").Length == 8, "Inner exception reporting must have a fixed bound");
+    return Task.CompletedTask;
+});
 const string wiki = """
 {"batchcomplete":"","query":{"searchinfo":{"totalhits":1},"search":[{"ns":0,"title":"Madrid &amp; región","pageid":19,"size":1234,"wordcount":100,"snippet":"La <span class=\"searchmatch\">capital</span> &amp; ciudad","timestamp":"2026-10-29T00:00:00Z"}]}}
 """;
@@ -166,7 +179,7 @@ Test("launcher retains ownership and reports termination failure before reconfig
 LauncherReadinessTests.Register(Test);
 IdentityProofTests.Register(Test);
 int failed = 0;
-foreach (var t in tests) { try { await t.Run(); Console.WriteLine("PASS " + t.Name); } catch (Exception e) { failed++; Console.WriteLine("FAIL " + t.Name + ": " + e.Message); } }
+foreach (var t in tests) { try { await t.Run(); Console.WriteLine("PASS " + t.Name); } catch (Exception e) { failed++; Console.WriteLine("FAIL " + t.Name + ": " + TestFailureDiagnostics.Describe(e)); } }
 Console.WriteLine($"{tests.Count - failed}/{tests.Count} checks PASS"); return failed == 0 ? 0 : 1;
 
 static HttpResponseMessage Reply(string body) => new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
@@ -233,5 +246,19 @@ static class TestTransport
             foreach(var header in request.Headers) copy.Headers.TryAddWithoutValidation(header.Key,header.Value);
             return await client.SendAsync(copy, HttpCompletionOption.ResponseHeadersRead, token);
         }
+    }
+}
+
+static class TestFailureDiagnostics
+{
+    public static string Describe(Exception failure)
+    {
+        var details = new List<string>();
+        for (Exception? current = failure; current is not null && details.Count < 8; current = current.InnerException)
+        {
+            var native = current is System.ComponentModel.Win32Exception win32 ? $", NativeErrorCode=0x{win32.NativeErrorCode:X8}" : "";
+            details.Add($"{current.GetType().FullName} (HResult=0x{current.HResult:X8}{native})");
+        }
+        return string.Join(" -> ", details);
     }
 }
