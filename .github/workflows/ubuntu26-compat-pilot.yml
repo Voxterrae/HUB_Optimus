@@ -35,7 +35,7 @@ jobs:
       with:
         fetch-depth: 0
         persist-credentials: false
-        ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
+        ref: 87619823860b3cb7bfca14e1b1fa3b391b9932ad
     - name: Setup Python
       uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
@@ -79,7 +79,7 @@ jobs:
     - name: Run tests
       run: python -m pytest -q
     name: Ubuntu 26 / pytest
-    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == 'cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907'
+    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == '87619823860b3cb7bfca14e1b1fa3b391b9932ad'
   pilot-powershell-tooling:
     name: Ubuntu 26 / PowerShell tooling
     runs-on: ubuntu-26.04
@@ -97,7 +97,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
-        ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
+        ref: 87619823860b3cb7bfca14e1b1fa3b391b9932ad
         persist-credentials: false
     - name: Require PowerShell 7
       shell: bash
@@ -122,7 +122,7 @@ jobs:
         python -m pip install -r requirements-dev.txt
     - name: Run PowerShell tooling behavior tests
       run: python -m pytest -q tests/test_powershell_tooling_safety.py
-    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == 'cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907'
+    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == '87619823860b3cb7bfca14e1b1fa3b391b9932ad'
   pilot-ec2-locked-environment:
     name: Ubuntu 26 / EC2 locked environment
     runs-on: ubuntu-26.04
@@ -142,7 +142,7 @@ jobs:
       with:
         fetch-depth: 0
         persist-credentials: false
-        ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
+        ref: 87619823860b3cb7bfca14e1b1fa3b391b9932ad
     - name: Setup reviewed EC2 Python ABI
       uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
@@ -312,10 +312,10 @@ jobs:
           PATH="$node_dir:/usr/bin:/bin" \
           PYTHONNOUSERSITE=1 \
           "$release_a/.venv/bin/python" -m pytest -q
-    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == 'cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907'
+    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == '87619823860b3cb7bfca14e1b1fa3b391b9932ad'
   pilot-founder-authority:
     name: Ubuntu 26 / founder-authority-bootstrap
-    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == 'cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907'
+    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == '87619823860b3cb7bfca14e1b1fa3b391b9932ad'
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
@@ -331,7 +331,7 @@ jobs:
     - name: Checkout trusted base policy
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
-        ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
+        ref: 87619823860b3cb7bfca14e1b1fa3b391b9932ad
         fetch-depth: 1
         persist-credentials: false
     - name: Validate exact pull-request head from trusted base
@@ -342,7 +342,7 @@ jobs:
       run: python .github/scripts/founder_authority_workflow.py --validate-only
   pilot-founder-authority-app-canary:
     name: Ubuntu 26 / founder-authority-app-canary
-    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == 'cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907'
+    if: github.repository == 'Voxterrae/HUB_Optimus' && github.actor_id == '249308740' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'pilot/ubuntu26-compat-2064' && github.event.pull_request.base.sha == '87619823860b3cb7bfca14e1b1fa3b391b9932ad'
     permissions:
       contents: read
     runs-on: ubuntu-26.04
@@ -360,7 +360,7 @@ jobs:
     - name: Checkout trusted base policy
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
-        ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
+        ref: 87619823860b3cb7bfca14e1b1fa3b391b9932ad
         fetch-depth: 1
         persist-credentials: false
     - name: Create repository-scoped founder-authority App token
