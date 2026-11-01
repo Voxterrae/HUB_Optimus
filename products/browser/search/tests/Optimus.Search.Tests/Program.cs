@@ -399,6 +399,8 @@ Test("service exposes HTTPS only including actual ephemeral port", async () => {
 
 IdentityProofTests.Register(Test);
 TlsSigningKeyTests.Register(Test);
+MwmblPilotTests.Register(Test, CliStart);
+MwmblProviderTests.Register(Test);
 int failed = 0;
 try { foreach (var (name, run) in tests) { try { await run(); Console.WriteLine("PASS " + name); } catch(Exception ex) { failed++; Console.WriteLine("FAIL " + name + ": " + ex.GetType().Name + ": " + ex.Message); } } }
 finally { Directory.Delete(temp, true); }

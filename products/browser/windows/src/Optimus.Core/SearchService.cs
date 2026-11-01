@@ -71,6 +71,7 @@ public sealed class OptimusSearchService
                 HttpStatusCode.ServiceUnavailable => "La búsqueda Web no está configurada en el servicio local. Configura el servidor SearXNG del operador.",
                 HttpStatusCode.Unauthorized => "El servicio local no aceptó el token del perfil.",
                 HttpStatusCode.GatewayTimeout => "El proveedor Web superó el tiempo límite.",
+                HttpStatusCode.TooManyRequests => "El proveedor Web ha alcanzado su límite de consultas o frecuencia. Espera antes de volver a buscar.",
                 _ => "El servicio local no pudo completar la búsqueda. No se consultó otro proveedor."
             });
             if (!response.IsSuccessStatusCode) return Response($"{(useSearx ? "SearXNG" : "Wikipedia")} devolvió HTTP {(int)response.StatusCode}. No se consultó otro proveedor.");

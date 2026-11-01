@@ -3,12 +3,13 @@ using System.Text.Json;
 
 namespace Optimus.Search;
 
-public sealed class SearchProviderException(bool timedOut = false) : Exception(timedOut ? "Search provider timed out." : "Search provider failed.")
+public sealed class SearchProviderException(bool timedOut = false, bool rateLimited = false) : Exception(timedOut ? "Search provider timed out." : rateLimited ? "Search provider rate limit reached." : "Search provider failed.")
 {
     public bool TimedOut { get; } = timedOut;
+    public bool RateLimited { get; } = rateLimited;
 }
 
-public sealed class SearxSearchProvider : IDisposable
+public sealed class SearxSearchProvider : IWebSearchProvider
 {
     private readonly Uri endpoint;
     private readonly HttpClient client;

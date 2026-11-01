@@ -17,7 +17,7 @@ public sealed class SearchServer : IAsyncDisposable
     private readonly ServiceCertificate certificate;
     public string Address { get; }
     private SearchServer(WebApplication application, string address, ServiceCertificate certificate) { this.application = application; Address = address; this.certificate = certificate; }
-    public static async Task<SearchServer> StartAsync(ServerOptions options, LocalSearchIndex index, SearxSearchProvider? provider = null, CancellationToken cancellationToken = default)
+    public static async Task<SearchServer> StartAsync(ServerOptions options, LocalSearchIndex index, IWebSearchProvider? provider = null, CancellationToken cancellationToken = default)
     {
         if (options.Port is < 0 or > 65535 || !TokenStore.IsValid(options.Token)) throw new ArgumentException("Invalid service configuration.");
         var certificate = new ServiceCertificate(options.Token);
@@ -72,7 +72,7 @@ public sealed class SearchServer : IAsyncDisposable
                 context.RequestAborted.ThrowIfCancellationRequested();
                 await context.Response.WriteAsJsonAsync(new SearchResponse(text!, results, new(1, scope, true, index.DocumentCount)), context.RequestAborted);
             }
-            catch (SearchProviderException ex) { await Error(ex.TimedOut ? 504 : 502, ex.TimedOut ? "upstream-timeout" : "upstream-failed", ex.TimedOut ? "Web search timed out." : "Web search failed.", scope); }
+            catch (SearchProviderException ex) { await Error(ex.RateLimited ? 429 : ex.TimedOut ? 504 : 502, ex.RateLimited ? "upstream-rate-limited" : ex.TimedOut ? "upstream-timeout" : "upstream-failed", ex.RateLimited ? "Web search quota or rate limit reached." : ex.TimedOut ? "Web search timed out." : "Web search failed.", scope); }
             catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested) { context.Abort(); }
         });
         try

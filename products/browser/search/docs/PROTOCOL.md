@@ -7,12 +7,12 @@ Contrato vinculante: [diseño aprobado](https://github.com/Voxterrae/HUB_Optimus
 | `GET /health` | JSON exacto `{"name":"OptimusSearch","version":1}` sin información de token, catálogo ni upstream. El cliente solicita prueba mediante nonce antes de enviar credenciales. |
 | `GET /search?format=json&q=texto&scope=web&language=es` | `Authorization: Bearer <token>`; scopes `web` e `index`. Rechaza Origin y Host que no corresponda a loopback/puerto real. |
 | Respuesta | `{query,results:[{title,url,content,source}],optimus:{version:1,scope,webConfigured,indexedDocuments},error?,message?}`. |
-| CLI de servicio | `Optimus.SearchHost [--port N] [--index-file path] [--token-file path] [--searx-url URL] [--owner-stdin true]`. La última opción exige entrada estándar redirigida y reserva EOF para el cierre del proceso propio. |
+| CLI de servicio | `Optimus.SearchHost [--port N] [--index-file path] [--token-file path] [--searx-url URL | --web-provider mwmbl] [--owner-stdin true]`. La última opción exige entrada estándar redirigida y reserva EOF para el cierre del proceso propio. |
 | CLI de importación | `Optimus.SearchHost index --input catalog.json --output index.json`. |
 
 No CORS, endpoints de escritura ni archivos estáticos. Encabezados no-store, nosniff y no-referrer. No logs de solicitudes que revelen consulta/token. Textos externos inertes. El cliente comprueba el marcador Optimus y la versión; una respuesta arbitraria SearXNG no es una respuesta Optimus.
 
-`web` envía `/search?format=json&q=...&language=...&categories=general` únicamente al endpoint SearXNG fijo del operador. Conserva el prefijo configurado: `/instance`, `/instance/` y `/instance/search` usan `/instance/search`; raíz usa `/search`. HTTPS o HTTP con `localhost` literal o una IP loopback (sin confiar en otros nombres DNS); sin credenciales, query ni fragmento configurados. Redirecciones, cookies y credenciales ambientales desactivadas; máximo 1 MiB y plazo total 10 s incluyendo cuerpo. `index` no hace solicitudes de red. Escribir/cambiar fuente en Windows invalida trabajo anterior sin enviar otra búsqueda.
+Con `--searx-url`, `web` envía `/search?format=json&q=...&language=...&categories=general` únicamente al endpoint SearXNG fijo del operador. Conserva el prefijo configurado: `/instance`, `/instance/` y `/instance/search` usan `/instance/search`; raíz usa `/search`. HTTPS o HTTP con `localhost` literal o una IP loopback (sin confiar en otros nombres DNS); sin credenciales, query ni fragmento configurados. Redirecciones, cookies y credenciales ambientales desactivadas; máximo 1 MiB y plazo total 10 s incluyendo cuerpo. `index` no hace solicitudes de red. Escribir/cambiar fuente en Windows invalida trabajo anterior sin enviar otra búsqueda.
 
 | Límite / error | Resultado |
 | --- | --- |
@@ -23,7 +23,30 @@ No CORS, endpoints de escritura ni archivos estáticos. Encabezados no-store, no
 | Token ausente/incorrecto | 401. |
 | Origin/Host rechazado | 403. |
 | Web sin configurar | 503, `web-not-configured`. |
+| Cuota o frecuencia externa agotada | 429, `upstream-rate-limited`; mensaje genérico, sin resultados ni reintento automático. |
 | Fallo upstream / timeout | 502 / 504; mensajes no revelan URL, token, archivos ni excepciones. `unresponsive_engines` no vacío (o de tipo inválido) devuelve 502 incluso si hay resultados parciales; vacío sano devuelve 200. |
+
+## Proveedor Mwmbl opcional
+
+`--web-provider mwmbl` selecciona únicamente el piloto Mwmbl y es incompatible con `--searx-url`. Un valor desconocido o una opción repetida falla al arrancar. Sin ambas opciones no se configura Web. El protocolo local sigue en versión 1; `webConfigured` indica selección de proveedor, no su disponibilidad, cuota o calidad. El launcher y las preferencias nativas existentes no activan esta opción automáticamente.
+
+La petición externa es un GET HTTPS al endpoint fijo `https://api.mwmbl.org/api/v2/search/?q=...`, con consulta escapada y sin bearer local, clave API, cookies, credenciales HTTP ambientales o redirecciones. Mwmbl recibe la consulta y la IP de salida. No existe fallback ni reintento. `language` se valida como antes en el host, pero el adaptador no lo envía a Mwmbl ni promete filtro por idioma o SafeSearch.
+
+El JSON debe ser un objeto con `results` de tipo array y sin `error` no nulo. El máximo es 1 MiB y profundidad 32. Filas sin URL válida o título no vacío se omiten; contenido ausente o no textual se trata como vacío. Se normaliza y deduplica la URL, se conserva el orden externo y se devuelven como máximo 20 resultados válidos, con título de hasta 240 unidades UTF-16 y contenido de hasta 1200. Los textos continúan siendo datos inertes.
+
+| `engine` externo reconocido | `source` de Optimus |
+| --- | --- |
+| `mwmbl` | `Mwmbl · índice` |
+| `user` | `Mwmbl · comunidad` |
+| `wikipedia` | `Mwmbl · Wikipedia` |
+| `google` | `Mwmbl · Google` |
+| Ausente o no reconocido | `Mwmbl · origen no especificado` |
+
+La separación mínima entre inicios de peticiones externas es 1,1 s, coordinada entre las instancias del mismo proceso. El turno se conserva hasta disponer la respuesta. El límite total de 10 s incluye espera, conexión, cabeceras y cuerpo; la espera y la lectura son cancelables. Esto no coordina otros procesos ni equipos de la misma IP y no reserva o contabiliza una cuota mensual. HTTP 429 se propaga como el error local de cuota de la tabla; otros estados no satisfactorios, esquemas inválidos y redirecciones fallan sin resultados.
+
+El acceso anónimo publicado el 01/11/2026 indica 1.000 consultas/mes, 1/s por IP y ningún SLA. No se crea cuenta ni se activa facturación. Las condiciones combinan permiso de aplicación comercial y resultados CC BY-NC-SA 4.0: no se infiere autorización comercial de los resultados. Piloto privado y finito; despliegue comercial y reutilización pendientes de aclaración, sin importar resultados al índice. Fuentes: [acceso](https://developer.mwmbl.org/) y [condiciones](https://developer.mwmbl.org/terms/).
+
+La respuesta es de un proveedor externo; no acredita índice mundial propio, cobertura completa, relevancia ni protección de contenidos. La [validación del piloto](VALIDATION_MWMBL_PILOT.md) distingue pruebas controladas, consultas reales mediante el cliente y aceptación nativa Windows.
 
 Token aleatorio de 32 bytes, 64 hexadecimales, comparación constante; se crea atómicamente en el perfil (0600 en Unix). Un archivo existente inválido falla cerrado. La creación entre procesos cooperantes se serializa mediante service.token.lock vacío y persistente (0600 en Unix), exclusión verificada y espera cancelable de hasta cinco segundos. Se comprueba de nuevo el destino bajo el guard; no se borra el sidecar, evitando separar propietarios entre inodos. Si la exclusión no está disponible, no se publica un token. Nunca se envía a SearXNG ni se serializa en settings, argumentos, paquetes o logs. No se afirma aislamiento frente a procesos comprometidos del mismo usuario o administradores.
 

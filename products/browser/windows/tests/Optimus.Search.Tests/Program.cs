@@ -119,6 +119,11 @@ Test("typed Web defaults to authenticated local protocol without fallback",async
  var result=await new OptimusSearchService(c, _ => TestTransport.Borrow(c)).SearchAsync("sol & luna",[],new OptimusSearchTarget(OptimusSearchScope.Web,null,bearer),default);
  Check(result.Error==null&&result.Provider.Contains("Web")&&result.Results.Single().Source=="Proveedor fixture","Protocol validated result and provenance");
 });
+Test("typed Web quota failure is visible without fallback or upstream detail",async()=>{
+ int calls=0;using var h=new Fixture(_=>{calls++;return new HttpResponseMessage(HttpStatusCode.TooManyRequests){Content=new StringContent("private quota detail")};});using var c=new HttpClient(h);
+ var result=await new OptimusSearchService(c,_=>TestTransport.Borrow(c)).SearchAsync("x",[],new OptimusSearchTarget(OptimusSearchScope.Web,null,bearer),default);
+ Check(result.Error?.Contains("límite de consultas") == true && result.Results.Count==0 && calls==1,"Quota must be explained and never retried or replaced");Check(!(result.Error??"").Contains("private"),"Upstream error body is not user text");
+});
 Test("typed Index stays local and Wikipedia is explicit without local bearer",async()=>{
  using var h=new Fixture(r=>{if(r.RequestUri!.Host=="es.wikipedia.org"){Check(r.Headers.Authorization==null,"Never leak local token to Wiki");return Reply(wiki);}Check(r.RequestUri.Query.Contains("scope=index"),"Index scope");return Reply(localBody.Replace("\"scope\":\"web\"","\"scope\":\"index\""));});using var c=new HttpClient(h);var s=new OptimusSearchService(c, _ => TestTransport.Borrow(c));
  Check((await s.SearchAsync("x",[],new OptimusSearchTarget(OptimusSearchScope.Index,null,bearer),default)).Error==null,"Index response");
