@@ -1,0 +1,87 @@
+name: Relay token buffer conformance
+
+on:
+  push:
+    branches:
+      - codex/relay-token-buffer-20261101
+    paths:
+      - .github/workflows/relay-token-buffer.yml
+      - products/device-bridge/windows/native-pilot/tools/native_token_buffer.rs
+      - products/device-bridge/windows/native-pilot/tools/native_token_buffer_tests.rs
+      - products/device-bridge/windows/native-pilot/tools/native_token_buffer_abi.cpp
+
+permissions:
+  contents: read
+
+concurrency:
+  group: relay-token-buffer-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  conformance:
+    name: Native token buffer conformance (Windows)
+    if: >-
+      github.repository == 'Voxterrae/HUB_Optimus' &&
+      github.actor == 'Voxterrae' && github.actor_id == '249308740' &&
+      github.event.repository.private == false
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check disposable runner and select fixed compiler
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $drive = (Get-Item -LiteralPath $env:RUNNER_TEMP).PSDrive
+          if ($drive.Free -lt 2147483648) { throw 'Disposable runner capacity below 2 GiB.' }
+          rustup toolchain install 1.99.0 --profile minimal
+          if ($LASTEXITCODE -ne 0) { throw 'Fixed compiler installation failed.' }
+          rustup run 1.99.0 rustc --version
+          if ($LASTEXITCODE -ne 0) { throw 'Fixed compiler unavailable.' }
+
+      - name: Verify x64 layouts against the Windows SDK
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+          $install = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ($LASTEXITCODE -ne 0 -or -not $install) { throw 'MSVC tools unavailable.' }
+          $vcvars = Join-Path $install 'VC/Auxiliary/Build/vcvars64.bat'
+          $source = Join-Path $env:GITHUB_WORKSPACE 'products/device-bridge/windows/native-pilot/tools/native_token_buffer_abi.cpp'
+          $object = Join-Path $env:RUNNER_TEMP 'relay-token-buffer-abi.obj'
+          $command = 'call "' + $vcvars + '" >nul && cl.exe /nologo /std:c++17 /W4 /WX /c "' + $source + '" /Fo"' + $object + '"'
+          & $env:ComSpec /d /s /c $command
+          if ($LASTEXITCODE -ne 0) { throw 'Windows SDK x64 layout assumptions differ.' }
+          Write-Output 'Windows SDK x64 structure layout assertions passed; no host token query.'
+
+      - name: Compile synthetic token buffer conformance
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $binary = Join-Path $env:RUNNER_TEMP 'relay-token-buffer-tests.exe'
+          rustup run 1.99.0 rustc --edition=2021 --test products/device-bridge/windows/native-pilot/tools/native_token_buffer_tests.rs -o $binary
+          if ($LASTEXITCODE -ne 0) { throw 'Native token buffer compilation failed.' }
+
+      - name: Run synthetic token buffer conformance
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $binary = Join-Path $env:RUNNER_TEMP 'relay-token-buffer-tests.exe'
+          & $binary
+          if ($LASTEXITCODE -ne 0) { throw 'Native token buffer conformance failed.' }
+          Write-Output 'Synthetic borrowed decoder only; no OS token collection or activation.'
+
+      - name: Preserve minimum-refusal conformance
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $binary = Join-Path $env:RUNNER_TEMP 'relay-refusal-codec-tests.exe'
+          rustup run 1.99.0 rustc --edition=2021 --test products/device-bridge/windows/native-pilot/tools/native_refusal_codec_tests.rs -o $binary
+          if ($LASTEXITCODE -ne 0) { throw 'Minimum-refusal compilation failed.' }
+          & $binary
+          if ($LASTEXITCODE -ne 0) { throw 'Minimum-refusal conformance failed.' }
