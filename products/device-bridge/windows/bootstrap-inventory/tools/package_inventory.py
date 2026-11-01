@@ -27,7 +27,11 @@ MAX_BUNDLE_BYTES = 256 * 1024 * 1024
 ALLOWED_DLLS = frozenset(("advapi32.dll", "bcrypt.dll", "crypt32.dll", "dbghelp.dll", "kernel32.dll",
     "ntdll.dll", "ole32.dll", "oleaut32.dll", "secur32.dll", "shell32.dll", "user32.dll",
     "userenv.dll", "ucrtbase.dll", "vcruntime140.dll", "vcruntime140_1.dll", "ws2_32.dll",
-    "api-ms-win-core-synch-l1-2-0.dll", "api-ms-win-core-winrt-l1-1-0.dll"))
+    "api-ms-win-core-synch-l1-2-0.dll", "api-ms-win-core-winrt-l1-1-0.dll",
+    # Observed in the actual fixed-toolchain release PE (native run41350942387).
+    "combase.dll", "api-ms-win-crt-string-l1-1-0.dll", "api-ms-win-crt-runtime-l1-1-0.dll",
+    "api-ms-win-crt-math-l1-1-0.dll", "api-ms-win-crt-stdio-l1-1-0.dll",
+    "api-ms-win-crt-locale-l1-1-0.dll", "api-ms-win-crt-heap-l1-1-0.dll"))
 _MANIFEST_KEYS = frozenset(("schema", "product", "target", "activation", "loaded_image_provenance",
     "build_metadata_authority", "integrity_scope", "source_commit", "policy_sha256", "toolchain",
     "dependencies", "pe_imports", "files"))

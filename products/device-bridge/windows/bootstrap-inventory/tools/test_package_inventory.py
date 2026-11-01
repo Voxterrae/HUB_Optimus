@@ -98,6 +98,18 @@ class PackageTests(unittest.TestCase):
         (self.stage/"hub-relay-bootstrap-inventory.exe").write_bytes(data)
         with self.assertRaises(package.PackageError): self.build()
 
+    def test_actual_release_windows_com_and_ucrt_imports_are_exact_names(self):
+        names=('combase.dll','api-ms-win-crt-string-l1-1-0.dll','api-ms-win-crt-runtime-l1-1-0.dll',
+               'api-ms-win-crt-math-l1-1-0.dll','api-ms-win-crt-stdio-l1-1-0.dll',
+               'api-ms-win-crt-locale-l1-1-0.dll','api-ms-win-crt-heap-l1-1-0.dll')
+        for name in names:
+            with self.subTest(name=name):
+                data=bytearray(pe()); struct.pack_into('<II',data,0x98+112+8,0x1000,40)
+                struct.pack_into('<IIIII',data,512,0,0,0,0x1040,0)
+                data[576:576+len(name)]=name.encode('ascii')
+                self.assertEqual(package.pe_imports(bytes(data)),[name])
+        self.assertNotIn('api-ms-win-crt-foreign-l1-1-0.dll',package.ALLOWED_DLLS)
+
     def test_nonpinned_version_prefix_refuses(self):
         self.meta["rustc_version"]="rustc 1.99.01 forged"
         with self.assertRaises(package.PackageError): self.build()
