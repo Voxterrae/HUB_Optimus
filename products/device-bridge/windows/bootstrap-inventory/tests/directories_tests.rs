@@ -1,4 +1,4 @@
-use bootstrap_inventory::directories::{classify_completion, completion_error, parse_drive_path, parse_guid_path, CompletionClass, MAX_PATH_UNITS};
+use bootstrap_inventory::directories::{classify_completion, completion_error, parse_drive_path, parse_guid_path, portable_path_equal, CompletionClass, MAX_PATH_UNITS};
 use bootstrap_inventory::model::{Completion, Domain, Operation, Phase, Reason};
 use bootstrap_inventory::os_policy::validate_descriptor;
 
@@ -15,7 +15,8 @@ fn descriptor(owner: &[u8], aces: &[(u8,u8,u32,Vec<u8>)]) -> Vec<u8> {
 #[test]
 fn fixed_drive_grammar_rejects_network_device_relative_and_malformed_before_io() {
     let p=units("C:\\Program Files"); let d=parse_drive_path(&p).unwrap(); assert_eq!(d.component_count(),1); assert_eq!(d.component(0),Some(&p[3..]));
-    for text in ["\\\\server\\share", "\\\\?\\C:\\Program Files", "C:Program Files", "/Program Files", "1:\\Program Files", "C:/Program Files", "C:\\", "C:\\Program Files\\", "C:\\x\\..", "C:\\CON", "C:\\com¹", "C:\\NUL.txt", "C:\\x~1", "C:\\x ", "C:\\x.", "C:\\x:y", "C:\\x\\\\y"] { assert!(parse_drive_path(&units(text)).is_err(),"{text}"); }
+    for text in ["\\\\server\\share", "\\\\?\\C:\\Program Files", "C:Program Files", "/Program Files", "1:\\Program Files", "C:/Program Files", "C:\\Program Files\\", "C:\\x\\..", "C:\\CON", "C:\\com¹", "C:\\NUL.txt", "C:\\x~1", "C:\\x ", "C:\\x.", "C:\\x:y", "C:\\x\\\\y"] { assert!(parse_drive_path(&units(text)).is_err(),"{text}"); }
+    assert_eq!(parse_drive_path(&units("C:\\")).unwrap().component_count(),0);
     assert!(parse_drive_path(&[67,58,92,0xd800]).is_err()); assert!(parse_drive_path(&[67,58,92,0]).is_err());
 }
 #[test]
@@ -89,4 +90,12 @@ fn nt_unwritten_sentinel_uses_signed_call_status_and_pending_always_aborts() {
     assert_eq!(classify_completion(Completion{call:0xc0000022,io_status:0x103,information:0},1,false),CompletionClass::FatalPending);
     let p=[67,58,92,0xd83d,0xde00]; assert!(parse_drive_path(&p).is_ok()); assert!(parse_drive_path(&[67,58,92,0xdc00]).is_err());
     for text in ["C:\\COM².txt","C:\\LPT³","C:\\COM¹"] { assert!(parse_drive_path(&units(text)).is_err()); }
+}
+
+#[test]
+fn offline_path_binding_folds_ascii_and_requires_other_utf16_exact() {
+    assert!(portable_path_equal(&units("C:\\Program Files"),&units("c:\\PROGRAM FILES")));
+    assert!(portable_path_equal(&units("C:\\日本語"),&units("c:\\日本語")));
+    assert!(!portable_path_equal(&units("C:\\Ä"),&units("C:\\ä")));
+    assert!(!portable_path_equal(&units("C:\\x"),&units("C:\\xy")));
 }

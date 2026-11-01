@@ -188,6 +188,17 @@ fn bounded_lengths_accept_exact_maximum_and_reject_zero_growth_and_plus_one() {
 }
 
 #[test]
+fn only_error_no_token_establishes_nonimpersonation() {
+    assert_eq!(process::classify_thread_failure(1008, Phase::Capture).unwrap(), bootstrap_inventory::model::ThreadContext::NoToken);
+    for code in [0, 5, 122, 1347, u32::MAX] {
+        let error = process::classify_thread_failure(code, Phase::Recheck).err().unwrap();
+        assert_eq!(error.code, Some(code));
+        assert_eq!(error.phase, Phase::Recheck);
+        assert_eq!(error.operation, bootstrap_inventory::model::Operation::OpenThreadToken);
+    }
+}
+
+#[test]
 fn privilege_name_extent_and_utf16_fail_before_complete_token() {
     let arena = Arena::new(2 * 1024 * 1024).unwrap();
     for length in [0, 257, usize::MAX] {
