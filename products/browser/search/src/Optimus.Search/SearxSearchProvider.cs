@@ -16,7 +16,7 @@ public sealed class SearxSearchProvider : IDisposable
     {
         this.endpoint = ValidateEndpoint(endpoint);
         client = new HttpClient(new SocketsHttpHandler {
-            AllowAutoRedirect = false, UseCookies = false, Credentials = null, DefaultProxyCredentials = null,
+            AllowAutoRedirect = false, UseProxy = false, UseCookies = false, Credentials = null, DefaultProxyCredentials = null,
             AutomaticDecompression = DecompressionMethods.None
         }) { Timeout = Timeout.InfiniteTimeSpan };
     }
