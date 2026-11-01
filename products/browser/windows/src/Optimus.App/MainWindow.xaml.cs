@@ -108,8 +108,9 @@ public partial class MainWindow : Window
   {var decision=privacy.Evaluate(target,isPrivate);if(decision==PrivacyAction.Block){SetStatus("Destino bloqueado por una regla local.");return null;}isPrivate=decision==PrivacyAction.Private;}
   var creationPolicy=policyGeneration;
   if(!cleanupOwner)ClosePanels(false);
-  var tab=new BrowserTab(t=>_=RecoverAsync(t),isPrivate,()=>privacy,()=>policyGeneration,()=>settings.Bookmarks,isPrivate?privateSession.Name:"Default",t=>Owns(t)&&Active==t&&!closing&&!clearingData&&!profileGate.IsBlocked,lifetime.Token,token=>searchHost.ConnectAsync(settings.SearxEndpoint,token));
+  var tab=new BrowserTab(t=>_=RecoverAsync(t),isPrivate,()=>privacy,()=>policyGeneration,()=>settings.Bookmarks,isPrivate?privateSession.Name:"Default",t=>Owns(t)&&Active==t&&!closing&&!clearingData&&!profileGate.IsBlocked,lifetime.Token,token=>searchHost.ConnectAsync(WebSearchConfiguration.FromSettings(settings),token));
   tab.HelpRequested+=_=>ShowHelp();tab.BookmarksRequested+=_=>Bookmarks_Click(this,new RoutedEventArgs());
+  tab.SearchSettingsRequested+=t=>{if(Owns(t)&&Active==t)PrivacySettings_Click(this,new RoutedEventArgs());};
   tab.Changed+=TabChanged;tab.Invalidated+=t=>{if(Active==t){Revoke();ClearPreview();ClearPendingPrivate();ClearHelpContent();}};tab.Notice+=SetStatus;tab.SafetyFailed+=_=>BlockAllTabsForRestart();
   tab.OpenRequested+=(t,address)=>{if(Active==t)NavigateKnownGet(t,address);};
   tab.PrivateOpeningOffered+=(t,address,lease)=>{if(Owns(t)&&Active==t&&t.IsCurrent(lease)){pendingPrivate=(t,address,lease);OpenPendingPrivate.ToolTip=address;OpenPendingPrivate.Visibility=Visibility.Visible;SetStatus("Destino protegido cancelado. Abrir destino en privado inicia una navegación nueva GET; no repite el formulario o redirección.");}};
@@ -197,7 +198,7 @@ public partial class MainWindow : Window
   if(closing||clearingData||profileGate.IsBlocked){SetStatus("El perfil está ocupado o requiere reiniciar Optimus.");return;}
   var dialog=new PrivacySettingsDialog(this,settings);if(dialog.ShowDialog()!=true||dialog.Rules==null)return;
   // Invalidate immediately, including creation already awaiting the engine in the serialized queue.
-  policyGeneration++;privacy=new(dialog.Rules);clearingData=true;permissions.Revoke();downloads.CancelAll();Revoke();ClearPreview();ClearPendingPrivate();
+  policyGeneration++;clearingData=true;permissions.Revoke();downloads.CancelAll();Revoke();ClearPreview();ClearPendingPrivate();
   foreach(var tab in Tabs.Items.Cast<TabItem>().Select(i=>(BrowserTab)i.Tag)){tab.NavigationReady=false;tab.Invalidate();try{tab.StopController();}catch(Exception ex) when(IsEngineError(ex)){}}
   await RunTabOperationAsync(async()=>
   {
@@ -205,9 +206,15 @@ public partial class MainWindow : Window
    try
    {
     await Task.WhenAll(tabs.Select(t=>t.QuiesceAsync())).WaitAsync(lifetime.Token);lifetime.Check();
-    settings=settings with {PrivacyRules=dialog.Rules,SearxEndpoint=dialog.Endpoint};closedTabs.Clear();
+    var applied=settingsStore.Apply(settings,settings with {PrivacyRules=dialog.Rules,SearxEndpoint=dialog.Endpoint,WebProvider=dialog.Provider,SessionUrls=[]});
+    var message=applied.Error;
+    if(message is null)
+    {
+     settings=applied.Settings;privacy=new(settings.PrivacyRules);closedTabs.Clear();
+     message="Preferencias guardadas. Los documentos y búsquedas se cerraron. "+searchHost.ConfigureUpstream(WebSearchConfiguration.FromSettings(settings));
+    }
     foreach(var tab in tabs){CheckOwned(tab);tab.PolicyChanged();tab.NavigationReady=tab.IsFullyInitialized;}
-    if(SaveSettings())SetStatus("Reglas actualizadas. Los documentos y búsquedas se cerraron. " + searchHost.ConfigureUpstream(settings.SearxEndpoint));
+    SetStatus(message);
    }
    catch(Exception ex) when(IsEngineError(ex)){await profileGate.RunAsync(Task.FromException(ex),()=>{},TimeSpan.FromSeconds(1));foreach(var tab in tabs){if(Tabs.Items.Contains(tab.Item))Tabs.Items.Remove(tab.Item);tab.Dispose();}SetStatus("No se pudo detener todos los documentos. Se cerraron las pestañas; vuelve a abrir Optimus antes de continuar.");}
    finally{clearingData=false;}

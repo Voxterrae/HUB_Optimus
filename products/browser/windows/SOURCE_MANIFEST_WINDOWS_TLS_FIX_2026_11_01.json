@@ -7,7 +7,7 @@
   "inventory_scope": "Selected current Windows and Search source bytes, including intended new Git files and historical manifests; excludes build/tool artifacts and this manifest itself. Current acceptance is recorded separately against exact product/run SHAs in issue2031.",
   "self_hash_excluded": "products/browser/windows/SOURCE_MANIFEST_WINDOWS_TLS_FIX_2026_11_01.json",
   "historical_manifests_unchanged": true,
-  "file_count": 124,
+  "file_count": 125,
   "files": [
     {
       "path": "products/browser/search/README.md",
@@ -293,9 +293,9 @@
     },
     {
       "path": "products/browser/windows/docs/VALIDATION_WINDOWS_TLS_2026_11_01.md",
-      "bytes": 5775,
-      "sha256": "862d320d643ecb39856d2c1d795abb7b153701dbdc1b231a5a34a2a64181b83b",
-      "git_blob_sha1": "3acee263a8c416c2a3a582165a4b9e325acc2431"
+      "bytes": 8854,
+      "sha256": "30736a7120cbcb3a40da50b09d9574cb3872162a0492925366d240b6d1ba37b6",
+      "git_blob_sha1": "8ae88ecd49dcd58bb20b97e8210fee32c5a90547"
     },
     {
       "path": "products/browser/windows/docs/superpowers/plans/2026-10-30-native-design.md",
@@ -406,10 +406,16 @@
       "git_blob_sha1": "a6db24db5a3f12f1e85a45c35a17ea7303bcb0f1"
     },
     {
+      "path": "products/browser/windows/scripts/WindowsSmoke/GuiNavigationDiagnostics.cs",
+      "bytes": 7701,
+      "sha256": "6247a63c30a76ee9a5894d6619ea2890c8df22ee95ba0d1d6741aa63b1f02cb3",
+      "git_blob_sha1": "eb693e4e7acda46aadbb2f7f6ae2aee3d48b2cd8"
+    },
+    {
       "path": "products/browser/windows/scripts/WindowsSmoke/GuiSmoke.cs",
-      "bytes": 11899,
-      "sha256": "ad8eac0bbf69e3acba64e02f71c1925da9f09cd0f51aa12e4f4e4abdd5c13a98",
-      "git_blob_sha1": "07fcbd10c007937f89f65e8e496228db83d6d493"
+      "bytes": 14433,
+      "sha256": "811f4f2f280efbdbf052e78a0f63556311f36d2f78d61eb6a1aef205e8fa3f50",
+      "git_blob_sha1": "1c15cfdbe9666d5662156010b8b67d548e0413a4"
     },
     {
       "path": "products/browser/windows/scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj",
@@ -419,9 +425,9 @@
     },
     {
       "path": "products/browser/windows/scripts/WindowsSmoke/Program.cs",
-      "bytes": 10864,
-      "sha256": "a76c9cbb6e14bae42e9bcd4931da2cc58d2e564206f380df22d89d654992c9e0",
-      "git_blob_sha1": "ec1fef7bb767341b40e59b6134a272ad04eb6bc2"
+      "bytes": 10957,
+      "sha256": "7c7af09a17ebbd16d234d7dc2ea4d2edacc2b7b0e84f2770ba461317b27bf590",
+      "git_blob_sha1": "d51a299f53a3ceb6a66f26cb477fdf73c2487906"
     },
     {
       "path": "products/browser/windows/src/Optimus.App/App.xaml",
@@ -467,9 +473,9 @@
     },
     {
       "path": "products/browser/windows/src/Optimus.App/BrowserTab.cs",
-      "bytes": 14775,
-      "sha256": "044b9e594e22df7edddc2909ac483a5448d6eda4938be4daa96302c7edaafeaf",
-      "git_blob_sha1": "ea6544e9a69e31803cc17c9213b2ca53f55697b0"
+      "bytes": 15096,
+      "sha256": "f2f6a6319ae439de31eab074c4b5cafa8ebc1bfbfdddc69ab4d18b4415f2bfcd",
+      "git_blob_sha1": "fe0d87ce07a2bc35897a9888094160f60322f1d6"
     },
     {
       "path": "products/browser/windows/src/Optimus.App/DownloadController.cs",

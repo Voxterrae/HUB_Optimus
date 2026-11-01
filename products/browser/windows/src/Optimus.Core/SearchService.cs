@@ -68,7 +68,7 @@ public sealed class OptimusSearchService
             using var response = await (localClient ?? client).SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline.Token).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode && local.HasValue) return Response(response.StatusCode switch
             {
-                HttpStatusCode.ServiceUnavailable => "La búsqueda Web no está configurada en el servicio local. Configura el servidor SearXNG del operador.",
+                HttpStatusCode.ServiceUnavailable => "La búsqueda Web no está configurada. Elige una fuente en Ajustes · Privacidad y búsqueda.",
                 HttpStatusCode.Unauthorized => "El servicio local no aceptó el token del perfil.",
                 HttpStatusCode.GatewayTimeout => "El proveedor Web superó el tiempo límite.",
                 HttpStatusCode.TooManyRequests => "El proveedor Web ha alcanzado su límite de consultas o frecuencia. Espera antes de volver a buscar.",

@@ -182,6 +182,7 @@ Test("launcher retains ownership and reports termination failure before reconfig
  finally{Directory.Delete(directory,true);}
 });
 LauncherReadinessTests.Register(Test);
+NativeWebProviderTests.Register(Test);
 IdentityProofTests.Register(Test);
 int failed = 0;
 foreach (var t in tests) { try { await t.Run(); Console.WriteLine("PASS " + t.Name); } catch (Exception e) { failed++; Console.WriteLine("FAIL " + t.Name + ": " + TestFailureDiagnostics.Describe(e)); } }

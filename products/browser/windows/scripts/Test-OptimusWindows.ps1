@@ -4,10 +4,12 @@ param(
     [Parameter(Mandatory = $true)][string]$Publication,
     [string]$EvidenceDirectory,
     [ValidatePattern('^[0-9a-fA-F]{40}$')][string]$SourceCommit,
-    [switch]$Gui
+    [switch]$Gui,
+    [switch]$LiveWeb
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+if ($LiveWeb -and -not $Gui) { throw 'LiveWeb requires the explicit Gui test.' }
 if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
     throw 'Windows required. No Windows acceptance checks ran.'
 }
@@ -49,6 +51,7 @@ try {
     $start.CreateNoWindow = $true
     $start.Arguments = (Quote-Argument $publicationPath) + ' ' + (Quote-Argument $reportPath)
     if ($Gui) { $start.Arguments += ' --gui' }
+    if ($LiveWeb) { $start.Arguments += ' --live-web' }
     $helper = [Diagnostics.Process]::Start($start)
     try {
         if (-not $helper.WaitForExit(180000)) {

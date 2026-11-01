@@ -7,7 +7,10 @@ using System.Text.Json;
 
 namespace Optimus.Core;
 
-public readonly record struct SearchHostConnection(OptimusSearchTarget Target, string? Error);
+public readonly record struct SearchHostConnection(OptimusSearchTarget Target, string? Error, string? WebError = null)
+{
+    public string? GetError(OptimusSearchScope scope) => Error ?? (scope == OptimusSearchScope.Web ? WebError : null);
+}
 
 /// <summary>One application-owned process; independent loopback services are never stopped.</summary>
 public sealed class SearchHostLauncher : IDisposable
@@ -29,34 +32,53 @@ public sealed class SearchHostLauncher : IDisposable
     private readonly CancellationTokenSource lifetime = new();
     private ISearchHostProcess? owned;
     private bool disposed, independent;
-    private string? upstream;
+    private WebSearchConfiguration upstream;
+    private long configurationRevision;
     public bool OwnsProcess { get { lock (sync) return owned is { HasExited: false }; } }
 
     public static ProcessStartInfo CreateStartInfo(string applicationDirectory, string? upstream, string tokenPath)
+        => CreateStartInfo(applicationDirectory, LegacyConfiguration(upstream), tokenPath);
+
+    public static ProcessStartInfo CreateStartInfo(string applicationDirectory, WebSearchConfiguration configuration, string tokenPath)
     {
-        if (upstream is not null && !OptimusSearchService.IsValidEndpoint(upstream)) throw new ArgumentException("Servidor SearXNG no válido.");
         var start = new ProcessStartInfo(Path.Combine(Path.GetFullPath(applicationDirectory), "Search", "Optimus.SearchHost.exe"))
         { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, WorkingDirectory = Path.GetFullPath(applicationDirectory) };
         start.ArgumentList.Add("--token-file"); start.ArgumentList.Add(tokenPath);
-        if (upstream is not null) { start.ArgumentList.Add("--searx-url"); start.ArgumentList.Add(upstream); }
+        if (configuration.Provider == WebProvider.Searx) { start.ArgumentList.Add("--searx-url"); start.ArgumentList.Add(configuration.Endpoint!); }
+        if (configuration.Provider == WebProvider.Mwmbl) { start.ArgumentList.Add("--web-provider"); start.ArgumentList.Add("mwmbl"); }
         start.ArgumentList.Add("--owner-stdin"); start.ArgumentList.Add("true");
         return start;
     }
 
-    public string ConfigureUpstream(string? endpoint)
+    private static WebSearchConfiguration LegacyConfiguration(string? endpoint) => new(endpoint is null ? WebProvider.None : WebProvider.Searx, endpoint);
+
+    public string ConfigureUpstream(string? endpoint) => ConfigureUpstream(LegacyConfiguration(endpoint));
+
+    public string ConfigureUpstream(WebSearchConfiguration configuration)
     {
         lock (sync)
         {
             if (disposed) return "Optimus Search está cerrado.";
-            if (upstream == endpoint && ShutdownError is null) return independent ? "El servicio es independiente: configura y reinicia ese servicio para aplicar el servidor Web." : "Solo el servicio iniciado por Optimus usará estos ajustes. Un servicio independiente requiere configurarse y reiniciarse aparte.";
+            if (upstream == configuration && ShutdownError is null) return independent ? IndependentWebError : "Solo el servicio iniciado por Optimus usará estos ajustes. Un servicio independiente requiere configurarse y reiniciarse aparte.";
             if (!StopOwned()) return ShutdownError!;
-            upstream = endpoint;
-            return independent ? "El servicio es independiente: configura y reinicia ese servicio para aplicar el servidor Web."
+            upstream = configuration;
+            configurationRevision++;
+            return independent ? IndependentWebError
                 : "El servicio iniciado por Optimus usará estos ajustes al buscar. Un servicio independiente requiere configurarse y reiniciarse aparte.";
         }
     }
 
-    public async Task<SearchHostConnection> ConnectAsync(string? endpoint, CancellationToken cancellationToken)
+    private const string IndependentWebError = "La fuente del servicio independiente no está confirmada. El índice local sigue disponible. Para Web, usa la ventana que inició ese servicio o ciérralo desde su origen y vuelve a buscar.";
+
+    public Task<SearchHostConnection> ConnectAsync(string? endpoint, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (endpoint is not null && !OptimusSearchService.IsValidEndpoint(endpoint))
+            return Task.FromResult(new SearchHostConnection(new(OptimusSearchScope.Web, null, null), "El servidor SearXNG del operador no es válido."));
+        return ConnectAsync(LegacyConfiguration(endpoint), cancellationToken);
+    }
+
+    public async Task<SearchHostConnection> ConnectAsync(WebSearchConfiguration configuration, CancellationToken cancellationToken)
     {
         using var request = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lifetime.Token);
         request.CancelAfter(TimeSpan.FromSeconds(4));
@@ -67,15 +89,21 @@ public sealed class SearchHostLauncher : IDisposable
         try
         {
             token.ThrowIfCancellationRequested();
-            if (endpoint is not null && !OptimusSearchService.IsValidEndpoint(endpoint)) return Failure("El servidor SearXNG del operador no es válido.");
             // Existing invalid files fail closed; only the host creates the token.
             if (File.Exists(tokenPath) && ReadToken() is null) return Failure("El token de perfil de Optimus Search no es válido. No se inició el servicio.");
-            ConfigureUpstream(endpoint);
-            lock (sync) if (ShutdownError is {} failure) return Failure(failure);
+            ConfigureUpstream(configuration);
+            long revision;
+            lock (sync)
+            {
+                if (ShutdownError is {} failure) return Failure(failure);
+                if (upstream != configuration) return Failure("La configuración de búsqueda cambió. Vuelve a buscar.");
+                revision = configurationRevision;
+            }
             var bearer = await VerifiedTokenAsync(token).ConfigureAwait(false);
+            lock (sync) if (configurationRevision != revision) return Failure("La configuración de búsqueda cambió. Vuelve a buscar.");
             if (bearer is not null)
             {
-                lock (sync) independent = owned is null;
+                lock (sync) independent = owned is null || owned.HasExited;
             }
             else
             {
@@ -83,6 +111,7 @@ public sealed class SearchHostLauncher : IDisposable
                 {
                     token.ThrowIfCancellationRequested();
                     if (disposed) throw new OperationCanceledException(token);
+                    if (configurationRevision != revision) return Failure("La configuración de búsqueda cambió. Vuelve a buscar.");
                     if (owned is null || owned.HasExited)
                     {
                         if (!StopOwned()) return Failure(ShutdownError!);
@@ -97,6 +126,7 @@ public sealed class SearchHostLauncher : IDisposable
                 while (true)
                 {
                     token.ThrowIfCancellationRequested();
+                    lock (sync) if (configurationRevision != revision) return Failure("La configuración de búsqueda cambió. Vuelve a buscar.");
                     bearer = await VerifiedTokenAsync(token).ConfigureAwait(false);
                     if (bearer is not null) break;
                     await Task.Delay(100, token).ConfigureAwait(false);
@@ -104,7 +134,14 @@ public sealed class SearchHostLauncher : IDisposable
             }
             token.ThrowIfCancellationRequested();
             // Return only the token snapshot whose possession was proved, never a later profile-file value.
-            return bearer is null ? Failure("No se pudo leer un token válido del perfil para el servicio local.") : new(new(OptimusSearchScope.Web, null, bearer), null);
+            lock (sync)
+            {
+                if (configurationRevision != revision) return Failure("La configuración de búsqueda cambió. Vuelve a buscar.");
+                if (ShutdownError is {} failure) return Failure(failure);
+                var webError = configuration.Provider == WebProvider.None ? "La búsqueda Web está desactivada. Elige una fuente en Ajustes · Privacidad y búsqueda. El índice local sigue disponible."
+                    : owned is { HasExited: false } ? null : IndependentWebError;
+                return bearer is null ? Failure("No se pudo leer un token válido del perfil para el servicio local.") : new(new(OptimusSearchScope.Web, null, bearer), null, webError);
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested || lifetime.IsCancellationRequested)
         { lock (sync) if (startedHere) StopOwned(); throw; }

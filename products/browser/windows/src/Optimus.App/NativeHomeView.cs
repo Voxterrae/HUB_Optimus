@@ -12,7 +12,7 @@ internal sealed class NativeHomeView : UserControl
     private readonly TextBox query = new() { MaxLength = 500, MinHeight = 60, VerticalContentAlignment = VerticalAlignment.Center };
     private readonly ComboBox source = new() { MinHeight = 44 };
 
-    public NativeHomeView(bool isPrivate, Func<string, OptimusSearchScope, Task> submit, Action openIndex, Action bookmarks, Action help)
+    public NativeHomeView(bool isPrivate, Func<string, OptimusSearchScope, Task> submit, Action openIndex, Action bookmarks, Action help, Action configureWeb)
     {
         NativeSurface.Surface(this);
         var body = new StackPanel { MaxWidth = 1000, Margin = new Thickness(40, 32, 40, 32), HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -42,7 +42,12 @@ internal sealed class NativeHomeView : UserControl
         var form = new StackPanel();
         var label = NativeSurface.Text("¿Qué quieres encontrar?", "OptimusBodySize");
         label.Margin = new Thickness(0, 0, 0, 10);
-        form.Children.Add(label);
+        label.VerticalAlignment = VerticalAlignment.Center;
+        var webSettings = NativeSurface.Button("Elegir fuente Web", "Elegir fuente Web");
+        webSettings.Margin = new Thickness(16, 0, 0, 10);
+        webSettings.Click += (_, _) => configureWeb();
+        var heading = new WrapPanel(); heading.Children.Add(label); heading.Children.Add(webSettings);
+        form.Children.Add(heading);
         NativeSurface.Input(query);
         AutomationProperties.SetName(query, "Consulta de inicio de Optimus");
         query.ToolTip = "Hasta 500 caracteres. Pulsa Intro para buscar en la fuente elegida.";
@@ -62,12 +67,16 @@ internal sealed class NativeHomeView : UserControl
         form.Children.Add(controls);
         var sourceNote = NativeSurface.Text("", "OptimusSmallSize", "OptimusMutedBrush");
         sourceNote.Margin = new Thickness(0, 12, 0, 0);
-        void DescribeSource() => sourceNote.Text = source.SelectedIndex switch
+        void DescribeSource()
         {
-            1 => "Índice local: solo documentos importados. No cubre toda la web.",
-            2 => "Wikipedia recibe tu consulta y tu conexión al buscar.",
-            _ => "Web usa el servidor del operador. Requiere que esté configurado."
-        };
+            sourceNote.Text = source.SelectedIndex switch
+            {
+                1 => "Índice local: solo documentos importados. No cubre toda la web.",
+                2 => "Wikipedia recibe tu consulta y tu conexión al buscar.",
+                _ => "Web usa la fuente que elijas. Puedes cambiarla antes de buscar."
+            };
+            webSettings.Visibility = source.SelectedIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
         source.SelectionChanged += (_, _) => DescribeSource();
         DescribeSource();
         form.Children.Add(sourceNote);
