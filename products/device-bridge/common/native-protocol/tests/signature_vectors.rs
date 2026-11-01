@@ -1,8 +1,7 @@
 use hub_relay_native_protocol::{
-    ApprovalMatchError, SignatureError,
-    approval_digest, approval_signing_bytes, parse_approval_envelope, parse_request_envelope,
-    request_digest, request_signing_bytes, verify_approval_for_pending_request,
-    verify_approval_signature, verify_request_signature,
+    ApprovalMatchError, SignatureError, approval_digest, approval_signing_bytes,
+    parse_approval_envelope, parse_request_envelope, request_digest, request_signing_bytes,
+    verify_approval_for_pending_request, verify_approval_signature, verify_request_signature,
 };
 use serde_json::{Value, json};
 
@@ -286,12 +285,10 @@ fn matching_payload_still_requires_both_role_signatures() {
     let vector = fixture();
     let broker = key(&vector, "broker");
     let approver = key(&vector, "approver");
-    let request = |name| {
-        parse_request_envelope(&envelope(&vector, name, "signatureLowSDerHex")).unwrap()
-    };
-    let approval = |name| {
-        parse_approval_envelope(&envelope(&vector, name, "signatureLowSDerHex")).unwrap()
-    };
+    let request =
+        |name| parse_request_envelope(&envelope(&vector, name, "signatureLowSDerHex")).unwrap();
+    let approval =
+        |name| parse_approval_envelope(&envelope(&vector, name, "signatureLowSDerHex")).unwrap();
     assert_eq!(
         verify_approval_for_pending_request(
             &request("wrongRequestDomain"),
@@ -299,7 +296,9 @@ fn matching_payload_still_requires_both_role_signatures() {
             &approval("approval"),
             &approver,
         ),
-        Err(ApprovalMatchError::RequestSignature(SignatureError::VerificationFailed))
+        Err(ApprovalMatchError::RequestSignature(
+            SignatureError::VerificationFailed
+        ))
     );
     assert_eq!(
         verify_approval_for_pending_request(
@@ -308,6 +307,8 @@ fn matching_payload_still_requires_both_role_signatures() {
             &approval("wrongApprovalDomain"),
             &approver,
         ),
-        Err(ApprovalMatchError::ApprovalSignature(SignatureError::VerificationFailed))
+        Err(ApprovalMatchError::ApprovalSignature(
+            SignatureError::VerificationFailed
+        ))
     );
 }
