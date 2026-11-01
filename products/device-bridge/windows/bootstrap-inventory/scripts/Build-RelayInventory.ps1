@@ -66,12 +66,15 @@ try {
     $linker = (Get-Command link.exe -CommandType Application -ErrorAction Stop).Source
     $git = (Get-Command git.exe -CommandType Application -ErrorAction Stop).Source
     $python = (Get-Command $PythonExecutable -CommandType Application -ErrorAction Stop).Source
-    $buildPhase = 'source'
+    $buildPhase = 'source_head'
     $actualSource = (Invoke-BuildChild $git @('-C', $sourceRoot, 'rev-parse', 'HEAD') @{}).Trim()
     if ($actualSource -cne $SourceCommit) { throw 'Source mismatch' }
+    $buildPhase = 'source_tracked'
     [void](Invoke-BuildChild $git @('-C', $sourceRoot, 'diff', '--quiet', 'HEAD', '--', $crate, 'IP_NOTICE.md') @{})
+    $buildPhase = 'source_untracked'
     $untracked = Invoke-BuildChild $git @('-C', $sourceRoot, 'ls-files', '--others', '--exclude-standard', '--', $crate) @{}
     if (-not [string]::IsNullOrWhiteSpace($untracked)) { throw 'Uncommitted source refused' }
+    $buildPhase = 'source_policy'
     $actualPolicy = (Get-FileHash -LiteralPath (Join-Path $crate 'src/os_policy.rs') -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actualPolicy -cne $PolicySha256) { throw 'Policy mismatch' }
     $buildPhase = 'toolchain'
@@ -125,6 +128,13 @@ try {
     Write-Output 'Diagnostic bundle built; artifact metadata are unverified claims; activation blocked.'
     exit 0
 } catch {
+    # Only our fixed exception texts are public; .NET/child diagnostic text can
+    # contain paths and is never echoed.
+    $known = @('Source mismatch','Build child failed','Uncommitted source refused','Policy mismatch',
+        'Invalid build argument','Build timeout','Pinned toolchain must already be installed','Toolchain mismatch',
+        'Linker mismatch','SDK mismatch','SDK unavailable')
+    $category = if ($known -ccontains $_.Exception.Message) { $_.Exception.Message } else { 'Native or script precondition' }
+    Write-Output ('Fixed build failure category: ' + $category)
     Write-Output ('Diagnostic build or package validation failed at fixed phase ' + $buildPhase + '; no authority established.')
     exit 1
 }
