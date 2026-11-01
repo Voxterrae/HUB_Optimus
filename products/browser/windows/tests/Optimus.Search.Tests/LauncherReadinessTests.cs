@@ -277,6 +277,8 @@ internal static class LauncherReadinessTests
             {
                 var index = start.ArgumentList.IndexOf("--owner-stdin");
                 if (index >= 0) { start.ArgumentList.RemoveAt(index + 1); start.ArgumentList.RemoveAt(index); }
+                var identity = start.ArgumentList.IndexOf("--owner-identity-stdout");
+                if (identity >= 0) { start.ArgumentList.RemoveAt(identity + 1); start.ArgumentList.RemoveAt(identity); }
             }
             owned = Start(start);
             return new SystemSearchHostProcess(owned.Process);
@@ -298,7 +300,11 @@ internal static class LauncherReadinessTests
             public Child(ProcessStartInfo start, int port)
             {
                 Port = port; Process = new Process { StartInfo = start };
-                Process.OutputDataReceived += (_, e) => { if (e.Data == "OptimusSearch ready.") ready.TrySetResult(); };
+                Process.OutputDataReceived += (_, e) =>
+                {
+                    var fields = e.Data?.Split('|');
+                    if (e.Data == "OptimusSearch ready." || fields is { Length: 3 } && fields[0] == "OptimusSearch owner/1" && fields[1] == port.ToString(System.Globalization.CultureInfo.InvariantCulture) && OptimusSearchService.IsValidToken(fields[2])) ready.TrySetResult();
+                };
                 Process.ErrorDataReceived += (_, _) => { };
                 if (!Process.Start()) throw new InvalidOperationException("Actual child did not start");
                 observation = System.Diagnostics.Process.GetProcessById(Process.Id);

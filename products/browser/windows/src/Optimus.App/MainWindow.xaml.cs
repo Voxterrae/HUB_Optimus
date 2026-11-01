@@ -108,9 +108,9 @@ public partial class MainWindow : Window
   {var decision=privacy.Evaluate(target,isPrivate);if(decision==PrivacyAction.Block){SetStatus("Destino bloqueado por una regla local.");return null;}isPrivate=decision==PrivacyAction.Private;}
   var creationPolicy=policyGeneration;
   if(!cleanupOwner)ClosePanels(false);
-  var tab=new BrowserTab(t=>_=RecoverAsync(t),isPrivate,()=>privacy,()=>policyGeneration,()=>settings.Bookmarks,isPrivate?privateSession.Name:"Default",t=>Owns(t)&&Active==t&&!closing&&!clearingData&&!profileGate.IsBlocked,lifetime.Token,token=>searchHost.ConnectAsync(WebSearchConfiguration.FromSettings(settings),token));
+  var tab=new BrowserTab(t=>_=RecoverAsync(t),isPrivate,()=>privacy,()=>policyGeneration,()=>settings.Bookmarks,isPrivate?privateSession.Name:"Default",t=>Owns(t)&&Active==t&&!closing&&!clearingData&&!profileGate.IsBlocked,lifetime.Token,(scope,token)=>searchHost.ConnectAsync(WebSearchConfiguration.FromSettings(settings),scope,token));
   tab.HelpRequested+=_=>ShowHelp();tab.BookmarksRequested+=_=>Bookmarks_Click(this,new RoutedEventArgs());
-  tab.SearchSettingsRequested+=t=>{if(Owns(t)&&Active==t)PrivacySettings_Click(this,new RoutedEventArgs());};
+  tab.SearchSettingsRequested+=async t=>{if(Owns(t)&&Active==t)await PrivacySettingsAsync(true);};
   tab.Changed+=TabChanged;tab.Invalidated+=t=>{if(Active==t){Revoke();ClearPreview();ClearPendingPrivate();ClearHelpContent();}};tab.Notice+=SetStatus;tab.SafetyFailed+=_=>BlockAllTabsForRestart();
   tab.OpenRequested+=(t,address)=>{if(Active==t)NavigateKnownGet(t,address);};
   tab.PrivateOpeningOffered+=(t,address,lease)=>{if(Owns(t)&&Active==t&&t.IsCurrent(lease)){pendingPrivate=(t,address,lease);OpenPendingPrivate.ToolTip=address;OpenPendingPrivate.Visibility=Visibility.Visible;SetStatus("Destino protegido cancelado. Abrir destino en privado inicia una navegación nueva GET; no repite el formulario o redirección.");}};
@@ -193,10 +193,11 @@ public partial class MainWindow : Window
  private async void NewPrivate_Click(object sender,RoutedEventArgs e){ClosePanels(false);await AddTabAsync(null,true);}
  private async void CurrentPrivate_Click(object sender,RoutedEventArgs e)
  {var tab=Active;if(tab?.CurrentUri is not {} uri||tab.IsHome){SetStatus("Abre primero una página para iniciar una navegación nueva en privado.");return;}var lease=tab.Capture();await RunTabOperationAsync(async()=>{if(Owns(tab)&&Active==tab&&tab.IsCurrent(lease))await CreateTabAsync(uri.AbsoluteUri,true);});}
- private async void PrivacySettings_Click(object sender,RoutedEventArgs e)
+ private async void PrivacySettings_Click(object sender,RoutedEventArgs e)=>await PrivacySettingsAsync(false);
+ private async Task PrivacySettingsAsync(bool focusWeb)
  {
   if(closing||clearingData||profileGate.IsBlocked){SetStatus("El perfil está ocupado o requiere reiniciar Optimus.");return;}
-  var dialog=new PrivacySettingsDialog(this,settings);if(dialog.ShowDialog()!=true||dialog.Rules==null)return;
+  var dialog=new PrivacySettingsDialog(this,settings,focusWeb);if(dialog.ShowDialog()!=true||dialog.Rules==null)return;
   // Invalidate immediately, including creation already awaiting the engine in the serialized queue.
   policyGeneration++;clearingData=true;permissions.Revoke();downloads.CancelAll();Revoke();ClearPreview();ClearPendingPrivate();
   foreach(var tab in Tabs.Items.Cast<TabItem>().Select(i=>(BrowserTab)i.Tag)){tab.NavigationReady=false;tab.Invalidate();try{tab.StopController();}catch(Exception ex) when(IsEngineError(ex)){}}

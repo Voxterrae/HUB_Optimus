@@ -1,3 +1,5 @@
+> **Selección Web nativa — incremento de 01/11/2026:** Inicio → Elegir fuente Web. None desactiva Web; Mwmbl es piloto privado y SearXNG requiere servidor del operador. [Uso y validación del incremento](docs/VALIDATION_NATIVE_SEARCH_2026_11_01.md), [condiciones pendientes](docs/WEB_PROVIDER_CONDITIONS_2026_11_01.md). Los párrafos versionados siguientes conservan su alcance histórico; los recibos nativos actuales por SHA están en la PR #2040.
+
 > **Apariencia nativa 0.3.3 — 31/10/2026:** temas Claro/Oscuro/Sistema y Modo fácil optativo, con tamaño manual conservado y alto contraste independiente. [Guía 0.3.3](docs/GUIA_0_3_3.md), [validación](docs/VALIDATION_0_3_3.md) y [decisiones](docs/DECISIONS_0_3_3.md). La ejecución real en Windows y la aceptación de accesibilidad siguen pendientes; la propuesta CI está inactiva.
 
 > **Arranque y diagnóstico 0.3.2 — 30/10/2026:** corrección del plazo de arranque en frío y diagnóstico Windows autocontenido. [Guía 0.3.2](docs/GUIA_0_3_2.md). La ejecución real de servicio/interfaz en Windows sigue pendiente; la propuesta CI está inactiva.
@@ -6,7 +8,7 @@
 
 # Optimus Windows 0.3 alpha — búsqueda compartida
 
-WPF/WebView2 con servicio local .NET 10 en `../search`. Web es la fuente predeterminada mediante ese servicio; Índice Optimus consulta un catálogo finito offline y Wikipedia es una elección explícita. El SearXNG web lo configura el operador. Alpha sin firma; ejecución y accesibilidad de esta versión en Windows pendientes.
+WPF/WebView2 con servicio local .NET 10 en `../search`. Web es la fuente predeterminada mediante ese servicio; Índice Optimus consulta un catálogo finito offline y Wikipedia es una elección explícita. La fuente Web se elige expresamente; sin elección queda desactivada y los ajustes antiguos de SearXNG se conservan. Un servicio ajeno permite Índice, pero su Web no se usa sin confirmar la fuente. Alpha sin firma; ejecución y accesibilidad de esta versión en Windows pendientes.
 
 Lee [GUIA_0_3.md](docs/GUIA_0_3.md) para uso, token, configuración y límites, [el protocolo](../search/docs/PROTOCOL.md) y [la validación 0.3](../search/docs/VALIDATION.md). La guía local funciona mediante reglas; no hay asistente generativo conectado, voz ni IoT.
 

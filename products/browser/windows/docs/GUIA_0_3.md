@@ -1,3 +1,5 @@
+> **Incremento nativo de 01/11/2026:** en Inicio pulsa **Elegir fuente Web**. Web sin configurar mantiene Índice offline; Mwmbl es un piloto privado con condiciones empresariales pendientes; SearXNG requiere un servidor. Guardar cierra las páginas actuales. La Web de otro servicio/instancia no confirmado se bloquea: usa la ventana que lo inició o ciérralo desde su origen. La configuración CLI histórica de esta guía sigue siendo útil para operadores del protocolo, pero no sustituye esa comprobación nativa. Estado del candidato y pruebas: [PR #2040](https://github.com/Voxterrae/HUB_Optimus/pull/2040).
+
 # Optimus Windows 0.3 alpha — búsqueda local y web
 
 Incremento de #2021 sobre la importación 0.2 de #2018. Alpha privada sin firma. Requiere Windows x64 y Microsoft Edge WebView2 Evergreen Runtime. La entrega incluye .NET 10, Windows Desktop y ASP.NET Core; conserva `Search/` junto a `Optimus.exe` al descomprimir. No instala servicios ni cambia el navegador predeterminado.

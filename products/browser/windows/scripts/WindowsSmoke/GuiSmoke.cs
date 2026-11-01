@@ -39,7 +39,7 @@ internal static class GuiSmoke
             FindOwned(window, "Consulta de inicio de Optimus", blocked: true); report.Checks.Add("gui-native-home-uia");
             Invoke("Elegir fuente Web");
             var dialog = FindOwnedDialog(app.Id, app.MainWindowHandle);
-            var combo = FindScrolled(dialog, "Fuente Web de Optimus");
+            var combo = FindOwned(dialog, "Fuente Web de Optimus");
             RequireSelection(combo, "Web sin configurar");
             Select(dialog, combo, "SearXNG · servidor del operador");
             var serverInput = FindScrolled(dialog, "Servidor SearXNG", ControlType.Edit);
@@ -51,8 +51,17 @@ internal static class GuiSmoke
             var dialogHandle = (nint)dialog.Current.NativeWindowHandle;
             ((InvokePattern)FindScrolled(dialog, "Guardar y cerrar páginas actuales").GetCurrentPattern(InvokePattern.Pattern)).Invoke();
             Wait(() => !IsWindow(dialogHandle), "Owned Web settings dialog did not close.");
-            Wait(() => window.FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text))
-                .Cast<AutomationElement>().Any(element => element.Current.Name.StartsWith("Preferencias guardadas.", StringComparison.Ordinal)), "Selected Web settings were not applied.");
+            try
+            {
+                Wait(() => GuiNavigationDiagnostics.IsNavigationReady(window), "Settings did not resume the verified controller.");
+                Invoke("Elegir fuente Web");
+                var persisted = FindOwnedDialog(app.Id, app.MainWindowHandle);
+                RequireSelection(FindOwned(persisted, "Fuente Web de Optimus"), "Mwmbl · piloto privado");
+                var persistedHandle = (nint)persisted.Current.NativeWindowHandle;
+                ((InvokePattern)FindScrolled(persisted, "Cancelar").GetCurrentPattern(InvokePattern.Pattern)).Invoke();
+                Wait(() => !IsWindow(persistedHandle), "Owned settings verification dialog did not close.");
+            }
+            catch { GuiNavigationDiagnostics.Capture(window, "", report, "settings-failure"); throw; }
             if (((ValuePattern)Find("Consulta de inicio de Optimus").GetCurrentPattern(ValuePattern.Pattern)).Current.Value.Length != 0)
                 throw new InvalidOperationException("Selecting a Web source populated a query.");
             var inactive = new TcpListener(IPAddress.Loopback, 17831);

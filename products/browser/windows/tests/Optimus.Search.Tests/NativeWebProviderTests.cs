@@ -8,16 +8,37 @@ static class NativeWebProviderTests
 {
     public static void Register(Action<string, Func<Task>> test)
     {
+        test("a live spawned child cannot authorize another same-profile responder without its channel identity", async () =>
+        {
+            using var fixture = new HostFixture { MissingIdentity = true };
+            var result = await fixture.Launcher.ConnectAsync(new WebSearchConfiguration(WebProvider.Mwmbl), default);
+            Require(fixture.Launcher.OwnsProcess && result.GetError(OptimusSearchScope.Index) is null, "Keep the live child and authenticated Index available");
+            Require(result.GetError(OptimusSearchScope.Web) is not null, "Profile proof plus a live child is insufficient to disclose a Web query");
+        });
+        test("owned Web target carries the identity supplied by its private child channel", async () =>
+        {
+            using var fixture = new HostFixture();
+            var result = await fixture.Launcher.ConnectAsync(new WebSearchConfiguration(WebProvider.Mwmbl), default);
+            Require(result.GetError(OptimusSearchScope.Web) is null && result.Target.ExpectedSpkiSha256 == HostFixture.OwnerPin, "Carry the owned TLS pin to the actual request, not just readiness");
+        });
+        test("malformed owned TLS pins never dispatch a local HTTP request", async () =>
+        {
+            var calls = 0;
+            using var client = new HttpClient(new Handler((_, _) => { calls++; return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"query\":\"q\",\"results\":[],\"optimus\":{\"version\":1,\"scope\":\"web\",\"webConfigured\":true,\"indexedDocuments\":0}}") }); }));
+            var service = new OptimusSearchService(client, _ => TestTransport.Borrow(client));
+            foreach (var pin in new[] { "", new string('g',64), new string('c',63), new string('c',64)+"\n" })
+                Require((await service.SearchAsync("q", [], new OptimusSearchTarget(OptimusSearchScope.Web,null,HostFixture.Bearer,pin),default)).Error is not null && calls == 0, "Reject a malformed expected identity before any HTTP disclosure");
+        });
         test("native Web arguments select exactly one explicit provider", () =>
         {
             var app = Path.GetTempPath(); const string path = "profile/service.token";
             var none = SearchHostLauncher.CreateStartInfo(app, new WebSearchConfiguration(WebProvider.None, "https://remembered.example/"), path);
-            Require(none.ArgumentList.SequenceEqual(new[] { "--token-file", path, "--owner-stdin", "true" }), "Web off must not transmit the remembered server or select another provider");
+            Require(none.ArgumentList.SequenceEqual(new[] { "--token-file", path, "--owner-stdin", "true", "--owner-identity-stdout", "true" }), "Web off must not transmit the remembered server or select another provider");
             var mwmbl = SearchHostLauncher.CreateStartInfo(app, new WebSearchConfiguration(WebProvider.Mwmbl), path);
-            Require(mwmbl.ArgumentList.SequenceEqual(new[] { "--token-file", path, "--web-provider", "mwmbl", "--owner-stdin", "true" }), "Explicit Mwmbl must reach the bundled service");
+            Require(mwmbl.ArgumentList.SequenceEqual(new[] { "--token-file", path, "--web-provider", "mwmbl", "--owner-stdin", "true", "--owner-identity-stdout", "true" }), "Explicit Mwmbl must reach the bundled service");
             var searx = SearchHostLauncher.CreateStartInfo(app, new WebSearchConfiguration(WebProvider.Searx, "https://operator.example/"), path);
-            Require(searx.ArgumentList.SequenceEqual(new[] { "--token-file", path, "--searx-url", "https://operator.example/", "--owner-stdin", "true" }), "SearXNG and Mwmbl options must never be combined");
-            Require(!mwmbl.UseShellExecute && mwmbl.RedirectStandardInput && Path.IsPathFullyQualified(mwmbl.FileName), "Keep argument isolation and owned graceful shutdown");
+            Require(searx.ArgumentList.SequenceEqual(new[] { "--token-file", path, "--searx-url", "https://operator.example/", "--owner-stdin", "true", "--owner-identity-stdout", "true" }), "SearXNG and Mwmbl options must never be combined");
+            Require(!mwmbl.UseShellExecute && mwmbl.RedirectStandardInput && mwmbl.RedirectStandardOutput && Path.IsPathFullyQualified(mwmbl.FileName), "Keep argument isolation and owned graceful shutdown");
             return Task.CompletedTask;
         });
         test("changing native Web mode restarts only its owned host even without endpoints", async () =>
@@ -67,9 +88,11 @@ static class NativeWebProviderTests
     private sealed class HostFixture : IDisposable
     {
         public const string Bearer = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        public const string OwnerPin = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
         private readonly string directory = Path.Combine(Path.GetTempPath(), "optimus-native-web-" + Guid.NewGuid().ToString("N"));
         private readonly HttpClient client;
         public bool Ready;
+        public bool MissingIdentity;
         public Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>? Probe;
         public List<ProcessStartInfo> Starts { get; } = [];
         public List<ProcessFixture> Processes { get; } = [];
@@ -86,7 +109,7 @@ static class NativeWebProviderTests
             }));
             Launcher = new SearchHostLauncher(client, directory, directory, start =>
             {
-                Starts.Add(start); Ready = true; var process = new ProcessFixture(() => Ready = false); Processes.Add(process); return process;
+                Starts.Add(start); Ready = true; var process = new ProcessFixture(() => Ready = false, MissingIdentity ? null : OwnerPin); Processes.Add(process); return process;
             }, _ => TestTransport.Borrow(client));
         }
         public static HttpResponseMessage Proof(HttpRequestMessage request)
@@ -103,11 +126,12 @@ static class NativeWebProviderTests
             Launcher.Dispose(); client.Dispose(); Directory.Delete(directory, true);
         }
     }
-    private sealed class ProcessFixture(Action stopped) : ISearchHostProcess
+    private sealed class ProcessFixture(Action stopped, string? ownerPin) : ISearchHostProcess
     {
         public bool Stopped { get; private set; }
         public bool RefuseStop;
         public bool HasExited => Stopped;
+        public Task<string?> ReadOwnerSpkiAsync(CancellationToken token) => Task.FromResult(ownerPin);
         public void Stop() { if (RefuseStop) throw new InvalidOperationException("Expected failed cleanup"); Stopped = true; stopped(); }
         public void Dispose() { }
     }

@@ -21,13 +21,13 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
     private readonly StackPanel _results = new();
     private CancellationTokenSource? _pending;
     private readonly ComboBox _scope = new() { MinHeight = 44, Margin = new Thickness(0, 0, 0, 8) };
-    private readonly Func<CancellationToken, Task<SearchHostConnection>> _connect;
+    private readonly Func<OptimusSearchScope, CancellationToken, Task<SearchHostConnection>> _connect;
     private readonly CancellationToken _hostLifetime;
     private OptimusSearchScope Scope => (OptimusSearchScope)Math.Max(0, _scope.SelectedIndex);
     private long _generation;
     private bool _disposed;
 
-    public OptimusSearchView(Action<string> openUrl, Func<IReadOnlyList<Bookmark>> bookmarks,Func<bool> eligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connect)
+    public OptimusSearchView(Action<string> openUrl, Func<IReadOnlyList<Bookmark>> bookmarks,Func<bool> eligible,CancellationToken hostLifetime,Func<OptimusSearchScope,CancellationToken,Task<SearchHostConnection>> connect)
     {
         _openUrl = openUrl;
         _connect = connect;
@@ -138,7 +138,7 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
             OptimusSearchTarget target = new(scope, null, null);
             if (scope != OptimusSearchScope.Wikipedia)
             {
-                var connection = await _connect(cancellation.Token);
+                var connection = await _connect(scope,cancellation.Token);
                 if (!CanSubmit || generation != _generation || cancellation.IsCancellationRequested) return;
                 if (connection.GetError(scope) is {} error) { _status.Text = error; return; }
                 target = connection.Target with { Scope = scope };

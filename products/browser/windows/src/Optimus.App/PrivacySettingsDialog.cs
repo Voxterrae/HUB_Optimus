@@ -7,7 +7,7 @@ internal sealed class PrivacySettingsDialog : Window
  public List<PrivacyRule>? Rules {get;private set;}
  public string? Endpoint {get;private set;}
  public WebProvider Provider {get;private set;}
- public PrivacySettingsDialog(Window owner,BrowserSettings settings)
+ public PrivacySettingsDialog(Window owner,BrowserSettings settings,bool focusWeb=false)
  {
   Owner=owner;Title="Privacidad y búsqueda · Optimus";Width=Math.Min(760,SystemParameters.WorkArea.Width);Height=Math.Min(820,SystemParameters.WorkArea.Height);FontSize=owner.FontSize;
   var body=new StackPanel {Margin=new Thickness(16)};Content=new ScrollViewer {Content=body,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
@@ -50,6 +50,7 @@ internal sealed class PrivacySettingsDialog : Window
    System.Windows.Automation.AutomationProperties.SetName(item,option.Item2);source.Items.Add(item);
   }
   source.SelectedValue=WebSearchConfiguration.FromSettings(settings).Provider;body.Children.Add(source);
+  if(focusWeb)Loaded+=(_,_)=>Dispatcher.BeginInvoke(new Action(()=>{if(IsVisible){source.BringIntoView();source.Focus();}}));
   var sourceNote=new TextBlock {TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,8,0,8)};body.Children.Add(sourceNote);
   var server=new StackPanel();server.Children.Add(new TextBlock {Text="Servidor SearXNG"});
   var endpoint=new TextBox {Text=settings.SearxEndpoint??"",MinHeight=44};System.Windows.Automation.AutomationProperties.SetName(endpoint,"Servidor SearXNG");server.Children.Add(endpoint);body.Children.Add(server);

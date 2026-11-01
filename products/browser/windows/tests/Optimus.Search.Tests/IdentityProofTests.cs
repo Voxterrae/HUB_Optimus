@@ -15,6 +15,21 @@ static class IdentityProofTests
     private const string Health = "{\"name\":\"OptimusSearch\",\"version\":1}";
     public static void Register(Action<string, Func<Task>> test)
     {
+        test("actual Web request rejects a replacement listener with the same profile but another owned TLS key", async () =>
+        {
+            string pin;
+            await using (var owned = new Listener((stream, headers) => Send(stream, Health, null)))
+            {
+                pin = owned.SpkiSha256;
+                using var initial = Client(); using var response = await initial.GetAsync(OptimusSearchTarget.LocalEndpoint + "/health");
+                Require(response.IsSuccessStatusCode, "Original TLS owner is available before replacement");
+            }
+            await using var replacement = new Listener((stream, headers) => Send(stream, "{\"query\":\"private query\",\"results\":[],\"optimus\":{\"version\":1,\"scope\":\"web\",\"webConfigured\":true,\"indexedDocuments\":0}}", null));
+            Require(replacement.SpkiSha256 != pin, "The same profile must have a distinct replacement key");
+            using var client = Client();
+            var result = await new OptimusSearchService(client).SearchAsync("private query", [], new OptimusSearchTarget(OptimusSearchScope.Web,null,Token,pin), default);
+            Require(result.Error is not null && replacement.Requests.IsEmpty, "Reject replacement in TLS before sending bearer or query HTTP bytes");
+        });
         test("profile-authenticated TLS completes before fixture health HTTP", async () =>
         {
             await using var listener = new Listener((stream, headers) => Send(stream, Health, null));
@@ -275,9 +290,11 @@ static class IdentityProofTests
         private readonly FixtureCertificate? ownedCertificate;
         private Task? disposal;
         public ConcurrentQueue<string> Requests { get; } = new();
+        public string SpkiSha256 { get; }
         public Listener(Func<Stream, string, Task> respond, X509Certificate2? certificate = null)
         {
             if (certificate is null) { ownedCertificate = Certificate(Token); certificate = ownedCertificate.Value; }
+            using (var key = certificate.GetECDsaPublicKey()) SpkiSha256 = Convert.ToHexStringLower(SHA256.HashData(key!.ExportSubjectPublicKeyInfo()));
             try { listener.Start(); }
             catch { listener.Stop(); stopping.Dispose(); ownedCertificate?.Dispose(); throw; }
             serving = Task.Run(async () =>

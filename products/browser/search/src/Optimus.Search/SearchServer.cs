@@ -1,5 +1,6 @@
 using System.Net;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -16,6 +17,14 @@ public sealed class SearchServer : IAsyncDisposable
     private readonly WebApplication application;
     private readonly ServiceCertificate certificate;
     public string Address { get; }
+    public string TlsSpkiSha256
+    {
+        get
+        {
+            using var key = certificate.ForPort(new Uri(Address).Port).GetECDsaPublicKey()!;
+            return Convert.ToHexStringLower(SHA256.HashData(key.ExportSubjectPublicKeyInfo()));
+        }
+    }
     private SearchServer(WebApplication application, string address, ServiceCertificate certificate) { this.application = application; Address = address; this.certificate = certificate; }
     public static async Task<SearchServer> StartAsync(ServerOptions options, LocalSearchIndex index, IWebSearchProvider? provider = null, CancellationToken cancellationToken = default)
     {

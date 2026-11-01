@@ -65,7 +65,7 @@ internal sealed class BrowserTab : IDisposable
  private bool disposed,internalBlank;
  private readonly OperationLifetime lifetime=new();
  public bool IsDisposed=>lifetime.IsDisposed;
- public BrowserTab(Action<BrowserTab> recover,bool isPrivate,Func<PrivacyPolicy> policy,Func<long> policyGeneration,Func<IReadOnlyList<Bookmark>> bookmarks,string profileName,Func<BrowserTab,bool> searchEligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connectSearch)
+ public BrowserTab(Action<BrowserTab> recover,bool isPrivate,Func<PrivacyPolicy> policy,Func<long> policyGeneration,Func<IReadOnlyList<Bookmark>> bookmarks,string profileName,Func<BrowserTab,bool> searchEligible,CancellationToken hostLifetime,Func<OptimusSearchScope,CancellationToken,Task<SearchHostConnection>> connectSearch)
  {
   controllerOwnership=new ControllerOwnership(()=>View.Dispose());
   this.profileName=profileName;IsPrivate=isPrivate;this.policy=policy;this.policyGeneration=policyGeneration;
