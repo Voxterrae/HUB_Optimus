@@ -23,3 +23,7 @@ mod relative_ntfs;
 // Dormant retained ancestor observations; no storage authority.
 #[allow(dead_code)]
 mod ancestor_chain;
+
+// Private own-process observations; trusted launch remains a separate gate.
+#[allow(dead_code)]
+mod bootstrap_process;

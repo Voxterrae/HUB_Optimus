@@ -44,6 +44,14 @@ unavailable.
 
 ## Dependency and rights boundary
 
+The private `bootstrap_process` prerequisite retains a real handle to its own
+native x64 process with `PROCESS_QUERY_LIMITED_INFORMATION`. It records the PID,
+creation time, architecture and Win32/native image names, then compares a second
+observation on that same noninheritable handle. Its explicit close reports cleanup
+errors. These internal observations prepare the bootstrap inventory described in
+the acquisition proposal. Trusted image provenance and enrollment remain separate
+requirements of the eventual protected-store producer.
+
 The target-Windows dependency is exactly `windows-sys 0.61.2`, with
 `Win32_Foundation`, `Win32_Security_Cryptography`, `Win32_Networking_HttpServer`,
 `Win32_Security_Authorization`, `Win32_Storage_FileSystem`, `Win32_System_IO`,
