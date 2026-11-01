@@ -22,6 +22,15 @@ SEARX_PORT = 18888
 API_URL = "https://api.mwmbl.org/api/v1"
 
 
+class Cancelled(Exception):
+    """A supervisor interrupt; no raw signal or child output is reported."""
+
+
+def check_cancellation(cancelled):
+    if cancelled is not None and cancelled():
+        raise Cancelled()
+
+
 def validate_source(value):
     if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{40}", value):
         raise ValueError("invalid-source")
@@ -92,10 +101,11 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def wait_health(process, seconds=30.0):
+def wait_health(process, seconds=30.0, cancelled=None):
     deadline = time.monotonic() + seconds
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
     while time.monotonic() < deadline:
+        check_cancellation(cancelled)
         if process.poll() is not None:
             return False
         try:
@@ -182,18 +192,38 @@ def curate_probe(value, expected_source=None):
     return value
 
 
-def execute_probe(command, environment, source):
+def cancel_probe(process):
+    """Let the exact owned probe close its own host before upstream shutdown."""
+    if process.poll() is None:
+        try:
+            process.send_signal(signal.SIGINT)
+        except ProcessLookupError:
+            pass
+    try:
+        process.communicate(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.communicate(timeout=5)
+
+
+def execute_probe(command, environment, source, cancelled=None):
+    check_cancellation(cancelled)
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=environment)
     try:
-        output, _ = process.communicate(timeout=90)
-    except subprocess.TimeoutExpired:
-        process.send_signal(signal.SIGINT)
-        try:
-            process.communicate(timeout=10)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.communicate(timeout=5)
-        raise ValueError("probe-timeout")
+        deadline = time.monotonic() + 90
+        while True:
+            check_cancellation(cancelled)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ValueError("probe-timeout")
+            try:
+                output, _ = process.communicate(timeout=min(0.2, remaining))
+                break
+            except subprocess.TimeoutExpired:
+                continue
+    except BaseException:
+        cancel_probe(process)
+        raise
     if len(output) > 16384:
         raise ValueError("probe-report-invalid")
     result = curate_probe(json.loads(output), source)
@@ -212,12 +242,21 @@ def main():
     result = {"status": "blocked", "reason": "preflight", "sourceCommit": None,
               "workflowCommit": None, "searxCommit": SEARX_COMMIT, "searxCleanup": False}
     owned = None
+    interrupted = False
+    def interrupt(signum, frame):
+        nonlocal interrupted
+        # Do not raise between Popen creation and handle assignment, or during cleanup.
+        interrupted = True
+    previous_signals = {number: signal.signal(number, interrupt) for number in (signal.SIGINT, signal.SIGTERM)}
+    cancelled = lambda: interrupted
     try:
+        check_cancellation(cancelled)
         result.update(sourceCommit=validate_source(args.source), workflowCommit=validate_source(args.workflow))
         checkout(args.product_root, args.source)
         checkout(args.harness_root, args.workflow)
         checkout(args.searx_root, SEARX_COMMIT)
         result["dependencies"] = dependency_provenance(args.searx_python, args.searx_root, args.dependency_report)
+        check_cancellation(cancelled)
         require_free_port(SEARX_PORT)
         require_free_port(17831)
         runner_temp = Path(os.environ["RUNNER_TEMP"]).resolve(strict=True)
@@ -228,14 +267,15 @@ def main():
             config.write_text(json.dumps(settings()), encoding="utf-8")
             os.chmod(config, 0o600)
             environment = searx_environment(args.searx_root.resolve(), temporary, secrets.token_hex(32))
-            owned = subprocess.Popen([str(args.searx_python.resolve()), "-m", "searx.webapp"],
+            # Keep the venv executable path: resolving its symlink discards pyvenv.cfg.
+            owned = subprocess.Popen([str(args.searx_python.absolute()), "-m", "searx.webapp"],
                                      cwd=args.searx_root, env=environment,
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             try:
-                if not wait_health(owned):
+                if not wait_health(owned, cancelled=cancelled):
                     raise ValueError("searx-health-blocked")
                 result["probe"] = execute_probe(["dotnet", str(args.probe.resolve()), "--host", str(args.host.resolve()),
-                    "--profile", str(temporary / "profile"), "--source", args.source], process_environment(), args.source)
+                    "--profile", str(temporary / "profile"), "--source", args.source], process_environment(), args.source, cancelled)
                 result["status"] = result["probe"]["status"]
                 result["reason"] = "accepted" if result["status"] == "passed" else "upstream-blocked"
             finally:
@@ -243,6 +283,8 @@ def main():
                 owned = None
                 if not result["searxCleanup"]:
                     result.update(status="blocked", reason="cleanup-failed")
+    except Cancelled:
+        result.update(status="blocked", reason="cancelled")
     except (OSError, ValueError, subprocess.SubprocessError, KeyError, json.JSONDecodeError):
         result.update(status="blocked", reason="execution-blocked")
     finally:
@@ -250,6 +292,10 @@ def main():
             result["searxCleanup"] = stop_owned(owned)
         if not result["searxCleanup"]:
             result["status"] = "blocked"
+        if interrupted:
+            result.update(status="blocked", reason="cancelled")
+        for number, handler in previous_signals.items():
+            signal.signal(number, handler)
     print(json.dumps(result, sort_keys=True))
     return 0 if result["status"] == "passed" else 2
 
