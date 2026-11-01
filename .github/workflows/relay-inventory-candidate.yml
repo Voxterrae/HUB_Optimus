@@ -1,0 +1,167 @@
+name: Relay inventory candidate conformance
+on:
+  # Owner-bound read-only validation of the selected exact ref, including main.
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/relay-inventory-candidate-20261101
+    paths:
+      - .github/workflows/relay-inventory-candidate.yml
+      - products/device-bridge/windows/bootstrap-inventory/**
+      - tests/test_workflow_action_pins.py
+permissions:
+  contents: read
+concurrency:
+  group: relay-inventory-${{ github.ref }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: pwsh
+jobs:
+  tests:
+    name: Inventory ${{ matrix.slice }} (Windows)
+    if: >-
+      github.repository == 'Voxterrae/HUB_Optimus' &&
+      github.actor == 'Voxterrae' && github.actor_id == '249308740' &&
+      github.event.repository.private == false
+    strategy:
+      fail-fast: false
+      matrix:
+        slice: [core, native]
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Capacity floor and fixed compiler
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $drive = (Get-Item -LiteralPath $env:RUNNER_TEMP).PSDrive
+          if ($drive.Free -lt 2147483648) { throw 'Disposable runner below 2 GiB.' }
+          rustup toolchain install 1.99.0 --profile minimal
+          if ($LASTEXITCODE -ne 0) { throw 'Fixed toolchain install failed.' }
+          rustup run 1.99.0 rustc --version
+          if ($LASTEXITCODE -ne 0) { throw 'Fixed compiler unavailable.' }
+      - name: Compile and run portable arena and wire conformance
+        if: matrix.slice == 'core'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $binary = Join-Path $env:RUNNER_TEMP 'relay-inventory-core.exe'
+          rustup run 1.99.0 rustc --edition=2024 --test products/device-bridge/windows/bootstrap-inventory/tests/core_tests.rs -o $binary
+          if ($LASTEXITCODE -ne 0) { throw 'Inventory core compilation failed.' }
+          & $binary
+          if ($LASTEXITCODE -ne 0) { throw 'Inventory core conformance failed.' }
+      - name: Compile native library first
+        if: matrix.slice == 'native'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          rustup run 1.99.0 cargo test --manifest-path products/device-bridge/windows/bootstrap-inventory/Cargo.toml --target-dir "${env:RUNNER_TEMP}/relay-inventory-target" --locked --lib --no-run
+          if ($LASTEXITCODE -ne 0) { throw 'Inventory native library compilation failed.' }
+      - name: Run all diagnostic candidate tests with private native details
+        if: matrix.slice == 'native'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $privateLog = Join-Path $env:RUNNER_TEMP 'relay-inventory-native-private.txt'
+          try {
+            rustup run 1.99.0 cargo test --manifest-path products/device-bridge/windows/bootstrap-inventory/Cargo.toml --target-dir "${env:RUNNER_TEMP}/relay-inventory-target" --locked --offline --all-targets -- --test-threads=1 *> $privateLog
+            $testExit = $LASTEXITCODE
+            $lines = @(Get-Content -LiteralPath $privateLog)
+            $safe = @($lines | Where-Object { $_ -match '^test [A-Za-z0-9_:]+ \.\.\. (ok|FAILED|ignored)$' -or $_ -match '^test result: (ok|FAILED)\. [0-9]+ passed; [0-9]+ failed; [0-9]+ ignored;' })
+            $safe | ForEach-Object { Write-Output $_ }
+            if ($safe.Count -eq 0) { throw 'No attributable diagnostic test result.' }
+            if ($testExit -ne 0) { throw 'Diagnostic tests failed; native details remain private.' }
+            if (@($safe | Where-Object { $_ -match ' \.\.\. ignored$' }).Count -ne 0) { throw 'Unexpected ignored diagnostic case.' }
+          } finally {
+            Remove-Item -LiteralPath $privateLog -Force -ErrorAction SilentlyContinue
+          }
+  package:
+    name: Build and exercise diagnostic bundle (Windows)
+    needs: tests
+    if: >-
+      github.repository == 'Voxterrae/HUB_Optimus' &&
+      github.actor == 'Voxterrae' && github.actor_id == '249308740' &&
+      github.event.repository.private == false
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Select Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Fixed toolchain and locked dependency cache
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ((Get-Item -LiteralPath $env:RUNNER_TEMP).PSDrive.Free -lt 2147483648) { throw 'Capacity below 2 GiB.' }
+          rustup toolchain install 1.99.0 --profile minimal
+          if ($LASTEXITCODE -ne 0) { throw 'Fixed compiler unavailable.' }
+          rustup run 1.99.0 cargo fetch --locked --manifest-path products/device-bridge/windows/bootstrap-inventory/Cargo.toml
+          if ($LASTEXITCODE -ne 0) { throw 'Locked cache unavailable.' }
+      - name: Python validator and packaging tests
+        run: |
+          python -B -m unittest discover -s products/device-bridge/windows/bootstrap-inventory/tools -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Python conformance failed.' }
+      - name: Exercise owned namespace and transfer fixtures
+        run: |
+          & products/device-bridge/windows/bootstrap-inventory/scripts/Test-CaptureHelpers.ps1 -ScratchDirectory (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'relay-helper-fixtures')
+          if ($LASTEXITCODE -ne 0) { throw 'Capture helper fixtures failed.' }
+      - name: Build release bundle offline and capture privately
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+          $vs = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($vs)) { throw 'Developer environment unavailable.' }
+          Import-Module (Join-Path $vs 'Common7/Tools/Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
+          $linkText = (& link.exe /? 2>&1 | Out-String)
+          if ($linkText -notmatch 'Version\s+([0-9.]+)') { throw 'Linker version unavailable.' }
+          $linkVersion = $Matches[1]
+          $sdkVersion = $env:WindowsSDKVersion.TrimEnd('\')
+          $crate = Join-Path $env:GITHUB_WORKSPACE 'products/device-bridge/windows/bootstrap-inventory'
+          $policy = (Get-FileHash -LiteralPath (Join-Path $crate 'src/os_policy.rs') -Algorithm SHA256).Hash.ToLowerInvariant()
+          $build = Join-Path $env:RUNNER_TEMP 'relay-diagnostic-build'
+          & (Join-Path $crate 'scripts/Build-RelayInventory.ps1') -SourceCommit '${{ github.sha }}' -PolicySha256 $policy -LinkerVersion $linkVersion -SdkVersion $sdkVersion -OutputDirectory $build
+          if ($LASTEXITCODE -ne 0) {
+            $compiled = Join-Path $build 'target/x86_64-pc-windows-msvc/release/hub-relay-bootstrap-inventory.exe'
+            if (Test-Path -LiteralPath $compiled) {
+              # Own generated artifact static DLL names only; no host observations.
+              & dumpbin.exe /dependents $compiled | Where-Object { $_ -match '^\s+[A-Za-z0-9_.-]+\.dll$' } | ForEach-Object { $_.Trim() }
+            }
+            throw 'Diagnostic build failed.'
+          }
+          $bundle = Join-Path $env:RUNNER_TEMP 'relay-diagnostic-extracted'
+          Expand-Archive -LiteralPath (Join-Path $build 'hub-relay-bootstrap-inventory-windows-amd64.zip') -DestinationPath $bundle
+          python -B (Join-Path $bundle 'tools/package_inventory.py') --verify $bundle
+          if ($LASTEXITCODE -ne 0) { throw 'Extracted package failed integrity validation.' }
+          & (Join-Path $bundle 'scripts/Run-RelayInventory.ps1') -PrivateCaptureDirectory (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'relay-private-capture')
+          if ($LASTEXITCODE -ne 0) { throw 'Whole diagnostic capture failed; private details remain local.' }
+          # Parse validated private output but publish only the fixed enum.
+          $receipt = Get-Content -LiteralPath (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'relay-private-capture/receipt.json') -Raw | ConvertFrom-Json
+          if ($receipt.outcome -cnotin @('observed','refused')) { throw 'Unexpected diagnostic outcome.' }
+          Write-Output ('Whole release diagnostic capture: ' + $receipt.outcome + '; activation blocked.')
+          & (Join-Path $bundle 'hub-relay-bootstrap-inventory.exe') unexpected-argument *> $null
+          if ($LASTEXITCODE -ne 2) { throw 'Collector accepted arguments.' }
+          Write-Output 'Collector argument rejection: passed.'
+          $global:LASTEXITCODE = 0
+          # Only the distributable diagnostic ZIP is made public.
+          $publish = Join-Path $env:RUNNER_TEMP 'relay-public-package'
+          [void](New-Item -ItemType Directory -Path $publish)
+          Copy-Item -LiteralPath (Join-Path $build 'hub-relay-bootstrap-inventory-windows-amd64.zip') -Destination $publish
+      - name: Upload diagnostic bundle only
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: hub-relay-bootstrap-inventory-windows-amd64
+          path: ${{ runner.temp }}/relay-public-package/hub-relay-bootstrap-inventory-windows-amd64.zip
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          overwrite: false
