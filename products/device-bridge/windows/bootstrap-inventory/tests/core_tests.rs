@@ -68,3 +68,31 @@ fn rejected(r:&Receipt<'_>) {assert!(wire::encoded_len(r).is_err());let mut out=
 #[test] fn filesystem_descriptor_and_ancestor_bounds_are_exact() {let ee=[failure()];let mut r=refusal(&ee);let fs="a".repeat(31);let mut a=anchor();a.filesystem=&fs;r.anchor=Some(a);assert!(wire::encoded_len(&r).is_ok());let fs="a".repeat(32);a.filesystem=&fs;r.anchor=Some(a);rejected(&r);r.anchor=None;let descriptor=vec![0;65537];let mut aa=[ancestor()];aa[0].owner_dacl=&descriptor[..65536];r.ancestors=Some(&aa);assert!(wire::encoded_len(&r).is_ok());aa[0].owner_dacl=&descriptor;let mut r=refusal(&ee);r.ancestors=Some(&aa);rejected(&r);let mut aa=vec![ancestor();128];for (i,a) in aa.iter_mut().enumerate() {a.index=i as u32;}let mut r=refusal(&ee);r.ancestors=Some(&aa);assert!(wire::encoded_len(&r).is_ok());aa.push(ancestor());let mut r=refusal(&ee);r.ancestors=Some(&aa);rejected(&r);}
 #[test] fn manual_error_arrays_cannot_bypass_reserve_or_signature() {let mut c=Error::native(Phase::Cleanup,Operation::CloseHandle,Domain::Win32,6);c.kind=Kind::Cleanup;let ee=[c;256];let mut r=refusal(&ee);r.cleanup=Cleanup::Failed;rejected(&r);let ee=[failure(),failure()];rejected(&refusal(&ee));let mut b=ErrorBag::new();b.receipt_bound();let mut e=b.as_slice()[0];for variant in 0..5 {let saved=e;match variant {0=>e.phase=Phase::Capture,1=>e.operation=Operation::Validate,2=>e.ancestor_index=Some(0),3=>e.reason=Some(Reason::Bound),_=>e.domain=Domain::Win32};let ee=[e];rejected(&refusal(&ee));e=saved;}}
 #[test] fn thread_context_cannot_hide_a_complete_thread_token() {let ee=[failure()];let mut r=refusal(&ee);let mut t=token();t.token_type=2;t.impersonation_level=Some(2);r.thread_token=Some(t);rejected(&r);r.thread_context=ThreadContext::NoToken;rejected(&r);r.thread_context=ThreadContext::Present;assert!(wire::encoded_len(&r).is_ok());}
+
+#[test] fn nonzero_informational_nt_statuses_remain_native_terminal_evidence() {
+    for (call,io_status) in [(1,0),(0,1),(0x40000000,0),(0,0x40000000),(0x7fffffff,0),(0,0x7fffffff)] {
+        let completion=Completion{call,io_status,information:99};
+        let mut error=Error::native(Phase::Capture,Operation::NtQueryInformationFile,Domain::Ntstatus,call);
+        error.completion=Some(completion);
+        let errors=[error];
+        let json=String::from_utf8(encode(&refusal(&errors))).unwrap();
+        assert!(json.contains("\"domain\":\"ntstatus\""));
+        assert!(json.contains(&format!("\"call\":{}",call)));
+        assert!(json.contains(&format!("\"io_status\":{}",io_status)));
+        assert!(json.contains("\"information\":\"99\""));
+        error.code=Some(call^1);let errors=[error];rejected(&refusal(&errors));
+        error=Error::internal(Phase::Capture,Operation::NtQueryInformationFile,Reason::Malformed);
+        error.completion=Some(completion);let errors=[error];rejected(&refusal(&errors));
+    }
+    let completion=Completion{call:0,io_status:0,information:99};
+    let mut error=Error::native(Phase::Capture,Operation::NtCreateFile,Domain::Ntstatus,0);
+    error.completion=Some(completion);let errors=[error];rejected(&refusal(&errors));
+    error=Error::internal(Phase::Capture,Operation::NtCreateFile,Reason::Malformed);
+    error.completion=Some(completion);let errors=[error];assert!(wire::encoded_len(&refusal(&errors)).is_ok());
+}
+#[test] fn native_status_completion_cannot_serialize_pending_or_unwritten_iosb() {
+    for (call,io_status,information) in [(0x103,0,4),(0,0x103,4),(0xc0000022,0x103,0),(0,0xc0000001,u64::MAX),(1,0xc0000001,u64::MAX)] {
+        let mut error=Error::native(Phase::Capture,Operation::NtQueryInformationFile,Domain::Ntstatus,call);
+        error.completion=Some(Completion{call,io_status,information});let errors=[error];rejected(&refusal(&errors));
+    }
+}
