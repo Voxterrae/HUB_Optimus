@@ -1,12 +1,12 @@
 # REVIEW CANDIDATE ONLY: apply through the protected owner process on main.
 # Adapted from products/browser/windows/ci/WindowsSmoke.workflow.yml at 178e52e.
-# Explicit source SHA: isolated execution does not merge or approve the product commit.
+# Reviewed source pin: changing the executable source requires protected review.
 name: Optimus Windows 0.3.3 isolated smoke
 on:
   workflow_dispatch:
     inputs:
       source_commit:
-        description: Complete lowercase 40-hex product SHA to test in this disposable runner
+        description: Confirm the reviewed product SHA; other commits are blocked
         type: string
         required: true
         default: 0790e0977c170ff8507bb73e0ec7b6e166755892
@@ -33,7 +33,8 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 15
     env:
-      OPTIMUS_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      OPTIMUS_SOURCE_COMMIT: 0790e0977c170ff8507bb73e0ec7b6e166755892
+      OPTIMUS_REQUESTED_SOURCE_COMMIT: ${{ inputs.source_commit }}
       OPTIMUS_WORKFLOW_COMMIT: ${{ github.workflow_sha }}
       OPTIMUS_RUN_ID: ${{ github.run_id }}
       OPTIMUS_RUN_ATTEMPT: ${{ github.run_attempt }}
@@ -45,11 +46,12 @@ jobs:
       - name: Validate exact source before checkout
         working-directory: ${{ runner.temp }}
         run: |
-          if ($env:OPTIMUS_SOURCE_COMMIT -cnotmatch '\A[0-9a-f]{40}\z') { throw 'A complete lowercase commit SHA is required; branch and tag names are not accepted.' }
+          if ($env:OPTIMUS_REQUESTED_SOURCE_COMMIT -cnotmatch '\A[0-9a-f]{40}\z') { throw 'A complete lowercase commit SHA is required; branch and tag names are not accepted.' }
+          if ($env:OPTIMUS_REQUESTED_SOURCE_COMMIT -cne $env:OPTIMUS_SOURCE_COMMIT) { throw 'Only the protected reviewed product pin may execute.' }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ inputs.source_commit }}
+          ref: 0790e0977c170ff8507bb73e0ec7b6e166755892
       - name: Toolchain preflight (no installation)
         run: |
           $ErrorActionPreference = 'Stop'
