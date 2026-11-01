@@ -6,6 +6,9 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using Optimus.Search;
 
+if (args is ["--provider-proxy-worker", var proxyWorkerEndpoint])
+    return await ProxyIsolationTests.RunWorkerAsync(proxyWorkerEndpoint);
+
 // Workers exercise the production token store in independent processes without emitting token bytes.
 if (args is ["--token-race-worker", var workerTokenPath, var workerReadyPath, var workerStartPath, var workerVerifyPath])
     return await RunTokenWorker(workerTokenPath, workerReadyPath, workerStartPath, workerVerifyPath);
@@ -399,6 +402,7 @@ Test("service exposes HTTPS only including actual ephemeral port", async () => {
 
 IdentityProofTests.Register(Test);
 TlsSigningKeyTests.Register(Test);
+ProxyIsolationTests.Register(Test, DotnetStart);
 int failed = 0;
 try { foreach (var (name, run) in tests) { try { await run(); Console.WriteLine("PASS " + name); } catch(Exception ex) { failed++; Console.WriteLine("FAIL " + name + ": " + ex.GetType().Name + ": " + ex.Message); } } }
 finally { Directory.Delete(temp, true); }
