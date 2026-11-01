@@ -484,13 +484,16 @@ and fail on missing, irrelevant, rate-limited or unresponsive evidence.
 The proposal creates no persistent endpoint or application default, changes no
 ranking, and provisions no paid resources. Both manual QA workflows select the
 native-accepted product0790e0977c170ff8507bb73e0ec7b6e166755892; the existing
-Windows workflow changes only its default input SHA, retaining all its gates. Source, workflow,
+Windows workflow also fixes checkout/build source literally. Both source inputs
+are confirmation-only; another candidate needs a protected pin update, avoiding
+unreviewed code execution in main's cache context. Existing authorization, runner,
+permission, timeout and profile safeguards remain. Source, workflow,
 upstream and resolved dependency provenance remain distinct; direct requirements
 pins do not establish a hermetic transitive lock. Curated reports and exact-owned
 cleanup are mandatory. Local synthetic tests do not establish real-Web relevance;
 independent review found two startup/cancellation defects, now covered by real
 symlinked-venv and actual-wrapper signal regressions. The final Python suite is
-41/41; required checks and a separately attributed cloud run remain pending.
+44/44 after additional source-trust regressions; required checks and a separately attributed cloud run remain pending.
 See `products/browser/search/docs/REAL_WEB_SMOKE_2062.md`. The separate
 ranking correction remains under #2061; existing owner-authority and acceptance
 boundaries remain unchanged.
