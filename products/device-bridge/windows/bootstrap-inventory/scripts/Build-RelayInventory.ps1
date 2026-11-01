@@ -23,7 +23,9 @@ function Invoke-BuildChild([string]$Executable, [string[]]$Arguments, [hashtable
     $start.WorkingDirectory = $script:crate
     $quoted = foreach ($argument in $Arguments) {
         if ($argument.Contains('"') -or $argument.Contains("`r") -or $argument.Contains("`n")) { throw 'Invalid build argument' }
-        '"' + $argument + '"'
+        # Windows CRT treats backslashes immediately before a closing quote as
+        # escapes. Double that terminal run; embedded quotes are already refused.
+        '"' + ($argument -replace '(\\+)$', '$1$1') + '"'
     }
     $start.Arguments = $quoted -join ' '
     foreach ($name in $EnvironmentValues.Keys) { $start.EnvironmentVariables[$name] = $EnvironmentValues[$name] }
@@ -135,6 +137,7 @@ try {
         'Linker mismatch','SDK mismatch','SDK unavailable')
     $category = if ($known -ccontains $_.Exception.Message) { $_.Exception.Message } else { 'Native or script precondition' }
     Write-Output ('Fixed build failure category: ' + $category)
+    Write-Output ('Build exception class: ' + $_.Exception.GetType().Name)
     Write-Output ('Diagnostic build or package validation failed at fixed phase ' + $buildPhase + '; no authority established.')
     exit 1
 }
