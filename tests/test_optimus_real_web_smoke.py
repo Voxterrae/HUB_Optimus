@@ -185,7 +185,8 @@ def test_health_redirect_cannot_contact_another_endpoint(monkeypatch):
         for thread in threads: thread.join(timeout=2)
 
 
-def test_main_starts_upstream_inside_its_symlinked_venv(monkeypatch, tmp_path, capsys):
+@pytest.mark.parametrize("mode", ["queries", "startup-only", "startup-failure"])
+def test_main_starts_upstream_inside_its_symlinked_venv(monkeypatch, tmp_path, capsys, mode):
     """The real interpreter must see packages installed only in the new venv."""
     import socket
     environment = tmp_path / "isolated-venv"
@@ -211,21 +212,38 @@ def test_main_starts_upstream_inside_its_symlinked_venv(monkeypatch, tmp_path, c
         " def do_GET(self):\n"
         "  self.send_response(200); self.end_headers(); self.wfile.write(b'OK')\n"
         f"HTTPServer(('127.0.0.1', {port}), Health).serve_forever()\n")
+    if mode == "startup-failure":
+        (package / "webapp.py").write_text("raise SystemExit(3)\n")
     monkeypatch.setattr(smoke, "SEARX_PORT", port)
     monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
     monkeypatch.setattr(smoke, "checkout", lambda *args: None)
     monkeypatch.setattr(smoke, "dependency_provenance", lambda *args: {"hermetic": False})
-    monkeypatch.setattr(smoke, "execute_probe", lambda *args: passing_report())
+    probe_calls = []
+    def execute(*args):
+        probe_calls.append(True)
+        return passing_report()
+    monkeypatch.setattr(smoke, "execute_probe", execute)
     argv = ["real-web", "--source", "a" * 40, "--workflow", "b" * 40]
     for name, value in {"product-root": tmp_path, "harness-root": tmp_path,
                         "searx-root": source, "searx-python": python,
                         "host": tmp_path / "host.dll", "probe": tmp_path / "probe.dll",
                         "dependency-report": tmp_path / "report.json"}.items():
         argv.extend(["--" + name, str(value)])
+    if mode != "queries":
+        argv.extend(["--mode", "startup-only"])
     monkeypatch.setattr(sys, "argv", argv)
-    assert smoke.main() == 0
-    assert marker.read_text() == str(environment)
-    assert json.loads(capsys.readouterr().out)["searxCleanup"] is True
+    assert smoke.main() == (2 if mode == "startup-failure" else 0)
+    result = json.loads(capsys.readouterr().out)
+    assert probe_calls == ([True] if mode == "queries" else [])
+    assert result["queryProbeAttempted"] == (mode == "queries")
+    if mode == "startup-failure":
+        assert result["status"] == "blocked" and result["stage"] == "upstream-health"
+        assert result["upstreamExitCode"] == 3 and result["upstreamReady"] is False
+    else:
+        assert marker.read_text() == str(environment)
+        assert result["status"] == ("passed" if mode == "queries" else "startup-ready")
+        assert result["upstreamReady"] is True and result["searxCleanup"] is True
+        if mode == "startup-only": assert "probe" not in result
 
 
 @pytest.mark.parametrize("interruption", [signal.SIGTERM, signal.SIGINT])
@@ -308,11 +326,34 @@ def workflow():
     return yaml.load((ROOT / ".github/workflows/optimus-real-web-smoke.yml").read_text(), Loader=yaml.BaseLoader)
 
 
-def test_manual_job_has_only_full_sha_input_and_disposable_read_only_runner():
+@pytest.mark.parametrize("exit_code", [0, 2])
+def test_actual_actions_shell_publishes_result_and_preserves_exit_code(tmp_path, exit_code):
+    """Use Actions' real bash -e invocation, including a negative probe outcome."""
+    binary = tmp_path / "bin"
+    binary.mkdir()
+    python = binary / "python3"
+    python.write_text("#!/bin/sh\nprintf '%s\\n' '{\"status\":\"blocked\",\"reason\":\"fixture\"}'\nexit " + str(exit_code) + "\n")
+    python.chmod(0o700)
+    summary = tmp_path / "summary"
+    environment = dict(os.environ, PATH=str(binary) + os.pathsep + os.environ["PATH"],
+                       RUNNER_TEMP=str(tmp_path), GITHUB_WORKSPACE=str(tmp_path),
+                       GITHUB_STEP_SUMMARY=str(summary), OPTIMUS_SOURCE_COMMIT="a" * 40,
+                       OPTIMUS_WORKFLOW_COMMIT="b" * 40, OPTIMUS_QA_MODE="startup-only")
+    script = workflow()["jobs"]["real-web"]["steps"][-1]["run"]
+    result = subprocess.run(["bash", "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", script],
+                            env=environment, capture_output=True, text=True, timeout=3)
+    assert result.returncode == exit_code
+    assert '"reason":"fixture"' in result.stdout, "A blocked run must publish its curated report"
+    assert summary.exists() and '"reason":"fixture"' in summary.read_text()
+
+
+def test_manual_job_has_reviewed_sha_and_closed_mode_inputs_with_disposable_read_only_runner():
     value = workflow()
     assert set(value["on"]) == {"workflow_dispatch"}
     inputs = value["on"]["workflow_dispatch"]["inputs"]
-    assert set(inputs) == {"source_commit"} and inputs["source_commit"]["required"] == "true"
+    assert set(inputs) == {"source_commit", "qa_mode"} and inputs["source_commit"]["required"] == "true"
+    assert inputs["qa_mode"]["type"] == "choice" and inputs["qa_mode"]["default"] == "startup-only"
+    assert inputs["qa_mode"]["options"] == ["startup-only", "queries"]
     assert smoke.validate_source(inputs["source_commit"]["default"])
     assert value["permissions"] == {"contents": "read"}
     job = value["jobs"]["real-web"]
@@ -327,7 +368,19 @@ def dispatch_environment(requested):
         if key in values:
             environment[key] = requested if values[key] == "${{ inputs.source_commit }}" else values[key]
     environment["OPTIMUS_WORKFLOW_COMMIT"] = "b" * 40
+    environment["OPTIMUS_QA_MODE"] = "startup-only"
     return environment
+
+
+@pytest.mark.parametrize("mode,accepted", [("startup-only", True), ("queries", True), ("", False), ("queries\n", False), ("$(false)", False)])
+def test_before_checkout_shell_rejects_any_unknown_mode(mode, accepted):
+    inputs = workflow()["on"]["workflow_dispatch"]["inputs"]
+    environment = dispatch_environment(inputs["source_commit"]["default"])
+    environment["OPTIMUS_QA_MODE"] = mode
+    script = workflow()["jobs"]["real-web"]["steps"][0]["run"]
+    result = subprocess.run(["bash", "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", script],
+                            env=environment, capture_output=True, timeout=3)
+    assert (result.returncode == 0) == accepted
 
 
 @pytest.mark.parametrize("value,accepted", [(workflow()["on"]["workflow_dispatch"]["inputs"]["source_commit"]["default"], True), ("a" * 40, False), ("main", False), ("A" * 40, False),
