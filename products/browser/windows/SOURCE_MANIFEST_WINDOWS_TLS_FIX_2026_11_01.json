@@ -149,9 +149,9 @@
     },
     {
       "path": "products/browser/search/tests/Optimus.Search.Tests/Program.cs",
-      "bytes": 40685,
-      "sha256": "ac370f959da2a6ef6b7308135c6c9f3e4183ff42c56746e51b7c8025f1e8415f",
-      "git_blob_sha1": "ca318f339a3e0bcde61eda5e797e8ada8935b69d"
+      "bytes": 43289,
+      "sha256": "ee0e0fcd1b6d4e94d93672b8b690b0286d3cc147f072e87e648bd27d1d7e9f4b",
+      "git_blob_sha1": "532d1caecb85f923ef5b08883f35bcaa4bf1f1d5"
     },
     {
       "path": "products/browser/search/tests/Optimus.Search.Tests/TestTls.cs",
@@ -293,9 +293,9 @@
     },
     {
       "path": "products/browser/windows/docs/VALIDATION_WINDOWS_TLS_2026_11_01.md",
-      "bytes": 4500,
-      "sha256": "df00cf739542c3ffde0a8185acdadb50744c02676f0e58e9f5caccaab605b8c3",
-      "git_blob_sha1": "8a4be2cf3456c1269fd1cdaf5296626edadbe2d5"
+      "bytes": 5775,
+      "sha256": "862d320d643ecb39856d2c1d795abb7b153701dbdc1b231a5a34a2a64181b83b",
+      "git_blob_sha1": "3acee263a8c416c2a3a582165a4b9e325acc2431"
     },
     {
       "path": "products/browser/windows/docs/superpowers/plans/2026-10-30-native-design.md",

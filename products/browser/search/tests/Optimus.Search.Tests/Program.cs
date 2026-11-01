@@ -175,6 +175,24 @@ Test("CLI import actually normalizes catalog, invalid input preserves output", a
     var before=await File.ReadAllTextAsync(FilePath("cli-output.json"));True(before.Contains("https://example.org/help"));
     await File.WriteAllTextAsync(FilePath("cli-input.json"),"invalid");result=await RunCli(["index","--input",FilePath("cli-input.json"),"--output",FilePath("cli-output.json")]);Equal(2,result.Code);Equal(before,await File.ReadAllTextAsync(FilePath("cli-output.json")));
 });
+Test("CLI and actual token worker run without optional DOTNET_ROOT", async () => {
+    var previousRoot=Environment.GetEnvironmentVariable("DOTNET_ROOT");
+    Environment.SetEnvironmentVariable("DOTNET_ROOT",null);
+    try {
+        Equal(2,(await RunCli(["--port","-1"])).Code);
+        var directory=FilePath("host-discovery-worker");Directory.CreateDirectory(directory);
+        var tokenPath=Path.Combine(directory,"service.token");var readyPath=Path.Combine(directory,"ready");
+        var startPath=Path.Combine(directory,"start");var verifyPath=Path.Combine(directory,"verify");
+        await File.WriteAllTextAsync(startPath,"start");await File.WriteAllTextAsync(verifyPath,"verify");
+        using var worker=Process.Start(DotnetStart(System.Reflection.Assembly.GetExecutingAssembly().Location,
+            ["--token-race-worker",tokenPath,readyPath,startPath,verifyPath]))!;
+        try {
+            await worker.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));Equal(0,worker.ExitCode);
+            True(File.Exists(readyPath));True(TokenStore.IsValid(await File.ReadAllTextAsync(tokenPath)));
+            Equal("loaded",await worker.StandardOutput.ReadLineAsync());Equal("",await worker.StandardOutput.ReadToEndAsync());Equal("",await worker.StandardError.ReadToEndAsync());
+        } finally {if(!worker.HasExited){worker.Kill(true);await worker.WaitForExitAsync();}}
+    } finally {Environment.SetEnvironmentVariable("DOTNET_ROOT",previousRoot);}
+});
 
 
 Test("provider accepts exactly one MiB and rejects larger declared body", async () => {
@@ -264,17 +282,31 @@ if(!OperatingSystem.IsWindows()) Test("token creation rejects a guard file acces
     await Reject(()=>TokenStore.LoadOrCreateAsync(path));True(!File.Exists(path));
     Equal(UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.GroupRead,File.GetUnixFileMode(path+".lock"));
 });
-Test("CLI starts real loopback service and explicit missing index fails closed", async () => {
+Test("CLI starts and gracefully stops real loopback service; missing index fails closed", async () => {
     var missing=await RunCli(["--index-file",FilePath("not-present.json"),"--token-file",FilePath("missing/service.token")]);Equal(2,missing.Code);True(!File.Exists(FilePath("missing/service.token")));
     var listener=new TcpListener(IPAddress.Loopback,0);listener.Start();var port=((IPEndPoint)listener.LocalEndpoint).Port;listener.Stop();
-    var start=CliStart(["--port",port.ToString(System.Globalization.CultureInfo.InvariantCulture),"--index-file",FilePath("cli-output.json"),"--token-file",FilePath("cli-profile/service.token")]);
+    var start=CliStart(["--port",port.ToString(System.Globalization.CultureInfo.InvariantCulture),"--index-file",FilePath("cli-output.json"),"--token-file",FilePath("cli-profile/service.token"),"--owner-stdin","true"]);
+    start.RedirectStandardInput=true;
     using var process=Process.Start(start)!;var output=process.StandardOutput.ReadToEndAsync();var errors=process.StandardError.ReadToEndAsync();
     try {
         using var client=new HttpClient(TestTls.Handler(() => File.ReadAllText(FilePath("cli-profile/service.token")))){BaseAddress=new Uri($"https://127.0.0.1:{port}")};
         var ready=false;for(var attempt=0;attempt<80;attempt++){try{using var health=await client.GetAsync("/health");if(health.IsSuccessStatusCode){ready=true;break;}}catch(HttpRequestException){}await Task.Delay(50);}
         True(ready);var token=await File.ReadAllTextAsync(FilePath("cli-profile/service.token"));client.DefaultRequestHeaders.Authorization=new("Bearer",token);
         using var result=await client.GetAsync("/search?format=json&q=help&scope=index&language=es");Equal(HttpStatusCode.OK,result.StatusCode);using var json=JsonDocument.Parse(await result.Content.ReadAsStringAsync());Equal(1,json.RootElement.GetProperty("results").GetArrayLength());
-    }finally{if(!process.HasExited)process.Kill(true);await process.WaitForExitAsync();var logged=await output+await errors;True(!logged.Contains("/search"));True(!logged.Contains("help"));True(!logged.Contains(await File.ReadAllTextAsync(FilePath("cli-profile/service.token"))));True(!logged.Contains(FilePath("cli-profile/service.token")));}
+    }finally{
+        var forced=false;
+        try {
+            if(!process.HasExited) {
+                process.StandardInput.Close();
+                await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
+            }
+        } catch {
+            forced=true;
+            if(!process.HasExited) {process.Kill(true);await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));}
+        }
+        var logged=await output+await errors;True(!logged.Contains("/search"));True(!logged.Contains("help"));True(!logged.Contains(await File.ReadAllTextAsync(FilePath("cli-profile/service.token"))));True(!logged.Contains(FilePath("cli-profile/service.token")));
+        True(!forced);Equal(0,process.ExitCode);
+    }
 });
 
 
@@ -388,8 +420,24 @@ static ProcessStartInfo CliStart(string[] args)
 
 static ProcessStartInfo DotnetStart(string assembly, string[] args)
 {
-    var start=new ProcessStartInfo(Path.Combine(Environment.GetEnvironmentVariable("DOTNET_ROOT")!,OperatingSystem.IsWindows()?"dotnet.exe":"dotnet")) {RedirectStandardError=true,RedirectStandardOutput=true,UseShellExecute=false};
+    var start=new ProcessStartInfo(DotnetHost()) {RedirectStandardError=true,RedirectStandardOutput=true,UseShellExecute=false};
     start.ArgumentList.Add(assembly);foreach(var arg in args)start.ArgumentList.Add(arg);return start;
+}
+
+static string DotnetHost()
+{
+    var name=OperatingSystem.IsWindows()?"dotnet.exe":"dotnet";
+    // Reuse the exact muxer for DLL launches; an apphost instead uses SDK hints or PATH.
+    var current=Environment.ProcessPath;
+    if(current is not null && string.Equals(Path.GetFileName(current),name,StringComparison.OrdinalIgnoreCase)) return current;
+    var hinted=Environment.GetEnvironmentVariable("DOTNET_HOST_PATH");
+    if(!string.IsNullOrWhiteSpace(hinted) && Path.IsPathFullyQualified(hinted) && File.Exists(hinted)) return hinted;
+    var root=Environment.GetEnvironmentVariable("DOTNET_ROOT");
+    if(!string.IsNullOrWhiteSpace(root)) {
+        var candidate=Path.Combine(root,name);
+        if(File.Exists(candidate)) return candidate;
+    }
+    return name;
 }
 
 static FileStream HoldTokenGuard(string path)
