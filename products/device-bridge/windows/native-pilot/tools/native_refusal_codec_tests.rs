@@ -126,7 +126,7 @@ fn binary_build_metadata_uses_lowercase_hex_without_losing_zero_bytes() {
     assert!(output.contains(r#""source_commit":"00000000000000000000000000000000000000ff""#));
     assert!(output.contains(concat!(
         r#""policy_sha256":""#,
-        "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+        "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
         r#"""#,
     )));
 }
