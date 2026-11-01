@@ -93,6 +93,12 @@ def test_nonzero_early_exit_is_not_clean():
     assert not smoke.stop_owned(process)
 
 
+@pytest.mark.parametrize("output,category", [(b"UnknownError: token=private-fixture", "unknown"),
+                                            (b"KeyError: token=private-fixture\n" + b"x" * 65536, "output-limit")])
+def test_upstream_error_category_is_closed_and_has_a_read_limit(output, category):
+    assert smoke.classify_upstream_error(output) == category
+
+
 def passing_report():
     return {"status": "passed", "passed": True, "source": "a" * 40, "provenanceVerified": True,
             "reason": "none", "stage": "none", "ready": True,
@@ -213,7 +219,7 @@ def test_main_starts_upstream_inside_its_symlinked_venv(monkeypatch, tmp_path, c
         "  self.send_response(200); self.end_headers(); self.wfile.write(b'OK')\n"
         f"HTTPServer(('127.0.0.1', {port}), Health).serve_forever()\n")
     if mode == "startup-failure":
-        (package / "webapp.py").write_text("raise SystemExit(3)\n")
+        (package / "webapp.py").write_text("import sys\nsys.stderr.write('KeyError: token=private-fixture\\n')\nraise SystemExit(3)\n")
     monkeypatch.setattr(smoke, "SEARX_PORT", port)
     monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
     monkeypatch.setattr(smoke, "checkout", lambda *args: None)
@@ -239,6 +245,8 @@ def test_main_starts_upstream_inside_its_symlinked_venv(monkeypatch, tmp_path, c
     if mode == "startup-failure":
         assert result["status"] == "blocked" and result["stage"] == "upstream-health"
         assert result["upstreamExitCode"] == 3 and result["upstreamReady"] is False
+        assert result["upstreamErrorCategory"] == "key-error"
+        assert "private-fixture" not in json.dumps(result)
     else:
         assert marker.read_text() == str(environment)
         assert result["status"] == ("passed" if mode == "queries" else "startup-ready")
