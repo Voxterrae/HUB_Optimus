@@ -50,6 +50,7 @@ using System.Threading;
 public static class Fixture {
     public static void Main(string[] args) {
         string mode=Environment.GetEnvironmentVariable("HUB_RELAY_OWNED_FIXTURE");
+        if (mode=="info") {Console.Write("owned informational fixture"); Environment.Exit(7); return;}
         if (mode=="metadata") {Console.Write(new string('a',40)+"\n"); return;}
         if (mode=="arguments") {
             Environment.Exit(args.Length==3 && args[0]=="endslash\\" && args[1]=="space value" && args[2]=="" ? 0 : 3); return;
@@ -84,6 +85,12 @@ public static class Fixture {
         if ($metadata -isnot [string] -or $metadata.Trim() -cne ('a'*40)) { throw 'Build empty environment metadata failed.' }
     } finally { [Environment]::SetEnvironmentVariable('HUB_RELAY_OWNED_FIXTURE',$previousMode) }
     Write-Output 'Build child stdout fixtures: 2 passed.'
+    $refused=$false
+    try { [void](Invoke-BuildChild $fixtureExe @() @{ HUB_RELAY_OWNED_FIXTURE='info' }) } catch { $refused=$_.Exception.Message -ceq 'Build child failed' }
+    if (-not $refused) { throw 'Nonzero build child accepted.' }
+    $info=Invoke-BuildChild $fixtureExe @() @{ HUB_RELAY_OWNED_FIXTURE='info' } -InformationalQuery
+    if ($info -cne 'owned informational fixture') { throw 'Informational child output failed.' }
+    Write-Output 'Build child exit-policy fixtures: 2 passed.'
     $saved=[Environment]::GetEnvironmentVariable('HUB_RELAY_OWNED_FIXTURE')
     try {
         foreach ($mode in @('complete','timeout','flood','stderr')) {

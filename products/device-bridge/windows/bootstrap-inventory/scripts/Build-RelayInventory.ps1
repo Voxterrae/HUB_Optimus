@@ -12,7 +12,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-function Invoke-BuildChild([string]$Executable, [string[]]$Arguments, [hashtable]$EnvironmentValues) {
+function Invoke-BuildChild([string]$Executable, [string[]]$Arguments, [hashtable]$EnvironmentValues, [switch]$InformationalQuery) {
     # All arguments below are fixed or validated paths/metadata; no shell/evaluation.
     $start = [Diagnostics.ProcessStartInfo]::new()
     $start.FileName = $Executable
@@ -38,7 +38,8 @@ function Invoke-BuildChild([string]$Executable, [string[]]$Arguments, [hashtable
         if (-not $child.WaitForExit(600000)) { try { $child.Kill() } catch {}; throw 'Build timeout' }
         $text = $stdout.GetAwaiter().GetResult()
         $diagnostics = $stderr.GetAwaiter().GetResult()
-        if ($child.ExitCode -ne 0) { throw 'Build child failed' }
+        $script:lastBuildChildExit = $child.ExitCode
+        if ($child.ExitCode -ne 0 -and -not $InformationalQuery) { throw 'Build child failed' }
         return $text + $diagnostics
     } finally { $child.Dispose() }
 }
@@ -89,8 +90,10 @@ try {
     $cargoVersion = (Invoke-BuildChild $rustup @('run', '1.99.0', 'cargo', '--version') @{}).Trim()
     if ($rustVersion -notmatch '^rustc 1\.99\.0 ' -or $cargoVersion -notmatch '^cargo 1\.99\.0 ') { throw 'Toolchain mismatch' }
     $buildPhase = 'toolchain_linker'
-    $linkText = Invoke-BuildChild $linker @('/?') @{}
-    if ($linkText -notmatch ('Version\s+' + [regex]::Escape($LinkerVersion) + '(\s|$)')) { throw 'Linker mismatch' }
+    # MSVC help is an informational version query. Its status is not the
+    # compilation status; source checks and actual builds still require exit0.
+    $linkText = Invoke-BuildChild $linker @('/?') @{} -InformationalQuery
+    if ($linkText -notmatch ('Microsoft \(R\) Incremental Linker Version\s+' + [regex]::Escape($LinkerVersion) + '(\s|$)')) { throw 'Linker mismatch' }
     $buildPhase = 'toolchain_sdk'
     $sdkObserved = [Environment]::GetEnvironmentVariable('WindowsSDKVersion')
     if ([string]::IsNullOrEmpty($sdkObserved) -or $sdkObserved.TrimEnd('\') -cne $SdkVersion) { throw 'SDK mismatch' }
@@ -142,6 +145,7 @@ try {
         'Linker mismatch','SDK mismatch','SDK unavailable','Resolved build executable unavailable')
     $category = if ($known -ccontains $_.Exception.Message) { $_.Exception.Message } else { 'Native or script precondition' }
     Write-Output ('Fixed build failure category: ' + $category)
+    if (Test-Path variable:script:lastBuildChildExit) { Write-Output ('Build child exit code: ' + $script:lastBuildChildExit) }
     Write-Output ('Build exception class: ' + $_.Exception.GetType().Name)
     Write-Output ('Build exception line: ' + $_.InvocationInfo.ScriptLineNumber)
     if ($null -ne $_.Exception.InnerException) {
