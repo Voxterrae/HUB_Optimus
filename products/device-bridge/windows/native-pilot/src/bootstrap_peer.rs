@@ -919,7 +919,14 @@ impl Client {
             no_impersonation()?;
             valid_deadline(deadline)?;
             expected.recheck()?;
-            let pipe = open_pipe(name, deadline, SECURITY_IDENTIFICATION)?;
+            // Dynamic tracking lets the server observe each message's thread
+            // context. This cooperative client selects these SQOS flags; the
+            // server cannot impose them on an arbitrary client.
+            let pipe = open_pipe(
+                name,
+                deadline,
+                SECURITY_IDENTIFICATION | SECURITY_CONTEXT_TRACKING,
+            )?;
             if let Err(error) = expected.bind_pipe(&pipe, false) {
                 return combine(Err(error), [pipe]);
             }

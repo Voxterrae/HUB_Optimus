@@ -174,6 +174,198 @@ fn server() -> Server {
     server
 }
 
+// All tokens come from this child process. Neither the primary token nor any
+// other process is modified; the selected duplicate is installed only here.
+fn fixture_token(kind: &str) -> OwnedHandle {
+    assert!(matches!(kind, "same-context" | "filtered" | "restricted"));
+    let mut source = std::ptr::null_mut();
+    assert_ne!(
+        unsafe {
+            OpenProcessToken(
+                GetCurrentProcess(),
+                TOKEN_QUERY | TOKEN_DUPLICATE,
+                &mut source,
+            )
+        },
+        0
+    );
+    let source = owned(source).unwrap();
+    let original_context = TokenContext::capture(raw(&source)).unwrap();
+    let restricted = if kind == "same-context" {
+        None
+    } else {
+        let logon_data = TokenData::query(raw(&source), TokenLogonSid).unwrap();
+        let logon = logon_data.pointer::<TOKEN_GROUPS>();
+        assert_eq!(unsafe { (*logon).GroupCount }, 1);
+        let restricting_sid = SID_AND_ATTRIBUTES {
+            Sid: unsafe { (*logon).Groups[0].Sid },
+            Attributes: 0,
+        };
+        let mut restricted = std::ptr::null_mut();
+        assert_ne!(
+            unsafe {
+                CreateRestrictedToken(
+                    raw(&source),
+                    DISABLE_MAX_PRIVILEGE,
+                    0,
+                    std::ptr::null(),
+                    0,
+                    std::ptr::null(),
+                    u32::from(kind == "restricted"),
+                    &restricting_sid,
+                    &mut restricted,
+                )
+            },
+            0
+        );
+        let restricted = owned(restricted).unwrap();
+        let altered_context = TokenContext::capture(raw(&restricted)).unwrap();
+        assert!(
+            altered_context.privileges != original_context.privileges,
+            "actual privilege filtering"
+        );
+        if kind == "restricted" {
+            assert_ne!(unsafe { IsTokenRestricted(raw(&restricted)) }, 0);
+            assert!(
+                altered_context.restricted != original_context.restricted,
+                "actual restricting SID change"
+            );
+            assert_eq!(altered_context.restricted.len(), 1);
+            assert!(
+                altered_context.restricted[0].0 == sid_bytes(restricting_sid.Sid).unwrap(),
+                "selected restricting SID is present"
+            );
+        } else {
+            assert!(
+                altered_context.restricted == original_context.restricted,
+                "privilege-only filter adds no restricting SID"
+            );
+        }
+        Some(restricted)
+    };
+    let selected = restricted.as_ref().unwrap_or(&source);
+    let mut impersonation = std::ptr::null_mut();
+    assert_ne!(
+        unsafe {
+            DuplicateTokenEx(
+                raw(selected),
+                TOKEN_QUERY | TOKEN_IMPERSONATE,
+                std::ptr::null(),
+                SecurityImpersonation,
+                TokenImpersonation,
+                &mut impersonation,
+            )
+        },
+        0
+    );
+    let impersonation = owned(impersonation).unwrap();
+    assert!(
+        TokenContext::capture(raw(&impersonation)).unwrap()
+            == TokenContext::capture(raw(selected)).unwrap(),
+        "duplication preserves the selected context"
+    );
+    if kind == "same-context" {
+        assert!(
+            TokenContext::capture(raw(&impersonation)).unwrap() == original_context,
+            "positive control preserves every compared context field"
+        );
+        assert!(
+            token_id(raw(&impersonation)).unwrap() != token_id(raw(&source)).unwrap(),
+            "positive control uses a distinct token"
+        );
+    }
+    if let Some(restricted) = restricted {
+        close_checked(restricted).unwrap();
+    }
+    close_checked(source).unwrap();
+    impersonation
+}
+
+fn impersonate_fixture(token: &OwnedHandle) -> Revert {
+    no_impersonation().unwrap();
+    assert_ne!(unsafe { SetThreadToken(std::ptr::null(), raw(token)) }, 0);
+    // Use the production fail-fast guard on normal return and panic unwinding.
+    Revert
+}
+
+fn assert_pipe_closed(error: Error) {
+    assert!(
+        matches!(
+            error,
+            Error::Native("ReadFile", ERROR_BROKEN_PIPE | ERROR_PIPE_NOT_CONNECTED)
+        ),
+        "server must close on denial, not time out: {error:?}"
+    );
+}
+
+fn context_change_client(
+    name: &str,
+    ceremony: [u8; 16],
+    parent: ExpectedPeer,
+    deadline: Instant,
+    before_hello: bool,
+    kind: &str,
+) {
+    // This handle MUST be opened by the production client. A raw dynamic
+    // open_pipe fixture would pass even if Client::connect remained static.
+    let client = Client::connect(name, ceremony, parent, deadline).unwrap();
+    let token = fixture_token(kind);
+    let mut client_nonce = [0; 32];
+    random(&mut client_nonce).unwrap();
+    let mut revert = before_hello.then(|| impersonate_fixture(&token));
+    write_frame(
+        &client.pipe,
+        Frame::new(HELLO, ceremony, [0; 32], client_nonce),
+        deadline,
+    )
+    .unwrap();
+    // Keep the token through the server's authentication acknowledgement or
+    // closure. Reverting immediately after WriteFile could race that check.
+    let challenge = read_frame(&client.pipe, deadline);
+    drop(revert.take());
+    no_impersonation().unwrap();
+    if let Ok(challenge) = challenge {
+        challenge
+            .check(CHALLENGE, &ceremony, None, Some(&client_nonce))
+            .unwrap();
+        if !before_hello {
+            revert = Some(impersonate_fixture(&token));
+        }
+        write_frame(
+            &client.pipe,
+            Frame::new(FINISH, ceremony, challenge.server(), client_nonce),
+            deadline,
+        )
+        .unwrap();
+        let terminal = read_frame(&client.pipe, deadline);
+        drop(revert.take());
+        no_impersonation().unwrap();
+        match terminal {
+            Ok(terminal) => terminal
+                .check(
+                    TERMINAL,
+                    &ceremony,
+                    Some(&challenge.server()),
+                    Some(&client_nonce),
+                )
+                .unwrap(),
+            Err(error) => {
+                assert!(!before_hello && kind != "same-context");
+                assert_pipe_closed(error);
+            }
+        }
+    } else {
+        assert!(before_hello && kind != "same-context");
+        assert_pipe_closed(challenge.unwrap_err());
+    }
+    // If the static opener unexpectedly accepts the altered context, finish a
+    // valid transcript. The parent then fails on acceptance, not fixture panic.
+    close_checked(token).unwrap();
+    close_checked(client.pipe).unwrap();
+    client.expected.close().unwrap();
+    no_impersonation().unwrap();
+}
+
 #[test]
 #[ignore = "subprocess fixture entry; exercised by native parent tests"]
 fn native_child_entry() {
@@ -189,6 +381,17 @@ fn native_child_entry() {
         .try_into()
         .unwrap();
     let deadline = Instant::now() + LIMIT;
+    let context_fixture = mode
+        .strip_prefix("context-before-hello-")
+        .map(|kind| (true, kind))
+        .or_else(|| {
+            mode.strip_prefix("context-before-finish-")
+                .map(|kind| (false, kind))
+        });
+    if let Some((before_hello, kind)) = context_fixture {
+        context_change_client(&name, ceremony, parent, deadline, before_hello, kind);
+        return;
+    }
     if mode == "idle" {
         std::thread::sleep(Duration::from_millis(450));
         parent.close().unwrap();
@@ -273,97 +476,18 @@ fn native_child_entry() {
         parent.close().unwrap();
         return;
     }
-    if mode == "restricted" || mode == "filtered" {
-        let mut source = std::ptr::null_mut();
-        assert_ne!(
-            unsafe {
-                OpenProcessToken(
-                    GetCurrentProcess(),
-                    TOKEN_QUERY | TOKEN_DUPLICATE,
-                    &mut source,
-                )
-            },
-            0
-        );
-        let source = owned(source).unwrap();
-        let original_context = TokenContext::capture(raw(&source)).unwrap();
-        let logon_data = TokenData::query(raw(&source), TokenLogonSid).unwrap();
-        let logon = logon_data.pointer::<TOKEN_GROUPS>();
-        assert_eq!(unsafe { (*logon).GroupCount }, 1);
-        let restricting_sid = SID_AND_ATTRIBUTES {
-            Sid: unsafe { (*logon).Groups[0].Sid },
-            Attributes: 0,
-        };
-        let restrict_count = u32::from(mode == "restricted");
-        let mut restricted = std::ptr::null_mut();
-        assert_ne!(
-            unsafe {
-                CreateRestrictedToken(
-                    raw(&source),
-                    DISABLE_MAX_PRIVILEGE,
-                    0,
-                    std::ptr::null(),
-                    0,
-                    std::ptr::null(),
-                    restrict_count,
-                    &restricting_sid,
-                    &mut restricted,
-                )
-            },
-            0
-        );
-        let restricted = owned(restricted).unwrap();
-        let altered_context = TokenContext::capture(raw(&restricted)).unwrap();
-        assert_ne!(
-            altered_context.privileges, original_context.privileges,
-            "actual privilege filtering"
-        );
-        if mode == "restricted" {
-            assert_ne!(unsafe { IsTokenRestricted(raw(&restricted)) }, 0);
-            assert_ne!(altered_context.restricted, original_context.restricted);
-            assert_eq!(altered_context.restricted.len(), 1);
-            assert_eq!(
-                altered_context.restricted[0].0,
-                sid_bytes(restricting_sid.Sid).unwrap()
-            );
-        } else {
-            assert_eq!(
-                altered_context.restricted, original_context.restricted,
-                "privilege-only filter adds no restricting SID"
-            );
-        }
-        let mut impersonation = std::ptr::null_mut();
-        assert_ne!(
-            unsafe {
-                DuplicateTokenEx(
-                    raw(&restricted),
-                    TOKEN_QUERY | TOKEN_IMPERSONATE,
-                    std::ptr::null(),
-                    SecurityImpersonation,
-                    TokenImpersonation,
-                    &mut impersonation,
-                )
-            },
-            0
-        );
-        let impersonation = owned(impersonation).unwrap();
-        assert_ne!(
-            unsafe { SetThreadToken(std::ptr::null(), raw(&impersonation)) },
-            0
-        );
-        close_checked(impersonation).unwrap();
-        close_checked(restricted).unwrap();
-        close_checked(source).unwrap();
-    }
+    let token = if mode == "restricted" || mode == "filtered" {
+        Some(fixture_token(&mode))
+    } else {
+        None
+    };
+    let revert = token.as_ref().map(impersonate_fixture);
     let sqos = if mode == "anonymous" {
         SECURITY_ANONYMOUS
     } else {
-        SECURITY_IDENTIFICATION
+        SECURITY_IDENTIFICATION | SECURITY_CONTEXT_TRACKING
     };
     let pipe = open_pipe(&name, deadline, sqos).unwrap();
-    if mode == "restricted" || mode == "filtered" {
-        assert_ne!(unsafe { RevertToSelf() }, 0);
-    }
     if mode == "disconnect" {
         close_checked(pipe).unwrap();
         std::thread::sleep(Duration::from_millis(450));
@@ -408,7 +532,13 @@ fn native_child_entry() {
             | "oversize"
             | "truncated"
     ) {
-        assert!(read_frame(&pipe, deadline).is_err());
+        let reply = read_frame(&pipe, deadline);
+        drop(revert);
+        no_impersonation().unwrap();
+        if let Some(token) = token {
+            close_checked(token).unwrap();
+        }
+        assert!(reply.is_err());
         close_checked(pipe).unwrap();
         parent.close().unwrap();
         return;
@@ -442,6 +572,54 @@ fn honest_held_parent_child_exchange() {
     assert!(result.is_ok(), "{result:?}");
     child.finish();
     no_impersonation().unwrap();
+}
+
+fn context_change_is_denied(mode: &str) {
+    let server = server();
+    let mut child = Child::launch(mode, &server);
+    let result = server.exchange(child.expected(), Instant::now() + LIMIT);
+    child.finish();
+    no_impersonation().unwrap();
+    assert_eq!(
+        result.unwrap_err(),
+        Error::Denied("message token context"),
+        "{mode}"
+    );
+}
+
+#[test]
+fn native_client_rejects_filtered_context_after_connect_before_hello() {
+    context_change_is_denied("context-before-hello-filtered");
+}
+
+#[test]
+fn native_client_rejects_restricted_context_after_connect_before_hello() {
+    context_change_is_denied("context-before-hello-restricted");
+}
+
+#[test]
+fn native_client_rejects_filtered_context_between_challenge_and_finish() {
+    context_change_is_denied("context-before-finish-filtered");
+}
+
+#[test]
+fn native_client_rejects_restricted_context_between_challenge_and_finish() {
+    context_change_is_denied("context-before-finish-restricted");
+}
+
+#[test]
+fn native_client_accepts_same_context_after_connect() {
+    for mode in [
+        "context-before-hello-same-context",
+        "context-before-finish-same-context",
+    ] {
+        let server = server();
+        let mut child = Child::launch(mode, &server);
+        let result = server.exchange(child.expected(), Instant::now() + LIMIT);
+        child.finish();
+        no_impersonation().unwrap();
+        assert!(result.is_ok(), "{mode}: {result:?}");
+    }
 }
 
 #[test]
@@ -646,8 +824,8 @@ fn native_second_instance_and_handle_noninheritance() {
             PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED,
             PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_REJECT_REMOTE_CLIENTS,
             1,
-            96,
-            96,
+            FRAME_LEN as u32,
+            FRAME_LEN as u32,
             0,
             std::ptr::null(),
         )
