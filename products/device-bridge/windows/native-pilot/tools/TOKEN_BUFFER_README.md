@@ -69,6 +69,12 @@ the [x64 type/storage alignment rules](https://learn.microsoft.com/en-us/cpp/bui
 The Windows x64 synthetic test independently declares those documented C field
 orders with `repr(C)` and checks the compiler's sizes, alignments and offsets;
 it does not import offsets from the decoder or query native token data.
+The separate [SDK ABI probe](native_token_buffer_abi.cpp) compiles `static_assert`
+checks against the runner's actual Windows SDK definitions with MSVC. Those
+assertions passed on the initial [Windows RED run](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41336819135),
+at source `a7044b0db626dc34e7bb154f0c8d2ce79618beff`; native Rust 1.99.0 then
+failed because the decoder module was intentionally absent. That checkpoint
+establishes the ABI probe and missing-feature RED, not decoder conformance.
 
 ## Synthetic conformance
 
