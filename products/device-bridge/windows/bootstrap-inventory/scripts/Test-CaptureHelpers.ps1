@@ -50,6 +50,7 @@ using System.Threading;
 public static class Fixture {
     public static void Main(string[] args) {
         string mode=Environment.GetEnvironmentVariable("HUB_RELAY_OWNED_FIXTURE");
+        if (mode=="metadata") {Console.Write(new string('a',40)+"\n"); return;}
         if (mode=="arguments") {
             Environment.Exit(args.Length==3 && args[0]=="endslash\\" && args[1]=="space value" && args[2]=="" ? 0 : 3); return;
         }
@@ -74,6 +75,15 @@ public static class Fixture {
     $script:crate=[IO.Directory]::GetParent($PSScriptRoot).FullName
     [void](Invoke-BuildChild $fixtureExe @('endslash\','space value','') @{ HUB_RELAY_OWNED_FIXTURE='arguments' })
     Write-Output 'Build child argument fixture: 1 passed.'
+    $metadata=Invoke-BuildChild $fixtureExe @() @{ HUB_RELAY_OWNED_FIXTURE='metadata' }
+    if ($metadata -isnot [string] -or $metadata.Trim() -cne ('a'*40)) { throw 'Build stdout metadata failed.' }
+    $previousMode=[Environment]::GetEnvironmentVariable('HUB_RELAY_OWNED_FIXTURE')
+    try {
+        [Environment]::SetEnvironmentVariable('HUB_RELAY_OWNED_FIXTURE','metadata')
+        $metadata=Invoke-BuildChild $fixtureExe @() @{}
+        if ($metadata -isnot [string] -or $metadata.Trim() -cne ('a'*40)) { throw 'Build empty environment metadata failed.' }
+    } finally { [Environment]::SetEnvironmentVariable('HUB_RELAY_OWNED_FIXTURE',$previousMode) }
+    Write-Output 'Build child stdout fixtures: 2 passed.'
     $saved=[Environment]::GetEnvironmentVariable('HUB_RELAY_OWNED_FIXTURE')
     try {
         foreach ($mode in @('complete','timeout','flood','stderr')) {

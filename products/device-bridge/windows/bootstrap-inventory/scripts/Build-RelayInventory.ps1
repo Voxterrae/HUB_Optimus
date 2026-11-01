@@ -138,6 +138,13 @@ try {
     $category = if ($known -ccontains $_.Exception.Message) { $_.Exception.Message } else { 'Native or script precondition' }
     Write-Output ('Fixed build failure category: ' + $category)
     Write-Output ('Build exception class: ' + $_.Exception.GetType().Name)
+    Write-Output ('Build exception line: ' + $_.InvocationInfo.ScriptLineNumber)
+    if ($null -ne $_.Exception.InnerException) {
+        Write-Output ('Build inner exception class: ' + $_.Exception.InnerException.GetType().Name)
+        if ($_.Exception.InnerException -is [ComponentModel.Win32Exception]) {
+            Write-Output ('Build native error code: ' + $_.Exception.InnerException.NativeErrorCode)
+        }
+    }
     Write-Output ('Diagnostic build or package validation failed at fixed phase ' + $buildPhase + '; no authority established.')
     exit 1
 }
