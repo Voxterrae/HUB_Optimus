@@ -470,3 +470,30 @@ No production SearXNG endpoint is configured by this result-order correction.
 Physical Windows10/11, spoken accessibility, upstream availability, code signing
 and public distribution remain separate gates. Owner identity, ownership,
 licensing and the controlling OWNER_AUTHORITY_HANDOFF are unchanged.
+
+## Optimus isolated real-Web acceptance proposal
+
+Issue #2062 scopes an owner-only manual public-repository/main Ubuntu24.04
+acceptance job. It checks out the reviewed harness, exact product and official
+SearXNG source separately, then uses a temporary loopback-only upstream with
+only the ordinary Mwmbl APIv1 adapter. The public typed Core client and real
+owned SearchHost submit only the fixed Python and Firefox cases with empty
+bookmarks, require SearXNG provenance and a relevant official HTTPS destination,
+and fail on missing, irrelevant, rate-limited or unresponsive evidence.
+
+The proposal creates no persistent endpoint or application default, changes no
+ranking, and provisions no paid resources. Both manual QA workflows select the
+native-accepted product0790e0977c170ff8507bb73e0ec7b6e166755892; the existing
+Windows workflow also fixes checkout/build source literally. Both source inputs
+are confirmation-only; another candidate needs a protected pin update, avoiding
+unreviewed code execution in main's cache context. Existing authorization, runner,
+permission, timeout and profile safeguards remain. Source, workflow,
+upstream and resolved dependency provenance remain distinct; direct requirements
+pins do not establish a hermetic transitive lock. Curated reports and exact-owned
+cleanup are mandatory. Local synthetic tests do not establish real-Web relevance;
+independent review found two startup/cancellation defects, now covered by real
+symlinked-venv and actual-wrapper signal regressions. The final Python suite is
+44/44 after additional source-trust regressions; required checks and a separately attributed cloud run remain pending.
+See `products/browser/search/docs/REAL_WEB_SMOKE_2062.md`. The separate
+ranking correction remains under #2061; existing owner-authority and acceptance
+boundaries remain unchanged.
