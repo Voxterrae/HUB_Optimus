@@ -293,9 +293,9 @@
     },
     {
       "path": "products/browser/windows/docs/VALIDATION_WINDOWS_TLS_2026_11_01.md",
-      "bytes": 7528,
-      "sha256": "ae8bd27b6a5793958a97f26dab504f20ae2eef81362ca3a5d20c02ed4db9d4d0",
-      "git_blob_sha1": "04962760d16f436c875e94172013f4f95e1af739"
+      "bytes": 8854,
+      "sha256": "30736a7120cbcb3a40da50b09d9574cb3872162a0492925366d240b6d1ba37b6",
+      "git_blob_sha1": "8ae88ecd49dcd58bb20b97e8210fee32c5a90547"
     },
     {
       "path": "products/browser/windows/docs/superpowers/plans/2026-10-30-native-design.md",
@@ -407,15 +407,15 @@
     },
     {
       "path": "products/browser/windows/scripts/WindowsSmoke/GuiNavigationDiagnostics.cs",
-      "bytes": 5857,
-      "sha256": "b92e9ed46a400de0c3e50d39dc2baa68d9092b0a94444143693c620147855773",
-      "git_blob_sha1": "d5e05e1094afbcd40aac7b740a1405993be694cf"
+      "bytes": 7701,
+      "sha256": "6247a63c30a76ee9a5894d6619ea2890c8df22ee95ba0d1d6741aa63b1f02cb3",
+      "git_blob_sha1": "eb693e4e7acda46aadbb2f7f6ae2aee3d48b2cd8"
     },
     {
       "path": "products/browser/windows/scripts/WindowsSmoke/GuiSmoke.cs",
-      "bytes": 14116,
-      "sha256": "c73587a4fba77bf08448702b58178bc422eed38f929b4ccc85c570a625a6d307",
-      "git_blob_sha1": "f561a358533c492e1ec3e957a20b9066c8169754"
+      "bytes": 14433,
+      "sha256": "811f4f2f280efbdbf052e78a0f63556311f36d2f78d61eb6a1aef205e8fa3f50",
+      "git_blob_sha1": "1c15cfdbe9666d5662156010b8b67d548e0413a4"
     },
     {
       "path": "products/browser/windows/scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj",
@@ -473,9 +473,9 @@
     },
     {
       "path": "products/browser/windows/src/Optimus.App/BrowserTab.cs",
-      "bytes": 14775,
-      "sha256": "044b9e594e22df7edddc2909ac483a5448d6eda4938be4daa96302c7edaafeaf",
-      "git_blob_sha1": "ea6544e9a69e31803cc17c9213b2ca53f55697b0"
+      "bytes": 15096,
+      "sha256": "f2f6a6319ae439de31eab074c4b5cafa8ebc1bfbfdddc69ab4d18b4415f2bfcd",
+      "git_blob_sha1": "fe0d87ce07a2bc35897a9888094160f60322f1d6"
     },
     {
       "path": "products/browser/windows/src/Optimus.App/DownloadController.cs",

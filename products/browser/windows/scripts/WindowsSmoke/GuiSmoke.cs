@@ -45,6 +45,9 @@ internal static class GuiSmoke
             Wait(() => ((ValuePattern)Find("Respuesta de la guía local").GetCurrentPattern(ValuePattern.Pattern)).Current.Value.Contains("Guía local basada en reglas", StringComparison.Ordinal), "Local guide response unavailable.");
             Invoke("Cerrar ayuda"); report.Checks.Add("gui-local-guide-response");
             // Navigation is loopback only; server receipt plus UIA page heading prove rendering.
+            try { Wait(() => GuiNavigationDiagnostics.IsNavigationReady(window), "Owned browser navigation did not become ready."); }
+            catch { GuiNavigationDiagnostics.Capture(window, page.Address, report, "navigation-failure"); throw; }
+            report.Checks.Add("gui-selected-tab-navigation-ready");
             Set("Dirección o búsqueda", page.Address);
             GuiNavigationDiagnostics.Capture(window, page.Address, report, "before-go");
             Invoke("Ir a la dirección o buscar");

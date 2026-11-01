@@ -22,14 +22,26 @@ internal static class GuiNavigationDiagnostics
         report.GuiDiagnostics[phase + ".keyboardFocus"] = snapshot.KeyboardFocus;
         report.GuiDiagnostics[phase + ".recoveryVisible"] = snapshot.RecoveryVisible;
         report.GuiDiagnostics[phase + ".status"] = snapshot.Status;
+        report.GuiDiagnostics[phase + ".navigationReady"] = snapshot.Navigation.Ready;
+        report.GuiDiagnostics[phase + ".preparationStage"] = snapshot.Navigation.Stage;
+    }
+
+    internal static bool IsNavigationReady(AutomationElement window)
+    {
+        try
+        {
+            return Task.Run(() =>
+            {
+                var processId = OwnedProcessId(window);
+                return processId is { } id && SelectedNavigation(window, id).Ready == "true";
+            }).WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        }
+        catch { return false; }
     }
 
     private static Snapshot Read(AutomationElement window, string expectedAddress)
     {
-        var processId = window.Current.ProcessId;
-        var handle = (nint)window.Current.NativeWindowHandle;
-        if (processId <= 0 || handle == 0 || GetWindowThreadProcessId(handle, out var owner) == 0 || owner != (uint)processId)
-            return Snapshot.Unavailable;
+        if (OwnedProcessId(window) is not { } processId) return Snapshot.Unavailable;
         AutomationElement? Find(Condition selector) => window.FindFirst(TreeScope.Descendants,
             new AndCondition(selector, new PropertyCondition(AutomationElement.ProcessIdProperty, processId)));
         var address = Find(new AndCondition(new PropertyCondition(AutomationElement.AutomationIdProperty, "Address"),
@@ -43,7 +55,30 @@ internal static class GuiNavigationDiagnostics
             new PropertyCondition(AutomationElement.IsOffscreenProperty, false)));
         var status = Find(new AndCondition(new PropertyCondition(AutomationElement.AutomationIdProperty, "Status"),
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text)));
-        return new(matches, focus, Boolean(recovery is not null), status is null ? "unavailable" : ClassifyStatus(status.Current.Name));
+        return new(matches, focus, Boolean(recovery is not null), status is null ? "unavailable" : ClassifyStatus(status.Current.Name), SelectedNavigation(window, processId));
+    }
+
+    private static int? OwnedProcessId(AutomationElement window)
+    {
+        var processId = window.Current.ProcessId;
+        var handle = (nint)window.Current.NativeWindowHandle;
+        return processId > 0 && handle != 0 && GetWindowThreadProcessId(handle, out var owner) != 0 && owner == (uint)processId ? processId : null;
+    }
+
+    private static NavigationState SelectedNavigation(AutomationElement window, int processId)
+    {
+        var selected = window.FindFirst(TreeScope.Descendants, new AndCondition(
+            new PropertyCondition(AutomationElement.ProcessIdProperty, processId),
+            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.TabItem),
+            new PropertyCondition(SelectionItemPattern.IsSelectedProperty, true)));
+        return selected?.Current.ItemStatus switch
+        {
+            "Preparando navegador" => new("false", "engine"),
+            "Preparando datos de navegación" => new("false", "profile"),
+            "Listo para navegar" => new("true", "ready"),
+            "Navegación no disponible" => new("false", "stopped"),
+            _ => NavigationState.Unavailable
+        };
     }
 
     private static string Boolean(bool value) => value ? "true" : "false";
@@ -73,9 +108,14 @@ internal static class GuiNavigationDiagnostics
         return string.IsNullOrEmpty(text) ? "empty" : "other";
     }
 
-    private sealed record Snapshot(string AddressMatches, string KeyboardFocus, string RecoveryVisible, string Status)
+    private sealed record NavigationState(string Ready, string Stage)
     {
-        public static Snapshot Unavailable { get; } = new("unavailable", "unavailable", "unavailable", "unavailable");
+        public static NavigationState Unavailable { get; } = new("unavailable", "unavailable");
+    }
+
+    private sealed record Snapshot(string AddressMatches, string KeyboardFocus, string RecoveryVisible, string Status, NavigationState Navigation)
+    {
+        public static Snapshot Unavailable { get; } = new("unavailable", "unavailable", "unavailable", "unavailable", NavigationState.Unavailable);
     }
 
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint hwnd, out uint processId);

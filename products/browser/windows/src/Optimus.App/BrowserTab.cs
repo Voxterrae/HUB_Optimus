@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
@@ -37,7 +38,15 @@ internal sealed class BrowserTab : IDisposable
  }
  public BrowserContext Context=>new(Id,Epoch,CurrentUri?.GetLeftPart(UriPartial.Authority)??"inicio");
  public bool IsHome {get;private set;}=true;
- public bool NavigationReady {get=>readiness.CanNavigate;set=>readiness.RequestResume(value);}
+ public bool NavigationReady
+ {
+  get=>readiness.CanNavigate;
+  set
+  {
+   readiness.RequestResume(value);
+   AutomationProperties.SetItemStatus(Item,readiness.CanNavigate?"Listo para navegar":"Navegación no disponible");
+  }
+ }
  public string Title=>IsSearch?"Optimus Search":IsHome?"Inicio":Core?.DocumentTitle??"Página";
  private NavigationSnapshot addressSnapshot=new();
  public string? LastAddress=>IsSearch?null:addressSnapshot.LastAddress is {} address&&Uri.TryCreate(address,UriKind.Absolute,out var u)&&policy().Evaluate(u,IsPrivate)!=PrivacyAction.Block&&(IsPrivate||policy().Evaluate(u)!=PrivacyAction.Private)?address:null;
@@ -61,14 +70,18 @@ internal sealed class BrowserTab : IDisposable
   this.profileName=profileName;IsPrivate=isPrivate;this.policy=policy;this.policyGeneration=policyGeneration;
   search=new OptimusSearchView(url=>OpenRequested?.Invoke(this,url),()=>IsPrivate?Array.Empty<Bookmark>():bookmarks(),()=>!IsDisposed&&searchEligible(this),hostLifetime,connectSearch) {Visibility=Visibility.Collapsed};
   home=new NativeHomeView(IsPrivate,(query,scope)=>SearchAsync(query,scope),()=>ShowSearch(OptimusSearchScope.Index),()=>BookmarksRequested?.Invoke(this),()=>HelpRequested?.Invoke(this));
-  Item=new TabItem {Header=ModeTitle("Inicio"),Content=Host,Tag=this};Host.Children.Add(View);Host.Children.Add(home);Host.Children.Add(failure);Host.Children.Add(search);
+  Item=new TabItem {Header=ModeTitle("Inicio"),Content=Host,Tag=this};AutomationProperties.SetItemStatus(Item,"Preparando navegador");Host.Children.Add(View);Host.Children.Add(home);Host.Children.Add(failure);Host.Children.Add(search);
   failure.Children.Add(new TextBlock {Text="El motor de esta pestaña se detuvo. Recuperarla vuelve a abrir la última dirección; el texto no guardado puede perderse.",TextWrapping=TextWrapping.Wrap});
   var retry=new Button {Content="Recuperar esta pestaña"};retry.Click+=(_,_)=>recover(this);failure.Children.Add(retry);
   View.Visibility=Visibility.Hidden;
  }
  public async Task InitializeAsync(CoreWebView2Environment environment,PermissionController permissions,DownloadController downloads,Func<bool> active,CancellationToken cancellationToken)
  {
-  try{await readiness.InitializeAsync(()=>InitializeControllerAsync(environment,permissions,downloads,active,cancellationToken));}
+  try
+  {
+   await readiness.InitializeAsync(()=>InitializeControllerAsync(environment,permissions,downloads,active,cancellationToken));
+   AutomationProperties.SetItemStatus(Item,"Preparando datos de navegación");
+  }
   catch{RetireController();throw;}
  }
  public void RetireController()
