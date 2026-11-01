@@ -105,6 +105,46 @@ runner, permission, timeout and profile safeguards remain. The six local
 synthetic host scenarios above used historical product `cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907`;
 they do not validate the new product or establish real-Web relevance.
 
+## First cloud execution and diagnostic correction
+
+PR2068 integrated the reviewed preparation as protected main
+`3652228c1cbbc2155bc44ba5280a396ab71312f6`, with the same full tree as
+reviewed head `27d70040dc334dbc0279b581c14476044c498355`. Its final CI observed
+2654 passed tests and1661 passed subtests, seven required publisher-bound
+checks, six CodeQL analyses and aggregate CodeQL success, with no open threads.
+
+The first real run [41362456275](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41362456275)
+attempt1 checked out the exact workflow, product0790 and SearXNG8b35 sources,
+verified SDK10.0.403, prepared dependencies, built both binaries and passed26
+probe self-tests. Execution exited2. The Actions Bash invocation includes `-e`;
+`set -uo pipefail` did not disable it, so the shell exited before publishing the
+redirected curated JSON. This run does not establish which internal stage failed,
+whether either search query was sent, or whether owned cleanup completed.
+Do not attribute that result to a provider denial or present it as Web acceptance.
+
+The diagnostic correction captures the Python exit code through an explicit OR
+list, publishes its existing curated report and summary, then returns the same
+code. A test using the actual Actions Bash `-e -o pipefail` invocation first failed
+to publish a blocked fixture, then passed while retaining exit2. A closed
+`qa_mode` choice now defaults to `startup-only`; unknown values fail before any
+checkout. This diagnostic starts only SearXNG, polls the fixed query-free health
+endpoint, stops its exact process and reports `startup-ready`, never Web `passed`.
+It does not start the product/probe or issue a search. The separate `queries` mode
+retains the two original fixed queries and all relevance and cleanup gates.
+Internal fixed stage names, upstream readiness/exit code and whether the query
+probe was attempted distinguish startup failure from later probe failure without
+printing upstream logs or private values. On an upstream health failure, stderr
+is retained only in a private temporary file until the exact process stops; at
+most65537 bytes are inspected to emit a fixed allowlisted error category, never
+exception messages or raw text. Unknown classes and output over65536 bytes yield
+fixed labels. This is an inspection-size limit; the temporary stderr file itself
+is not size-capped during the bounded startup interval. The synthetic startup failure includes a private-value fixture;
+its category is reported but its text is absent. Cleanup failure retains the primary
+failure stage when one already exists. The final local suite passes55 checks,
+including query-free healthy startup, early upstream exit3, actual shell report
+publication for exit0/2, and mode rejection. External diagnosis remains a separate
+protected-main execution; the initial failure is not silently retried.
+
 ## Limits
 
 No cache/artifact upload, secrets import, personal profile, paid provisioning,

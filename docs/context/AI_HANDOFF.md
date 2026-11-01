@@ -497,3 +497,11 @@ symlinked-venv and actual-wrapper signal regressions. The final Python suite is
 See `products/browser/search/docs/REAL_WEB_SMOKE_2062.md`. The separate
 ranking correction remains under #2061; existing owner-authority and acceptance
 boundaries remain unchanged.
+
+
+## Real-Web first execution and diagnostic correction — issue2062
+
+- Protected PR2068 merged3652228c1cbbc2155bc44ba5280a396ab71312f6, full tree equal27d70040. Final CI2654 tests+1661subtests passed,7required correct publishers and6CodeQL analyses+aggregate success,0unresolvedthreads.
+- Actual run41362456275/job125015536500 attempt1 verified workflow3652228/product0790/SearXNG8b35, SDK10.0.403/deps/build/self26 passed. Execution exited2; Actions Bash-e skipped publishing redirected JSON. Internal cause, query contacts and cleanup are unknown; real-Web acceptance remains blocked.
+- Follow-up captures code in OR-list, publishes the curated report even on negative output, returns original code. Closed qa_mode defaults startup-only: only SearXNG/query-free health, no product/probe search, distinct startup-ready status. Fixed diagnostic stage/readiness/exit/probe-attempt fields and a closed startup error category from bounded private stderr inspection; no raw text is published; existing product pin, authorization, relevance and no-bypass policy retained. Actual Actions-shell negative fixture was RED then GREEN; local suite55 passes.
+- Next: independent review, fresh protected CI/merge, startup-only main execution. Do not infer acceptance or automatically resubmit the uncertain first query run. No persistent endpoint/new resource/paid service. OWNER_AUTHORITY_HANDOFF remains unchanged and controlling.
