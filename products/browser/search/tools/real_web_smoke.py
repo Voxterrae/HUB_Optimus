@@ -238,9 +238,12 @@ def main():
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--source", required=True)
     parser.add_argument("--workflow", required=True)
+    parser.add_argument("--mode", choices=("queries", "startup-only"), default="queries")
     args = parser.parse_args()
     result = {"status": "blocked", "reason": "preflight", "sourceCommit": None,
-              "workflowCommit": None, "searxCommit": SEARX_COMMIT, "searxCleanup": False}
+              "workflowCommit": None, "searxCommit": SEARX_COMMIT, "searxCleanup": False,
+              "mode": args.mode, "stage": "source", "upstreamReady": False,
+              "upstreamExitCode": None, "queryProbeAttempted": False}
     owned = None
     interrupted = False
     def interrupt(signum, frame):
@@ -255,8 +258,10 @@ def main():
         checkout(args.product_root, args.source)
         checkout(args.harness_root, args.workflow)
         checkout(args.searx_root, SEARX_COMMIT)
+        result["stage"] = "dependencies"
         result["dependencies"] = dependency_provenance(args.searx_python, args.searx_root, args.dependency_report)
         check_cancellation(cancelled)
+        result["stage"] = "ports"
         require_free_port(SEARX_PORT)
         require_free_port(17831)
         runner_temp = Path(os.environ["RUNNER_TEMP"]).resolve(strict=True)
@@ -267,22 +272,33 @@ def main():
             config.write_text(json.dumps(settings()), encoding="utf-8")
             os.chmod(config, 0o600)
             environment = searx_environment(args.searx_root.resolve(), temporary, secrets.token_hex(32))
+            result["stage"] = "upstream-start"
             # Keep the venv executable path: resolving its symlink discards pyvenv.cfg.
             owned = subprocess.Popen([str(args.searx_python.absolute()), "-m", "searx.webapp"],
                                      cwd=args.searx_root, env=environment,
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             try:
+                result["stage"] = "upstream-health"
                 if not wait_health(owned, cancelled=cancelled):
+                    result["upstreamExitCode"] = owned.poll()
                     raise ValueError("searx-health-blocked")
-                result["probe"] = execute_probe(["dotnet", str(args.probe.resolve()), "--host", str(args.host.resolve()),
-                    "--profile", str(temporary / "profile"), "--source", args.source], process_environment(), args.source, cancelled)
-                result["status"] = result["probe"]["status"]
-                result["reason"] = "accepted" if result["status"] == "passed" else "upstream-blocked"
+                result["upstreamReady"] = True
+                if args.mode == "startup-only":
+                    result.update(status="startup-ready", reason="diagnostic-only", stage="complete")
+                else:
+                    result.update(stage="probe", queryProbeAttempted=True)
+                    result["probe"] = execute_probe(["dotnet", str(args.probe.resolve()), "--host", str(args.host.resolve()),
+                        "--profile", str(temporary / "profile"), "--source", args.source], process_environment(), args.source, cancelled)
+                    result["status"] = result["probe"]["status"]
+                    result["reason"] = "accepted" if result["status"] == "passed" else "upstream-blocked"
+                    result["stage"] = "complete" if result["status"] == "passed" else "probe"
             finally:
                 result["searxCleanup"] = stop_owned(owned)
                 owned = None
                 if not result["searxCleanup"]:
-                    result.update(status="blocked", reason="cleanup-failed")
+                    if result["status"] in ("passed", "startup-ready"):
+                        result.update(reason="cleanup-failed", stage="cleanup")
+                    result["status"] = "blocked"
     except Cancelled:
         result.update(status="blocked", reason="cancelled")
     except (OSError, ValueError, subprocess.SubprocessError, KeyError, json.JSONDecodeError):
@@ -297,7 +313,7 @@ def main():
         for number, handler in previous_signals.items():
             signal.signal(number, handler)
     print(json.dumps(result, sort_keys=True))
-    return 0 if result["status"] == "passed" else 2
+    return 0 if result["status"] in ("passed", "startup-ready") else 2
 
 
 if __name__ == "__main__":
