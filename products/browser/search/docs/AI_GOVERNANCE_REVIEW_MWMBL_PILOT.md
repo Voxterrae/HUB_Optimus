@@ -1,3 +1,5 @@
+> Registro del piloto inicial en `0b6662c60916b7a5043af4b0134adec04c2f60b2`. La evolución posterior de selección Windows se documenta en [validación nativa](../../windows/docs/VALIDATION_NATIVE_SEARCH_2026_11_01.md); los resultados históricos siguientes conservan su alcance.
+
 # AI Governance Review v0.1 — piloto Web Mwmbl
 
 Registro del 01/11/2026 conforme a [la plantilla vigente](../../../../templates/governance/AI_GOVERNANCE_REVIEW_v0.1.md). Es evidencia técnica de una propuesta, no autorización, certificación legal ni aprobación humana. No modifica las reglas de autoridad o derechos del proyecto.

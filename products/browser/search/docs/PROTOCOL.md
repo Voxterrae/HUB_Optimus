@@ -28,7 +28,9 @@ Con `--searx-url`, `web` envía `/search?format=json&q=...&language=...&categori
 
 ## Proveedor Mwmbl opcional
 
-`--web-provider mwmbl` selecciona únicamente el piloto Mwmbl y es incompatible con `--searx-url`. Un valor desconocido o una opción repetida falla al arrancar. Sin ambas opciones no se configura Web. El protocolo local sigue en versión 1; `webConfigured` indica selección de proveedor, no su disponibilidad, cuota o calidad. El launcher y las preferencias nativas existentes no activan esta opción automáticamente.
+`--web-provider mwmbl` selecciona únicamente el piloto Mwmbl y es incompatible con `--searx-url`. Un valor desconocido o una opción repetida falla al arrancar. Sin ambas opciones no se configura Web. El protocolo local sigue en versión 1; `webConfigured` indica selección de proveedor, no su disponibilidad, cuota o calidad. El launcher Windows admite una elección persistida y explícita desde Inicio → Elegir fuente Web; los valores iniciales mantienen Web desactivada. El servicio que inicia recibe exactamente la opción correspondiente. Una preferencia antigua de SearXNG se conserva al migrar.
+
+La UI no infiere el proveedor de un servicio independiente desde health o webConfigured. En ese caso bloquea el envío Web y conserva Índice. Un cambio de configuración invalida una conexión en preparación; un guardado fallido conserva política y fuente anteriores. Estas reglas del cliente no amplían el protocolo v1. Ver [validación nativa](../../windows/docs/VALIDATION_NATIVE_SEARCH_2026_11_01.md).
 
 La petición externa es un GET HTTPS al endpoint fijo `https://api.mwmbl.org/api/v2/search/?q=...`, con consulta escapada y sin bearer local, clave API, cookies, credenciales HTTP ambientales o redirecciones. Mwmbl recibe la consulta y la IP de salida. No existe fallback ni reintento. `language` se valida como antes en el host, pero el adaptador no lo envía a Mwmbl ni promete filtro por idioma o SafeSearch.
 

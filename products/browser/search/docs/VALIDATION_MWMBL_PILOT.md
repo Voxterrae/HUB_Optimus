@@ -1,3 +1,5 @@
+> Registro del piloto inicial en `0b6662c60916b7a5043af4b0134adec04c2f60b2`. La evolución posterior de selección Windows se documenta en [validación nativa](../../windows/docs/VALIDATION_NATIVE_SEARCH_2026_11_01.md); los resultados históricos siguientes conservan su alcance.
+
 # Validación del piloto Web Mwmbl — #2021
 
 Fecha del registro: 01/11/2026. Registro de pruebas controladas y tres consultas reales en Linux. La aceptación de Windows, la integración para usuarios y el despliegue comercial siguen pendientes.
