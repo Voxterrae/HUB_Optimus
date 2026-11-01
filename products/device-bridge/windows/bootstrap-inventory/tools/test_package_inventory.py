@@ -1,4 +1,5 @@
 """Bundle integrity checks do not establish origin or loaded-image provenance."""
+import copy
 import hashlib
 import json
 import shutil
@@ -9,6 +10,41 @@ import zipfile
 from pathlib import Path
 
 import package_inventory as package
+
+
+TEMPLATE = Path(__file__).resolve().parents[1] / "activation-plan.template.json"
+
+
+def invalid_activation_templates(template):
+    """Mutate the public empty template, never production validation helpers."""
+    for invalid in (None, [], True, 0):
+        yield "root type", json.dumps(invalid).encode()
+    for field, expected in template.items():
+        value = copy.deepcopy(template); del value[field]
+        yield "missing " + field, json.dumps(value).encode()
+        if type(expected) is not dict:
+            for invalid in (None, True, False, 0, 1, "approved", {}, []):
+                if type(invalid) is type(expected) and invalid == expected:
+                    continue
+                value = copy.deepcopy(template); value[field] = invalid
+                yield "changed " + field, json.dumps(value).encode()
+            continue
+        for invalid in (None, [], True, 0):
+            value = copy.deepcopy(template); value[field] = invalid
+            yield "section type " + field, json.dumps(value).encode()
+        value = copy.deepcopy(template); value[field]["unreviewed"] = None
+        yield "unknown nested key " + field, json.dumps(value).encode()
+        for nested, empty in expected.items():
+            value = copy.deepcopy(template); del value[field][nested]
+            yield "missing " + field + "." + nested, json.dumps(value).encode()
+            invalids = (None, True, False, 0, "completed", "approved") if nested == "status" else (
+                "synthetic private evidence", {}, [], False, True, 0, 1,
+            )
+            for invalid in invalids:
+                value = copy.deepcopy(template); value[field][nested] = invalid
+                yield "changed " + field + "." + nested, json.dumps(value).encode()
+    value = copy.deepcopy(template); value["unreviewed"] = None
+    yield "unknown root key", json.dumps(value).encode()
 
 
 def pe(machine=0x8664):
@@ -32,7 +68,8 @@ class PackageTests(unittest.TestCase):
         for name in package.PAYLOAD_FILES:
             target = self.stage/name; target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(pe() if name.endswith(".exe") else b"synthetic reviewed asset\n")
-        (self.stage/"activation-plan.template.json").write_text(json.dumps({"activation":"blocked","loaded_image_provenance":"not_established"}))
+        self.template_bytes = TEMPLATE.read_bytes()
+        (self.stage/"activation-plan.template.json").write_bytes(self.template_bytes)
         self.meta = dict(source_commit="a"*40, policy_sha256="b"*64, rustc_version="rustc 1.99.0",
                          cargo_version="cargo 1.99.0", linker_version="14.44", sdk_version="10.0.26100.0")
 
@@ -40,6 +77,62 @@ class PackageTests(unittest.TestCase):
         output = self.base/filename
         package.create_package(self.stage, output, **self.meta)
         return output
+
+    def rehashed_plan(self, unpacked, raw):
+        (unpacked/"activation-plan.template.json").write_bytes(raw)
+        manifest_path = unpacked/"manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        manifest["files"]["activation-plan.template.json"] = {
+            "byte_length": len(raw), "sha256": hashlib.sha256(raw).hexdigest(),
+        }
+        manifest_path.write_text(json.dumps(manifest))
+
+    def test_incomplete_activation_template_refuses_creation(self):
+        (self.stage/"activation-plan.template.json").write_text(json.dumps({
+            "activation": "blocked", "loaded_image_provenance": "not_established",
+        }))
+        with self.assertRaises(package.PackageError): self.build()
+
+    def test_incomplete_activation_template_refuses_rehashed_verification(self):
+        archive = self.build(); unpacked = self.base/"unpacked"
+        with zipfile.ZipFile(archive) as zipped: zipped.extractall(unpacked)
+        self.rehashed_plan(unpacked, json.dumps({
+            "activation": "blocked", "loaded_image_provenance": "not_established",
+        }).encode())
+        with self.assertRaises(package.PackageError): package.verify_package(unpacked)
+
+    def test_closed_empty_activation_template_mutations_refuse_creation(self):
+        for index, (label, raw) in enumerate(invalid_activation_templates(json.loads(self.template_bytes))):
+            with self.subTest(case=index, mutation=label):
+                (self.stage/"activation-plan.template.json").write_bytes(raw)
+                output = self.base/("invalid-" + str(index) + ".zip")
+                with self.assertRaises(package.PackageError):
+                    package.create_package(self.stage, output, **self.meta)
+                self.assertFalse(output.exists())
+
+    def test_closed_empty_activation_template_mutations_refuse_rehashed_verification(self):
+        archive = self.build(); unpacked = self.base/"unpacked"
+        with zipfile.ZipFile(archive) as zipped: zipped.extractall(unpacked)
+        for index, (label, raw) in enumerate(invalid_activation_templates(json.loads(self.template_bytes))):
+            with self.subTest(case=index, mutation=label):
+                self.rehashed_plan(unpacked, raw)
+                with self.assertRaises(package.PackageError): package.verify_package(unpacked)
+
+    def test_duplicate_activation_template_keys_refuse_creation_and_rehashed_verification(self):
+        archive = self.build(); unpacked = self.base/"unpacked"
+        with zipfile.ZipFile(archive) as zipped: zipped.extractall(unpacked)
+        encoded = json.dumps(json.loads(self.template_bytes), separators=(",", ":")).encode()
+        for index, (old, replacement) in enumerate((
+            (b'"authority":', b'"authority":"approved","authority":'),
+            (b'"status":', b'"status":"approved","status":'),
+            (b'"independent_evidence":', b'"independent_evidence":"private","independent_evidence":'),
+        )):
+            raw = encoded.replace(old, replacement, 1)
+            with self.subTest(case=index):
+                (self.stage/"activation-plan.template.json").write_bytes(raw)
+                with self.assertRaises(package.PackageError): self.build("duplicate-" + str(index) + ".zip")
+                self.rehashed_plan(unpacked, raw)
+                with self.assertRaises(package.PackageError): package.verify_package(unpacked)
 
     def test_deterministic_exact_bundle(self):
         first=self.build(); second=self.build("other.zip")

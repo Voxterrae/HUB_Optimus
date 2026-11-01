@@ -37,6 +37,25 @@ _MANIFEST_KEYS = frozenset(("schema", "product", "target", "activation", "loaded
     "dependencies", "pe_imports", "files"))
 _DEPENDENCIES = [dict(name="windows-link", version="0.2.1", license="MIT OR Apache-2.0"),
                  dict(name="windows-sys", version="0.61.2", license="MIT OR Apache-2.0")]
+_ACTIVATION_TEMPLATE_LITERALS = {
+    "schema": "hub_relay.activation_plan.v0.1", "activation": "blocked",
+    "loaded_image_provenance": "not_established", "authority": "none",
+    "diagnostic_receipt_is_authority": False, "artifact_hash_is_loaded_image_proof": False,
+    "creation_implementation": "not_included",
+}
+_ACTIVATION_TEMPLATE_PENDING = {
+    "source_and_policy_review": ("independent_evidence",),
+    "independent_host_profile": ("supported_windows_build", "architecture", "independent_evidence"),
+    "independent_volume_binding": ("volume_guid", "native_identity", "component_route", "independent_evidence"),
+    "independent_primary_token_profile": ("principal", "groups_and_attributes", "privileges_and_attributes",
+                                          "session_and_context", "independent_evidence"),
+    "independent_service_sid_binding": ("binary_sid", "descriptor_bytes", "no_install_derivation_review",
+                                        "independent_evidence"),
+    "independent_launch_provenance": ("adopted_windows_mechanism", "verifier_trust_root",
+        "artifact_to_created_process_binding", "loaded_dependencies_evidence", "negative_evidence"),
+    "owned_resource_and_rollback_review": ("resources", "rollback"),
+    "owner_disposition": ("protected_github_record", "approval_scope_and_window", "reapproval_triggers"),
+}
 
 
 class PackageError(ValueError):
@@ -73,6 +92,18 @@ def _hex(value, length):
 
 def _version(value):
     if type(value) is not str or not 1 <= len(value) <= 256 or any(ord(c) < 32 or ord(c) > 126 for c in value): _reject()
+
+
+def _empty_activation_template(plan):
+    """Accept only the public empty template, never supplied activation evidence."""
+    if type(plan) is not dict or plan.keys() != _ACTIVATION_TEMPLATE_LITERALS.keys() | _ACTIVATION_TEMPLATE_PENDING.keys(): _reject()
+    for field, expected in _ACTIVATION_TEMPLATE_LITERALS.items():
+        if type(plan[field]) is not type(expected) or plan[field] != expected: _reject()
+    for section, empty_fields in _ACTIVATION_TEMPLATE_PENDING.items():
+        value = plan[section]
+        if type(value) is not dict or value.keys() != {"status", *empty_fields}: _reject()
+        if type(value["status"]) is not str or value["status"] != "pending": _reject()
+        if any(value[field] is not None for field in empty_fields): _reject()
 
 
 def _safe_node(path):
@@ -188,8 +219,7 @@ def _manifest(files, source_commit, policy_sha256, rustc_version, cargo_version,
     for version in (rustc_version,cargo_version,linker_version,sdk_version): _version(version)
     for product,version in (("rustc",rustc_version),("cargo",cargo_version)):
         if not re.fullmatch(product+r" 1\.99\.0(?: \([0-9a-f]{7,40} [0-9]{4}-[0-9]{2}-[0-9]{2}\))?",version): _reject()
-    plan=_json(files["activation-plan.template.json"])
-    if type(plan) is not dict or plan.get("activation") != "blocked" or plan.get("loaded_image_provenance") != "not_established": _reject()
+    _empty_activation_template(_json(files["activation-plan.template.json"]))
     return dict(schema="hub_relay.bootstrap_package.v0.1", product="hub-relay-bootstrap-inventory", target=TARGET,
         activation="blocked", loaded_image_provenance="not_established", build_metadata_authority="unverified_claims",
         integrity_scope="exact_packaged_file_bytes_only", source_commit=source_commit, policy_sha256=policy_sha256,
