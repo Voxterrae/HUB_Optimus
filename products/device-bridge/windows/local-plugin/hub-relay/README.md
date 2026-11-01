@@ -1,8 +1,8 @@
 # HUB_Relay — candidato de plugin local 0.1.0
 
-**Estado: código preparado para revisión; lectura desactivada y sin instalar.**
-La decisión sobre una excepción temporal al requisito de autorizar desde el
-Xiaomi sigue pendiente. Este paquete no la concede ni la presupone.
+**Estado: candidato de pruebas; lectura desactivada por defecto.**
+Cualquier excepción temporal al requisito de autorizar desde el Xiaomi debe
+ser explícita y acotada. Este paquete no la concede ni la presupone.
 
 ## Lo que implementa
 
@@ -28,13 +28,13 @@ la resolución de claves vinculadas, el bootstrap o las reglas del servicio.
 Por defecto, la operación devuelve `LOCAL_PILOT_DISABLED` antes de consultar
 Windows. Los argumentos MCP no pueden cambiar ese estado. El parámetro de
 arranque `--local-supervised-diagnostics` existe para el perfil local que está
-en revisión; **no se ha aprobado ni se añade al manifiesto distribuido**.
+en revisión; **no se añade al manifiesto distribuido**.
 No debe habilitarse por decisión del modelo. No es una prueba de autorización,
 un factor biométrico ni una defensa frente a otro proceso de la misma cuenta.
 
 El requisito vigente de aprobar las lecturas desde el Xiaomi se conserva para
 el producto. La activación de este piloto necesita una excepción concreta y
-registrada para esa lectura local supervisada. No se reutiliza la excepción
+registrada para esa lectura local supervisada y su sesión/vigencia. No se reutiliza la excepción
 histórica de auditoría para autorizar un nuevo producto.
 
 Este candidato no permite archivos, terminal, ratón, teclado, Android,
@@ -72,7 +72,8 @@ python -I -B -m unittest discover -s tests -v
 Las pruebas con proveedores sintéticos comprueban la lógica del colector sin
 leer el equipo. La prueba de proceso real comprueba el protocolo y el rechazo
 por defecto; no acredita una lectura real de Windows. El informe de validación
-distingue esas pruebas del ensayo en el equipo y de la instalación pendientes.
+distingue esas pruebas del ensayo supervisado descrito más abajo. La instalación
+y el descubrimiento de herramientas en el cliente deben acreditarse por separado.
 
 Referencias del transporte implementado:
 [MCP stdio](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports),
@@ -90,5 +91,17 @@ No cambia titularidad, licencias o gobernanza del proyecto; el código candidato
 es una contribución original de HUB_Optimus, sin incorporar código de RDC ni
 Tailscale. Sus respectivos productos conservan sus propios derechos.
 
-Al no estar instalado ni crear estado persistente, no hay servicio que retirar.
+El servidor no crea un servicio ni estado persistente. Si se instala el paquete,
+su registro se gestiona desde el cliente; no equivale a habilitar la lectura.
 No elimines otras aplicaciones o conexiones para probar este candidato.
+
+## Ensayo supervisado del 1 de noviembre de 2026
+
+La excepción puntual para este chat quedó registrada en
+[PR #2037](https://github.com/Voxterrae/HUB_Optimus/pull/2037#issuecomment-6561070445).
+Se inicializó un proceso MCP local, se descubrió la herramienta, se hizo una
+lectura con argumentos vacíos y se cerró el proceso con salida 0. El resultado
+real cumple el esquema; el comprobante con las mediciones se conserva privado.
+Una revisión independiente comprobó su coherencia y la identidad del código.
+Esto no autoriza el uso indefinido ni prueba integración en un cliente de IA,
+biometría, funcionamiento remoto o instalación en otros equipos.

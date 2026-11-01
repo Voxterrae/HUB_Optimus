@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "hub-relay",
   "version": "0.1.0",
-  "description": "Candidato local de HUB_Relay: diagnóstico limitado de Windows mediante MCP. Activación supervisada pendiente; sin autorización biométrica ni acceso remoto.",
+  "description": "Candidato local de HUB_Relay: diagnóstico limitado de Windows mediante MCP. Requiere habilitación supervisada; sin autorización biométrica ni acceso remoto.",
   "author": {"name": "HUB_Optimus"},
   "extensions": {
     "com.openai": {

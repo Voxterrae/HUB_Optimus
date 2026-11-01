@@ -5,7 +5,8 @@ description: Use when the user requests the HUB_Relay local Windows diagnostic p
 
 # HUB_Relay: local diagnostic candidate
 
-This candidate is not the native protected bridge and is not activated.
+This candidate is not the native protected bridge. Its distributed configuration
+does not activate diagnostic collection.
 Its only prepared tool, `hub_relay_windows_diagnostics`, accepts `{}` and can
 report numeric Windows version plus total and free bytes on fixed C:.
 It never accepts a path, command, device, user identifier or approval flag.
