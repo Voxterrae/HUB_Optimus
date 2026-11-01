@@ -17,6 +17,13 @@ from urllib.parse import urlsplit
 VERSION = '0.3.3_alpha'
 ROOT = f'Optimus_Browser_{VERSION}'
 ARCHIVE = f'Optimus_Browser_Windows_{VERSION}.zip'
+# Exact output of the real catalog importer for the frozen 0.3.3 public help.
+# Linux emits LF; native Windows emits CRLF. Only those two observed byte streams qualify.
+# Updating release content requires a reviewed pin update; user imports remain unrestricted.
+PUBLIC_HELP_INDEX_SHA256S = frozenset({
+    '3f084892eae765fbd1d872beab3514def3967068e4103ebf9831a0d68b26b958',
+    '18976d5bc476b8a8c2b7f653556f682e63ff00dc9f004453ce51a25f632a26b2',
+})
 EXCLUDED = {'.git', '.superpowers', 'bin', 'obj', 'artifacts', 'tooling', '__pycache__', '.pytest_cache', 'qa', 'testresults'}
 PRIVATE_DIRS = {'userdata', 'user-data', 'user_data', 'browserdata', 'browser-data', 'profiles', 'profile', 'logs', 'secrets', '.ssh', '.aws', '.azure'}
 RESERVED = {'source', 'leeme.txt', 'validacion.md', 'decisiones.md', 'sha256sums.txt'}
@@ -150,7 +157,7 @@ def load_metadata(path):
 
 def validate_bundled_index(data):
     # This is release acceptance, not a replacement for the host's real import.
-    # A nonempty default corpus is promised by this alpha's frozen layout.
+    # Only the bundled public help belongs in this alpha's frozen distribution.
     try:
         if len(data) > 16 * 1024 * 1024:
             raise ValueError()
@@ -180,6 +187,8 @@ def validate_bundled_index(data):
                 raise ValueError()
     except (ValueError, TypeError, KeyError, OverflowError, RecursionError):
         raise PackagingError('Search/index.json must contain a valid nonempty schemaVersion 1 catalog within documented limits') from None
+    if hashlib.sha256(data).hexdigest() not in PUBLIC_HELP_INDEX_SHA256S:
+        raise PackagingError('Search/index.json must exactly match the frozen 0.3.3 public-help CLI output')
 
 
 def validate_binary(files):
