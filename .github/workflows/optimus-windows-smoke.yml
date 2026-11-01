@@ -9,7 +9,7 @@ on:
         description: Complete lowercase 40-hex product SHA to test in this disposable runner
         type: string
         required: true
-        default: 178e52efbc84428653e004b8c9f02cda30fc74b0
+        default: 46085be8dec5676271290eb3e2906546fc7efd77
       gui:
         description: Attempt GUI/UIAutomation on a clean interactive runner (blocked if unavailable)
         type: boolean
@@ -81,7 +81,8 @@ jobs:
           dotnet publish src/Optimus.App/Optimus.App.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o $output; CheckExit
           dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.3-alpha -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Search"; CheckExit
           dotnet publish scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Diagnostics"; CheckExit
-          dotnet run --project ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -- index --input ../search/catalog/optimus-help.json --output "$output/Search/index.json"; CheckExit
+          $catalog = (Resolve-Path '../search/catalog/optimus-help.json').Path
+          dotnet run --project ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -- index --input $catalog --output "$output/Search/index.json"; CheckExit
       - name: Real packaged host acceptance through Windows PowerShell 5.1
         run: |
           & "$env:SystemRoot/System32/WindowsPowerShell/v1.0/powershell.exe" -NoProfile -File scripts/Test-OptimusWindows.ps1 -Publication "$env:RUNNER_TEMP/optimus-publication" -EvidenceDirectory "$env:RUNNER_TEMP/optimus-service-evidence" -SourceCommit $env:OPTIMUS_SOURCE_COMMIT
