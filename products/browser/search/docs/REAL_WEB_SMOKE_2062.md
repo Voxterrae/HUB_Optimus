@@ -133,8 +133,14 @@ It does not start the product/probe or issue a search. The separate `queries` mo
 retains the two original fixed queries and all relevance and cleanup gates.
 Internal fixed stage names, upstream readiness/exit code and whether the query
 probe was attempted distinguish startup failure from later probe failure without
-printing upstream logs or private values. Cleanup failure retains the primary
-failure stage when one already exists. The final local suite passes53 checks,
+printing upstream logs or private values. On an upstream health failure, stderr
+is retained only in a private temporary file until the exact process stops; at
+most65537 bytes are inspected to emit a fixed allowlisted error category, never
+exception messages or raw text. Unknown classes and output over65536 bytes yield
+fixed labels. This is an inspection-size limit; the temporary stderr file itself
+is not size-capped during the bounded startup interval. The synthetic startup failure includes a private-value fixture;
+its category is reported but its text is absent. Cleanup failure retains the primary
+failure stage when one already exists. The final local suite passes55 checks,
 including query-free healthy startup, early upstream exit3, actual shell report
 publication for exit0/2, and mode rejection. External diagnosis remains a separate
 protected-main execution; the initial failure is not silently retried.
