@@ -403,3 +403,70 @@ the exact PR head and checks. Integration grants no temporary Cognito identity
 exception and lifts no #1831 or #1835 gate: exact merged-SHA authorization,
 identity, roles/bootstrap, current cost/credit headroom, confirmed alerts,
 private-window approval and rollback evidence remain required before AWS.
+
+## Optimus Windows 0.3.3 integration boundary
+
+Issue #2045 and PR #2047 carry the current Windows/Search integration record.
+The initial Windows and Search import preserved the source blobs from
+`5ed8785c5be011dba943371d87de4c4dd074a2c5` exactly in the integration branch
+based on current main.
+The integration candidate then incorporates the focused corrections reviewed
+under #2049, #2050 and #2051: direct SearxSearchProvider transport to the
+operator-configured SearXNG endpoint without ambient proxies, retaining normal
+TLS certificate validation; load-only recovery of an otherwise valid oversized legacy
+endpoint while retaining the other valid settings; and exact LF/CRLF byte pins
+for the three public help records accepted by the release packager. Loading
+leaves the settings file untouched; the next ordinary save, including an
+application or tab close, may persist the disabled endpoint as null.
+
+The unsigned feature-stack commits remain historical proposal provenance
+rather than commits introduced by this integration. Existing contributor
+attribution and third-party notices remain in place; verified GitHub commits
+do not constitute hardware attestation. Historical source manifests remain
+unchanged snapshots. The current candidate inventory and local validation are
+recorded in
+`products/browser/windows/SOURCE_MANIFEST_WINDOWS_INTEGRATION_2026_11_01.json`
+and `products/browser/windows/docs/VALIDATION_WINDOWS_INTEGRATION_2026_11_01.md`.
+
+Use the exact product SHA, component ProductVersion verification and separate
+service/GUI reports in #2045 for native acceptance of an integration candidate.
+The upstream cold runs 41331622526 and 41332021001 validate their stated source;
+source equivalence or Linux tests alone do not prove a later native execution.
+The corrected local candidate passes Core39, Windows Search59, Privacy28,
+backend48 and 23 packager tests on Linux. Focused correction review found no
+outstanding Critical/Important finding; final review, required CI and fresh
+Windows service/GUI execution still need the exact integration candidate SHA.
+The manual protected workflow remains owner-only, read-only and isolated.
+
+The local help index is finite; no operational SearXNG/public-web coverage is
+inferred. Windows CNG signing keys are nonexportable and explicitly deleted on
+normal owned-host shutdown, but abrupt termination or deletion failure may leave
+an orphan key. Physical Windows10/11, spoken Narrator/NVDA, complete cookie
+isolation, binary signing and public distribution retain their own acceptance
+gates. Founder ownership, licensing posture and the controlling
+OWNER_AUTHORITY_HANDOFF boundary are unchanged.
+
+## Provider-result visibility continuation
+
+Issue #2061 continues the owner-scoped Windows/Search repair. The preceding
+integration #2047 and pilot pin #2055 are merged; exact product
+`4c9ee43aa2a435abc18a6c63399fb2a99a698e58` passed174 native checks in
+run41338890297, with packaged service/GUI and normal cleanup. This is historical
+acceptance for that exact source, not for the correction described below.
+
+The selected provider now has priority in the bounded result list; safe matching
+bookmarks fill unused slots. Previously twenty matching bookmarks could hide
+every successful Web/Index result. Deduplication prefers the actual provider's
+destination/title/source. Provider errors still remain visible and eligible
+bookmarks remain available without querying a fallback. Limits, authenticated
+local TLS, token handling, cancellation and private bookmark omission are retained.
+The priority regressions produced60/66 before the fix and66/66 after it on
+Linux. The eighth new regression then exposed submission-time bookmark mutation
+(66/67); capturing the input snapshot brings the final Search suite to67/67. Fresh exact-source native acceptance, required CI and final review for
+this increment are recorded in #2061, rather than inferred from the earlier run.
+
+Issue #2062 separately prepares a loopback-only disposable real-Web cloud test.
+No production SearXNG endpoint is configured by this result-order correction.
+Physical Windows10/11, spoken accessibility, upstream availability, code signing
+and public distribution remain separate gates. Owner identity, ownership,
+licensing and the controlling OWNER_AUTHORITY_HANDOFF are unchanged.

@@ -1,6 +1,8 @@
 name: Relay token buffer conformance
 
 on:
+  # Owner-bound read-only validation of the selected exact ref, including main.
+  workflow_dispatch:
   push:
     branches:
       - codex/relay-token-buffer-20261101
