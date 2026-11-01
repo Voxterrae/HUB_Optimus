@@ -232,6 +232,24 @@ def execute_probe(command, environment, source, cancelled=None):
     return result
 
 
+def classify_upstream_error(output):
+    """Return only fixed categories; never exception messages or upstream text."""
+    if len(output) > 65536:
+        return "output-limit"
+    names = {"ModuleNotFoundError": "missing-module", "ImportError": "import-error",
+             "FileNotFoundError": "missing-file", "PermissionError": "permission-denied",
+             "KeyError": "key-error", "ValueError": "value-error", "TypeError": "type-error",
+             "OperationalError": "sqlite-error", "RuntimeError": "runtime-error"}
+    classes = re.findall(rb"^(?:sqlite3\.)?([A-Za-z]+Error):", output, re.MULTILINE)
+    for name in reversed(classes):
+        category = names.get(name.decode("ascii"))
+        if category:
+            return category
+    if b"server.secret_key is not changed" in output:
+        return "default-secret"
+    return "unknown"
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("product-root", "harness-root", "searx-root", "searx-python", "host", "probe", "dependency-report"):
@@ -243,7 +261,7 @@ def main():
     result = {"status": "blocked", "reason": "preflight", "sourceCommit": None,
               "workflowCommit": None, "searxCommit": SEARX_COMMIT, "searxCleanup": False,
               "mode": args.mode, "stage": "source", "upstreamReady": False,
-              "upstreamExitCode": None, "queryProbeAttempted": False}
+              "upstreamExitCode": None, "upstreamErrorCategory": "none", "queryProbeAttempted": False}
     owned = None
     interrupted = False
     def interrupt(signum, frame):
@@ -273,32 +291,36 @@ def main():
             os.chmod(config, 0o600)
             environment = searx_environment(args.searx_root.resolve(), temporary, secrets.token_hex(32))
             result["stage"] = "upstream-start"
-            # Keep the venv executable path: resolving its symlink discards pyvenv.cfg.
-            owned = subprocess.Popen([str(args.searx_python.absolute()), "-m", "searx.webapp"],
-                                     cwd=args.searx_root, env=environment,
-                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            try:
-                result["stage"] = "upstream-health"
-                if not wait_health(owned, cancelled=cancelled):
-                    result["upstreamExitCode"] = owned.poll()
-                    raise ValueError("searx-health-blocked")
-                result["upstreamReady"] = True
-                if args.mode == "startup-only":
-                    result.update(status="startup-ready", reason="diagnostic-only", stage="complete")
-                else:
-                    result.update(stage="probe", queryProbeAttempted=True)
-                    result["probe"] = execute_probe(["dotnet", str(args.probe.resolve()), "--host", str(args.host.resolve()),
-                        "--profile", str(temporary / "profile"), "--source", args.source], process_environment(), args.source, cancelled)
-                    result["status"] = result["probe"]["status"]
-                    result["reason"] = "accepted" if result["status"] == "passed" else "upstream-blocked"
-                    result["stage"] = "complete" if result["status"] == "passed" else "probe"
-            finally:
-                result["searxCleanup"] = stop_owned(owned)
-                owned = None
-                if not result["searxCleanup"]:
-                    if result["status"] in ("passed", "startup-ready"):
-                        result.update(reason="cleanup-failed", stage="cleanup")
-                    result["status"] = "blocked"
+            with tempfile.TemporaryFile(dir=temporary) as diagnostic_log:
+                # Keep the venv executable path: resolving its symlink discards pyvenv.cfg.
+                owned = subprocess.Popen([str(args.searx_python.absolute()), "-m", "searx.webapp"],
+                                         cwd=args.searx_root, env=environment,
+                                         stdout=subprocess.DEVNULL, stderr=diagnostic_log)
+                try:
+                    result["stage"] = "upstream-health"
+                    if not wait_health(owned, cancelled=cancelled):
+                        result["upstreamExitCode"] = owned.poll()
+                        raise ValueError("searx-health-blocked")
+                    result["upstreamReady"] = True
+                    if args.mode == "startup-only":
+                        result.update(status="startup-ready", reason="diagnostic-only", stage="complete")
+                    else:
+                        result.update(stage="probe", queryProbeAttempted=True)
+                        result["probe"] = execute_probe(["dotnet", str(args.probe.resolve()), "--host", str(args.host.resolve()),
+                            "--profile", str(temporary / "profile"), "--source", args.source], process_environment(), args.source, cancelled)
+                        result["status"] = result["probe"]["status"]
+                        result["reason"] = "accepted" if result["status"] == "passed" else "upstream-blocked"
+                        result["stage"] = "complete" if result["status"] == "passed" else "probe"
+                finally:
+                    result["searxCleanup"] = stop_owned(owned)
+                    if not result["upstreamReady"]:
+                        diagnostic_log.seek(0)
+                        result["upstreamErrorCategory"] = classify_upstream_error(diagnostic_log.read(65537))
+                    owned = None
+                    if not result["searxCleanup"]:
+                        if result["status"] in ("passed", "startup-ready"):
+                            result.update(reason="cleanup-failed", stage="cleanup")
+                        result["status"] = "blocked"
     except Cancelled:
         result.update(status="blocked", reason="cancelled")
     except (OSError, ValueError, subprocess.SubprocessError, KeyError, json.JSONDecodeError):
