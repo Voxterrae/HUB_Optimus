@@ -119,6 +119,11 @@ Test("typed Web defaults to authenticated local protocol without fallback",async
  var result=await new OptimusSearchService(c, _ => TestTransport.Borrow(c)).SearchAsync("sol & luna",[],new OptimusSearchTarget(OptimusSearchScope.Web,null,bearer),default);
  Check(result.Error==null&&result.Provider.Contains("Web")&&result.Results.Single().Source=="Proveedor fixture","Protocol validated result and provenance");
 });
+Test("typed Web quota failure is visible without fallback or upstream detail",async()=>{
+ int calls=0;using var h=new Fixture(_=>{calls++;return new HttpResponseMessage(HttpStatusCode.TooManyRequests){Content=new StringContent("private quota detail")};});using var c=new HttpClient(h);
+ var result=await new OptimusSearchService(c,_=>TestTransport.Borrow(c)).SearchAsync("x",[],new OptimusSearchTarget(OptimusSearchScope.Web,null,bearer),default);
+ Check(result.Error?.Contains("límite de consultas") == true && result.Results.Count==0 && calls==1,"Quota must be explained and never retried or replaced");Check(!(result.Error??"").Contains("private"),"Upstream error body is not user text");
+});
 Test("typed Index stays local and Wikipedia is explicit without local bearer",async()=>{
  using var h=new Fixture(r=>{if(r.RequestUri!.Host=="es.wikipedia.org"){Check(r.Headers.Authorization==null,"Never leak local token to Wiki");return Reply(wiki);}Check(r.RequestUri.Query.Contains("scope=index"),"Index scope");return Reply(localBody.Replace("\"scope\":\"web\"","\"scope\":\"index\""));});using var c=new HttpClient(h);var s=new OptimusSearchService(c, _ => TestTransport.Borrow(c));
  Check((await s.SearchAsync("x",[],new OptimusSearchTarget(OptimusSearchScope.Index,null,bearer),default)).Error==null,"Index response");
@@ -141,7 +146,7 @@ Test("launcher validates profile token before any startup and never exposes secr
  var directory=Path.Combine(Path.GetTempPath(),"optimus-launch-"+Guid.NewGuid());Directory.CreateDirectory(Path.Combine(directory,"Optimus","Search"));
  try{var path=Path.Combine(directory,"Optimus","Search","service.token");await File.WriteAllTextAsync(path,"invalid");using var h=new Fixture(_=>throw new Exception("Invalid token reached health"));using var c=new HttpClient(h);using var launcher=new SearchHostLauncher(c,directory,directory, localClientFactory: _ => TestTransport.Borrow(c));
  var result=await launcher.ConnectAsync(null,default);Check(result.Error!=null,"Invalid token fails closed");
- var info=SearchHostLauncher.CreateStartInfo(directory,"https://search.example/instance",path);Check(info.FileName==Path.Combine(directory,"Search","Optimus.SearchHost.exe")&&!info.UseShellExecute&&info.RedirectStandardInput&&info.ArgumentList.SequenceEqual(new[]{"--token-file",path,"--searx-url","https://search.example/instance","--owner-stdin","true"}),"Only bundled executable, separate arguments and owned stdin lifetime");Check(!info.Arguments.Contains(bearer)&&!info.ArgumentList.Contains(bearer),"Token contents never commandline");
+ var info=SearchHostLauncher.CreateStartInfo(directory,"https://search.example/instance",path);Check(info.FileName==Path.Combine(directory,"Search","Optimus.SearchHost.exe")&&!info.UseShellExecute&&info.RedirectStandardInput&&info.RedirectStandardOutput&&info.ArgumentList.SequenceEqual(new[]{"--token-file",path,"--searx-url","https://search.example/instance","--owner-stdin","true","--owner-identity-stdout","true"}),"Only bundled executable, separate arguments and owned stdin lifetime");Check(!info.Arguments.Contains(bearer)&&!info.ArgumentList.Contains(bearer),"Token contents never commandline");
  }finally{Directory.Delete(directory,true);}
 });
 Test("launcher connects independent host without owning or reconfiguring it",async()=>{
@@ -177,6 +182,7 @@ Test("launcher retains ownership and reports termination failure before reconfig
  finally{Directory.Delete(directory,true);}
 });
 LauncherReadinessTests.Register(Test);
+NativeWebProviderTests.Register(Test);
 IdentityProofTests.Register(Test);
 int failed = 0;
 foreach (var t in tests) { try { await t.Run(); Console.WriteLine("PASS " + t.Name); } catch (Exception e) { failed++; Console.WriteLine("FAIL " + t.Name + ": " + TestFailureDiagnostics.Describe(e)); } }

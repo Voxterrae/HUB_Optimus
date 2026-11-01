@@ -58,18 +58,19 @@ internal sealed class BrowserTab : IDisposable
  public event Action<BrowserTab,string>? OpenRequested;
  public event Action<BrowserTab>? HelpRequested;
  public event Action<BrowserTab>? BookmarksRequested;
+ public event Action<BrowserTab>? SearchSettingsRequested;
  public event Action<BrowserTab,string,NavigationLease>? PrivateOpeningOffered;
  private readonly NativeHomeView home;
  private readonly StackPanel failure=new() {Margin=new Thickness(30),Visibility=Visibility.Collapsed};
  private bool disposed,internalBlank;
  private readonly OperationLifetime lifetime=new();
  public bool IsDisposed=>lifetime.IsDisposed;
- public BrowserTab(Action<BrowserTab> recover,bool isPrivate,Func<PrivacyPolicy> policy,Func<long> policyGeneration,Func<IReadOnlyList<Bookmark>> bookmarks,string profileName,Func<BrowserTab,bool> searchEligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connectSearch)
+ public BrowserTab(Action<BrowserTab> recover,bool isPrivate,Func<PrivacyPolicy> policy,Func<long> policyGeneration,Func<IReadOnlyList<Bookmark>> bookmarks,string profileName,Func<BrowserTab,bool> searchEligible,CancellationToken hostLifetime,Func<OptimusSearchScope,CancellationToken,Task<SearchHostConnection>> connectSearch)
  {
   controllerOwnership=new ControllerOwnership(()=>View.Dispose());
   this.profileName=profileName;IsPrivate=isPrivate;this.policy=policy;this.policyGeneration=policyGeneration;
   search=new OptimusSearchView(url=>OpenRequested?.Invoke(this,url),()=>IsPrivate?Array.Empty<Bookmark>():bookmarks(),()=>!IsDisposed&&searchEligible(this),hostLifetime,connectSearch) {Visibility=Visibility.Collapsed};
-  home=new NativeHomeView(IsPrivate,(query,scope)=>SearchAsync(query,scope),()=>ShowSearch(OptimusSearchScope.Index),()=>BookmarksRequested?.Invoke(this),()=>HelpRequested?.Invoke(this));
+  home=new NativeHomeView(IsPrivate,(query,scope)=>SearchAsync(query,scope),()=>ShowSearch(OptimusSearchScope.Index),()=>BookmarksRequested?.Invoke(this),()=>HelpRequested?.Invoke(this),()=>SearchSettingsRequested?.Invoke(this));
   Item=new TabItem {Header=ModeTitle("Inicio"),Content=Host,Tag=this};AutomationProperties.SetItemStatus(Item,"Preparando navegador");Host.Children.Add(View);Host.Children.Add(home);Host.Children.Add(failure);Host.Children.Add(search);
   failure.Children.Add(new TextBlock {Text="El motor de esta pestaña se detuvo. Recuperarla vuelve a abrir la última dirección; el texto no guardado puede perderse.",TextWrapping=TextWrapping.Wrap});
   var retry=new Button {Content="Recuperar esta pestaña"};retry.Click+=(_,_)=>recover(this);failure.Children.Add(retry);

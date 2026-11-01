@@ -7,7 +7,7 @@ public static class Program
         try
         {
             var import = args.Length > 0 && args[0] == "index";
-            var allowed = import ? new[] { "--input", "--output" } : new[] { "--port", "--index-file", "--token-file", "--searx-url", "--owner-stdin" };
+            var allowed = import ? new[] { "--input", "--output" } : new[] { "--port", "--index-file", "--token-file", "--searx-url", "--owner-stdin", "--web-provider", "--owner-identity-stdout" };
             var values = new Dictionary<string, string>(StringComparer.Ordinal);
             for (var i = import ? 1 : 0; i < args.Length; i += 2)
             {
@@ -22,15 +22,20 @@ public static class Program
             }
             var ownerStdin = values.TryGetValue("--owner-stdin", out var ownerValue);
             if (ownerStdin && (ownerValue != "true" || !Console.IsInputRedirected)) throw new ArgumentException();
+            var ownerIdentity = values.TryGetValue("--owner-identity-stdout", out var identityValue);
+            if (ownerIdentity && (identityValue != "true" || !ownerStdin || !Console.IsOutputRedirected)) throw new ArgumentException();
             var port = 17831;
             if (values.TryGetValue("--port", out var portValue) && (!int.TryParse(portValue, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out port) || port is < 0 or > 65535)) throw new ArgumentException();
-            using var provider = values.TryGetValue("--searx-url", out var endpoint) ? new SearxSearchProvider(endpoint) : null;
+            if (values.TryGetValue("--web-provider", out var selected) && (selected != "mwmbl" || values.ContainsKey("--searx-url"))) throw new ArgumentException();
+            using IWebSearchProvider? provider = selected == "mwmbl" ? new MwmblSearchProvider() : values.TryGetValue("--searx-url", out var endpoint) ? new SearxSearchProvider(endpoint) : null;
             var explicitIndex = values.TryGetValue("--index-file", out var indexPath);
             indexPath ??= Path.Combine(AppContext.BaseDirectory, "index.json");
             var documents = explicitIndex || File.Exists(indexPath) ? await CatalogStore.LoadAsync(indexPath) : [];
             var token = await TokenStore.LoadOrCreateAsync(values.GetValueOrDefault("--token-file") ?? TokenStore.DefaultPath);
             await using var server = await SearchServer.StartAsync(new ServerOptions(port, token), new LocalSearchIndex(documents), provider);
-            Console.WriteLine("OptimusSearch ready.");
+            // This public key belongs to the listener that has actually bound, and is
+            // delivered only through the launcher-created private child pipe.
+            Console.WriteLine(ownerIdentity ? $"OptimusSearch owner/1|{new Uri(server.Address).Port}|{server.TlsSpkiSha256}" : "OptimusSearch ready.");
             var shutdown = server.WaitForShutdownAsync();
             if (ownerStdin)
             {

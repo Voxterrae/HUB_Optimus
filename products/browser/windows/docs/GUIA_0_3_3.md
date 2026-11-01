@@ -1,3 +1,5 @@
+> **Incremento nativo de 01/11/2026:** en Inicio pulsa **Elegir fuente Web**. Web sin configurar mantiene Índice offline; Mwmbl es un piloto privado con condiciones empresariales pendientes; SearXNG requiere un servidor. Guardar cierra las páginas actuales. La Web de otro servicio/instancia no confirmado se bloquea: usa la ventana que lo inició o ciérralo desde su origen. La configuración CLI histórica de esta guía sigue siendo útil para operadores del protocolo, pero no sustituye esa comprobación nativa. Estado del candidato y pruebas: [PR #2040](https://github.com/Voxterrae/HUB_Optimus/pull/2040).
+
 # Optimus Windows 0.3.3 alpha — apariencia y Modo fácil
 
 Al recibir el ZIP de esta versión, extráelo completo en una carpeta nueva y abre `Optimus.exe`, conservando `Search/` y `Diagnostics/` junto a él. El título debe mostrar **0.3.3 alpha**. Requiere Windows x64 y WebView2 Evergreen; los runtimes .NET se incluyen en la publicación autocontenida. Es una alpha privada sin firma. La compilación Linux no acredita su ejecución ni su accesibilidad en Windows.

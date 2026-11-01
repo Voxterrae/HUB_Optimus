@@ -8,9 +8,11 @@ namespace Optimus.Core;
 public sealed class OptimusSearchService
 {
     private readonly HttpClient client;
-    private readonly Func<string, HttpClient> localClientFactory;
-    public OptimusSearchService(HttpClient client) : this(client, LocalSearchTransport.CreateClient) { }
+    private readonly Func<string, string?, HttpClient> localClientFactory;
+    public OptimusSearchService(HttpClient client) : this(client, (token, pin) => LocalSearchTransport.CreateClient(token, pin)) { }
     internal OptimusSearchService(HttpClient client, Func<string, HttpClient> localClientFactory)
+        : this(client, (token, pin) => pin is null ? localClientFactory(token) : LocalSearchTransport.CreateClient(token, pin)) { }
+    private OptimusSearchService(HttpClient client, Func<string, string?, HttpClient> localClientFactory)
     { this.client = client; this.localClientFactory = localClientFactory; }
     private const int MaxResponseBytes = 1024 * 1024;
     private const int MaxResults = 20;
@@ -34,7 +36,8 @@ public sealed class OptimusSearchService
         SearchResponse Response(string? error) => new(results.AsReadOnly(), provider, error);
         if (string.IsNullOrWhiteSpace(query) || query.Length > 500)
             return Response("Escribe una consulta de 1 a 500 caracteres.");
-        if (local is {} target && (!Enum.IsDefined(target.Scope) || !IsValidLocalEndpoint(target.Endpoint) || !IsValidToken(target.BearerToken)))
+        if (local is {} target && (!Enum.IsDefined(target.Scope) || !IsValidLocalEndpoint(target.Endpoint) || !IsValidToken(target.BearerToken)
+            || target.ExpectedSpkiSha256 is not null && !IsValidToken(target.ExpectedSpkiSha256)))
             return Response("No se pudo autenticar el servicio local de Optimus Search. Comprueba su configuración y token de perfil.");
         if (useSearx && !IsValidEndpoint(searxEndpoint))
             return Response("La dirección de SearXNG no es válida: usa HTTPS o HTTP en localhost, sin credenciales, consulta ni fragmento.");
@@ -64,13 +67,14 @@ public sealed class OptimusSearchService
             request.Headers.Accept.ParseAdd("application/json");
             if (local is {} authenticated) request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authenticated.BearerToken);
             request.Headers.UserAgent.ParseAdd("OptimusBrowser/0.2 (native search)");
-            using var localClient = local is {} localTarget ? localClientFactory(localTarget.BearerToken!) : null;
+            using var localClient = local is {} localTarget ? localClientFactory(localTarget.BearerToken!, localTarget.ExpectedSpkiSha256) : null;
             using var response = await (localClient ?? client).SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline.Token).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode && local.HasValue) return Response(response.StatusCode switch
             {
-                HttpStatusCode.ServiceUnavailable => "La búsqueda Web no está configurada en el servicio local. Configura el servidor SearXNG del operador.",
+                HttpStatusCode.ServiceUnavailable => "La búsqueda Web no está configurada. Elige una fuente en Ajustes · Privacidad y búsqueda.",
                 HttpStatusCode.Unauthorized => "El servicio local no aceptó el token del perfil.",
                 HttpStatusCode.GatewayTimeout => "El proveedor Web superó el tiempo límite.",
+                HttpStatusCode.TooManyRequests => "El proveedor Web ha alcanzado su límite de consultas o frecuencia. Espera antes de volver a buscar.",
                 _ => "El servicio local no pudo completar la búsqueda. No se consultó otro proveedor."
             });
             if (!response.IsSuccessStatusCode) return Response($"{(useSearx ? "SearXNG" : "Wikipedia")} devolvió HTTP {(int)response.StatusCode}. No se consultó otro proveedor.");

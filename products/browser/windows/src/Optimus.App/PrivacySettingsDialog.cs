@@ -6,7 +6,8 @@ internal sealed class PrivacySettingsDialog : Window
 {
  public List<PrivacyRule>? Rules {get;private set;}
  public string? Endpoint {get;private set;}
- public PrivacySettingsDialog(Window owner,BrowserSettings settings)
+ public WebProvider Provider {get;private set;}
+ public PrivacySettingsDialog(Window owner,BrowserSettings settings,bool focusWeb=false)
  {
   Owner=owner;Title="Privacidad y búsqueda · Optimus";Width=Math.Min(760,SystemParameters.WorkArea.Width);Height=Math.Min(820,SystemParameters.WorkArea.Height);FontSize=owner.FontSize;
   var body=new StackPanel {Margin=new Thickness(16)};Content=new ScrollViewer {Content=body,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
@@ -40,12 +41,41 @@ internal sealed class PrivacySettingsDialog : Window
    }catch(ArgumentException e){error.Text=e.Message;}
   };
   remove.Click+=(_,_)=>{if(list.SelectedIndex>=0){candidate.RemoveAt(list.SelectedIndex);Refresh();error.Text="Regla quitada de la lista. Pulsa Guardar para aplicar el cambio.";}else error.Text="Selecciona una regla para quitarla.";};
-  body.Children.Add(new TextBlock {Text="Búsqueda Web · servidor SearXNG del operador",FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,16,0,0)});
-  body.Children.Add(new TextBlock {Text="Vacío deja la Web sin configurar. El servicio local usa este servidor para búsquedas Web; Índice Optimus funciona sin red y Wikipedia se elige expresamente. Se admite HTTPS o HTTP en este equipo. Guardar reinicia solo el servicio iniciado por Optimus; un servicio independiente debe configurarse y reiniciarse aparte. Optimus no elige un servidor público por ti.",TextWrapping=TextWrapping.Wrap});
-  var endpoint=new TextBox {Text=settings.SearxEndpoint??""};System.Windows.Automation.AutomationProperties.SetName(endpoint,"Servidor SearXNG opcional");body.Children.Add(endpoint);body.Children.Add(error);
+  body.Children.Add(new TextBlock {Text="Búsqueda en la Web",FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,16,0,8)});
+  var source=new ComboBox {MinHeight=44,SelectedValuePath="Tag"};
+  System.Windows.Automation.AutomationProperties.SetName(source,"Fuente Web de Optimus");
+  foreach(var option in new[]{(WebProvider.None,"Web sin configurar"),(WebProvider.Mwmbl,"Mwmbl · piloto privado"),(WebProvider.Searx,"SearXNG · servidor del operador")})
+  {
+   var item=new ComboBoxItem {Tag=option.Item1,Content=NativeDialogs.ListRowText(option.Item2),MinHeight=44};
+   System.Windows.Automation.AutomationProperties.SetName(item,option.Item2);source.Items.Add(item);
+  }
+  source.SelectedValue=WebSearchConfiguration.FromSettings(settings).Provider;body.Children.Add(source);
+  if(focusWeb)Loaded+=(_,_)=>Dispatcher.BeginInvoke(new Action(()=>{if(IsVisible){source.BringIntoView();source.Focus();}}));
+  var sourceNote=new TextBlock {TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,8,0,8)};body.Children.Add(sourceNote);
+  var server=new StackPanel();server.Children.Add(new TextBlock {Text="Servidor SearXNG"});
+  var endpoint=new TextBox {Text=settings.SearxEndpoint??"",MinHeight=44};System.Windows.Automation.AutomationProperties.SetName(endpoint,"Servidor SearXNG");server.Children.Add(endpoint);body.Children.Add(server);
+  void DescribeSource()
+  {
+   var selected=source.SelectedValue is WebProvider value?value:WebProvider.None;
+   server.Visibility=selected==WebProvider.Searx?Visibility.Visible:Visibility.Collapsed;
+   sourceNote.Text=selected switch
+   {
+    WebProvider.Mwmbl=>"Piloto privado. Al buscar, Mwmbl recibe tu consulta y la IP de tu conexión. Tiene límites y su uso empresarial está pendiente de aclaración. Los resultados proceden de fuentes externas; no cubren toda la web.",
+    WebProvider.Searx=>"El servidor del operador recibe la consulta y puede consultar otras fuentes. Usa HTTPS; HTTP solo se admite en este equipo.",
+    _=>"La búsqueda Web queda desactivada. El índice Optimus sigue disponible sin conexión, entre los documentos importados."
+   };
+  }
+  source.SelectionChanged+=(_,_)=>DescribeSource();DescribeSource();body.Children.Add(error);
   var save=new Button {Content="Guardar y cerrar páginas actuales"};body.Children.Add(save);save.Click+=(_,_)=>
   {
-   try{PrivacyPolicy.ValidateRules(candidate);var address=string.IsNullOrWhiteSpace(endpoint.Text)?null:endpoint.Text.Trim();if(address!=null&&!OptimusSearchService.IsValidEndpoint(address))throw new ArgumentException("Servidor no válido: usa HTTPS sin usuario, contraseña, consulta ni fragmento. HTTP solo localhost.");Rules=candidate;Endpoint=address;DialogResult=true;}
+   try
+   {
+    PrivacyPolicy.ValidateRules(candidate);
+    if(source.SelectedValue is not WebProvider selected)throw new ArgumentException("Elige una fuente Web.");
+    var address=selected==WebProvider.Searx?(string.IsNullOrWhiteSpace(endpoint.Text)?null:endpoint.Text.Trim()):settings.SearxEndpoint;
+    _=new WebSearchConfiguration(selected,address);
+    Rules=candidate;Endpoint=address;Provider=selected;DialogResult=true;
+   }
    catch(ArgumentException e){error.Text=e.Message;}
   };
   var cancel=new Button {Content="Cancelar"};cancel.Click+=(_,_)=>DialogResult=false;body.Children.Add(cancel);Refresh();NativeTheme.Inherit(this,owner);

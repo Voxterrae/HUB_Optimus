@@ -1,6 +1,6 @@
 # Optimus Search — host local compartido v1
 
-Servicio .NET/ASP.NET Core 10 para Web mediante un SearXNG controlado y para un índice propio finito sin conexión. Forma parte del incremento Windows 0.3 alpha de #2021 y mantiene un protocolo reutilizable por Linux, sin modificar su trabajo. No crea cuentas, servicios de pago, Azure, Dataverse ni proveedores de IA.
+Servicio .NET/ASP.NET Core 10 para Web mediante un SearXNG controlado o el piloto externo Mwmbl seleccionado expresamente, y para un índice propio finito sin conexión. Forma parte del trabajo de #2021 y mantiene un protocolo reutilizable por Linux, sin modificar su trabajo. No crea cuentas, servicios de pago, Azure, Dataverse ni proveedores de IA.
 
 ```sh
 dotnet run --project tests/Optimus.Search.Tests -c Release
@@ -18,6 +18,28 @@ El catálogo tiene schemaVersion 1, máximo 1000 documentos y 16 MiB; contenido 
 
 La distribución Windows publica `Optimus.SearchHost.exe` autocontenido en `Search/`, junto al navegador `Optimus.exe` y ambos runtimes. Ver [protocolo](docs/PROTOCOL.md), [guía Windows](https://github.com/Voxterrae/HUB_Optimus/blob/feat/browser-windows-search-2021/products/browser/windows/docs/GUIA_0_3.md), [validación](docs/VALIDATION.md), [revisión IA](docs/AI_GOVERNANCE_REVIEW.md) y [empaquetado](https://github.com/Voxterrae/HUB_Optimus/blob/feat/browser-windows-search-2021/products/browser/windows/tools/release/README.md).
 
-La aceptación web general real está bloqueada por motores upstream. Los fixtures prueban el protocolo y los límites; no demuestran resultados de Internet ni ejecución Windows.
+La [validación histórica](docs/VALIDATION.md) conserva el bloqueo observado con los motores upstream de SearXNG. El nuevo [registro del piloto Mwmbl](docs/VALIDATION_MWMBL_PILOT.md) y su [revisión de integración](docs/AI_GOVERNANCE_REVIEW_MWMBL_PILOT.md) separan las pruebas controladas de las consultas reales a través de Optimus. Los fixtures no demuestran resultados de Internet ni ejecución Windows.
 
 El endpoint SearXNG admite HTTPS o HTTP con `localhost` literal o una IP loopback. Conserva un prefijo como `/instance`, `/instance/` o `/instance/search` y solicita `/instance/search`. Si `unresponsive_engines` no está vacío, devuelve un fallo genérico 502, también si hay resultados parciales; una lista vacía sana sigue siendo válida.
+
+## Piloto externo Mwmbl: selección explícita
+
+El operador puede iniciar un host de prueba con esta única selección de proveedor:
+
+```sh
+dotnet run --project src/Optimus.Search/Optimus.Search.csproj -c Release -- --port 17831 --token-file /ruta/al/perfil-de-prueba/service.token --web-provider mwmbl
+```
+
+La ruta es un marcador para un perfil de prueba propio, fuera del repositorio. No se escribe el token en argumentos. `--web-provider mwmbl` y `--searx-url` son incompatibles; valores de proveedor desconocidos y opciones repetidas se rechazan. Sin ninguno, Web sigue sin configurar; el índice local continúa disponible. La nueva interfaz Windows permite elegir la fuente desde Inicio → Elegir fuente Web y conserva esa preferencia. El launcher aplica la elección explícita al host que inicia; sin elección previa se conserva Web desactivada y se migra un servidor SearXNG anterior. Consulta [uso y validación nativa](../windows/docs/VALIDATION_NATIVE_SEARCH_2026_11_01.md). Una alpha descargada anteriormente mantiene sus funciones originales.
+
+El host CLI sirve para operadores y clientes del protocolo. La interfaz Windows conserva Índice ante un host independiente, pero bloquea Web cuando no puede confirmar su fuente; usa la ventana que inició el host o ciérralo desde su origen antes de buscar con otra elección.
+
+Cada búsqueda `scope=web` de ese host envía la consulta por HTTPS a `https://api.mwmbl.org/api/v2/search/?q=...`. El proveedor ve la consulta y la dirección de salida de red; la modalidad sin cuenta no ofrece anonimato de red. No se reenvía el bearer local, ni se añaden claves API, cookies o credenciales HTTP ambientales. No hay redirecciones, reintentos automáticos ni sustitución por SearXNG, Wikipedia o el índice. `scope=index` no consulta ese endpoint.
+
+El adaptador acepta como máximo 1 MiB de JSON con profundidad 32, conserva hasta 20 resultados válidos en el orden recibido y aplica los límites de URL, título y contenido del [protocolo](docs/PROTOCOL.md). Coordina las instancias del mismo proceso con un mínimo de 1,1 s entre inicios externos. El plazo de 10 s incluye esa espera, cabeceras y cuerpo; la cancelación también interrumpe la espera. Esta coordinación no administra la cuota mensual ni el tráfico de otros procesos o equipos que compartan IP. Un 429 externo se devuelve como `429 / upstream-rate-limited`, sin resultados ni reintento automático.
+
+La documentación externa consultada el 01/11/2026 publica acceso anónimo de 1.000 consultas/mes y 1 solicitud/s por IP, sin SLA. Esta opción no registra cuenta, tarjeta ni facturación. Consulte [el acceso publicado](https://developer.mwmbl.org/) y [las condiciones](https://developer.mwmbl.org/terms/) antes de usarla.
+
+Las condiciones permiten aplicaciones comerciales, pero atribuyen a los resultados CC BY-NC-SA 4.0; esa tensión no se resuelve aquí. El alcance es un piloto técnico privado y finito. El despliegue comercial y la reutilización de resultados quedan pendientes de aclaración; no se importan al índice Optimus.
+
+Mwmbl es una fuente externa y su cobertura no es un índice mundial propio de Optimus. El campo `source` conserva la procedencia reconocida del resultado: índice Mwmbl, comunidad, Wikipedia o Google; si no se reconoce, indica origen no especificado. El parámetro local `language` no constituye filtrado por idioma en Mwmbl y no se transmite como filtro externo. No se garantiza SafeSearch, relevancia, actualización, disponibilidad ni cobertura total. La prueba del cliente y de la interfaz en Windows sigue siendo una aceptación separada.

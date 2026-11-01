@@ -16,7 +16,9 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
-        if (args.Length is < 2 or > 3 || (args.Length == 3 && args[2] != "--gui")) return 2;
+        var flags = args.Skip(2).ToArray();
+        if (args.Length is < 2 or > 4 || flags.Distinct(StringComparer.Ordinal).Count() != flags.Length
+            || flags.Any(flag => flag is not ("--gui" or "--live-web")) || flags.Contains("--live-web") && !flags.Contains("--gui")) return 2;
         var report = new SmokeReport();
         try
         {
@@ -25,7 +27,7 @@ internal static class Program
             foreach (var relative in new[] { "Optimus.exe", "Optimus.runtimeconfig.json", "Search/Optimus.SearchHost.exe", "Search/Optimus.SearchHost.runtimeconfig.json", "Search/index.json" })
                 if (!File.Exists(Path.Combine(publication, relative))) throw new InvalidOperationException("Publication incomplete.");
             ServiceAsync(publication, report).GetAwaiter().GetResult();
-            if (args.Length == 3) GuiSmoke.Run(publication, Path.GetDirectoryName(Path.GetFullPath(args[1]))!, report);
+            if (flags.Contains("--gui")) GuiSmoke.Run(publication, Path.GetDirectoryName(Path.GetFullPath(args[1]))!, report, flags.Contains("--live-web"));
             report.Status = "passed";
         }
         catch (SmokeBlocked ex) { report.Status = "blocked"; report.Failure = ex.Message; }

@@ -13,7 +13,7 @@ namespace Optimus.Windows.Smoke;
 
 internal static class GuiSmoke
 {
-    internal static void Run(string publication, string evidence, SmokeReport report)
+    internal static void Run(string publication, string evidence, SmokeReport report, bool liveWeb = false)
     {
         // A dedicated disposable Windows user/VM is required. Never inspect an existing profile.
         var profile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Optimus");
@@ -37,9 +37,41 @@ internal static class GuiSmoke
             void Invoke(string name) => ((InvokePattern)Find(name).GetCurrentPattern(InvokePattern.Pattern)).Invoke();
             void Set(string name, string value) => ((ValuePattern)Find(name).GetCurrentPattern(ValuePattern.Pattern)).SetValue(value);
             FindOwned(window, "Consulta de inicio de Optimus", blocked: true); report.Checks.Add("gui-native-home-uia");
+            Invoke("Elegir fuente Web");
+            var dialog = FindOwnedDialog(app.Id, app.MainWindowHandle);
+            var combo = FindOwned(dialog, "Fuente Web de Optimus");
+            RequireSelection(combo, "Web sin configurar");
+            Select(dialog, combo, "SearXNG · servidor del operador");
+            var serverInput = FindScrolled(dialog, "Servidor SearXNG", ControlType.Edit);
+            if (!serverInput.TryGetCurrentPattern(ValuePattern.Pattern, out var editable) || ((ValuePattern)editable).Current.IsReadOnly)
+                throw new InvalidOperationException("Operator server input is not editable.");
+            Select(dialog, combo, "Mwmbl · piloto privado");
+            var hiddenServer = dialog.FindFirst(TreeScope.Descendants, new AndCondition(new PropertyCondition(AutomationElement.NameProperty, "Servidor SearXNG"), new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit)));
+            if (hiddenServer is not null && !hiddenServer.Current.IsOffscreen) throw new InvalidOperationException("Inactive operator input remained visible.");
+            var dialogHandle = (nint)dialog.Current.NativeWindowHandle;
+            ((InvokePattern)FindScrolled(dialog, "Guardar y cerrar páginas actuales").GetCurrentPattern(InvokePattern.Pattern)).Invoke();
+            Wait(() => !IsWindow(dialogHandle), "Owned Web settings dialog did not close.");
+            try
+            {
+                Wait(() => GuiNavigationDiagnostics.IsNavigationReady(window), "Settings did not resume the verified controller.");
+                Invoke("Elegir fuente Web");
+                var persisted = FindOwnedDialog(app.Id, app.MainWindowHandle);
+                RequireSelection(FindOwned(persisted, "Fuente Web de Optimus"), "Mwmbl · piloto privado");
+                var persistedHandle = (nint)persisted.Current.NativeWindowHandle;
+                ((InvokePattern)FindScrolled(persisted, "Cancelar").GetCurrentPattern(InvokePattern.Pattern)).Invoke();
+                Wait(() => !IsWindow(persistedHandle), "Owned settings verification dialog did not close.");
+            }
+            catch { GuiNavigationDiagnostics.Capture(window, "", report, "settings-failure"); throw; }
+            if (((ValuePattern)Find("Consulta de inicio de Optimus").GetCurrentPattern(ValuePattern.Pattern)).Current.Value.Length != 0)
+                throw new InvalidOperationException("Selecting a Web source populated a query.");
+            var inactive = new TcpListener(IPAddress.Loopback, 17831);
+            try { inactive.Start(); } catch (SocketException) { throw new InvalidOperationException("Saving Web settings started a listener before a search."); } finally { inactive.Stop(); }
+            report.Checks.Add("gui-web-source-explicit-selection");
+            report.Checks.Add("gui-web-settings-save-without-search-listener");
             // Home's public index entry opens the real native search surface in Index scope.
             Invoke("Tu índice"); Set("Consulta de Optimus Search", "servicio local"); Invoke("Buscar en la fuente elegida");
             Find("Abrir: Ayuda Optimus: servicio local y privacidad"); report.Checks.Add("gui-index-public-help-result");
+            report.Checks.Add("gui-index-after-web-source-selection");
             Invoke("Inicio");
             Invoke("✧  Ayuda"); Set("Pregunta a la guía local", "permisos"); Invoke("Consultar guía");
             Wait(() => ((ValuePattern)Find("Respuesta de la guía local").GetCurrentPattern(ValuePattern.Pattern)).Current.Value.Contains("Guía local basada en reglas", StringComparison.Ordinal), "Local guide response unavailable.");
@@ -55,6 +87,17 @@ internal static class GuiSmoke
             catch { GuiNavigationDiagnostics.Capture(window, page.Address, report, "navigation-failure"); throw; }
             Find("Optimus isolated smoke page"); report.Checks.Add("gui-loopback-navigation-rendered");
             Invoke("Nueva pestaña privada"); Find("Privado · no se restauran direcciones"); report.Checks.Add("gui-private-tab");
+            if (liveWeb)
+            {
+                // This single benign public query is separately opted in; never open or persist returned pages.
+                Set("Consulta de inicio de Optimus", "web accessibility");
+                report.Checks.Add("gui-live-mwmbl-web-requested");
+                Invoke("Buscar en la fuente elegida");
+                Wait(() => HasLiveWebResult(window, report), "Live Web did not return an identified Mwmbl result.");
+                report.Checks.Add("gui-live-mwmbl-web-results");
+                Invoke("Inicio"); Find("Privado · no se restauran direcciones");
+                Set("Consulta de inicio de Optimus", "");
+            }
             // Sidebar is a native button; no keyboard injection or global mouse action.
             Invoke("⚙  Ajustes"); Find("Tamaño y zoom"); Invoke("Cerrar ajustes"); report.Checks.Add("gui-settings-open-close");
             Capture(app.MainWindowHandle, Path.Combine(evidence, "owned-window.png")); report.Checks.Add("gui-own-window-capture");
@@ -79,6 +122,80 @@ internal static class GuiSmoke
                 if (Directory.Exists(Path.Combine(profile, relative))) report.CreatedGuiDirectories.Add("Optimus/" + relative);
             report.Checks.Add("gui-default-profile-retained-discard-test-user");
         }
+    }
+
+    private static AutomationElement FindOwnedDialog(int processId, nint mainWindow)
+    {
+        nint handle = 0;
+        Wait(() =>
+        {
+            handle = GetWindow(mainWindow, 6); // GW_ENABLEDPOPUP; never enumerate the desktop.
+            return handle != 0 && handle != mainWindow && GetWindow(handle, 4) == mainWindow
+                && GetWindowThreadProcessId(handle, out var owner) != 0 && owner == (uint)processId;
+        }, "Owned settings dialog unavailable.");
+        var dialog = AutomationElement.FromHandle(handle);
+        if (dialog.Current.ProcessId != processId || dialog.Current.Name != "Privacidad y búsqueda · Optimus") throw new InvalidOperationException("Owned settings dialog mismatch.");
+        return dialog;
+    }
+
+    private static AutomationElement FindScrolled(AutomationElement root, string name, ControlType? type = null)
+    {
+        AutomationElement? found = null;
+        var scan = 0;
+        Wait(() =>
+        {
+            System.Windows.Automation.Condition condition = new PropertyCondition(AutomationElement.NameProperty, name);
+            if (type is not null) condition = new AndCondition(condition, new PropertyCondition(AutomationElement.ControlTypeProperty, type));
+            found = root.FindFirst(TreeScope.Descendants, condition);
+            if (found is null) return false;
+            if (!found.Current.IsOffscreen) return true;
+            if (found.TryGetCurrentPattern(ScrollItemPattern.Pattern, out var item)) ((ScrollItemPattern)item).ScrollIntoView();
+            else
+            {
+                var container = root.TryGetCurrentPattern(ScrollPattern.Pattern, out _) ? root
+                    : root.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.IsScrollPatternAvailableProperty, true));
+                if (container?.TryGetCurrentPattern(ScrollPattern.Pattern, out var scrolling) == true && ((ScrollPattern)scrolling).Current.VerticallyScrollable)
+                    ((ScrollPattern)scrolling).SetScrollPercent(ScrollPattern.NoScroll, (scan++ % 11) * 10);
+            }
+            return !found.Current.IsOffscreen;
+        }, "Required owned settings control unavailable.");
+        return found!;
+    }
+
+    private static void Select(AutomationElement dialog, AutomationElement combo, string name)
+    {
+        FindScrolled(dialog, "Fuente Web de Optimus");
+        var expansion = (ExpandCollapsePattern)combo.GetCurrentPattern(ExpandCollapsePattern.Pattern); expansion.Expand();
+        AutomationElement? item = null;
+        Wait(() =>
+        {
+            var condition = new AndCondition(new PropertyCondition(AutomationElement.NameProperty, name), new PropertyCondition(AutomationElement.IsSelectionItemPatternAvailableProperty, true));
+            item = combo.FindFirst(TreeScope.Descendants, condition) ?? dialog.FindFirst(TreeScope.Descendants, condition);
+            return item is not null;
+        }, "Requested Web source unavailable.");
+        ((SelectionItemPattern)item!.GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
+        expansion.Collapse(); RequireSelection(combo, name);
+    }
+
+    private static void RequireSelection(AutomationElement combo, string name)
+    {
+        var selected = ((SelectionPattern)combo.GetCurrentPattern(SelectionPattern.Pattern)).Current.GetSelection();
+        if (selected.Length != 1 || selected[0].Current.Name != name) throw new InvalidOperationException("Native Web source selection mismatch.");
+    }
+
+    private static bool HasLiveWebResult(AutomationElement window, SmokeReport report)
+    {
+        var status = window.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "OptimusSearchStatus"));
+        var text = status?.Current.Name ?? "";
+        var failure = text.Contains("límite de consultas", StringComparison.Ordinal) ? "quota"
+            : text.Contains("tiempo límite", StringComparison.Ordinal) ? "timeout"
+            : text.Contains("Sin resultados.", StringComparison.Ordinal) ? "empty" : null;
+        if (failure is not null) { report.Checks.Add("gui-live-mwmbl-web-" + failure); throw new InvalidOperationException("Live Web acceptance unavailable: " + failure + "."); }
+        var sources = window.FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "OptimusResultSource"));
+        var prefixes = new[] { "Mwmbl · índice · ", "Mwmbl · comunidad · ", "Mwmbl · Wikipedia · ", "Mwmbl · Google · ", "Mwmbl · origen no especificado · " };
+        var identified = sources.Cast<AutomationElement>().Any(element => prefixes.Any(prefix => element.Current.Name.StartsWith(prefix + "https://", StringComparison.Ordinal) || element.Current.Name.StartsWith(prefix + "http://", StringComparison.Ordinal)));
+        return identified && window.FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button))
+            .Cast<AutomationElement>().Any(element => element.Current.Name.StartsWith("Abrir: ", StringComparison.Ordinal));
     }
 
     private static bool CloseOwnedWindow(Process app)
@@ -174,6 +291,8 @@ internal static class GuiSmoke
     [StructLayout(LayoutKind.Sequential)] private struct Rect { public int Left, Top, Right, Bottom; }
     [DllImport("user32.dll")] private static extern bool GetClientRect(nint hwnd, out Rect rect);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint hwnd, out uint processId);
+    [DllImport("user32.dll")] private static extern nint GetWindow(nint hwnd, uint command);
+    [DllImport("user32.dll")] private static extern bool IsWindow(nint hwnd);
     [DllImport("user32.dll")] private static extern nint GetDC(nint hwnd);
     [DllImport("user32.dll")] private static extern int ReleaseDC(nint hwnd, nint dc);
     [DllImport("user32.dll")] private static extern bool PrintWindow(nint hwnd, nint dc, uint flags);

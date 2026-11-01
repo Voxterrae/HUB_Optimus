@@ -3,6 +3,7 @@ using System.Text.Json;
 var tests = new List<(string Name, Action Run)>();
 void Test(string name, Action run) => tests.Add((name,run));
 void Check(bool condition, string behavior) { if(!condition) throw new Exception(behavior); }
+WebSearchSettingsTests.Register(Test);
 var context = new BrowserContext(Guid.NewGuid(), 1, "https://example.org");
 Test("URL: bare domains use HTTPS", () => Check(NavigationPolicy.Resolve("example.org/path", SearchProvider.DuckDuckGo).Uri?.AbsoluteUri == "https://example.org/path", "Expected HTTPS bare domain"));
 Test("URL: ordinary search uses selected fixed provider", () => { var r=NavigationPolicy.Resolve("ayuntamiento de Madrid", SearchProvider.Google); Check(r.IsSearch && r.Uri?.Host=="www.google.com" && r.Uri.Query.Contains("ayuntamiento"),"Expected fixed Google search"); });

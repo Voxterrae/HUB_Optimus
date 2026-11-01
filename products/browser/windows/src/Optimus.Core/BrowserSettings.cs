@@ -4,6 +4,7 @@ public record BrowserSettings
  public SearchProvider SearchProvider { get; init; } = SearchProvider.Optimus;
  public List<PrivacyRule> PrivacyRules { get; init; } = PrivacyPolicy.Seeds();
  public string? SearxEndpoint { get; init; }
+ public WebProvider? WebProvider { get; init; }
  public double TextScale { get; init; } = 1;
  public ThemePreference Theme { get; init; } = ThemePreference.Dark;
  public bool EasyMode { get; init; }

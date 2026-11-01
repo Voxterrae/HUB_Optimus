@@ -9,7 +9,7 @@ internal static class GuiNavigationDiagnostics
     // remain inside that root and its native process; no desktop-wide UI search.
     internal static void Capture(AutomationElement window, string expectedAddress, SmokeReport report, string phase)
     {
-        if (phase is not ("before-go" or "navigation-failure")) return;
+        if (phase is not ("before-go" or "navigation-failure" or "settings-failure")) return;
         var snapshot = Snapshot.Unavailable;
         try
         {
@@ -85,6 +85,9 @@ internal static class GuiNavigationDiagnostics
 
     private static string ClassifyStatus(string text)
     {
+        if (text.StartsWith("Preferencias guardadas.", StringComparison.Ordinal)) return "settings-saved";
+        if (text.StartsWith("No se guardaron los ajustes", StringComparison.Ordinal) || text.StartsWith("No se pudieron guardar los ajustes", StringComparison.Ordinal)) return "settings-save-failed";
+        if (text.StartsWith("No se pudo detener todos los documentos.", StringComparison.Ordinal)) return "settings-quiescence-failed";
         if (text.StartsWith("No se pudo iniciar WebView2.", StringComparison.Ordinal)) return "engine-initialization-failed";
         if (text.StartsWith("No se pudo verificar el perfil y su barrera de privacidad.", StringComparison.Ordinal)) return "profile-initialization-failed";
         if (text.StartsWith("El perfil está bloqueado.", StringComparison.Ordinal)

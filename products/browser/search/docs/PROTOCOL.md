@@ -7,12 +7,12 @@ Contrato vinculante: [diseño aprobado](https://github.com/Voxterrae/HUB_Optimus
 | `GET /health` | JSON exacto `{"name":"OptimusSearch","version":1}` sin información de token, catálogo ni upstream. El cliente solicita prueba mediante nonce antes de enviar credenciales. |
 | `GET /search?format=json&q=texto&scope=web&language=es` | `Authorization: Bearer <token>`; scopes `web` e `index`. Rechaza Origin y Host que no corresponda a loopback/puerto real. |
 | Respuesta | `{query,results:[{title,url,content,source}],optimus:{version:1,scope,webConfigured,indexedDocuments},error?,message?}`. |
-| CLI de servicio | `Optimus.SearchHost [--port N] [--index-file path] [--token-file path] [--searx-url URL] [--owner-stdin true]`. La última opción exige entrada estándar redirigida y reserva EOF para el cierre del proceso propio. |
+| CLI de servicio | `Optimus.SearchHost [--port N] [--index-file path] [--token-file path] [--searx-url URL | --web-provider mwmbl] [--owner-stdin true]`. La última opción exige entrada estándar redirigida y reserva EOF para el cierre del proceso propio. |
 | CLI de importación | `Optimus.SearchHost index --input catalog.json --output index.json`. |
 
 No CORS, endpoints de escritura ni archivos estáticos. Encabezados no-store, nosniff y no-referrer. No logs de solicitudes que revelen consulta/token. Textos externos inertes. El cliente comprueba el marcador Optimus y la versión; una respuesta arbitraria SearXNG no es una respuesta Optimus.
 
-`web` envía `/search?format=json&q=...&language=...&categories=general` únicamente al endpoint SearXNG fijo del operador. Conserva el prefijo configurado: `/instance`, `/instance/` y `/instance/search` usan `/instance/search`; raíz usa `/search`. HTTPS o HTTP con `localhost` literal o una IP loopback (sin confiar en otros nombres DNS); sin credenciales, query ni fragmento configurados. Redirecciones, cookies y credenciales ambientales desactivadas; máximo 1 MiB y plazo total 10 s incluyendo cuerpo. `index` no hace solicitudes de red. Escribir/cambiar fuente en Windows invalida trabajo anterior sin enviar otra búsqueda.
+Con `--searx-url`, `web` envía `/search?format=json&q=...&language=...&categories=general` únicamente al endpoint SearXNG fijo del operador. Conserva el prefijo configurado: `/instance`, `/instance/` y `/instance/search` usan `/instance/search`; raíz usa `/search`. HTTPS o HTTP con `localhost` literal o una IP loopback (sin confiar en otros nombres DNS); sin credenciales, query ni fragmento configurados. Redirecciones, cookies y credenciales ambientales desactivadas; máximo 1 MiB y plazo total 10 s incluyendo cuerpo. `index` no hace solicitudes de red. Escribir/cambiar fuente en Windows invalida trabajo anterior sin enviar otra búsqueda.
 
 | Límite / error | Resultado |
 | --- | --- |
@@ -23,7 +23,32 @@ No CORS, endpoints de escritura ni archivos estáticos. Encabezados no-store, no
 | Token ausente/incorrecto | 401. |
 | Origin/Host rechazado | 403. |
 | Web sin configurar | 503, `web-not-configured`. |
+| Cuota o frecuencia externa agotada | 429, `upstream-rate-limited`; mensaje genérico, sin resultados ni reintento automático. |
 | Fallo upstream / timeout | 502 / 504; mensajes no revelan URL, token, archivos ni excepciones. `unresponsive_engines` no vacío (o de tipo inválido) devuelve 502 incluso si hay resultados parciales; vacío sano devuelve 200. |
+
+## Proveedor Mwmbl opcional
+
+`--web-provider mwmbl` selecciona únicamente el piloto Mwmbl y es incompatible con `--searx-url`. Un valor desconocido o una opción repetida falla al arrancar. Sin ambas opciones no se configura Web. El protocolo local sigue en versión 1; `webConfigured` indica selección de proveedor, no su disponibilidad, cuota o calidad. El launcher Windows admite una elección persistida y explícita desde Inicio → Elegir fuente Web; los valores iniciales mantienen Web desactivada. El servicio que inicia recibe exactamente la opción correspondiente. Una preferencia antigua de SearXNG se conserva al migrar.
+
+La UI no infiere el proveedor de un servicio independiente desde health o webConfigured. En ese caso bloquea el envío Web y conserva Índice. Un cambio de configuración invalida una conexión en preparación; un guardado fallido conserva política y fuente anteriores. Estas reglas del cliente no amplían el protocolo v1. Ver [validación nativa](../../windows/docs/VALIDATION_NATIVE_SEARCH_2026_11_01.md).
+
+La petición externa es un GET HTTPS al endpoint fijo `https://api.mwmbl.org/api/v2/search/?q=...`, con consulta escapada y sin bearer local, clave API, cookies, credenciales HTTP ambientales o redirecciones. Mwmbl recibe la consulta y la IP de salida. No existe fallback ni reintento. `language` se valida como antes en el host, pero el adaptador no lo envía a Mwmbl ni promete filtro por idioma o SafeSearch.
+
+El JSON debe ser un objeto con `results` de tipo array y sin `error` no nulo. El máximo es 1 MiB y profundidad 32. Filas sin URL válida o título no vacío se omiten; contenido ausente o no textual se trata como vacío. Se normaliza y deduplica la URL, se conserva el orden externo y se devuelven como máximo 20 resultados válidos, con título de hasta 240 unidades UTF-16 y contenido de hasta 1200. Los textos continúan siendo datos inertes.
+
+| `engine` externo reconocido | `source` de Optimus |
+| --- | --- |
+| `mwmbl` | `Mwmbl · índice` |
+| `user` | `Mwmbl · comunidad` |
+| `wikipedia` | `Mwmbl · Wikipedia` |
+| `google` | `Mwmbl · Google` |
+| Ausente o no reconocido | `Mwmbl · origen no especificado` |
+
+La separación mínima entre inicios de peticiones externas es 1,1 s, coordinada entre las instancias del mismo proceso. El turno se conserva hasta disponer la respuesta. El límite total de 10 s incluye espera, conexión, cabeceras y cuerpo; la espera y la lectura son cancelables. Esto no coordina otros procesos ni equipos de la misma IP y no reserva o contabiliza una cuota mensual. HTTP 429 se propaga como el error local de cuota de la tabla; otros estados no satisfactorios, esquemas inválidos y redirecciones fallan sin resultados.
+
+El acceso anónimo publicado el 01/11/2026 indica 1.000 consultas/mes, 1/s por IP y ningún SLA. No se crea cuenta ni se activa facturación. Las condiciones combinan permiso de aplicación comercial y resultados CC BY-NC-SA 4.0: no se infiere autorización comercial de los resultados. Piloto privado y finito; despliegue comercial y reutilización pendientes de aclaración, sin importar resultados al índice. Fuentes: [acceso](https://developer.mwmbl.org/) y [condiciones](https://developer.mwmbl.org/terms/).
+
+La respuesta es de un proveedor externo; no acredita índice mundial propio, cobertura completa, relevancia ni protección de contenidos. La [validación del piloto](VALIDATION_MWMBL_PILOT.md) distingue pruebas controladas, consultas reales mediante el cliente y aceptación nativa Windows.
 
 Token aleatorio de 32 bytes, 64 hexadecimales, comparación constante; se crea atómicamente en el perfil (0600 en Unix). Un archivo existente inválido falla cerrado. La creación entre procesos cooperantes se serializa mediante service.token.lock vacío y persistente (0600 en Unix), exclusión verificada y espera cancelable de hasta cinco segundos. Se comprueba de nuevo el destino bajo el guard; no se borra el sidecar, evitando separar propietarios entre inodos. Si la exclusión no está disponible, no se publica un token. Nunca se envía a SearXNG ni se serializa en settings, argumentos, paquetes o logs. No se afirma aislamiento frente a procesos comprometidos del mismo usuario o administradores.
 
@@ -48,3 +73,9 @@ El certificado lleva exactamente una extensión no crítica OID `1.3.6.1.4.1.572
 Windows crea un transporte dedicado por petición local con la instantánea de token correspondiente y lo destruye al acabar. Antes de cualquier cabecera HTTP, TLS exige posesión de la clave privada y el cliente comprueba esquema/host/puerto, validez temporal, clave ECDSA de 256 bits, extensión única de 32 bytes y HMAC en tiempo constante. La confianza del perfil sustituye la cadena PKI pública; no existe callback que acepte cualquier certificado. Reconexiones vuelven a autenticar la clave con esa misma instantánea; no se reutilizan conexiones entre peticiones/tokens. Copiar el certificado/proof sin clave privada o cambiar el listener entre health y search no permite recibir bearer ni consulta.
 
 Health sigue sin Authorization; su nonce HMAC es una comprobación adicional. Un fallo TLS produce error genérico y ninguna petición HTTP al impostor. Cancelación cierra el transporte y cuerpo pendientes. Los procesos que ya pueden leer el token de perfil y los administradores siguen fuera de este aislamiento.
+
+### Native owned listener binding (2026-11-01)
+
+The Windows launcher starts its child with redirected stdin/stdout and `--owner-identity-stdout true`. This optional flag requires `--owner-stdin true` and both redirected streams. Only after successful bind, the child emits `OptimusSearch owner/1|<actual-port>|<64-hex-SHA256-SPKI>` through that private stdout pipe. It reports a public key digest, never the profile bearer, query, private key or profile path. The default CLI ready message is unchanged.
+
+Native Web requests require the digest received from that owned child; merely finding a live child and a same-profile health responder cannot authorize Web. The actual request TLS connection must match both this digest and the existing profile HMAC certificate proof before HTTP bearer/query transmission. The digest is transient and is not persisted in settings. An independently started service can still serve the local Index after profile authentication; its Web source remains unconfirmed and blocked from this window. Existing fixed host/port, nonce proof, deadline and EOF cleanup checks remain required.

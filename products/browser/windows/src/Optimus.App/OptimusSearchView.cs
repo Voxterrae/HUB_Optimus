@@ -21,13 +21,13 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
     private readonly StackPanel _results = new();
     private CancellationTokenSource? _pending;
     private readonly ComboBox _scope = new() { MinHeight = 44, Margin = new Thickness(0, 0, 0, 8) };
-    private readonly Func<CancellationToken, Task<SearchHostConnection>> _connect;
+    private readonly Func<OptimusSearchScope, CancellationToken, Task<SearchHostConnection>> _connect;
     private readonly CancellationToken _hostLifetime;
     private OptimusSearchScope Scope => (OptimusSearchScope)Math.Max(0, _scope.SelectedIndex);
     private long _generation;
     private bool _disposed;
 
-    public OptimusSearchView(Action<string> openUrl, Func<IReadOnlyList<Bookmark>> bookmarks,Func<bool> eligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connect)
+    public OptimusSearchView(Action<string> openUrl, Func<IReadOnlyList<Bookmark>> bookmarks,Func<bool> eligible,CancellationToken hostLifetime,Func<OptimusSearchScope,CancellationToken,Task<SearchHostConnection>> connect)
     {
         _openUrl = openUrl;
         _connect = connect;
@@ -45,6 +45,7 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         NativeSurface.Surface(this);
         NativeSurface.Input(_query);
         NativeSurface.Input(_scope);
+        System.Windows.Automation.AutomationProperties.SetAutomationId(_status, "OptimusSearchStatus");
         _query.Margin = new Thickness(0, 0, 0, 12);
         _query.MinHeight = 60;
         _scope.Margin = new Thickness(0);
@@ -137,9 +138,9 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
             OptimusSearchTarget target = new(scope, null, null);
             if (scope != OptimusSearchScope.Wikipedia)
             {
-                var connection = await _connect(cancellation.Token);
+                var connection = await _connect(scope,cancellation.Token);
                 if (!CanSubmit || generation != _generation || cancellation.IsCancellationRequested) return;
-                if (connection.Error is {} error) { _status.Text = error; return; }
+                if (connection.GetError(scope) is {} error) { _status.Text = error; return; }
                 target = connection.Target with { Scope = scope };
             }
             var response = await _submissions.SearchAsync(query, bookmarks, target, cancellation.Token);
@@ -153,6 +154,7 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
                 heading.FontWeight = FontWeights.SemiBold;
                 row.Children.Add(heading);
                 var address = NativeSurface.Text(result.Source + " · " + result.Url, "OptimusSmallSize", "OptimusAccentBrush");
+                System.Windows.Automation.AutomationProperties.SetAutomationId(address, "OptimusResultSource");
                 address.Margin = new Thickness(0, 8, 0, 0);
                 row.Children.Add(address);
                 var snippet = NativeSurface.Text(result.Snippet, "OptimusBodySize", "OptimusMutedBrush");
@@ -191,13 +193,13 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         {
             OptimusSearchScope.Index => "Índice local · solo documentos importados, sin red.",
             OptimusSearchScope.Wikipedia => "Wikipedia · esta fuente recibe tu consulta y conexión.",
-            _ => "Web · usa el servidor del operador; requiere configuración."
+            _ => "Web · usa la fuente que elijas en Ajustes."
         };
         _privacyDetails.Text = Scope switch
     {
         OptimusSearchScope.Index => "Índice Optimus: búsqueda local, sin red. Solo incluye los documentos importados; no cubre toda la web. Los marcadores de esta pestaña se combinan localmente. No se guardan consultas ni resultados.",
         OptimusSearchScope.Wikipedia => "Wikipedia explícita y marcadores locales. Wikipedia recibe tu consulta y conexión y puede aplicar sus políticas de registro. No se guardan consultas ni resultados.",
-        _ => "Web: el servicio local consulta el servidor SearXNG del operador, que puede consultar proveedores externos y aplicar sus políticas de registro. Si no está configurado, se muestra un error. No se guardan consultas ni resultados."
+        _ => "Web: el servicio local consulta la fuente elegida en Ajustes · Privacidad y búsqueda. La fuente externa recibe tu consulta y conexión, puede consultar otras fuentes y aplicar sus políticas de registro. Si está desactivada o no se confirma la configuración, se muestra un error. No se guardan consultas ni resultados."
         };
     }
 

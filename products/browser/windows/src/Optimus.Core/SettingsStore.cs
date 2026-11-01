@@ -3,6 +3,11 @@ namespace Optimus.Core;
 public sealed class SettingsStore(string path,string? legacyPath=null)
 {
  private static readonly JsonSerializerOptions JsonOptions=new() {WriteIndented=true};
+ public SettingsResult Apply(BrowserSettings current,BrowserSettings candidate)
+ {
+  var error=Save(candidate);
+  return error is null?new(Sanitize(candidate)):new(current,error);
+ }
  public SettingsResult Load()
  {
   var source=File.Exists(path)?path:legacyPath;
@@ -33,12 +38,13 @@ public sealed class SettingsStore(string path,string? legacyPath=null)
   finally {if(temporary!=null && File.Exists(temporary)) {try{File.Delete(temporary);}catch(Exception e) when(e is IOException or UnauthorizedAccessException){ /* Original remains untouched; temporary can be removed manually. */ }}}
  }
  private static BrowserSettings Sanitize(BrowserSettings s)
- {var policy=new PrivacyPolicy(s.PrivacyRules);return s with {SessionUrls=s.RestoreSession?s.SessionUrls.Where(url=>policy.CanPersist(url)).ToList():[]};}
+ {var policy=new PrivacyPolicy(s.PrivacyRules);return s with {WebProvider=WebSearchConfiguration.FromSettings(s).Provider,SessionUrls=s.RestoreSession?s.SessionUrls.Where(url=>policy.CanPersist(url)).ToList():[]};}
  private static void Validate(BrowserSettings s)
  {
   if(!Enum.IsDefined(s.Theme)||!Enum.IsDefined(s.SearchProvider)||!double.IsFinite(s.TextScale)||s.TextScale<1||s.TextScale>2||s.Bookmarks==null||s.SessionUrls==null || s.Bookmarks.Count>5000||s.SessionUrls.Count>100) throw new ArgumentException("Ajustes inválidos");
   if(s.PrivacyRules==null)throw new ArgumentException("Reglas inválidas");
   PrivacyPolicy.ValidateRules(s.PrivacyRules);
+  _=WebSearchConfiguration.FromSettings(s);
   if(s.SearxEndpoint!=null&&!OptimusSearchService.IsValidEndpoint(s.SearxEndpoint))throw new ArgumentException("Endpoint de búsqueda no válido.");
   foreach(var b in s.Bookmarks) if(b==null||b.Title==null || b.Url==null || !Uri.TryCreate(b.Url,UriKind.Absolute,out var u)||!NavigationPolicy.IsAllowed(u)) throw new ArgumentException("Marcador inválido");
   foreach(var url in s.SessionUrls) if(!Uri.TryCreate(url,UriKind.Absolute,out var u)||!NavigationPolicy.IsAllowed(u)) throw new ArgumentException("Sesión inválida");
