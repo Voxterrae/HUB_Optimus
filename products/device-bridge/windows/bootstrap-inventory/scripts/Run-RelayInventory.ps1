@@ -41,7 +41,7 @@ $captureValidated = $false
 try {
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT -or -not [Environment]::Is64BitProcess) { throw 'Unsupported platform' }
     $bundle = Assert-LocalPlainPath ([IO.Directory]::GetParent($PSScriptRoot).FullName)
-    $python = Assert-LocalPlainPath ((Get-Command $PythonExecutable -CommandType Application -ErrorAction Stop).Source)
+    $python = Assert-LocalPlainPath ((Get-Command $PythonExecutable -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path)
     & $python (Join-Path $bundle 'tools/package_inventory.py') --verify $bundle *> $null
     if ($LASTEXITCODE -ne 0) { throw 'Bundle integrity failed' }
     $destination = Assert-LocalPlainPath $PrivateCaptureDirectory

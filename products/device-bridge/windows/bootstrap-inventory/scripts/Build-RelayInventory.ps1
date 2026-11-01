@@ -62,12 +62,15 @@ try {
     }
     $drive = [IO.DriveInfo]::new([IO.Path]::GetPathRoot($output))
     if ($drive.DriveType -ne [IO.DriveType]::Fixed -or $drive.AvailableFreeSpace -lt 2147483648) { throw 'Capacity floor not met' }
-    $cargo = (Get-Command cargo.exe -CommandType Application -ErrorAction Stop).Source
-    $rustc = (Get-Command rustc.exe -CommandType Application -ErrorAction Stop).Source
-    $rustup = (Get-Command rustup.exe -CommandType Application -ErrorAction Stop).Source
-    $linker = (Get-Command link.exe -CommandType Application -ErrorAction Stop).Source
-    $git = (Get-Command git.exe -CommandType Application -ErrorAction Stop).Source
-    $python = (Get-Command $PythonExecutable -CommandType Application -ErrorAction Stop).Source
+    $cargo = (Get-Command cargo.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
+    $rustc = (Get-Command rustc.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
+    $rustup = (Get-Command rustup.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
+    $linker = (Get-Command link.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
+    $git = (Get-Command git.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
+    $python = (Get-Command $PythonExecutable -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
+    foreach ($tool in @($cargo,$rustc,$rustup,$linker,$git,$python)) {
+        if ($tool -isnot [string] -or -not [IO.File]::Exists($tool)) { throw 'Resolved build executable unavailable' }
+    }
     $buildPhase = 'source_head'
     $actualSource = (Invoke-BuildChild $git @('-C', $sourceRoot, 'rev-parse', 'HEAD') @{}).Trim()
     if ($actualSource -cne $SourceCommit) { throw 'Source mismatch' }
@@ -134,7 +137,7 @@ try {
     # contain paths and is never echoed.
     $known = @('Source mismatch','Build child failed','Uncommitted source refused','Policy mismatch',
         'Invalid build argument','Build timeout','Pinned toolchain must already be installed','Toolchain mismatch',
-        'Linker mismatch','SDK mismatch','SDK unavailable')
+        'Linker mismatch','SDK mismatch','SDK unavailable','Resolved build executable unavailable')
     $category = if ($known -ccontains $_.Exception.Message) { $_.Exception.Message } else { 'Native or script precondition' }
     Write-Output ('Fixed build failure category: ' + $category)
     Write-Output ('Build exception class: ' + $_.Exception.GetType().Name)
