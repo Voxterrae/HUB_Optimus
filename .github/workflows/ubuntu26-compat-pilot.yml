@@ -31,13 +31,13 @@ jobs:
         printf "OS=%s %s\n" "$ID" "$VERSION_ID"
         python --version
     - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
         persist-credentials: false
         ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
     - name: Setup Python
-      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
     - name: Install dependencies
@@ -95,7 +95,7 @@ jobs:
         printf "OS=%s %s\n" "$ID" "$VERSION_ID"
         python --version
     - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
         persist-credentials: false
@@ -113,7 +113,7 @@ jobs:
           }
         '
     - name: Setup Python
-      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
     - name: Install test dependencies
@@ -138,13 +138,13 @@ jobs:
         printf "OS=%s %s\n" "$ID" "$VERSION_ID"
         python --version
     - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
         persist-credentials: false
         ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
     - name: Setup reviewed EC2 Python ABI
-      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
     - name: Verify dependency locks
@@ -329,7 +329,7 @@ jobs:
         printf "OS=%s %s\n" "$ID" "$VERSION_ID"
         python --version
     - name: Checkout trusted base policy
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
         fetch-depth: 1
@@ -358,14 +358,14 @@ jobs:
         printf "OS=%s %s\n" "$ID" "$VERSION_ID"
         python --version
     - name: Checkout trusted base policy
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: cfaadf3c5267d046bb3c4a105e6ec0f8a7d7a907
         fetch-depth: 1
         persist-credentials: false
     - name: Create repository-scoped founder-authority App token
       id: founder-authority-app-token
-      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
       with:
         client-id: ${{ vars.FOUNDER_AUTHORITY_APP_CLIENT_ID }}
         private-key: ${{ secrets.FOUNDER_AUTHORITY_APP_PRIVATE_KEY }}
