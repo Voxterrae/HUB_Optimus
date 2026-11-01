@@ -403,3 +403,45 @@ the exact PR head and checks. Integration grants no temporary Cognito identity
 exception and lifts no #1831 or #1835 gate: exact merged-SHA authorization,
 identity, roles/bootstrap, current cost/credit headroom, confirmed alerts,
 private-window approval and rollback evidence remain required before AWS.
+
+## Optimus Windows 0.3.3 integration boundary
+
+Issue #2045 and PR #2047 carry the current Windows/Search integration record.
+The initial Windows and Search import preserved the source blobs from
+`5ed8785c5be011dba943371d87de4c4dd074a2c5` exactly in the integration branch
+based on current main.
+The integration candidate then incorporates the focused corrections reviewed
+under #2049, #2050 and #2051: direct SearxSearchProvider transport to the
+operator-configured SearXNG endpoint without ambient proxies, retaining normal
+TLS certificate validation; load-only recovery of an otherwise valid oversized legacy
+endpoint while retaining the other valid settings; and exact LF/CRLF byte pins
+for the three public help records accepted by the release packager. Loading
+leaves the settings file untouched; the next ordinary save, including an
+application or tab close, may persist the disabled endpoint as null.
+
+The unsigned feature-stack commits remain historical proposal provenance
+rather than commits introduced by this integration. Existing contributor
+attribution and third-party notices remain in place; verified GitHub commits
+do not constitute hardware attestation. Historical source manifests remain
+unchanged snapshots. The current candidate inventory and local validation are
+recorded in
+`products/browser/windows/SOURCE_MANIFEST_WINDOWS_INTEGRATION_2026_11_01.json`
+and `products/browser/windows/docs/VALIDATION_WINDOWS_INTEGRATION_2026_11_01.md`.
+
+Use the exact product SHA, component ProductVersion verification and separate
+service/GUI reports in #2045 for native acceptance of an integration candidate.
+The upstream cold runs 41331622526 and 41332021001 validate their stated source;
+source equivalence or Linux tests alone do not prove a later native execution.
+The corrected local candidate passes Core39, Windows Search59, Privacy28,
+backend48 and 23 packager tests on Linux. Focused correction review found no
+outstanding Critical/Important finding; final review, required CI and fresh
+Windows service/GUI execution still need the exact integration candidate SHA.
+The manual protected workflow remains owner-only, read-only and isolated.
+
+The local help index is finite; no operational SearXNG/public-web coverage is
+inferred. Windows CNG signing keys are nonexportable and explicitly deleted on
+normal owned-host shutdown, but abrupt termination or deletion failure may leave
+an orphan key. Physical Windows10/11, spoken Narrator/NVDA, complete cookie
+isolation, binary signing and public distribution retain their own acceptance
+gates. Founder ownership, licensing posture and the controlling
+OWNER_AUTHORITY_HANDOFF boundary are unchanged.
