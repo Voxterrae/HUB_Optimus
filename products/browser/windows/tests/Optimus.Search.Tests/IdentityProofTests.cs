@@ -122,7 +122,7 @@ static class IdentityProofTests
                 return verified;
             });
             using var replacementCertificate = Certificate(new string('b', 64));
-            await using var impostor = new Listener((stream, headers) => Send(stream, "{\"results\":[],\"optimus\":{\"version\":1,\"scope\":\"web\",\"webConfigured\":true,\"indexedDocuments\":0}}", null), replacementCertificate);
+            await using var impostor = new Listener((stream, headers) => Send(stream, "{\"results\":[],\"optimus\":{\"version\":1,\"scope\":\"web\",\"webConfigured\":true,\"indexedDocuments\":0}}", null), replacementCertificate.Value);
             var result = await new OptimusSearchService(client).SearchAsync("private query", [], connection.Target, default);
             Require(result.Error is not null, "Replacement must be rejected");
             Require(impostor.Requests.All(r => !r.Contains("Authorization", StringComparison.OrdinalIgnoreCase) && !r.Contains("private") && !r.Contains(Token)), "Replacement stole bearer/query after verified health");
@@ -145,8 +145,8 @@ static class IdentityProofTests
         {
             using var legitimate = Certificate(Token);
             using var cert = Certificate(mode == "wrong-token" ? new string('b',64) : Token, mode, mode == "wrong-port" ? 17832 : 17831,
-                mode == "copied-proof" ? legitimate.Extensions.Cast<X509Extension>().Single().RawData : null);
-            await using var attacker = new Listener((stream, headers) => Send(stream, Health, null), cert);
+                mode == "copied-proof" ? legitimate.Value.Extensions.Cast<X509Extension>().Single().RawData : null);
+            await using var attacker = new Listener((stream, headers) => Send(stream, Health, null), cert.Value);
             using var client = Client();
             var result = await new OptimusSearchService(client).SearchAsync("private query", [], new OptimusSearchTarget(OptimusSearchScope.Index, null, Token), default);
             Require(result.Error is not null && !result.Error.Contains(Token), "Invalid TLS identity must give generic error");
@@ -158,14 +158,14 @@ static class IdentityProofTests
             await using(var real = await SearchServer.StartAsync(new(17831, Token), new LocalSearchIndex([])))
                 Require((await service.SearchAsync("private query", [], new OptimusSearchTarget(OptimusSearchScope.Index,null,Token),default)).Error is null,"Initial search succeeds");
             using var cert = Certificate(new string('b',64));
-            await using var attacker = new Listener((stream, headers) => Send(stream, Health, null),cert);
+            await using var attacker = new Listener((stream, headers) => Send(stream, Health, null),cert.Value);
             Require((await service.SearchAsync("private query", [], new OptimusSearchTarget(OptimusSearchScope.Index,null,Token),default)).Error is not null,"Reconnect must reauthenticate");
             Require(attacker.Requests.IsEmpty,"Reconnect leaked HTTP");
         });
         test("copied public certificate without private key cannot terminate TLS", async () =>
         {
             using var privateCertificate = Certificate(Token);
-            using var publicCertificate = X509CertificateLoader.LoadCertificate(privateCertificate.RawData);
+            using var publicCertificate = X509CertificateLoader.LoadCertificate(privateCertificate.Value.RawData);
             Require(!publicCertificate.HasPrivateKey,"Attacker must have public certificate only");
             await using var attacker = new Listener((stream, headers) => Send(stream, Health, null), publicCertificate);
             using var client = Client();
@@ -220,13 +220,26 @@ static class IdentityProofTests
         });
     }
 
-    private static X509Certificate2 Certificate(string token, string mode = "valid", int port = 17831, byte[]? copiedProof = null)
+    private static FixtureCertificate Certificate(string token, string mode = "valid", int port = 17831, byte[]? copiedProof = null)
+        => new(token, mode, port, copiedProof);
+
+    private sealed class FixtureCertificate : IDisposable
     {
-        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-        var request = new CertificateRequest("CN=fixture", key, HashAlgorithmName.SHA256);
-        var message = $"OptimusSearch/TLS/v1|https://127.0.0.1:{port}|{Convert.ToBase64String(key.ExportSubjectPublicKeyInfo())}";
-        if (mode != "missing") request.CertificateExtensions.Add(new X509Extension("1.3.6.1.4.1.57264.2021.1", copiedProof ?? (mode == "malformed" ? new byte[31] : HMACSHA256.HashData(Encoding.ASCII.GetBytes(token), Encoding.ASCII.GetBytes(message))), false));
-        return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
+        private readonly TlsSigningKey signingKey = TlsSigningKey.Create();
+        public X509Certificate2 Value { get; }
+        public FixtureCertificate(string token, string mode, int port, byte[]? copiedProof)
+        {
+            try
+            {
+                var key = signingKey.Key;
+                var request = new CertificateRequest("CN=fixture", key, HashAlgorithmName.SHA256);
+                var message = $"OptimusSearch/TLS/v1|https://127.0.0.1:{port}|{Convert.ToBase64String(key.ExportSubjectPublicKeyInfo())}";
+                if (mode != "missing") request.CertificateExtensions.Add(new X509Extension("1.3.6.1.4.1.57264.2021.1", copiedProof ?? (mode == "malformed" ? new byte[31] : HMACSHA256.HashData(Encoding.ASCII.GetBytes(token), Encoding.ASCII.GetBytes(message))), false));
+                Value = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
+            }
+            catch { signingKey.Dispose(); throw; }
+        }
+        public void Dispose() { try { Value.Dispose(); } finally { signingKey.Dispose(); } }
     }
     private static async Task<T> WithActualService<T>(Func<SearchServer, Task<T>> run)
     {
@@ -259,12 +272,12 @@ static class IdentityProofTests
         private readonly TcpListener listener = new(IPAddress.Loopback, 17831);
         private readonly CancellationTokenSource stopping = new();
         private readonly Task serving;
-        private readonly X509Certificate2? ownedCertificate;
+        private readonly FixtureCertificate? ownedCertificate;
         private Task? disposal;
         public ConcurrentQueue<string> Requests { get; } = new();
         public Listener(Func<Stream, string, Task> respond, X509Certificate2? certificate = null)
         {
-            if (certificate is null) certificate = ownedCertificate = Certificate(Token);
+            if (certificate is null) { ownedCertificate = Certificate(Token); certificate = ownedCertificate.Value; }
             try { listener.Start(); }
             catch { listener.Stop(); stopping.Dispose(); ownedCertificate?.Dispose(); throw; }
             serving = Task.Run(async () =>

@@ -141,7 +141,7 @@ Test("launcher validates profile token before any startup and never exposes secr
  var directory=Path.Combine(Path.GetTempPath(),"optimus-launch-"+Guid.NewGuid());Directory.CreateDirectory(Path.Combine(directory,"Optimus","Search"));
  try{var path=Path.Combine(directory,"Optimus","Search","service.token");await File.WriteAllTextAsync(path,"invalid");using var h=new Fixture(_=>throw new Exception("Invalid token reached health"));using var c=new HttpClient(h);using var launcher=new SearchHostLauncher(c,directory,directory, localClientFactory: _ => TestTransport.Borrow(c));
  var result=await launcher.ConnectAsync(null,default);Check(result.Error!=null,"Invalid token fails closed");
- var info=SearchHostLauncher.CreateStartInfo(directory,"https://search.example/instance",path);Check(info.FileName==Path.Combine(directory,"Search","Optimus.SearchHost.exe")&&!info.UseShellExecute&&info.ArgumentList.SequenceEqual(new[]{"--token-file",path,"--searx-url","https://search.example/instance"}),"Only bundled executable and separate arguments");Check(!info.Arguments.Contains(bearer)&&!info.ArgumentList.Contains(bearer),"Token contents never commandline");
+ var info=SearchHostLauncher.CreateStartInfo(directory,"https://search.example/instance",path);Check(info.FileName==Path.Combine(directory,"Search","Optimus.SearchHost.exe")&&!info.UseShellExecute&&info.RedirectStandardInput&&info.ArgumentList.SequenceEqual(new[]{"--token-file",path,"--searx-url","https://search.example/instance","--owner-stdin","true"}),"Only bundled executable, separate arguments and owned stdin lifetime");Check(!info.Arguments.Contains(bearer)&&!info.ArgumentList.Contains(bearer),"Token contents never commandline");
  }finally{Directory.Delete(directory,true);}
 });
 Test("launcher connects independent host without owning or reconfiguring it",async()=>{
@@ -221,7 +221,7 @@ sealed class LocalProcessHost : IDisposable
  {
   System.IO.Directory.CreateDirectory(Path.Combine(Directory,"Search"));System.IO.Directory.CreateDirectory(Path.Combine(Directory,"Optimus","Search"));
   var executable=Path.Combine(Directory,"Search","Optimus.SearchHost.exe");
-  File.WriteAllText(executable,"#!/bin/sh\nprintf '%s' '"+token+"' > \"$2\"\nprintf '%s' \"$$\" > '"+PidPath+"'\nexec /bin/sleep 30\n");
+  File.WriteAllText(executable,"#!/bin/sh\nprintf '%s' '"+token+"' > \"$2\"\nprintf '%s' \"$$\" > '"+PidPath+"'\nwhile IFS= read -r line; do :; done\nexit 0\n");
   if(!OperatingSystem.IsWindows())File.SetUnixFileMode(executable,UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.UserExecute);
  }
  public void Dispose()=>System.IO.Directory.Delete(Directory,true);

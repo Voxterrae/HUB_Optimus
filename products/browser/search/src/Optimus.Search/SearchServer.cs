@@ -82,8 +82,21 @@ public sealed class SearchServer : IAsyncDisposable
             actualPort = new Uri(address).Port;
             return new SearchServer(app, address, certificate);
         }
-        catch { await app.DisposeAsync(); certificate.Dispose(); throw; }
+        catch
+        {
+            try { await app.DisposeAsync(); }
+            finally { certificate.Dispose(); }
+            throw;
+        }
     }
     public Task WaitForShutdownAsync(CancellationToken cancellationToken = default) => application.WaitForShutdownAsync(cancellationToken);
-    public async ValueTask DisposeAsync() { try { await application.StopAsync(); await application.DisposeAsync(); } finally { certificate.Dispose(); } }
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            try { await application.StopAsync(); }
+            finally { await application.DisposeAsync(); }
+        }
+        finally { certificate.Dispose(); }
+    }
 }

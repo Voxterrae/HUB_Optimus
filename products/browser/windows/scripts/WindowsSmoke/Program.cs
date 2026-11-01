@@ -53,8 +53,8 @@ internal static class Program
             var reservation = new TcpListener(IPAddress.Loopback, 0);
             reservation.Start(); var port = ((IPEndPoint)reservation.LocalEndpoint).Port; reservation.Stop();
             var start = new ProcessStartInfo(Path.Combine(publication, "Search", "Optimus.SearchHost.exe"))
-            { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = publication, RedirectStandardOutput = true, RedirectStandardError = true };
-            foreach (var argument in new[] { "--port", port.ToString(System.Globalization.CultureInfo.InvariantCulture), "--token-file", tokenFile, "--index-file", Path.Combine(publication, "Search", "index.json") }) start.ArgumentList.Add(argument);
+            { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = publication, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true };
+            foreach (var argument in new[] { "--port", port.ToString(System.Globalization.CultureInfo.InvariantCulture), "--token-file", tokenFile, "--index-file", Path.Combine(publication, "Search", "index.json"), "--owner-stdin", "true" }) start.ArgumentList.Add(argument);
             host = Process.Start(start) ?? throw new InvalidOperationException("Owned host did not start.");
             // Drain pipes without persisting host output (could change to contain sensitive data).
             host.OutputDataReceived += (_, _) => { }; host.ErrorDataReceived += (_, _) => { };
@@ -92,7 +92,7 @@ internal static class Program
         }
         finally
         {
-            StopOwned(host, report, "service");
+            StopOwned(host, report, "service", ownerStdin: true);
             try { Directory.Delete(temporary, true); report.Checks.Add("isolated-service-temporary-cleanup"); }
             catch { report.CleanupFailures.Add("Isolated service temporary directory cleanup failed."); }
         }
@@ -123,11 +123,30 @@ internal static class Program
         return output.ToArray();
     }
 
-    internal static void StopOwned(Process? process, SmokeReport report, string label)
+    internal static void StopOwned(Process? process, SmokeReport report, string label, bool ownerStdin = false)
     {
         if (process is null) return;
-        try { if (!process.HasExited) { process.Kill(entireProcessTree: true); if (!process.WaitForExit(5000)) throw new InvalidOperationException(); } report.Checks.Add(label + "-owned-process-stopped"); }
-        catch { report.CleanupFailures.Add(label + " owned-process shutdown failed."); }
+        try
+        {
+            var forced = false;
+            if (!process.HasExited)
+            {
+                if (ownerStdin)
+                {
+                    try { process.StandardInput.Close(); }
+                    catch (Exception ex) when (ex is IOException or InvalidOperationException) { }
+                }
+                if (!ownerStdin || !process.WaitForExit(5000))
+                {
+                    forced = true;
+                    process.Kill(entireProcessTree: true);
+                    if (!process.WaitForExit(5000)) throw new InvalidOperationException();
+                }
+            }
+            if (forced || process.ExitCode != 0) report.CleanupFailures.Add(label + " normal shutdown and TLS key cleanup were not confirmed.");
+            else { report.Checks.Add(label + "-owned-process-stopped"); report.Checks.Add(label + "-owned-process-graceful-exit-zero"); }
+        }
+        catch { report.CleanupFailures.Add(label + " owned-process shutdown and TLS key cleanup were not confirmed."); }
         finally { process.Dispose(); }
     }
 }

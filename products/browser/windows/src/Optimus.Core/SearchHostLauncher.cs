@@ -36,9 +36,10 @@ public sealed class SearchHostLauncher : IDisposable
     {
         if (upstream is not null && !OptimusSearchService.IsValidEndpoint(upstream)) throw new ArgumentException("Servidor SearXNG no válido.");
         var start = new ProcessStartInfo(Path.Combine(Path.GetFullPath(applicationDirectory), "Search", "Optimus.SearchHost.exe"))
-        { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetFullPath(applicationDirectory) };
+        { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, WorkingDirectory = Path.GetFullPath(applicationDirectory) };
         start.ArgumentList.Add("--token-file"); start.ArgumentList.Add(tokenPath);
         if (upstream is not null) { start.ArgumentList.Add("--searx-url"); start.ArgumentList.Add(upstream); }
+        start.ArgumentList.Add("--owner-stdin"); start.ArgumentList.Add("true");
         return start;
     }
 
@@ -84,7 +85,7 @@ public sealed class SearchHostLauncher : IDisposable
                     if (disposed) throw new OperationCanceledException(token);
                     if (owned is null || owned.HasExited)
                     {
-                        StopOwned();
+                        if (!StopOwned()) return Failure(ShutdownError!);
                         var start = CreateStartInfo(applicationDirectory, upstream, tokenPath);
                         if (!File.Exists(start.FileName)) return Failure("No se encontró el servicio incluido en Search. Reinstala el paquete de Optimus.");
                         owned = startProcess(start);
@@ -164,13 +165,14 @@ public sealed class SearchHostLauncher : IDisposable
         if (owned is null) { ShutdownError = null; return true; }
         try
         {
-            if (!owned.HasExited) owned.Stop();
+            // Even an exited child must confirm normal completion rather than a crash/forced exit.
+            owned.Stop();
             owned.Dispose(); owned = null; ShutdownError = null; return true;
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             // Retain the handle so failure cannot permit a second process or pretend reconfiguration.
-            ShutdownError = "No se pudo detener el servicio de búsqueda de Optimus. La nueva configuración no se aplicó; cierra el servicio y reinicia Optimus.";
+            ShutdownError = "No se pudo detener normalmente y confirmar la limpieza del servicio de búsqueda de Optimus. La nueva configuración no se aplicó; cierra el servicio y reinicia Optimus.";
             return false;
         }
     }
@@ -189,12 +191,24 @@ internal interface ISearchHostProcess : IDisposable
 }
 internal sealed class SystemSearchHostProcess(Process process) : ISearchHostProcess
 {
+    private bool forcedTermination;
     public bool HasExited => process.HasExited;
     public void Stop()
     {
-        if (process.HasExited) return;
-        process.Kill();
-        if (!process.WaitForExit(1000)) throw new InvalidOperationException("No se confirmó el cierre del proceso de búsqueda.");
+        if (!process.HasExited)
+        {
+            // Only the launcher-created pipe is closed. No network shutdown surface is exposed.
+            try { process.StandardInput.Close(); }
+            catch (Exception ex) when (ex is IOException or InvalidOperationException) { }
+            if (!process.WaitForExit(3000))
+            {
+                forcedTermination = true;
+                process.Kill();
+                if (!process.WaitForExit(1000)) throw new InvalidOperationException("No se confirmó el cierre del proceso de búsqueda.");
+                throw new InvalidOperationException("El cierre forzado no confirma la limpieza de la identidad TLS.");
+            }
+        }
+        if (forcedTermination || process.ExitCode != 0) throw new InvalidOperationException("El servicio no confirmó un cierre normal y su limpieza.");
     }
     public void Dispose() => process.Dispose();
 }

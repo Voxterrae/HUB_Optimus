@@ -1,7 +1,15 @@
 # Isolated Windows acceptance proposal
 
-`WindowsSmoke.workflow.yml` is dormant: its location outside `.github/workflows`
-prevents registration and execution. No workflow was activated or dispatched.
+`WindowsSmoke.workflow.yml` is the original dormant proposal: its location outside
+`.github/workflows` prevents its registration and execution. Do not register that
+historical template directly. The independent manual pilot on protected `main`,
+`.github/workflows/optimus-windows-smoke.yml`, was registered through PR #2032 and
+extended through PR #2033 to accept an explicit complete lowercase 40-hex product
+SHA. Only the owner can dispatch it from public `main`; validation precedes checkout
+and checked-out HEAD plus executable provenance must match that SHA. Runs
+41325505050 and 41327022528 exercised real Windows and failed in native Search;
+issue #2031 carries the continuing correction evidence. These runs do not accept
+the packaged service, GUI, accessibility or web search.
 It proposes a standard `windows-2022` runner, read-only contents permission,
 manual dispatch, no secrets, no deployment, no environment changes, short
 retention and bounded execution. Checkout reuses the repository's existing
@@ -94,6 +102,11 @@ private certificate, profile content, personal query or captured desktop is
 emitted. Artifact upload is restricted to these JSON files and owned PNG;
 profiles, service temporaries and complete publication folders are excluded.
 
-Linux cross-build or parsing establishes preparation only. Actual Windows
-service/GUI execution and PowerShell 5.1 behavior remain unverified until a
-corresponding Windows run produces structured evidence.
+Linux cross-build or parsing establishes preparation only. Actual Windows service,
+GUI and PowerShell 5.1 acceptance must be attributed to a corresponding run and
+exact product SHA, with separate step outcomes. The correction proposal uses a
+nonexportable current-user CNG key on Windows for Schannel compatibility and an
+owned stdin pipe for normal service shutdown. The certificate is not installed in
+a trust store; abrupt termination or key-deletion failure can leave an orphan key.
+See the Search protocol for that documented deviation from memory-only keys. No
+personal user profile or credential is imported into the disposable runner.

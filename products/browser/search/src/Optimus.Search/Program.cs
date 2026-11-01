@@ -7,7 +7,7 @@ public static class Program
         try
         {
             var import = args.Length > 0 && args[0] == "index";
-            var allowed = import ? new[] { "--input", "--output" } : new[] { "--port", "--index-file", "--token-file", "--searx-url" };
+            var allowed = import ? new[] { "--input", "--output" } : new[] { "--port", "--index-file", "--token-file", "--searx-url", "--owner-stdin" };
             var values = new Dictionary<string, string>(StringComparer.Ordinal);
             for (var i = import ? 1 : 0; i < args.Length; i += 2)
             {
@@ -20,6 +20,8 @@ public static class Program
                 Console.WriteLine("Catalog imported.");
                 return 0;
             }
+            var ownerStdin = values.TryGetValue("--owner-stdin", out var ownerValue);
+            if (ownerStdin && (ownerValue != "true" || !Console.IsInputRedirected)) throw new ArgumentException();
             var port = 17831;
             if (values.TryGetValue("--port", out var portValue) && (!int.TryParse(portValue, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out port) || port is < 0 or > 65535)) throw new ArgumentException();
             using var provider = values.TryGetValue("--searx-url", out var endpoint) ? new SearxSearchProvider(endpoint) : null;
@@ -29,13 +31,27 @@ public static class Program
             var token = await TokenStore.LoadOrCreateAsync(values.GetValueOrDefault("--token-file") ?? TokenStore.DefaultPath);
             await using var server = await SearchServer.StartAsync(new ServerOptions(port, token), new LocalSearchIndex(documents), provider);
             Console.WriteLine("OptimusSearch ready.");
-            await server.WaitForShutdownAsync();
+            var shutdown = server.WaitForShutdownAsync();
+            if (ownerStdin)
+            {
+                // Console.In can block even for ReadAsync. Keep that read off the
+                // calling path so an independent normal shutdown can still win.
+                var completed = await Task.WhenAny(shutdown, Task.Run(WaitForOwnerEofAsync));
+                await completed;
+            }
+            else await shutdown;
             return 0;
         }
-        catch (Exception ex) when (ex is ArgumentException or IOException or InvalidDataException or UnauthorizedAccessException or InvalidOperationException or System.Net.Sockets.SocketException)
+        catch (Exception)
         {
             Console.Error.WriteLine("Unable to start search or import catalog. Check local configuration.");
             return 2;
         }
+    }
+
+    private static async Task WaitForOwnerEofAsync()
+    {
+        var buffer = new char[256];
+        while (await Console.In.ReadAsync(buffer.AsMemory()) != 0) { }
     }
 }
