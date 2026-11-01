@@ -32,6 +32,7 @@ internal static class GuiSmoke
                 ?? throw new InvalidOperationException("Packaged GUI did not start.");
             Wait(() => { app.Refresh(); return app.MainWindowHandle != 0 && !app.HasExited; }, "Owned GUI window unavailable.", true);
             var window = AutomationElement.FromHandle(app.MainWindowHandle);
+            if (app.HasExited || window.Current.ProcessId != app.Id) throw new InvalidOperationException("Owned GUI automation root mismatch.");
             AutomationElement Find(string name) => FindOwned(window, name);
             void Invoke(string name) => ((InvokePattern)Find(name).GetCurrentPattern(InvokePattern.Pattern)).Invoke();
             void Set(string name, string value) => ((ValuePattern)Find(name).GetCurrentPattern(ValuePattern.Pattern)).SetValue(value);
@@ -44,26 +45,62 @@ internal static class GuiSmoke
             Wait(() => ((ValuePattern)Find("Respuesta de la guía local").GetCurrentPattern(ValuePattern.Pattern)).Current.Value.Contains("Guía local basada en reglas", StringComparison.Ordinal), "Local guide response unavailable.");
             Invoke("Cerrar ayuda"); report.Checks.Add("gui-local-guide-response");
             // Navigation is loopback only; server receipt plus UIA page heading prove rendering.
-            Set("Dirección o búsqueda", page.Address); Invoke("Ir a la dirección o buscar");
-            Wait(() => page.Received, "Owned loopback page was not requested.");
+            Set("Dirección o búsqueda", page.Address);
+            GuiNavigationDiagnostics.Capture(window, page.Address, report, "before-go");
+            Invoke("Ir a la dirección o buscar");
+            try { Wait(() => page.Received, "Owned loopback page was not requested."); }
+            catch { GuiNavigationDiagnostics.Capture(window, page.Address, report, "navigation-failure"); throw; }
             Find("Optimus isolated smoke page"); report.Checks.Add("gui-loopback-navigation-rendered");
             Invoke("Nueva pestaña privada"); Find("Privado · no se restauran direcciones"); report.Checks.Add("gui-private-tab");
             // Sidebar is a native button; no keyboard injection or global mouse action.
             Invoke("⚙  Ajustes"); Find("Tamaño y zoom"); Invoke("Cerrar ajustes"); report.Checks.Add("gui-settings-open-close");
             Capture(app.MainWindowHandle, Path.Combine(evidence, "owned-window.png")); report.Checks.Add("gui-own-window-capture");
-            ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
-            if (!app.WaitForExit(15000)) throw new InvalidOperationException("GUI graceful close did not finish.");
+            if (!CloseOwnedWindow(app)) throw new InvalidOperationException("GUI graceful close did not finish.");
             report.Checks.Add("gui-graceful-close");
         }
         finally
         {
-            Program.StopOwned(app, report, "gui");
+            try
+            {
+                if (app is not null && !app.HasExited)
+                {
+                    if (CloseOwnedWindow(app)) report.Checks.Add("gui-cleanup-owned-window-graceful-exit-zero");
+                    else report.CleanupFailures.Add("gui owned-window graceful cleanup was not confirmed.");
+                }
+            }
+            catch { report.CleanupFailures.Add("gui owned-window graceful cleanup was not confirmed."); }
+            finally { Program.StopOwned(app, report, "gui"); }
             // Retain this fresh user's GUI state for diagnosis. The harness never recursively
             // deletes default profile paths; discard the disposable user/VM after the run.
             foreach (var relative in new[] { "private-pilot", "Search" })
                 if (Directory.Exists(Path.Combine(profile, relative))) report.CreatedGuiDirectories.Add("Optimus/" + relative);
             report.Checks.Add("gui-default-profile-retained-discard-test-user");
         }
+    }
+
+    private static bool CloseOwnedWindow(Process app)
+    {
+        // A provider can block inside Close; the single deadline covers both its request and process exit.
+        // The worker never writes evidence, so a late completion cannot turn timed-out cleanup into success.
+        var close = Task.Run(() =>
+        {
+            try
+            {
+                if (app.HasExited) return false;
+                app.Refresh();
+                var handle = app.MainWindowHandle;
+                var processId = app.Id;
+                if (handle == 0 || GetWindowThreadProcessId(handle, out var windowProcessId) == 0 || windowProcessId != (uint)processId) return false;
+                var window = AutomationElement.FromHandle(handle);
+                if (window.Current.ProcessId != processId || !window.TryGetCurrentPattern(WindowPattern.Pattern, out var pattern)) return false;
+                if (app.HasExited || GetWindowThreadProcessId(handle, out windowProcessId) == 0 || windowProcessId != (uint)processId) return false;
+                ((WindowPattern)pattern).Close();
+                return app.WaitForExit(15000) && app.ExitCode == 0;
+            }
+            catch { return false; }
+        });
+        try { return close.WaitAsync(TimeSpan.FromSeconds(15)).GetAwaiter().GetResult(); }
+        catch { return false; }
     }
 
     private static bool Absent(string path)
@@ -133,6 +170,7 @@ internal static class GuiSmoke
     }
     [StructLayout(LayoutKind.Sequential)] private struct Rect { public int Left, Top, Right, Bottom; }
     [DllImport("user32.dll")] private static extern bool GetClientRect(nint hwnd, out Rect rect);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint hwnd, out uint processId);
     [DllImport("user32.dll")] private static extern nint GetDC(nint hwnd);
     [DllImport("user32.dll")] private static extern int ReleaseDC(nint hwnd, nint dc);
     [DllImport("user32.dll")] private static extern bool PrintWindow(nint hwnd, nint dc, uint flags);

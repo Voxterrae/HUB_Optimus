@@ -161,5 +161,6 @@ internal sealed class SmokeReport
     public List<string> Checks { get; } = [];
     public List<string> CreatedGuiDirectories { get; } = [];
     public List<string> CleanupFailures { get; } = [];
+    public Dictionary<string, string> GuiDiagnostics { get; } = new(StringComparer.Ordinal);
 }
 internal sealed class SmokeBlocked(string message) : Exception(message);

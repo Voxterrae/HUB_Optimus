@@ -13,6 +13,9 @@ No source manifest, Linux build or draft PR grants release acceptance.
 | [41325505050](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41325505050) | `178e52efbc84428653e004b8c9f02cda30fc74b0` | Core39/39; Windows Search30/48. Eighteen failures included initial TLS failures and a later port17831 leak. Publication, packaged service and GUI were not reached. |
 | [41327022528](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41327022528) | `7cd90a685bff0e492a3d9d525b82affa6ab04a2c` | Core39/39; Windows Search38/51. The forced-assertion/rebind regression passed and the port cascade disappeared. The safe server diagnostic exposed Win32 `0x8009030E`; thirteen TLS-related failures remained. Publication, packaged service and GUI were not reached. |
 | [41328508505](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41328508505) | `c929bfe80d57d3d9eb24e1dfae0499c184637965` | Core39/39, Windows Search56/56, Privacy24/24. Backend45/49, including all five Windows CNG checks passing; four child-process tests failed because their test launcher assumed `DOTNET_ROOT` was defined. Publication, packaged service and GUI were not reached. |
+| [41329111534](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41329111534) | `46085be8dec5676271290eb3e2906546fc7efd77` | All169 native checks passed and all three self-contained publications succeeded. Workflow catalog import then failed because dotnet run changed the child working directory. |
+| [41329948417](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41329948417) | `46085be8dec5676271290eb3e2906546fc7efd77` | All169 native checks, three publications, catalog import and packaged-service acceptance passed. PowerShell5.1, verified product versions, actual authenticated TLS/search, normal exit0 and no cleanup failures. GUI deliberately unrun. |
+| [41330205280](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41330205280) | `46085be8dec5676271290eb3e2906546fc7efd77` | All169 native checks and service passed again. Actual GUI with WebView2 131.0.2903.86 passed home, help-index result and local guide; failed before the controlled loopback page was requested. Forced GUI cleanup was correctly reported as unconfirmed. Page rendering, private/settings/capture and final graceful close were not accepted. |
 
 The first two used standard `windows-2022`, image `win22/20261026.347.1`, SDK10.0.403.
 The third used the same SDK; its setup log reports image `20261025.346.1`,
@@ -38,11 +41,19 @@ The additional child-launch correction reuses the active .NET muxer for DLL runs
 then valid SDK hints or the executable on PATH for apphost runs. It does not require
 the optional `DOTNET_ROOT` variable or modify the runner environment. Its regression
 runs the real CLI and token worker with that variable absent; the backend passes
-47/47 on Linux in this mode. Native Windows acceptance still requires the subsequent
-exact-source run.
+47/47 on Linux in this mode. The later exact-source Windows runs above pass all50
+backend tests. The catalog path fix is isolated to protected workflow PR2038;
+production catalog validation and input bytes remain unchanged.
 The existing real CLI service test also uses owner stdin EOF and requires bounded,
 normal exit zero. Its previous forced kill failed the new assertion with exit137;
 the corrected test passes with its original TLS, result and log-secrecy assertions.
+
+Service acceptance is now observed for product46085be in the runs above; this is not
+GUI acceptance for subsequent proposals. The next GUI diagnostic records only
+bounded own-window booleans and whitelisted status categories, excluding raw UI
+strings, addresses, queries, tokens and profile paths. Error cleanup requests normal
+close of the exact owned HWND/PID with a deadline covering request and exit; forced
+or nonzero cleanup remains a failure and never erases the original test failure.
 
 - Keep the listener alive only inside its owned scope, including assertion,
   constructor, cancellation and disposal failures; prove release by actual rebind.
