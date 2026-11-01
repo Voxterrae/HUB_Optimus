@@ -1,11 +1,14 @@
 name: Relay inventory candidate conformance
 on:
+  # Owner-bound read-only validation of the selected exact ref, including main.
+  workflow_dispatch:
   push:
     branches:
       - codex/relay-inventory-candidate-20261101
     paths:
       - .github/workflows/relay-inventory-candidate.yml
       - products/device-bridge/windows/bootstrap-inventory/**
+      - tests/test_workflow_action_pins.py
 permissions:
   contents: read
 concurrency:
