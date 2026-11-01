@@ -445,3 +445,28 @@ an orphan key. Physical Windows10/11, spoken Narrator/NVDA, complete cookie
 isolation, binary signing and public distribution retain their own acceptance
 gates. Founder ownership, licensing posture and the controlling
 OWNER_AUTHORITY_HANDOFF boundary are unchanged.
+
+## Provider-result visibility continuation
+
+Issue #2061 continues the owner-scoped Windows/Search repair. The preceding
+integration #2047 and pilot pin #2055 are merged; exact product
+`4c9ee43aa2a435abc18a6c63399fb2a99a698e58` passed174 native checks in
+run41338890297, with packaged service/GUI and normal cleanup. This is historical
+acceptance for that exact source, not for the correction described below.
+
+The selected provider now has priority in the bounded result list; safe matching
+bookmarks fill unused slots. Previously twenty matching bookmarks could hide
+every successful Web/Index result. Deduplication prefers the actual provider's
+destination/title/source. Provider errors still remain visible and eligible
+bookmarks remain available without querying a fallback. Limits, authenticated
+local TLS, token handling, cancellation and private bookmark omission are retained.
+The priority regressions produced60/66 before the fix and66/66 after it on
+Linux. The eighth new regression then exposed submission-time bookmark mutation
+(66/67); capturing the input snapshot brings the final Search suite to67/67. Fresh exact-source native acceptance, required CI and final review for
+this increment are recorded in #2061, rather than inferred from the earlier run.
+
+Issue #2062 separately prepares a loopback-only disposable real-Web cloud test.
+No production SearXNG endpoint is configured by this result-order correction.
+Physical Windows10/11, spoken accessibility, upstream availability, code signing
+and public distribution remain separate gates. Owner identity, ownership,
+licensing and the controlling OWNER_AUTHORITY_HANDOFF are unchanged.
