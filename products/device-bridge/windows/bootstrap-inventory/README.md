@@ -115,6 +115,12 @@ or timeout cannot be accepted. A parseable JSON prefix is insufficient. Timeout/
 termination is never evidence of successful collector cleanup. Fixed/redacted
 messages are the only public console output of the helper.
 
+The package validator requires the complete closed, fully pending activation
+template. Missing or unknown fields, completed statuses, non-null evidence and
+contradictory authority/creation claims refuse both package creation and
+verification, even if file digests are recomputed. Completed private evidence
+records do not belong in this public diagnostic bundle.
+
 `verify_inventory.py` is a strict data verifier, not an authority constructor.
 File hashes and PE AMD64/import checks establish equality to an unauthenticated
 manifest and static file structure only. They do not establish authorship,
