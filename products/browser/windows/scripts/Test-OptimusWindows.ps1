@@ -9,6 +9,8 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+# QA-only finite Web acceptance; this branch is not a product default.
+if ($Gui) { $LiveWeb = $true }
 if ($LiveWeb -and -not $Gui) { throw 'LiveWeb requires the explicit Gui test.' }
 if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
     throw 'Windows required. No Windows acceptance checks ran.'
