@@ -7,6 +7,14 @@ on:
         type: string
         required: true
         default: 0790e0977c170ff8507bb73e0ec7b6e166755892
+      qa_mode:
+        description: Startup diagnosis sends no search queries; queries is a separate acceptance run
+        type: choice
+        required: true
+        default: startup-only
+        options:
+          - startup-only
+          - queries
 permissions:
   contents: read
 concurrency:
@@ -28,6 +36,7 @@ jobs:
     env:
       OPTIMUS_SOURCE_COMMIT: 0790e0977c170ff8507bb73e0ec7b6e166755892
       OPTIMUS_REQUESTED_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      OPTIMUS_QA_MODE: ${{ inputs.qa_mode }}
       OPTIMUS_WORKFLOW_COMMIT: ${{ github.workflow_sha }}
       OPTIMUS_SEARX_COMMIT: 8b35dcd2e312d1d30fcfcbf6a9d01bda6fc52192
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
@@ -44,6 +53,7 @@ jobs:
           [[ "$OPTIMUS_REQUESTED_SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo 'Blocked: complete lowercase product SHA required.'; exit 2; }
           [[ "$OPTIMUS_REQUESTED_SOURCE_COMMIT" == "$OPTIMUS_SOURCE_COMMIT" ]] || { echo 'Blocked: only the protected reviewed product pin may execute.'; exit 2; }
           [[ "$OPTIMUS_WORKFLOW_COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo 'Blocked: workflow provenance unavailable.'; exit 2; }
+          [[ "$OPTIMUS_QA_MODE" == 'startup-only' || "$OPTIMUS_QA_MODE" == 'queries' ]] || { echo 'Blocked: unknown QA mode.'; exit 2; }
       - name: Checkout reviewed harness separately
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -88,17 +98,17 @@ jobs:
           dotnet publish src/Optimus.Search/Optimus.Search.csproj -c Release --self-contained false "-p:SourceRevisionId=$OPTIMUS_SOURCE_COMMIT" -o "$RUNNER_TEMP/optimus-real-web-host"
           dotnet build "$GITHUB_WORKSPACE/harness/products/browser/search/tools/RealWebSmoke/RealWebSmoke.csproj" -c Release "-p:OptimusProductRoot=$GITHUB_WORKSPACE/product" "-p:SourceRevisionId=$OPTIMUS_SOURCE_COMMIT" -o "$RUNNER_TEMP/optimus-real-web-probe"
           dotnet "$RUNNER_TEMP/optimus-real-web-probe/RealWebSmoke.dll" --self-test
-      - name: Run two fixed typed-client queries and record sanitized outcome
+      - name: Run selected QA mode and always record sanitized outcome
         shell: bash
         run: |
-          set -uo pipefail
-          python3 harness/products/browser/search/tools/real_web_smoke.py --product-root "$GITHUB_WORKSPACE/product" --harness-root "$GITHUB_WORKSPACE/harness" --searx-root "$GITHUB_WORKSPACE/searxng" --searx-python "$RUNNER_TEMP/optimus-searx-venv/bin/python" --host "$RUNNER_TEMP/optimus-real-web-host/Optimus.SearchHost.dll" --probe "$RUNNER_TEMP/optimus-real-web-probe/RealWebSmoke.dll" --source "$OPTIMUS_SOURCE_COMMIT" --workflow "$OPTIMUS_WORKFLOW_COMMIT" --dependency-report "$RUNNER_TEMP/optimus-pip-report.json" > "$RUNNER_TEMP/optimus-real-web-result.json"
-          outcome=$?
+          set -euo pipefail
+          outcome=0
+          python3 harness/products/browser/search/tools/real_web_smoke.py --product-root "$GITHUB_WORKSPACE/product" --harness-root "$GITHUB_WORKSPACE/harness" --searx-root "$GITHUB_WORKSPACE/searxng" --searx-python "$RUNNER_TEMP/optimus-searx-venv/bin/python" --host "$RUNNER_TEMP/optimus-real-web-host/Optimus.SearchHost.dll" --probe "$RUNNER_TEMP/optimus-real-web-probe/RealWebSmoke.dll" --source "$OPTIMUS_SOURCE_COMMIT" --workflow "$OPTIMUS_WORKFLOW_COMMIT" --dependency-report "$RUNNER_TEMP/optimus-pip-report.json" --mode "$OPTIMUS_QA_MODE" > "$RUNNER_TEMP/optimus-real-web-result.json" || outcome=$?
           if [[ -f "$RUNNER_TEMP/optimus-real-web-result.json" ]]; then
             cat "$RUNNER_TEMP/optimus-real-web-result.json"
             {
               echo '# Optimus isolated real-Web acceptance'
-              echo 'Two fixed logical queries; failures, empty/irrelevant output and cleanup failures remain blocked.'
+              echo 'Startup-only sends no search queries and cannot establish Web relevance. Queries mode requires two fixed logical queries; failures remain blocked.'
               echo 'No artifacts/cache uploaded. No persistent service, public endpoint or production-Web acceptance.'
               echo '```json'
               cat "$RUNNER_TEMP/optimus-real-web-result.json"
