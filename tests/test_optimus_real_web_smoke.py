@@ -320,14 +320,35 @@ def test_manual_job_has_only_full_sha_input_and_disposable_read_only_runner():
     assert "services" not in job
 
 
-@pytest.mark.parametrize("value,accepted", [("a" * 40, True), ("main", False), ("A" * 40, False),
+def dispatch_environment(requested):
+    values = workflow()["jobs"]["real-web"]["env"]
+    environment = smoke.process_environment()
+    for key in ("OPTIMUS_SOURCE_COMMIT", "OPTIMUS_REQUESTED_SOURCE_COMMIT"):
+        if key in values:
+            environment[key] = requested if values[key] == "${{ inputs.source_commit }}" else values[key]
+    environment["OPTIMUS_WORKFLOW_COMMIT"] = "b" * 40
+    return environment
+
+
+@pytest.mark.parametrize("value,accepted", [(workflow()["on"]["workflow_dispatch"]["inputs"]["source_commit"]["default"], True), ("a" * 40, False), ("main", False), ("A" * 40, False),
     ("a" * 39, False), ("a" * 41, False), ("a" * 40 + "\n", False), ("$(false)", False), ("a" * 39 + "g", False)])
 def test_actual_before_checkout_shell_guard(value, accepted):
     script = workflow()["jobs"]["real-web"]["steps"][0]["run"]
-    environment = smoke.process_environment()
-    environment.update(OPTIMUS_SOURCE_COMMIT=value, OPTIMUS_WORKFLOW_COMMIT="b" * 40)
-    result = subprocess.run(["bash", "-c", script], env=environment, capture_output=True, timeout=3)
+    result = subprocess.run(["bash", "-c", script], env=dispatch_environment(value), capture_output=True, timeout=3)
     assert (result.returncode == 0) == accepted
+
+
+@pytest.mark.parametrize("filename,job_name", [("optimus-real-web-smoke.yml", "real-web"), ("optimus-windows-smoke.yml", "windows-smoke")])
+def test_main_context_can_execute_only_the_literal_reviewed_product(filename, job_name):
+    value = yaml.load((ROOT / ".github/workflows" / filename).read_text(), Loader=yaml.BaseLoader)
+    approved = value["on"]["workflow_dispatch"]["inputs"]["source_commit"]["default"]
+    job = value["jobs"][job_name]
+    product = next(step for step in job["steps"] if "uses" in step and step.get("with", {}).get("repository", "") == ""
+                   and step.get("with", {}).get("path") != "harness")
+    assert smoke.validate_source(approved)
+    assert product["with"]["ref"] == approved, "A dispatch input cannot select executable source in main's cache context"
+    assert job["env"]["OPTIMUS_SOURCE_COMMIT"] == approved
+    assert job["env"]["OPTIMUS_REQUESTED_SOURCE_COMMIT"] == "${{ inputs.source_commit }}"
 
 
 def test_actual_workflow_guard_denies_each_untrusted_dispatch_context():
@@ -357,7 +378,7 @@ def test_workflow_separates_harness_product_and_official_upstream_before_executi
     assert all(step["uses"] == "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" for step in checkouts)
     assert all(step["with"]["persist-credentials"] == "false" for step in checkouts)
     assert checkouts[0]["with"]["ref"] == "${{ github.workflow_sha }}"
-    assert checkouts[1]["with"]["ref"] == "${{ inputs.source_commit }}"
+    assert checkouts[1]["with"]["ref"] == workflow()["on"]["workflow_dispatch"]["inputs"]["source_commit"]["default"]
     assert checkouts[2]["with"]["repository"] == "searxng/searxng"
     assert checkouts[2]["with"]["ref"] == smoke.SEARX_COMMIT
     all_commands = "\n".join(step.get("run", "") for step in steps)
