@@ -141,6 +141,7 @@ jobs:
           & (Join-Path $bundle 'hub-relay-bootstrap-inventory.exe') unexpected-argument *> $null
           if ($LASTEXITCODE -ne 2) { throw 'Collector accepted arguments.' }
           Write-Output 'Collector argument rejection: passed.'
+          $global:LASTEXITCODE = 0
           # Only the distributable diagnostic ZIP is made public.
           $publish = Join-Path $env:RUNNER_TEMP 'relay-public-package'
           [void](New-Item -ItemType Directory -Path $publish)
