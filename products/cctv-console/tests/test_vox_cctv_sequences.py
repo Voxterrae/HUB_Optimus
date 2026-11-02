@@ -409,6 +409,61 @@ class SequenceContracts(unittest.TestCase):
         self.assertEqual(len(self.manager.list_clips()), 1)
         self.assertEqual(self.manager.snapshot()['last_error_kind'], 'RetentionDeleteBlocked')
 
+    def test_storage_recovery_restores_old_clips_before_enforcing_count_quota(self):
+        self.feed(99, True)
+        self.manager.trigger(self.event(), 100)
+        self.manager._collect_due(116)
+        first = self.manager._jobs.get_nowait()
+        with patch.object(sequences, '_decode_records', return_value=iter(())):
+            self.manager._process_job(first)
+        directory = Path(self.temporary.name)
+        foreign = directory / 'manual-recording.h264'
+        foreign.write_bytes(b'preserve')
+        reopened = sequences.SequenceManager('private', directory, lambda *args: None,
+            max_episodes=1, min_free_bytes=0)
+        try:
+            with patch.object(reopened, '_safe_directory', side_effect=OSError('storage unavailable')):
+                reopened._load_clips()
+            reopened._ingest(0, video(True), 119)
+            reopened.trigger(self.event(), 120)
+            reopened._collect_due(136)
+            second = reopened._jobs.get_nowait()
+            with patch.object(sequences, '_decode_records', return_value=iter(())):
+                reopened._process_job(second)
+            self.assertEqual({path.stem for path in directory.glob('*.json')}, {second.identifier})
+            self.assertEqual([clip['id'] for clip in reopened.list_clips()], [second.identifier])
+            self.assertFalse((directory / (first.identifier + '.h264')).exists())
+            self.assertEqual((directory / (second.identifier + '.h264')).read_bytes(), video(True).payload)
+            self.assertEqual(foreign.read_bytes(), b'preserve')
+            owned = [directory / (second.identifier + suffix) for suffix in ('.h264', '.json')]
+            self.assertEqual(reopened.snapshot()['storage_bytes'], sum(path.stat().st_size for path in owned))
+        finally:
+            reopened.stop()
+
+    def test_failed_directory_scan_refuses_new_write_and_preserves_existing_evidence(self):
+        self.feed(99, True)
+        self.manager.trigger(self.event(), 100)
+        self.manager._collect_due(116)
+        with patch.object(sequences, '_decode_records', return_value=iter(())):
+            self.manager._process_job(self.manager._jobs.get_nowait())
+        directory = Path(self.temporary.name)
+        original = {path.name: path.read_bytes() for path in directory.iterdir()}
+        reopened = sequences.SequenceManager('private', directory, lambda *args: None,
+            max_episodes=1, min_free_bytes=0)
+        try:
+            reopened._ingest(0, video(True), 119)
+            reopened.trigger(self.event(), 120)
+            reopened._collect_due(136)
+            job = reopened._jobs.get_nowait()
+            metadata = reopened._metadata(job, None, None)
+            with patch.object(Path, 'iterdir', side_effect=OSError('scan unavailable')):
+                reopened._load_clips()
+                with self.assertRaises(OSError):
+                    reopened._save_episode(job, metadata)
+            self.assertEqual({path.name: path.read_bytes() for path in directory.iterdir()}, original)
+        finally:
+            reopened.stop()
+
     def test_reduced_quota_restart_reclaims_previously_valid_oversized_episode(self):
         self.feed(99, True)
         self.manager.trigger(self.event(), 100)
