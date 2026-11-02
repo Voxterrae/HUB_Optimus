@@ -135,6 +135,12 @@ owner hardware key, certify all installed Apps, or settle all follow-up in
 #1743, #1881 and #1906. The detailed dated refresh is in
 `docs/governance/GITHUB_SETTINGS_PROTECTION_CHECKLIST.md`.
 
+Dependabot version updates cover root GitHub Actions weekly, root pip monthly,
+and `/ops/aws/operator-url-intake` npm monthly with one open version-update PR
+under issue #2070. This scheduling is separate from enabled security updates;
+it does not remediate existing advisories or authorize dependency integration.
+All generated proposals require the normal owner-authority checks and review.
+
 ## Operating discipline
 
 - One problem equals one small, reversible pull request.
