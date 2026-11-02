@@ -40,6 +40,14 @@ SEC1 public key of exactly 65 bytes and strict minimal DER with nonzero in-range
 r/s. Both high-S and low-S are accepted. Request origin verification also checks
 that SHA-256 of the supplied SEC1 bytes equals the declared `brokerKeyId`.
 
+`verify_approval_for_pending_request(pending, broker_key, approval, approver_key)`
+checks both signatures and compares every field of the approval's nested request
+with the pending request supplied by the caller. For example, an approval signed
+for another nonce yields `ApprovalMatchError::PendingMismatch` even when both
+signatures verify. The caller must retrieve the pending request from its own
+trusted state and select both keys from the appropriate enrollment. A match is
+one input to the broker's separate freshness, revocation and consumption checks.
+
 ## Local validation
 
 From this directory, with the reviewed Rust 1.99.0 GNU Windows compiler,
