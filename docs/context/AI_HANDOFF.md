@@ -445,3 +445,63 @@ an orphan key. Physical Windows10/11, spoken Narrator/NVDA, complete cookie
 isolation, binary signing and public distribution retain their own acceptance
 gates. Founder ownership, licensing posture and the controlling
 OWNER_AUTHORITY_HANDOFF boundary are unchanged.
+
+## Provider-result visibility continuation
+
+Issue #2061 continues the owner-scoped Windows/Search repair. The preceding
+integration #2047 and pilot pin #2055 are merged; exact product
+`4c9ee43aa2a435abc18a6c63399fb2a99a698e58` passed174 native checks in
+run41338890297, with packaged service/GUI and normal cleanup. This is historical
+acceptance for that exact source, not for the correction described below.
+
+The selected provider now has priority in the bounded result list; safe matching
+bookmarks fill unused slots. Previously twenty matching bookmarks could hide
+every successful Web/Index result. Deduplication prefers the actual provider's
+destination/title/source. Provider errors still remain visible and eligible
+bookmarks remain available without querying a fallback. Limits, authenticated
+local TLS, token handling, cancellation and private bookmark omission are retained.
+The priority regressions produced60/66 before the fix and66/66 after it on
+Linux. The eighth new regression then exposed submission-time bookmark mutation
+(66/67); capturing the input snapshot brings the final Search suite to67/67. Fresh exact-source native acceptance, required CI and final review for
+this increment are recorded in #2061, rather than inferred from the earlier run.
+
+Issue #2062 separately prepares a loopback-only disposable real-Web cloud test.
+No production SearXNG endpoint is configured by this result-order correction.
+Physical Windows10/11, spoken accessibility, upstream availability, code signing
+and public distribution remain separate gates. Owner identity, ownership,
+licensing and the controlling OWNER_AUTHORITY_HANDOFF are unchanged.
+
+## Optimus isolated real-Web acceptance proposal
+
+Issue #2062 scopes an owner-only manual public-repository/main Ubuntu24.04
+acceptance job. It checks out the reviewed harness, exact product and official
+SearXNG source separately, then uses a temporary loopback-only upstream with
+only the ordinary Mwmbl APIv1 adapter. The public typed Core client and real
+owned SearchHost submit only the fixed Python and Firefox cases with empty
+bookmarks, require SearXNG provenance and a relevant official HTTPS destination,
+and fail on missing, irrelevant, rate-limited or unresponsive evidence.
+
+The proposal creates no persistent endpoint or application default, changes no
+ranking, and provisions no paid resources. Both manual QA workflows select the
+native-accepted product0790e0977c170ff8507bb73e0ec7b6e166755892; the existing
+Windows workflow also fixes checkout/build source literally. Both source inputs
+are confirmation-only; another candidate needs a protected pin update, avoiding
+unreviewed code execution in main's cache context. Existing authorization, runner,
+permission, timeout and profile safeguards remain. Source, workflow,
+upstream and resolved dependency provenance remain distinct; direct requirements
+pins do not establish a hermetic transitive lock. Curated reports and exact-owned
+cleanup are mandatory. Local synthetic tests do not establish real-Web relevance;
+independent review found two startup/cancellation defects, now covered by real
+symlinked-venv and actual-wrapper signal regressions. The final Python suite is
+44/44 after additional source-trust regressions; required checks and a separately attributed cloud run remain pending.
+See `products/browser/search/docs/REAL_WEB_SMOKE_2062.md`. The separate
+ranking correction remains under #2061; existing owner-authority and acceptance
+boundaries remain unchanged.
+
+
+## Real-Web first execution and diagnostic correction — issue2062
+
+- Protected PR2068 merged3652228c1cbbc2155bc44ba5280a396ab71312f6, full tree equal27d70040. Final CI2654 tests+1661subtests passed,7required correct publishers and6CodeQL analyses+aggregate success,0unresolvedthreads.
+- Actual run41362456275/job125015536500 attempt1 verified workflow3652228/product0790/SearXNG8b35, SDK10.0.403/deps/build/self26 passed. Execution exited2; Actions Bash-e skipped publishing redirected JSON. Internal cause, query contacts and cleanup are unknown; real-Web acceptance remains blocked.
+- Follow-up captures code in OR-list, publishes the curated report even on negative output, returns original code. Closed qa_mode defaults startup-only: only SearXNG/query-free health, no product/probe search, distinct startup-ready status. Fixed diagnostic stage/readiness/exit/probe-attempt fields and a closed startup error category from bounded private stderr inspection; no raw text is published; existing product pin, authorization, relevance and no-bypass policy retained. Actual Actions-shell negative fixture was RED then GREEN; local suite55 passes.
+- Next: independent review, fresh protected CI/merge, startup-only main execution. Do not infer acceptance or automatically resubmit the uncertain first query run. No persistent endpoint/new resource/paid service. OWNER_AUTHORITY_HANDOFF remains unchanged and controlling.
