@@ -38,7 +38,7 @@ def test_runtime_and_development_dependencies_are_separate() -> None:
     assert runtime == ["jsonschema>=4.26.0,<5"]
     assert development == [
         "-r requirements.txt",
-        "pytest>=9.1.1,<10",
+        "pytest>=9.2.0,<10",
         "PyYAML>=6.0.3,<7",
     ]
     assert all("pytest" not in requirement.lower() for requirement in runtime)

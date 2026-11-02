@@ -28,7 +28,7 @@ DEVELOPMENT_REQUIREMENTS = REPO_ROOT / "requirements-dev.txt"
 MIN_PYTHON = (3, 11)
 SUPPORTED_PACKAGE_RANGES = {
     "jsonschema": ((4, 26, 0), (5, 0, 0)),
-    "pytest": ((9, 1, 1), (10, 0, 0)),
+    "pytest": ((9, 2, 0), (10, 0, 0)),
     "PyYAML": ((6, 0, 3), (7, 0, 0)),
 }
 PACKAGE_IMPORT_NAMES = {
