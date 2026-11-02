@@ -31,7 +31,12 @@ public sealed class OptimusSearchService
         var scope = local?.Scope == OptimusSearchScope.Index ? "index" : "web";
         var provider = local.HasValue ? (scope == "index" ? "Índice Optimus y marcadores" : "Web Optimus y marcadores") : useSearx ? "SearXNG y marcadores" : "Wikipedia y marcadores";
         List<SearchResult> results = [];
-        SearchResponse Response(string? error) => new(results.AsReadOnly(), provider, error);
+        Action? appendBookmarks = null;
+        SearchResponse Response(string? error)
+        {
+            appendBookmarks?.Invoke();
+            return new(results.AsReadOnly(), provider, error);
+        }
         if (string.IsNullOrWhiteSpace(query) || query.Length > 500)
             return Response("Escribe una consulta de 1 a 500 caracteres.");
         if (local is {} target && (!Enum.IsDefined(target.Scope) || !IsValidLocalEndpoint(target.Endpoint) || !IsValidToken(target.BearerToken)))
@@ -46,13 +51,17 @@ public sealed class OptimusSearchService
             results.Add(new(ToText(title, 240), destination.AbsoluteUri, ToText(snippet, 1200), source));
         }
         query = query.Trim();
-        foreach (var bookmark in bookmarks)
+        var bookmarkSnapshot = bookmarks.ToArray();
+        appendBookmarks = () =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (bookmark.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || bookmark.Url.Contains(query, StringComparison.OrdinalIgnoreCase))
-                Add(bookmark.Title, bookmark.Url, "Marcador guardado en este navegador", "Marcadores");
-            if (results.Count == MaxResults) break;
-        }
+            foreach (var bookmark in bookmarkSnapshot)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (results.Count == MaxResults) break;
+                if (bookmark.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || bookmark.Url.Contains(query, StringComparison.OrdinalIgnoreCase))
+                    Add(bookmark.Title, bookmark.Url, "Marcador guardado en este navegador", "Marcadores");
+            }
+        };
 
         var endpoint = local.HasValue ? new Uri(OptimusSearchTarget.LocalEndpoint + "/search?format=json&q=" + Uri.EscapeDataString(query) + "&scope=" + scope + "&language=es") : useSearx ? new Uri(searxEndpoint!.TrimEnd('/') + (new Uri(searxEndpoint).AbsolutePath.TrimEnd('/').EndsWith("/search", StringComparison.Ordinal) ? "" : "/search") + "?format=json&q=" + Uri.EscapeDataString(query))
             : new Uri("https://es.wikipedia.org/w/api.php?action=query&list=search&format=json&utf8=1&srlimit=20&srsearch=" + Uri.EscapeDataString(query));

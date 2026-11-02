@@ -1,0 +1,17 @@
+{
+  "schema": "hub_relay.activation_plan.v0.1",
+  "activation": "blocked",
+  "loaded_image_provenance": "not_established",
+  "authority": "none",
+  "source_and_policy_review": {"status": "pending", "independent_evidence": null},
+  "independent_host_profile": {"status": "pending", "supported_windows_build": null, "architecture": null, "independent_evidence": null},
+  "independent_volume_binding": {"status": "pending", "volume_guid": null, "native_identity": null, "component_route": null, "independent_evidence": null},
+  "independent_primary_token_profile": {"status": "pending", "principal": null, "groups_and_attributes": null, "privileges_and_attributes": null, "session_and_context": null, "independent_evidence": null},
+  "independent_service_sid_binding": {"status": "pending", "binary_sid": null, "descriptor_bytes": null, "no_install_derivation_review": null, "independent_evidence": null},
+  "independent_launch_provenance": {"status": "pending", "adopted_windows_mechanism": null, "verifier_trust_root": null, "artifact_to_created_process_binding": null, "loaded_dependencies_evidence": null, "negative_evidence": null},
+  "owned_resource_and_rollback_review": {"status": "pending", "resources": null, "rollback": null},
+  "owner_disposition": {"status": "pending", "protected_github_record": null, "approval_scope_and_window": null, "reapproval_triggers": null},
+  "diagnostic_receipt_is_authority": false,
+  "artifact_hash_is_loaded_image_proof": false,
+  "creation_implementation": "not_included"
+}

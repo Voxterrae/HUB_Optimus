@@ -44,7 +44,7 @@ Test("bookmarks are matched locally validated deduplicated and never leak when o
     using var h = new Fixture(_ => Reply(wiki)); using var c = new HttpClient(h); var s = new OptimusSearchService(c, _ => TestTransport.Borrow(c));
     Bookmark[] b = [new("Madrid favorito", "https://example.org"), new("Madrid duplicate", "https://example.org/"), new("Madrid credential", "https://a:b@example.org"), new("Madrid script", "javascript:alert(1)"), new("Other", "https://other.org")];
     var r = await s.SearchAsync("Madrid", b, null, default);
-    Check(r.Results.Count == 2 && r.Results[0].Source == "Marcadores" && r.Results[0].Url == "https://example.org/", "Only safe matching unique bookmark plus Wiki");
+    Check(r.Results.Count == 2 && r.Results[0].Source == "Wikipedia" && r.Results[1].Source == "Marcadores" && r.Results[1].Url == "https://example.org/", "Provider first, then only safe matching unique bookmark");
     Check((await s.SearchAsync("Madrid", [], null, default)).Results.All(x => x.Source != "Marcadores"), "Host omission excludes normal bookmarks in private context");
 });
 Test("optional SearXNG returns documented JSON results and no Wikipedia fallback", async () => {
@@ -176,6 +176,7 @@ Test("launcher retains ownership and reports termination failure before reconfig
  try{await File.WriteAllTextAsync(Path.Combine(directory,"Search","Optimus.SearchHost.exe"),"");await File.WriteAllTextAsync(Path.Combine(directory,"Optimus","Search","service.token"),bearer);var process=new RefusingProcess();int probes=0;using var h=new Fixture(r=>++probes==1?new HttpResponseMessage(HttpStatusCode.ServiceUnavailable):IdentityReply(r,bearer));using var c=new HttpClient(h);using var launcher=new SearchHostLauncher(c,directory,directory,_=>process, localClientFactory: _ => TestTransport.Borrow(c));Check((await launcher.ConnectAsync(null,default)).Error==null&&launcher.OwnsProcess,"Owned process prepared");Check(launcher.ConfigureUpstream("https://new.example").Contains("No se pudo detener")&&launcher.OwnsProcess,"Failed stop retains ownership and reports that configuration was not applied");Check((await launcher.ConnectAsync("https://new.example",default)).Error!=null&&launcher.OwnsProcess,"No restart or old-config success after failure");launcher.Dispose();Check(launcher.ShutdownError!=null&&launcher.OwnsProcess,"Close cannot claim successful cleanup");process.AllowStop=true;launcher.Dispose();Check(!launcher.OwnsProcess&&launcher.ShutdownError==null,"Repeated close can retry retained owned resource");}
  finally{Directory.Delete(directory,true);}
 });
+ProviderPriorityTests.Register(Test);
 LauncherReadinessTests.Register(Test);
 IdentityProofTests.Register(Test);
 int failed = 0;
