@@ -1,0 +1,122 @@
+---
+name: Actions lockfile pilot
+
+"on":
+  pull_request:
+    paths:
+      - ".github/workflows/actions-lock-pilot.yml"
+      - ".github/workflows/link-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: Generate and verify Link Check lockfile candidate
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PILOT_BASE_SHA: 5b1f5989a6626ad1abe9ba84ef42595bd77f4c16
+      PILOT_SOURCE_BLOB: 658e026485e6386f727ea367825328e4fda2a4db
+      PILOT_WORKFLOW: .github/workflows/link-check.yml
+
+    steps:
+      - name: Read the exact reviewed baseline
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 5b1f5989a6626ad1abe9ba84ef42595bd77f4c16
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Download the official generator and check its bytes
+        shell: bash
+        env:
+          ACTIONS_LOCK_BIN: ${{ runner.temp }}/gh-actions-lock-v0.4.0
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 60 --retry 2 \
+            https://github.com/github/gh-actions-lock/releases/download/v0.4.0/linux-amd64 \
+            --output "$ACTIONS_LOCK_BIN"
+          printf '%s  %s\n' \
+            f9da98f2a6e9e0ae77deadf9a2319a8a86bb002b541cc3203b247cc59fb04842 \
+            "$ACTIONS_LOCK_BIN" | sha256sum --check --strict
+          chmod +x "$ACTIONS_LOCK_BIN"
+          "$ACTIONS_LOCK_BIN" --version
+
+      - name: Generate and verify in a disposable staging directory
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_HOST: github.com
+          GH_ACTIONS_LOCK_REPO_ROOT: ${{ runner.temp }}/actions-lock-pilot-stage
+          ACTIONS_LOCK_BIN: ${{ runner.temp }}/gh-actions-lock-v0.4.0
+          PILOT_EVIDENCE: ${{ runner.temp }}/actions-lock-pilot-evidence
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PILOT_BASE_SHA"
+          test "$(git hash-object "$PILOT_WORKFLOW")" = "$PILOT_SOURCE_BLOB"
+          mkdir -p "$GH_ACTIONS_LOCK_REPO_ROOT/.github/workflows" "$PILOT_EVIDENCE"
+          cp "$PILOT_WORKFLOW" "$GH_ACTIONS_LOCK_REPO_ROOT/$PILOT_WORKFLOW"
+          cd "$GH_ACTIONS_LOCK_REPO_ROOT"
+          "$ACTIONS_LOCK_BIN" --no-interactive --no-narrow \
+            --json=valid,findings,workflows,dependencies,pins \
+            "$PILOT_WORKFLOW" > "$PILOT_EVIDENCE/generation.json"
+          "$ACTIONS_LOCK_BIN" --verify-local \
+            --json=valid,findings,workflows,dependencies,pins \
+            "$PILOT_WORKFLOW" > "$PILOT_EVIDENCE/verification-local.json"
+          "$ACTIONS_LOCK_BIN" --verify --no-interactive \
+            --json=valid,findings,workflows,dependencies,pins \
+            "$PILOT_WORKFLOW" > "$PILOT_EVIDENCE/verification.json"
+          test "$(git hash-object "$PILOT_WORKFLOW")" = "$PILOT_SOURCE_BLOB"
+          git diff --no-index --exit-code -- \
+            "$GITHUB_WORKSPACE/$PILOT_WORKFLOW" "$GH_ACTIONS_LOCK_REPO_ROOT/$PILOT_WORKFLOW"
+          git -C "$GITHUB_WORKSPACE" diff --exit-code -- "$PILOT_WORKFLOW"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          evidence = Path(os.environ["PILOT_EVIDENCE"])
+          expected = {
+              "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "lycheeverse/lychee-action": "e7477775783ea5526144ba13e8db5eec57747ce8",
+          }
+          report = json.loads((evidence / "verification.json").read_text())
+          if report.get("valid") is not True:
+              raise SystemExit("Online verification did not pass")
+          if report.get("cli_version") != "v0.4.0":
+              raise SystemExit("Unexpected generator version")
+          if [w["path"] for w in report["workflows"]] != [os.environ["PILOT_WORKFLOW"]]:
+              raise SystemExit("Unexpected workflow coverage")
+          direct = [d for d in report["dependencies"] if d.get("direct")]
+          if {d["nwo"]: d["sha"] for d in direct} != expected or len(direct) != 2:
+              raise SystemExit("Direct execution commits changed")
+          if any(d["ref"] != expected[d["nwo"]] for d in direct):
+              raise SystemExit("Direct SHA references changed")
+          manifest = {
+              "baseline_commit": os.environ["PILOT_BASE_SHA"],
+              "workflow": os.environ["PILOT_WORKFLOW"],
+              "source_and_candidate_git_blob": os.environ["PILOT_SOURCE_BLOB"],
+              "generator": "github/gh-actions-lock v0.4.0 linux-amd64",
+              "generator_sha256": "f9da98f2a6e9e0ae77deadf9a2319a8a86bb002b541cc3203b247cc59fb04842",
+              "direct_execution_commits": expected,
+              "online_verification": True,
+              "offline_coverage": True,
+              "candidate_applied_to_repository": False,
+          }
+          (evidence / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+          PY
+          cp .github/workflows/actions.lock "$PILOT_EVIDENCE/actions.lock"
+          cp "$PILOT_WORKFLOW" "$PILOT_EVIDENCE/link-check.yml"
+          cd "$PILOT_EVIDENCE"
+          sha256sum actions.lock link-check.yml generation.json verification.json \
+            verification-local.json manifest.json > SHA256SUMS
+
+      - name: Publish the review artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: actions-lock-link-check-pilot
+          path: ${{ runner.temp }}/actions-lock-pilot-evidence/
+          retention-days: 7
+          if-no-files-found: error
