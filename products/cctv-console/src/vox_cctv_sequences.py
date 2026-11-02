@@ -857,8 +857,7 @@ class SequenceManager:
     def _load_clips(self):
         with self._lock:
             if self._loaded:
-                return
-            self._loaded = True
+                return True
         try:
             self._safe_directory()
             saved = []
@@ -935,10 +934,13 @@ class SequenceManager:
             with self._lock:
                 self._clips = saved
                 self._orphans = {filename: size for filename, size in owned.items() if filename not in used}
+                self._loaded = True
             self._prune_storage()
+            return True
         except OSError as error:
             with self._lock:
                 self._last_error_kind = type(error).__name__
+            return False
 
     @staticmethod
     def _valid_restored_metadata(clip):
@@ -978,7 +980,8 @@ class SequenceManager:
         return all(isinstance(reason, str) and len(reason) <= 80 for reason in reasons)
 
     def _save_episode(self, job, metadata):
-        self._load_clips()
+        if not self._load_clips():
+            raise OSError('Sequence restoration is incomplete')
         self._safe_directory()
         payload = json.dumps(metadata, ensure_ascii=False, separators=(',', ':'), allow_nan=False).encode('utf-8')
         size = len(payload) + metadata['encoded_bytes']

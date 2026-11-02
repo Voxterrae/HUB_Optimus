@@ -75,8 +75,8 @@
     },
     {
       "path": "src/vox_cctv_sequences.py",
-      "sha256": "8e3dd93e6633e227f573be2c07a49d19f4af295cd47a1b14cb68e94352f4fe1d",
-      "size": 54990
+      "sha256": "7f021127d685123dac402a63971a04410c42861f217575088b68165c1e24beb5",
+      "size": 55120
     },
     {
       "path": "src/vox_cctv_video.py",
@@ -185,8 +185,8 @@
     },
     {
       "path": "tests/test_vox_cctv_sequences.py",
-      "sha256": "6ffdc4e9301d78728a463fd57e353edc35584b5444199923948e224a11f28132",
-      "size": 28124
+      "sha256": "9b5d3ec2ee9292831c44497bf13f6faed674ee929dd7bddeef5c51173630f421",
+      "size": 31206
     },
     {
       "path": "tests/test_vox_cctv_ui.py",
