@@ -4100,9 +4100,10 @@
             ? "intakeStatusPasted"
             : "intakeStatusReview"));
 
-      const attributionNotice = intakeRecord.status === "operator-attribution-unverified"
-        ? `<p><b>${escapeHtml(t("cardAttributionBoundary"))}</b> ${escapeHtml(t("cardAttributionPasted"))}</p>`
-        : `<p><b>${escapeHtml(t("cardAttributionBoundary"))}</b> ${escapeHtml(t("cardAttributionRetrieved"))}</p>`;
+      const attributionKey = {
+        intakeStatusRetrieved: "cardAttributionRetrieved",
+        intakeStatusPastedWithUrl: "cardAttributionPasted"
+      }[statusKey];
 
       return `
         <section class="output-card full">
@@ -4114,7 +4115,7 @@
           <p><b>${escapeHtml(t("cardRetrieved"))}</b> ${token(intakeRecord.retrieved_at, "valueNotRetrieved")} · ${escapeHtml(t("intakeRedirectCount", { count: redirectCount(intakeRecord.redirects) }))}</p>
           <p><b>${escapeHtml(t("cardContent"))}</b> ${escapeHtml(t(contentKey))} · ${escapeHtml(t(snapshotKey))}</p>
           <p><b>${escapeHtml(t("cardStatus"))}</b> ${escapeHtml(t(statusKey))}</p>
-          ${attributionNotice}
+          ${attributionKey ? `<p><b>${escapeHtml(t("cardAttributionBoundary"))}</b> ${escapeHtml(t(attributionKey))}</p>` : ""}
         </section>
       `;
     }
