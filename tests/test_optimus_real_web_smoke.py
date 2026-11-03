@@ -103,7 +103,7 @@ def passing_report():
     return {"status": "passed", "passed": True, "source": "a" * 40, "provenanceVerified": True,
             "reason": "none", "stage": "none", "ready": True,
             "queries": [{"id": key, "typedWeb": True, "sourceVerified": True,
-                         "officialDomain": host, "topicMatched": True, "passed": True}
+                         "officialDomain": host, "topicMatched": True, "pairedMatch": True, "passed": True}
                         for key, host in (("python", "docs.python.org"), ("firefox", "www.mozilla.org"))],
             "cleanup": {"attempted": True, "normalExit": True, "forced": False, "profileRemoved": True, "failed": False}}
 
@@ -111,6 +111,37 @@ def passing_report():
 def test_report_accepts_two_relevant_queries_with_clean_exit():
     value = passing_report()
     assert smoke.curate_probe(value) == value
+
+
+@pytest.mark.parametrize("domain,topic", [("www.python.org", False), (None, True), ("www.python.org", True)])
+def test_blocked_evidence_distinguishes_domain_topic_and_split_candidates(domain, topic):
+    value = passing_report()
+    value.update(status="blocked", passed=False, reason="web-result-blocked", stage="python")
+    value["queries"] = [{"id": "python", "typedWeb": True, "sourceVerified": True,
+                         "officialDomain": domain, "topicMatched": topic, "pairedMatch": False, "passed": False}]
+    assert smoke.curate_probe(value) == value
+
+
+@pytest.mark.parametrize("case", ["missing-pair", "paired-without-domain", "paired-without-topic", "split-claimed-passed", "pair-is-integer"])
+def test_curator_rejects_contradictory_query_evidence_even_when_outer_report_is_blocked(case):
+    value = passing_report()
+    value.update(status="blocked", passed=False, reason="web-result-blocked", stage="python")
+    item = value["queries"][0]
+    if case == "missing-pair": del item["pairedMatch"]
+    elif case == "paired-without-domain": item["officialDomain"] = None
+    elif case == "paired-without-topic": item["topicMatched"] = False
+    elif case == "split-claimed-passed": item["pairedMatch"] = False
+    elif case == "pair-is-integer": item["pairedMatch"] = 1
+    with pytest.raises(ValueError): smoke.curate_probe(value)
+
+
+@pytest.mark.parametrize("domain", ["https://outside.example/?token=private-fixture.python.org", "private-fixture.python.org"])
+def test_curator_cannot_publish_raw_urls_or_upstream_subdomain_labels(domain):
+    value = passing_report()
+    value.update(status="blocked", passed=False, reason="web-result-blocked", stage="python")
+    value["queries"] = [{"id": "python", "typedWeb": True, "sourceVerified": True,
+                         "officialDomain": domain, "topicMatched": False, "pairedMatch": False, "passed": False}]
+    with pytest.raises(ValueError): smoke.curate_probe(value)
 
 
 @pytest.mark.parametrize("case", ["empty", "wrong-domain", "missing-source", "forced", "raw-output", "wrong-order"])

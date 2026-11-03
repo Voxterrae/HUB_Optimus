@@ -516,3 +516,41 @@ boundaries remain unchanged.
 - Actual run41362456275/job125015536500 attempt1 verified workflow3652228/product0790/SearXNG8b35, SDK10.0.403/deps/build/self26 passed. Execution exited2; Actions Bash-e skipped publishing redirected JSON. Internal cause, query contacts and cleanup are unknown; real-Web acceptance remains blocked.
 - Follow-up captures code in OR-list, publishes the curated report even on negative output, returns original code. Closed qa_mode defaults startup-only: only SearXNG/query-free health, no product/probe search, distinct startup-ready status. Fixed diagnostic stage/readiness/exit/probe-attempt fields and a closed startup error category from bounded private stderr inspection; no raw text is published; existing product pin, authorization, relevance and no-bypass policy retained. Actual Actions-shell negative fixture was RED then GREEN; local suite55 passes.
 - Next: independent review, fresh protected CI/merge, startup-only main execution. Do not infer acceptance or automatically resubmit the uncertain first query run. No persistent endpoint/new resource/paid service. OWNER_AUTHORITY_HANDOFF remains unchanged and controlling.
+
+
+## Search relevance evidence correction — issue2062, 2026-11-03
+
+The owner requested continued launch repairs with Microsoft infrastructure as the
+default. Current mainaed8336db4311f25b0246d19221c8ccb3281ef50 retains the
+browser/search implementation validated at36c34f4; the historical real-Web
+run41363931459 remains blocked by its combined relevance criterion.
+
+The QA probe previously derived both domain and topic diagnostics from a single
+combined match. It now reports an independently found allowed official domain,
+an independent title-topic match and a pairedMatch boolean. A query still passes
+only with an error-free typed response, nonempty all-SearXNG results and domain
+plus topic in the same result. Separate matching results never combine to pass.
+The supervisor requires the new exact evidence shape and rejects contradictory
+paired/pass claims even when the outer report is already blocked. No raw title,
+URL or error message is added. Old historical reports are not reinterpreted.
+
+Synthetic regression evidence: C# self-test first blocked at check27 for an
+official-domain-only candidate; final33 checks pass. Python contract fixtures
+first failed for the missing pairedMatch shape; three contradictory-evidence
+cases then failed after shape acceptance and pass with the consistency checks.
+Final65 focused Python tests pass. The probe compiled with no warnings/errors
+against21 Core files whose blob IDs match current main. No new upstream query,
+fallback, endpoint, criterion relaxation, product pin update or cloud resource.
+Microsoft-first launch planning remains separate coordination under2021; a new
+Azure remote-service contract cannot reuse the local loopback profile boundary
+unchanged. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+
+Fresh review found that a suffix-based report-domain check could accept a raw
+URL ending in an official domain, and arbitrary upstream subdomain labels could
+carry private-looking text. Producer diagnostics now project onto a closed set
+of known public names or the matching fixed root. The curator accepts exactly
+those labels. Qualification still accepts the same proper official subdomains;
+only published evidence is projected. Producer privacy self-check32 and two
+curator fixtures failed before this fix, then passed; final33 C# checks and65
+Python tests pass. No Critical/Important review finding remains after the
+verified fix pass. No external request was made to test it.

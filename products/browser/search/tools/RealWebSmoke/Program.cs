@@ -246,8 +246,10 @@ internal static class Program
     {
         var typedWeb = response.Error is null;
         var sourceVerified = response.Results.Count != 0 && response.Results.All(result => result.Source == "SearXNG");
+        var officialDomain = response.Results.Select(result => OfficialDomainEvidence(result.Url, item.Domains)).FirstOrDefault(domain => domain is not null);
+        var topicMatched = response.Results.Any(result => result.Title.Contains(item.Topic, StringComparison.OrdinalIgnoreCase));
         var relevant = response.Results.FirstOrDefault(result => OfficialDomain(result.Url, item.Domains) is not null && result.Title.Contains(item.Topic, StringComparison.OrdinalIgnoreCase));
-        return new(item.Id, typedWeb, sourceVerified, relevant is null ? null : OfficialDomain(relevant.Url, item.Domains), relevant is not null,
+        return new(item.Id, typedWeb, sourceVerified, officialDomain, topicMatched, relevant is not null,
             typedWeb && sourceVerified && relevant is not null);
     }
     private static string? OfficialDomain(string value, IReadOnlyList<string> domains)
@@ -256,6 +258,14 @@ internal static class Program
             || uri.Scheme != Uri.UriSchemeHttps || !uri.IsDefaultPort || uri.UserInfo.Length != 0 || uri.Query.Length != 0 || uri.Fragment.Length != 0) return null;
         var host = uri.IdnHost.ToLowerInvariant();
         return domains.Any(domain => host == domain || host.EndsWith("." + domain, StringComparison.Ordinal)) ? host : null;
+    }
+
+    private static string? OfficialDomainEvidence(string value, IReadOnlyList<string> domains)
+    {
+        var host = OfficialDomain(value, domains);
+        if (host is null) return null;
+        if (host is "python.org" or "www.python.org" or "docs.python.org" or "mozilla.org" or "www.mozilla.org" or "firefox.com" or "www.firefox.com") return host;
+        return domains.First(domain => host == domain || host.EndsWith("." + domain, StringComparison.Ordinal));
     }
 
     private static int SelfTest()
@@ -277,6 +287,20 @@ internal static class Program
             Check(!Qualify(Cases[0], new([python with { Source = "Marcadores" }], "Web Optimus y marcadores", null)).Passed);
             Check(!Qualify(Cases[1], new([firefox with { Title = "Mozilla Foundation" }], "Web Optimus y marcadores", null)).Passed);
             Check(!Qualify(Cases[0], new([python with { Url = "https://python.org.evil.test/" }], "Web Optimus y marcadores", null)).Passed);
+            var domainOnly = Qualify(Cases[0], new([python with { Title = "Welcome" }], "Web Optimus y marcadores", null));
+            Check(domainOnly.OfficialDomain == "www.python.org" && !domainOnly.TopicMatched && !domainOnly.Passed);
+            var topicOnly = Qualify(Cases[0], new([python with { Url = "https://untrusted.example/?token=private-fixture" }], "Web Optimus y marcadores", null));
+            Check(topicOnly.OfficialDomain is null && topicOnly.TopicMatched && !topicOnly.Passed);
+            var split = Qualify(Cases[0], new([python with { Title = "Welcome" }, python with { Url = "https://untrusted.example/" }], "Web Optimus y marcadores", null));
+            var splitJson = JsonSerializer.SerializeToElement(split, JsonOptions);
+            Check(split.OfficialDomain == "www.python.org" && split.TopicMatched && !split.Passed
+                && splitJson.TryGetProperty("pairedMatch", out var splitPair) && !splitPair.GetBoolean());
+            var pairJson = JsonSerializer.SerializeToElement(Qualify(Cases[0], new([python], "Web Optimus y marcadores", null)), JsonOptions);
+            Check(pairJson.TryGetProperty("pairedMatch", out var pair) && pair.GetBoolean());
+            Check(!JsonSerializer.Serialize(topicOnly, JsonOptions).Contains("private-fixture", StringComparison.Ordinal));
+            var privateLabel = Qualify(Cases[0], new([python with { Title = "Welcome", Url = "https://private-fixture.python.org/" }], "Web Optimus y marcadores", null));
+            Check(privateLabel.OfficialDomain == "python.org" && !JsonSerializer.Serialize(privateLabel, JsonOptions).Contains("private-fixture", StringComparison.Ordinal));
+            Check(Qualify(Cases[0], new([python with { Url = "https://private-fixture.python.org/" }], "Web Optimus y marcadores", null)).Passed);
             Console.WriteLine(JsonSerializer.Serialize(new { status = "passed", mode = "self-test", checks }, JsonOptions));
             return 0;
         }
@@ -285,7 +309,7 @@ internal static class Program
 
     private sealed class Blocked(string code) : Exception { public string Code { get; } = code; }
     private sealed record Case(string Id, string Query, string Topic, string[] Domains);
-    private sealed record QueryEvidence(string Id, bool TypedWeb, bool SourceVerified, string? OfficialDomain, bool TopicMatched, bool Passed);
+    private sealed record QueryEvidence(string Id, bool TypedWeb, bool SourceVerified, string? OfficialDomain, bool TopicMatched, bool PairedMatch, bool Passed);
     private sealed class CleanupEvidence { public bool Attempted { get; set; } public bool NormalExit { get; set; } public bool Forced { get; set; } public bool ProfileRemoved { get; set; } public bool Failed { get; set; } }
     private sealed class Report { public string Status { get; set; } = "blocked"; public bool Passed { get; set; } public string Source { get; set; } = ""; public bool ProvenanceVerified { get; set; } public bool Ready { get; set; } public string Reason { get; set; } = "not-started"; public string Stage { get; set; } = "none"; public List<QueryEvidence> Queries { get; } = []; public CleanupEvidence Cleanup { get; } = new(); }
 }
