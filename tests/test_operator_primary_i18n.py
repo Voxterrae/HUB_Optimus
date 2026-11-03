@@ -571,10 +571,23 @@ for (const locale of operatorI18n.supportedLocales) {{
   }}
   for (const key of [
     "intakeModeControlled", "intakeRedirectCount", "intakeContentHtml",
-    "intakeSnapshotComplete", "intakeStatusRetrieved"
+    "intakeSnapshotComplete", "intakeStatusRetrieved", "cardAttributionRetrieved"
   ]) {{
     const expected = operatorTextFor(locale, key, {{count: 1}});
     if (!html.includes(expected)) throw new Error(`${{locale}} omitted ${{key}}`);
+  }}
+  const retrievedNotice = escapeHtml(opText("cardAttributionRetrieved"));
+  const urlNotice = escapeHtml(opText("cardAttributionPasted"));
+  for (const [mode, status, expectsUrlNotice] of [
+    ["operator-pasted-text", "operator-provided", false],
+    ["operator-pasted-text-with-url", "operator-attribution-unverified", true],
+    ["controlled-url", "error", false],
+    ["unknown", "unknown", false],
+  ]) {{
+    const card = intakeRecordCard({{mode, status}}, {{language: locale}});
+    if (card.includes(retrievedNotice) || card.includes(urlNotice) !== expectsUrlNotice) {{
+      throw new Error(`${{locale}}: incorrect attribution notice for ${{mode}} / ${{status}}`);
+    }}
   }}
   const triage = operationalSignalLabel("triage");
   if (triage !== operatorI18n.messages[locale].signalTriageLabel || triage === "triage") {{
