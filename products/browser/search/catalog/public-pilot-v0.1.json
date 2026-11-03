@@ -1,0 +1,61 @@
+{
+  "documents": [
+    {
+      "content": "Optimus Search ofrece dos ámbitos de consulta. Web consulta un SearXNG configurado por el operador; Índice Optimus busca sin conexión en el catálogo importado. Estas fuentes mantienen funciones separadas: sin proveedor configurado, Web informa esa falta. El catálogo es finito y no equivale a cobertura de toda Internet. Cada importación valida los documentos y el servicio carga esa instantánea al arrancar. Las URLs y las fechas de las ayudas identifican su referencia y versión de contenido, sin afirmar una descarga remota.",
+      "source": "Optimus — resúmenes propios de referencias públicas",
+      "title": "Optimus Search: fuentes y catálogo finito",
+      "updatedUtc": "2026-11-03T19:29:39Z",
+      "url": "https://github.com/Voxterrae/HUB_Optimus/blob/d77ede8f834fb1e4b078923866a55506e8f64e2d/products/browser/search/README.md"
+    },
+    {
+      "content": "El token del perfil autentica las peticiones de búsqueda al host local. El contrato limita el servicio a HTTPS en 127.0.0.1 y Windows comprueba una prueba HMAC vinculada a la clave TLS y al puerto antes de enviar la consulta y el bearer. El token no se pasa a SearXNG ni se guarda en argumentos, ajustes o paquetes. Esta frontera no aísla frente a procesos que ya puedan leer el perfil ni frente a administradores. La importación del índice es una operación explícita del CLI.",
+      "source": "Optimus — resúmenes propios de referencias públicas",
+      "title": "Optimus Search: token del perfil y transporte local",
+      "updatedUtc": "2026-11-03T19:29:39Z",
+      "url": "https://github.com/Voxterrae/HUB_Optimus/blob/d77ede8f834fb1e4b078923866a55506e8f64e2d/products/browser/search/docs/PROTOCOL.md"
+    },
+    {
+      "content": "Los temas de contraste de Windows cambian los colores del texto, los controles y los fondos para facilitar su lectura. La guía de Microsoft explica cómo elegir y activar un tema desde Configuración de accesibilidad y cómo personalizar sus colores. Probar una combinación y ajustar sus elementos permite adaptarla a las preferencias visuales de cada persona. La página de referencia está en inglés; este texto es un resumen propio en español.",
+      "source": "Optimus — resúmenes propios de referencias públicas",
+      "title": "Windows: contraste para facilitar la lectura",
+      "updatedUtc": "2026-11-03T19:29:39Z",
+      "url": "https://support.microsoft.com/en-us/accessibility/windows/change-color-contrast-in-windows"
+    },
+    {
+      "content": "Los atajos de teclado permiten realizar acciones mediante combinaciones de teclas. Ctrl+C copia, Ctrl+V pega y Alt+Tab cambia entre ventanas abiertas. La referencia de Microsoft reúne combinaciones para el escritorio, el Explorador de archivos, la configuración y otras funciones de Windows. Elegir algunas tareas frecuentes y practicar sus combinaciones ayuda a trabajar con menos desplazamientos del puntero. La acción disponible depende del contexto y de la aplicación activa.",
+      "source": "Optimus — resúmenes propios de referencias públicas",
+      "title": "Windows: atajos de teclado para navegar y trabajar",
+      "updatedUtc": "2026-11-03T19:29:39Z",
+      "url": "https://support.microsoft.com/es-es/accessibility/windows/keyboard-shortcuts-in-windows"
+    },
+    {
+      "content": "Azure Container Apps ofrece un entorno administrado para ejecutar aplicaciones y trabajos en contenedores sin administrar directamente un clúster Kubernetes. Puede alojar API, servicios y procesos en segundo plano, con opciones de escalado según la carga o los eventos. Una futura aplicación de búsqueda necesitaría definir su imagen, recursos, acceso y red. El catálogo público constituye datos de entrada; por sí solo no configura un servicio ni demuestra una ejecución en Azure.",
+      "source": "Optimus — resúmenes propios de referencias públicas",
+      "title": "Azure Container Apps: ejecución de contenedores",
+      "updatedUtc": "2026-11-03T19:29:39Z",
+      "url": "https://learn.microsoft.com/en-us/azure/container-apps/overview"
+    },
+    {
+      "content": "Azure Blob Storage organiza datos no estructurados, como documentos o imágenes, en blobs dentro de contenedores de una cuenta de almacenamiento. Las aplicaciones acceden a esos objetos mediante interfaces y permisos configurados para su uso. Un archivo de catálogo y su manifiesto podrían guardarse como objetos para su distribución futura. El almacenamiento conserva archivos; la aplicación que los consume sigue siendo responsable de validar el catálogo y construir su índice de búsqueda.",
+      "source": "Optimus — resúmenes propios de referencias públicas",
+      "title": "Azure Blob Storage: almacenamiento de objetos",
+      "updatedUtc": "2026-11-03T19:29:39Z",
+      "url": "https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction"
+    },
+    {
+      "content": "En Microsoft Entra, autenticación y autorización responden a decisiones diferentes. La autenticación verifica la identidad de quien intenta acceder; la autorización determina qué recursos y acciones puede usar esa identidad. Un servicio necesita definir ambas fronteras según su diseño y los permisos aplicables. Comprender esta diferencia ayuda a preparar un futuro acceso controlado sin confundir una comprobación de identidad con permiso para todas las operaciones.",
+      "source": "Optimus — resúmenes propios de referencias públicas",
+      "title": "Microsoft Entra: autenticación y autorización",
+      "updatedUtc": "2026-11-03T19:29:39Z",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/authentication-vs-authorization"
+    },
+    {
+      "content": "Los presupuestos de Azure Cost Management permiten fijar un importe para un periodo y recibir avisos cuando el coste o su previsión alcanza los umbrales configurados. Sirven para observar el gasto y avisar a las personas responsables. Los presupuestos y sus alertas no detienen por sí solos los recursos ni imponen un límite automático al consumo. Antes de una futura publicación deben revisarse el ámbito, los permisos, los destinatarios y cualquier acción adicional para controlar costes.",
+      "source": "Optimus — resúmenes propios de referencias públicas",
+      "title": "Azure Cost Management: presupuestos y alertas de coste",
+      "updatedUtc": "2026-11-03T19:29:39Z",
+      "url": "https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-acm-create-budgets"
+    }
+  ],
+  "schemaVersion": 1
+}
