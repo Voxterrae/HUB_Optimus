@@ -145,6 +145,39 @@ including query-free healthy startup, early upstream exit3, actual shell report
 publication for exit0/2, and mode rejection. External diagnosis remains a separate
 protected-main execution; the initial failure is not silently retried.
 
+## Relevance evidence correction — 3 November 2026
+
+The old qualifier derived both officialDomain and topicMatched from a single
+domain-and-title match. A blocked report could not distinguish an official
+destination with a different title, a topical result on another domain, or
+matches split across two results. The probe now records officialDomain and
+topicMatched independently and emits pairedMatch only when both match the same
+result. Passed retains the original typed-response, source and paired-match
+requirements. Two separate partial matches never pass. The supervisor validates
+the exact new shape and rejects contradictory paired/pass evidence even when
+the outer report is blocked. No raw title/URL is published.
+
+C# self-test first failed at check27 for domain-only evidence, then passed33
+checks after the correction. New Python shape cases failed first; after shape
+acceptance, three contradictory blocked-report cases failed before consistency
+validation and now pass. The complete focused suite passes65 tests. The harness
+build used21 Core source files independently matched to mainaed8336d, with
+SDK10.0.403 and no warnings/errors. No external query is part of this correction.
+The recorded run41363931459 cannot retroactively establish any of these new
+independent diagnostics and remains blocked. Neither provider coverage nor
+production deployment is accepted by these synthetic checks.
+
+
+Fresh review found that a suffix-based report-domain check could accept a raw
+URL ending in an official domain, and arbitrary upstream subdomain labels could
+carry private-looking text. Producer diagnostics now project onto a closed set
+of known public names or the matching fixed root. The curator accepts exactly
+those labels. Qualification still accepts the same proper official subdomains;
+only published evidence is projected. Producer privacy self-check32 and two
+curator fixtures failed before this fix, then passed; final33 C# checks and65
+Python tests pass. No Critical/Important review finding remains after the
+verified fix pass. No external request was made to test it.
+
 ## Limits
 
 No cache/artifact upload, secrets import, personal profile, paid provisioning,
