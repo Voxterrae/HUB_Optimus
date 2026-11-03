@@ -29,16 +29,17 @@ public sealed class SearchHostLauncher : IDisposable
     private readonly CancellationTokenSource lifetime = new();
     private ISearchHostProcess? owned;
     private bool disposed, independent;
-    private string? upstream;
+    private string? upstream, indexFile;
     public bool OwnsProcess { get { lock (sync) return owned is { HasExited: false }; } }
 
-    public static ProcessStartInfo CreateStartInfo(string applicationDirectory, string? upstream, string tokenPath)
+    public static ProcessStartInfo CreateStartInfo(string applicationDirectory, string? upstream, string tokenPath, string? indexFile = null)
     {
         if (upstream is not null && !OptimusSearchService.IsValidEndpoint(upstream)) throw new ArgumentException("Servidor SearXNG no válido.");
         var start = new ProcessStartInfo(Path.Combine(Path.GetFullPath(applicationDirectory), "Search", "Optimus.SearchHost.exe"))
         { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, WorkingDirectory = Path.GetFullPath(applicationDirectory) };
         start.ArgumentList.Add("--token-file"); start.ArgumentList.Add(tokenPath);
         if (upstream is not null) { start.ArgumentList.Add("--searx-url"); start.ArgumentList.Add(upstream); }
+        if (indexFile is not null) { if (!Path.IsPathFullyQualified(indexFile) || indexFile.Any(char.IsControl)) throw new ArgumentException("Índice no válido."); start.ArgumentList.Add("--index-file"); start.ArgumentList.Add(indexFile); }
         start.ArgumentList.Add("--owner-stdin"); start.ArgumentList.Add("true");
         return start;
     }
@@ -60,8 +61,57 @@ public sealed class SearchHostLauncher : IDisposable
     {
         using var request = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lifetime.Token);
         request.CancelAfter(TimeSpan.FromSeconds(4));
+        await connecting.WaitAsync(request.Token).ConfigureAwait(false);
+        try { return await ConnectLockedAsync(endpoint, request.Token, cancellationToken).ConfigureAwait(false); }
+        finally { connecting.Release(); }
+    }
+
+    internal async Task<string?> SelectIndexAsync(string? candidate, CancellationToken cancellationToken)
+    {
+        using var request = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lifetime.Token);
+        request.CancelAfter(TimeSpan.FromSeconds(8));
         var token = request.Token;
-        await connecting.WaitAsync(token).ConfigureAwait(false);
+        bool acquired = false, changed = false, committed = false;
+        string? previous = null;
+        try
+        {
+            await connecting.WaitAsync(token).ConfigureAwait(false); acquired = true;
+            lock (sync)
+            {
+                token.ThrowIfCancellationRequested();
+                if (disposed) throw new OperationCanceledException(token);
+                previous = indexFile;
+            }
+            bool hasOwned; lock (sync) hasOwned = owned is not null;
+            if (!hasOwned && await VerifiedTokenAsync(token).ConfigureAwait(false) is not null)
+                return "El servicio de búsqueda es independiente. Ciérralo por su vía habitual antes de cargar el piloto.";
+            lock (sync)
+            {
+                token.ThrowIfCancellationRequested();
+                if (disposed) throw new OperationCanceledException(token);
+                if (!StopOwned()) return ShutdownError;
+                indexFile = candidate; changed = true; independent = false;
+            }
+            var connection = await ConnectLockedAsync(upstream, token, cancellationToken).ConfigureAwait(false);
+            if (connection.Error is not null) return connection.Error;
+            lock (sync) { token.ThrowIfCancellationRequested(); if (disposed) throw new OperationCanceledException(token); committed = true; }
+            return null;
+        }
+        catch (OperationCanceledException) { return "No se pudo cambiar el catálogo. Se conserva la selección anterior."; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
+        { return "No se pudo cambiar el catálogo. Se conserva la selección anterior."; }
+        finally
+        {
+            if (changed && !committed) lock (sync) { StopOwned(); indexFile = previous; }
+            if (acquired) connecting.Release();
+        }
+    }
+
+    private async Task<SearchHostConnection> ConnectLockedAsync(string? endpoint, CancellationToken cancellationToken, CancellationToken callerToken)
+    {
+        using var request = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lifetime.Token);
+        request.CancelAfter(TimeSpan.FromSeconds(4));
+        var token = request.Token;
         bool startedHere = false;
         SearchHostConnection Failure(string error) => new(new(OptimusSearchScope.Web, null, null), error);
         try
@@ -86,7 +136,7 @@ public sealed class SearchHostLauncher : IDisposable
                     if (owned is null || owned.HasExited)
                     {
                         if (!StopOwned()) return Failure(ShutdownError!);
-                        var start = CreateStartInfo(applicationDirectory, upstream, tokenPath);
+                        var start = CreateStartInfo(applicationDirectory, upstream, tokenPath, indexFile);
                         if (!File.Exists(start.FileName)) return Failure("No se encontró el servicio incluido en Search. Reinstala el paquete de Optimus.");
                         owned = startProcess(start);
                         startedHere = owned is not null;
@@ -106,13 +156,12 @@ public sealed class SearchHostLauncher : IDisposable
             // Return only the token snapshot whose possession was proved, never a later profile-file value.
             return bearer is null ? Failure("No se pudo leer un token válido del perfil para el servicio local.") : new(new(OptimusSearchScope.Web, null, bearer), null);
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested || lifetime.IsCancellationRequested)
+        catch (OperationCanceledException) when (callerToken.IsCancellationRequested || lifetime.IsCancellationRequested)
         { lock (sync) if (startedHere) StopOwned(); throw; }
         catch (OperationCanceledException)
         { lock (sync) if (startedHere) StopOwned(); return Failure("El servicio local de búsqueda no respondió a tiempo."); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException)
         { lock (sync) if (startedHere) StopOwned(); return Failure("No se pudo preparar el servicio local de búsqueda."); }
-        finally { connecting.Release(); }
     }
 
     private string? ReadToken()
