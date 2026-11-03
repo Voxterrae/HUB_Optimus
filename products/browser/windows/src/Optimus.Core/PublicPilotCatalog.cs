@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace Optimus.Core;
 
@@ -59,6 +60,7 @@ public sealed class PublicPilotCatalog : IDisposable
                 token.ThrowIfCancellationRequested();
                 var info = new FileInfo(output);
                 if (!info.Exists || info.Length is <= 0 or > 262144 || (info.Attributes & FileAttributes.ReparsePoint) != 0) return new(active, Failure);
+                if (!MatchesReviewedCorpus(output, catalog)) return new(active, Failure);
             }
             token.ThrowIfCancellationRequested();
             var error = await launcher.SelectIndexAsync(enabled ? Path.Combine(candidate!, "index.json") : null, token).ConfigureAwait(false);
@@ -69,9 +71,9 @@ public sealed class PublicPilotCatalog : IDisposable
             Clean(previous);
             return new(active, null);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or OperationCanceledException or System.ComponentModel.Win32Exception)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or OperationCanceledException or System.ComponentModel.Win32Exception or JsonException)
         { return new(active, Failure); }
-        finally { if (!launcher.OwnsProcess || launcher.ShutdownError is null) Clean(candidate); if (acquired) changing.Release(); }
+        finally { if (launcher.CanRemoveUnusedIndex) Clean(candidate); if (acquired) changing.Release(); }
     }
 
     private byte[] ReadAsset(string name, string expectedHash)
@@ -88,6 +90,35 @@ public sealed class PublicPilotCatalog : IDisposable
         var normalized = Encoding.UTF8.GetBytes(text);
         if (Convert.ToHexStringLower(SHA256.HashData(normalized)) != expectedHash) throw new IOException();
         return normalized;
+    }
+
+    private static bool MatchesReviewedCorpus(string output, byte[] reviewed)
+    {
+        using var stream = new FileStream(output, FileMode.Open, FileAccess.Read, FileShare.Read);
+        if (stream.Length is <= 0 or > 262144) return false;
+        var bytes = new byte[checked((int)stream.Length)]; stream.ReadExactly(bytes);
+        if (stream.ReadByte() != -1) return false;
+        var options = new JsonDocumentOptions { MaxDepth = 8 };
+        using var expected = JsonDocument.Parse(reviewed, options);
+        using var actual = JsonDocument.Parse(bytes, options);
+        static bool Fields(JsonElement value, string[] fields) => value.ValueKind == JsonValueKind.Object
+            && value.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal).SequenceEqual(fields.Order(StringComparer.Ordinal));
+        var root = actual.RootElement;
+        if (!Fields(root, ["schemaVersion", "documents"]) || !root.GetProperty("schemaVersion").TryGetInt32(out var version) || version != 1) return false;
+        var documents = root.GetProperty("documents");
+        if (documents.ValueKind != JsonValueKind.Array || documents.GetArrayLength() != 8) return false;
+        var original = expected.RootElement.GetProperty("documents");
+        for (var index = 0; index < 8; index++)
+        {
+            var document = documents[index]; var reference = original[index];
+            if (!Fields(document, ["url", "title", "content", "source", "updatedUtc"])) return false;
+            foreach (var field in new[] { "url", "title", "content", "source" })
+                if (document.GetProperty(field).ValueKind != JsonValueKind.String || document.GetProperty(field).GetString() != reference.GetProperty(field).GetString()) return false;
+            if (document.GetProperty("updatedUtc").ValueKind != JsonValueKind.String
+                || !document.GetProperty("updatedUtc").TryGetDateTimeOffset(out var stamp) || stamp.Offset != TimeSpan.Zero
+                || stamp != reference.GetProperty("updatedUtc").GetDateTimeOffset()) return false;
+        }
+        return true;
     }
 
     internal static async Task<int> RunImporterAsync(ProcessStartInfo start, CancellationToken token)
@@ -134,7 +165,7 @@ public sealed class PublicPilotCatalog : IDisposable
     {
         disposed = true; lifetime.Cancel();
         if (!changing.Wait(TimeSpan.FromSeconds(10))) return;
-        try { if (!launcher.OwnsProcess) { foreach (var directory in workspaces.ToArray()) Clean(directory); workspace = null; } }
+        try { if (launcher.HasConfirmedShutdown) { foreach (var directory in workspaces.ToArray()) Clean(directory); workspace = null; } }
         finally { changing.Release(); }
     }
 }

@@ -31,12 +31,14 @@ public sealed class SearchHostLauncher : IDisposable
     private bool disposed, independent;
     private string? upstream, indexFile;
     public bool OwnsProcess { get { lock (sync) return owned is { HasExited: false }; } }
+    internal bool CanRemoveUnusedIndex { get { lock (sync) return ShutdownError is null; } }
+    internal bool HasConfirmedShutdown { get { lock (sync) return owned is null && ShutdownError is null; } }
 
     public static ProcessStartInfo CreateStartInfo(string applicationDirectory, string? upstream, string tokenPath, string? indexFile = null)
     {
         if (upstream is not null && !OptimusSearchService.IsValidEndpoint(upstream)) throw new ArgumentException("Servidor SearXNG no válido.");
         var start = new ProcessStartInfo(Path.Combine(Path.GetFullPath(applicationDirectory), "Search", "Optimus.SearchHost.exe"))
-        { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, WorkingDirectory = Path.GetFullPath(applicationDirectory) };
+        { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, WorkingDirectory = Path.GetFullPath(applicationDirectory) };
         start.ArgumentList.Add("--token-file"); start.ArgumentList.Add(tokenPath);
         if (upstream is not null) { start.ArgumentList.Add("--searx-url"); start.ArgumentList.Add(upstream); }
         if (indexFile is not null) { if (!Path.IsPathFullyQualified(indexFile) || indexFile.Any(char.IsControl)) throw new ArgumentException("Índice no válido."); start.ArgumentList.Add("--index-file"); start.ArgumentList.Add(indexFile); }
@@ -92,7 +94,7 @@ public sealed class SearchHostLauncher : IDisposable
                 if (!StopOwned()) return ShutdownError;
                 indexFile = candidate; changed = true; independent = false;
             }
-            var connection = await ConnectLockedAsync(upstream, token, cancellationToken).ConfigureAwait(false);
+            var connection = await ConnectLockedAsync(upstream, token, cancellationToken, allowIndependent: false).ConfigureAwait(false);
             if (connection.Error is not null) return connection.Error;
             lock (sync) { token.ThrowIfCancellationRequested(); if (disposed) throw new OperationCanceledException(token); committed = true; }
             return null;
@@ -107,7 +109,7 @@ public sealed class SearchHostLauncher : IDisposable
         }
     }
 
-    private async Task<SearchHostConnection> ConnectLockedAsync(string? endpoint, CancellationToken cancellationToken, CancellationToken callerToken)
+    private async Task<SearchHostConnection> ConnectLockedAsync(string? endpoint, CancellationToken cancellationToken, CancellationToken callerToken, bool allowIndependent = true)
     {
         using var request = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lifetime.Token);
         request.CancelAfter(TimeSpan.FromSeconds(4));
@@ -125,7 +127,12 @@ public sealed class SearchHostLauncher : IDisposable
             var bearer = await VerifiedTokenAsync(token).ConfigureAwait(false);
             if (bearer is not null)
             {
-                lock (sync) independent = owned is null;
+                lock (sync)
+                {
+                    if ((!allowIndependent || indexFile is not null) && owned is not { HasExited: false, Ready: true })
+                        return Failure("Otro servicio responde en el puerto local. No se confirmó el catálogo seleccionado; cierra ese servicio por su vía habitual.");
+                    independent = owned is null;
+                }
             }
             else
             {
@@ -148,7 +155,7 @@ public sealed class SearchHostLauncher : IDisposable
                 {
                     token.ThrowIfCancellationRequested();
                     bearer = await VerifiedTokenAsync(token).ConfigureAwait(false);
-                    if (bearer is not null) break;
+                    lock (sync) if (bearer is not null && owned is { HasExited: false, Ready: true }) break;
                     await Task.Delay(100, token).ConfigureAwait(false);
                 }
             }
@@ -236,10 +243,35 @@ public sealed class SearchHostLauncher : IDisposable
 internal interface ISearchHostProcess : IDisposable
 {
     bool HasExited { get; }
+    bool Ready => !HasExited;
     void Stop();
 }
-internal sealed class SystemSearchHostProcess(Process process) : ISearchHostProcess
+internal sealed class SystemSearchHostProcess : ISearchHostProcess
 {
+    private readonly Process process;
+    private int ready;
+    public SystemSearchHostProcess(Process process)
+    {
+        this.process = process;
+        _ = ObserveReadyAsync();
+    }
+    public bool Ready => Volatile.Read(ref ready) == 1 && !HasExited;
+    private async Task ObserveReadyAsync()
+    {
+        try
+        {
+            // Existing fixed stdout marker is emitted only after this child's server has bound.
+            var line = new char[64]; int count = 0;
+            while (count < line.Length)
+            {
+                if (await process.StandardOutput.ReadAsync(line.AsMemory(count, 1)).ConfigureAwait(false) == 0) return;
+                if (line[count++] != '\n') continue;
+                if (new string(line, 0, count).TrimEnd('\r', '\n') == "OptimusSearch ready.") Volatile.Write(ref ready, 1);
+                return;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException) { }
+    }
     private bool forcedTermination;
     public bool HasExited => process.HasExited;
     public void Stop()
