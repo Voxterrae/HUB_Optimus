@@ -1,0 +1,68 @@
+{
+  "catalogCanonicalSha256": "8294911789f69f2c1262c80153ca0dddd6189e9a198b586f5fbb3beeb0d665ec",
+  "catalogId": "optimus-public-pilot-v0.1",
+  "classification": "public-reviewed-reference-summaries",
+  "contentKind": "optimus-authored-summaries",
+  "entries": [
+    {
+      "referenceCheckedDate": "2026-11-03",
+      "referenceKind": "github-immutable",
+      "sourceRevision": "d77ede8f834fb1e4b078923866a55506e8f64e2d",
+      "summarySha256": "95a6cb00de01306d781367c6eec9cb9b4872fddf27d525f9da8cc13bf959514e",
+      "url": "https://github.com/Voxterrae/HUB_Optimus/blob/d77ede8f834fb1e4b078923866a55506e8f64e2d/products/browser/search/README.md"
+    },
+    {
+      "referenceCheckedDate": "2026-11-03",
+      "referenceKind": "github-immutable",
+      "sourceRevision": "d77ede8f834fb1e4b078923866a55506e8f64e2d",
+      "summarySha256": "5b39cc32c2846cd083b44181802a16a6e50b308e7086004c6a9e999f6dd1610e",
+      "url": "https://github.com/Voxterrae/HUB_Optimus/blob/d77ede8f834fb1e4b078923866a55506e8f64e2d/products/browser/search/docs/PROTOCOL.md"
+    },
+    {
+      "referenceCheckedDate": "2026-11-03",
+      "referenceKind": "microsoft-live",
+      "sourceRevision": null,
+      "summarySha256": "c3de7bb90b62e902ed2eb73bd15453af0662dab230d9a954e84126ff809dcd6e",
+      "url": "https://support.microsoft.com/en-us/accessibility/windows/change-color-contrast-in-windows"
+    },
+    {
+      "referenceCheckedDate": "2026-11-03",
+      "referenceKind": "microsoft-live",
+      "sourceRevision": null,
+      "summarySha256": "91760bd0c0f6215d13140d84aee1e3abd86576cf1681205b5d83bd1be3167f9d",
+      "url": "https://support.microsoft.com/es-es/accessibility/windows/keyboard-shortcuts-in-windows"
+    },
+    {
+      "referenceCheckedDate": "2026-11-03",
+      "referenceKind": "microsoft-live",
+      "sourceRevision": null,
+      "summarySha256": "fa3596854be2d0b2735b2602e2c0b49f33692f251589fed2ba27f3f79c8a02ec",
+      "url": "https://learn.microsoft.com/en-us/azure/container-apps/overview"
+    },
+    {
+      "referenceCheckedDate": "2026-11-03",
+      "referenceKind": "microsoft-live",
+      "sourceRevision": null,
+      "summarySha256": "57e51a72dd9aee82914d76e66393c9b552bf72faba91da366717fe642af69f0e",
+      "url": "https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction"
+    },
+    {
+      "referenceCheckedDate": "2026-11-03",
+      "referenceKind": "microsoft-live",
+      "sourceRevision": null,
+      "summarySha256": "9a297b80a51df8626da8c3a78b45c6142ff0d479c48083c3db704273830eafd9",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/authentication-vs-authorization"
+    },
+    {
+      "referenceCheckedDate": "2026-11-03",
+      "referenceKind": "microsoft-live",
+      "sourceRevision": null,
+      "summarySha256": "b93dc046f2dff237d6c201bc5e475695cd90bb910571bca673f2611e93529d0f",
+      "url": "https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-acm-create-budgets"
+    }
+  ],
+  "generalWebCoverage": false,
+  "language": "es",
+  "schemaVersion": 1,
+  "snapshotUtc": "2026-11-03T19:29:39Z"
+}

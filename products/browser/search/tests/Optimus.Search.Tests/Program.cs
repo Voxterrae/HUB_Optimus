@@ -178,6 +178,45 @@ Test("CLI import actually normalizes catalog, invalid input preserves output", a
     var before=await File.ReadAllTextAsync(FilePath("cli-output.json"));True(before.Contains("https://example.org/help"));
     await File.WriteAllTextAsync(FilePath("cli-input.json"),"invalid");result=await RunCli(["index","--input",FilePath("cli-input.json"),"--output",FilePath("cli-output.json")]);Equal(2,result.Code);Equal(before,await File.ReadAllTextAsync(FilePath("cli-output.json")));
 });
+Test("public pilot actual CLI import resolves eight reviewed topics and unrelated search stays empty", async () => {
+    var output=FilePath("public-pilot.index.json");
+    Equal(0,(await RunCli(["index","--input",Path.Combine(AppContext.BaseDirectory,"catalog","public-pilot-v0.1.json"),"--output",output])).Code);
+    var index=new LocalSearchIndex(await CatalogStore.LoadAsync(output));Equal(8,index.DocumentCount);
+    foreach(var (query,url) in new[]{
+        ("fuentes","https://github.com/Voxterrae/HUB_Optimus/blob/d77ede8f834fb1e4b078923866a55506e8f64e2d/products/browser/search/README.md"),
+        ("token","https://github.com/Voxterrae/HUB_Optimus/blob/d77ede8f834fb1e4b078923866a55506e8f64e2d/products/browser/search/docs/PROTOCOL.md"),
+        ("contraste","https://support.microsoft.com/en-us/accessibility/windows/change-color-contrast-in-windows"),
+        ("atajos","https://support.microsoft.com/es-es/accessibility/windows/keyboard-shortcuts-in-windows"),
+        ("contenedores","https://learn.microsoft.com/en-us/azure/container-apps/overview"),
+        ("almacenamiento","https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction"),
+        ("Entra","https://learn.microsoft.com/en-us/entra/identity-platform/authentication-vs-authorization"),
+        ("presupuestos","https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-acm-create-budgets")
+    }) {
+        var results=index.Search(query);True(results.Count>0);Equal(url,results[0].Url);
+        Equal("Optimus — resúmenes propios de referencias públicas",results[0].Source);
+    }
+    Equal(0,index.Search("trilobites").Count);
+});
+Test("public pilot real CLI repeated imports produce identical index bytes", async () => {
+    var input=Path.Combine(AppContext.BaseDirectory,"catalog","public-pilot-v0.1.json");var output=FilePath("public-pilot-repeat.index.json");
+    Equal(0,(await RunCli(["index","--input",input,"--output",output])).Code);
+    var before=await File.ReadAllBytesAsync(output);Equal(8,(await CatalogStore.LoadAsync(output)).Count);
+    Equal(0,(await RunCli(["index","--input",input,"--output",output])).Code);
+    var after=await File.ReadAllBytesAsync(output);True(before.SequenceEqual(after));
+});
+Test("public pilot malformed and duplicate real CLI imports preserve existing index with generic errors", async () => {
+    var input=Path.Combine(AppContext.BaseDirectory,"catalog","public-pilot-v0.1.json");var output=FilePath("public-pilot-preserved.index.json");
+    Equal(0,(await RunCli(["index","--input",input,"--output",output])).Code);
+    var before=await File.ReadAllBytesAsync(output);Equal(8,(await CatalogStore.LoadAsync(output)).Count);
+    using var catalog=JsonDocument.Parse(await File.ReadAllTextAsync(input));var documents=catalog.RootElement.GetProperty("documents").EnumerateArray().ToArray();
+    var duplicate=JsonSerializer.Serialize(new {schemaVersion=1,documents=documents.Append(documents[0]).ToArray()});
+    foreach(var invalid in new[]{"SYNTHETIC_PRIVATE_INVALID_PILOT",duplicate}) {
+        var invalidPath=FilePath("public-pilot-invalid.json");await File.WriteAllTextAsync(invalidPath,invalid);
+        var result=await RunCli(["index","--input",invalidPath,"--output",output]);Equal(2,result.Code);
+        Equal("Unable to start search or import catalog. Check local configuration.",result.Output.Trim());
+        var after=await File.ReadAllBytesAsync(output);True(before.SequenceEqual(after));
+    }
+});
 Test("CLI and actual token worker run without optional DOTNET_ROOT", async () => {
     var previousRoot=Environment.GetEnvironmentVariable("DOTNET_ROOT");
     Environment.SetEnvironmentVariable("DOTNET_ROOT",null);
