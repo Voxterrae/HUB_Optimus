@@ -146,6 +146,36 @@ under issue #2070. This scheduling is separate from enabled security updates;
 it does not remediate existing advisories or authorize dependency integration.
 All generated proposals require the normal owner-authority checks and review.
 
+## Pages Environment review checkpoint — 2026-11-03
+
+Issue [#1743](https://github.com/Voxterrae/HUB_Optimus/issues/1743) records
+activation of option B from the [Pages review design](../maintenance/pages_environment_review_design_2026-11-01.md).
+Authenticated reads found existing `github-pages` Environment `10953982818`
+requiring exactly `Voxterrae` (user ID `249308740`), with
+`prevent_self_review=false`, `can_admins_bypass=false` and exactly branch
+`main` admitted. The initiator can approve: this is a single-owner hold,
+not independent two-person review. These mutable settings need fresh reads.
+
+[Run 41699683380](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41699683380),
+attempt 1, source `aed8336db4311f25b0246d19221c8ccb3281ef50`, records
+native `rejected` by that owner account. It finished `failure` with no
+deployment steps or artifacts: the expected negative test, not a deployment
+PASS. Its completion at 20:19:09 UTC is not an exact review-decision timestamp.
+
+At the verified checkpoint, [run 41705548138](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41705548138),
+attempt 1, source `9fa3f8a0dbe5ea6919e49240a0df6bac7dbba803`, was
+`waiting` for review, unapproved and without steps or artifacts. Keep it held
+under the owner's instruction; re-read live main, run, attempt and checks before
+any later decision. Positive publication and artifact/served-byte acceptance
+remain pending separate authorization and native human approval of the exact
+candidate. This handoff PR authorizes neither merge nor deployment; `docs/**`
+merges trigger the existing Pages workflow.
+
+Recovery retains the hold and served version; never remove the reviewer,
+enable bypass or weaken checks to recover. #1743 remains open for positive
+acceptance and hardware-key enrollment. Owner authority,
+ratification and the controlling OWNER_AUTHORITY_HANDOFF remain unchanged.
+
 ## Operating discipline
 
 - One problem equals one small, reversible pull request.
