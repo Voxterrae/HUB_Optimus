@@ -223,7 +223,7 @@ sealed class LocalProcessHost : IDisposable
  {
   System.IO.Directory.CreateDirectory(Path.Combine(Directory,"Search"));System.IO.Directory.CreateDirectory(Path.Combine(Directory,"Optimus","Search"));
   var executable=Path.Combine(Directory,"Search","Optimus.SearchHost.exe");
-  File.WriteAllText(executable,"#!/bin/sh\nprintf '%s' '"+token+"' > \"$2\"\nprintf '%s' \"$$\" > '"+PidPath+"'\nwhile IFS= read -r line; do :; done\nexit 0\n");
+  File.WriteAllText(executable,"#!/bin/sh\nprintf '%s' '"+token+"' > \"$2\"\nprintf '%s' \"$$\" > '"+PidPath+"'\necho 'OptimusSearch ready.'\nwhile IFS= read -r line; do :; done\nexit 0\n");
   if(!OperatingSystem.IsWindows())File.SetUnixFileMode(executable,UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.UserExecute);
  }
  public void Dispose()=>System.IO.Directory.Delete(Directory,true);
