@@ -152,11 +152,9 @@ def dependency_provenance(python, source, report):
 
 
 def official_domain(host, query_id):
-    if not isinstance(host, str) or len(host) > 253 or host != host.lower():
-        return False
-    allowed = {"python": ("python.org", "docs.python.org"),
-               "firefox": ("mozilla.org", "firefox.com")}.get(query_id, ())
-    return any(host == domain or host.endswith("." + domain) for domain in allowed)
+    allowed = {"python": ("python.org", "www.python.org", "docs.python.org"),
+               "firefox": ("mozilla.org", "www.mozilla.org", "firefox.com", "www.firefox.com")}.get(query_id, ())
+    return isinstance(host, str) and host in allowed
 
 
 def curate_probe(value, expected_source=None):
@@ -178,15 +176,19 @@ def curate_probe(value, expected_source=None):
     if not isinstance(queries, list) or len(queries) > 2:
         raise ValueError("probe-report-invalid")
     for index, item in enumerate(queries):
-        if not isinstance(item, dict) or set(item) != {"id", "typedWeb", "sourceVerified", "officialDomain", "topicMatched", "passed"}:
+        if not isinstance(item, dict) or set(item) != {"id", "typedWeb", "sourceVerified", "officialDomain", "topicMatched", "pairedMatch", "passed"}:
             raise ValueError("probe-report-invalid")
-        if item["id"] != ("python", "firefox")[index] or any(type(item[key]) is not bool for key in ("typedWeb", "sourceVerified", "topicMatched", "passed")):
+        if item["id"] != ("python", "firefox")[index] or any(type(item[key]) is not bool for key in ("typedWeb", "sourceVerified", "topicMatched", "pairedMatch", "passed")):
             raise ValueError("probe-report-invalid")
         if item["officialDomain"] is not None and not official_domain(item["officialDomain"], item["id"]):
             raise ValueError("probe-report-invalid")
+        if item["pairedMatch"] and (item["officialDomain"] is None or not item["topicMatched"]):
+            raise ValueError("probe-report-invalid")
+        if item["passed"] != (item["typedWeb"] and item["sourceVerified"] and item["pairedMatch"]):
+            raise ValueError("probe-report-invalid")
     if value["status"] == "passed" and (not value["ready"] or not value["provenanceVerified"] or value["source"] is None or len(queries) != 2
             or cleanup != {"attempted": True, "normalExit": True, "forced": False, "profileRemoved": True, "failed": False}
-            or any(not all(item[key] for key in ("typedWeb", "sourceVerified", "topicMatched", "passed"))
+            or any(not all(item[key] for key in ("typedWeb", "sourceVerified", "topicMatched", "pairedMatch", "passed"))
                    or item["officialDomain"] is None for item in queries)):
         raise ValueError("probe-report-invalid")
     return value
