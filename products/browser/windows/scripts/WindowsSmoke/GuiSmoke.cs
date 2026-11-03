@@ -41,19 +41,6 @@ internal static class GuiSmoke
             Invoke("Tu índice"); Set("Consulta de Optimus Search", "servicio local"); Invoke("Buscar en la fuente elegida");
             Find("Abrir: Ayuda Optimus: servicio local y privacidad"); report.Checks.Add("gui-index-public-help-result");
             var pilotAsset = Path.Combine(publication, "Search", "catalog", "public-pilot-v0.1.json");
-            var originalPilot = File.ReadAllBytes(pilotAsset);
-            try
-            {
-                // Only the helper-owned publication's fixed public asset is changed, never a profile.
-                File.WriteAllText(pilotAsset, "{\"schemaVersion\":1,\"documents\":[]}", new UTF8Encoding(false));
-                Invoke("Cargar catálogo piloto");
-                Find("No se pudo cargar el catálogo piloto. Se conserva el catálogo anterior.");
-                Find("Catálogo habitual");
-                Set("Consulta de Optimus Search", "servicio local"); Invoke("Buscar en la fuente elegida");
-                Find("Abrir: Ayuda Optimus: servicio local y privacidad");
-                report.Checks.Add("gui-pilot-invalid-public-asset-preserves-habitual-index");
-            }
-            finally { File.WriteAllBytes(pilotAsset, originalPilot); }
             Invoke("Cargar catálogo piloto"); Find("Piloto público · 8 documentos");
             foreach (var (query, title) in new[] {
                 ("fuentes", "Optimus Search: fuentes y catálogo finito"),
@@ -70,6 +57,17 @@ internal static class GuiSmoke
                 Find("Abrir: " + title);
             }
             report.Checks.Add("gui-pilot-eight-public-topic-results");
+            // An exclusive read lease makes the asset unavailable without mutating caller files.
+            // This tests failed reload of an already active pilot, not malformed bytes.
+            using (var unavailable = new FileStream(pilotAsset, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                Invoke("Cargar catálogo piloto");
+                Find("No se pudo cargar el catálogo piloto. Se conserva el catálogo anterior.");
+                Find("Piloto público · 8 documentos");
+                Set("Consulta de Optimus Search", "contraste"); Invoke("Buscar en la fuente elegida");
+                Find("Abrir: Windows: contraste para facilitar la lectura");
+                report.Checks.Add("gui-pilot-unavailable-asset-reload-preserves-active-index");
+            }
             Set("Consulta de Optimus Search", "trilobites"); Invoke("Buscar en la fuente elegida");
             Find("Índice Optimus y marcadores (8 documentos) · Sin resultados."); report.Checks.Add("gui-pilot-unrelated-empty");
             Invoke("Restaurar catálogo anterior"); Find("Catálogo habitual");
@@ -181,7 +179,23 @@ internal static class GuiSmoke
         Wait(() =>
         {
             found = root.FindFirst(TreeScope.Descendants, new AndCondition(new PropertyCondition(AutomationElement.NameProperty, name), new PropertyCondition(AutomationElement.IsOffscreenProperty, false)));
-            return found is not null;
+            if (found is not null) return true;
+            // Long cards need ordinary scrolling, just as for a keyboard/screen-reader user.
+            // Consider only a matching descendant with a visible scrollable owned ancestor.
+            foreach (AutomationElement candidate in root.FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, name)))
+            {
+                var parent = TreeWalker.RawViewWalker.GetParent(candidate);
+                for (var depth = 0; parent is not null && depth < 32 && !parent.Equals(root); depth++, parent = TreeWalker.RawViewWalker.GetParent(parent))
+                {
+                    if (parent.Current.IsOffscreen || !parent.TryGetCurrentPattern(ScrollPattern.Pattern, out var pattern)) continue;
+                    var scroll = (ScrollPattern)pattern;
+                    if (!scroll.Current.VerticallyScrollable) continue;
+                    var above = candidate.Current.BoundingRectangle.Top < parent.Current.BoundingRectangle.Top;
+                    scroll.Scroll(ScrollAmount.NoAmount, above ? ScrollAmount.LargeDecrement : ScrollAmount.LargeIncrement);
+                    return false;
+                }
+            }
+            return false;
         }, "Required owned-window UIAutomation control unavailable.", blocked);
         return found!;
     }
