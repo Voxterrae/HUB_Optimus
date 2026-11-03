@@ -40,6 +40,41 @@ internal static class GuiSmoke
             // Home's public index entry opens the real native search surface in Index scope.
             Invoke("Tu índice"); Set("Consulta de Optimus Search", "servicio local"); Invoke("Buscar en la fuente elegida");
             Find("Abrir: Ayuda Optimus: servicio local y privacidad"); report.Checks.Add("gui-index-public-help-result");
+            var pilotAsset = Path.Combine(publication, "Search", "catalog", "public-pilot-v0.1.json");
+            var originalPilot = File.ReadAllBytes(pilotAsset);
+            try
+            {
+                // Only the helper-owned publication's fixed public asset is changed, never a profile.
+                File.WriteAllText(pilotAsset, "{\"schemaVersion\":1,\"documents\":[]}", new UTF8Encoding(false));
+                Invoke("Cargar catálogo piloto");
+                Find("No se pudo cargar el catálogo piloto. Se conserva el catálogo anterior.");
+                Find("Catálogo habitual");
+                Set("Consulta de Optimus Search", "servicio local"); Invoke("Buscar en la fuente elegida");
+                Find("Abrir: Ayuda Optimus: servicio local y privacidad");
+                report.Checks.Add("gui-pilot-invalid-public-asset-preserves-habitual-index");
+            }
+            finally { File.WriteAllBytes(pilotAsset, originalPilot); }
+            Invoke("Cargar catálogo piloto"); Find("Piloto público · 8 documentos");
+            foreach (var (query, title) in new[] {
+                ("fuentes", "Optimus Search: fuentes y catálogo finito"),
+                ("token", "Optimus Search: token del perfil y transporte local"),
+                ("contraste", "Windows: contraste para facilitar la lectura"),
+                ("atajos", "Windows: atajos de teclado para navegar y trabajar"),
+                ("contenedores", "Azure Container Apps: ejecución de contenedores"),
+                ("almacenamiento", "Azure Blob Storage: almacenamiento de objetos"),
+                ("Entra", "Microsoft Entra: autenticación y autorización"),
+                ("presupuestos", "Azure Cost Management: presupuestos y alertas de coste")
+            })
+            {
+                Set("Consulta de Optimus Search", query); Invoke("Buscar en la fuente elegida");
+                Find("Abrir: " + title);
+            }
+            report.Checks.Add("gui-pilot-eight-public-topic-results");
+            Set("Consulta de Optimus Search", "trilobites"); Invoke("Buscar en la fuente elegida");
+            Find("Índice Optimus y marcadores (8 documentos) · Sin resultados."); report.Checks.Add("gui-pilot-unrelated-empty");
+            Invoke("Restaurar catálogo anterior"); Find("Catálogo habitual");
+            Set("Consulta de Optimus Search", "servicio local"); Invoke("Buscar en la fuente elegida");
+            Find("Abrir: Ayuda Optimus: servicio local y privacidad"); report.Checks.Add("gui-pilot-restores-habitual-index");
             Invoke("Inicio");
             Invoke("✧  Ayuda"); Set("Pregunta a la guía local", "permisos"); Invoke("Consultar guía");
             Wait(() => ((ValuePattern)Find("Respuesta de la guía local").GetCurrentPattern(ValuePattern.Pattern)).Current.Value.Contains("Guía local basada en reglas", StringComparison.Ordinal), "Local guide response unavailable.");
@@ -54,6 +89,13 @@ internal static class GuiSmoke
             try { Wait(() => page.Received, "Owned loopback page was not requested."); }
             catch { GuiNavigationDiagnostics.Capture(window, page.Address, report, "navigation-failure"); throw; }
             Find("Optimus isolated smoke page"); report.Checks.Add("gui-loopback-navigation-rendered");
+            Invoke("✧  Ayuda"); Set("Pregunta a la guía local", "guardar marcador"); Invoke("Consultar guía");
+            Invoke("Confirmar acción"); Invoke("Cerrar ayuda"); Invoke("Inicio"); Invoke("Tu índice");
+            Set("Consulta de Optimus Search", "smoke"); Invoke("Buscar en la fuente elegida");
+            Find("Abrir: Optimus smoke"); var requestsBeforeOpen = page.Requests;
+            Invoke("Abrir: Optimus smoke");
+            Wait(() => page.Requests > requestsBeforeOpen, "Selected loopback bookmark result was not requested.");
+            Find("Optimus isolated smoke page"); report.Checks.Add("gui-loopback-bookmark-result-open-rendered");
             Invoke("Nueva pestaña privada"); Find("Privado · no se restauran direcciones"); report.Checks.Add("gui-private-tab");
             // Sidebar is a native button; no keyboard injection or global mouse action.
             Invoke("⚙  Ajustes"); Find("Tamaño y zoom"); Invoke("Cerrar ajustes"); report.Checks.Add("gui-settings-open-close");
@@ -188,8 +230,9 @@ internal static class GuiSmoke
         private readonly TcpListener listener = new(IPAddress.Loopback, 0);
         private readonly CancellationTokenSource stop = new();
         private readonly Task serving;
-        private volatile bool received;
-        public bool Received => received;
+        private int received;
+        public bool Received => Requests > 0;
+        public int Requests => Volatile.Read(ref received);
         public string Address { get; }
         public LocalPage()
         {
@@ -206,9 +249,9 @@ internal static class GuiSmoke
                     using var deadline = CancellationTokenSource.CreateLinkedTokenSource(stop.Token); deadline.CancelAfter(2000);
                     var input = new byte[4096]; var count = await stream.ReadAsync(input, deadline.Token);
                     if (count == 0) continue;
-                    received = true;
+                    Interlocked.Increment(ref received);
                     var body = Encoding.UTF8.GetBytes("<!doctype html><html><title>Optimus smoke</title><h1>Optimus isolated smoke page</h1><p>Loopback only.</p></html>");
-                    var header = Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n");
+                    var header = Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n");
                     await stream.WriteAsync(header, deadline.Token); await stream.WriteAsync(body, deadline.Token);
                 }
             }
