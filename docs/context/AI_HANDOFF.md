@@ -173,7 +173,7 @@ merges trigger the existing Pages workflow.
 
 Recovery retains the hold and served version; never remove the reviewer,
 enable bypass or weaken checks to recover. #1743 remains open for positive
-acceptance, App inventory and hardware-key enrollment. Owner authority,
+acceptance and hardware-key enrollment. Owner authority,
 ratification and the controlling OWNER_AUTHORITY_HANDOFF remain unchanged.
 
 ## Operating discipline
