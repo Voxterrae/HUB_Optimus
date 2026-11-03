@@ -1,0 +1,16 @@
+name: Actions event policy denial probe
+
+on:
+  pull_request_target:
+    branches: [issue1960-negative-probe]
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  denial-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Signal unexpected execution
+        run: echo "ISSUE1960_POLICY_PROBE_UNEXPECTED_RUN"
