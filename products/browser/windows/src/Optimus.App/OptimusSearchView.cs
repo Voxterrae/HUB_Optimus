@@ -10,6 +10,13 @@ namespace Optimus.App;
 internal sealed class OptimusSearchView : UserControl, IDisposable
 {
     private readonly Action<string> _openUrl;
+    private readonly PublicPilotCatalog _pilot;
+    private readonly Func<bool, Task<PilotCatalogChange>> _changePilot;
+    private readonly Func<bool> _catalogBusy;
+    private readonly StackPanel _pilotPanel = new();
+    private readonly TextBlock _pilotScope = NativeSurface.Text("Catálogo habitual", "OptimusSmallSize");
+    private readonly Button _loadPilot = NativeSurface.Button("Cargar catálogo piloto", "Cargar catálogo piloto");
+    private readonly Button _restorePilot = NativeSurface.Button("Restaurar catálogo anterior", "Restaurar catálogo anterior");
     private readonly Func<IReadOnlyList<Bookmark>> _bookmarks;
     private readonly HttpClient _client;
     private readonly SearchSubmissionGate _submissions;
@@ -27,9 +34,9 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
     private long _generation;
     private bool _disposed;
 
-    public OptimusSearchView(Action<string> openUrl, Func<IReadOnlyList<Bookmark>> bookmarks,Func<bool> eligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connect)
+    public OptimusSearchView(Action<string> openUrl, Func<IReadOnlyList<Bookmark>> bookmarks,Func<bool> eligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connect,PublicPilotCatalog pilot,Func<bool,Task<PilotCatalogChange>> changePilot,Func<bool> catalogBusy)
     {
-        _openUrl = openUrl;
+        _openUrl = openUrl; _pilot = pilot; _changePilot = changePilot; _catalogBusy = catalogBusy;
         _connect = connect;
         _hostLifetime = hostLifetime;
         _bookmarks = bookmarks;
@@ -68,6 +75,13 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         System.Windows.Automation.AutomationProperties.SetName(_scope, "Fuente de búsqueda");
         _scope.SelectionChanged += (_, _) => { Invalidate(); _results.Children.Clear(); UpdatePrivacy(); _status.Text = "Fuente cambiada. Pulsa Buscar para consultar."; };
         _query.TextChanged += (_, _) => { Invalidate(); _results.Children.Clear(); _status.Text = "Consulta modificada. Pulsa Buscar para consultar."; };
+        _pilotPanel.Children.Add(_pilotScope);
+        _pilotPanel.Children.Add(NativeSurface.Text("Piloto público en español · solo esta sesión · no cubre toda Internet.", "OptimusSmallSize", "OptimusMutedBrush"));
+        var pilotActions = new WrapPanel();
+        foreach (var button in new[] { _loadPilot, _restorePilot }) { button.Margin = new Thickness(0, 8, 8, 8); pilotActions.Children.Add(button); }
+        _pilotPanel.Children.Add(pilotActions);
+        _loadPilot.Click += async (_, _) => await ChangePilotAsync(true);
+        _restorePilot.Click += async (_, _) => await ChangePilotAsync(false);
         UpdatePrivacy();
         var form = new Grid();
         form.ColumnDefinitions.Add(new ColumnDefinition());
@@ -89,6 +103,7 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         };
         searchPanel.Children.Add(form);
         searchPanel.Children.Add(_privacy);
+        searchPanel.Children.Add(_pilotPanel);
         var detailHeader = NativeSurface.Text("Detalles de la fuente y privacidad", "OptimusSmallSize");
         detailHeader.MinHeight = 44;
         detailHeader.VerticalAlignment = VerticalAlignment.Center;
@@ -185,8 +200,28 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         }
     }
 
+    private async Task ChangePilotAsync(bool enabled)
+    {
+        if (_disposed || _catalogBusy() || !CanSubmit) return;
+        var result = await _changePilot(enabled);
+        if (_disposed || !CanSubmit) return;
+        RefreshPilot();
+        _status.Text = result.Error ?? (result.Active
+            ? "Piloto público cargado para esta sesión. Escribe una consulta y pulsa Buscar."
+            : "Catálogo anterior restaurado. Escribe una consulta y pulsa Buscar.");
+    }
+
+    public void RefreshPilot()
+    {
+        _pilotPanel.Visibility = Scope == OptimusSearchScope.Index ? Visibility.Visible : Visibility.Collapsed;
+        _pilotScope.Text = _pilot.IsActive ? "Piloto público · 8 documentos" : "Catálogo habitual";
+        _loadPilot.IsEnabled = !_catalogBusy() && CanSubmit;
+        _restorePilot.IsEnabled = !_catalogBusy() && CanSubmit && _pilot.IsActive;
+    }
+
     private void UpdatePrivacy()
     {
+        RefreshPilot();
         _privacy.Text = Scope switch
         {
             OptimusSearchScope.Index => "Índice local · solo documentos importados, sin red.",

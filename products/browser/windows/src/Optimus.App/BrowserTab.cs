@@ -64,11 +64,11 @@ internal sealed class BrowserTab : IDisposable
  private bool disposed,internalBlank;
  private readonly OperationLifetime lifetime=new();
  public bool IsDisposed=>lifetime.IsDisposed;
- public BrowserTab(Action<BrowserTab> recover,bool isPrivate,Func<PrivacyPolicy> policy,Func<long> policyGeneration,Func<IReadOnlyList<Bookmark>> bookmarks,string profileName,Func<BrowserTab,bool> searchEligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connectSearch)
+ public BrowserTab(Action<BrowserTab> recover,bool isPrivate,Func<PrivacyPolicy> policy,Func<long> policyGeneration,Func<IReadOnlyList<Bookmark>> bookmarks,string profileName,Func<BrowserTab,bool> searchEligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connectSearch,PublicPilotCatalog pilot,Func<bool,Task<PilotCatalogChange>> changePilot,Func<bool> catalogBusy)
  {
   controllerOwnership=new ControllerOwnership(()=>View.Dispose());
   this.profileName=profileName;IsPrivate=isPrivate;this.policy=policy;this.policyGeneration=policyGeneration;
-  search=new OptimusSearchView(url=>OpenRequested?.Invoke(this,url),()=>IsPrivate?Array.Empty<Bookmark>():bookmarks(),()=>!IsDisposed&&searchEligible(this),hostLifetime,connectSearch) {Visibility=Visibility.Collapsed};
+  search=new OptimusSearchView(url=>OpenRequested?.Invoke(this,url),()=>IsPrivate?Array.Empty<Bookmark>():bookmarks(),()=>!IsDisposed&&searchEligible(this),hostLifetime,connectSearch,pilot,changePilot,catalogBusy) {Visibility=Visibility.Collapsed};
   home=new NativeHomeView(IsPrivate,(query,scope)=>SearchAsync(query,scope),()=>ShowSearch(OptimusSearchScope.Index),()=>BookmarksRequested?.Invoke(this),()=>HelpRequested?.Invoke(this));
   Item=new TabItem {Header=ModeTitle("Inicio"),Content=Host,Tag=this};AutomationProperties.SetItemStatus(Item,"Preparando navegador");Host.Children.Add(View);Host.Children.Add(home);Host.Children.Add(failure);Host.Children.Add(search);
   failure.Children.Add(new TextBlock {Text="El motor de esta pestaña se detuvo. Recuperarla vuelve a abrir la última dirección; el texto no guardado puede perderse.",TextWrapping=TextWrapping.Wrap});
@@ -199,9 +199,10 @@ internal sealed class BrowserTab : IDisposable
  public void ShowSearch(OptimusSearchScope scope)
  {
   if(!search.CanSubmit)return;
-  ShowSearch();search.SetScope(scope);search.FocusQuery();
+  ShowSearch();search.SetScope(scope);search.RefreshPilot();search.FocusQuery();
  }
  public void CancelSearch()=>Invalidate();
+ public void RefreshCatalog()=>search.RefreshPilot();
  public void DisableSearch(){search.Disable();Invalidate();}
  public void PolicyChanged(){Invalidate();addressSnapshot=new();GoHome();}
  private string ModeTitle(string title)=>(IsPrivate?"Privado · ":"Normal · ")+ShortTitle(title);
