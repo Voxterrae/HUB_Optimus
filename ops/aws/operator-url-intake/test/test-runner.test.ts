@@ -104,12 +104,22 @@ test('case timeout', async (context) => {
 
 test('lifecycle hooks retain explicit per-hook deadlines', () => {
   withFixture((root) => {
-    addCase(root, 'hook-timeout', `const { test, beforeAll } = require(${support});
-beforeAll(async () => { await new Promise((done) => setTimeout(done, 200)); }, 25);
-test('hook timeout', () => {});\n`);
+    const hookCase = (timeout: number) => `const { test, beforeAll } = require(${support});
+beforeAll(async () => { await new Promise((done) => setTimeout(done, 200)); }, ${timeout});
+test('hook timeout control', () => { console.log('HOOK_BODY_EXECUTED'); });\n`;
+    addCase(root, 'hook-timeout', hookCase(25));
     const result = runFixture(root);
     assert.equal(result.status, 1);
-    assert.match(result.stdout, /timed out after 25ms/);
+    assert.match(result.stdout, /failed running before hook/);
+    assert.doesNotMatch(result.stdout, /HOOK_BODY_EXECUTED/);
+
+    // Only the deadline changes: the same hook and body must now execute.
+    addCase(root, 'hook-timeout', hookCase(1_000));
+    const control = runFixture(root);
+    assert.equal(control.status, 0);
+    assert.match(control.stdout, /HOOK_BODY_EXECUTED/);
+    assert.match(control.stdout, /\btests 1\b/);
+    assert.match(control.stdout, /\bpass 1\b/);
   });
 });
 
