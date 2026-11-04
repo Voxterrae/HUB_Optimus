@@ -10,7 +10,10 @@ if (args.some((arg) => arg !== '--runInBand')) {
 }
 
 function run(commandArgs) {
-  const result = spawnSync(process.execPath, commandArgs, { cwd: root, stdio: 'inherit' });
+  const env = { ...process.env };
+  // Each invocation starts a fresh runner, including calls made from a test.
+  delete env.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, commandArgs, { cwd: root, stdio: 'inherit', env });
   if (result.error) {
     console.error(result.error.message);
     process.exit(1);

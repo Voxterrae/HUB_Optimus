@@ -46,7 +46,11 @@ function runFixture(root: string, args: string[] = []) {
 test('runner discovers nested tests and accepts the existing --runInBand option', () => {
   withFixture((root) => {
     addCase(root, 'nested/example', "require('node:test').test('nested case', () => {});\n");
-    assert.equal(runFixture(root, ['--runInBand']).status, 0);
+    const result = runFixture(root, ['--runInBand']);
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /nested case/);
+    assert.match(result.stdout, /\btests 1\b/);
+    assert.match(result.stdout, /\bpass 1\b/);
   });
 });
 
@@ -131,10 +135,16 @@ test('missing assertion', () => { expect.assertions(1); });\n`);
   });
 });
 
-test('fulfilled expect assertion counts pass the native test', () => {
+test('standalone expect honors assertion counts without the vulnerable runner dependencies', () => {
+  assert.throws(() => require.resolve('deepmerge'), { code: 'MODULE_NOT_FOUND' });
+  assert.throws(() => require.resolve('jest-config'), { code: 'MODULE_NOT_FOUND' });
   withFixture((root) => {
     addCase(root, 'counted-assertion', `const { test, expect } = require(${support});
 test('counted assertion', () => { expect.assertions(1); expect(true).toBe(true); });\n`);
-    assert.equal(runFixture(root).status, 0);
+    const result = runFixture(root);
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /counted assertion/);
+    assert.match(result.stdout, /\btests 1\b/);
+    assert.match(result.stdout, /\bpass 1\b/);
   });
 });
