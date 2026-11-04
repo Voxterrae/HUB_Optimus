@@ -1,3 +1,4 @@
+import { expect, test } from './test-support';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 

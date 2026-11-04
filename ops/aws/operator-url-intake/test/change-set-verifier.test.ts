@@ -1,3 +1,4 @@
+import { expect, test } from './test-support';
 import {
   deriveExpectedResourceChanges,
   templatesMatch,

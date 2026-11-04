@@ -1,3 +1,4 @@
+import { expect, test } from './test-support';
 import {
   EXECUTE_DEPLOY_ROLE_NAME,
   EXPECTED_ACCOUNT_ID,
