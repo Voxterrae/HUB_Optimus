@@ -32,6 +32,8 @@ jobs:
           # Keep checked-out bytes unchanged by Windows line-ending conversion.
           git config --global core.autocrlf false
           if ($LASTEXITCODE -ne 0) { throw 'Cannot disable runner line-ending conversion' }
+          git config --global core.eol lf
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot enforce runner LF checkout bytes' }
 
       - name: Checkout exact candidate without persisted credentials
         id: checkout
@@ -82,6 +84,11 @@ jobs:
             $actualBlobs = @(git -C $env:GITHUB_WORKSPACE hash-object --no-filters -- @paths)
             if ($LASTEXITCODE -ne 0) { throw 'Cannot hash raw candidate source bytes' }
             if (($actualBlobs -join "`n") -cne ($expectedBlobs -join "`n")) {
+              for ($i = 0; $i -lt $paths.Count; $i++) {
+                if ($actualBlobs[$i] -cne $expectedBlobs[$i]) {
+                  Write-Host "Raw blob mismatch: $($paths[$i]); expected=$($expectedBlobs[$i]); raw=$($actualBlobs[$i])"
+                }
+              }
               throw 'Checked-out bytes differ from the immutable candidate Git blobs'
             }
             $snapshot = [ordered]@{}
