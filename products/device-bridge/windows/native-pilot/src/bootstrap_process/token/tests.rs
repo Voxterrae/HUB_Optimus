@@ -106,7 +106,11 @@ fn native_record_layout_and_both_user_fixtures_preserve_defined_padding() {
     assert!(reply.success);
     api.close(handle).unwrap();
     for buffer in [user_buffer(&sid, u32::MAX), emitted] {
-        assert!(buffer.bytes()[padding_start..header_length].iter().all(|byte| *byte == 0));
+        assert!(
+            buffer.bytes()[padding_start..header_length]
+                .iter()
+                .all(|byte| *byte == 0)
+        );
     }
 }
 

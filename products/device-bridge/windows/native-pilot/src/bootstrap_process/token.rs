@@ -8,10 +8,10 @@ use windows_sys::Win32::Foundation::*;
 use windows_sys::Win32::Security::*;
 // Uppercase aliases keep native class values usable in Rust constant patterns.
 use windows_sys::Win32::Security::{
-    TokenUser as CLASS_USER, TokenType as CLASS_TYPE,
-    TokenStatistics as CLASS_STATISTICS, TokenElevationType as CLASS_ELEVATION_TYPE,
-    TokenElevation as CLASS_ELEVATION, TokenIsAppContainer as CLASS_IS_APP_CONTAINER,
+    TokenElevation as CLASS_ELEVATION, TokenElevationType as CLASS_ELEVATION_TYPE,
     TokenImpersonationLevel as CLASS_IMPERSONATION_LEVEL,
+    TokenIsAppContainer as CLASS_IS_APP_CONTAINER, TokenStatistics as CLASS_STATISTICS,
+    TokenType as CLASS_TYPE, TokenUser as CLASS_USER,
 };
 use windows_sys::Win32::System::Threading::{GetCurrentThread, OpenProcessToken, OpenThreadToken};
 
