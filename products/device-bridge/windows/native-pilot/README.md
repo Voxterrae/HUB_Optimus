@@ -52,6 +52,28 @@ errors. These internal observations prepare the bootstrap inventory described in
 the acquisition proposal. Trusted image provenance and enrollment remain separate
 requirements of the eventual protected-store producer.
 
+Its private child `bootstrap_process::token` retains one noninheritable primary
+token opened from that held process with exactly `TOKEN_QUERY` (`0x0008`). The
+token observation borrows the process observation and has checked consuming
+cleanup. This partial diagnostic copies the bounded binary `TokenUser` SID and
+all attribute bits, `TokenType`, `TokenStatistics`, `TokenElevationType`,
+`TokenElevation` and `TokenIsAppContainer`. It requires primary type, known
+elevation values, exact boolean scalars and no AppContainer context. Aligned
+buffers are limited to 64 KiB; every SID pointer and extent is checked inside the
+actual returned buffer before copying. Variable capture uses one size query and
+one retrieval, with no retry on unsupported, growing or truncated output.
+
+Statistics IDs bracket each capture. Recheck compares all selected facts on the
+retained token and a freshly opened current primary token, then checked-closes
+the fresh token. Process and current-thread checks bracket the operation. Only
+`OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE)` failing with
+`ERROR_NO_TOKEN` establishes observed nonimpersonation; a returned token is
+minimally inspected, checked-closed and refused. No thread token is changed.
+These observations cannot exclude ABA changes or changes afterward. No account
+lookup, groups/privileges capture, effective-access claim, complete 19-class token
+context, serialized receipt or approval follows. Negative tests use synthetic
+records; native token tests only query the test process and current thread.
+
 The target-Windows dependency is exactly `windows-sys 0.61.2`, with
 `Win32_Foundation`, `Win32_Security_Cryptography`, `Win32_Networking_HttpServer`,
 `Win32_Security_Authorization`, `Win32_Storage_FileSystem`, `Win32_System_IO`,
