@@ -1,6 +1,8 @@
 //! Dormant observations of this process, retained by a limited real handle.
 //! The image names are metadata observations; trusted launch remains separate.
 
+mod token;
+
 use std::os::windows::io::{AsRawHandle, FromRawHandle, IntoRawHandle, OwnedHandle};
 use std::ptr::null_mut;
 use windows_sys::Win32::Foundation::*;
