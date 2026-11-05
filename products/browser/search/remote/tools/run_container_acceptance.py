@@ -20,6 +20,7 @@ from verify_response import decode, verify
 
 
 REGISTRY_PATH = '/run/optimus-remote/credentials.json'
+PHASE = 'arguments'
 TOPICS = (
     ('fuentes catálogo', 'README.md'),
     ('token perfil', 'PROTOCOL.md'),
@@ -30,6 +31,12 @@ TOPICS = (
     ('Entra autenticación', 'authentication-vs-authorization'),
     ('presupuestos coste', 'tutorial-acm-create-budgets'),
 )
+
+
+def checkpoint(phase):
+    global PHASE
+    PHASE = phase
+    print(f'CHECK {phase}', flush=True)
 
 
 def require(condition):
@@ -128,6 +135,8 @@ def stop(container, base):
 
 
 def accept(image):
+    global PHASE
+    checkpoint('imageinspect')
     image_config = json.loads(docker('image', 'inspect', image).stdout)[0]
     require(image_config['Config']['User'] == '1654:1654')
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -137,6 +146,7 @@ def accept(image):
         credential = secrets.token_urlsafe(32)
         write_registry(registry, credential)
         try:
+            checkpoint('create')
             docker('create', '--cidfile', str(cid_file),
                    '--publish', '127.0.0.1::8080',
                    '--cpus', '0.25', '--memory', '512m', '--memory-swap', '512m',
@@ -148,40 +158,58 @@ def accept(image):
                    '--env', f'OPTIMUS_REMOTE_CREDENTIALS_FILE={REGISTRY_PATH}', image)
             container = cid_file.read_text(encoding='ascii').strip()
             require(re.fullmatch(r'[0-9a-f]{64}', container) is not None)
+            checkpoint('start')
             docker('start', container)
+            checkpoint('endpointmetadata')
             base = endpoint(container, registry)
+            checkpoint('readiness')
             ready(opener, base)
+            checkpoint('uid')
             processes = docker('top', container, '-eo', 'uid,gid,comm').stdout.splitlines()[1:]
             require(processes and all(line.split()[:2] == ['1654', '1654'] for line in processes))
+            checkpoint('auth')
             require(request(opener, base, '/v1/catalog', expected=401)['error'] == 'unauthorized')
             require(request(opener, base, '/v1/search', body={'query': 'contraste', 'limit': 8}, expected=401)['error'] == 'unauthorized')
             catalog = request(opener, base, '/v1/catalog', credential)
+            checkpoint('topics')
             for query, suffix in TOPICS:
                 response = request(opener, base, '/v1/search', credential,
                                    {'query': query, 'limit': 8})
                 require(verify(catalog, response) > 0)
                 require(response['results'][0]['url'].endswith(suffix))
+            checkpoint('empty')
             empty = request(opener, base, '/v1/search', credential,
                             {'query': 'zzzzsyntheticunrelatedneedle', 'limit': 8})
             require(verify(catalog, empty) == 0)
 
+            checkpoint('stop')
             stop(container, base)
+            checkpoint('rotation')
             replacement = secrets.token_urlsafe(32)
             write_registry(registry, replacement)
+            checkpoint('restart')
             docker('start', container)
+            checkpoint('rotationmetadata')
             base = endpoint(container, registry)
+            checkpoint('rotationreadiness')
             ready(opener, base)
+            checkpoint('revocation')
             require(request(opener, base, '/v1/catalog', credential, expected=401)['error'] == 'unauthorized')
             rotated_catalog = request(opener, base, '/v1/catalog', replacement)
             require(rotated_catalog == catalog)
+            checkpoint('finalstop')
             stop(container, base)
+            checkpoint('logs')
             logs = docker('logs', container)
             require(not logs.stdout and not logs.stderr)
         finally:
             if cid_file.exists():
+                prior_phase = PHASE
+                checkpoint('cleanup')
                 container = cid_file.read_text(encoding='ascii').strip()
                 require(re.fullmatch(r'[0-9a-f]{64}', container) is not None)
                 docker('rm', '--force', container, timeout=15)
+                PHASE = prior_phase
 
 
 def main():
@@ -190,8 +218,8 @@ def main():
         return 2
     try:
         accept(sys.argv[1])
-    except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
-        print('FAIL isolated container acceptance; captured details suppressed.', file=sys.stderr)
+    except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError) as error:
+        print(f'FAIL isolated container acceptance at {PHASE} ({type(error).__name__}); captured details suppressed.', file=sys.stderr)
         return 1
     print('PASS constrained UID1654 container, read-only hash registry, independent verification of 8 topics and empty result, 401/revocation, silent logs and graceful cleanup.')
     return 0
