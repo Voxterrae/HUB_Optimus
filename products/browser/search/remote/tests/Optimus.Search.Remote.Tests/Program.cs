@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -50,6 +51,31 @@ Test("strict auth rejects local, malformed, padded, duplicate and revoked creden
 });
 Test("credential digest contract hashes canonical ASCII bearer text",async()=>{
     await using var f=await Fixture.Start();using var r=await f.GetCatalog();Equal(HttpStatusCode.OK,r.StatusCode);
+});
+Test("concurrent monotonic authentication samples cannot look like UTC rollback",async()=>{
+    await using var f=new Fixture();using var clock=new OrderedAuthenticationClock(f.Clock.GetUtcNow());
+    var type=typeof(RemoteServer).Assembly.GetType("Optimus.Search.Remote.CredentialRegistry",throwOnError:true)!;
+    var loading=(Task)type.GetMethod("Load",BindingFlags.Public|BindingFlags.Static)!.Invoke(null,[f.RegistryPath,clock])!;
+    await loading;var registry=loading.GetType().GetProperty("Result")!.GetValue(loading)!;
+    var gate=type.GetField("gate",BindingFlags.NonPublic|BindingFlags.Instance)!.GetValue(registry)!;
+    var authenticate=type.GetMethod("Authenticate",BindingFlags.Public|BindingFlags.Instance)!;
+    clock.Arm(gate);
+    Task<object?> RunAuthentication(bool second)=>Task.Factory.StartNew(()=>{
+        try{return authenticate.Invoke(registry,["Bearer "+f.Secrets[0]]);}
+        finally{if(second)clock.SecondCompleted.Set();}
+    },CancellationToken.None,TaskCreationOptions.LongRunning,TaskScheduler.Default);
+    var first=RunAuthentication(false);
+    try{
+        await clock.FirstSampled.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var second=RunAuthentication(true);
+        var results=await Task.WhenAll(first,second).WaitAsync(TimeSpan.FromSeconds(5));
+        True(results.All(result=>result is not null));
+    }finally{clock.SecondCompleted.Set();await first.WaitAsync(TimeSpan.FromSeconds(5));}
+});
+Test("actual UTC rollback still rejects an otherwise valid remote credential",async()=>{
+    await using var f=await Fixture.Start();Equal(HttpStatusCode.OK,(await f.GetCatalog()).StatusCode);
+    f.Clock.Advance(TimeSpan.FromSeconds(1));Equal(HttpStatusCode.OK,(await f.GetCatalog()).StatusCode);
+    f.Clock.Advance(TimeSpan.FromSeconds(-1));Equal(HttpStatusCode.Unauthorized,(await f.GetCatalog()).StatusCode);
 });
 Test("GET endpoints reject supplied bodies before returning public or catalog content",async()=>{
     await using var f=await Fixture.Start();foreach(var path in new[]{"/healthz","/v1/catalog"}){using var q=new HttpRequestMessage(HttpMethod.Get,path);q.Headers.Authorization=new("Bearer",f.Secrets[0]);q.Content=new StringContent("synthetic_body");Equal(HttpStatusCode.BadRequest,(await f.Client.SendAsync(q)).StatusCode);}
@@ -139,6 +165,25 @@ Test("valid CLI ignores ambient network configuration and emits no private reque
 var failed=0;foreach(var test in tests){try{await test.Run();Console.WriteLine("PASS "+test.Name);}catch(Exception e){failed++;Console.WriteLine("FAIL "+test.Name+": "+e.GetType().Name+": "+e.Message);}}Console.WriteLine($"{tests.Count-failed}/{tests.Count} passed");return failed==0?0:1;
 
 sealed class ManualClock:TimeProvider {private DateTimeOffset now=new(2026,11,4,0,0,0,TimeSpan.Zero);private long stamp;public override DateTimeOffset GetUtcNow()=>now;public override long TimestampFrequency=>TimeSpan.TicksPerSecond;public override long GetTimestamp()=>stamp;public void Advance(TimeSpan value){now+=value;if(value>TimeSpan.Zero)stamp+=value.Ticks;}}
+sealed class OrderedAuthenticationClock(DateTimeOffset origin):TimeProvider,IDisposable {
+    private object gate=null!;private bool armed;private int reads;
+    public TaskCompletionSource<bool> FirstSampled{get;}=new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public ManualResetEventSlim SecondCompleted{get;}=new(false);
+    public void Arm(object registryGate){gate=registryGate;Volatile.Write(ref armed,true);}
+    public override DateTimeOffset GetUtcNow(){
+        if(!Volatile.Read(ref armed))return origin;
+        var order=Interlocked.Increment(ref reads);var sampled=origin.AddSeconds(order);
+        if(order==1){
+            FirstSampled.SetResult(true);
+            // A sample outside the registry gate can be delayed until a later
+            // caller publishes its newer sample. Under the gate, that caller
+            // cannot sample yet; return immediately so it can proceed next.
+            if(!Monitor.IsEntered(gate)&&!SecondCompleted.Wait(TimeSpan.FromSeconds(5)))throw new TimeoutException("Controlled authentication ordering did not complete.");
+        }
+        return sampled;
+    }
+    public void Dispose()=>SecondCompleted.Dispose();
+}
 sealed class Fixture:IAsyncDisposable {
     public static string CatalogDirectory=>Path.Combine(AppContext.BaseDirectory,"catalog");
     public string Directory{get;}=Path.Combine(Path.GetTempPath(),"optimus-remote-test-"+Guid.NewGuid().ToString("N"));
