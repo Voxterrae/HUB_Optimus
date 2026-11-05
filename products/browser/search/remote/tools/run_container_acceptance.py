@@ -165,7 +165,7 @@ def accept(image):
             checkpoint('readiness')
             ready(opener, base)
             checkpoint('uid')
-            processes = docker('top', container, '-eo', 'uid,gid,comm').stdout.splitlines()[1:]
+            processes = docker('top', container, '-eo', 'uid,gid,pid,comm').stdout.splitlines()[1:]
             require(processes and all(line.split()[:2] == ['1654', '1654'] for line in processes))
             checkpoint('auth')
             require(request(opener, base, '/v1/catalog', expected=401)['error'] == 'unauthorized')
