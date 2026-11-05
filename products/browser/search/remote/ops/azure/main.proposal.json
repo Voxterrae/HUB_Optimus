@@ -1,0 +1,90 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "0.1.0.0",
+  "metadata": {
+    "description": "INERT REVIEW PROPOSAL. No deployment authorization. Every resource is gated by a false-only parameter; promotion requires a separately reviewed template change. Missing credentials mount deliberately prevents application startup.",
+    "apiReferenceDateUtc": "2026-11-04"
+  },
+  "parameters": {
+    "deployEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "allowedValues": [false],
+      "metadata": {"description": "Must remain false. A parameter file cannot activate this proposal."}
+    },
+    "location": {
+      "type": "string",
+      "metadata": {"description": "Exact owner-approved Azure region; no region is inferred."}
+    },
+    "environmentName": {
+      "type": "string",
+      "defaultValue": "optimus-search-proposal-env",
+      "metadata": {"description": "Draft name only; target subscription and resource group remain unselected."}
+    },
+    "containerAppName": {
+      "type": "string",
+      "defaultValue": "optimus-search-proposal",
+      "metadata": {"description": "Draft name only; no service is created by this proposal."}
+    },
+    "imageDigestRef": {
+      "type": "string",
+      "defaultValue": "registry.invalid/optimus-search-remote@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "metadata": {"description": "Unpullable placeholder. Replace only with a reviewed immutable release digest in a later promotion change."}
+    }
+  },
+  "resources": [
+    {
+      "condition": "[parameters('deployEnabled')]",
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2025-01-01",
+      "name": "[parameters('environmentName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "appLogsConfiguration": {"destination": "none"},
+        "workloadProfiles": [{"name": "Consumption", "workloadProfileType": "Consumption"}]
+      }
+    },
+    {
+      "condition": "[parameters('deployEnabled')]",
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2025-01-01",
+      "name": "[parameters('containerAppName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": ["[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]"],
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]",
+        "workloadProfileName": "Consumption",
+        "configuration": {
+          "activeRevisionsMode": "Single",
+          "maxInactiveRevisions": 1,
+          "ingress": {"external": false, "allowInsecure": false, "transport": "http", "targetPort": 8080}
+        },
+        "template": {
+          "containers": [
+            {
+              "name": "remote-search",
+              "image": "[parameters('imageDigestRef')]",
+              "env": [
+                {"name": "OPTIMUS_REMOTE_CONTAINER_HTTP", "value": "true"},
+                {"name": "OPTIMUS_REMOTE_CREDENTIALS_FILE", "value": "/run/optimus-remote/credentials.json"}
+              ],
+              "resources": {"cpu": 0.25, "memory": "0.5Gi"},
+              "probes": [
+                {"type": "Startup", "tcpSocket": {"port": 8080}, "periodSeconds": 3, "timeoutSeconds": 1, "failureThreshold": 10},
+                {"type": "Liveness", "tcpSocket": {"port": 8080}, "periodSeconds": 10, "timeoutSeconds": 1, "failureThreshold": 3}
+              ]
+            }
+          ],
+          "scale": {
+            "minReplicas": 0,
+            "maxReplicas": 1,
+            "rules": [{"name": "bounded-http", "http": {"metadata": {"concurrentRequests": "4"}}}]
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "proposalStatus": {"type": "string", "value": "INERT: no resource activation is permitted; no application credentials mount is configured."}
+  }
+}

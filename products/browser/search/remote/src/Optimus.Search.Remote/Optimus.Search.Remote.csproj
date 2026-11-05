@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../src/Optimus.Search/LocalSearchIndex.cs" Link="Ranking/LocalSearchIndex.cs" />
+    <Compile Include="../../../src/Optimus.Search/SearchModels.cs" Link="Ranking/SearchModels.cs" />
+    <Content Include="../../../catalog/public-pilot-v0.1.json" Link="catalog/public-pilot-v0.1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../../catalog/public-pilot-v0.1.provenance.json" Link="catalog/public-pilot-v0.1.provenance.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
