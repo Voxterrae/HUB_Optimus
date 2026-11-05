@@ -5689,9 +5689,12 @@
         intakeRecord?.mode === "operator-pasted-text-with-url" ||
         intakeRecord?.attribution === "operator-provided-url-not-fetched"
       ) {
+        const suppliedUrl = localAttributionUrl(
+          intakeRecord?.original_url || record?.source_url || null
+        );
         return [
           opText("shareProvenancePasted"),
-          sourceUrl ? opText("shareSuppliedUrl", { url: ltrIsolate(compactText(sourceUrl, 240)) }) : ""
+          suppliedUrl ? opText("shareSuppliedUrl", { url: ltrIsolate(suppliedUrl) }) : ""
         ];
       }
 
