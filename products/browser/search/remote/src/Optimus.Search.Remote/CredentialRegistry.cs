@@ -33,8 +33,8 @@ internal sealed class CredentialRegistry
         if(!authorization.StartsWith("Bearer ",StringComparison.Ordinal))return null;var token=authorization[7..];if(token.Length!=43||token.Any(c=>!char.IsAsciiLetterOrDigit(c)&&c!='-'&&c!='_'))return null;
         Span<byte> secret=stackalloc byte[32];if(!Convert.TryFromBase64String(token.Replace('-','+').Replace('_','/')+"=",secret,out var written)||written!=32)return null;
         var canonical=Convert.ToBase64String(secret).TrimEnd('=').Replace('+','-').Replace('/','_');if(!string.Equals(canonical,token,StringComparison.Ordinal)){CryptographicOperations.ZeroMemory(secret);return null;}
-        Span<byte> hash=stackalloc byte[32];Span<byte> canonicalBytes=stackalloc byte[43];Encoding.ASCII.GetBytes(token,canonicalBytes);SHA256.HashData(canonicalBytes,hash);CryptographicOperations.ZeroMemory(canonicalBytes);CryptographicOperations.ZeroMemory(secret);var now=time.GetUtcNow();bool clockValid;
-        lock(gate){clockValid=now>=latestUtc;if(clockValid)latestUtc=now;}
+        Span<byte> hash=stackalloc byte[32];Span<byte> canonicalBytes=stackalloc byte[43];Encoding.ASCII.GetBytes(token,canonicalBytes);SHA256.HashData(canonicalBytes,hash);CryptographicOperations.ZeroMemory(canonicalBytes);CryptographicOperations.ZeroMemory(secret);DateTimeOffset now;bool clockValid;
+        lock(gate){now=time.GetUtcNow();clockValid=now>=latestUtc;if(clockValid)latestUtc=now;}
         Client? found=null;foreach(var row in clients){var equal=CryptographicOperations.FixedTimeEquals(hash,row.Hash);if(equal&&clockValid&&now<row.ExpiresUtc)found=row;}CryptographicOperations.ZeroMemory(hash);return found;
     }
 }
