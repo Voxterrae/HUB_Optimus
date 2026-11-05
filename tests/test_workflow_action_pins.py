@@ -143,4 +143,3 @@ def test_yaml_parser_finds_equivalent_uses_key_spellings(
     assert _uses_references(workflow_path) == [
         ("actions/checkout@main", "unreviewed")
     ]
-

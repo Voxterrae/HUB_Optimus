@@ -118,7 +118,7 @@ def ready(opener, base):
         try:
             require(request(opener, base, '/healthz') == {'status': 'ok'})
             return
-        except (urllib.error.URLError, TimeoutError):
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
             if time.monotonic() >= deadline:
                 raise ValueError('Container readiness deadline expired.')
             time.sleep(0.1)
