@@ -3609,20 +3609,36 @@ function withoutIsolates(value) {
 """
         + helpers
         + """
-const pasted = shareProvenanceLines({
-  source_url: "https://example.com/source",
+const suppliedUrl = "https://example.org/reports/" + "public-".repeat(40) + "?prueba=operator#referencia";
+const pastedRecord = {
+  source_url: suppliedUrl,
   intake_record: {
     mode: "operator-pasted-text-with-url",
-    original_url: "https://example.com/source",
+    original_url: suppliedUrl,
     final_url: null,
     attribution: "operator-provided-url-not-fetched"
   }
-});
+};
+const pasted = shareProvenanceLines(pastedRecord);
 if (!pasted[0].includes("Operator did not fetch the URL")) {
   throw new Error("pasted text and URL boundary lost");
 }
-if (withoutIsolates(pasted[1]) !== "Supplied URL, not fetched: https://example.com/") {
-  throw new Error("unfetched URL label lost");
+if (withoutIsolates(pasted[1]) !== `Supplied URL, not fetched: ${suppliedUrl}`) {
+  throw new Error("supplied URL path, query or fragment lost or truncated");
+}
+for (const locale of operatorI18n.supportedLocales) {
+  activeOperatorLanguage = locale;
+  if (!withoutIsolates(shareProvenanceLines(pastedRecord)[1]).includes(suppliedUrl)) {
+    throw new Error(`supplied URL changed in ${locale}`);
+  }
+}
+activeOperatorLanguage = "en";
+const legacy = shareProvenanceLines({
+  source_url: suppliedUrl,
+  intake_record: { attribution: "operator-provided-url-not-fetched" }
+});
+if (withoutIsolates(legacy[1]) !== `Supplied URL, not fetched: ${suppliedUrl}`) {
+  throw new Error("legacy manual attribution URL lost");
 }
 
 const fetched = shareProvenanceLines({
@@ -3630,7 +3646,8 @@ const fetched = shareProvenanceLines({
   intake_record: {
     mode: "controlled-url",
     original_url: "https://origin.example/report",
-    final_url: "https://final.example/report"
+    final_url: "https://user:password@final.example/report?token=private#secret",
+    attribution: "operator-provided-url-not-fetched"
   }
 });
 if (!fetched[0].includes("controlled URL intake")) {
@@ -3647,6 +3664,71 @@ if (withoutIsolates(fetched[1]) !== "Retrieved URL: https://final.example/") {
         text=True, encoding="utf-8",
         capture_output=True,
         check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_copy_summary_keeps_pasted_text_full_url_and_unverified_attribution():
+    parser = _InlineScriptParser()
+    parser.feed(_read(INDEX))
+    parser.close()
+    assert len(parser.scripts) == 1
+    harness = FULL_PAGE_HARNESS.rsplit("(async () => {", 1)[0].replace(
+        "vm.createContext(context);",
+        "vm.createContext(context);\nvm.runInContext(I18N_SOURCE, context);",
+    )
+    smoke = (
+        f"const SOURCE = {json.dumps(parser.scripts[0])};\n"
+        f"const CLAIM_SOURCE = {json.dumps(_read(CLAIM_DECOMPOSITION))};\n"
+        f"const I18N_SOURCE = {json.dumps(_read(OPERATOR_I18N))};\n"
+        + harness
+        + r'''
+(async () => {
+  const exactText = "El equipo cont\u00f3 dos cajas.";
+  const exactUrl = "https://example.org/?prueba=operator#referencia";
+  const record = {
+    normalizer_version: "operator-source-bound-v2",
+    source_type: "automatic",
+    signal_domain: "general",
+    operational_signal: "triage",
+    source_url: exactUrl,
+    intake_record: {
+      mode: "operator-pasted-text-with-url",
+      original_url: exactUrl,
+      final_url: null,
+      attribution: "operator-provided-url-not-fetched"
+    },
+    claims: [{id: "claim-1", text: exactText, source_quote_type: "exact"}],
+    evidence_records: [{id: "evidence-1", text: exactText, supports_claim_ids: ["claim-1"]}]
+  };
+  window.location.pathname = "/operator/";
+  vm.runInContext(`
+    activeOperatorLanguage = "es";
+    currentMemoryRecord = ${JSON.stringify(record)};
+    setMemoryActionsEnabled(true);
+  `, context);
+  let copied = "";
+  window.navigator.clipboard = {async writeText(text) { copied = text; }};
+  await byId("share_memory_link").emit("click");
+  if (!copied.includes(exactText) || !copied.includes(exactUrl)) {
+    throw new Error("copy summary lost the exact text or supplied URL");
+  }
+  if (!copied.includes("Operator no recuper\u00f3 la URL")
+      || !copied.includes("la atribuci\u00f3n entre URL y texto no est\u00e1 verificada")) {
+    throw new Error("copy summary lost the unverified attribution boundary");
+  }
+  if (copied.includes("URL recuperada:")) {
+    throw new Error("copy summary misrepresented the supplied URL as retrieved");
+  }
+  if (fetchCalls !== 0 || !byId("memory_status").textContent.includes("Resumen legible copiado")) {
+    throw new Error("copy summary fetched a URL or failed to confirm the copy");
+  }
+})().catch((error) => { console.error(error); process.exitCode = 1; });
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
 
