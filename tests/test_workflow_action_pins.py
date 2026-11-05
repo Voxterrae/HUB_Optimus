@@ -22,6 +22,10 @@ EXPECTED_ACTION_PINS = {
         "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
         "v7.1.0",
     ),
+    "actions/setup-dotnet": (
+        "2016bd2012dba4e32de620c46fe006a3ac9f0602",
+        "v5.0.1",
+    ),
     "actions/setup-node": (
         "949feb2413d6458794dcd2491c4babbbce0c15c1",
         "v7.1.0",
@@ -139,3 +143,4 @@ def test_yaml_parser_finds_equivalent_uses_key_spellings(
     assert _uses_references(workflow_path) == [
         ("actions/checkout@main", "unreviewed")
     ]
+
