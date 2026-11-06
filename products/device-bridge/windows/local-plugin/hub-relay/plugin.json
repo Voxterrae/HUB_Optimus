@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "hub-relay",
+  "version": "0.1.0",
+  "description": "Candidato local de HUB_Relay: diagnóstico limitado de Windows mediante MCP. Requiere habilitación supervisada; sin autorización biométrica ni acceso remoto.",
+  "author": {"name": "HUB_Optimus"},
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "HUB_Relay",
+        "shortDescription": "Diagnóstico local de Windows",
+        "longDescription": "Prepara una lectura de versión de Windows y capacidad de C: desde un cliente local de IA. El paquete arranca con la lectura desactivada hasta resolver la autorización del piloto. No sustituye todavía la conexión entre redes ni la aprobación desde el Xiaomi.",
+        "developerName": "HUB_Optimus",
+        "category": "Productivity",
+        "capabilities": ["Read"],
+        "defaultPrompt": "Comprueba si el piloto local de HUB_Relay está autorizado y disponible."
+      }
+    }
+  }
+}
