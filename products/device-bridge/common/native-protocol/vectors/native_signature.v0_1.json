@@ -1,0 +1,177 @@
+{
+  "status": "synthetic-test-only",
+  "authority": "NONE: public fixed software scalars, no enrollment, hardware, biometric or execution evidence",
+  "generator": {
+    "nodeVersion": "v24.19.0",
+    "opensslVersion": "3.5.7",
+    "command": "node generate-vectors.cjs (from repository root; extract generator.source into a temporary file)",
+    "canonicalizationScope": "Recursive Object.keys default UTF-16 sort plus JSON.stringify, only this closed ASCII and integer-TTL profile; not a full JCS conformance implementation",
+    "randomness": "ECDSA signatures use OpenSSL randomness; reproduction compares canonical bytes/digests and successful verification, not identical signatures",
+    "source": "'use strict';\n// PUBLIC SYNTHETIC SOFTWARE TEST KEYS. NEVER USE FOR IDENTITY OR AUTHORITY.\nconst crypto = require('node:crypto');\nconst fs = require('node:fs');\nconst path = require('node:path');\nconst assert = require('node:assert/strict');\nconst output = path.resolve('products/device-bridge/common/native-protocol/vectors/native_signature.v0_1.json');\nconst order = BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551');\nconst hex32 = value => value.toString(16).padStart(64, '0');\nconst sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');\nfunction canonical(value) {\n  if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';\n  if (value && typeof value === 'object') return '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + canonical(value[key])).join(',') + '}';\n  return JSON.stringify(value);\n}\nfunction key(scalar) {\n  const d = Buffer.from(hex32(BigInt(scalar)), 'hex');\n  const ecdh = crypto.createECDH('prime256v1');\n  ecdh.setPrivateKey(d);\n  const sec1 = ecdh.getPublicKey(undefined, 'uncompressed');\n  const privateKey = crypto.createPrivateKey({format: 'jwk', key: {kty: 'EC', crv: 'P-256', d: d.toString('base64url'), x: sec1.subarray(1, 33).toString('base64url'), y: sec1.subarray(33).toString('base64url')}});\n  return {privateKey, publicKey: crypto.createPublicKey(privateKey), sec1, scalarHex: d.toString('hex')};\n}\nfunction integer(value) {\n  let hex = value.toString(16);\n  if (hex.length % 2) hex = '0' + hex;\n  let bytes = Buffer.from(hex, 'hex');\n  if (bytes[0] & 128) bytes = Buffer.concat([Buffer.from([0]), bytes]);\n  return Buffer.concat([Buffer.from([2, bytes.length]), bytes]);\n}\nfunction sequence(...parts) {\n  const bytes = Buffer.concat(parts);\n  return Buffer.concat([Buffer.from([48, bytes.length]), bytes]);\n}\nfunction der(r, s) { return sequence(integer(r), integer(s)); }\nfunction decode(signature) {\n  assert.equal(signature[0], 48);\n  const rLength = signature[3];\n  const r = BigInt('0x' + signature.subarray(4, 4 + rLength).toString('hex'));\n  const sOffset = 4 + rLength;\n  assert.equal(signature[sOffset], 2);\n  const s = BigInt('0x' + signature.subarray(sOffset + 2).toString('hex'));\n  return {r, s};\n}\nfunction signed(payload, domain, signer) {\n  const canonicalPayload = canonical(payload);\n  const signingBytes = Buffer.concat([Buffer.from(domain, 'utf8'), Buffer.from([0]), Buffer.from(canonicalPayload, 'utf8')]);\n  const original = crypto.sign('sha256', signingBytes, {key: signer.privateKey, dsaEncoding: 'der'});\n  const {r, s} = decode(original);\n  const lowS = s > order / 2n ? order - s : s;\n  const low = der(r, lowS), high = der(r, order - lowS);\n  for (const signature of [low, high]) assert(crypto.verify('sha256', signingBytes, signer.publicKey, signature));\n  return {payload, canonicalPayload, domain, signingBytesHex: signingBytes.toString('hex'), digestSha256Hex: sha(signingBytes), signatureLowSDerHex: low.toString('hex'), signatureHighSDerHex: high.toString('hex')};\n}\nconst broker = key(1), approver = key(2);\nconst requestSource = '{\"version\":\"relay.native-request.v0.1\",\"requestId\":\"11111111111111111111111111111111\",\"operation\":\"windows.runtime_inventory.v0_1\",\"brokerKeyId\":\"' + sha(broker.sec1) + '\",\"targetId\":\"22222222222222222222222222222222\",\"profileId\":\"33333333333333333333333333333333\",\"enrollmentGeneration\":\"44444444444444444444444444444444\",\"brokerStartGeneration\":\"55555555555555555555555555555555\",\"nonce\":\"6666666666666666666666666666666666666666666666666666666666666666\",\"fields\":[\"windows\",\"powershell7\",\"node\"],\"ttlMs\":60000}';\nconst requestPayload = JSON.parse(requestSource);\nconst approvalPayload = {version: 'relay.native-approval.v0.1', request: requestPayload};\nconst request = signed(requestPayload, 'HUB-RELAY-REQUEST-v0.1', broker);\nconst approval = signed(approvalPayload, 'HUB-RELAY-APPROVAL-v0.1', approver);\nconst falseId = signed({...requestPayload, brokerKeyId: sha(approver.sec1)}, request.domain, broker);\nconst wrongRequestDomain = signed(requestPayload, approval.domain, broker);\nconst wrongApprovalDomain = signed(approvalPayload, request.domain, approver);\nfunction malformed(vector, signer) {\n  const {r, s} = decode(Buffer.from(vector.signatureLowSDerHex, 'hex'));\n  const rPart = integer(r);\n  const nonminimal = sequence(Buffer.concat([Buffer.from([2, rPart[1] + 1, 0]), rPart.subarray(2)]), integer(s));\n  const cases = {\n    trailingByte: vector.signatureLowSDerHex + '00',\n    nonminimalInteger: nonminimal.toString('hex'),\n    negativeInteger: sequence(Buffer.from([2, 1, 128]), integer(s)).toString('hex'),\n    zeroR: der(0n, s).toString('hex'), zeroS: der(r, 0n).toString('hex'),\n    outOfRangeR: der(order, s).toString('hex'), outOfRangeS: der(r, order).toString('hex'),\n    truncated: vector.signatureLowSDerHex.slice(0, -2), raw64: hex32(r) + hex32(s)\n  };\n  for (const invalid of Object.values(cases)) assert.equal(crypto.verify('sha256', Buffer.from(vector.signingBytesHex, 'hex'), signer.publicKey, Buffer.from(invalid, 'hex')), false);\n  return cases;\n}\nconst malformedDer = malformed(request, broker);\nconst malformedApprovalDer = malformed(approval, approver);\nconst vector = {\n  status: 'synthetic-test-only', authority: 'NONE: public fixed software scalars, no enrollment, hardware, biometric or execution evidence',\n  generator: {nodeVersion: process.version, opensslVersion: process.versions.openssl, command: 'node generate-vectors.cjs (from repository root; extract generator.source into a temporary file)', canonicalizationScope: 'Recursive Object.keys default UTF-16 sort plus JSON.stringify, only this closed ASCII and integer-TTL profile; not a full JCS conformance implementation', randomness: 'ECDSA signatures use OpenSSL randomness; reproduction compares canonical bytes/digests and successful verification, not identical signatures', source: fs.readFileSync(__filename, 'utf8')},\n  keys: {broker: {publicSec1Hex: broker.sec1.toString('hex'), publicTestScalarHex: broker.scalarHex}, approver: {publicSec1Hex: approver.sec1.toString('hex'), publicTestScalarHex: approver.scalarHex}},\n  requestSource, approvalSource: JSON.stringify(approvalPayload), request, approval,\n  correctlySignedFalseBrokerKeyId: falseId, wrongRequestDomain, wrongApprovalDomain, malformedDer, malformedApprovalDer\n};\nfs.mkdirSync(path.dirname(output), {recursive: true});\nfs.writeFileSync(output, JSON.stringify(vector, null, 2) + '\\n', 'utf8');\nconsole.log(JSON.stringify({output, nodeVersion: process.version, opensslVersion: process.versions.openssl, requestDigest: request.digestSha256Hex, approvalDigest: approval.digestSha256Hex, verifiedPositiveSignatures: 10, rejectedMalformedDer: Object.keys(malformedDer).length + Object.keys(malformedApprovalDer).length}));\n"
+  },
+  "keys": {
+    "broker": {
+      "publicSec1Hex": "046b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c2964fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5",
+      "publicTestScalarHex": "0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    "approver": {
+      "publicSec1Hex": "047cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc4766997807775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d1",
+      "publicTestScalarHex": "0000000000000000000000000000000000000000000000000000000000000002"
+    }
+  },
+  "requestSource": "{\"version\":\"relay.native-request.v0.1\",\"requestId\":\"11111111111111111111111111111111\",\"operation\":\"windows.runtime_inventory.v0_1\",\"brokerKeyId\":\"698bea63dc44a344663ff1429aea10842df27b6b991ef25866b2c6c02cdcc5be\",\"targetId\":\"22222222222222222222222222222222\",\"profileId\":\"33333333333333333333333333333333\",\"enrollmentGeneration\":\"44444444444444444444444444444444\",\"brokerStartGeneration\":\"55555555555555555555555555555555\",\"nonce\":\"6666666666666666666666666666666666666666666666666666666666666666\",\"fields\":[\"windows\",\"powershell7\",\"node\"],\"ttlMs\":60000}",
+  "approvalSource": "{\"version\":\"relay.native-approval.v0.1\",\"request\":{\"version\":\"relay.native-request.v0.1\",\"requestId\":\"11111111111111111111111111111111\",\"operation\":\"windows.runtime_inventory.v0_1\",\"brokerKeyId\":\"698bea63dc44a344663ff1429aea10842df27b6b991ef25866b2c6c02cdcc5be\",\"targetId\":\"22222222222222222222222222222222\",\"profileId\":\"33333333333333333333333333333333\",\"enrollmentGeneration\":\"44444444444444444444444444444444\",\"brokerStartGeneration\":\"55555555555555555555555555555555\",\"nonce\":\"6666666666666666666666666666666666666666666666666666666666666666\",\"fields\":[\"windows\",\"powershell7\",\"node\"],\"ttlMs\":60000}}",
+  "request": {
+    "payload": {
+      "version": "relay.native-request.v0.1",
+      "requestId": "11111111111111111111111111111111",
+      "operation": "windows.runtime_inventory.v0_1",
+      "brokerKeyId": "698bea63dc44a344663ff1429aea10842df27b6b991ef25866b2c6c02cdcc5be",
+      "targetId": "22222222222222222222222222222222",
+      "profileId": "33333333333333333333333333333333",
+      "enrollmentGeneration": "44444444444444444444444444444444",
+      "brokerStartGeneration": "55555555555555555555555555555555",
+      "nonce": "6666666666666666666666666666666666666666666666666666666666666666",
+      "fields": [
+        "windows",
+        "powershell7",
+        "node"
+      ],
+      "ttlMs": 60000
+    },
+    "canonicalPayload": "{\"brokerKeyId\":\"698bea63dc44a344663ff1429aea10842df27b6b991ef25866b2c6c02cdcc5be\",\"brokerStartGeneration\":\"55555555555555555555555555555555\",\"enrollmentGeneration\":\"44444444444444444444444444444444\",\"fields\":[\"windows\",\"powershell7\",\"node\"],\"nonce\":\"6666666666666666666666666666666666666666666666666666666666666666\",\"operation\":\"windows.runtime_inventory.v0_1\",\"profileId\":\"33333333333333333333333333333333\",\"requestId\":\"11111111111111111111111111111111\",\"targetId\":\"22222222222222222222222222222222\",\"ttlMs\":60000,\"version\":\"relay.native-request.v0.1\"}",
+    "domain": "HUB-RELAY-REQUEST-v0.1",
+    "signingBytesHex": "4855422d52454c41592d524551554553542d76302e31007b2262726f6b65724b65794964223a2236393862656136336463343461333434363633666631343239616561313038343264663237623662393931656632353836366232633663303263646363356265222c2262726f6b6572537461727447656e65726174696f6e223a223535353535353535353535353535353535353535353535353535353535353535222c22656e726f6c6c6d656e7447656e65726174696f6e223a223434343434343434343434343434343434343434343434343434343434343434222c226669656c6473223a5b2277696e646f7773222c22706f7765727368656c6c37222c226e6f6465225d2c226e6f6e6365223a2236363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636222c226f7065726174696f6e223a2277696e646f77732e72756e74696d655f696e76656e746f72792e76305f31222c2270726f66696c654964223a223333333333333333333333333333333333333333333333333333333333333333222c22726571756573744964223a223131313131313131313131313131313131313131313131313131313131313131222c227461726765744964223a223232323232323232323232323232323232323232323232323232323232323232222c2274746c4d73223a36303030302c2276657273696f6e223a2272656c61792e6e61746976652d726571756573742e76302e31227d",
+    "digestSha256Hex": "caf7c7db28ad6e51d6d332073e2e68fc32489a8848d50005a0d1a9f0bdfc71b1",
+    "signatureLowSDerHex": "3045022100f810e434194cca9e997f2cc6e187e228dbf77f2fe77bcc7c16d1b870c7c6b67102207cb157509911c67485f5a9642d7e8b62617a02b1957212339705e2c4c21e3736",
+    "signatureHighSDerHex": "3046022100f810e434194cca9e997f2cc6e187e228dbf77f2fe77bcc7c16d1b870c7c6b671022100834ea8ae66ee398c7a0a569bd281749d5b6cf7fc11a58c515cb3e7fe3a44ee1b"
+  },
+  "approval": {
+    "payload": {
+      "version": "relay.native-approval.v0.1",
+      "request": {
+        "version": "relay.native-request.v0.1",
+        "requestId": "11111111111111111111111111111111",
+        "operation": "windows.runtime_inventory.v0_1",
+        "brokerKeyId": "698bea63dc44a344663ff1429aea10842df27b6b991ef25866b2c6c02cdcc5be",
+        "targetId": "22222222222222222222222222222222",
+        "profileId": "33333333333333333333333333333333",
+        "enrollmentGeneration": "44444444444444444444444444444444",
+        "brokerStartGeneration": "55555555555555555555555555555555",
+        "nonce": "6666666666666666666666666666666666666666666666666666666666666666",
+        "fields": [
+          "windows",
+          "powershell7",
+          "node"
+        ],
+        "ttlMs": 60000
+      }
+    },
+    "canonicalPayload": "{\"request\":{\"brokerKeyId\":\"698bea63dc44a344663ff1429aea10842df27b6b991ef25866b2c6c02cdcc5be\",\"brokerStartGeneration\":\"55555555555555555555555555555555\",\"enrollmentGeneration\":\"44444444444444444444444444444444\",\"fields\":[\"windows\",\"powershell7\",\"node\"],\"nonce\":\"6666666666666666666666666666666666666666666666666666666666666666\",\"operation\":\"windows.runtime_inventory.v0_1\",\"profileId\":\"33333333333333333333333333333333\",\"requestId\":\"11111111111111111111111111111111\",\"targetId\":\"22222222222222222222222222222222\",\"ttlMs\":60000,\"version\":\"relay.native-request.v0.1\"},\"version\":\"relay.native-approval.v0.1\"}",
+    "domain": "HUB-RELAY-APPROVAL-v0.1",
+    "signingBytesHex": "4855422d52454c41592d415050524f56414c2d76302e31007b2272657175657374223a7b2262726f6b65724b65794964223a2236393862656136336463343461333434363633666631343239616561313038343264663237623662393931656632353836366232633663303263646363356265222c2262726f6b6572537461727447656e65726174696f6e223a223535353535353535353535353535353535353535353535353535353535353535222c22656e726f6c6c6d656e7447656e65726174696f6e223a223434343434343434343434343434343434343434343434343434343434343434222c226669656c6473223a5b2277696e646f7773222c22706f7765727368656c6c37222c226e6f6465225d2c226e6f6e6365223a2236363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636222c226f7065726174696f6e223a2277696e646f77732e72756e74696d655f696e76656e746f72792e76305f31222c2270726f66696c654964223a223333333333333333333333333333333333333333333333333333333333333333222c22726571756573744964223a223131313131313131313131313131313131313131313131313131313131313131222c227461726765744964223a223232323232323232323232323232323232323232323232323232323232323232222c2274746c4d73223a36303030302c2276657273696f6e223a2272656c61792e6e61746976652d726571756573742e76302e31227d2c2276657273696f6e223a2272656c61792e6e61746976652d617070726f76616c2e76302e31227d",
+    "digestSha256Hex": "a67d717a797cf3b38034d369c34fb1ac84d1cb4ffe8e256df678aa5d823cd1e1",
+    "signatureLowSDerHex": "3044022029e9876698ac056535dbc99031c3633b5c76315113cb8844de0df1e8b3a790df022066837d970d9a8c20aa2493f91dd575e960c37ddbf07b121c81b86019ac11cbfa",
+    "signatureHighSDerHex": "3045022029e9876698ac056535dbc99031c3633b5c76315113cb8844de0df1e8b3a790df022100997c8267f26573e055db6c06e22a8a165c237cd1b69c8c6872016aa950515957"
+  },
+  "correctlySignedFalseBrokerKeyId": {
+    "payload": {
+      "version": "relay.native-request.v0.1",
+      "requestId": "11111111111111111111111111111111",
+      "operation": "windows.runtime_inventory.v0_1",
+      "brokerKeyId": "a9f300eb5960e89133af7362011a1e26f0e2ea2e36dc402a04af6c192b891a8c",
+      "targetId": "22222222222222222222222222222222",
+      "profileId": "33333333333333333333333333333333",
+      "enrollmentGeneration": "44444444444444444444444444444444",
+      "brokerStartGeneration": "55555555555555555555555555555555",
+      "nonce": "6666666666666666666666666666666666666666666666666666666666666666",
+      "fields": [
+        "windows",
+        "powershell7",
+        "node"
+      ],
+      "ttlMs": 60000
+    },
+    "canonicalPayload": "{\"brokerKeyId\":\"a9f300eb5960e89133af7362011a1e26f0e2ea2e36dc402a04af6c192b891a8c\",\"brokerStartGeneration\":\"55555555555555555555555555555555\",\"enrollmentGeneration\":\"44444444444444444444444444444444\",\"fields\":[\"windows\",\"powershell7\",\"node\"],\"nonce\":\"6666666666666666666666666666666666666666666666666666666666666666\",\"operation\":\"windows.runtime_inventory.v0_1\",\"profileId\":\"33333333333333333333333333333333\",\"requestId\":\"11111111111111111111111111111111\",\"targetId\":\"22222222222222222222222222222222\",\"ttlMs\":60000,\"version\":\"relay.native-request.v0.1\"}",
+    "domain": "HUB-RELAY-REQUEST-v0.1",
+    "signingBytesHex": "4855422d52454c41592d524551554553542d76302e31007b2262726f6b65724b65794964223a2261396633303065623539363065383931333361663733363230313161316532366630653265613265333664633430326130346166366331393262383931613863222c2262726f6b6572537461727447656e65726174696f6e223a223535353535353535353535353535353535353535353535353535353535353535222c22656e726f6c6c6d656e7447656e65726174696f6e223a223434343434343434343434343434343434343434343434343434343434343434222c226669656c6473223a5b2277696e646f7773222c22706f7765727368656c6c37222c226e6f6465225d2c226e6f6e6365223a2236363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636222c226f7065726174696f6e223a2277696e646f77732e72756e74696d655f696e76656e746f72792e76305f31222c2270726f66696c654964223a223333333333333333333333333333333333333333333333333333333333333333222c22726571756573744964223a223131313131313131313131313131313131313131313131313131313131313131222c227461726765744964223a223232323232323232323232323232323232323232323232323232323232323232222c2274746c4d73223a36303030302c2276657273696f6e223a2272656c61792e6e61746976652d726571756573742e76302e31227d",
+    "digestSha256Hex": "6bdc9ff0c6102b410c406f1c3dbb2039abe49a82cbc922b50c93316238d436c6",
+    "signatureLowSDerHex": "304402206bf4c233bec31488e3ebbc58b414d3eef9c945efab37d973c8f2b08bd1a89db902204c63775e3e0077665b67096dab9655324689bfcb5ac5de56588204cb30cb740e",
+    "signatureHighSDerHex": "304502206bf4c233bec31488e3ebbc58b414d3eef9c945efab37d973c8f2b08bd1a89db9022100b39c88a0c1ff889aa498f6925469aacd765d3ae24c51c02e9b37c5f7cb97b143"
+  },
+  "wrongRequestDomain": {
+    "payload": {
+      "version": "relay.native-request.v0.1",
+      "requestId": "11111111111111111111111111111111",
+      "operation": "windows.runtime_inventory.v0_1",
+      "brokerKeyId": "698bea63dc44a344663ff1429aea10842df27b6b991ef25866b2c6c02cdcc5be",
+      "targetId": "22222222222222222222222222222222",
+      "profileId": "33333333333333333333333333333333",
+      "enrollmentGeneration": "44444444444444444444444444444444",
+      "brokerStartGeneration": "55555555555555555555555555555555",
+      "nonce": "6666666666666666666666666666666666666666666666666666666666666666",
+      "fields": [
+        "windows",
+        "powershell7",
+        "node"
+      ],
+      "ttlMs": 60000
+    },
+    "canonicalPayload": "{\"brokerKeyId\":\"698bea63dc44a344663ff1429aea10842df27b6b991ef25866b2c6c02cdcc5be\",\"brokerStartGeneration\":\"55555555555555555555555555555555\",\"enrollmentGeneration\":\"44444444444444444444444444444444\",\"fields\":[\"windows\",\"powershell7\",\"node\"],\"nonce\":\"6666666666666666666666666666666666666666666666666666666666666666\",\"operation\":\"windows.runtime_inventory.v0_1\",\"profileId\":\"33333333333333333333333333333333\",\"requestId\":\"11111111111111111111111111111111\",\"targetId\":\"22222222222222222222222222222222\",\"ttlMs\":60000,\"version\":\"relay.native-request.v0.1\"}",
+    "domain": "HUB-RELAY-APPROVAL-v0.1",
+    "signingBytesHex": "4855422d52454c41592d415050524f56414c2d76302e31007b2262726f6b65724b65794964223a2236393862656136336463343461333434363633666631343239616561313038343264663237623662393931656632353836366232633663303263646363356265222c2262726f6b6572537461727447656e65726174696f6e223a223535353535353535353535353535353535353535353535353535353535353535222c22656e726f6c6c6d656e7447656e65726174696f6e223a223434343434343434343434343434343434343434343434343434343434343434222c226669656c6473223a5b2277696e646f7773222c22706f7765727368656c6c37222c226e6f6465225d2c226e6f6e6365223a2236363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636222c226f7065726174696f6e223a2277696e646f77732e72756e74696d655f696e76656e746f72792e76305f31222c2270726f66696c654964223a223333333333333333333333333333333333333333333333333333333333333333222c22726571756573744964223a223131313131313131313131313131313131313131313131313131313131313131222c227461726765744964223a223232323232323232323232323232323232323232323232323232323232323232222c2274746c4d73223a36303030302c2276657273696f6e223a2272656c61792e6e61746976652d726571756573742e76302e31227d",
+    "digestSha256Hex": "d70f4b1ab087e37143995f3fae9ce8d7e1a6291d59a46729b98743393c61d7f3",
+    "signatureLowSDerHex": "304402205781c3cd1993462391620ae72aba3ea9241bd15ba9c6c7dac2f48d22cf7fb569022035348ae91ebe687c27c0ab15693356892938928328dce473f5421b918221fc6b",
+    "signatureHighSDerHex": "304502205781c3cd1993462391620ae72aba3ea9241bd15ba9c6c7dac2f48d22cf7fb569022100cacb7515e1419784d83f54ea96cca97693ae682a7e3aba10fe77af317a4128e6"
+  },
+  "wrongApprovalDomain": {
+    "payload": {
+      "version": "relay.native-approval.v0.1",
+      "request": {
+        "version": "relay.native-request.v0.1",
+        "requestId": "11111111111111111111111111111111",
+        "operation": "windows.runtime_inventory.v0_1",
+        "brokerKeyId": "698bea63dc44a344663ff1429aea10842df27b6b991ef25866b2c6c02cdcc5be",
+        "targetId": "22222222222222222222222222222222",
+        "profileId": "33333333333333333333333333333333",
+        "enrollmentGeneration": "44444444444444444444444444444444",
+        "brokerStartGeneration": "55555555555555555555555555555555",
+        "nonce": "6666666666666666666666666666666666666666666666666666666666666666",
+        "fields": [
+          "windows",
+          "powershell7",
+          "node"
+        ],
+        "ttlMs": 60000
+      }
+    },
+    "canonicalPayload": "{\"request\":{\"brokerKeyId\":\"698bea63dc44a344663ff1429aea10842df27b6b991ef25866b2c6c02cdcc5be\",\"brokerStartGeneration\":\"55555555555555555555555555555555\",\"enrollmentGeneration\":\"44444444444444444444444444444444\",\"fields\":[\"windows\",\"powershell7\",\"node\"],\"nonce\":\"6666666666666666666666666666666666666666666666666666666666666666\",\"operation\":\"windows.runtime_inventory.v0_1\",\"profileId\":\"33333333333333333333333333333333\",\"requestId\":\"11111111111111111111111111111111\",\"targetId\":\"22222222222222222222222222222222\",\"ttlMs\":60000,\"version\":\"relay.native-request.v0.1\"},\"version\":\"relay.native-approval.v0.1\"}",
+    "domain": "HUB-RELAY-REQUEST-v0.1",
+    "signingBytesHex": "4855422d52454c41592d524551554553542d76302e31007b2272657175657374223a7b2262726f6b65724b65794964223a2236393862656136336463343461333434363633666631343239616561313038343264663237623662393931656632353836366232633663303263646363356265222c2262726f6b6572537461727447656e65726174696f6e223a223535353535353535353535353535353535353535353535353535353535353535222c22656e726f6c6c6d656e7447656e65726174696f6e223a223434343434343434343434343434343434343434343434343434343434343434222c226669656c6473223a5b2277696e646f7773222c22706f7765727368656c6c37222c226e6f6465225d2c226e6f6e6365223a2236363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636222c226f7065726174696f6e223a2277696e646f77732e72756e74696d655f696e76656e746f72792e76305f31222c2270726f66696c654964223a223333333333333333333333333333333333333333333333333333333333333333222c22726571756573744964223a223131313131313131313131313131313131313131313131313131313131313131222c227461726765744964223a223232323232323232323232323232323232323232323232323232323232323232222c2274746c4d73223a36303030302c2276657273696f6e223a2272656c61792e6e61746976652d726571756573742e76302e31227d2c2276657273696f6e223a2272656c61792e6e61746976652d617070726f76616c2e76302e31227d",
+    "digestSha256Hex": "3de8a06fc1e3b356f00e2b8f3a1ed232a356ea55ac1a7189009a0d6f42ef9f73",
+    "signatureLowSDerHex": "3045022100f3dbf9e16c62af49af9f0288ff8ffe4b5cb347197bd79f697f787155f3958e6e02202f4b6f108f403a02fe1b9e9e89782489aaa19c375a10a49f9f5003c15bc33325",
+    "signatureHighSDerHex": "3046022100f3dbf9e16c62af49af9f0288ff8ffe4b5cb347197bd79f697f787155f3958e6e022100d0b490ee70bfc5fe01e461617687db7612455e764d06f9e55469c701a09ff22c"
+  },
+  "malformedDer": {
+    "trailingByte": "3045022100f810e434194cca9e997f2cc6e187e228dbf77f2fe77bcc7c16d1b870c7c6b67102207cb157509911c67485f5a9642d7e8b62617a02b1957212339705e2c4c21e373600",
+    "nonminimalInteger": "304602220000f810e434194cca9e997f2cc6e187e228dbf77f2fe77bcc7c16d1b870c7c6b67102207cb157509911c67485f5a9642d7e8b62617a02b1957212339705e2c4c21e3736",
+    "negativeInteger": "302502018002207cb157509911c67485f5a9642d7e8b62617a02b1957212339705e2c4c21e3736",
+    "zeroR": "302502010002207cb157509911c67485f5a9642d7e8b62617a02b1957212339705e2c4c21e3736",
+    "zeroS": "3026022100f810e434194cca9e997f2cc6e187e228dbf77f2fe77bcc7c16d1b870c7c6b671020100",
+    "outOfRangeR": "3045022100ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc63255102207cb157509911c67485f5a9642d7e8b62617a02b1957212339705e2c4c21e3736",
+    "outOfRangeS": "3046022100f810e434194cca9e997f2cc6e187e228dbf77f2fe77bcc7c16d1b870c7c6b671022100ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551",
+    "truncated": "3045022100f810e434194cca9e997f2cc6e187e228dbf77f2fe77bcc7c16d1b870c7c6b67102207cb157509911c67485f5a9642d7e8b62617a02b1957212339705e2c4c21e37",
+    "raw64": "f810e434194cca9e997f2cc6e187e228dbf77f2fe77bcc7c16d1b870c7c6b6717cb157509911c67485f5a9642d7e8b62617a02b1957212339705e2c4c21e3736"
+  },
+  "malformedApprovalDer": {
+    "trailingByte": "3044022029e9876698ac056535dbc99031c3633b5c76315113cb8844de0df1e8b3a790df022066837d970d9a8c20aa2493f91dd575e960c37ddbf07b121c81b86019ac11cbfa00",
+    "nonminimalInteger": "304502210029e9876698ac056535dbc99031c3633b5c76315113cb8844de0df1e8b3a790df022066837d970d9a8c20aa2493f91dd575e960c37ddbf07b121c81b86019ac11cbfa",
+    "negativeInteger": "3025020180022066837d970d9a8c20aa2493f91dd575e960c37ddbf07b121c81b86019ac11cbfa",
+    "zeroR": "3025020100022066837d970d9a8c20aa2493f91dd575e960c37ddbf07b121c81b86019ac11cbfa",
+    "zeroS": "3025022029e9876698ac056535dbc99031c3633b5c76315113cb8844de0df1e8b3a790df020100",
+    "outOfRangeR": "3045022100ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551022066837d970d9a8c20aa2493f91dd575e960c37ddbf07b121c81b86019ac11cbfa",
+    "outOfRangeS": "3045022029e9876698ac056535dbc99031c3633b5c76315113cb8844de0df1e8b3a790df022100ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551",
+    "truncated": "3044022029e9876698ac056535dbc99031c3633b5c76315113cb8844de0df1e8b3a790df022066837d970d9a8c20aa2493f91dd575e960c37ddbf07b121c81b86019ac11cb",
+    "raw64": "29e9876698ac056535dbc99031c3633b5c76315113cb8844de0df1e8b3a790df66837d970d9a8c20aa2493f91dd575e960c37ddbf07b121c81b86019ac11cbfa"
+  }
+}

@@ -1,5 +1,12 @@
 # HUB_Optimus — Name, Marks, and Identity Use
 
+> **Owner-authority boundary:** Benjamin Gerrit Hoff is the project owner and final
+> human authority under the [Founder Ownership and Authority Charter](FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
+> Neutral evaluation, anti-capture and consensus rules below govern evidence and
+> transparent review; they create no independent ownership or control authority.
+> The permanent parent-platform non-transfer condition in section 4.1 prevails.
+> This clarification preserves existing third-party rights and granted licenses.
+
 ## Purpose
 HUB_Optimus must remain resistant to capture, commercialization pressure, and misleading claims of authority.
 This document defines how the name and identity may be used without creating a private "owner" or an institutional choke point.

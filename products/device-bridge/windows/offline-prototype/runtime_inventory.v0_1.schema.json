@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HUB_Optimus synthetic Windows fixture v0.1",
+  "description": "Shape only. Serialized UTF-8 request/result byte limits are enforced by the fixture contract.",
+  "$defs": {
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "operationId",
+        "requestId",
+        "targetRef",
+        "profileRef",
+        "nonce",
+        "fields"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "fixture.v0.1"
+        },
+        "operationId": {
+          "const": "windows.runtime_inventory.v0_1"
+        },
+        "requestId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$(?![\\s\\S])",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "targetRef": {
+          "const": "fixture-windows-01"
+        },
+        "profileRef": {
+          "const": "fixture-profile-01"
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$(?![\\s\\S])",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "fields": {
+          "const": [
+            "windows",
+            "powershell7",
+            "node"
+          ]
+        }
+      }
+    },
+    "field": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "version"
+          ],
+          "properties": {
+            "state": {
+              "const": "available"
+            },
+            "version": {
+              "type": "string",
+              "maxLength": 128
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ],
+          "properties": {
+            "state": {
+              "enum": [
+                "missing",
+                "unverified"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "completed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "simulated",
+        "state",
+        "data"
+      ],
+      "properties": {
+        "simulated": {
+          "const": true
+        },
+        "state": {
+          "const": "completed"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "windows",
+            "powershell7",
+            "node"
+          ],
+          "properties": {
+            "windows": {
+              "$ref": "#/$defs/field"
+            },
+            "powershell7": {
+              "$ref": "#/$defs/field"
+            },
+            "node": {
+              "$ref": "#/$defs/field"
+            }
+          }
+        }
+      }
+    },
+    "denied": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "simulated",
+        "state",
+        "code"
+      ],
+      "properties": {
+        "simulated": {
+          "const": true
+        },
+        "state": {
+          "const": "denied"
+        },
+        "code": {
+          "enum": [
+            "INVALID_REQUEST",
+            "UNKNOWN_OPERATION",
+            "UNKNOWN_TARGET",
+            "UNKNOWN_FIELD",
+            "REQUEST_TOO_LARGE",
+            "INVALID_RESULT",
+            "RESULT_TOO_LARGE",
+            "APPROVAL_MISSING",
+            "APPROVAL_EXPIRED",
+            "APPROVAL_INVALID",
+            "REQUEST_CHANGED",
+            "TARGET_CHANGED",
+            "APPROVAL_REPLAYED",
+            "CANCELLED",
+            "TIMED_OUT",
+            "UNKNOWN_SCENARIO",
+            "EXECUTOR_DISABLED"
+          ]
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/completed"
+    },
+    {
+      "$ref": "#/$defs/denied"
+    }
+  ]
+}

@@ -549,7 +549,15 @@ def print_summary(index: dict[str, Any]) -> None:
 # ── CLI ─────────────────────────────────────────────────────
 
 
+def _configure_utf8_stdio() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8")
+
+
 def main() -> int:
+    _configure_utf8_stdio()
     parser = argparse.ArgumentParser(
         description="Collect execution telemetry for generated scenarios."
     )

@@ -1,6 +1,7 @@
 import re
 import shutil
 import subprocess
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -11,10 +12,32 @@ INDEX = ROOT / "site" / "operator" / "index.html"
 NODE = shutil.which("node")
 
 
+class _InlineScriptParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.scripts = []
+        self._parts = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script":
+            self._parts = [] if "src" not in dict(attrs) else None
+
+    def handle_data(self, data):
+        if self._parts is not None:
+            self._parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self._parts is not None:
+            self.scripts.append("".join(self._parts))
+            self._parts = None
+
+
 def _inline_script(html: str) -> str:
-    match = re.search(r"<script>\s*(.*?)\s*</script>", html, re.DOTALL)
-    assert match is not None
-    return match.group(1)
+    parser = _InlineScriptParser()
+    parser.feed(html)
+    parser.close()
+    assert len(parser.scripts) == 1
+    return parser.scripts[0].strip()
 
 
 def _record_integrity_helpers(html: str) -> str:

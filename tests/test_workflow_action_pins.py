@@ -11,16 +11,24 @@ WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 
 EXPECTED_ACTION_PINS = {
     "actions/create-github-app-token": (
-        "bcd2ba49218906704ab6c1aa796996da409d3eb1",
-        "v3.2.0",
+        "64ab729a6294000f5aa4a4bc0b73d1f32bc45510",
+        "v3.3.0",
     ),
     "actions/checkout": (
         "3d3c42e5aac5ba805825da76410c181273ba90b1",
         "v7.0.1",
     ),
     "actions/setup-python": (
-        "5fda3b95a4ea91299a34e894583c3862153e4b97",
-        "v7.0.0",
+        "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+        "v7.1.0",
+    ),
+    "actions/setup-node": (
+        "949feb2413d6458794dcd2491c4babbbce0c15c1",
+        "v7.1.0",
+    ),
+    "aws-actions/configure-aws-credentials": (
+        "e1253824e5c10ff9df46874f81ed3ec929e19cfd",
+        "v6.3.0",
     ),
     "actions/configure-pages": (
         "45bfe0192ca1faeb007ade9deae92b16b8254a0d",
@@ -29,6 +37,10 @@ EXPECTED_ACTION_PINS = {
     "actions/upload-pages-artifact": (
         "fc324d3547104276b827a68afc52ff2a11cc49c9",
         "v5.0.0",
+    ),
+    "actions/upload-artifact": (
+        "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+        "v7.0.2",
     ),
     "actions/deploy-pages": (
         "368f82528645a54fb793d4d04e342629a3f51346",

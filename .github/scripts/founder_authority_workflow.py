@@ -10,10 +10,12 @@ and semantic evidence remain unchanged.
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import pathlib
 import sys
+import time
 import urllib.error
 import urllib.request
 from typing import Any
@@ -30,6 +32,8 @@ API_VERSION = "2022-11-28"
 CHECK_NAME = "founder-authority"
 EVIDENCE_PATH = pathlib.Path("founder-authority-evidence.json")
 MANIFEST_PATH = pathlib.Path("config/governance/owner_identity.v1.json")
+MERGEABILITY_MAX_ATTEMPTS = 4
+MERGEABILITY_RETRY_SECONDS = 2
 
 
 class WorkflowError(RuntimeError):
@@ -110,6 +114,13 @@ class GitHubClient:
             if self.strict_check_publisher
             else None
         )
+        if (
+            self.expected_check_app_id == 15368
+            or self.expected_check_app_slug == "github-actions"
+        ):
+            raise WorkflowError(
+                "generic GitHub Actions cannot be the founder-authority publisher"
+            )
         self.created_check_targets: dict[int, tuple[str, str]] = {}
 
     def require_expected_check(
@@ -265,10 +276,10 @@ class GitHubClient:
         return require_mapping(result.get("data"), "GitHub GraphQL data")
 
     def create_check(self, target_sha: str, *, target_label: str) -> int:
-        external_id: str | None = None
-        if self.strict_check_publisher:
-            target_sha = require_sha(target_sha, f"{target_label} target SHA")
-            external_id = f"founder-authority:v1:{target_label}:{target_sha}"
+        if not self.strict_check_publisher:
+            raise WorkflowError("dedicated App publisher identity is required")
+        target_sha = require_sha(target_sha, f"{target_label} target SHA")
+        external_id = f"founder-authority:v1:{target_label}:{target_sha}"
         payload: dict[str, Any] = {
             "name": CHECK_NAME,
             "head_sha": target_sha,
@@ -281,8 +292,7 @@ class GitHubClient:
                 ),
             },
         }
-        if external_id is not None:
-            payload["external_id"] = external_id
+        payload["external_id"] = external_id
         check = self.repository_request(
             "check-runs",
             method="POST",
@@ -292,10 +302,6 @@ class GitHubClient:
         check_run_id = require_int(
             check.get("id"), f"created {target_label} check-run ID"
         )
-        if not self.strict_check_publisher:
-            return check_run_id
-
-        assert external_id is not None
         try:
             self.require_expected_check(
                 check,
@@ -332,6 +338,8 @@ class GitHubClient:
         success: bool,
         summary: str,
     ) -> None:
+        if not self.strict_check_publisher:
+            raise WorkflowError("dedicated App publisher identity is required")
         conclusion = "success" if success else "failure"
         title = (
             "Founder Authority Guard passed"
@@ -343,14 +351,6 @@ class GitHubClient:
             "conclusion": conclusion,
             "output": {"title": title, "summary": summary[-60000:]},
         }
-        if not self.strict_check_publisher:
-            self.repository_request(
-                f"check-runs/{check_run_id}",
-                method="PATCH",
-                payload=payload,
-            )
-            return
-
         target = self.created_check_targets.get(check_run_id)
         if target is None:
             raise WorkflowError(
@@ -625,29 +625,49 @@ def live_pull_snapshot(
     expected_base_sha: str,
     expected_merge_sha: str | None = None,
 ) -> dict[str, Any]:
-    pull = require_mapping(
-        client.repository_request(f"pulls/{pull_number}"),
-        f"live pull request #{pull_number}",
-    )
-    if pull.get("state") != "open" or pull.get("merged") is not False:
-        raise WorkflowError("pull request must remain open and unmerged")
-
-    head = require_mapping(pull.get("head"), "live pull-request head")
-    base = require_mapping(pull.get("base"), "live pull-request base")
-    head_sha = require_sha(head.get("sha"), "live pull-request head SHA")
-    base_sha = require_sha(base.get("sha"), "live pull-request base SHA")
-    merge_sha = require_sha(
-        pull.get("merge_commit_sha"), "live test merge commit SHA"
-    )
-
-    if head_sha != expected_head_sha:
-        raise WorkflowError(
-            f"pull-request head changed: expected {expected_head_sha}, got {head_sha}"
+    # Only explicit null/null means GitHub is still computing this snapshot.
+    # Four requests allow at most six seconds of deliberate pauses, in addition
+    # to the existing HTTP timeouts; this is not a wall-clock deadline.
+    for attempt in range(MERGEABILITY_MAX_ATTEMPTS):
+        pull = require_mapping(
+            client.repository_request(f"pulls/{pull_number}"),
+            f"live pull request #{pull_number}",
         )
-    if base_sha != expected_base_sha:
-        raise WorkflowError(
-            f"pull-request base changed: expected {expected_base_sha}, got {base_sha}"
+        if pull.get("state") != "open" or pull.get("merged") is not False:
+            raise WorkflowError("pull request must remain open and unmerged")
+
+        head = require_mapping(pull.get("head"), "live pull-request head")
+        base = require_mapping(pull.get("base"), "live pull-request base")
+        head_sha = require_sha(head.get("sha"), "live pull-request head SHA")
+        base_sha = require_sha(base.get("sha"), "live pull-request base SHA")
+        if head_sha != expected_head_sha:
+            raise WorkflowError(
+                f"pull-request head changed: expected {expected_head_sha}, got {head_sha}"
+            )
+        if base_sha != expected_base_sha:
+            raise WorkflowError(
+                f"pull-request base changed: expected {expected_base_sha}, got {base_sha}"
+            )
+
+        if "mergeable" not in pull or "merge_commit_sha" not in pull:
+            raise WorkflowError("live pull request must include mergeability fields")
+        mergeable = pull["mergeable"]
+        if mergeable is not None and type(mergeable) is not bool:
+            raise WorkflowError("live pull-request mergeable must be boolean or null")
+        if mergeable is False:
+            raise WorkflowError("live pull request is not mergeable")
+        if mergeable is None and pull["merge_commit_sha"] is None:
+            if attempt + 1 == MERGEABILITY_MAX_ATTEMPTS:
+                raise WorkflowError("live pull-request mergeability remained pending")
+            time.sleep(MERGEABILITY_RETRY_SECONDS)
+            continue
+        if mergeable is not True:
+            raise WorkflowError("live pull-request mergeability is unresolved")
+        merge_sha = require_sha(
+            pull["merge_commit_sha"], "live test merge commit SHA"
         )
+        break
+
     if expected_merge_sha is not None and merge_sha != expected_merge_sha:
         raise WorkflowError(
             f"test merge commit changed: expected {expected_merge_sha}, got {merge_sha}"
@@ -662,10 +682,14 @@ def live_pull_snapshot(
     parents = merge_commit.get("parents")
     if not isinstance(parents, list):
         raise WorkflowError("live test merge commit parents must be an array")
+    if len(parents) != 2:
+        raise WorkflowError("live test merge commit must have exactly two parents")
     parent_shas = [
-        require_sha(item.get("sha"), "test merge parent SHA")
+        require_sha(
+            require_mapping(item, "test merge parent").get("sha"),
+            "test merge parent SHA",
+        )
         for item in parents
-        if isinstance(item, dict)
     ]
     if parent_shas != [base_sha, head_sha]:
         raise WorkflowError(
@@ -726,7 +750,7 @@ def finalize_created_checks(
     return [*errors, *revocation_errors]
 
 
-def run() -> int:
+def run(*, publish_checks: bool = True) -> int:
     event = load_event()
     repository = require_mapping(event.get("repository"), "repository payload")
     event_pull = require_mapping(event.get("pull_request"), "pull_request payload")
@@ -747,28 +771,31 @@ def run() -> int:
     summary = "Founder Authority Guard failed before producing a result."
 
     try:
+        if publish_checks and not client.strict_check_publisher:
+            raise WorkflowError("dedicated App publisher identity is required")
         initial = live_pull_snapshot(
             client,
             pull_number,
             expected_head_sha=expected_head_sha,
             expected_base_sha=expected_base_sha,
         )
-        checks.append(
-            (
-                "exact pull-request head",
-                client.create_check(
-                    initial["head_sha"], target_label="exact pull-request head"
-                ),
+        if publish_checks:
+            checks.append(
+                (
+                    "exact pull-request head",
+                    client.create_check(
+                        initial["head_sha"], target_label="exact pull-request head"
+                    ),
+                )
             )
-        )
-        checks.append(
-            (
-                "live test merge commit",
-                client.create_check(
-                    initial["merge_sha"], target_label="live test merge commit"
-                ),
+            checks.append(
+                (
+                    "live test merge commit",
+                    client.create_check(
+                        initial["merge_sha"], target_label="live test merge commit"
+                    ),
+                )
             )
-        )
 
         manifest = require_mapping(
             json.loads(MANIFEST_PATH.read_text(encoding="utf-8")),
@@ -843,17 +870,26 @@ def run() -> int:
         success = False
         summary = f"{summary}\n" + "\n".join(finalization_errors)
 
+    if not publish_checks:
+        summary = f"mode=validate-only; no check-run writes\n{summary}"
     print(summary, file=sys.stdout if success else sys.stderr)
     return 0 if success else 1
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--validate-only",
+        action="store_true",
+        help="validate live authority evidence without creating or finalizing check runs",
+    )
+    args = parser.parse_args([] if argv is None else argv)
     try:
-        return run()
+        return run(publish_checks=not args.validate_only)
     except (OSError, WorkflowError, urllib.error.URLError) as exc:
         print(f"FOUNDER_AUTHORITY_GUARD: FAIL CLOSED: {exc}", file=sys.stderr)
         return 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

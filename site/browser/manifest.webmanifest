@@ -1,0 +1,10 @@
+{
+ "name":"Optimus",
+ "short_name":"Optimus",
+ "start_url":"./",
+ "scope":"./",
+ "display":"browser",
+ "background_color":"#0c1015",
+ "theme_color":"#0c1015",
+ "icons":[{"src":"./assets/optimus.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]
+}

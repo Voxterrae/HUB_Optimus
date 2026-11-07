@@ -39,6 +39,10 @@ def _digest(release: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
+@pytest.mark.skipif(
+    shutil.which("bash") is None,
+    reason="dependency-lock digest tests require bash",
+)
 def test_reviewed_dependency_locks_have_one_stable_digest(tmp_path: Path) -> None:
     release = _release(tmp_path)
 
@@ -52,6 +56,10 @@ def test_reviewed_dependency_locks_have_one_stable_digest(tmp_path: Path) -> Non
     assert set(first.stdout.strip()) <= set("0123456789abcdef")
 
 
+@pytest.mark.skipif(
+    shutil.which("bash") is None,
+    reason="dependency-lock digest tests require bash",
+)
 @pytest.mark.parametrize(
     ("corruption", "expected"),
     (
@@ -144,8 +152,9 @@ def test_deploy_uses_only_hash_locked_allowlisted_dependencies() -> None:
 
 def test_dependency_lock_files_are_public_read_only_inputs() -> None:
     for path in (RUNTIME_LOCK, VALIDATION_LOCK):
-        assert stat.S_IMODE(path.stat().st_mode) == 0o644
         assert not path.is_symlink()
+        if os.name != "nt":
+            assert stat.S_IMODE(path.stat().st_mode) == 0o644
 
 
 def test_locked_ci_certifies_two_reproducible_offline_environments() -> None:

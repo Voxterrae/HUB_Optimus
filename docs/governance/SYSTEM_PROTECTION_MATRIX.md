@@ -33,6 +33,25 @@ external legal protection.
 | Contributor credit and IP | Removing authority could wrongly erase contribution credit or overclaim third-party IP. | `ACKNOWLEDGEMENTS.md` preserves credit; IP notice separates project authority from third-party and contributor rights. | Benjamin Gerrit Hoff / applicable rights holders | active | Formal contributor, employment, assignment, or license agreements remain external legal work. |
 | Secrets and owner keys | A signing secret could be committed or controlled by a service provider. | Manifest stores fingerprints only, never private keys; contribution policy forbids secrets. | Benjamin Gerrit Hoff | pending | Generate and store the owner key on owner-controlled hardware; publish only the public key or fingerprint. |
 
+## Current limited refresh — 2026-10-03 UTC
+
+At `main@bb9a343ab76000c06ad199e29fbdcceb9ec82f18`, authenticated owner
+CLI GETs confirmed Voxterrae / immutable ID 249308740 as the sole primary-repo
+collaborator/admin, with no invitations, deploy keys or webhooks. Ruleset
+11665521 remains active without bypass actors. The required `founder-authority`
+publisher is dedicated App 4705710; the other six required contexts use
+Actions App 15368. Workflow defaults already are `read/false` under #1931.
+The dated checklist records the exact scope and unresolved App/account limits.
+
+The permanent parent-platform non-transfer condition governs collaboration and
+commercial exceptions. Lawfully owned generic new programs, operating-system
+components, products and improvements remain under Benjamin Gerrit Hoff's
+ownership and final human authority; scoped product licenses and services may
+be monetized without transferring the matrix. Existing third-party rights,
+granted licenses and contribution credit remain intact. Hardware-key enrollment
+is still pending. The older dated rows do not grant technical roles or current
+collaborator rights.
+
 ## Dated live findings - 2026-09-14 UTC
 
 The authenticated ruleset collection/detail and repository audit supersede the
@@ -58,13 +77,14 @@ without bypass; they do not certify the unresolved publisher trust boundary.
 
 - Preserve #1681 and #1683 as the enforcement and no-bypass evidence trails.
   The old overlapping-ruleset and missing-required-check tasks are complete.
-- Keep #1906 open for the dedicated publisher and exact-authorization work.
-  The shadow App canary remains non-required.
+- Keep #1906's unresolved exact-authorization work visible. The dedicated
+  publisher is now required as observed in the 2026-10-03 refresh; do not
+  describe its founder-authority context as shadow-only or optional.
 - Preserve RATIFICATION_PROPOSED and pending hardware-backed owner-key
   enrollment in the identity manifest until the separate protected process has
   the necessary evidence; follow-up remains in #1743 and #1881.
 - Re-audit collaborator grants after onboarding or settings changes.
-- Keep #1931's Actions-default proposal separate from explicit workflow
-  permissions; verify any actual settings change before recording completion.
+- Keep #1931's already applied Actions defaults separate from explicit workflow
+  permissions; bind completion to observed protected PR checks and fresh GETs.
 - #1743 retains the broader Pages/environment and protection follow-ups.
   Publication receipts and runtime readiness are separate from this matrix.

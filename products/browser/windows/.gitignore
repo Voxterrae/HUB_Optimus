@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+artifacts/
+.superpowers/
+.vs/
+*.user
+*.suo
+*.pfx
+*.key
+.env*
+!.env.example
+__pycache__/
+*.pyc

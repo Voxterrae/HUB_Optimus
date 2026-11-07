@@ -1,0 +1,146 @@
+# REVIEW CANDIDATE ONLY: apply through the protected owner process on main.
+# Adapted from products/browser/windows/ci/WindowsSmoke.workflow.yml at 178e52e.
+# Reviewed source pin: changing the executable source requires protected review.
+name: Optimus Windows public pilot isolated smoke
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Confirm the reviewed product SHA; other commits are blocked
+        type: string
+        required: true
+        default: 91ce4863d756f429d8fcae19787e56d166d69b82
+permissions:
+  contents: read
+concurrency:
+  group: optimus-windows-public-pilot-smoke
+  cancel-in-progress: false
+jobs:
+  windows-smoke:
+    # Only a manual owner dispatch on protected main in the public source repository.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' &&
+          github.repository == 'Voxterrae/HUB_Optimus' &&
+          github.repository_id == '1115264109' &&
+          github.event.repository.private == false &&
+          github.ref == 'refs/heads/main' &&
+          github.actor_id == '249308740' &&
+          github.triggering_actor == 'Voxterrae' }}
+    runs-on: windows-2022
+    timeout-minutes: 15
+    env:
+      OPTIMUS_SOURCE_COMMIT: 91ce4863d756f429d8fcae19787e56d166d69b82
+      OPTIMUS_REQUESTED_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      OPTIMUS_WORKFLOW_COMMIT: ${{ github.workflow_sha }}
+      OPTIMUS_RUN_ID: ${{ github.run_id }}
+      OPTIMUS_RUN_ATTEMPT: ${{ github.run_attempt }}
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: products/browser/windows
+    steps:
+      - name: Validate exact source before checkout
+        working-directory: ${{ runner.temp }}
+        run: |
+          if ($env:OPTIMUS_REQUESTED_SOURCE_COMMIT -cnotmatch '\A[0-9a-f]{40}\z') { throw 'A complete lowercase commit SHA is required; branch and tag names are not accepted.' }
+          if ($env:OPTIMUS_REQUESTED_SOURCE_COMMIT -cne $env:OPTIMUS_SOURCE_COMMIT) { throw 'Only the protected reviewed product pin may execute.' }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: 91ce4863d756f429d8fcae19787e56d166d69b82
+      - name: Toolchain preflight (no installation)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $head = & git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $head -ne $env:OPTIMUS_SOURCE_COMMIT) { throw 'Checkout source head mismatch.' }
+          $version = & dotnet --version
+          if ($LASTEXITCODE -ne 0 -or $version -ne '10.0.403') { throw 'Required .NET SDK 10.0.403 absent; provision the isolated runner through protected review.' }
+          [ordered]@{
+            sourceCommit = $head
+            workflowCommit = $env:OPTIMUS_WORKFLOW_COMMIT
+            runId = $env:OPTIMUS_RUN_ID
+            runAttempt = $env:OPTIMUS_RUN_ATTEMPT
+            sdk = $version
+            os = [Environment]::OSVersion.VersionString
+            imageOS = $env:ImageOS
+            imageVersion = $env:ImageVersion
+            guiRequested = $true
+          } | ConvertTo-Json | Set-Content "$env:RUNNER_TEMP/optimus-toolchain.json" -Encoding utf8
+      - name: Build production suites and self-contained executables
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function CheckExit { if ($LASTEXITCODE -ne 0) { throw 'Native build/test/import failed.' } }
+          foreach ($suite in @('Optimus.Core.Tests', 'Optimus.Search.Tests', 'Optimus.Privacy.Tests')) {
+            dotnet run --project "tests/$suite" -c Release; CheckExit
+          }
+          dotnet run --project ../search/tests/Optimus.Search.Tests -c Release; CheckExit
+          # Packaging's Linux path/symlink/CON fixtures are not run on Windows.
+          $output = "$env:RUNNER_TEMP/optimus-publication"
+          dotnet publish src/Optimus.App/Optimus.App.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o $output; CheckExit
+          dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.3-alpha -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Search"; CheckExit
+          dotnet publish scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Diagnostics"; CheckExit
+          $catalog = (Resolve-Path '../search/catalog/optimus-help.json').Path
+          dotnet run --project ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -- index --input $catalog --output "$output/Search/index.json"; CheckExit
+      - name: Verify fixed public pilot assets after publication
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $assets = [ordered]@{
+            'public-pilot-v0.1.json' = '8294911789f69f2c1262c80153ca0dddd6189e9a198b586f5fbb3beeb0d665ec'
+            'public-pilot-v0.1.provenance.json' = '5312f482daea11727c9c90a683bcf95dce587021aa6c63609b9038756eb05aae'
+          }
+          $evidence = [ordered]@{}
+          foreach ($name in $assets.Keys) {
+            $source = (Resolve-Path "../search/catalog/$name").Path
+            $published = Join-Path "$env:RUNNER_TEMP/optimus-publication/Search/catalog" $name
+            $sourceHash = (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash.ToLowerInvariant()
+            $publishedHash = (Get-FileHash -LiteralPath $published -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($sourceHash -cne $assets[$name] -or $publishedHash -cne $sourceHash) { throw 'Reviewed public pilot asset mismatch after publication.' }
+            $evidence[$name] = $publishedHash
+          }
+          $evidence | ConvertTo-Json | Set-Content "$env:RUNNER_TEMP/optimus-public-assets.json" -Encoding utf8
+      - name: Real packaged host acceptance through Windows PowerShell 5.1
+        run: |
+          & "$env:SystemRoot/System32/WindowsPowerShell/v1.0/powershell.exe" -NoProfile -File scripts/Test-OptimusWindows.ps1 -Publication "$env:RUNNER_TEMP/optimus-publication" -EvidenceDirectory "$env:RUNNER_TEMP/optimus-service-evidence" -SourceCommit $env:OPTIMUS_SOURCE_COMMIT
+          if ($LASTEXITCODE -ne 0) { throw 'Windows service acceptance failed; retain negative evidence.' }
+      - name: Required pilot GUI acceptance (no runtime installation)
+        run: |
+          # Helper preflights absent default profiles, free port, desktop and WebView2.
+          & "$env:SystemRoot/System32/WindowsPowerShell/v1.0/powershell.exe" -NoProfile -File scripts/Test-OptimusWindows.ps1 -Publication "$env:RUNNER_TEMP/optimus-publication" -EvidenceDirectory "$env:RUNNER_TEMP/optimus-gui-evidence" -SourceCommit $env:OPTIMUS_SOURCE_COMMIT -Gui
+          if ($LASTEXITCODE -ne 0) { throw 'GUI failed or blocked; this is not a passing desktop run.' }
+      - name: Report separate results without artifact or cache storage
+        if: ${{ always() }}
+        working-directory: ${{ runner.temp }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $summary = @(
+            '# Optimus Windows public pilot smoke',
+            "Source: $env:OPTIMUS_SOURCE_COMMIT",
+            "Workflow: $env:OPTIMUS_WORKFLOW_COMMIT",
+            "Run: $env:OPTIMUS_RUN_ID; attempt: $env:OPTIMUS_RUN_ATTEMPT",
+            'Missing evidence never establishes acceptance; inspect step outcomes.',
+            'Service and GUI reports are separate. Both must succeed; blocked or missing evidence is not acceptance.',
+            'Themes, Easy mode, keyboard, Narrator/NVDA and public web search are NOT accepted by this smoke.',
+            'No artifacts or cache uploaded. Owned-window PNG is discarded with the VM; only its hash can appear below.'
+          )
+          $files = @(
+            "$env:RUNNER_TEMP/optimus-toolchain.json",
+            "$env:RUNNER_TEMP/optimus-public-assets.json",
+            "$env:RUNNER_TEMP/optimus-service-evidence/metadata.json",
+            "$env:RUNNER_TEMP/optimus-service-evidence/result.json",
+            "$env:RUNNER_TEMP/optimus-gui-evidence/metadata.json",
+            "$env:RUNNER_TEMP/optimus-gui-evidence/result.json",
+            "$env:RUNNER_TEMP/optimus-gui-evidence/image.json"
+          )
+          foreach ($file in $files) {
+            $label = (Split-Path (Split-Path $file) -Leaf) + '/' + (Split-Path $file -Leaf)
+            $summary += "## $label"
+            if (Test-Path -LiteralPath $file -PathType Leaf) {
+              if ((Get-Item -LiteralPath $file).Length -gt 65536) { throw 'Evidence exceeded summary size bound.' }
+              $json = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json | ConvertTo-Json -Depth 12
+              # Log only the curated reports; never host output, token files or profiles.
+              Write-Output $label
+              Write-Output $json
+              $summary += @('```json', $json, '```')
+            } else { $summary += 'UNRUN / report unavailable' }
+          }
+          $summary | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Encoding utf8

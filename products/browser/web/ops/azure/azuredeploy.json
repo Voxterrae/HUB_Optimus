@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "siteName": {"type": "string", "minLength": 2, "maxLength": 60},
+    "location": {"type": "string", "defaultValue": "westeurope"}
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/staticSites",
+      "apiVersion": "2025-03-01",
+      "name": "[parameters('siteName')]",
+      "location": "[parameters('location')]",
+      "sku": {"name": "Free", "tier": "Free"},
+      "tags": {"project": "optimus", "environment": "pilot", "cost_center": "optimus"},
+      "properties": {"stagingEnvironmentPolicy": "Enabled"}
+    }
+  ],
+  "outputs": {
+    "hostname": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/staticSites', parameters('siteName')), '2025-03-01').defaultHostname]"
+    }
+  }
+}

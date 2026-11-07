@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+if os.name != "posix":
+    pytest.skip("EC2 release-worktree verifier tests require POSIX paths", allow_module_level=True)
 
 ROOT = Path(__file__).resolve().parents[1]
 VERIFIER = ROOT / "ops" / "ec2" / "verify-release-worktree.py"

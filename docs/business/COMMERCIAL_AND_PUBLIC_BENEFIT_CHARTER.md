@@ -157,19 +157,33 @@ The reserve:
 
 ## 8. Intellectual-property and data boundary
 
-Standard commercial and pro bono engagements do not transfer ownership of the
-HUB_Optimus core.
+HUB_Optimus is Benjamin Gerrit Hoff's permanently retained parent platform.
+Every commercial, public-benefit, joint-venture or exception decision is subject
+to section 4.1 of the
+[Founder Ownership and Authority Charter](../governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md).
+No agreement may sell, assign, gift, make co-owned or transfer control or final
+human authority over the matrix.
 
-Unless a separate signed agreement expressly states otherwise:
+New programs, operating-system components, products, reusable improvements and
+generic systems lawfully owned by Benjamin Gerrit Hoff remain under his project
+ownership and final human authority. Their use, product licenses, implementation,
+support and services may be monetized through explicit, scoped owner-approved
+agreements. Purchase, embedding, white-label use, resale or technical access
+creates no independent project ownership or control authority.
+
+The following boundary applies, preserving previously granted rights:
 
 - the client or beneficiary retains its own data and pre-existing materials;
 - HUB_Optimus retains its platform, architecture, methods, reusable connectors,
   policies, templates, models, tools, know-how, improvements, and generic
   components;
-- client-specific deliverables are licensed or assigned only as stated in the
-  applicable contract;
-- source code, exclusivity, white-label rights, resale rights, sector exclusivity,
-  and ownership transfers are separate high-value negotiations;
+- rights in genuinely client-specific deliverables are defined by the applicable
+  contract; their scope must exclude the parent platform and retained generic
+  software, methods, reusable components and improvements;
+- source-code access, exclusivity, white-label, resale and sector rights require
+  separate scoped agreements without transferring the matrix or its authority;
+- third parties retain their pre-existing software, infrastructure, data and
+  rights; the project makes no blanket ownership claim over them;
 - no engagement creates an implied joint venture, ownership share, agency, or
   governance right.
 
@@ -177,7 +191,9 @@ Unless a separate signed agreement expressly states otherwise:
 
 A joint venture or strategic partnership requires a separate written agreement
 approved by Benjamin Gerrit Hoff with fair, transparent, reciprocal, and clearly
-scoped conditions.
+scoped conditions, subject to the permanent parent-platform non-transfer
+condition. An economic arrangement does not confer independent project or
+constitutional authority.
 
 The default economic rule is:
 
@@ -193,7 +209,9 @@ The default economic rule is:
 
 Any exception to the paid-client rule, minimum engagement, public-benefit
 eligibility, discount boundary, IP boundary, or joint-venture funding rule
-requires an explicit written decision by Benjamin Gerrit Hoff.
+requires an explicit written decision by Benjamin Gerrit Hoff. The exception
+procedure cannot waive section 4.1 or transfer the parent platform, its control
+or final human authority.
 
 Silence, urgency, a verbal promise, a chat message, an email from a third party,
 a procurement deadline, or previous unpaid assistance does not constitute an

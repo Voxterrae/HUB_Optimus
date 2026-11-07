@@ -11,10 +11,9 @@ permissions:
   contents: read
   issues: read
   pull-requests: read
-  checks: write
 
 concurrency:
-  group: founder-authority-${{ github.event.pull_request.number }}
+  group: founder-authority-${{ github.event_name }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -37,12 +36,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PYTHONPATH: .
-        run: python .github/scripts/founder_authority_workflow.py
+        run: python .github/scripts/founder_authority_workflow.py --validate-only
 
   founder-authority-app-canary:
     name: founder-authority-app-canary
     if: github.event.pull_request.base.ref == 'main'
-    continue-on-error: true
+    # Required-check publication failures must also fail this workflow.
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -58,7 +57,7 @@ jobs:
 
       - name: Create repository-scoped founder-authority App token
         id: founder-authority-app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ vars.FOUNDER_AUTHORITY_APP_CLIENT_ID }}
           private-key: ${{ secrets.FOUNDER_AUTHORITY_APP_PRIVATE_KEY }}
@@ -94,9 +93,9 @@ jobs:
             exit 1
           fi
 
-      # Shadow-only during migration. This job is deliberately non-required and
-      # tolerant of failure until the App has emitted a recent, verified check
-      # and the ruleset source is switched in a later protected change.
+      # The dedicated App is the required founder-authority publisher. The
+      # historical canary job name remains for continuity; generic Actions
+      # validation cannot publish this context.
       - name: Validate with dedicated founder-authority App canary
         shell: bash
         env:

@@ -33,7 +33,7 @@ def test_wiki_declares_its_audited_boundary_and_live_state_authorities():
     )
     publishing = (WIKI / "README.md").read_text(encoding="utf-8")
 
-    assert "c399c94e098058a723482001811c7d8491ebbd5e" in home
+    assert "23ea5a6677c07dcefab60f70c6b1641a3541f0b0" in home
     assert "main" in publishing
     assert "independent source of truth" in publishing
     assert "https://github.com/Voxterrae/HUB_Optimus/issues" in roadmap

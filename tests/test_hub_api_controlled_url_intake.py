@@ -2,6 +2,7 @@ import ast
 import io
 import json
 import re
+import signal
 import socket
 import sys
 import threading
@@ -14,6 +15,15 @@ from urllib.error import URLError
 
 import jsonschema
 import pytest
+
+HAS_POSIX_FETCH_ALARM = all(
+    hasattr(signal, attribute)
+    for attribute in ("SIGALRM", "ITIMER_REAL", "getitimer", "setitimer")
+)
+requires_posix_fetch_alarm = pytest.mark.skipif(
+    not HAS_POSIX_FETCH_ALARM,
+    reason="URL fetch integration requires enforceable POSIX interval timers",
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 API_SCRIPT = ROOT / "ops" / "ec2" / "hub-api.sh"
@@ -882,6 +892,7 @@ def test_pinned_opener_disables_environment_proxies(hub_api):
         "http://private.example/private",
     ],
 )
+@requires_posix_fetch_alarm
 def test_redirects_to_local_or_private_destinations_are_rejected(
     hub_api,
     monkeypatch,
@@ -924,6 +935,7 @@ def test_redirects_to_local_or_private_destinations_are_rejected(
     assert 0 < requests[0][1] <= hub_api.URL_TIMEOUT_SECONDS
 
 
+@requires_posix_fetch_alarm
 def test_redirect_with_duplicate_location_headers_is_rejected(
     hub_api,
     monkeypatch,
@@ -960,6 +972,7 @@ def test_redirect_with_duplicate_location_headers_is_rejected(
     assert caught.value.code == "redirect_without_location"
 
 
+@requires_posix_fetch_alarm
 def test_success_fetches_one_url_without_crawling_and_marks_provenance(
     hub_api,
     monkeypatch,
@@ -1042,6 +1055,7 @@ def test_success_fetches_one_url_without_crawling_and_marks_provenance(
     ],
     ids=["partial-206", "content-range-on-200", "encoded-gzip"],
 )
+@requires_posix_fetch_alarm
 def test_partial_or_encoded_success_is_never_presented_as_complete_source_text(
     hub_api,
     monkeypatch,
@@ -1132,6 +1146,7 @@ def test_partial_or_encoded_success_is_never_presented_as_complete_source_text(
     ],
     ids=["duplicate-encoding", "duplicate-content-range", "duplicate-content-type"],
 )
+@requires_posix_fetch_alarm
 def test_repeated_representation_headers_cannot_hide_an_unsupported_value(
     hub_api,
     monkeypatch,
@@ -1228,6 +1243,7 @@ def test_repeated_representation_headers_cannot_hide_an_unsupported_value(
     ],
     ids=["short-eof", "duplicate-content-length", "combined-content-length", "oversized-content-length", "cl-and-te", "unsupported-te"],
 )
+@requires_posix_fetch_alarm
 def test_response_framing_ambiguity_or_early_eof_fails_closed(
     hub_api,
     monkeypatch,
@@ -1294,6 +1310,7 @@ def test_response_framing_ambiguity_or_early_eof_fails_closed(
     ],
     ids=["real-short-content-length", "real-incomplete-chunk"],
 )
+@requires_posix_fetch_alarm
 def test_real_http_response_incomplete_framing_is_rejected(
     hub_api,
     monkeypatch,
@@ -1764,6 +1781,7 @@ def test_ambiguous_or_empty_charset_parameters_are_rejected(
     ],
     ids=["fetch-latin-first", "fetch-utf8-first"],
 )
+@requires_posix_fetch_alarm
 def test_fetch_rejects_conflicting_charset_parameters(
     hub_api,
     monkeypatch,
@@ -1855,6 +1873,7 @@ def test_source_bytes_that_cannot_be_decoded_exactly_are_rejected(
     ],
     ids=["fetch-unknown-explicit-charset", "fetch-incomplete-declared-utf8"],
 )
+@requires_posix_fetch_alarm
 def test_fetch_rejects_undecodable_source_without_replacement_text(
     hub_api,
     monkeypatch,
@@ -2003,6 +2022,7 @@ def test_parser_close_flushes_text_before_an_incomplete_entity(hub_api):
     ],
     ids=["bad-status", "long-header", "incomplete-chunk"],
 )
+@requires_posix_fetch_alarm
 def test_malformed_http_responses_fail_with_controlled_intake_error(
     hub_api,
     monkeypatch,
@@ -2037,6 +2057,7 @@ def test_malformed_http_responses_fail_with_controlled_intake_error(
         (TimeoutError("response stalled"), 504, "url_fetch_timeout"),
     ],
 )
+@requires_posix_fetch_alarm
 def test_response_read_errors_fail_cleanly(
     hub_api,
     monkeypatch,
@@ -2080,6 +2101,7 @@ def test_response_read_errors_fail_cleanly(
     assert caught.value.code == expected_code
 
 
+@requires_posix_fetch_alarm
 def test_wrapped_url_timeout_remains_a_504(hub_api, monkeypatch):
     def fake_getaddrinfo(host, port, type):
         return [address_info("8.8.8.8", port)]
@@ -2102,6 +2124,7 @@ def test_wrapped_url_timeout_remains_a_504(hub_api, monkeypatch):
     assert caught.value.code == "url_fetch_timeout"
 
 
+@requires_posix_fetch_alarm
 def test_handler_preserves_unreviewed_provenance_for_malformed_http(
     hub_api,
     monkeypatch,
@@ -2238,6 +2261,7 @@ def test_international_hostname_requires_idna_a_label(
         ("https://[2001:db8::1", "invalid_url"),
     ],
 )
+@requires_posix_fetch_alarm
 def test_redirect_location_uses_same_ascii_uri_policy(
     hub_api,
     monkeypatch,
@@ -2416,6 +2440,7 @@ def test_stalled_first_ip_preserves_time_for_working_later_ip(
     assert [attempt[1] for attempt in attempts] == pytest.approx([4, 4])
 
 
+@requires_posix_fetch_alarm
 def test_redirect_hops_share_one_total_deadline(
     hub_api,
     monkeypatch,
@@ -2454,6 +2479,29 @@ def test_redirect_hops_share_one_total_deadline(
     assert request_timeouts == [8, 5, 2]
 
 
+@pytest.mark.parametrize("missing_api", ("SIGALRM", "ITIMER_REAL", "getitimer", "setitimer"))
+def test_deadline_enforcement_rejects_missing_posix_alarm(
+    hub_api, monkeypatch, missing_api
+):
+    monkeypatch.delattr(hub_api.signal, missing_api, raising=False)
+
+    def unexpected_network(*args, **kwargs):
+        pytest.fail("unsupported deadline enforcement must reject before network access")
+
+    monkeypatch.setattr(hub_api.socket, "getaddrinfo", unexpected_network)
+    monkeypatch.setattr(hub_api, "build_pinned_opener", unexpected_network)
+
+    with pytest.raises(hub_api.IntakeError) as failure:
+        hub_api.fetch_url_text("https://public.example/article")
+
+    assert failure.value.status == 503
+    assert failure.value.code == "url_fetch_unavailable"
+
+
+@pytest.mark.skipif(
+    not HAS_POSIX_FETCH_ALARM,
+    reason="SIGALRM deadline tests require POSIX interval timers",
+)
 def test_main_thread_alarm_interrupts_python_level_blocking_dns_probe(
     hub_api,
     monkeypatch,
@@ -2502,6 +2550,10 @@ def test_deadline_enforcement_off_main_thread_fails_cleanly(hub_api):
     assert failures[0].code == "url_fetch_unavailable"
 
 
+@pytest.mark.skipif(
+    not HAS_POSIX_FETCH_ALARM,
+    reason="SIGALRM deadline tests require POSIX interval timers",
+)
 def test_total_deadline_closes_a_slow_response(
     hub_api,
     monkeypatch,

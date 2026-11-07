@@ -1,0 +1,15 @@
+{
+  "repository": "Voxterrae/HUB_Optimus",
+  "ref": "98fadc6853bec78755cf20cbc35c8462f36c4c0a",
+  "logo": {
+    "path": "assets/brand/logo/hub-optimus-logo-lockup.png",
+    "blobSha": "da938708a6cfb2c88d208d684260750dcc81d2db",
+    "url": "https://github.com/Voxterrae/HUB_Optimus/blob/98fadc6853bec78755cf20cbc35c8462f36c4c0a/assets/brand/logo/hub-optimus-logo-lockup.png"
+  },
+  "icon": {
+    "path": "site/operator/icon.svg",
+    "blobSha": "6f02abc1843f498f76c4a3b082a8e9c5bb182454"
+  },
+  "tokens": "assets/brand/source/brand-tokens.json",
+  "notes": "Approved assets are presentation support; preserve factual project meaning. optimus-webops logo search returned no results."
+}

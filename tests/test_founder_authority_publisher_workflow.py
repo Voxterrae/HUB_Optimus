@@ -17,7 +17,7 @@ def workflow_jobs() -> dict[str, object]:
     return jobs
 
 
-def test_required_legacy_job_remains_isolated_and_unchanged() -> None:
+def test_required_bootstrap_is_isolated_and_read_only() -> None:
     jobs = workflow_jobs()
     legacy = jobs["founder-authority"]
     assert isinstance(legacy, dict)
@@ -37,22 +37,24 @@ def test_required_legacy_job_remains_isolated_and_unchanged() -> None:
         "PYTHONPATH": ".",
     }
     assert validation["run"] == (
-        "python .github/scripts/founder_authority_workflow.py"
+        "python .github/scripts/founder_authority_workflow.py --validate-only"
     )
 
 
-def test_app_canary_is_separate_tolerated_pinned_and_least_privilege() -> None:
+def test_app_publisher_is_separate_fail_closed_pinned_and_least_privilege() -> None:
     text = WORKFLOW.read_text(encoding="utf-8")
     jobs = workflow_jobs()
     canary = jobs["founder-authority-app-canary"]
     assert isinstance(canary, dict)
     assert canary["name"] == "founder-authority-app-canary"
-    assert canary["continue-on-error"] is True
+    # Required-check publication errors must also fail the workflow.
+    assert canary.get("continue-on-error", False) is False
     assert canary["permissions"] == {"contents": "read"}
     assert "needs" not in canary
 
     steps = canary["steps"]
     assert isinstance(steps, list)
+    assert all(step.get("continue-on-error", False) is False for step in steps)
     checkout = steps[0]
     assert checkout["name"] == "Checkout trusted base policy"
     assert checkout["with"] == {
@@ -63,7 +65,7 @@ def test_app_canary_is_separate_tolerated_pinned_and_least_privilege() -> None:
 
     assert (
         "actions/create-github-app-token@"
-        "bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0"
+        "64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0"
     ) in text
     assert "client-id: ${{ vars.FOUNDER_AUTHORITY_APP_CLIENT_ID }}" in text
     assert "private-key: ${{ secrets.FOUNDER_AUTHORITY_APP_PRIVATE_KEY }}" in text
@@ -98,3 +100,37 @@ def test_app_canary_pins_expected_identity_and_installation() -> None:
         "${{ steps.founder-authority-app-token.outputs.app-slug }}"
     ) in text
     assert text.count("python .github/scripts/founder_authority_workflow.py") == 2
+
+
+def test_generic_workflow_token_cannot_write_check_runs() -> None:
+    document = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+    permissions = document["permissions"]
+    assert permissions == {
+        "contents": "read", "issues": "read", "pull-requests": "read"
+    }
+    bootstrap = document["jobs"]["founder-authority"]
+    effective = bootstrap.get("permissions", permissions)
+    assert effective.get("checks", "none") == "none"
+
+
+def test_review_and_pull_request_events_have_independent_concurrency() -> None:
+    document = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+    concurrency = document["concurrency"]
+    assert concurrency["cancel-in-progress"] is True
+    template = concurrency["group"]
+
+    def group(event: str, number: int) -> str:
+        rendered = template.replace("${{ github.event_name }}", event)
+        rendered = rendered.replace(
+            "${{ github.event.pull_request.number }}", str(number)
+        )
+        assert "${{" not in rendered
+        return rendered
+
+    target = group("pull_request_target", 1959)
+    review = group("pull_request_review", 1959)
+    assert target != review
+    assert target == group("pull_request_target", 1959)
+    assert review == group("pull_request_review", 1959)
+    assert target != group("pull_request_target", 1963)
+    assert review != group("pull_request_review", 1963)

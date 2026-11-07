@@ -40,7 +40,7 @@ The registry reports evidence; it does not create authority. In particular:
   immutable ID may record the channel and provenance of that decision, but the
   account is not an independent human authority.
 
-## Current snapshot
+## Historical snapshot and atomic-claim reconciliation
 
 At the verified baseline commit
 `d96fa7de64e5a27a3058d892ca31cf93d0fa0de7` from 2026-08-25, fifteen RFC
@@ -58,3 +58,12 @@ Repository capabilities are tracked separately in
 [`../architecture/capability_status.md`](../architecture/capability_status.md).
 The plain-language project boundary is
 [`../context/PROJECT_OVERVIEW.md`](../context/PROJECT_OVERVIEW.md).
+
+## AI access matrix proposal checkpoint
+
+At `main@23ea5a6677c07dcefab60f70c6b1641a3541f0b0`, the registry contains
+sixteen `Draft`, one `Accepted`, and one `Partially Implemented` record.
+The AI Access Matrix proposal under #1584 adds a seventeenth `Draft` record;
+existing decisions and implementation states remain unchanged. This proposal
+checkpoint does not re-certify the registry's historical baseline, accept the
+matrix, configure accounts, or enable any provider integration or permission.

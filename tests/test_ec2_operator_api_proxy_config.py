@@ -317,7 +317,7 @@ def test_logout_clears_the_session_and_uses_only_a_fixed_local_return_path():
     assert "$request_uri" not in sign_out
     assert "auth_request" not in signed_out
     assert "<script" not in signed_out.lower()
-    assert "https://huboptimus.dev/" in signed_out
+    assert 'href="https://huboptimus.dev/"' in signed_out
     assert "chatgpt.site" not in signed_out
     assert (
         "https://api.huboptimus.dev/oauth2/start?"

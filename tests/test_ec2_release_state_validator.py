@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+if shutil.which("bash") is None:
+    pytest.skip("EC2 release-state validator tests require bash", allow_module_level=True)
 
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = ROOT / "ops" / "ec2" / "validate-release-state.sh"

@@ -1,0 +1,5 @@
+.worktrees/
+.superpowers/
+artifacts/
+node_modules/
+*.log

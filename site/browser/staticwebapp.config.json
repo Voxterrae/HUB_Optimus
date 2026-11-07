@@ -1,0 +1,9 @@
+{
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), geolocation=(), payment=()",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://es.wikipedia.org https://ca.wikipedia.org https://en.wikipedia.org https://de.wikipedia.org https://fr.wikipedia.org https://ru.wikipedia.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+  },
+  "mimeTypes": {".mjs": "text/javascript", ".webmanifest": "application/manifest+json"}
+}

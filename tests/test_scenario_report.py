@@ -211,7 +211,7 @@ def test_atomic_output_rejects_parent_directory_swap(
     source_dir.mkdir()
     output_dir.mkdir()
     telemetry = source_dir / "telemetry.json"
-    output = output_dir / "telemetry.json"
+    output = output_dir / "report.txt"
     _write_telemetry(telemetry, [_record("fixture", "agreement", 2)])
     original = telemetry.read_bytes()
     target = report._validate_output_target(telemetry, output)
@@ -226,7 +226,7 @@ def test_atomic_output_rejects_parent_directory_swap(
     else:
         raise AssertionError("parent swap must fail closed")
     assert telemetry.read_bytes() == original
-    assert not (moved_output_dir / "telemetry.json").exists()
+    assert not (moved_output_dir / "report.txt").exists()
 
 
 def test_missing_telemetry_is_controlled_exit_one(tmp_path: Path) -> None:

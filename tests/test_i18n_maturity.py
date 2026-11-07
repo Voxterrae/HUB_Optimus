@@ -69,11 +69,11 @@ def _write_fixture(
 ) -> tuple[Path, Path]:
     docs = tmp_path / "docs"
     docs.mkdir()
-    (docs / "start.md").write_text("# English source\n", encoding="utf-8")
+    (docs / "start.md").write_bytes("# English source\n".encode("utf-8"))
     if target_text is not None:
         target_dir = docs / "de"
         target_dir.mkdir()
-        (target_dir / "start.md").write_text(target_text, encoding="utf-8")
+        (target_dir / "start.md").write_bytes(target_text.encode("utf-8"))
     manifest_path = docs / "maturity.json"
     manifest_path.write_text(
         json.dumps(

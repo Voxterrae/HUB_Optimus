@@ -46,3 +46,23 @@ canonical v1 methodology remains Spanish under `v1_core/languages/es/`.
 - `.github/copilot-instructions.md` identifies `v1_core/workflow/05_meta_learning.md` as the meta-learning update location.
 - Other meta-learning files exist as compatibility targets, translations, or unclassified copies and need separate canonical/parity/legacy classification.
 - Do not consolidate, delete, or rewrite meta-learning files without a scoped issue or PR.
+
+## Operator URL-intake runtime status
+
+- The public Operator remains local/pasted-text first; controlled remote URL
+  retrieval is not enabled on production.
+- The invitation-only AWS canary is a repository candidate tracked by issue
+  `#1917` and PR `#1918`; code integration does not prove deployment or browser
+  readiness. Its implementation location is `ops/aws/operator-url-intake/`.
+- Auth/runtime assets remain dormant: canonical `index.html` does not load them
+  and `sw.js` does not precache them. Changing `enabled` alone cannot activate
+  the canary. Frontend wiring and a response adapter remain pending under #1917.
+- Canonical Entra owner/team intake, private sign-out/cache isolation and
+  human-confirmed atomic claims remain intact. No Cognito identity exception or
+  #1831/#1835 deployment gate is lifted by this integration.
+- Public signup, DNS publication, audiovisual/TikTok ingestion, public crawling,
+  and enterprise claims memory are outside this canary and remain separate
+  governed changes.
+- AWS mutation remains blocked until the repository hold, identity exception,
+  merged SHA, cost/credit headroom, alert path, and least-privilege roles are
+  verified through their authoritative records.

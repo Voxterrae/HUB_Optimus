@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+if shutil.which("bash") is None:
+    pytest.skip("EC2 reviewed-operation dispatcher tests require bash", allow_module_level=True)
 
 ROOT = Path(__file__).resolve().parents[1]
 DISPATCHER = ROOT / "ops" / "ec2" / "run-reviewed-operation.py"

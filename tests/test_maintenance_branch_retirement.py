@@ -368,6 +368,10 @@ def test_push_plan_has_one_atomic_transaction_and_exact_lease_per_candidate():
     assert dry_run == command[:6] + ["--dry-run"] + command[6:]
 
 
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="881-ref push exceeds the Windows CreateProcess command-line limit; covered on Linux",
+)
 def test_atomic_git_push_with_881_leases_is_all_or_nothing(tmp_path: Path):
     source = tmp_path / "source"
     remote = tmp_path / "remote.git"
@@ -417,8 +421,7 @@ def test_atomic_git_push_with_881_leases_is_all_or_nothing(tmp_path: Path):
     )
     subprocess.run(
         ["git", f"--git-dir={remote}", "update-ref", "--stdin"],
-        input=updates,
-        text=True,
+        input=updates.encode("ascii"),
         check=True,
         capture_output=True,
     )
@@ -431,8 +434,7 @@ def test_atomic_git_push_with_881_leases_is_all_or_nothing(tmp_path: Path):
 
     subprocess.run(
         ["git", f"--git-dir={remote}", "update-ref", "--stdin"],
-        input=updates,
-        text=True,
+        input=updates.encode("ascii"),
         check=True,
         capture_output=True,
     )
@@ -971,7 +973,7 @@ def test_manual_workflow_uses_pinned_actions_and_trusted_main_guards():
         "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
     ) == 2
     assert text.count(
-        "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97"
+        "actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"
     ) == 2
     assert text.count("persist-credentials: false") == 2
     assert text.count("ref: main") == 2

@@ -19,4 +19,4 @@
 ---
 
 **Estado:** navegación documental.
-**Base:** [`c399c94`](https://github.com/Voxterrae/HUB_Optimus/commit/c399c94e098058a723482001811c7d8491ebbd5e).
+**Base:** [`23ea5a6`](https://github.com/Voxterrae/HUB_Optimus/commit/23ea5a6677c07dcefab60f70c6b1641a3541f0b0).

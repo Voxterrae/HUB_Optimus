@@ -3,8 +3,10 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -311,6 +313,87 @@ def make_journal(tmp_path: Path, mode: str = "TEST") -> app.EvidenceJournal:
     )
 
 
+def _skip_metadata_propagation_waits(monkeypatch: pytest.MonkeyPatch) -> None:
+    clock = app.time
+
+    def sleep(seconds: float) -> None:
+        # FakeTransport resolves metadata immediately; keep filesystem backoff.
+        if seconds not in (10, 15):
+            clock.sleep(seconds)
+
+    monkeypatch.setattr(
+        app, "time", SimpleNamespace(monotonic=clock.monotonic, sleep=sleep)
+    )
+
+
+def test_journal_save_retries_windows_lock_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    journal = make_journal(tmp_path)
+    original_replace = app.os.replace
+    attempts = 0
+
+    def flaky_replace(source, target):
+        nonlocal attempts
+        attempts += 1
+        if attempts <= 20:
+            error = PermissionError(5, "Access is denied")
+            error.winerror = 5
+            raise error
+        return original_replace(source, target)
+
+    monkeypatch.setattr(app, "IS_WINDOWS", True, raising=False)
+    _skip_metadata_propagation_waits(monkeypatch)
+    monkeypatch.setattr(app.os, "replace", flaky_replace)
+
+    journal.check("journal-write", "PASS")
+
+    assert attempts == 21
+    assert json.loads(journal.path.read_text(encoding="utf-8"))["checks"][-1]["name"] == "journal-write"
+
+
+def test_skipping_metadata_waits_preserves_journal_backoff(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    journal = make_journal(tmp_path)
+    real_sleep = time.sleep
+    real_replace = app.os.replace
+    released = False
+    attempts = 0
+
+    def release_after_backoff(seconds: float) -> None:
+        nonlocal released
+        real_sleep(seconds)
+        released = True
+
+    def replace_after_release(source, target):
+        nonlocal attempts
+        attempts += 1
+        if not released:
+            error = PermissionError(5, "Access is denied")
+            error.winerror = 5
+            raise error
+        return real_replace(source, target)
+
+    monkeypatch.setattr(app, "IS_WINDOWS", True)
+    monkeypatch.setattr(
+        app,
+        "time",
+        SimpleNamespace(monotonic=time.monotonic, sleep=release_after_backoff),
+    )
+    monkeypatch.setattr(app.os, "replace", replace_after_release)
+    _skip_metadata_propagation_waits(monkeypatch)
+
+    app.time.sleep(10)
+    app.time.sleep(15)
+    journal.check("backoff-preserved", "PASS")
+
+    assert attempts == 2
+    saved = json.loads(journal.path.read_text(encoding="utf-8"))
+    assert saved["checks"][-1]["name"] == "backoff-preserved"
+    assert time.sleep is real_sleep
+
+
 def rollback_authorization(journal_path: Path) -> dict[str, Any]:
     return {
         "mode": "ROLLBACK_METADATA",
@@ -336,7 +419,7 @@ def test_offline_review_is_hash_bound_and_non_applying() -> None:
 def test_inspect_only_reports_missing_metadata_without_writes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     transport = FakeTransport()
     journal = make_journal(tmp_path)
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
     result = app.SchemaApplicator(CONTRACT, PLAN, transport, journal, apply=False).run()
     assert result["mode"] == "INSPECT_ONLY"
     assert result["createdCount"] == 0
@@ -347,7 +430,7 @@ def test_inspect_only_reports_missing_metadata_without_writes(tmp_path: Path, mo
 
 def test_apply_is_check_first_solution_scoped_and_idempotent(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     transport = FakeTransport()
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
     first_journal = make_journal(tmp_path / "first", "APPLY")
     first = app.SchemaApplicator(CONTRACT, PLAN, transport, first_journal, apply=True).run()
 
@@ -392,7 +475,7 @@ def test_existing_column_with_wrong_type_fails_closed(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     transport = FakeTransport()
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
     applicator = app.SchemaApplicator(CONTRACT, PLAN, transport, make_journal(tmp_path), apply=True)
     applicator.verify_target()
     table = CONTRACT["tables"][0]
@@ -414,7 +497,7 @@ def test_existing_column_with_wrong_type_fails_closed(
 
 def test_existing_drift_fails_before_creating_more_metadata(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     transport = FakeTransport()
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
     journal = make_journal(tmp_path, "APPLY")
     applicator = app.SchemaApplicator(CONTRACT, PLAN, transport, journal, apply=True)
     applicator.verify_target()
@@ -672,7 +755,7 @@ def test_zero_row_rollback_deletes_only_journaled_paths_in_reverse_order(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     transport = FakeTransport()
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
     journal_path = tmp_path / "journal.json"
     journal_path.write_text(
         json.dumps(
@@ -722,7 +805,7 @@ def test_exact_existing_component_outside_solution_fails_before_writes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     transport = FakeTransport()
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
     choice = CONTRACT["globalChoices"][0]
     metadata_id = guid(777)
     transport.choices[choice["logicalName"]] = {
@@ -747,7 +830,7 @@ def test_relationship_lookup_collision_fails_during_full_preflight_before_writes
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     transport = FakeTransport()
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
 
     seed = app.SchemaApplicator(
         CONTRACT, PLAN, transport, make_journal(tmp_path / "seed", "APPLY"), apply=True
@@ -939,7 +1022,7 @@ def test_table_root_membership_accepts_columns_keys_and_relationships_and_is_ide
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     transport = FakeTransport()
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
 
     first_journal = make_journal(tmp_path / "root-first", "APPLY")
     first = app.SchemaApplicator(
@@ -983,7 +1066,7 @@ def test_direct_child_solution_components_remain_supported(
 ) -> None:
     transport = FakeTransport()
     transport.direct_child_components = True
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
 
     journal = make_journal(tmp_path, "APPLY")
     result = app.SchemaApplicator(
@@ -1007,7 +1090,7 @@ def test_segmented_or_shell_table_rejects_orphan_column(
     root_behavior: int,
 ) -> None:
     transport = FakeTransport()
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
     applicator = app.SchemaApplicator(
         CONTRACT, PLAN, transport, make_journal(tmp_path), apply=True
     )
@@ -1047,7 +1130,7 @@ def test_real_orphans_for_keys_and_relationships_are_rejected(
     parent_count: int,
 ) -> None:
     transport = FakeTransport()
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
     applicator = app.SchemaApplicator(
         CONTRACT, PLAN, transport, make_journal(tmp_path), apply=True
     )
@@ -1074,7 +1157,7 @@ def test_rollback_deletes_root_included_subcomponents_before_table_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     transport = FakeTransport()
-    monkeypatch.setattr(app.time, "sleep", lambda _seconds: None)
+    _skip_metadata_propagation_waits(monkeypatch)
 
     table = CONTRACT["tables"][0]
     column = table["columns"][0]
