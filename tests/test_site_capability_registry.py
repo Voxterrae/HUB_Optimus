@@ -52,7 +52,21 @@ IN_DEVELOPMENT_COMPONENTS = {
     "connect-xai-x",
     "global-graph",
 }
-ADMIN_GATEWAY_STACK = {"1871", "1872", "1873", "1875", "1876"}
+MERGED_DEVELOPMENT_EVIDENCE = {
+    "admin-gateway": {
+        "c7a67a7af9e5067e27518d3a9bd8b56f99767acf": "products/admin-gateway/src/optimus_admin_gateway",
+        "fc5e45d35376184609341ec1b1232ca381c89993": "products/admin-gateway/runbooks",
+        "77ec62b023ee128d3c84b68e38423d9def6a4c44": "products/admin-gateway/power-platform/custom-connector",
+        "d12f96f43f2e09ba911f371bdc2f3708413e7043": "products/admin-gateway/dataverse",
+        "663556d7622dcc5c4cbf352b3561ad439f38b86a": "products/admin-gateway/deployment",
+    },
+    "evidence-lab": {
+        "51327282170b9c0a6f769b8bd5ddc5c39572d6a4": "products/evidence-lab",
+    },
+    "connect-xai-x": {
+        "bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41": "hub_optimus/connect",
+    },
+}
 ALLOWED_LIFECYCLE_STATES = {
     "active-methodology",
     "working-deterministic-prototype",
@@ -128,6 +142,23 @@ def load_schema():
 
 def component_map(registry):
     return {component["id"]: component for component in registry["components"]}
+
+
+def make_draft_fixture(registry, component_id):
+    component = component_map(registry)[component_id]
+    ref = {
+        "admin-gateway": "1871",
+        "evidence-lab": "1879",
+        "connect-xai-x": "1877",
+    }[component_id]
+    component["source_status"] = "draft-pr"
+    component["lifecycle_state"] = "draft"
+    component["evidence"] = [{
+        "type": "pull-request",
+        "ref": ref,
+        "url": f"https://github.com/Voxterrae/HUB_Optimus/pull/{ref}",
+    }]
+    return component
 
 
 def parse_public_component_statuses():
@@ -270,7 +301,7 @@ def test_evidence_type_ref_and_url_identity_are_exact_and_unique():
             match = patterns[evidence["type"]].fullmatch(evidence["url"])
             assert match, evidence
             assert match.group("ref") == evidence["ref"], evidence
-            if evidence["type"] == "commit-path":
+            if evidence["type"] == "commit-path" and component["id"] in PUBLIC_COMPONENTS:
                 assert evidence["ref"] == public_evidence_sha, evidence
 
             parsed = urlsplit(evidence["url"])
@@ -280,19 +311,24 @@ def test_evidence_type_ref_and_url_identity_are_exact_and_unique():
             assert not parsed.fragment
 
 
-def test_historical_admin_gateway_stack_lists_exact_recorded_pull_requests():
-    registry = load_registry()
-    admin_gateway = component_map(registry)["admin-gateway"]
+def test_merged_development_components_have_exact_source_evidence():
+    components = component_map(load_registry())
 
-    refs = {evidence["ref"] for evidence in admin_gateway["evidence"]}
-    urls = {evidence["url"] for evidence in admin_gateway["evidence"]}
-
-    assert refs == ADMIN_GATEWAY_STACK
-    assert urls == {
-        f"https://github.com/Voxterrae/HUB_Optimus/pull/{number}"
-        for number in ADMIN_GATEWAY_STACK
-    }
-    assert "1874" not in refs
+    for component_id, paths in MERGED_DEVELOPMENT_EVIDENCE.items():
+        component = components[component_id]
+        assert component["source_status"] == "merged"
+        assert component["evidence"] == [
+            {
+                "type": "commit-path",
+                "ref": ref,
+                "url": f"https://github.com/Voxterrae/HUB_Optimus/tree/{ref}/{path}",
+            }
+            for ref, path in paths.items()
+        ]
+        assert component["public_section"] == "in-development"
+        assert component["publicly_listed"] is False
+        assert component["production_writes_executed"] == 0
+        assert component["live_external_transport_enabled"] is False
 
 
 def test_component_states_and_present_claims_are_bounded():
@@ -348,6 +384,9 @@ def test_schema_rejects_non_merged_release_transport_and_write_overclaims():
         ("global-graph", "production_writes_executed", 1),
     ):
         mutated = copy.deepcopy(registry)
+        if component_id != "global-graph":
+            make_draft_fixture(mutated, component_id)
+        assert not schema_errors(mutated, schema)
         component_map(mutated)[component_id][field] = value
         assert schema_errors(mutated, schema), (component_id, field)
 
@@ -361,6 +400,8 @@ def test_schema_rejects_lifecycle_and_public_section_promotion_without_source_ch
     assert schema_errors(mutated_issue, schema)
 
     mutated_draft = copy.deepcopy(registry)
+    make_draft_fixture(mutated_draft, "evidence-lab")
+    assert not schema_errors(mutated_draft, schema)
     component_map(mutated_draft)["evidence-lab"]["public_section"] = "what-exists-today"
     component_map(mutated_draft)["evidence-lab"]["public_static_surface_available"] = True
     component_map(mutated_draft)["evidence-lab"]["publicly_listed"] = True
@@ -400,7 +441,8 @@ def test_new_unmarked_portfolio_card_is_rejected():
 
 def test_listed_development_card_is_allowed_only_in_its_declared_section():
     registry = load_registry()
-    component = component_map(registry)["evidence-lab"]
+    component = make_draft_fixture(registry, "evidence-lab")
+    assert not schema_errors(registry, load_schema())
     component["publicly_listed"] = True
     component["public_static_surface_available"] = True
     assert not schema_errors(registry, load_schema())
@@ -411,10 +453,12 @@ def test_listed_development_card_is_allowed_only_in_its_declared_section():
         validate_portfolio_markup(registry, markup + '<section id="portfolio">' + card + '</section>')
 
 
-def test_merged_admin_foundation_is_separate_from_pending_implementation():
+def test_merged_admin_implementation_retains_its_documentation_foundation():
     component = component_map(load_registry())["admin-gateway"]
-    assert {item["ref"] for item in component["evidence"]} == ADMIN_GATEWAY_STACK
-    assert component["source_status"] == "draft-pr-stack"
+    assert {item["ref"] for item in component["evidence"]} == set(
+        MERGED_DEVELOPMENT_EVIDENCE["admin-gateway"]
+    )
+    assert component["source_status"] == "merged"
     assert component["foundation_evidence"] == [{
         "type": "commit-path",
         "ref": "ebe288effbdc3307c8f9f6c509178f66fe42484f",

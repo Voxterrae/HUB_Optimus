@@ -3,7 +3,7 @@
   "schema_version": "1.0.0",
   "registry_id": "hub_optimus.public_capabilities.v1",
   "registry_mode": "human-reviewed-static",
-  "reviewed_at": "2026-09-14",
+  "reviewed_at": "2026-09-30",
   "baseline": {
     "canonical_repository": "Voxterrae/HUB_Optimus",
     "source_baseline_sha": "30e985226347b4bc59b0e187b96633a09647ca42",
@@ -202,8 +202,8 @@
     {
       "id": "admin-gateway",
       "display_name": "Optimus Admin Gateway",
-      "lifecycle_state": "draft",
-      "source_status": "draft-pr-stack",
+      "lifecycle_state": "implementation-present-deployment-unverified",
+      "source_status": "merged",
       "public_section": "in-development",
       "publicly_listed": false,
       "public_static_surface_available": false,
@@ -213,32 +213,32 @@
       "live_external_transport_enabled": false,
       "evidence": [
         {
-          "type": "pull-request",
-          "ref": "1871",
-          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1871"
+          "type": "commit-path",
+          "ref": "c7a67a7af9e5067e27518d3a9bd8b56f99767acf",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/c7a67a7af9e5067e27518d3a9bd8b56f99767acf/products/admin-gateway/src/optimus_admin_gateway"
         },
         {
-          "type": "pull-request",
-          "ref": "1872",
-          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1872"
+          "type": "commit-path",
+          "ref": "fc5e45d35376184609341ec1b1232ca381c89993",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/fc5e45d35376184609341ec1b1232ca381c89993/products/admin-gateway/runbooks"
         },
         {
-          "type": "pull-request",
-          "ref": "1873",
-          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1873"
+          "type": "commit-path",
+          "ref": "77ec62b023ee128d3c84b68e38423d9def6a4c44",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/77ec62b023ee128d3c84b68e38423d9def6a4c44/products/admin-gateway/power-platform/custom-connector"
         },
         {
-          "type": "pull-request",
-          "ref": "1875",
-          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1875"
+          "type": "commit-path",
+          "ref": "d12f96f43f2e09ba911f371bdc2f3708413e7043",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/d12f96f43f2e09ba911f371bdc2f3708413e7043/products/admin-gateway/dataverse"
         },
         {
-          "type": "pull-request",
-          "ref": "1876",
-          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1876"
+          "type": "commit-path",
+          "ref": "663556d7622dcc5c4cbf352b3561ad439f38b86a",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/663556d7622dcc5c4cbf352b3561ad439f38b86a/products/admin-gateway/deployment"
         }
       ],
-      "claim_boundary": "Documentation foundation #1870 is merged; the separate implementation stack #1871-#1873 and #1875-#1876 remains pending. Documentation does not establish a deployed API, connector activation, production execution or tenant authorization.",
+      "claim_boundary": "Merged API, runbook, Power Platform, Dataverse and deployment reference assets from #1871-#1873 and #1875-#1876. Live API execution remains disabled; source integration does not establish production deployment, connector activation, tenant authorization or production writes.",
       "foundation_evidence": [
         {
           "type": "commit-path",
@@ -250,8 +250,8 @@
     {
       "id": "evidence-lab",
       "display_name": "Optimus Evidence Lab",
-      "lifecycle_state": "draft",
-      "source_status": "draft-pr",
+      "lifecycle_state": "implementation-present-deployment-unverified",
+      "source_status": "merged",
       "public_section": "in-development",
       "publicly_listed": false,
       "public_static_surface_available": false,
@@ -261,18 +261,18 @@
       "live_external_transport_enabled": false,
       "evidence": [
         {
-          "type": "pull-request",
-          "ref": "1879",
-          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1879"
+          "type": "commit-path",
+          "ref": "51327282170b9c0a6f769b8bd5ddc5c39572d6a4",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/51327282170b9c0a6f769b8bd5ddc5c39572d6a4/products/evidence-lab"
         }
       ],
-      "claim_boundary": "Draft offline Dataverse package; no production deployment, public runtime or business-data seed is claimed."
+      "claim_boundary": "Merged offline Dataverse package from #1879 with governed schema and seed plans. Source integration does not establish production deployment, a public runtime, live metadata application or business-data seeding."
     },
     {
       "id": "connect-xai-x",
       "display_name": "HUB_Optimus Connect — xAI and X Foundation",
-      "lifecycle_state": "draft",
-      "source_status": "draft-pr",
+      "lifecycle_state": "early-implementation",
+      "source_status": "merged",
       "public_section": "in-development",
       "publicly_listed": false,
       "public_static_surface_available": false,
@@ -282,12 +282,12 @@
       "live_external_transport_enabled": false,
       "evidence": [
         {
-          "type": "pull-request",
-          "ref": "1877",
-          "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1877"
+          "type": "commit-path",
+          "ref": "bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41/hub_optimus/connect"
         }
       ],
-      "claim_boundary": "Draft provider boundary only; no credentials, live calls, automatic publication, partnership claim or external transport is enabled."
+      "claim_boundary": "Merged provider boundary from #1877; adapters and publication planning default to disabled. No credentials, live calls, automatic publication, partnership claim or external transport is enabled."
     },
     {
       "id": "global-graph",
