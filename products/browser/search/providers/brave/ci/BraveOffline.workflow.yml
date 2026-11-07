@@ -1,0 +1,78 @@
+# Dormant proposal. Registration in .github/workflows requires owner approval.
+name: Brave adapter offline
+
+on:
+  pull_request:
+    paths:
+      - products/browser/search/providers/brave/**
+      - products/browser/search/global.json
+      - .github/workflows/brave-offline.yml
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full candidate commit SHA to validate
+        required: true
+        default: 75e34382ded37d37f52f2970bfa04760badc9ef8
+
+permissions:
+  contents: read
+
+jobs:
+  brave-offline:
+    name: Brave offline build and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CANDIDATE_SHA: ${{ inputs.candidate_sha || github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout validation harness
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: harness
+          persist-credentials: false
+      - name: Require full candidate SHA
+        shell: bash
+        run: '[[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]'
+      - name: Checkout exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: candidate
+          ref: ${{ env.CANDIDATE_SHA }}
+          persist-credentials: false
+      - name: Verify candidate identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE_SHA"
+          echo "Validated source candidate: $CANDIDATE_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Validation harness: $(git -C harness rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+      - name: Prepare fixed SDK before offline boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Online provisioning only; no provider, NuGet feed or install script.
+          # Hash reviewed from official .NET 10 release metadata, 2026-11-07.
+          curl --fail --show-error --silent --location --proto '=https' --proto-redir '=https' \
+            --retry 2 --max-time 180 \
+            https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.403/dotnet-sdk-10.0.403-linux-x64.tar.gz \
+            --output "$RUNNER_TEMP/brave-sdk.tar.gz"
+          echo "b7b3d8461cf98b07d2552ce9199702fa3ad010ac2671a5f8cd5136f7534e50f6855ba7bbb02b11494563f1d04156276a31cda1103b900e5eecd0d9473dc7b9c5  $RUNNER_TEMP/brave-sdk.tar.gz" | sha512sum --check --strict
+          mkdir "$RUNNER_TEMP/brave-sdk"
+          tar -xzf "$RUNNER_TEMP/brave-sdk.tar.gz" -C "$RUNNER_TEMP/brave-sdk"
+      - name: Restore build and test with loopback only
+        shell: bash
+        run: |
+          set -euo pipefail
+          # No fallback if namespace creation fails. Only loopback is enabled.
+          # Drop root before running candidate code and clear its environment.
+          sudo unshare --net -- /bin/bash -euc '
+            ip link set lo up
+            test "$(ip -o link show | wc -l)" -eq 1
+            test -z "$(ip route show)"
+            exec setpriv --reuid="$1" --regid="$2" --clear-groups --no-new-privs \
+              env -i PATH=/usr/bin:/bin /bin/bash "$3" "$4" "$5"
+          ' _ "$(id -u)" "$(id -g)" \
+            "$PWD/harness/products/browser/search/providers/brave/ci/build-test.sh" \
+            "$PWD/candidate/products/browser/search/providers/brave" \
+            "$RUNNER_TEMP/brave-sdk/dotnet" | tee "$RUNNER_TEMP/brave-offline.log"
+          echo 'Offline Brave build and console tests completed successfully.' >> "$GITHUB_STEP_SUMMARY"
