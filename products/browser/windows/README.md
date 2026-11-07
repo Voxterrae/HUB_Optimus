@@ -23,6 +23,14 @@ python3 -m unittest discover -s tools/release -v
 dotnet build Optimus.slnx -c Release -p:EnableWindowsTargeting=true -m:1
 ```
 
+Solo en un escritorio Windows interactivo, la regresión nativa de ayudas emergentes se ejecuta por separado:
+
+```sh
+dotnet run --project tests/Optimus.Theme.Tests -c Release
+```
+
+Reutiliza los estilos y la paleta de producción, abre únicamente ventanas de prueba y no inicia el navegador ni el servicio. Consulta [resultados y aceptación visual pendiente](docs/TOOLTIP_CONTRAST_VALIDATION.md). Los scripts de verificación y el workflow Windows existentes no ejecutan esta suite nueva.
+
 Publicación autocontenida Windows x64 del navegador, servicio y diagnóstico, sin ejecutarlos:
 
 ```sh
