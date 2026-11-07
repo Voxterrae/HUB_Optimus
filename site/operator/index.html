@@ -3856,7 +3856,7 @@
         // names (tickets, SAML assertions, OTPs, nested redirect URLs, etc.).
         // Controlled retrieval persists/shares only the public origin. Manual
         // public attribution follows the separate localAttributionUrl path and
-        // deliberately keeps the exact operator-supplied URL with a warning.
+        // keeps path/query/fragment, but strips userinfo and normalizes the URL.
         parsed.pathname = "/";
         parsed.search = "";
         return parsed.toString();
@@ -3868,12 +3868,14 @@
     function localAttributionUrl(sourceUrl) {
       if (!sourceUrl) return null;
       try {
-        const parsed = new URL(sourceUrl);
+        const parsed = new URL(String(sourceUrl).trim());
         if (!["http:", "https:"].includes(parsed.protocol)) return null;
-        // Manual public intake makes no request. Preserve the operator's exact,
-        // already-trimmed URL as unverified attribution; the UI warns that an
-        // explicit share action can include it and forbids secrets/private URLs.
-        return String(sourceUrl);
+        // Manual public intake makes no request. Remove embedded credentials
+        // while retaining path/query/fragment as unverified attribution. The UI
+        // still warns against secrets/private URLs in an explicit share action.
+        parsed.username = "";
+        parsed.password = "";
+        return parsed.toString();
       } catch {
         return null;
       }

@@ -3669,7 +3669,117 @@ if (withoutIsolates(fetched[1]) !== "Retrieved URL: https://final.example/") {
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
-def test_copy_summary_keeps_pasted_text_full_url_and_unverified_attribution():
+@pytest.mark.parametrize("locale", ["en", "es", "de", "ru", "he", "zh-Hans"])
+def test_manual_share_urls_remove_userinfo_and_padding_without_losing_provenance(locale):
+    html = _read(INDEX)
+    smoke = (
+        _operator_i18n_node_prelude()
+        + _intake_record_helpers(html)
+        + _share_provenance_helpers(html)
+        + f"\nactiveOperatorLanguage = {json.dumps(locale)};\n"
+        + r'''
+function compactText(value, maxLength) {
+  return String(value).slice(0, maxLength);
+}
+// Reserved example domains and invented credentials only; no request is made.
+const cases = [
+  [" \thttps://synthetic-user:synthetic-password@example.org/report?view=full#source\r\n ",
+   "https://example.org/report?view=full#source"],
+  ["https://synthetic-user@example.org/report?view=full#source",
+   "https://example.org/report?view=full#source"],
+  ["https://:synthetic-password@example.org/report?view=full#source",
+   "https://example.org/report?view=full#source"],
+  ["https://synthetic%40user:synthetic%3Apassword@example.org/a%2Fb?x=%2F&x=two+words#part%20one",
+   "https://example.org/a%2Fb?x=%2F&x=two+words#part%20one"],
+  ["https://synthetic@user:synthetic@password@example.org/report?q=a@b#c@d",
+   "https://example.org/report?q=a@b#c@d"],
+  [" \nHTTP://synthetic-user:synthetic-password@[2001:db8::1]:8080/report?q=a%20b#source\t ",
+   "http://[2001:db8::1]:8080/report?q=a%20b#source"],
+  ["https://synthetic-\tuser:synthetic-\npassword@example.org/report?q=a%20b#source",
+   "https://example.org/report?q=a%20b#source"],
+  ["https://synthetic-user:synthetic-password@example.org/a b?q=two words#part one",
+   "https://example.org/a%20b?q=two%20words#part%20one"],
+  [" \thttps://example.org/@public/a%2Fb?email=a@b&x=1&x=2#c@d \n",
+   "https://example.org/@public/a%2Fb?email=a@b&x=1&x=2#c@d"],
+  ["https://example.org/reports/" + "public-".repeat(40) + "?view=full#source",
+   "https://example.org/reports/" + "public-".repeat(40) + "?view=full#source"]
+];
+for (const [raw, expected] of cases) {
+  if (localAttributionUrl(raw) !== expected) {
+    throw new Error(`manual attribution did not sanitize synthetic URL in ${activeOperatorLanguage}`);
+  }
+  for (const record of [
+    {intake_record: {mode: "operator-pasted-text-with-url", original_url: raw}},
+    {source_url: raw, intake_record: {attribution: "operator-provided-url-not-fetched"}}
+  ]) {
+    const lines = shareProvenanceLines(record);
+    if (lines[0] !== opText("shareProvenancePasted")
+        || lines[1] !== opText("shareSuppliedUrl", {url: ltrIsolate(expected)})) {
+      throw new Error(`manual share URL or unverified boundary changed in ${activeOperatorLanguage}`);
+    }
+  }
+  const intake = buildIntakeRecord("Synthetic pasted text", raw);
+  if (intake.original_url !== expected || intake.final_url !== null || intake.retrieved_at !== null) {
+    throw new Error("local attribution leaked userinfo or claimed retrieval");
+  }
+}
+for (const invalid of [null, "", "  ", "https://", "not a URL", "javascript:alert(1)",
+                       "data:text/plain,synthetic", "ftp://synthetic:password@example.org/file"]) {
+  const lines = shareProvenanceLines({intake_record: {
+    mode: "operator-pasted-text-with-url", original_url: invalid
+  }});
+  if (localAttributionUrl(invalid) !== null || lines[1] !== "") {
+    throw new Error("invalid or non-HTTP URL reached shared attribution");
+  }
+}
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+@pytest.mark.parametrize("locale", ["en", "es", "de", "ru", "he", "zh-Hans"])
+def test_controlled_share_urls_keep_origin_only_privacy_in_every_locale(locale):
+    html = _read(INDEX)
+    smoke = (
+        _operator_i18n_node_prelude()
+        + _intake_record_helpers(html)
+        + _share_provenance_helpers(html)
+        + f"\nactiveOperatorLanguage = {json.dumps(locale)};\n"
+        + r'''
+function compactText(value, maxLength) {
+  return String(value).slice(0, maxLength);
+}
+const raw = " \thttps://synthetic-user:synthetic-password@example.org/private-path?ticket=synthetic-ticket#private-fragment\n ";
+for (const record of [
+  {intake_record: {final_url: raw, original_url: "https://original.example/"}},
+  {intake_record: {original_url: raw}},
+  {source_url: raw, intake_record: {}}
+]) {
+  record.intake_record.mode = "controlled-url";
+  // Controlled mode takes precedence over a contradictory legacy marker.
+  record.intake_record.attribution = "operator-provided-url-not-fetched";
+  const lines = shareProvenanceLines(record);
+  if (lines[0] !== opText("shareProvenanceRetrieved")
+      || lines[1] !== opText("shareRetrievedUrl", {url: ltrIsolate("https://example.org/")})) {
+    throw new Error(`controlled URL privacy changed in ${activeOperatorLanguage}`);
+  }
+}
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+@pytest.mark.parametrize("locale", ["en", "es", "de", "ru", "he", "zh-Hans"])
+@pytest.mark.parametrize("with_userinfo", [False, True], ids=["public-url", "synthetic-userinfo"])
+def test_copy_summary_keeps_pasted_text_full_url_and_unverified_attribution(locale, with_userinfo):
     parser = _InlineScriptParser()
     parser.feed(_read(INDEX))
     parser.close()
@@ -3682,20 +3792,25 @@ def test_copy_summary_keeps_pasted_text_full_url_and_unverified_attribution():
         f"const SOURCE = {json.dumps(parser.scripts[0])};\n"
         f"const CLAIM_SOURCE = {json.dumps(_read(CLAIM_DECOMPOSITION))};\n"
         f"const I18N_SOURCE = {json.dumps(_read(OPERATOR_I18N))};\n"
+        f"const LOCALE = {json.dumps(locale)};\n"
+        f"const WITH_USERINFO = {json.dumps(with_userinfo)};\n"
         + harness
         + r'''
 (async () => {
   const exactText = "El equipo cont\u00f3 dos cajas.";
   const exactUrl = "https://example.org/?prueba=operator#referencia";
+  const suppliedUrl = WITH_USERINFO
+    ? " \tHTTPS://synthetic-user:synthetic-password@example.org/?prueba=operator#referencia\r\n "
+    : exactUrl;
   const record = {
     normalizer_version: "operator-source-bound-v2",
     source_type: "automatic",
     signal_domain: "general",
     operational_signal: "triage",
-    source_url: exactUrl,
+    source_url: suppliedUrl,
     intake_record: {
       mode: "operator-pasted-text-with-url",
-      original_url: exactUrl,
+      original_url: suppliedUrl,
       final_url: null,
       attribution: "operator-provided-url-not-fetched"
     },
@@ -3704,7 +3819,7 @@ def test_copy_summary_keeps_pasted_text_full_url_and_unverified_attribution():
   };
   window.location.pathname = "/operator/";
   vm.runInContext(`
-    activeOperatorLanguage = "es";
+    activeOperatorLanguage = ${JSON.stringify(LOCALE)};
     currentMemoryRecord = ${JSON.stringify(record)};
     setMemoryActionsEnabled(true);
   `, context);
@@ -3714,14 +3829,18 @@ def test_copy_summary_keeps_pasted_text_full_url_and_unverified_attribution():
   if (!copied.includes(exactText) || !copied.includes(exactUrl)) {
     throw new Error("copy summary lost the exact text or supplied URL");
   }
-  if (!copied.includes("Operator no recuper\u00f3 la URL")
-      || !copied.includes("la atribuci\u00f3n entre URL y texto no est\u00e1 verificada")) {
+  if (!copied.includes(vm.runInContext('opText("shareProvenancePasted")', context))) {
     throw new Error("copy summary lost the unverified attribution boundary");
   }
-  if (copied.includes("URL recuperada:")) {
+  if (copied.includes(vm.runInContext('opText("shareProvenanceRetrieved")', context))) {
     throw new Error("copy summary misrepresented the supplied URL as retrieved");
   }
-  if (fetchCalls !== 0 || !byId("memory_status").textContent.includes("Resumen legible copiado")) {
+  if (copied.includes("synthetic-user") || copied.includes("synthetic-password")
+      || copied.includes("\t") || copied.includes("\r")) {
+    throw new Error("copy summary exposed synthetic userinfo or URL padding");
+  }
+  if (fetchCalls !== 0 || !byId("memory_status").textContent.includes(
+      vm.runInContext('opText("msgSummaryCopied")', context))) {
     throw new Error("copy summary fetched a URL or failed to confirm the copy");
   }
 })().catch((error) => { console.error(error); process.exitCode = 1; });
