@@ -32,6 +32,8 @@ jobs:
           # Keep checked-out bytes unchanged by Windows line-ending conversion.
           git config --global core.autocrlf false
           if ($LASTEXITCODE -ne 0) { throw 'Cannot disable runner line-ending conversion' }
+          git config --global core.eol lf
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot enforce runner LF checkout bytes' }
 
       - name: Checkout exact candidate without persisted credentials
         id: checkout
@@ -82,6 +84,11 @@ jobs:
             $actualBlobs = @(git -C $env:GITHUB_WORKSPACE hash-object --no-filters -- @paths)
             if ($LASTEXITCODE -ne 0) { throw 'Cannot hash raw candidate source bytes' }
             if (($actualBlobs -join "`n") -cne ($expectedBlobs -join "`n")) {
+              for ($i = 0; $i -lt $paths.Count; $i++) {
+                if ($actualBlobs[$i] -cne $expectedBlobs[$i]) {
+                  Write-Host "Raw blob mismatch: $($paths[$i]); expected=$($expectedBlobs[$i]); raw=$($actualBlobs[$i])"
+                }
+              }
               throw 'Checked-out bytes differ from the immutable candidate Git blobs'
             }
             $snapshot = [ordered]@{}
@@ -109,7 +116,7 @@ jobs:
             $completed += $phase
 
             $phase = 'exact GNU toolchain'
-            $rustup = (Get-Command rustup.exe -CommandType Application).Source
+            $rustup = (Get-Command rustup.exe -CommandType Application | Select-Object -First 1).Source
             # Discard inherited compiler overrides, wrappers, flags and Cargo configuration.
             Get-ChildItem Env: | Where-Object {
               $_.Name -match '^(RUST|CARGO|SCCACHE|CCACHE)' -or
@@ -125,8 +132,8 @@ jobs:
             $env:PATH = "$gnuBin;$env:PATH"
             foreach ($tool in @('gcc', 'ar', 'dlltool')) {
               $expected = Join-Path $gnuBin "$tool.exe"
-              $resolved = (Get-Command "$tool.exe" -CommandType Application).Source
-              if ($resolved -ine $expected) { throw "Expected explicit GNU tool: $expected" }
+              $resolved = (Get-Command "$tool.exe" -CommandType Application | Select-Object -First 1).Source
+              if ($resolved -ine $expected) { throw "Expected explicit GNU tool: $expected; selected: $resolved" }
               $version = & $expected --version
               if ($LASTEXITCODE -ne 0) { throw "Cannot inspect $tool version" }
               $file = Get-Item -LiteralPath $expected
