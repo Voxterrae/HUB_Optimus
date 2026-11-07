@@ -44,7 +44,7 @@ public partial class MainWindow : Window
   pilotCatalog=new(searchHost,AppContext.BaseDirectory);
   InitializeComponent();Width=Math.Min(1400,SystemParameters.WorkArea.Width);Height=Math.Min(920,SystemParameters.WorkArea.Height);permissions=new(this,SetStatus);downloads=new(this,SetStatus);
   var loaded=settingsStore.Load();settings=loaded.Settings;privacy=new(settings.PrivacyRules);
-  ThemeChoice.SelectedValue=settings.Theme;EasyChoice.IsChecked=settings.EasyMode;SearchChoice.SelectedValue=settings.SearchProvider;ScaleChoice.SelectedIndex=ScaleIndex(settings.TextScale);ContrastChoice.IsChecked=settings.HighContrast;RestoreChoice.IsChecked=settings.RestoreSession;
+  ThemeChoice.SelectedValue=settings.Theme;EasyChoice.IsChecked=settings.EasyMode;ScaleChoice.SelectedIndex=ScaleIndex(settings.TextScale);ContrastChoice.IsChecked=settings.HighContrast;RestoreChoice.IsChecked=settings.RestoreSession;
   ApplyAppearance();InitializeChrome();ready=true;
   if(loaded.Error!=null)SetStatus(loaded.Error);
   Loaded+=async(_,_)=>await StartAsync(loaded.Error);
@@ -173,8 +173,8 @@ public partial class MainWindow : Window
   if(closing||clearingData||profileGate.IsBlocked){SetStatus("El perfil está ocupado o requiere reiniciar antes de buscar o navegar.");return;}
   ClosePanels(false);
   var input=Address.Text;
-  var result=NavigationPolicy.Resolve(input,settings.SearchProvider==SearchProvider.Optimus?SearchProvider.DuckDuckGo:settings.SearchProvider);
-  if(settings.SearchProvider==SearchProvider.Optimus&&result.IsSearch)
+  var result=NavigationPolicy.Resolve(input,SearchProvider.Optimus);
+  if(result.IsSearch)
   {if(input.Trim().Length>500){SetStatus("La consulta admite hasta 500 caracteres.");return;}if(Active is {} searchTab)_=searchTab.SearchAsync(input.Trim(),OptimusSearchScope.Web);return;}
   if(!result.Allowed){SetStatus(result.Error!);return;}
   if(Active==null){_=AddTabAsync(result.Uri!.AbsoluteUri);return;}
@@ -332,7 +332,6 @@ public partial class MainWindow : Window
   else if(result==BookmarkSaveResult.AlreadyExists)SetStatus("Esta página ya está en Marcadores.");
  }
  private void Bookmarks_Click(object sender,RoutedEventArgs e){ClosePanels(false);NativeDialogs.ShowBookmarks(this,settings.Bookmarks,AddBookmark,url=>{if(Active is {} tab)NavigateKnownGet(tab,url);},()=>{SaveSettings();});}
- private void Search_Changed(object sender,SelectionChangedEventArgs e){if(!ready)return;settings=settings with {SearchProvider=(SearchProvider)SearchChoice.SelectedValue};SaveSettings();}
  private void Scale_Changed(object sender,SelectionChangedEventArgs e){if(!ready)return;settings=settings with {TextScale=new[]{1d,1.25,1.5,2}[Math.Max(0,ScaleChoice.SelectedIndex)]};ApplyAppearance();SaveSettings();}
  private void Theme_Changed(object sender,SelectionChangedEventArgs e){if(!ready)return;settings=settings with {Theme=(ThemePreference)ThemeChoice.SelectedValue};ApplyAppearance();SaveSettings();}
  private void Easy_Click(object sender,RoutedEventArgs e){if(!ready)return;settings=settings with {EasyMode=EasyChoice.IsChecked==true};ApplyAppearance();SaveSettings();}
