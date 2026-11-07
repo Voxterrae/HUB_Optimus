@@ -144,6 +144,24 @@ class PackagingTests(unittest.TestCase):
             for line in manifest:
                 digest, path = line.split('  ', 1)
                 self.assertEqual(hashlib.sha256(z.read(PREFIX+path)).hexdigest(), digest)
+    def test_public_pilot_assets_ship_exactly_without_replacing_frozen_help(self):
+        public = SCRIPT.parents[3]/'search'/'catalog'
+        directory = self.bin/'Search'/'catalog'; directory.mkdir()
+        expected = {}
+        for name in ('public-pilot-v0.1.json', 'public-pilot-v0.1.provenance.json'):
+            expected[name] = (public/name).read_bytes()
+            (directory/name).write_bytes(expected[name])
+        verified = subprocess.run([sys.executable, str(SCRIPT), '--verify-publication', str(self.bin)], capture_output=True, text=True)
+        self.assertEqual(verified.returncode, 0, verified.stderr)
+        built = self.run_cli(); self.assertEqual(built.returncode, 0, built.stderr)
+        with zipfile.ZipFile(self.root/'out'/'Optimus_Browser_Windows_0.3.3_alpha.zip') as archive:
+            manifest = archive.read(PREFIX+'SHA256SUMS.txt').decode('ascii')
+            for name, data in expected.items():
+                path = 'Search/catalog/'+name
+                self.assertEqual(archive.read(PREFIX+path), data)
+                self.assertIn(hashlib.sha256(data).hexdigest()+'  '+path+'\n', manifest)
+            self.assertEqual(archive.read(PREFIX+'Search/index.json'), PUBLIC_HELP_INDEX.read_bytes())
+
     def test_rejects_missing_or_invalid_host_runtime_and_notices(self):
         # Catches a native-only ZIP, wrong-host architecture and stripped runtimes/notices.
         required = ('GUIA_0_3_3.md', 'Search/README.md', 'Search/docs/PROTOCOL.md', 'Search/Optimus.SearchHost.exe', 'Search/Optimus.SearchHost.dll',

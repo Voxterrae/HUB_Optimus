@@ -15,6 +15,8 @@ public partial class MainWindow : Window
  private BrowserSettings settings=new();
  private readonly System.Net.Http.HttpClient searchConnectionClient = new(new System.Net.Http.HttpClientHandler { AllowAutoRedirect=false, UseCookies=false, UseDefaultCredentials=false, Credentials=null, UseProxy=false });
  private readonly SearchHostLauncher searchHost;
+ private readonly PublicPilotCatalog pilotCatalog;
+ private bool changingCatalog;
 
  private readonly HelpController help=new();
  private readonly PermissionController permissions;
@@ -39,6 +41,7 @@ public partial class MainWindow : Window
  public MainWindow()
  {
   searchHost=new(searchConnectionClient,AppContext.BaseDirectory,Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+  pilotCatalog=new(searchHost,AppContext.BaseDirectory);
   InitializeComponent();Width=Math.Min(1400,SystemParameters.WorkArea.Width);Height=Math.Min(920,SystemParameters.WorkArea.Height);permissions=new(this,SetStatus);downloads=new(this,SetStatus);
   var loaded=settingsStore.Load();settings=loaded.Settings;privacy=new(settings.PrivacyRules);
   ThemeChoice.SelectedValue=settings.Theme;EasyChoice.IsChecked=settings.EasyMode;SearchChoice.SelectedValue=settings.SearchProvider;ScaleChoice.SelectedIndex=ScaleIndex(settings.TextScale);ContrastChoice.IsChecked=settings.HighContrast;RestoreChoice.IsChecked=settings.RestoreSession;
@@ -108,7 +111,7 @@ public partial class MainWindow : Window
   {var decision=privacy.Evaluate(target,isPrivate);if(decision==PrivacyAction.Block){SetStatus("Destino bloqueado por una regla local.");return null;}isPrivate=decision==PrivacyAction.Private;}
   var creationPolicy=policyGeneration;
   if(!cleanupOwner)ClosePanels(false);
-  var tab=new BrowserTab(t=>_=RecoverAsync(t),isPrivate,()=>privacy,()=>policyGeneration,()=>settings.Bookmarks,isPrivate?privateSession.Name:"Default",t=>Owns(t)&&Active==t&&!closing&&!clearingData&&!profileGate.IsBlocked,lifetime.Token,token=>searchHost.ConnectAsync(settings.SearxEndpoint,token));
+  var tab=new BrowserTab(t=>_=RecoverAsync(t),isPrivate,()=>privacy,()=>policyGeneration,()=>settings.Bookmarks,isPrivate?privateSession.Name:"Default",t=>Owns(t)&&Active==t&&!closing&&!clearingData&&!changingCatalog&&!profileGate.IsBlocked,lifetime.Token,token=>searchHost.ConnectAsync(settings.SearxEndpoint,token),pilotCatalog,ChangePilotAsync,()=>changingCatalog);
   tab.HelpRequested+=_=>ShowHelp();tab.BookmarksRequested+=_=>Bookmarks_Click(this,new RoutedEventArgs());
   tab.Changed+=TabChanged;tab.Invalidated+=t=>{if(Active==t){Revoke();ClearPreview();ClearPendingPrivate();ClearHelpContent();}};tab.Notice+=SetStatus;tab.SafetyFailed+=_=>BlockAllTabsForRestart();
   tab.OpenRequested+=(t,address)=>{if(Active==t)NavigateKnownGet(t,address);};
@@ -151,7 +154,19 @@ public partial class MainWindow : Window
  {
   if(e.Source!=Tabs)return;
   foreach(var removed in e.RemovedItems.OfType<TabItem>())if(removed.Tag is BrowserTab previous)previous.CancelSearch();
-  Revoke();ClearPreview();ClearPendingPrivate();ClearHelpContent();if(Active!=null) {Address.Text=Active.IsHome?"":Active.CurrentUri?.AbsoluteUri??Active.LastAddress??"";TabChanged(Active);}
+  Revoke();ClearPreview();ClearPendingPrivate();ClearHelpContent();if(Active!=null) {Active.RefreshCatalog();Address.Text=Active.IsHome?"":Active.CurrentUri?.AbsoluteUri??Active.LastAddress??"";TabChanged(Active);}
+ }
+ private async Task<PilotCatalogChange> ChangePilotAsync(bool enabled)
+ {
+  if(closing||clearingData||changingCatalog||profileGate.IsBlocked)return new(pilotCatalog.IsActive,"El perfil está ocupado. Espera o reinicia Optimus antes de cambiar el catálogo.");
+  changingCatalog=true;
+  foreach(var item in Tabs.Items.Cast<TabItem>())if(item.Tag is BrowserTab tab){tab.CancelSearch();tab.RefreshCatalog();}
+  try {return await pilotCatalog.SetActiveAsync(enabled,lifetime.Token);}
+  finally
+  {
+   changingCatalog=false;
+   if(!closing)foreach(var item in Tabs.Items.Cast<TabItem>())if(item.Tag is BrowserTab tab)tab.RefreshCatalog();
+  }
  }
  private void Go()
  {
@@ -194,7 +209,7 @@ public partial class MainWindow : Window
  {var tab=Active;if(tab?.CurrentUri is not {} uri||tab.IsHome){SetStatus("Abre primero una página para iniciar una navegación nueva en privado.");return;}var lease=tab.Capture();await RunTabOperationAsync(async()=>{if(Owns(tab)&&Active==tab&&tab.IsCurrent(lease))await CreateTabAsync(uri.AbsoluteUri,true);});}
  private async void PrivacySettings_Click(object sender,RoutedEventArgs e)
  {
-  if(closing||clearingData||profileGate.IsBlocked){SetStatus("El perfil está ocupado o requiere reiniciar Optimus.");return;}
+  if(closing||clearingData||changingCatalog||profileGate.IsBlocked){SetStatus("El perfil está ocupado o requiere reiniciar Optimus.");return;}
   var dialog=new PrivacySettingsDialog(this,settings);if(dialog.ShowDialog()!=true||dialog.Rules==null)return;
   // Invalidate immediately, including creation already awaiting the engine in the serialized queue.
   policyGeneration++;privacy=new(dialog.Rules);clearingData=true;permissions.Revoke();downloads.CancelAll();Revoke();ClearPreview();ClearPendingPrivate();
@@ -401,7 +416,7 @@ public partial class MainWindow : Window
  private async void Window_Closing(object? sender,CancelEventArgs e)
  {
   if(closed)return;e.Cancel=true;if(closing)return;
-  closing=true;searchHost.Dispose();if(searchHost.ShutdownError is {} shutdownError)MessageBox.Show(this,shutdownError,"Cierre de Optimus Search",MessageBoxButton.OK,MessageBoxImage.Warning);searchConnectionClient.Dispose();foreach(var item in Tabs.Items.Cast<TabItem>())if(item.Tag is BrowserTab tab)tab.DisableSearch();lifetime.Dispose();timer.Stop();permissions.Revoke();Revoke();ClearPreview();downloads.CancelAll();
+  closing=true;searchHost.Dispose();pilotCatalog.Dispose();if(searchHost.ShutdownError is {} shutdownError)MessageBox.Show(this,shutdownError,"Cierre de Optimus Search",MessageBoxButton.OK,MessageBoxImage.Warning);searchConnectionClient.Dispose();foreach(var item in Tabs.Items.Cast<TabItem>())if(item.Tag is BrowserTab tab)tab.DisableSearch();lifetime.Dispose();timer.Stop();permissions.Revoke();Revoke();ClearPreview();downloads.CancelAll();
   // Creation/destruction serialize, while cancellation prevents late creation from resuming.
   await tabOperations.RunAsync(async()=>
   {

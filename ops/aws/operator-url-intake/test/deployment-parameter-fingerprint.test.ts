@@ -1,3 +1,4 @@
+import { expect, test } from './test-support';
 import { deploymentParameterFingerprint } from '../scripts/deployment-parameter-fingerprint';
 
 const fingerprintKey = '9f'.repeat(32);

@@ -260,7 +260,7 @@ internal static class LauncherReadinessTests
             start.ArgumentList.Add("--token-file"); start.ArgumentList.Add(TokenPath);
             return start;
         }
-        public Child Start(ProcessStartInfo start, bool addPort = true)
+        public Child Start(ProcessStartInfo start, bool addPort = true, bool observeOutput = true)
         {
             start.FileName = Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "Optimus.SearchHost.exe" : "Optimus.SearchHost");
             start.WorkingDirectory = directory;
@@ -269,7 +269,7 @@ internal static class LauncherReadinessTests
             var reservation = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
             reservation.Start(); var port = ((IPEndPoint)reservation.LocalEndpoint).Port; reservation.Stop();
             if (addPort) { start.ArgumentList.Add("--port"); start.ArgumentList.Add(port.ToString(System.Globalization.CultureInfo.InvariantCulture)); }
-            var child = new Child(start, port); Children.Add(child); return child;
+            var child = new Child(start, port, observeOutput); Children.Add(child); return child;
         }
         public SearchHostLauncher Launcher(HttpClient client) => new(client, directory, directory, start =>
         {
@@ -278,8 +278,9 @@ internal static class LauncherReadinessTests
                 var index = start.ArgumentList.IndexOf("--owner-stdin");
                 if (index >= 0) { start.ArgumentList.RemoveAt(index + 1); start.ArgumentList.RemoveAt(index); }
             }
-            owned = Start(start);
-            return new SystemSearchHostProcess(owned.Process);
+            owned = Start(start, observeOutput: false);
+            var ownership = new SystemSearchHostProcess(owned.Process); owned.Ownership = ownership;
+            return ownership;
         }, _ => TestTransport.Borrow(client));
         public void Dispose()
         {
@@ -294,16 +295,17 @@ internal static class LauncherReadinessTests
             public int ExitCode => observation.ExitCode;
             public Process Process { get; }
             public int Port { get; }
-            public bool Ready => ready.Task.IsCompletedSuccessfully;
-            public Child(ProcessStartInfo start, int port)
+            internal SystemSearchHostProcess? Ownership { get; set; }
+            public bool Ready => !HasExited && (Ownership?.Ready ?? ready.Task.IsCompletedSuccessfully);
+            public Child(ProcessStartInfo start, int port, bool observeOutput)
             {
                 Port = port; Process = new Process { StartInfo = start };
-                Process.OutputDataReceived += (_, e) => { if (e.Data == "OptimusSearch ready.") ready.TrySetResult(); };
+                if (observeOutput) Process.OutputDataReceived += (_, e) => { if (e.Data == "OptimusSearch ready.") ready.TrySetResult(); };
                 Process.ErrorDataReceived += (_, _) => { };
                 if (!Process.Start()) throw new InvalidOperationException("Actual child did not start");
                 observation = System.Diagnostics.Process.GetProcessById(Process.Id);
                 _ = observation.SafeHandle; // Retain an independent handle after the launcher releases its own.
-                Process.BeginOutputReadLine(); Process.BeginErrorReadLine();
+                if (observeOutput) Process.BeginOutputReadLine(); Process.BeginErrorReadLine();
             }
             public async Task WaitReadyAsync()
             {
