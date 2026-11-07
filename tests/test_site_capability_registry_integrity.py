@@ -89,6 +89,11 @@ def test_schema_rejects_source_status_and_evidence_type_mismatches():
     component = component_map(relabeled_stack)["admin-gateway"]
     component["source_status"] = "merged"
     component["lifecycle_state"] = "active-methodology"
+    component["evidence"] = [{
+        "type": "pull-request",
+        "ref": "1871",
+        "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1871",
+    }]
     assert schema_errors(relabeled_stack)
 
     relabeled_issue = copy.deepcopy(registry)
@@ -99,6 +104,14 @@ def test_schema_rejects_source_status_and_evidence_type_mismatches():
 
     wrong_draft_evidence = copy.deepcopy(registry)
     component = component_map(wrong_draft_evidence)["evidence-lab"]
+    component["source_status"] = "draft-pr"
+    component["lifecycle_state"] = "draft"
+    component["evidence"] = [{
+        "type": "pull-request",
+        "ref": "1879",
+        "url": "https://github.com/Voxterrae/HUB_Optimus/pull/1879",
+    }]
+    assert not schema_errors(wrong_draft_evidence)
     component["evidence"] = [
         {
             "type": "issue",
