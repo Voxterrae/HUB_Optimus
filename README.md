@@ -144,6 +144,21 @@ HUB_Optimus exists to **break that cycle** by evaluating scenarios **before** de
 
 ---
 
+## Product entry points
+
+See the [public portfolio](https://huboptimus.dev/) or open the component guide below.
+
+| Component | Where to start | Current scope |
+| --- | --- | --- |
+| Operator | [Open Operator](https://huboptimus.dev/operator/) · [Source](site/operator/) | Public browser prototype for preparing drafts from pasted source text. |
+| Optimus Browser | [Windows alpha](products/browser/windows/README.md) · [Web pilot guide](products/browser/web/README.md) | Native Windows alpha and a separate static web pilot. |
+| Optimus Search | [Local host guide](products/browser/search/README.md) | Device-local search with a finite index. Web search requires an operator-configured SearXNG instance. |
+| Device Bridge / HUB_Relay | [Device Bridge guide](products/device-bridge/README.md) · [Windows diagnostics](products/device-bridge/windows/bootstrap-inventory/README.md) | Experimental diagnostics and compatibility work. Relay activation remains blocked. |
+| Admin Gateway | [Module guide](products/admin-gateway/README.md) | Local Microsoft 365 administration reference API; defaults to dry run. |
+| Evidence Lab | [Package guide](products/evidence-lab/README.md) | Dataverse package with offline dry-run evidence. |
+
+---
+
 ## The simulator
 
 **Current prototype** (`hub_optimus_simulator.py` + `run_scenario.py`):
