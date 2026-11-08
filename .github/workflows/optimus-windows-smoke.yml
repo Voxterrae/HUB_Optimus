@@ -9,7 +9,7 @@ on:
         description: Confirm the reviewed product SHA; other commits are blocked
         type: string
         required: true
-        default: aface3c9558c5104099a00eb4a8926c6c0d22c5b
+        default: 66857eec18741106625e059bd0b03d504b1d5dd9
       gui:
         description: Attempt GUI/UIAutomation on a clean interactive runner (blocked if unavailable)
         type: boolean
@@ -33,8 +33,8 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 15
     env:
-      OPTIMUS_SOURCE_COMMIT: aface3c9558c5104099a00eb4a8926c6c0d22c5b
-      OPTIMUS_SOURCE_TREE: 1a62d4e597fabcf87725d2c139b3599304001df0
+      OPTIMUS_SOURCE_COMMIT: 66857eec18741106625e059bd0b03d504b1d5dd9
+      OPTIMUS_SOURCE_TREE: 4e1384cc238d37825365b7c8b2114c4c69002c4f
       OPTIMUS_REQUESTED_SOURCE_COMMIT: ${{ inputs.source_commit }}
       OPTIMUS_WORKFLOW_COMMIT: ${{ github.workflow_sha }}
       OPTIMUS_RUN_ID: ${{ github.run_id }}
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: aface3c9558c5104099a00eb4a8926c6c0d22c5b
+          ref: 66857eec18741106625e059bd0b03d504b1d5dd9
       - name: Toolchain preflight (no installation)
         run: |
           $ErrorActionPreference = 'Stop'
