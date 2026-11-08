@@ -114,12 +114,47 @@ unless a separate reviewed record proves that exact statement.
 
 Private identifiers, protected URLs, tenant details, credentials, certificates, customer information, private evidence, unpublished source snapshots, authorization receipts, and operational logs do not belong in the public registry or site.
 
-## Treatment at the 2026-08-21 observation
+## Historical treatment at the 2026-08-21 observation
 
 - **Optimus Admin Gateway** was a draft stack at the August observation. The September integration now separates merged documentation foundation #1870 at ebe288effbdc3307c8f9f6c509178f66fe42484f from pending implementation PRs #1871-#1873 and #1875-#1876. The registry records the foundation in a separate commit-bound foundation_evidence field; it does not promote the implementation or authorize tenant execution.
 - **Optimus Evidence Lab** remains draft PR #1879 and an offline package boundary. It is not a production deployment or a public runtime.
 - **HUB_Optimus Connect — xAI and X Foundation** remains draft PR #1877 and a disabled provider boundary. It has no credentials, live calls, automatic publication, or partnership claim.
 - **Optimus Global Graph** remains issue-only under #1880. It has no implementation, person-level graph, Dataverse mutation, public API, public globe integration, or Sites deployment.
+
+## Reviewed presentation slice — 8 November 2026 (Europe/Madrid)
+
+The source review for this slice uses merged snapshot
+`7ca513eb16d12d77ba5f017c63109dab937c12b2`. It adds the repository catalogue at
+`products/README.md` and a clearly separated **In development** section to the
+static public portfolio. The eight existing public component records and their
+older public-document evidence baseline remain unchanged, explicitly dated
+observations. The new product references identify their own immutable source
+paths; they do not silently advance that older document-route baseline.
+
+Admin Gateway, Evidence Lab and Connect now have merged source evidence, as
+reconciled by #2105. Their public cards describe that source while keeping live
+runtime, production deployment, transport and writes disabled. Global Graph
+remains issue-only. A listed static card means that a description is available,
+not that its product is released or its service deployed.
+
+The Browser family uses separate Windows, web-pilot and Linux records. The
+existing static web pilot has a browser runtime and an explicit Wikipedia
+transport; recording that fact is not a new provider activation. Its prototype
+label and limitations remain visible. Windows remains a native alpha; Linux has
+no merged Browser source at this snapshot. Search remains a finite local host
+with separately configured Web adapters. Device Bridge/HUB_Relay remains an
+experimental diagnostic boundary with activation blocked.
+
+Tests bind the catalogue IDs/states/evidence and the public card placement to the
+registry, preserve draft-stack rejection rules, and pin the exact component
+runtime/transport exceptions. All components still claim zero production writes
+and no deployed production service. All new interface translations retain their
+qualified-human-review requirement.
+
+This source slice does not itself certify a Pages run or a Sites version. After
+the exact reviewed tree is integrated and published, retain the resulting
+commit/tree/run, served-file hashes and separate Sites provenance receipt in the
+governing PR/issue. Do not overwrite the historical observations above.
 
 ## GitHub Pages boundary
 

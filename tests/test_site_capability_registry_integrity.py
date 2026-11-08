@@ -39,6 +39,28 @@ def component_map(registry):
     return {component["id"]: component for component in registry["components"]}
 
 
+def make_draft_stack_fixture(registry):
+    component = component_map(registry)["admin-gateway"]
+    component.update({
+        "source_status": "draft-pr-stack",
+        "lifecycle_state": "draft",
+        "public_section": "in-development",
+        "public_browser_runtime_available": False,
+        "production_service_deployed": False,
+        "production_writes_executed": 0,
+        "live_external_transport_enabled": False,
+        "evidence": [
+            {
+                "type": "pull-request",
+                "ref": ref,
+                "url": f"https://github.com/Voxterrae/HUB_Optimus/pull/{ref}",
+            }
+            for ref in ("1871", "1872")
+        ],
+    })
+    return component
+
+
 def schema_errors(registry):
     validator = Draft202012Validator(
         load_schema(),
@@ -120,6 +142,39 @@ def test_schema_rejects_source_status_and_evidence_type_mismatches():
         }
     ]
     assert schema_errors(wrong_draft_evidence)
+
+
+def test_schema_accepts_a_valid_draft_pr_stack_and_rejects_its_overclaims():
+    fixture = load_registry()
+    component = make_draft_stack_fixture(fixture)
+    assert not schema_errors(fixture)
+
+    pr_evidence = copy.deepcopy(component["evidence"])
+    issue_evidence = {
+        "type": "issue",
+        "ref": "1880",
+        "url": "https://github.com/Voxterrae/HUB_Optimus/issues/1880",
+    }
+    commit_evidence = {
+        "type": "commit-path",
+        "ref": "c7a67a7af9e5067e27518d3a9bd8b56f99767acf",
+        "url": "https://github.com/Voxterrae/HUB_Optimus/tree/c7a67a7af9e5067e27518d3a9bd8b56f99767acf/products/admin-gateway/src/optimus_admin_gateway",
+    }
+    for field, value in (
+        ("evidence", pr_evidence[:1]),
+        ("evidence", [pr_evidence[0], pr_evidence[0]]),
+        ("evidence", [pr_evidence[0], issue_evidence]),
+        ("evidence", [pr_evidence[0], commit_evidence]),
+        ("lifecycle_state", "early-implementation"),
+        ("public_section", "what-exists-today"),
+        ("public_browser_runtime_available", True),
+        ("production_service_deployed", True),
+        ("production_writes_executed", 1),
+        ("live_external_transport_enabled", True),
+    ):
+        mutated = copy.deepcopy(fixture)
+        component_map(mutated)["admin-gateway"][field] = value
+        assert schema_errors(mutated), (field, value)
 
 
 def test_every_commit_evidence_path_exists_at_the_declared_object_type():

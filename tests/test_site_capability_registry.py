@@ -51,7 +51,25 @@ IN_DEVELOPMENT_COMPONENTS = {
     "evidence-lab",
     "connect-xai-x",
     "global-graph",
+    "browser-windows",
+    "browser-web-pilot",
+    "browser-linux",
+    "search",
+    "device-bridge",
 }
+DEVELOPMENT_STATES = {
+    "admin-gateway": ("implementation-present-deployment-unverified", "merged"),
+    "evidence-lab": ("implementation-present-deployment-unverified", "merged"),
+    "connect-xai-x": ("early-implementation", "merged"),
+    "global-graph": ("issue-only", "open-issue"),
+    "browser-windows": ("early-implementation", "merged"),
+    "browser-web-pilot": ("browser-prototype", "merged"),
+    "browser-linux": ("issue-only", "open-issue"),
+    "search": ("implementation-present-deployment-unverified", "merged"),
+    "device-bridge": ("experimental-tooling", "merged"),
+}
+PUBLIC_BROWSER_RUNTIME_COMPONENTS = {"operator", "browser-web-pilot"}
+LIVE_EXTERNAL_TRANSPORT_COMPONENTS = {"browser-web-pilot"}
 MERGED_DEVELOPMENT_EVIDENCE = {
     "admin-gateway": {
         "c7a67a7af9e5067e27518d3a9bd8b56f99767acf": "products/admin-gateway/src/optimus_admin_gateway",
@@ -66,7 +84,20 @@ MERGED_DEVELOPMENT_EVIDENCE = {
     "connect-xai-x": {
         "bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41": "hub_optimus/connect",
     },
+    "browser-windows": {
+        "7ca513eb16d12d77ba5f017c63109dab937c12b2": "products/browser/windows",
+    },
+    "browser-web-pilot": {
+        "7ca513eb16d12d77ba5f017c63109dab937c12b2": "site/browser",
+    },
+    "search": {
+        "7ca513eb16d12d77ba5f017c63109dab937c12b2": "products/browser/search",
+    },
+    "device-bridge": {
+        "7ca513eb16d12d77ba5f017c63109dab937c12b2": "products/device-bridge",
+    },
 }
+ISSUE_DEVELOPMENT_EVIDENCE = {"global-graph": "1880", "browser-linux": "2021"}
 ALLOWED_LIFECYCLE_STATES = {
     "active-methodology",
     "working-deterministic-prototype",
@@ -142,6 +173,27 @@ def load_schema():
 
 def component_map(registry):
     return {component["id"]: component for component in registry["components"]}
+
+
+def validate_present_claims(registry):
+    components = component_map(registry)
+    for component_id, component in components.items():
+        assert component["production_service_deployed"] is False, component_id
+        assert component["production_writes_executed"] == 0, component_id
+        assert component["public_browser_runtime_available"] is (
+            component_id in PUBLIC_BROWSER_RUNTIME_COMPONENTS
+        ), component_id
+        assert component["live_external_transport_enabled"] is (
+            component_id in LIVE_EXTERNAL_TRANSPORT_COMPONENTS
+        ), component_id
+
+    for component_id, (lifecycle, source_status) in DEVELOPMENT_STATES.items():
+        component = components[component_id]
+        assert component["lifecycle_state"] == lifecycle, component_id
+        assert component["source_status"] == source_status, component_id
+        assert component["public_section"] == "in-development", component_id
+        assert component["publicly_listed"] is True, component_id
+        assert component["public_static_surface_available"] is True, component_id
 
 
 def make_draft_fixture(registry, component_id):
@@ -326,9 +378,53 @@ def test_merged_development_components_have_exact_source_evidence():
             for ref, path in paths.items()
         ]
         assert component["public_section"] == "in-development"
-        assert component["publicly_listed"] is False
-        assert component["production_writes_executed"] == 0
-        assert component["live_external_transport_enabled"] is False
+        assert component["publicly_listed"] is True
+        assert component["public_static_surface_available"] is True
+
+
+def test_issue_only_development_components_have_exact_issue_evidence():
+    components = component_map(load_registry())
+    for component_id, ref in ISSUE_DEVELOPMENT_EVIDENCE.items():
+        assert components[component_id]["evidence"] == [{
+            "type": "issue",
+            "ref": ref,
+            "url": f"https://github.com/Voxterrae/HUB_Optimus/issues/{ref}",
+        }]
+
+
+def test_present_operational_claims_and_development_maturity_are_explicit():
+    validate_present_claims(load_registry())
+
+
+@pytest.mark.parametrize("component_id", sorted(PUBLIC_COMPONENTS | IN_DEVELOPMENT_COMPONENTS))
+@pytest.mark.parametrize("field", (
+    "public_browser_runtime_available",
+    "live_external_transport_enabled",
+    "production_service_deployed",
+    "production_writes_executed",
+))
+def test_present_claim_guard_rejects_changed_operational_flags(component_id, field):
+    registry = load_registry()
+    validate_present_claims(registry)
+    component = component_map(registry)[component_id]
+    component[field] = 1 if field == "production_writes_executed" else not component[field]
+    with pytest.raises(AssertionError):
+        validate_present_claims(registry)
+
+
+@pytest.mark.parametrize("component_id", sorted(IN_DEVELOPMENT_COMPONENTS))
+@pytest.mark.parametrize("field, value", (
+    ("publicly_listed", False),
+    ("public_static_surface_available", False),
+    ("public_section", "what-exists-today"),
+    ("lifecycle_state", "active-methodology"),
+))
+def test_development_claim_guard_rejects_visibility_or_maturity_drift(component_id, field, value):
+    registry = load_registry()
+    validate_present_claims(registry)
+    component_map(registry)[component_id][field] = value
+    with pytest.raises(AssertionError):
+        validate_present_claims(registry)
 
 
 def test_component_states_and_present_claims_are_bounded():
@@ -439,18 +535,21 @@ def test_new_unmarked_portfolio_card_is_rejected():
         validate_portfolio_markup(load_registry(), markup)
 
 
-def test_listed_development_card_is_allowed_only_in_its_declared_section():
+@pytest.mark.parametrize("component_id", sorted(IN_DEVELOPMENT_COMPONENTS))
+def test_listed_development_card_is_allowed_only_in_its_declared_section(component_id):
     registry = load_registry()
-    component = make_draft_fixture(registry, "evidence-lab")
-    assert not schema_errors(registry, load_schema())
-    component["publicly_listed"] = True
-    component["public_static_surface_available"] = True
-    assert not schema_errors(registry, load_schema())
-    card = '<article class="portfolio-card" data-portfolio-component="evidence-lab" data-status="draft">Evidence Lab</article>'
     markup = INDEX_PATH.read_text(encoding="utf-8")
-    validate_portfolio_markup(registry, markup + '<section id="in-development">' + card + '</section>')
+    validate_portfolio_markup(registry, markup)
+    pattern = re.compile(
+        rf'<article\b(?=[^>]*\bdata-portfolio-component="{re.escape(component_id)}")[^>]*>.*?</article>',
+        re.DOTALL,
+    )
+    cards = pattern.findall(markup)
+    assert len(cards) == 1, component_id
+    moved_markup = pattern.sub("", markup, count=1)
+    moved_markup += '<section id="portfolio">' + cards[0] + '</section>'
     with pytest.raises(AssertionError):
-        validate_portfolio_markup(registry, markup + '<section id="portfolio">' + card + '</section>')
+        validate_portfolio_markup(registry, moved_markup)
 
 
 def test_merged_admin_implementation_retains_its_documentation_foundation():

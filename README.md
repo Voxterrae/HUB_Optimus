@@ -146,7 +146,9 @@ HUB_Optimus exists to **break that cycle** by evaluating scenarios **before** de
 
 ## Product entry points
 
-See the [public portfolio](https://huboptimus.dev/) or open the component guide below.
+See the [product catalogue](products/README.md) for the reviewed source, maturity
+and execution boundaries, the [public portfolio](https://huboptimus.dev/), or open
+the component guide below.
 
 | Component | Where to start | Current scope |
 | --- | --- | --- |
