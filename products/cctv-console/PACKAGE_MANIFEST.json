@@ -115,8 +115,8 @@
     },
     {
       "path": "src/vox_home/facade.py",
-      "sha256": "f161a687eaa74131fd0bf1e660ce5087f7d8c1357083a1cf0e7798a811b5579b",
-      "size": 16319
+      "sha256": "b3d18836b5536844f761c5a47628c1dc25d629d94474e5cb82829bb189528132",
+      "size": 18295
     },
     {
       "path": "src/vox_home/host.py",
@@ -150,8 +150,8 @@
     },
     {
       "path": "tests/test_home_facade.py",
-      "sha256": "21b30838405545bec33da80cf078962195d850bb230745ea91297607656b9ad2",
-      "size": 23720
+      "sha256": "0ff3c8f4d1c3c185e733875bad9403511a1a5ce704e11220885247a858a2cfb0",
+      "size": 29092
     },
     {
       "path": "tests/test_public_configuration.py",

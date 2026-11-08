@@ -443,3 +443,117 @@ class BridgeBoundaryTests(unittest.TestCase):
             client.poll()
         self.assertEqual(self.facade.events(self.owner, time.time()), [])
         client.close()
+
+
+class DelegatedAlarmLifecycleTests(unittest.TestCase):
+    setUp = HomeFacadeTests.setUp
+    real_bridge = BridgeBoundaryTests.real_bridge
+
+    def acquire_delegate(self):
+        self.real_bridge('active_auth')
+        self.expires_at = time.time() + 30
+        self.access.issue_grant(self.owner, Grant('alarm-observer', 's1', 'observer',
+            ('nvr1',), ('events',), self.expires_at, False))
+        observer = AccessContext('s1', 'observer', 'alarm-observer')
+        started = []
+        real_start = self.host.start
+
+        def start(*args):
+            # Retain the real worker only to observe its process exit. The host,
+            # permissions, broker and session lifecycle are not substituted.
+            worker = real_start(*args)
+            started.append(worker)
+            return worker
+
+        with patch.object(self.host, 'start', side_effect=start):
+            session = self.facade.acquire_alarm(observer, self.target)
+        self.addCleanup(self.facade.release_alarm, session)
+        self.assertEqual(session.call('probe', {}, time.time()).status, 'ok')
+        self.assertEqual(session.call('events', {}, time.time()).status, 'ok')
+        return session, started[0].process
+
+    def assert_worker_stops(self, process):
+        deadline = time.monotonic() + 2
+        while process.poll() is None and time.monotonic() < deadline:
+            time.sleep(.01)
+        self.assertIsNotNone(process.poll(), 'Worker outlived the delegated grant')
+
+    def test_revoked_delegate_cannot_call_returned_alarm_session(self):
+        session, process = self.acquire_delegate()
+        self.access.revoke(self.owner, 'alarm-observer')
+        with self.assertRaises(AccessDenied):
+            session.call('probe', {}, time.time())
+        self.assert_worker_stops(process)
+
+    def test_expired_delegate_cannot_drain_returned_alarm_session(self):
+        session, process = self.acquire_delegate()
+        with patch('vox_home.facade.time.time', return_value=self.expires_at):
+            with self.assertRaises(AccessDenied):
+                session.poll_events()
+            self.assert_worker_stops(process)
+
+    def test_revocation_stops_worker_without_another_session_call(self):
+        _, process = self.acquire_delegate()
+        self.access.revoke(self.owner, 'alarm-observer')
+        self.assert_worker_stops(process)
+
+    def test_expiry_stops_worker_without_another_session_call(self):
+        _, process = self.acquire_delegate()
+        with patch('vox_home.facade.time.time', return_value=self.expires_at):
+            self.assert_worker_stops(process)
+
+    def test_idle_revocation_releases_facade_for_owner_replacement(self):
+        self.real_bridge('active_auth')
+        self.access.issue_grant(self.owner, Grant('alarm-observer', 's1', 'observer',
+            ('nvr1',), ('events',), time.time() + 30, False))
+        observer = AccessContext('s1', 'observer', 'alarm-observer')
+        client = CoreAlarmClient(self.facade, observer, self.target, threading.Event())
+        self.addCleanup(client.close)
+        self.assertTrue(self.facade.status()['core_active'])
+
+        self.access.revoke(self.owner, 'alarm-observer')
+        deadline = time.monotonic() + 2
+        while self.facade.status()['alarm_subscriptions'] and time.monotonic() < deadline:
+            time.sleep(.01)
+        status = self.facade.status()
+        self.assertEqual(status['alarm_subscriptions'], 0)
+        self.assertFalse(status['core_active'])
+        self.assertEqual(status['worker_status'], 'closed')
+
+        replacement = CoreAlarmClient(self.facade, self.owner, self.target, threading.Event())
+        self.addCleanup(replacement.close)
+        client.close()
+        self.assertTrue(self.facade.status()['core_active'])
+        self.assertEqual(self.facade.status()['alarm_subscriptions'], 1)
+
+    def test_events_grant_does_not_authorize_owner_action_operations(self):
+        session, _ = self.acquire_delegate()
+        with self.assertRaises(AccessDenied):
+            session.call('prepare_action', {'action': 'unsupported', 'parameters': {}}, time.time())
+
+    def test_revocation_during_worker_start_closes_unpublished_session(self):
+        self.real_bridge('active_auth')
+        self.access.issue_grant(self.owner, Grant('starting-observer', 's1', 'observer',
+            ('nvr1',), ('events',), time.time() + 30, False))
+        observer = AccessContext('s1', 'observer', 'starting-observer')
+        real_start = self.host.start
+        started = []
+
+        def revoke_after_start(*args):
+            worker = real_start(*args)
+            started.append(worker)
+            self.access.revoke(self.owner, 'starting-observer')
+            return worker
+
+        with patch.object(self.host, 'start', side_effect=revoke_after_start):
+            with self.assertRaises(AccessDenied):
+                self.facade.acquire_alarm(observer, self.target)
+        self.assertEqual(len(started), 1)
+        self.assert_worker_stops(started[0].process)
+        self.assertEqual(self.facade.status()['alarm_subscriptions'], 0)
+        self.assertFalse(self.facade.status()['core_active'])
+        replacement = self.facade.acquire_alarm(self.owner, self.target)
+        try:
+            self.assertEqual(replacement.call('probe', {}, time.time()).status, 'ok')
+        finally:
+            self.facade.release_alarm(replacement)
