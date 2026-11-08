@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "0.1.0.0",
+  "parameters": {
+    "deployEnabled": {"value": false},
+    "location": {"value": "REVIEW_REQUIRED_REGION"},
+    "environmentName": {"value": "optimus-search-proposal-env"},
+    "containerAppName": {"value": "optimus-search-proposal"},
+    "imageDigestRef": {"value": "registry.invalid/optimus-search-remote@sha256:0000000000000000000000000000000000000000000000000000000000000000"}
+  }
+}
