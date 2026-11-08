@@ -1,9 +1,15 @@
 # GitHub Copilot Instructions for HUB_Optimus
 
 ## Project Overview
-HUB_Optimus is an integrity-first diplomatic simulation framework designed for evaluation, preventive mediation, and systemic learning. It helps institutions avoid repeating historical failure patterns and prioritizes medium/long-term stability over short-term optics.
+HUB_Optimus is an owner-governed parent platform for decision support, governed
+connectors and products. Its diplomatic methodology and deterministic simulation
+runtime are one surface, alongside Operator, Admin Gateway, Evidence Lab,
+Device Bridge/Relay and Optimus Browser/Search. Source presence is not proof of
+deployment, product readiness or real-world capability.
 
-**Core Purpose:** Improve diplomatic outcomes through structured evaluation of incentives, verification mechanisms, and sequencing of decisions.
+Read `AGENTS.md` and its required reading before editing. Use the applicable
+`.github/instructions/*.instructions.md` files for product-specific commands and
+safety boundaries; they supplement, never override, the controlling sources.
 
 ## Source of Truth
 
@@ -21,7 +27,7 @@ the founder-authority boundary, executable contracts or live GitHub settings.
 - `v1_core/languages/en/` is a parity reference that must remain synchronized.
 - For onboarding/navigation docs under `docs/`, maintenance priority is `es`, `de`, `en`.
 
-**What it is NOT:**
+**The diplomatic evaluation surface is NOT:**
 - Not an authority or decision-maker
 - Not a prediction engine
 - Not a replacement for diplomacy
@@ -30,7 +36,11 @@ the founder-authority boundary, executable contracts or live GitHub settings.
 
 ## Immutable Principles (Layer 0 - Kernel)
 
-When contributing to this codebase, you MUST respect these non-negotiable principles:
+Preserve the canonical Kernel principles when changing methodology or scenarios.
+These evaluation principles do not disable product authentication, authorization,
+privacy protections or the owner's repository authority. Normative sources live
+under `v1_core/languages/es/` and `docs/governance/`; this summary is not an
+independent constitutional contract.
 
 ### 1. Stability Over Optics
 Medium/long-term systemic stability is the supreme criterion. Any "success" that increases long-term instability is a false success and must be rejected.
@@ -70,95 +80,71 @@ evade the permanent parent-platform non-transfer condition.
 ## Repository Structure
 
 ### Critical Paths
-- `v1_core/` — Active Kernel and simulator (HIGH SCRUTINY required for changes - see "D) Kernel Changes" section below)
+- `v1_core/` — Active Kernel methodology and scenario documents (high scrutiny; see Contribution Boundaries)
   - `v1_core/languages/es/` — Canonical source of truth for v1 core specs
   - `v1_core/languages/en/` — Parity reference (must stay synchronized with `es`)
-  - `v1_core/workflow/` — Scenario simulator templates and examples
+  - `v1_core/workflow/` — Human scenario templates and examples, not the Python runtime
+- `hub_optimus_simulator.py`, `run_scenario.py`, `scenario.schema.json` — Simulation runtime and executable input contract
+- `hub_optimus/`, `semantic_engine/`, `tools/`, `tests/`, `benchmarks/` — Python packages, tooling and executable evidence
+- `products/` — Separate product contracts; use the scoped instructions below
+- `site/` — Public static/browser assets; a merge or build does not certify served bytes
+- `ops/` — Infrastructure and operations; validation does not authorize mutation
+- `.github/workflows/` — Exact CI triggers, tools, validation and permission boundaries
 - `docs/` — Onboarding and reading paths (multilingual)
 - `docs/governance/` — Governance documents (Charter, Kernel, Consensus Process, etc.)
 - `legacy/` — Historical v0 materials (DO NOT rewrite or modernize)
 
+### Product Validation Routing
+
+| Changed surface | Scoped operating instructions |
+| --- | --- |
+| `products/browser/**`, `site/browser/**` | [Browser/Search](instructions/browser.instructions.md) |
+| `products/device-bridge/**` | [Device Bridge native/Relay](instructions/device-bridge-native.instructions.md) |
+| `products/admin-gateway/**` | [Admin Gateway](instructions/admin-gateway.instructions.md) |
+| `products/evidence-lab/**` | [Evidence Lab](instructions/evidence-lab.instructions.md) |
+| `ops/aws/operator-url-intake/**` | [AWS URL intake](instructions/operator-url-intake.instructions.md) |
+
+Read the matching instruction when changing its workflow too. A new product
+surface needs a scoped instruction or an explicit validation/runbook reference;
+do not assume the root Python environment validates every product.
+
 ### File Naming Convention
-- Folder structure and filenames MUST remain consistent across all languages
+- Maintain the declared parity structure for the affected translation surface;
+  do not treat a stub or file presence as a completed translation
 - Follow the language policy from `docs/context/STATUS.md`
 - All translations must preserve meaning without conceptual drift
 
-## Contribution Guidelines
+## Contribution Boundaries
 
-### A) Documentation Improvements (Low Risk)
-**Allowed:**
-- Typo fixes
-- Formatting improvements
-- Readability enhancements (without meaning drift)
-- Broken link fixes
-
-**Process:**
-- Make focused, minimal changes
-- Preserve existing structure and tone
-- Do not introduce new concepts without justification
-
-### B) Scenario Contributions (Recommended)
-**Location:** `v1_core/workflow/`
-
-**Template:** Use `v1_core/workflow/04_scenario_template.md`
-
-**Required Elements:**
-- Trigger and structural context
-- Incentive analysis
-- Systemic evaluation
-- Historical contrast
-- Kernel coherence check
-- Final classification
-- Memory integration notes
-
-### C) Meta-Learning Updates (Medium Risk)
-**Location:** `v1_core/workflow/05_meta_learning.md`
-
-**Requirements:**
-- Reference which scenario(s) justify the new rule
-- Explain what failure/success pattern it prevents or reinforces
-- Maintain integrity-first framing
-
-### D) Kernel Changes (High Risk)
-**Files:**
-- `v1_core/languages/es/01_base_declaracion.md` (canonical)
-- `v1_core/languages/es/02_arquitectura_base.md` (canonical)
-- `v1_core/languages/es/03_flujo_operativo.md` (canonical)
-- `v1_core/languages/en/01_base_declaracion.md` (parity)
-- `v1_core/languages/en/02_arquitectura_base.md` (parity)
-- `v1_core/languages/en/03_flujo_operativo.md` (parity)
-
-**Requirements:**
-- Explicit justification aligned with Layer 0 principles
-- Impact analysis
-- Integrity-first review
-- Synchronized language updates in `es` and `en`, then propagate to other languages per `docs/context/STATUS.md`
-
-**DO NOT:**
-- Weaken Kernel integrity protections
-- Introduce coercive enforcement concepts
-- Add personal scapegoating as analysis
-- Present short-term "wins" as success while increasing long-term instability
-- Introduce narrative manipulation
-
-### E) Legacy Materials
-**Location:** `legacy/`
-
-**Rules:**
-- DO NOT rewrite or "modernize" legacy documents
-- Corrections should be added as v1 notes, not retroactively edited
-- Preserve for transparency and historical reference
+- Follow `AGENTS.md`, [Contributing](../CONTRIBUTING.md) and the scoped
+  [Git workflow discipline](instructions/git-workflow.instructions.md) for
+  branch, commit, PR and review requirements. One problem, one reversible PR;
+  keep code, its tests and necessary documentation within that problem's scope.
+- Documentation/typo/link improvements must preserve meaning and tone. No
+  surprise architecture, roadmap, runtime, schema or benchmark changes.
+- Human scenario documents use `v1_core/workflow/04_scenario_template.md`;
+  preserve its structural analysis, historical contrast, Kernel check, final
+  classification and memory integration. Executable scenarios instead follow
+  `scenario.schema.json` and `docs/architecture/runtime_contract.md`.
+- Meta-learning updates target `v1_core/workflow/05_meta_learning.md`; cite the
+  scenarios and failure/success pattern supporting the change. Do not consolidate
+  other copies whose canonical/parity/legacy status is unclassified.
+- Kernel changes are high risk: justify the exact impact, preserve Layer 0,
+  synchronize Spanish canonical and English parity files, and follow protected
+  review. An instruction, label or passing test does not itself authorize them.
+- Preserve `legacy/` unchanged; add current notes rather than modernizing history.
 
 ## Language Policy
 
 ### Translation Requirements
-1. **Structural Consistency:** All languages mirror the same file set, order, and structure
+1. **Structural Consistency:** Preserve declared parity paths without claiming progressive translations or stubs are complete
 2. **Source of Truth:** `docs/context/STATUS.md` defines canonical/parity policy
 3. **Canonical v1 Core Language:** Spanish (`es`) under `v1_core/languages/es/`
 4. **Parity Reference:** English (`en`) under `v1_core/languages/en/`
 5. **Meaning Preservation:** Translations must preserve intent and definitions precisely
 6. **No Conceptual Drift:** Language must not introduce new interpretations or concepts
-7. **Synchronized Updates:** Kernel changes must be reflected in `es` and `en` at minimum
+7. **Governance Canonicality:** `docs/governance/` follows its English canonical translation policy, subject to explicit document-specific canonical sections (including the Founder Charter)
+8. **Synchronized Updates:** Kernel changes must be reflected in `es` and `en` at minimum; propagate other surfaces per `STATUS.md`, not a blanket all-language rewrite
 
 ### Supported Languages
 - Spanish (`es`) — Canonical v1 core language and priority onboarding
@@ -167,73 +153,22 @@ evade the permanent parent-platform non-transfer condition.
 - Catalan (`ca`) — Onboarding materials
 - French (`fr`) — Onboarding materials
 - Russian (`ru`) — Onboarding materials
+- Simplified Chinese (`zh-Hans`, directory `docs/zh/`) and Hebrew (`he`, RTL) — Declared stubs, not completed translations
 
-## Code and Documentation Standards
+Use `docs/i18n/maturity.v1.json` for versioned translation maturity. Product UI
+locale sets are product-specific; do not infer them from onboarding languages.
 
-### Writing Style
-- **Clarity over volume:** Be precise and concise
-- **Structural reasoning over rhetoric:** Focus on systemic analysis
-- **Prevention over escalation:** Frame solutions proactively
-- **Integrity and coherence:** Maintain consistency with Layer 0 principles
-- **Verifiable improvement:** Changes must demonstrate measurable value
+## Writing and Review
 
-### What to Avoid
-- Verbose explanations that obscure meaning
-- Personal opinions presented as facts
-- Blame-oriented language
-- Short-term optimization that increases long-term risk
-- Propaganda or narrative manipulation
-- Introducing dependencies on external authorities
+Use concise, structural, evidence-backed reasoning; distinguish observation,
+inference and unknowns. Do not introduce propaganda, narrative manipulation,
+personal blame or short-term optics as success. External providers and AI models
+gain no authority over evidence or project governance; ordinary reviewed
+technical dependencies are a separate question.
 
-### Comments and Documentation
-- Include comments when explaining complex incentive structures
-- Document systemic relationships and feedback loops
-- Explain evaluation criteria and stability metrics
-- Reference historical patterns when relevant
-- Keep inline comments minimal; prefer external documentation
-
-## Git Workflow
-
-### Branch Naming
-- `feat/<short-name>` — New features or scenarios
-- `chore/<short-name>` — Maintenance, documentation, tooling
-- `fix/<short-name>` — Bug fixes
-
-### Commit Messages
-- Use clear, descriptive messages
-- Reference affected areas: `docs:`, `kernel:`, `scenario:`, `workflow:`
-- Example: `docs: fix broken links in governance section`
-- Example: `scenario: add SCN-003 verified monitoring protocol`
-- Example: `kernel: clarify incentive evaluation criteria`
-
-### Pull Request Requirements
-1. Clear summary of changes
-2. Rationale aligned with Layer 0 principles
-3. List of affected files
-4. Scenario links (if applicable)
-5. Risks and mitigations (if kernel-adjacent)
-6. Impact on other language versions (if applicable)
-
-## Quality Standards
-
-### Before Submitting Changes
-- [ ] Changes preserve Kernel integrity
-- [ ] No weakening of evaluation standards
-- [ ] No introduction of coercive mechanisms
-- [ ] Language is clear and precise
-- [ ] Systemic framing (not personal blame)
-- [ ] Medium/long-term stability prioritized
-- [ ] All relevant translations updated
-- [ ] Links validated (Lychee enforced via CI)
-
-### Review Criteria
-Contributions are reviewed for:
-- Coherence with Layer 0 principles
-- Systemic framing (not personal blame)
-- Incentive awareness
-- Prevention posture
-- Clarity and traceability
-- Integrity-first alignment
+Use `.github/PULL_REQUEST_TEMPLATE.md` to record scope, rationale, affected
+files, applicable language impact, validation/limits, risks, rollback and handoff.
+Never claim unrun tests, product acceptance, independent review or owner approval.
 
 ## Security and Sensitive Information
 
@@ -252,68 +187,53 @@ Contributions are reviewed for:
 
 ## Testing and Validation
 
+### Root Python and Tooling
+
+From the repository root, in an isolated development environment using Python
+3.12 to match `.github/workflows/ci.yml`. Use complete Git history (CI uses
+`fetch-depth: 0`): historical adoption regressions cannot run from a shallow
+clone. Linux EC2 isolation tests also need a real root-to-nobody UID transition
+and observable `/proc` descendants; an incompatible sandbox is a validation
+limitation, not permission to weaken those tests.
+
+```bash
+set -euo pipefail
+python -m pip install -r requirements-dev.txt
+python tools/check_mojibake.py .
+python tools/check_narrative_consistency.py --input datasets/ai_risk_narratives/seed_claims.json --schema datasets/ai_risk_narratives/claim_record.schema.json --report out/narrative_consistency.json
+python -m pytest -q
+python benchmarks/run_benchmarks.py
+```
+
+The runtime-only tier is `requirements.txt` (Python 3.11+); it does not install
+pytest/PyYAML. Root CI uses the development tier. PowerShell certification also
+requires `pwsh` 7+ and runs `python -m pytest -q
+tests/test_powershell_tooling_safety.py`; skips without `pwsh` are not a pass.
+Native Rust validation is described in the Device Bridge instruction.
+
+The separate `EC2 locked environment` job certifies Linux x86_64 CPython 3.12
+with `ops/ec2/requirements-{runtime,validation}.lock`, hash-checked wheels and
+two sealed offline installs. Reproduce that job's exact steps for EC2 changes;
+never substitute a root `pip install` for locked-environment certification or
+execute deployment scripts as tests. Benchmarks are non-blocking in the workflow
+(`continue-on-error: true`); report their actual result separately.
+
+Record the full tested SHA, command, OS/toolchain, exit result and skips. Check
+live required-check publishers and current HEAD before a merge decision. A
+missing, skipped, stale or manually dispatched product check is not implied by
+a green root suite; GUI, real-Web, host capture and deployment need their own
+exact-source evidence and applicable owner authorization. Do not dispatch them
+or weaken checks merely to complete validation.
+
 ### Link Checking
-- All documentation links are checked via GitHub Actions using Lychee
-- Configuration: `.github/lychee.toml`
-- Broken links will fail CI checks
-
-### Scenario Validation
-When adding or modifying scenarios:
-1. Verify all required sections are present per template
-2. Check incentive analysis is structural (not rhetorical)
-3. Ensure historical contrasts are accurate and relevant
-4. Validate Kernel coherence check references Layer 0 principles
-5. Confirm meta-learning integration is specified
-
-### Multi-Language Validation
-When updating Kernel documents:
-1. Update Spanish canonical version first (`v1_core/languages/es/`)
-2. Synchronize English parity version (`v1_core/languages/en/`)
-3. Propagate to additional languages per `docs/context/STATUS.md`
-4. Verify structural consistency across languages
-5. Check that translations preserve meaning
-
-## Common Tasks
-
-### Adding a New Scenario
-1. Copy `v1_core/workflow/04_scenario_template.md`
-2. Name it `scenario_XXX_descriptive_name.md`
-3. Fill all required sections
-4. Include incentive analysis (structural, not rhetorical)
-5. Add historical contrast
-6. Perform Kernel coherence check
-7. Update meta-learning if introducing new pattern
-8. Submit PR with clear rationale
-
-### Fixing Documentation Typos
-1. Make minimal, focused changes
-2. Preserve existing structure and tone
-3. If in Kernel files, update ALL language versions
-4. Verify links still work
-5. Submit with clear commit message
-
-### Updating Governance Documents
-1. Reference Layer 0 principles in justification
-2. Provide impact analysis
-3. Ensure systemic framing (not personal)
-4. Get integrity-first review
-5. Synchronize across languages if applicable
-
-## Working with GitHub Copilot
-
-### Prompts That Align With Project Values
-✅ "Add a scenario evaluating incentive misalignment in ceasefire negotiations"
-✅ "Document the systemic factors that lead to verification failures"
-✅ "Translate this Kernel section to Spanish, preserving exact meaning"
-✅ "Fix broken links in the governance documentation"
-✅ "Add meta-learning rule about short-term optics vs long-term stability"
-
-### Prompts to Avoid
-❌ "Add enforcement mechanisms for compliance"
-❌ "Create blame-assignment framework"
-❌ "Optimize for short-term visibility"
-❌ "Add predictive analytics for outcomes"
-❌ "Introduce authority-based decision making"
+- [Link Check workflow](workflows/link-check.yml) runs Lychee over `README.md`,
+  `CONTRIBUTING.md`, `docs/CONTRIBUTING.md`, `docs/**/*.md` and
+  `ops/aws/operator-url-intake/*.md`. The workflow does not explicitly select
+  `.github/lychee.toml`; do not assume that file's exclusions are active.
+- Failures in those configured targets fail that job. It does not cover all
+  Markdown: `products/**`, `v1_core/**`, `.github/**`, most `ops/**` and other
+  root documents are not covered. Validate changed links there separately;
+  green Lychee is not evidence for omitted paths or externally served bytes.
 
 ## Additional Resources
 
@@ -327,13 +247,6 @@ When updating Kernel documents:
 - English parity references: `/v1_core/languages/en/`
 - Governance Documents: `/docs/governance/`
 
-## Questions or Uncertainty?
-
-When in doubt:
-1. Prioritize stability over optics
-2. Frame systemically, not personally
-3. Focus on incentives and verification
-4. Preserve Kernel integrity
-5. Ask for clarification via issue or PR discussion
-
-Remember: HUB_Optimus is a tool for better judgment, not a replacement for human diplomatic wisdom. Contributions should enhance evaluation capacity while maintaining integrity-first principles.
+HUB_Optimus supports human judgment. Do not turn methodology goals, generated
+prose, a passing narrow test or historical acceptance into a broader capability
+or authorization claim.
