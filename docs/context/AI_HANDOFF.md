@@ -690,9 +690,24 @@ source/lock verification. CNG output is sanitized even on failure; real test key
 are confined to the disposable runner account under separately approved scope.
 See [WORKFLOWS.md](WORKFLOWS.md#native-pilot-windowsyml) for the execution contract.
 
-A current-base CNG candidate still requires separate publication and exact-source
-Windows validation. Making this selector available is not native acceptance:
-the new eight-test run and independent interoperability verification remain
-UNRUN. Historical bootstrap and Node evidence retain their original source/run
-limits. No owner's device, enrollment or activation is authorized by workflow
-availability. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+The exact CNG acceptance completed in
+[run 42517098465, attempt 1](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42517098465):
+eight identity tests passed, zero failed/ignored, with GNU Clippy/rustfmt and
+unchanged source/lock certification. Workflow source
+`f34b26828be2b95375cd3951796768d3a7cbb9d8` tested candidate
+`10c29771b859d7201d6d82ad1e517bf595ea8b66`; its tree is preserved by source merge
+`5263c2c8bc6dcbd36c23c7e042cae61f9169979b` (#2145).
+[The sanitized receipt](https://github.com/Voxterrae/HUB_Optimus/issues/2143#issuecomment-6726351126)
+records the owned-key cleanup and disposable-runner limits. No new independent
+Node, MSVC, TPM/biometric, same-user isolation, enrollment or activation
+acceptance follows. Historical bootstrap and Node evidence retain their original
+source/run limits.
+
+The additional closed `identity-http` profile requires the exact eight identity
+plus seven reviewed HTTP resource tests, with HTTP already `Running` before
+each native harness and still `Running` afterward. It issues no service
+start/stop/configuration command; the preflight is non-atomic. Its current-base
+source candidate and new hosted fifteen-test acceptance remain pending. Profile availability alone
+is not HTTP acceptance, a listener or a secure channel. No owner's device is
+authorized by workflow availability. OWNER_AUTHORITY_HANDOFF remains controlling
+and unchanged.

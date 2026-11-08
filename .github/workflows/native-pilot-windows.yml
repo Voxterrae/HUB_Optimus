@@ -15,6 +15,7 @@ on:
         options:
           - bootstrap-process
           - identity-cng
+          - identity-http
 
 permissions:
   contents: read
@@ -37,8 +38,8 @@ jobs:
           if ($env:CANDIDATE_SHA -cnotmatch '\A[0-9a-fA-F]{40}\z') {
             throw 'candidate_sha must contain exactly 40 hexadecimal characters'
           }
-          if ($env:TEST_SUITE -cnotin @('bootstrap-process', 'identity-cng')) {
-            throw 'test_suite must be bootstrap-process or identity-cng'
+          if ($env:TEST_SUITE -cnotin @('bootstrap-process', 'identity-cng', 'identity-http')) {
+            throw 'test_suite must be bootstrap-process, identity-cng or identity-http'
           }
           "sha=$($env:CANDIDATE_SHA.ToLowerInvariant())" >> $env:GITHUB_OUTPUT
           "suite=$env:TEST_SUITE" >> $env:GITHUB_OUTPUT
@@ -85,6 +86,7 @@ jobs:
             'identity::tests::altered_identity_digest_cannot_reopen_or_delete_the_real_key',
             'identity::tests::invalid_native_handle_is_an_error_instead_of_invalid_signature'
           )
+          $expectedNames = $identityNames
           switch -CaseSensitive ($env:TEST_SUITE) {
             'bootstrap-process' {
               $filter = 'bootstrap_process::'
@@ -97,7 +99,30 @@ jobs:
               $expectedCount = 8
               $requiredInputs += 'src/identity.rs'
             }
+            'identity-http' {
+              # The inventory must match all fifteen reviewed names before execution.
+              $filter = '::tests::'
+              $expectedCount = 15
+              $requiredInputs += @('src/identity.rs', 'src/approval_https.rs')
+              $expectedNames += @(
+                'approval_https::tests::real_owned_resources_close_explicitly',
+                'approval_https::tests::two_live_owners_close_independently',
+                'approval_https::tests::repeated_owned_lifecycles_release_each_resource',
+                'approval_https::tests::setup_failure_after_each_acquisition_cleans_only_owned_resources',
+                'approval_https::tests::setup_failure_preserves_primary_and_all_cleanup_failures',
+                'approval_https::tests::explicit_close_reports_every_failure_without_drop_retry',
+                'approval_https::tests::native_queue_close_error_survives_and_other_cleanup_continues'
+              )
+            }
             default { throw 'Unvalidated test suite' }
+          }
+
+          function Assert-HttpAlreadyRunning([string] $moment) {
+            # Read-only, non-atomic preflight: never start or configure the driver.
+            try { $state = (Get-Service -Name HTTP -ErrorAction Stop).Status.ToString() }
+            catch { throw 'HTTP driver state unavailable; native HTTP validation refused' }
+            if ($state -cne 'Running') { throw 'HTTP driver must already be Running; native HTTP validation refused' }
+            Write-Output "HTTP $moment : Running"
           }
 
           function Get-SourceSnapshot {
@@ -207,8 +232,13 @@ jobs:
             $completed += $phase
 
             $phase = "$expectedCount-test inventory ($env:TEST_SUITE)"
-            $listing = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib $filter -- --list 2>&1)
-            $inventoryExit = $LASTEXITCODE
+            if ($env:TEST_SUITE -ceq 'identity-http') { Assert-HttpAlreadyRunning 'before inventory' }
+            try {
+              $listing = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib $filter -- --list 2>&1)
+              $inventoryExit = $LASTEXITCODE
+            } finally {
+              if ($env:TEST_SUITE -ceq 'identity-http') { Assert-HttpAlreadyRunning 'after inventory' }
+            }
             if ($env:TEST_SUITE -ceq 'bootstrap-process') { $listing | Write-Output }
             if ($inventoryExit -ne 0) { throw "Selected test inventory failed (exit $inventoryExit)" }
             $names = @($listing | ForEach-Object { if ("$_" -cmatch '\A(.+): test\z') { $Matches[1] } })
@@ -223,17 +253,22 @@ jobs:
                 throw 'Expected exactly 36 bootstrap tests: 30 token plus 6 parent'
               }
             } else {
-              if (Compare-Object -CaseSensitive ($identityNames | Sort-Object) ($names | Sort-Object)) {
-                throw 'Expected the exact eight reviewed identity/CNG test names'
+              if (Compare-Object -CaseSensitive ($expectedNames | Sort-Object) ($names | Sort-Object)) {
+                throw 'Expected the exact reviewed native test names for this suite'
               }
-              $identityNames | ForEach-Object { Write-Output "Inventoried: $_" }
+              $expectedNames | ForEach-Object { Write-Output "Inventoried: $_" }
             }
             $completed += $phase
 
             $phase = "$expectedCount-test execution ($env:TEST_SUITE)"
-            # Failed tests can print captured vectors: never publish raw CNG output.
-            $results = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib $filter -- --test-threads=1 2>&1)
-            $testExit = $LASTEXITCODE
+            # Failed tests can print captured vectors or resource IDs: keep raw native output private.
+            if ($env:TEST_SUITE -ceq 'identity-http') { Assert-HttpAlreadyRunning 'before execution' }
+            try {
+              $results = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib $filter -- --test-threads=1 2>&1)
+              $testExit = $LASTEXITCODE
+            } finally {
+              if ($env:TEST_SUITE -ceq 'identity-http') { Assert-HttpAlreadyRunning 'after execution' }
+            }
             if ($env:TEST_SUITE -ceq 'bootstrap-process') { $results | Write-Output }
             $observed = @($results | ForEach-Object {
               if ("$_" -cmatch '\Atest (.+) \.\.\. (.+)\z') {
@@ -241,15 +276,16 @@ jobs:
               }
             })
             $passed = @($observed | Where-Object { $_.Status -ceq 'ok' } | ForEach-Object { $_.Name })
-            if ($env:TEST_SUITE -ceq 'identity-cng') {
+            if ($env:TEST_SUITE -cne 'bootstrap-process') {
               # Emit only allowlisted names and fixed statuses, never captured stdout/stderr.
               foreach ($test in $observed) {
-                if ($test.Name -cin $identityNames) {
+                if ($test.Name -cin $expectedNames) {
                   $status = if ($test.Status -cin @('ok', 'FAILED', 'ignored')) { $test.Status } else { 'unrecognized' }
                   Write-Output "test $($test.Name) ... $status"
                 }
               }
-              Write-Output "CNG exit: $testExit; recognized passes: $($passed.Count)/$expectedCount"
+              $resultLabel = if ($env:TEST_SUITE -ceq 'identity-http') { 'Native' } else { 'CNG' }
+              Write-Output "$resultLabel exit: $testExit; recognized passes: $($passed.Count)/$expectedCount"
             }
             if ($testExit -ne 0) { throw "Selected test execution failed (exit $testExit)" }
             $summaries = @($results | Where-Object { "$_" -cmatch '\Atest result:' })
