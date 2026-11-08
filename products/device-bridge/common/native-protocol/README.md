@@ -18,6 +18,12 @@ request payload, without the broker signature. See the self-contained
 [request schema](schemas/native_request.v0_1.schema.json) and
 [approval schema](schemas/native_approval.v0_1.schema.json).
 
+`parse_request_payload(&[u8])` validates the raw request payload before a
+signature exists and returns the same private-field `RequestPayload` used by
+the envelope parser. It applies the existing 4096-byte input limit, closed JSON
+shape and field validation. Success grants no enrollment, freshness, origin or
+admission authority.
+
 `parse_request_envelope` / `parse_approval_envelope` return validated types with
 private fields and getters. `serialize_request_envelope` /
 `serialize_approval_envelope` apply the same 4096-byte envelope limit.
