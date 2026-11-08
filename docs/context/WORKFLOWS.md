@@ -64,7 +64,7 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 
 - Trigger: `workflow_dispatch` only, with a required immutable 40-hex
   `candidate_sha` from this repository and a closed `test_suite` choice:
-  `bootstrap-process` (default) or `identity-cng`.
+  `bootstrap-process` (default), `identity-cng` or `identity-http`.
 - Permissions: `contents: read`; the reviewed checkout Action does not persist
   credentials. No named secrets, write token, upload or deployment is used.
 - One disposable GitHub-hosted `windows-2022` job (20-minute timeout):
@@ -75,14 +75,20 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
     the runner, with isolated Cargo/Rustup state and cleared compiler overrides;
   - fetches locked dependencies once, then runs the selected suite offline:
     exactly 36 `bootstrap_process::` tests (30 token and 6 parent), or the exact
-    eight reviewed `identity::tests::` names; then Clippy with
+    eight reviewed `identity::tests::` names, or exactly those eight plus seven
+    reviewed `approval_https::tests::` names for `identity-http`; then Clippy with
     `--all-targets -- -D warnings` and `rustfmt --check --edition 2024 src/lib.rs`;
   - requires all selected tests to execute with 0 failed and 0 ignored, and
     verifies unchanged source and Cargo.lock hashes afterward; filtered tests
     from other modules provide no acceptance;
-  - captures CNG test stdout/stderr in runner process memory and publishes only
+  - for `identity-http`, requires the HTTP driver already `Running` immediately
+    before both test inventory and execution, and still `Running` afterward,
+    including on failure. It refuses stopped/unavailable states and issues no
+    service start/stop/configuration command. These reads are not atomic and
+    cannot exclude external state changes between observation and `HttpInitialize`;
+  - captures CNG/HTTP test stdout/stderr in runner process memory and publishes only
     the allowlisted inventory, recognized test statuses, exit code and counts.
-    Raw vectors, key identifiers and failure output are not printed or uploaded;
+    Raw vectors, key/resource identifiers and failure output are not printed or uploaded;
   - records candidate/workflow SHAs, runner/tool versions, SHA-256 inputs and
     actual outcomes in the job log/summary. Skipped or incomplete validation
     cannot produce PASS.
@@ -94,6 +100,14 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   No existing keys are enumerated or deleted. Run only under the exact approved
   source/profile scope. Raw CNG output is ephemeral and is not retained as an
   artifact; a failed run may need a separately scoped private diagnostic.
+- The combined `identity-http` suite requires a separately reviewed candidate
+  containing `src/identity.rs` and `src/approval_https.rs`; the exact inventory
+  must contain only their fifteen expected tests before any are executed.
+  It repeats CNG under the candidate's changed manifest/module graph and creates
+  only owned API-v2 sessions, anonymous non-inheritable queues and empty URL
+  groups. No URL registration, queue binding, HTTP I/O, listener, certificate,
+  URLACL or TLS acceptance is included. Explicit cleanup failures fail the tests;
+  Drop is best-effort and failed cleanup may persist until process exit.
 - Eight internal CNG passes do not prove independent Node interoperability,
   production MSVC compatibility, TPM/biometric protection, same-user isolation
   or protected enrollment.
