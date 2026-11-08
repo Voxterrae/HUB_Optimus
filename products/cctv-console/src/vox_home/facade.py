@@ -136,6 +136,8 @@ class CoreFacade:
             if self._session is not None:
                 raise RuntimeError('subscription_active')
             session = self.host.start(self._manifest, target, self._owner)
+            if context.grant_id is not None:
+                session = _DelegatedAlarmSession(self, context, session)
             self._session = session
             self._worker_status = 'starting'
             return session
@@ -176,6 +178,55 @@ class CoreFacade:
                     self.registry.close()
             finally:
                 self.evidence_store.close()
+
+
+class _DelegatedAlarmSession:
+    """Owner-provisioned worker whose public use follows the requesting grant."""
+    def __init__(self, facade, context, session):
+        self._facade, self._context, self._session = facade, context, session
+        self._stop = threading.Event()
+        self._require('events', time.time())
+        threading.Thread(target=self._watch, daemon=True).start()
+
+    def _require(self, operation, now):
+        try:
+            self._facade._require(self._context, 'events', now)
+            # Probe/health are subscription setup and liveness checks. Other
+            # owner worker operations never inherit permission from events.
+            if operation not in ('probe', 'health', 'events'):
+                self._facade._require(self._context, operation, now)
+        except AccessDenied:
+            # Clear the facade slot and telemetry as part of the same bounded
+            # teardown. A rejected or stale wrapper still closes only its worker.
+            with self._facade._lock:
+                if self._facade._session is self:
+                    self._facade.release_alarm(self)
+                else:
+                    self.close()
+            raise
+
+    def _watch(self):
+        while not self._stop.wait(.1):
+            try:
+                self._require('events', time.time())
+            except AccessDenied:
+                return
+
+    def call(self, operation, parameters, now):
+        self._require(operation, now)
+        result = self._session.call(operation, parameters, now)
+        self._require(operation, now)
+        return result
+
+    def poll_events(self):
+        self._require('events', time.time())
+        events = self._session.poll_events()
+        self._require('events', time.time())
+        return events
+
+    def close(self):
+        self._stop.set()
+        self._session.close()
 
 
 class CoreAlarmClient:
