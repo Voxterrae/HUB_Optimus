@@ -14,7 +14,10 @@ fn payload_bytes(vector: &Value) -> Vec<u8> {
 }
 
 fn unhex(input: &str) -> Vec<u8> {
-    assert!(input.len().is_multiple_of(2), "fixture hex must have even length");
+    assert!(
+        input.len().is_multiple_of(2),
+        "fixture hex must have even length"
+    );
     input
         .as_bytes()
         .as_chunks::<2>()
