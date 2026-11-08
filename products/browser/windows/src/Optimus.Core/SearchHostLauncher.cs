@@ -191,7 +191,7 @@ public sealed class SearchHostLauncher : IDisposable
         try
         {
             using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
-            deadline.CancelAfter(TimeSpan.FromMilliseconds(300));
+            deadline.CancelAfter(TimeSpan.FromMilliseconds(1000));
             var nonce = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
             using var request = new HttpRequestMessage(HttpMethod.Get, OptimusSearchTarget.LocalEndpoint + "/health");
             request.Headers.Add("X-Optimus-Nonce", nonce);

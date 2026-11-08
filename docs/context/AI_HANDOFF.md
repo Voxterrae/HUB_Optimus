@@ -624,3 +624,21 @@ verified fix pass. No external request was made to test it.
 - Python focused118pass; packaging24pass/107subtests. Local full pytest initially had18collection errors due missing declared jsonschema4.26 dependency, resolved by installing unchanged requirements. Rerun was interrupted (exit130) after stalled quiet progress with3skips, without observed failure/final summary; cause unknown. A guessed nearby EC2marker test independently passed1/1 in0.04s, so no defect is attributed to it. Exact-head GitHub full-suite SUCCESS remains mandatory; local full suite is incomplete, never counted as passed.
 - Deferred minors: extreme OS post-kill/import-drain cleanup has no extra final deadline (no observed hang; can leave switching pending); further concurrent Connect/disposal fixture coverage beyond tested load/restore and host cases. These do not establish additional acceptance. Session-only rather than persisted generic import is a reversible scope choice; a future persistence requirement costs separate work. Read-only GUI failure fixture intentionally does not claim malformed-byte GUI evidence.
 - Preserve complete main9fa3f8a0 handoff prefix, other work, owner authority and Windows/Linux coordination2021. All7 latest publisher-bound checks,6 CodeQL analyses/aggregateSUCCESS, current base and0threads remain pre-merge gates. Native Windows acceptance is still UNRUN. #2079 remote service/auth/cost/deployment and #2062 relevance remain open.
+
+## 2026-11-08 — Operator Lambda dependency boundary (#2104)
+
+The centralized Lambda builder now checks esbuild's complete resolved input
+graph, including tree-shaken inputs, before returning any bundle bytes. It
+rejects CDK, constructs, minimatch, glob and esbuild package paths and allows
+only genuine Node builtins as external imports in both input and output
+metadata. Existing build and verification commands inherit the guard. This is
+a statically resolved graph check, not a sandbox for variable runtime imports
+or arbitrary source changes; npm package paths remain the current boundary.
+
+The reviewed Lambda bundle bytes and infrastructure package/lock declarations
+remain unchanged. This defensive guard does not remediate bundled
+minimatch 10.2.5 in aws-cdk-lib 2.273.0 or close Dependabot #21 / #2104. A
+supported supplier update, exact installed-tree and audit evidence, governed
+review, and a fresh authenticated alert read remain necessary. No AWS mutation,
+public activation, scanner exception or GitHub protection change is included.
+OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.

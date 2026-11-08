@@ -20,4 +20,6 @@ La distribución Windows publica `Optimus.SearchHost.exe` autocontenido en `Sear
 
 La aceptación web general real está bloqueada por motores upstream. Los fixtures prueban el protocolo y los límites; no demuestran resultados de Internet ni ejecución Windows.
 
-El endpoint SearXNG admite HTTPS o HTTP con `localhost` literal o una IP loopback. Conserva un prefijo como `/instance`, `/instance/` o `/instance/search` y solicita `/instance/search`. Si `unresponsive_engines` no está vacío, devuelve un fallo genérico 502, también si hay resultados parciales; una lista vacía sana sigue siendo válida.
+El endpoint SearXNG admite HTTPS o HTTP con `localhost` literal o una IP loopback. Conserva un prefijo como `/instance`, `/instance/` o `/instance/search` y solicita `/instance/search` mediante POST de formulario, con `safesearch=2`. La consulta no va en la URL upstream; el motor debe soportar el filtrado y el operador debe evitar registros de cuerpos. Solo acepta `application/json` sin compresión y rechaza propiedades duplicadas en raíz/resultados. Si `unresponsive_engines` no está vacío, devuelve un fallo genérico 502, también si hay resultados parciales; una lista vacía sana sigue siendo válida.
+
+La [propuesta de proveedor controlado](docs/CONTROLLED_WEB_DESIGN.md) compara equipo existente y Azure, dependencias, configuración, costes y aceptación. Es una preparación inactiva; las pruebas aisladas no resuelven el bloqueo de relevancia de #2062 ni configuran un proveedor de producción.
