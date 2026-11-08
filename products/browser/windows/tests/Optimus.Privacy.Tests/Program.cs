@@ -1,4 +1,5 @@
 using Optimus.Core;
+using System.Text.Json;
 var tests=new List<(string,Action)>();void Test(string n,Action a)=>tests.Add((n,a));void Check(bool b,string m){if(!b)throw new Exception(m);}void Throws(Action a){bool caught=false;try{a();}catch(ArgumentException){caught=true;}Check(caught,"Expected validation rejection");}
 var rules=new PrivacyPolicy([new("example.org",PrivacyAction.Private),new("blocked.example.org",PrivacyAction.Block),new("exact.test",PrivacyAction.Private,false),new("xn--bcher-kva.example",PrivacyAction.Private)]);
 Test("Host boundary exact subdomain and lookalikes",()=>{Check(rules.Evaluate(new("https://example.org"))==PrivacyAction.Private,"Exact protected");Check(rules.Evaluate(new("https://a.example.org"))==PrivacyAction.Private,"Subdomain protected");foreach(var host in new[]{"example.org.evil.test","notexample.org","sub.exact.test"})Check(rules.Evaluate(new("https://"+host))==PrivacyAction.Allow,"Lookalike/exact excluded");});
@@ -14,6 +15,60 @@ Test("Settings validate endpoint and rules before writing",()=>{var dir=Path.Com
 Test("Only host-controlled known GET may automatically open private",()=>{var protectedUri=new Uri("https://example.org/form");Check(rules.DecideNavigation(protectedUri,false,true)==NavigationDisposition.OpenPrivate,"Known GET selects private first");Check(rules.DecideNavigation(protectedUri,false,false)==NavigationDisposition.OfferPrivate,"Ambiguous engine link/redirect/form cancels and offers, never replays");Check(rules.DecideNavigation(protectedUri,true,false)==NavigationDisposition.Navigate,"Private stays in current private profile");Check(rules.DecideNavigation(new("https://blocked.example.org"),true,true)==NavigationDisposition.Block,"Block wins even host GET private");});
 Test("Final private retirement never reuses the old off-record profile identity",()=>{var session=new PrivateSessionIdentity();var first=session.Name;Check(session.Name==first,"Live controls share identity");session.Retire();Check(session.Name!=first&&session.Name.StartsWith("OptimusPrivate",StringComparison.Ordinal),"Final close/recovery retires identity");Check(new PrivateSessionIdentity().Name!=session.Name,"Separate process sessions do not reuse identity");});
 Test("Versioned settings migration preserves legacy file and never falls back from corrupt new settings",()=>{var dir=Path.Combine(Path.GetTempPath(),Guid.NewGuid().ToString());Directory.CreateDirectory(dir);var legacy=Path.Combine(dir,"settings.json");var current=Path.Combine(dir,"settings-v02.json");const string original="{\"SearchProvider\":1,\"TextScale\":1.5,\"HighContrast\":true,\"RestoreSession\":true,\"SessionUrls\":[\"https://example.org/private\",\"https://public.test\"],\"PrivacyRules\":[{\"Domain\":\"example.org\",\"Action\":1}]}";try{File.WriteAllText(legacy,original);var store=new SettingsStore(current,legacy);var imported=store.Load();Check(imported.Error==null&&imported.Settings.SearchProvider==SearchProvider.Google&&imported.Settings.HighContrast&&imported.Settings.TextScale==1.5,"Legacy preferences imported");Check(imported.Settings.SessionUrls.SequenceEqual(new[]{"https://public.test"}),"Protected legacy addresses scrubbed");Check(store.Save(imported.Settings with {SearchProvider=SearchProvider.Optimus})==null&&File.ReadAllText(legacy)==original,"Only versioned settings written");Check(store.Load().Settings.SearchProvider==SearchProvider.Optimus,"Current takes precedence");File.WriteAllText(current,"{corrupt");Check(store.Load().Error!=null&&store.Save(new())!=null&&File.ReadAllText(current)=="{corrupt"&&File.ReadAllText(legacy)==original,"Corrupt current preserved, no fallback");}finally{Directory.Delete(dir,true);}});
+Test("Oversized legacy endpoint preserves privacy and permits a deliberate normalized save",()=>{
+ var endpoint="https://operator.example/"+new string('a',2100);
+ Check(endpoint.Length==2125&&!OptimusSearchService.IsValidEndpoint(endpoint),"Current endpoint guard must continue rejecting the 0.2 fixture");
+ foreach(var fallback in new[]{false,true}) {
+  using var profile=new SettingsFileFixture(LegacyProfile(endpoint),fallback);
+  var loaded=profile.Store.Load();
+  Check(loaded.Settings.SearxEndpoint==null,"Only the unsupported saved endpoint must be disabled");
+  Check(new PrivacyPolicy(loaded.Settings.PrivacyRules).Evaluate(new("https://blocked.example/"))==PrivacyAction.Block,"The user's block must remain active during migration");
+  Check(loaded.Settings.Bookmarks.SequenceEqual(new[]{new Bookmark("a bookmark","https://book.example/")}),"The user's bookmark must survive migration");
+  Check(loaded.Settings.SearchProvider==SearchProvider.Google&&loaded.Settings.TextScale==1.5&&loaded.Settings.HighContrast&&loaded.Settings.RestoreSession,"Other valid preferences must survive migration");
+  Check(loaded.Settings.SessionUrls.SequenceEqual(new[]{"https://book.example/"}),"Existing private-session sanitization must still run");
+  Check(loaded.Error is {} warning&&warning.Contains("desactiv",StringComparison.OrdinalIgnoreCase)&&warning.Contains("longitud",StringComparison.OrdinalIgnoreCase)&&!warning.Contains(endpoint)&&!warning.Contains(profile.Source),"Migration must explain the disabled endpoint without reflecting URL or profile paths");
+  Check(File.ReadAllText(profile.Source)==profile.Original&&(!fallback||!File.Exists(profile.Current)),"Load must not rewrite either profile generation");
+  Check(profile.Store.Save(loaded.Settings with {SearxEndpoint=endpoint})!=null&&File.ReadAllText(profile.Source)==profile.Original,"Save must retain the strict endpoint guard");
+  Check(profile.Store.Save(loaded.Settings with {TextScale=2})==null,"A migration warning must permit a deliberate save of validated normalized settings");
+  var saved=profile.Store.Load();
+  Check(saved.Error==null&&saved.Settings.SearxEndpoint==null&&saved.Settings.TextScale==2&&saved.Settings.Bookmarks.SequenceEqual(loaded.Settings.Bookmarks),"Normalized settings must roundtrip without repeating the warning");
+  Check(new PrivacyPolicy(saved.Settings.PrivacyRules).Evaluate(new("https://blocked.example/"))==PrivacyAction.Block,"Saving must not drop the preserved block");
+  Check(!fallback||File.ReadAllText(profile.Legacy)==profile.Original,"Saving migrated settings must preserve the fallback legacy file");
+  Check(Directory.GetFiles(profile.Directory,"*.tmp").Length==0,"Atomic save must not leave a partial profile");
+ }
+});
+Test("Legacy endpoint whose escaped URI exceeds the cap preserves the rest of the profile",()=>{
+ var endpoint="https://operator.example/"+new string('é',400);
+ Check(endpoint.Length<2048&&new Uri(endpoint).AbsoluteUri.Length>2048&&!OptimusSearchService.IsValidEndpoint(endpoint),"Fixture must exceed only the escaped URI bound");
+ using var profile=new SettingsFileFixture(LegacyProfile(endpoint));
+ var loaded=profile.Store.Load();
+ Check(loaded.Settings.SearxEndpoint==null&&loaded.Error!=null&&loaded.Settings.Bookmarks.Count==1,"Escaped-length migration must disable only the endpoint and notify");
+ Check(new PrivacyPolicy(loaded.Settings.PrivacyRules).Evaluate(new("https://blocked.example/"))==PrivacyAction.Block&&File.ReadAllText(profile.Source)==profile.Original,"Escaped-length migration must preserve block and original file");
+ Check(profile.Store.Save(loaded.Settings)==null&&profile.Store.Load().Error==null,"Escaped-length migration must permit normalized save");
+});
+Test("Unsafe oversized endpoints remain corrupt and cannot overwrite the current profile",()=>{
+ foreach(var endpoint in new[]{"http://operator.example/"+new string('a',2100),"ftp://operator.example/"+new string('a',2100),"https://user:secret@operator.example/"+new string('a',2100),"https://operator.example/"+new string('a',2100)+"?secret=query","https://operator.example/"+new string('a',2100)+"#private","https://operator.example/"+new string('a',2100)+"\n","https://operator.example/"+new string('a',2100)+"\\path","https://user:secret@operator.example/"}) {
+  using var profile=new SettingsFileFixture(LegacyProfile(endpoint));
+  File.WriteAllText(profile.Legacy,LegacyProfile("https://valid.example/"));
+  var loaded=profile.Store.Load();
+  Check(loaded.Error!=null&&loaded.Settings.Bookmarks.Count==0,"Unsafe current profile must fail validation without falling back to legacy preferences");
+  Check(profile.Store.Save(new())!=null&&File.ReadAllText(profile.Current)==profile.Original,"Unsafe endpoint must preserve the complete corrupt-file save guard");
+ }
+});
+Test("Oversized endpoint cannot salvage invalid rules bookmarks or other settings",()=>{
+ foreach(var (field,value) in new (string,object?)[]{("TextScale",99d),("Theme",99),("SearchProvider",99),("EasyMode","invalid"),("PrivacyRules",null),("PrivacyRules",new[]{new{Domain="*.bad.test",Action=2}}),("Bookmarks",new[]{new{Title="bad",Url="https://user:secret@book.example/"}}),("SessionUrls",new[]{"file:///secret"})}) {
+  var fields=JsonSerializer.Deserialize<Dictionary<string,JsonElement>>(LegacyProfile("https://operator.example/"+new string('a',2100)))!;
+  fields[field]=JsonSerializer.SerializeToElement(value);
+  using var profile=new SettingsFileFixture(JsonSerializer.Serialize(fields));
+  Check(profile.Store.Load().Error!=null&&profile.Store.Save(new())!=null&&File.ReadAllText(profile.Current)==profile.Original,"Other invalid fields must remain corrupt rather than passing through endpoint migration");
+ }
+});
+string LegacyProfile(string endpoint)=>JsonSerializer.Serialize(new{
+ SearxEndpoint=endpoint,SearchProvider=1,TextScale=1.5,HighContrast=true,RestoreSession=true,
+ SessionUrls=new[]{"https://blocked.example/private","https://book.example/"},
+ Bookmarks=new[]{new{Title="a bookmark",Url="https://book.example/"}},
+ PrivacyRules=new[]{new{Domain="blocked.example",Action=2,IncludeSubdomains=true}}
+});
 foreach(var failure in new[]{"mode verification","barrier installation"})foreach(var resume in new[]{"settings resume","clear resume"})Test("Failed "+failure+" stays blocked after "+resume,()=>{var state=new ControllerReadiness();bool caught=false;try{state.InitializeAsync(()=>{if(failure=="mode verification")throw new InvalidOperationException("Mode mismatch");throw new NotSupportedException("Filter unavailable");}).GetAwaiter().GetResult();}catch(Exception e) when(e is InvalidOperationException or NotSupportedException){caught=true;}Check(caught,"Injected initialization failure observed");state.RequestResume(false);state.RequestResume(true);Check(!state.IsInitialized&&!state.CanNavigate,failure+" must remain non-navigable after "+resume);});
 Test("Complete initialization permits temporary suspension but permanent faults need replacement",()=>{var state=new ControllerReadiness();state.RequestResume(true);Check(!state.CanNavigate,"Resume before complete initialization must fail closed");state.InitializeAsync(()=>Task.CompletedTask).GetAwaiter().GetResult();Check(state.IsInitialized,"Full guards completed");state.RequestResume(true);Check(state.CanNavigate,"Initialized controller resumes");state.RequestResume(false);Check(state.IsInitialized&&!state.CanNavigate,"Quiescence preserves full guard invariant");state.RequestResume(true);Check(state.CanNavigate,"Clear/settings may resume initialized controller");state.Fail();state.RequestResume(true);Check(!state.IsInitialized&&!state.CanNavigate,"Permanent fault cannot be resumed");bool rejected=false;try{state.InitializeAsync(()=>Task.CompletedTask).GetAwaiter().GetResult();}catch(InvalidOperationException){rejected=true;}Check(rejected,"Same controller cannot reinitialize after retirement");var replacement=new ControllerReadiness();replacement.InitializeAsync(()=>Task.CompletedTask).GetAwaiter().GetResult();replacement.RequestResume(true);Check(replacement.CanNavigate,"Fully initialized replacement can navigate");state.Dispose();state.RequestResume(true);Check(!state.IsInitialized&&!state.CanNavigate,"Disposed controller cannot resume");});
 foreach(var operation in new[]{"rules update","clear all"})Test("Frame or nonfatal failure retires raw controller before "+operation,()=>{var trace=new List<string>();var posted=new Queue<Action>();var ownership=new ControllerOwnership(()=>trace.Add("dispose actual controller"));ownership.Attach();var readiness=new ControllerReadiness();readiness.InitializeAsync(()=>Task.CompletedTask).GetAwaiter().GetResult();readiness.Fail();ownership.RequestRetirement(posted.Enqueue,error=>throw error);Check(!readiness.IsInitialized&&ownership.HasController&&trace.Count==0,"Callback invalidates navigation but retains raw cleanup ownership until dispatch");ownership.QuiesceAsync(()=>{trace.Add("quiesce live document");return Task.CompletedTask;}).GetAwaiter().GetResult();Check(!ownership.HasController&&trace.SequenceEqual(new[]{"dispose actual controller"}),"Operation cannot finish while failed top-level document remains alive");while(posted.TryDequeue(out var retire))retire();Check(trace.Count==1,"Queued retirement must not double-dispose");});
@@ -24,3 +79,19 @@ Test("Profile owner lost while quiescing cannot produce a successful clear",()=>
 int failed=0;foreach(var (n,a) in tests){try{a();Console.WriteLine("PASS "+n);}catch(Exception e){failed++;Console.WriteLine("FAIL "+n+": "+e.Message);}}Console.WriteLine($"{tests.Count-failed}/{tests.Count} PASS");return failed==0?0:1;
 
 sealed class CleanupFixture(bool isPrivate){public bool Private {get;}=isPrivate;public bool Verified {get;set;}=true;public int Clears {get;set;}}
+
+sealed class SettingsFileFixture : IDisposable
+{
+ public string Directory {get;}=Path.Combine(Path.GetTempPath(),"optimus-settings-migration-"+Guid.NewGuid().ToString("N"));
+ public string Current=>Path.Combine(Directory,"settings-v02.json");
+ public string Legacy=>Path.Combine(Directory,"settings.json");
+ public string Source {get;}
+ public string Original {get;}
+ public SettingsStore Store {get;}
+ public SettingsFileFixture(string json,bool fallback=false)
+ {
+  System.IO.Directory.CreateDirectory(Directory);Original=json;Source=fallback?Legacy:Current;
+  File.WriteAllText(Source,json);Store=new(Current,Legacy);
+ }
+ public void Dispose()=>System.IO.Directory.Delete(Directory,true);
+}

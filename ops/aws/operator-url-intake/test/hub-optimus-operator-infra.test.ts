@@ -1,3 +1,4 @@
+import { expect, test } from './test-support';
 import * as cdk from 'aws-cdk-lib/core';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import { HubOptimusOperatorInfraStack } from '../lib/hub-optimus-operator-infra-stack';

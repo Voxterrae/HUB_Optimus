@@ -47,7 +47,7 @@ impl<'de, T: Deserialize<'de>> Deserialize<'de> for JsonObject<T> {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct RawRequestPayload {
     version: String,
@@ -89,7 +89,7 @@ struct RawApprovalEnvelope {
 
 /// A request whose closed wire shape and field restrictions have been checked.
 /// Its references and nonce carry no enrollment, freshness or entropy proof.
-#[derive(Debug, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(transparent)]
 pub struct RequestPayload {
     raw: RawRequestPayload,
@@ -222,6 +222,13 @@ fn validate_signature_hex(hex: &str) -> Result<(), ProtocolError> {
         return Err(ProtocolError::InvalidSignatureEncoding);
     }
     Ok(())
+}
+
+/// Validate a request payload before obtaining a signature.
+/// Success grants no enrollment, freshness, origin or admission authority.
+pub fn parse_request_payload(input: &[u8]) -> Result<RequestPayload, ProtocolError> {
+    let raw: RawRequestPayload = parse_object(input)?;
+    validate_request(raw)
 }
 
 pub fn parse_request_envelope(input: &[u8]) -> Result<RequestEnvelope, ProtocolError> {

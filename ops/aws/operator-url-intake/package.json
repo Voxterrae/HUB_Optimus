@@ -12,7 +12,7 @@
     "build": "tsc",
     "build:lambda": "node --require ts-node/register scripts/build-lambda-bundle.ts",
     "watch": "tsc -w",
-    "test": "jest",
+    "test": "node scripts/run-tests.cjs",
     "check": "npm run verify:lambda-build && npm run build && npm test -- --runInBand",
     "cdk": "cdk",
     "predeploy:check": "node --require ts-node/register scripts/predeploy-check.ts",
@@ -28,12 +28,11 @@
     "constructs": "^10.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^30",
-    "@types/node": "^24.10.1",
+    "@types/node": "^26.6.6",
     "aws-cdk": "2.1135.1",
     "esbuild": "0.28.2",
-    "jest": "^30",
-    "ts-jest": "^29",
+    "expect": "30.5.2",
+    "jest-mock": "30.5.2",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3"
   }

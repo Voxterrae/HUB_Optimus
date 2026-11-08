@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../../src/Optimus.Core/Optimus.Core.csproj"/></ItemGroup>
+  <ItemGroup><ProjectReference Include="../../src/Optimus.Core/Optimus.Core.csproj"/><ProjectReference Include="../../../search/src/Optimus.Search/Optimus.Search.csproj"/></ItemGroup>
+  <ItemGroup><Content Include="../../../search/catalog/public-pilot-v0.1*.json" Link="pilot-assets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
 </Project>

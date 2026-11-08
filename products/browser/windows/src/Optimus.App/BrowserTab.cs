@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
@@ -37,7 +38,15 @@ internal sealed class BrowserTab : IDisposable
  }
  public BrowserContext Context=>new(Id,Epoch,CurrentUri?.GetLeftPart(UriPartial.Authority)??"inicio");
  public bool IsHome {get;private set;}=true;
- public bool NavigationReady {get=>readiness.CanNavigate;set=>readiness.RequestResume(value);}
+ public bool NavigationReady
+ {
+  get=>readiness.CanNavigate;
+  set
+  {
+   readiness.RequestResume(value);
+   AutomationProperties.SetItemStatus(Item,readiness.CanNavigate?"Listo para navegar":"Navegación no disponible");
+  }
+ }
  public string Title=>IsSearch?"Optimus Search":IsHome?"Inicio":Core?.DocumentTitle??"Página";
  private NavigationSnapshot addressSnapshot=new();
  public string? LastAddress=>IsSearch?null:addressSnapshot.LastAddress is {} address&&Uri.TryCreate(address,UriKind.Absolute,out var u)&&policy().Evaluate(u,IsPrivate)!=PrivacyAction.Block&&(IsPrivate||policy().Evaluate(u)!=PrivacyAction.Private)?address:null;
@@ -47,32 +56,32 @@ internal sealed class BrowserTab : IDisposable
  public event Action<string>? Notice;
  public event Action<BrowserTab>? SafetyFailed;
  public event Action<BrowserTab,string>? OpenRequested;
+ public event Action<BrowserTab>? HelpRequested;
+ public event Action<BrowserTab>? BookmarksRequested;
  public event Action<BrowserTab,string,NavigationLease>? PrivateOpeningOffered;
- private readonly StackPanel home=new() {Margin=new Thickness(30)};
+ private readonly NativeHomeView home;
  private readonly StackPanel failure=new() {Margin=new Thickness(30),Visibility=Visibility.Collapsed};
  private bool disposed,internalBlank;
  private readonly OperationLifetime lifetime=new();
  public bool IsDisposed=>lifetime.IsDisposed;
- public BrowserTab(Action<BrowserTab> recover,bool isPrivate,Func<PrivacyPolicy> policy,Func<long> policyGeneration,Func<IReadOnlyList<Bookmark>> bookmarks,string profileName,Func<BrowserTab,bool> searchEligible,CancellationToken hostLifetime)
+ public BrowserTab(Action<BrowserTab> recover,bool isPrivate,Func<PrivacyPolicy> policy,Func<long> policyGeneration,Func<IReadOnlyList<Bookmark>> bookmarks,string profileName,Func<BrowserTab,bool> searchEligible,CancellationToken hostLifetime,Func<CancellationToken,Task<SearchHostConnection>> connectSearch,PublicPilotCatalog pilot,Func<bool,Task<PilotCatalogChange>> changePilot,Func<bool> catalogBusy)
  {
   controllerOwnership=new ControllerOwnership(()=>View.Dispose());
   this.profileName=profileName;IsPrivate=isPrivate;this.policy=policy;this.policyGeneration=policyGeneration;
-  search=new OptimusSearchView(url=>OpenRequested?.Invoke(this,url),()=>IsPrivate?Array.Empty<Bookmark>():bookmarks(),()=>!IsDisposed&&searchEligible(this),hostLifetime) {Visibility=Visibility.Collapsed};
-  Item=new TabItem {Header=ModeTitle("Inicio"),Content=Host,Tag=this};Host.Children.Add(View);Host.Children.Add(home);Host.Children.Add(failure);Host.Children.Add(search);
-  home.Children.Add(new System.Windows.Controls.Image {Source=(System.Windows.Media.ImageSource)Application.Current.FindResource("OptimusLogo"),Height=72,HorizontalAlignment=HorizontalAlignment.Left,Margin=new Thickness(0,0,0,16)});
-  home.Children.Add(new TextBlock {Text="Bienvenido a Optimus",FontSize=30,TextWrapping=TextWrapping.Wrap});
-  home.Children.Add(new TextBlock {Text="Escribe una dirección o una búsqueda arriba. La ayuda local funciona sin cuenta. Optimus Search consulta Wikipedia y marcadores; puedes elegir una búsqueda externa en Opciones.",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,14,0,14)});
-  home.Children.Add(new TextBlock {Text="Enlaces de inicio · candidatos sin atribución oficial",FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap});
-  foreach(var (label,url) in new[]{("Portal de administración · administracion.gob.es","https://administracion.gob.es/")})
-  {var b=new Button {Content=label,HorizontalAlignment=HorizontalAlignment.Left};b.Click+=(_,_)=>OpenRequested?.Invoke(this,url);home.Children.Add(b);}
-  home.Children.Add(new TextBlock {Text=(IsPrivate?"Privado: no se guardan direcciones en la sesión. No ofrece anonimato; marcadores y descargas explícitos pueden conservarse. ":"Normal: cookies y datos de sitios pueden persistir. ")+" Optimus no guarda un historial general; la restauración de direcciones requiere activar la opción. La comprobación de reputación se solicita al motor; Windows puede modificar su funcionamiento.",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,20,0,0)});
+  search=new OptimusSearchView(url=>OpenRequested?.Invoke(this,url),()=>IsPrivate?Array.Empty<Bookmark>():bookmarks(),()=>!IsDisposed&&searchEligible(this),hostLifetime,connectSearch,pilot,changePilot,catalogBusy) {Visibility=Visibility.Collapsed};
+  home=new NativeHomeView(IsPrivate,(query,scope)=>SearchAsync(query,scope),()=>ShowSearch(OptimusSearchScope.Index),()=>BookmarksRequested?.Invoke(this),()=>HelpRequested?.Invoke(this));
+  Item=new TabItem {Header=ModeTitle("Inicio"),Content=Host,Tag=this};AutomationProperties.SetItemStatus(Item,"Preparando navegador");Host.Children.Add(View);Host.Children.Add(home);Host.Children.Add(failure);Host.Children.Add(search);
   failure.Children.Add(new TextBlock {Text="El motor de esta pestaña se detuvo. Recuperarla vuelve a abrir la última dirección; el texto no guardado puede perderse.",TextWrapping=TextWrapping.Wrap});
   var retry=new Button {Content="Recuperar esta pestaña"};retry.Click+=(_,_)=>recover(this);failure.Children.Add(retry);
   View.Visibility=Visibility.Hidden;
  }
  public async Task InitializeAsync(CoreWebView2Environment environment,PermissionController permissions,DownloadController downloads,Func<bool> active,CancellationToken cancellationToken)
  {
-  try{await readiness.InitializeAsync(()=>InitializeControllerAsync(environment,permissions,downloads,active,cancellationToken));}
+  try
+  {
+   await readiness.InitializeAsync(()=>InitializeControllerAsync(environment,permissions,downloads,active,cancellationToken));
+   AutomationProperties.SetItemStatus(Item,"Preparando datos de navegación");
+  }
   catch{RetireController();throw;}
  }
  public void RetireController()
@@ -177,18 +186,28 @@ internal sealed class BrowserTab : IDisposable
   try {GoHome();await completion.Task.WaitAsync(TimeSpan.FromSeconds(5));}
   finally {core.NavigationCompleted-=Completed;}
  }
- public async Task SearchAsync(string query,string? endpoint)
+ public void ShowSearch()
  {
   if(!search.CanSubmit)return;
-  GoHome();IsSearch=true;home.Visibility=Visibility.Collapsed;search.Visibility=Visibility.Visible;Item.Header=ModeTitle("Optimus Search");Changed?.Invoke(this);
-  search.FocusQuery();await search.SearchAsync(query,endpoint,lifetime.Token);
+  GoHome();IsSearch=true;home.Visibility=Visibility.Collapsed;search.Visibility=Visibility.Visible;Item.Header=ModeTitle("Optimus Search");Changed?.Invoke(this);search.FocusQuery();
+ }
+ public async Task SearchAsync(string query,OptimusSearchScope scope=OptimusSearchScope.Web)
+ {
+  if(!search.CanSubmit)return;
+  ShowSearch();await search.SearchAsync(query,scope,lifetime.Token);
+ }
+ public void ShowSearch(OptimusSearchScope scope)
+ {
+  if(!search.CanSubmit)return;
+  ShowSearch();search.SetScope(scope);search.RefreshPilot();search.FocusQuery();
  }
  public void CancelSearch()=>Invalidate();
+ public void RefreshCatalog()=>search.RefreshPilot();
  public void DisableSearch(){search.Disable();Invalidate();}
  public void PolicyChanged(){Invalidate();addressSnapshot=new();GoHome();}
  private string ModeTitle(string title)=>(IsPrivate?"Privado · ":"Normal · ")+ShortTitle(title);
  private void ShowPage() {IsSearch=false;search.Visibility=Visibility.Collapsed;IsHome=false;home.Visibility=Visibility.Collapsed;failure.Visibility=Visibility.Collapsed;View.Visibility=Visibility.Visible;}
- public void Invalidate() {Epoch++;navigationEpoch.Invalidate();search.Cancel();Invalidated?.Invoke(this);}
+ public void Invalidate() {Epoch++;navigationEpoch.Invalidate();search.Cancel();home.ClearQuery();Invalidated?.Invoke(this);}
  private static string ShortTitle(string text)=>text.Length>24?text[..24]+"…":text;
  private void DisposeController()=>controllerOwnership.Retire();
  public void Dispose() {if(disposed)return;readiness.Dispose();lifetime.Dispose();navigationEpoch.Dispose();NavigationReady=false;Invalidate();search.Dispose();disposed=true;DisposeController();}

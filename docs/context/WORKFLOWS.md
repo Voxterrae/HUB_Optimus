@@ -60,6 +60,31 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   - runs the versioned Pester safety contracts with `Invoke-Pester -CI`.
 - Writes to repo: no.
 
+### native-pilot-windows.yml
+
+- Trigger: `workflow_dispatch` only, with a required immutable 40-hex
+  `candidate_sha` from this repository.
+- Permissions: `contents: read`; the reviewed checkout Action does not persist
+  credentials. No named secrets, write token, upload or deployment is used.
+- One disposable GitHub-hosted `windows-2022` job (20-minute timeout):
+  - validates the input before checkout, verifies exact HEAD and binds all
+    native-pilot source/manifest/lockfile bytes to that candidate;
+  - verifies explicit x64 MinGW `gcc`, `ar` and `dlltool` paths and metadata;
+  - installs exact Rust `1.99.0-x86_64-pc-windows-gnu`, Clippy and rustfmt on
+    the runner, with isolated Cargo/Rustup state and cleared compiler overrides;
+  - fetches locked dependencies once, then runs offline: exactly 36
+    `bootstrap_process::` tests (30 token and 6 parent), Clippy with
+    `--all-targets -- -D warnings`, and `rustfmt --check --edition 2024 src/lib.rs`;
+  - requires the inventoried tests to execute with 36 passed, 0 failed and
+    0 ignored, and verifies unchanged source and Cargo.lock hashes afterward;
+  - records candidate/workflow SHAs, runner/tool versions, SHA-256 inputs and
+    actual outcomes in the job log/summary. Skipped or incomplete validation
+    cannot produce PASS.
+- Writes to repo: no. This is candidate-specific hosted evidence, not laptop
+  account-context certification, remote-device enrollment or release authority.
+  The manual workflow must reach the default branch before dispatch; merging
+  it does not run native validation or make this job a required branch check.
+
 ### link-check.yml
 
 - Triggers:

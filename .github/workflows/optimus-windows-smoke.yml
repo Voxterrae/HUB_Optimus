@@ -1,15 +1,15 @@
 # REVIEW CANDIDATE ONLY: apply through the protected owner process on main.
-# Adapted from products/browser/windows/ci/WindowsSmoke.workflow.yml at 178e52e.
-# Explicit source SHA: isolated execution does not merge or approve the product commit.
-name: Optimus Windows 0.3.3 isolated smoke
+# PR #2112 exact-source validation; broader service/GUI results remain separate.
+# Reviewed source pin: changing the executable source requires protected review.
+name: Optimus Windows PR 2112 isolated smoke
 on:
   workflow_dispatch:
     inputs:
       source_commit:
-        description: Complete lowercase 40-hex product SHA to test in this disposable runner
+        description: Confirm the reviewed product SHA; other commits are blocked
         type: string
         required: true
-        default: 178e52efbc84428653e004b8c9f02cda30fc74b0
+        default: 66857eec18741106625e059bd0b03d504b1d5dd9
       gui:
         description: Attempt GUI/UIAutomation on a clean interactive runner (blocked if unavailable)
         type: boolean
@@ -33,7 +33,9 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 15
     env:
-      OPTIMUS_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      OPTIMUS_SOURCE_COMMIT: 66857eec18741106625e059bd0b03d504b1d5dd9
+      OPTIMUS_SOURCE_TREE: 4e1384cc238d37825365b7c8b2114c4c69002c4f
+      OPTIMUS_REQUESTED_SOURCE_COMMIT: ${{ inputs.source_commit }}
       OPTIMUS_WORKFLOW_COMMIT: ${{ github.workflow_sha }}
       OPTIMUS_RUN_ID: ${{ github.run_id }}
       OPTIMUS_RUN_ATTEMPT: ${{ github.run_attempt }}
@@ -45,20 +47,26 @@ jobs:
       - name: Validate exact source before checkout
         working-directory: ${{ runner.temp }}
         run: |
-          if ($env:OPTIMUS_SOURCE_COMMIT -cnotmatch '\A[0-9a-f]{40}\z') { throw 'A complete lowercase commit SHA is required; branch and tag names are not accepted.' }
+          if ($env:OPTIMUS_REQUESTED_SOURCE_COMMIT -cnotmatch '\A[0-9a-f]{40}\z') { throw 'A complete lowercase commit SHA is required; branch and tag names are not accepted.' }
+          if ($env:OPTIMUS_REQUESTED_SOURCE_COMMIT -cne $env:OPTIMUS_SOURCE_COMMIT) { throw 'Only the protected reviewed product pin may execute.' }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ inputs.source_commit }}
+          ref: 66857eec18741106625e059bd0b03d504b1d5dd9
       - name: Toolchain preflight (no installation)
         run: |
           $ErrorActionPreference = 'Stop'
           $head = & git rev-parse HEAD
-          if ($LASTEXITCODE -ne 0 -or $head -ne $env:OPTIMUS_SOURCE_COMMIT) { throw 'Checkout source head mismatch.' }
+          if ($LASTEXITCODE -ne 0 -or $head -cne $env:OPTIMUS_SOURCE_COMMIT) { throw 'Checkout source head mismatch.' }
+          $tree = & git rev-parse 'HEAD^{tree}'
+          if ($LASTEXITCODE -ne 0 -or $tree -cne $env:OPTIMUS_SOURCE_TREE) { throw 'Checkout source tree mismatch.' }
+          $dirty = & git status --porcelain
+          if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Executable source must be clean before building.' }
           $version = & dotnet --version
           if ($LASTEXITCODE -ne 0 -or $version -ne '10.0.403') { throw 'Required .NET SDK 10.0.403 absent; provision the isolated runner through protected review.' }
           [ordered]@{
             sourceCommit = $head
+            sourceTree = $tree
             workflowCommit = $env:OPTIMUS_WORKFLOW_COMMIT
             runId = $env:OPTIMUS_RUN_ID
             runAttempt = $env:OPTIMUS_RUN_ATTEMPT
@@ -68,11 +76,97 @@ jobs:
             imageVersion = $env:ImageVersion
             guiRequested = '${{ inputs.gui }}'
           } | ConvertTo-Json | Set-Content "$env:RUNNER_TEMP/optimus-toolchain.json" -Encoding utf8
+      - name: Isolated runner resource and port preflight
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $freeBytes = [int64]((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory) * 1KB
+          $portFree = $false
+          $probe = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 17831)
+          $probe.ExclusiveAddressUse = $true
+          try { $probe.Start(); $portFree = $true }
+          catch [System.Net.Sockets.SocketException] { $portFree = $false }
+          finally { $probe.Stop() }
+          [ordered]@{
+            freeMemoryBytes = $freeBytes
+            minimumFreeMemoryBytes = 1GB
+            loopbackPort = 17831
+            portFree = $portFree
+            state = $(if ($freeBytes -ge 1GB -and $portFree) { 'READY' } else { 'BLOCKED' })
+          } | ConvertTo-Json | Set-Content "$env:RUNNER_TEMP/optimus-regression-preflight.json" -Encoding utf8
+          if ($freeBytes -lt 1GB) { throw 'BLOCKED: less than 1 GiB free RAM; no build or tests ran.' }
+          if (!$portFree) { throw 'BLOCKED: loopback 17831 unavailable; no existing listener or process was stopped.' }
+      - name: Exact-source native TLS regression and identity suite
+        id: native_search
+        timeout-minutes: 5
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          # Custom test executable, not a dotnet test discovery/build-only result.
+          # Capture locally; never upload raw output, profile files or token material.
+          $output = @(& dotnet run --project tests/Optimus.Search.Tests -c Release 2>&1)
+          $exitCode = $LASTEXITCODE
+          $lines = @($output | ForEach-Object { $_.ToString() })
+          $lines | Set-Content "$env:RUNNER_TEMP/optimus-native-search.private.log" -Encoding utf8
+          $required = @(
+            'profile-authenticated TLS completes before fixture health HTTP',
+            'real TLS launcher accepts authenticated health after a 500ms response delay',
+            'real TLS launcher rejects missing identity without bearer or query disclosure',
+            'real TLS launcher rejects random identity without bearer or query disclosure',
+            'real TLS launcher rejects malformed identity without bearer or query disclosure',
+            'real TLS launcher rejects wrong-token identity without bearer or query disclosure',
+            'real TLS launcher rejects unknown-marker identity without bearer or query disclosure',
+            'real TLS launcher rejects replayed proof for a fresh connection nonce',
+            'real TLS launcher rejects proof relayed from actual service on another port',
+            'actual service identity unlocks native authenticated index search over TLS',
+            'actual search rejects listener replacement after verified health without bearer or query',
+            'failed actual service assertion releases its fixed listener before the next test',
+            'actual search rejects missing TLS certificate before HTTP disclosure',
+            'actual search rejects malformed TLS certificate before HTTP disclosure',
+            'actual search rejects wrong-token TLS certificate before HTTP disclosure',
+            'actual search rejects wrong-port TLS certificate before HTTP disclosure',
+            'actual search rejects copied-proof TLS certificate before HTTP disclosure',
+            'fresh search reconnect rejects changed certificate after a successful search',
+            'copied public certificate without private key cannot terminate TLS',
+            'accepted localhost configuration starts real backend with identical policy',
+            'actual TLS search cancellation closes pending body',
+            'real TLS identity cancellation closes pending health without disclosing bearer or query'
+          )
+          $cases = @(foreach ($name in $required) {
+            [ordered]@{ name = $name; passed = @($lines | Where-Object { $_ -ceq "PASS $name" }).Count -eq 1 }
+          })
+          $totals = @($lines | Where-Object { $_ -cmatch '\A([1-9][0-9]*)/([1-9][0-9]*) checks PASS\z' })
+          $passedLines = @($lines | Where-Object { $_ -cmatch '\APASS ' }).Count
+          $complete = $false
+          $reportedCount = 0
+          if ($totals.Count -eq 1 -and $lines[-1] -ceq $totals[0]) {
+            $null = $totals[0] -cmatch '\A([1-9][0-9]*)/([1-9][0-9]*) checks PASS\z'
+            $reportedCount = [int]$Matches[2]
+            $complete = $Matches[1] -ceq $Matches[2] -and $reportedCount -eq $passedLines -and $reportedCount -ge $required.Count
+          }
+          # Handshake-failed fixture diagnostics are expected in negative TLS cases.
+          $failedLines = @($lines | Where-Object { $_ -cmatch '\AFAIL ' }).Count
+          $accepted = $exitCode -eq 0 -and $complete -and $failedLines -eq 0 -and @($cases | Where-Object { !$_.passed }).Count -eq 0
+          [ordered]@{
+            sourceCommit = $env:OPTIMUS_SOURCE_COMMIT
+            sourceTree = $env:OPTIMUS_SOURCE_TREE
+            workflowCommit = $env:OPTIMUS_WORKFLOW_COMMIT
+            runId = $env:OPTIMUS_RUN_ID
+            runAttempt = $env:OPTIMUS_RUN_ATTEMPT
+            exitCode = $exitCode
+            suiteComplete = $complete
+            passedTestCount = $passedLines
+            reportedTestCount = $reportedCount
+            failedTestCount = $failedLines
+            identityCases = $cases
+            state = $(if ($accepted) { 'PASS' } else { 'FAIL' })
+          } | ConvertTo-Json -Depth 6 | Set-Content "$env:RUNNER_TEMP/optimus-native-search.json" -Encoding utf8
+          if (!$accepted) { throw 'Native TLS regression/identity suite failed or its execution evidence is incomplete.' }
       - name: Build production suites and self-contained executables
+        id: production
         run: |
           $ErrorActionPreference = 'Stop'
           function CheckExit { if ($LASTEXITCODE -ne 0) { throw 'Native build/test/import failed.' } }
-          foreach ($suite in @('Optimus.Core.Tests', 'Optimus.Search.Tests', 'Optimus.Privacy.Tests')) {
+          foreach ($suite in @('Optimus.Core.Tests', 'Optimus.Privacy.Tests')) {
             dotnet run --project "tests/$suite" -c Release; CheckExit
           }
           dotnet run --project ../search/tests/Optimus.Search.Tests -c Release; CheckExit
@@ -81,12 +175,15 @@ jobs:
           dotnet publish src/Optimus.App/Optimus.App.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o $output; CheckExit
           dotnet publish ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -r win-x64 --self-contained true -p:Version=0.3.3-alpha -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Search"; CheckExit
           dotnet publish scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Diagnostics"; CheckExit
-          dotnet run --project ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -- index --input ../search/catalog/optimus-help.json --output "$output/Search/index.json"; CheckExit
+          $catalog = (Resolve-Path '../search/catalog/optimus-help.json').Path
+          dotnet run --project ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -- index --input $catalog --output "$output/Search/index.json"; CheckExit
       - name: Real packaged host acceptance through Windows PowerShell 5.1
+        id: service
         run: |
           & "$env:SystemRoot/System32/WindowsPowerShell/v1.0/powershell.exe" -NoProfile -File scripts/Test-OptimusWindows.ps1 -Publication "$env:RUNNER_TEMP/optimus-publication" -EvidenceDirectory "$env:RUNNER_TEMP/optimus-service-evidence" -SourceCommit $env:OPTIMUS_SOURCE_COMMIT
           if ($LASTEXITCODE -ne 0) { throw 'Windows service acceptance failed; retain negative evidence.' }
       - name: Optional GUI acceptance (no runtime installation)
+        id: gui
         if: ${{ inputs.gui }}
         run: |
           # Helper preflights absent default profiles, free port, desktop and WebView2.
@@ -95,20 +192,31 @@ jobs:
       - name: Report separate results without artifact or cache storage
         if: ${{ always() }}
         working-directory: ${{ runner.temp }}
+        env:
+          OPTIMUS_NATIVE_SEARCH_OUTCOME: ${{ steps.native_search.outcome }}
+          OPTIMUS_PRODUCTION_OUTCOME: ${{ steps.production.outcome }}
+          OPTIMUS_SERVICE_OUTCOME: ${{ steps.service.outcome }}
+          OPTIMUS_GUI_OUTCOME: ${{ steps.gui.outcome }}
         run: |
           $ErrorActionPreference = 'Stop'
           $summary = @(
-            '# Optimus Windows 0.3.3 smoke',
+            '# Optimus Windows PR 2112 smoke',
             "Source: $env:OPTIMUS_SOURCE_COMMIT",
+            "Source tree: $env:OPTIMUS_SOURCE_TREE",
             "Workflow: $env:OPTIMUS_WORKFLOW_COMMIT",
             "Run: $env:OPTIMUS_RUN_ID; attempt: $env:OPTIMUS_RUN_ATTEMPT",
             'Missing evidence never establishes acceptance; inspect step outcomes.',
+            "Native C# regression/identity step: $env:OPTIMUS_NATIVE_SEARCH_OUTCOME",
+            "Other suites/publication: $env:OPTIMUS_PRODUCTION_OUTCOME; service: $env:OPTIMUS_SERVICE_OUTCOME; GUI: $env:OPTIMUS_GUI_OUTCOME",
+            'This manual run belongs to the workflow commit; its source evidence is not a new required PR check.',
             'Service and GUI reports are recorded separately. GUI is UNRUN unless requested and prior prerequisites pass.',
             'Themes, Easy mode, keyboard, Narrator/NVDA and public web search are NOT accepted by this smoke.',
             'No artifacts or cache uploaded. Owned-window PNG is discarded with the VM; only its hash can appear below.'
           )
           $files = @(
             "$env:RUNNER_TEMP/optimus-toolchain.json",
+            "$env:RUNNER_TEMP/optimus-regression-preflight.json",
+            "$env:RUNNER_TEMP/optimus-native-search.json",
             "$env:RUNNER_TEMP/optimus-service-evidence/metadata.json",
             "$env:RUNNER_TEMP/optimus-service-evidence/result.json",
             "$env:RUNNER_TEMP/optimus-gui-evidence/metadata.json",

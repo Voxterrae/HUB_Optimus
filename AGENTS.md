@@ -86,6 +86,10 @@ Principle: visible alliance, not hidden control.
 - Do not mix unrelated feature, refactor, docs, and cosmetic cleanup.
 - Do not touch runtime, CI, benchmarks, schemas, or Kernel/governance contracts
   unless the issue explicitly asks for it.
+- When creating or editing a protected-path PR body, keep a line beginning
+  `Related to #N` or `Governance issue #N`, using its actual owner-authored
+  `governance` issue number. `Closes` or `Refs` alone do not satisfy
+  [`tools/founder_authority_guard.py`](tools/founder_authority_guard.py).
 - No person or AI other than the owner may independently authorize or merge a
   change; third parties may propose changes through governed review.
 - If repeated mistakes appear, update this file through the protected owner

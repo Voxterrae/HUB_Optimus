@@ -1,0 +1,73 @@
+name: Relay native refusal conformance
+
+on:
+  push:
+    branches:
+      - codex/relay-native-refusal-20261101
+      - codex/relay-refusal-main-20261101
+    paths:
+      - .github/workflows/relay-native-refusal.yml
+      - products/device-bridge/windows/native-pilot/tools/native_refusal_codec.rs
+      - products/device-bridge/windows/native-pilot/tools/native_refusal_codec_tests.rs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: relay-native-refusal-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  conformance:
+    name: Native refusal codec (Windows)
+    if: >-
+      github.repository == 'Voxterrae/HUB_Optimus' &&
+      github.actor == 'Voxterrae' && github.actor_id == '249308740' &&
+      github.event.repository.private == false
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check disposable runner capacity
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $drive = (Get-Item -LiteralPath $env:RUNNER_TEMP).PSDrive
+          if ($drive.Free -lt 2147483648) {
+            throw 'The disposable runner has less than 2 GiB free.'
+          }
+          Write-Output 'Disposable runner capacity floor passed.'
+
+      - name: Select fixed Rust compiler
+        run: |
+          $ErrorActionPreference = 'Stop'
+          rustup toolchain install 1.99.0 --profile minimal
+          if ($LASTEXITCODE -ne 0) { throw 'Rust toolchain installation failed.' }
+          rustup run 1.99.0 rustc --version
+          if ($LASTEXITCODE -ne 0) { throw 'The fixed compiler is unavailable.' }
+
+      - name: Compile synthetic minimum-refusal tests
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $testBinary = Join-Path $env:RUNNER_TEMP 'relay-refusal-codec-tests.exe'
+          rustup run 1.99.0 rustc --edition=2021 --test `
+            products/device-bridge/windows/native-pilot/tools/native_refusal_codec_tests.rs `
+            -o $testBinary
+          if ($LASTEXITCODE -ne 0) { throw 'Native refusal codec test compilation failed.' }
+
+      - name: Run native synthetic conformance tests
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $testBinary = Join-Path $env:RUNNER_TEMP 'relay-refusal-codec-tests.exe'
+          & $testBinary
+          if ($LASTEXITCODE -ne 0) { throw 'Native refusal codec conformance failed.' }
+          Write-Output 'Synthetic native codec only; no host collection or activation.'

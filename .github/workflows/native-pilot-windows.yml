@@ -1,0 +1,241 @@
+name: Native pilot Windows validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Immutable HUB_Optimus candidate commit (40 hex characters)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-process:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Validate immutable candidate input
+        id: candidate
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:CANDIDATE_SHA -cnotmatch '\A[0-9a-fA-F]{40}\z') {
+            throw 'candidate_sha must contain exactly 40 hexadecimal characters'
+          }
+          "sha=$($env:CANDIDATE_SHA.ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          # Keep checked-out bytes unchanged by Windows line-ending conversion.
+          git config --global core.autocrlf false
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot disable runner line-ending conversion' }
+          git config --global core.eol lf
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot enforce runner LF checkout bytes' }
+
+      - name: Checkout exact candidate without persisted credentials
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.candidate.outputs.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Validate locked bootstrap process on native Windows GNU
+        id: validate
+        working-directory: ${{ runner.temp }}
+        env:
+          CANDIDATE_SHA: ${{ steps.candidate.outputs.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          $pilot = 'products/device-bridge/windows/native-pilot'
+          $manifest = Join-Path $env:GITHUB_WORKSPACE "$pilot/Cargo.toml"
+          $toolchain = '1.99.0-x86_64-pc-windows-gnu'
+          $target = 'x86_64-pc-windows-gnu'
+          $phase = 'checkout and source binding'
+          $completed = @()
+          $before = $null
+          $sourceIntegrity = 'NOT_CHECKED'
+          $certified = $false
+
+          function Get-SourceSnapshot {
+            $dirty = @(git -C $env:GITHUB_WORKSPACE status --porcelain --untracked-files=all -- $pilot)
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect candidate source status' }
+            if ($dirty.Count -ne 0) { throw 'Native pilot source is not clean' }
+            $tree = @(git -C $env:GITHUB_WORKSPACE ls-tree -r HEAD -- $pilot)
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot bind source to the candidate Git tree' }
+            $paths = @()
+            $expectedBlobs = @()
+            foreach ($entry in $tree) {
+              if ($entry -cnotmatch '\A100644 blob ([0-9a-f]{40})\t(.+)\z') {
+                throw 'Unexpected native pilot Git tree entry'
+              }
+              $expectedBlobs += $Matches[1]
+              $paths += $Matches[2]
+            }
+            foreach ($required in @('README.md', 'Cargo.toml', 'Cargo.lock', 'src/lib.rs',
+              'src/bootstrap_process.rs', 'src/bootstrap_process/token.rs',
+              'src/bootstrap_process/token/tests.rs')) {
+              if ("$pilot/$required" -cnotin $paths) { throw "Missing tracked input: $required" }
+            }
+            $actualBlobs = @(git -C $env:GITHUB_WORKSPACE hash-object --no-filters -- @paths)
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot hash raw candidate source bytes' }
+            if (($actualBlobs -join "`n") -cne ($expectedBlobs -join "`n")) {
+              for ($i = 0; $i -lt $paths.Count; $i++) {
+                if ($actualBlobs[$i] -cne $expectedBlobs[$i]) {
+                  Write-Host "Raw blob mismatch: $($paths[$i]); expected=$($expectedBlobs[$i]); raw=$($actualBlobs[$i])"
+                }
+              }
+              throw 'Checked-out bytes differ from the immutable candidate Git blobs'
+            }
+            $snapshot = [ordered]@{}
+            foreach ($path in $paths) {
+              $snapshot[$path] = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $env:GITHUB_WORKSPACE $path)).Hash.ToLowerInvariant()
+            }
+            return $snapshot
+          }
+
+          try {
+            if ($env:RUNNER_OS -cne 'Windows' -or $env:RUNNER_ARCH -cne 'X64') {
+              throw 'This validation requires native Windows X64'
+            }
+            $head = git -C $env:GITHUB_WORKSPACE rev-parse HEAD
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve checkout HEAD' }
+            if ($head -cne $env:CANDIDATE_SHA) { throw 'Checkout HEAD differs from candidate_sha' }
+            "## Native Windows candidate validation`n" >> $env:GITHUB_STEP_SUMMARY
+            "Candidate: $head; workflow source: $env:GITHUB_SHA" >> $env:GITHUB_STEP_SUMMARY
+            "Runner: $env:RUNNER_OS/$env:RUNNER_ARCH; image: $env:ImageOS/$env:ImageVersion; OS: $([Environment]::OSVersion.Version); PowerShell: $($PSVersionTable.PSVersion)" >> $env:GITHUB_STEP_SUMMARY
+            $before = Get-SourceSnapshot
+            "`n### Candidate inputs (SHA-256)" >> $env:GITHUB_STEP_SUMMARY
+            foreach ($path in $before.Keys) {
+              "$path : $($before[$path])" >> $env:GITHUB_STEP_SUMMARY
+            }
+            $completed += $phase
+
+            $phase = 'exact GNU toolchain'
+            $rustup = (Get-Command rustup.exe -CommandType Application | Select-Object -First 1).Source
+            # Discard inherited compiler overrides, wrappers, flags and Cargo configuration.
+            Get-ChildItem Env: | Where-Object {
+              $_.Name -match '^(RUST|CARGO|SCCACHE|CCACHE)' -or
+              $_.Name -match '^(CC|CXX|AR|LD|DLLTOOL)(_|$)'
+            } | ForEach-Object { Remove-Item -LiteralPath "Env:$($_.Name)" }
+            $env:RUSTUP_HOME = Join-Path $env:RUNNER_TEMP 'native-pilot-rustup'
+            $env:CARGO_HOME = Join-Path $env:RUNNER_TEMP 'native-pilot-cargo'
+            $env:CARGO_TARGET_DIR = Join-Path $env:RUNNER_TEMP 'native-pilot-target'
+            $env:CARGO_BUILD_JOBS = '1'
+            $env:CARGO_INCREMENTAL = '0'
+            $env:CARGO_TERM_COLOR = 'never'
+            $gnuBin = 'C:\mingw64\bin'
+            $env:PATH = "$gnuBin;$env:PATH"
+            foreach ($tool in @('gcc', 'ar', 'dlltool')) {
+              $expected = Join-Path $gnuBin "$tool.exe"
+              $resolved = (Get-Command "$tool.exe" -CommandType Application | Select-Object -First 1).Source
+              if ($resolved -ine $expected) { throw "Expected explicit GNU tool: $expected; selected: $resolved" }
+              $version = & $expected --version
+              if ($LASTEXITCODE -ne 0) { throw "Cannot inspect $tool version" }
+              $file = Get-Item -LiteralPath $expected
+              $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $expected).Hash.ToLowerInvariant()
+              "$tool : $expected; bytes: $($file.Length); SHA-256: $digest; $($version[0])" >> $env:GITHUB_STEP_SUMMARY
+            }
+            $machine = & "$gnuBin\gcc.exe" -dumpmachine
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect GNU machine target' }
+            if ($machine -cne 'x86_64-w64-mingw32') { throw 'GNU compiler target is not x64 MinGW' }
+            $env:CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER = "$gnuBin\gcc.exe"
+            $env:CC_x86_64_pc_windows_gnu = "$gnuBin\gcc.exe"
+            $env:AR_x86_64_pc_windows_gnu = "$gnuBin\ar.exe"
+            $env:DLLTOOL_x86_64_pc_windows_gnu = "$gnuBin\dlltool.exe"
+            & $rustup toolchain install $toolchain --profile minimal --component clippy --component rustfmt
+            if ($LASTEXITCODE -ne 0) { throw 'Exact Rust 1.99.0 GNU toolchain/components unavailable' }
+            $rustVersion = & $rustup run $toolchain rustc --version --verbose
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect Rust toolchain' }
+            if ('release: 1.99.0' -cnotin $rustVersion -or "host: $target" -cnotin $rustVersion) {
+              throw 'Rust release/host differs from the required GNU toolchain'
+            }
+            $rustVersion | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            foreach ($tool in @('cargo', 'clippy-driver', 'rustfmt')) {
+              $version = & $rustup run $toolchain $tool --version
+              if ($LASTEXITCODE -ne 0) { throw "Cannot inspect $tool version" }
+              $version | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            }
+            $completed += $phase
+
+            $phase = 'locked dependency fetch'
+            & $rustup run $toolchain cargo fetch --locked --target $target --manifest-path $manifest
+            if ($LASTEXITCODE -ne 0) { throw 'Locked dependency fetch failed' }
+            $env:CARGO_NET_OFFLINE = 'true'
+            $completed += $phase
+
+            $phase = '36-test inventory (30 token, 6 parent)'
+            $listing = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib bootstrap_process:: -- --list 2>&1)
+            if ($LASTEXITCODE -ne 0) { $listing | Write-Output; throw 'Bootstrap test inventory failed' }
+            $listing | Write-Output
+            $names = @($listing | ForEach-Object { if ("$_" -cmatch '\A(.+): test\z') { $Matches[1] } })
+            $token = @($names | Where-Object { $_ -cmatch '\Abootstrap_process::token::tests::[^:]+\z' })
+            $parent = @($names | Where-Object { $_ -cmatch '\Abootstrap_process::tests::[^:]+\z' })
+            if ($names.Count -ne 36 -or @($names | Select-Object -Unique).Count -ne 36 -or
+              $token.Count -ne 30 -or $parent.Count -ne 6 -or '36 tests, 0 benchmarks' -cnotin $listing) {
+              throw 'Expected exactly 36 bootstrap tests: 30 token plus 6 parent'
+            }
+            $completed += $phase
+
+            $phase = '36 tests passed, 0 failed, 0 ignored'
+            $results = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib bootstrap_process:: -- --test-threads=1 2>&1)
+            if ($LASTEXITCODE -ne 0) { $results | Write-Output; throw 'Bootstrap test execution failed' }
+            $results | Write-Output
+            $passed = @($results | ForEach-Object { if ("$_" -cmatch '\Atest (bootstrap_process::.+) \.\.\. ok\z') { $Matches[1] } })
+            $summaries = @($results | Where-Object { "$_" -cmatch '\Atest result:' })
+            if ($passed.Count -ne 36 -or @($passed | Select-Object -Unique).Count -ne 36 -or
+              (Compare-Object ($names | Sort-Object) ($passed | Sort-Object)) -or $summaries.Count -ne 1 -or
+              "$($summaries[0])" -cnotmatch '\Atest result: ok\. 36 passed; 0 failed; 0 ignored; 0 measured; [0-9]+ filtered out; finished in .+\z') {
+              throw 'Test execution did not prove all 36 inventoried bootstrap tests passed without ignores'
+            }
+            $completed += $phase
+
+            $phase = 'offline Clippy all targets, warnings denied'
+            & $rustup run $toolchain cargo clippy --locked --offline --target $target --manifest-path $manifest --all-targets -- -D warnings
+            if ($LASTEXITCODE -ne 0) { throw 'Clippy failed' }
+            $completed += $phase
+
+            $phase = 'rustfmt check, edition 2024'
+            & $rustup run $toolchain rustfmt --check --edition 2024 (Join-Path $env:GITHUB_WORKSPACE "$pilot/src/lib.rs")
+            if ($LASTEXITCODE -ne 0) { throw 'rustfmt check failed; publish a separate reviewed source correction' }
+            $completed += $phase
+            $certified = $true
+          } finally {
+            try {
+              if ($null -ne $before) {
+                $after = Get-SourceSnapshot
+                if (($before | ConvertTo-Json -Compress) -cne ($after | ConvertTo-Json -Compress)) {
+                  throw 'Source or Cargo.lock SHA-256 changed during validation'
+                }
+                $sourceIntegrity = 'UNCHANGED (all before/after SHA-256 values agree)'
+              }
+            } finally {
+              "`n### Validation progress" >> $env:GITHUB_STEP_SUMMARY
+              foreach ($item in $completed) { "- Completed: $item" >> $env:GITHUB_STEP_SUMMARY }
+              "Last phase reached: $phase; source/lock integrity: $sourceIntegrity" >> $env:GITHUB_STEP_SUMMARY
+              "certified=$($certified -and $sourceIntegrity.StartsWith('UNCHANGED'))".ToLowerInvariant() >> $env:GITHUB_OUTPUT
+            }
+          }
+
+      - name: Record actual outcome
+        if: ${{ always() }}
+        env:
+          INPUT_OUTCOME: ${{ steps.candidate.outcome }}
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          VALIDATION_OUTCOME: ${{ steps.validate.outcome }}
+          CERTIFIED: ${{ steps.validate.outputs.certified }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          "`n### Actual outcome" >> $env:GITHUB_STEP_SUMMARY
+          "Input: $env:INPUT_OUTCOME; checkout: $env:CHECKOUT_OUTCOME; validation: $env:VALIDATION_OUTCOME; job before summary: $env:JOB_STATUS" >> $env:GITHUB_STEP_SUMMARY
+          if ($env:INPUT_OUTCOME -cne 'success' -or $env:CHECKOUT_OUTCOME -cne 'success' -or
+            $env:VALIDATION_OUTCOME -cne 'success' -or $env:CERTIFIED -cne 'true' -or $env:JOB_STATUS -cne 'success') {
+            'NOT PASS: failed, skipped, cancelled, neutral or incomplete validation is not success.' >> $env:GITHUB_STEP_SUMMARY
+            throw 'Native candidate validation is not PASS'
+          }
+          'PASS: exact candidate, GNU tools, locked offline checks, 36 passing tests and unchanged inputs.' >> $env:GITHUB_STEP_SUMMARY

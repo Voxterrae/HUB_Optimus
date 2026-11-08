@@ -120,6 +120,11 @@ The existing App canary job publishes the required dedicated-App context on
 the exact head and live test-merge candidate. Its historical job name does not
 make the required publisher optional or create another owner.
 
+The dedicated App publisher job must not tolerate errors at job or step level.
+A failed authority evaluation or publication must also fail the workflow.
+The publisher regression test enforces this visibility boundary; required
+contexts, App bindings and approval policy remain unchanged.
+
 The required bootstrap job now uses API-read-only `--validate-only` evaluation.
 Its generic GITHUB_TOKEN has no Checks write permission and cannot create or
 finalize custom founder-authority checks. Default publication requires the
@@ -134,6 +139,42 @@ are pinned to immutable commits. This settings observation does not enroll an
 owner hardware key, certify all installed Apps, or settle all follow-up in
 #1743, #1881 and #1906. The detailed dated refresh is in
 `docs/governance/GITHUB_SETTINGS_PROTECTION_CHECKLIST.md`.
+
+Dependabot version updates cover root GitHub Actions weekly, root pip monthly,
+and `/ops/aws/operator-url-intake` npm monthly with one open version-update PR
+under issue #2070. This scheduling is separate from enabled security updates;
+it does not remediate existing advisories or authorize dependency integration.
+All generated proposals require the normal owner-authority checks and review.
+
+## Pages Environment review checkpoint — 2026-11-03
+
+Issue [#1743](https://github.com/Voxterrae/HUB_Optimus/issues/1743) records
+activation of option B from the [Pages review design](../maintenance/pages_environment_review_design_2026-11-01.md).
+Authenticated reads found existing `github-pages` Environment `10953982818`
+requiring exactly `Voxterrae` (user ID `249308740`), with
+`prevent_self_review=false`, `can_admins_bypass=false` and exactly branch
+`main` admitted. The initiator can approve: this is a single-owner hold,
+not independent two-person review. These mutable settings need fresh reads.
+
+[Run 41699683380](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41699683380),
+attempt 1, source `aed8336db4311f25b0246d19221c8ccb3281ef50`, records
+native `rejected` by that owner account. It finished `failure` with no
+deployment steps or artifacts: the expected negative test, not a deployment
+PASS. Its completion at 20:19:09 UTC is not an exact review-decision timestamp.
+
+At the verified checkpoint, [run 41705548138](https://github.com/Voxterrae/HUB_Optimus/actions/runs/41705548138),
+attempt 1, source `9fa3f8a0dbe5ea6919e49240a0df6bac7dbba803`, was
+`waiting` for review, unapproved and without steps or artifacts. Keep it held
+under the owner's instruction; re-read live main, run, attempt and checks before
+any later decision. Positive publication and artifact/served-byte acceptance
+remain pending separate authorization and native human approval of the exact
+candidate. This handoff PR authorizes neither merge nor deployment; `docs/**`
+merges trigger the existing Pages workflow.
+
+Recovery retains the hold and served version; never remove the reviewer,
+enable bypass or weaken checks to recover. #1743 remains open for positive
+acceptance and hardware-key enrollment. Owner authority,
+ratification and the controlling OWNER_AUTHORITY_HANDOFF remain unchanged.
 
 ## Operating discipline
 
@@ -228,14 +269,30 @@ foundation requires an explicit owner decision that covers the resulting Pages
 deployment and a post-merge receipt for the merged commit, tree, workflow run,
 and public registry/schema resources.
 
-Outstanding slices remain separate:
+The visible presentation slice keeps the existing eight methodology/prototype
+surfaces and adds a separate `in-development` section aligned with the reviewed
+registry. `products/README.md` is the repository catalogue; its exact component
+IDs, source states, lifecycle states and first immutable evidence references are
+checked against that registry. It is navigation and a dated source observation,
+not a release, support or deployment certificate.
 
-1. the visible presentation must consume the reviewed registry through its own
-   scoped pull request and must not present draft or issue-only work as live;
+Windows alpha, the separate static web pilot and Linux are separate Browser
+entries. The existing web pilot can perform an explicit Wikipedia request; its
+browser-runtime/transport flags describe that prototype, not a native Browser
+release or a production service. Linux remains issue-only at the reviewed source
+snapshot. Search separates its finite local catalogue from operator-configured
+Web providers. Relay activation remains blocked. Admin Gateway, Evidence Lab,
+Connect and Global Graph retain their recorded execution boundaries.
+
+Publication and synchronization remain separate receipt-backed operations:
+
+1. the visible presentation must pass its scoped pull-request checks and must
+   not present draft or issue-only work as live;
 2. the protected Sites mirror must be synchronized only after the canonical
    presentation change is reviewed, merged, deployed, and bound to an exact SHA;
-3. Sites publication, access changes, tenant mutation, external transport, and
-   production-service writes require their own explicit owner authorization.
+3. Sites publication must preserve its approved audience; access changes,
+   tenant mutation, new external transport, and production-service writes
+   require their own explicit owner authorization.
 
 Until those slices have exact repository and platform evidence, future operators
 must continue to describe GitHub Pages as the canonical public static surface
@@ -403,3 +460,222 @@ the exact PR head and checks. Integration grants no temporary Cognito identity
 exception and lifts no #1831 or #1835 gate: exact merged-SHA authorization,
 identity, roles/bootstrap, current cost/credit headroom, confirmed alerts,
 private-window approval and rollback evidence remain required before AWS.
+
+## Optimus Windows 0.3.3 integration boundary
+
+Issue #2045 and PR #2047 carry the current Windows/Search integration record.
+The initial Windows and Search import preserved the source blobs from
+`5ed8785c5be011dba943371d87de4c4dd074a2c5` exactly in the integration branch
+based on current main.
+The integration candidate then incorporates the focused corrections reviewed
+under #2049, #2050 and #2051: direct SearxSearchProvider transport to the
+operator-configured SearXNG endpoint without ambient proxies, retaining normal
+TLS certificate validation; load-only recovery of an otherwise valid oversized legacy
+endpoint while retaining the other valid settings; and exact LF/CRLF byte pins
+for the three public help records accepted by the release packager. Loading
+leaves the settings file untouched; the next ordinary save, including an
+application or tab close, may persist the disabled endpoint as null.
+
+The unsigned feature-stack commits remain historical proposal provenance
+rather than commits introduced by this integration. Existing contributor
+attribution and third-party notices remain in place; verified GitHub commits
+do not constitute hardware attestation. Historical source manifests remain
+unchanged snapshots. The current candidate inventory and local validation are
+recorded in
+`products/browser/windows/SOURCE_MANIFEST_WINDOWS_INTEGRATION_2026_11_01.json`
+and `products/browser/windows/docs/VALIDATION_WINDOWS_INTEGRATION_2026_11_01.md`.
+
+Use the exact product SHA, component ProductVersion verification and separate
+service/GUI reports in #2045 for native acceptance of an integration candidate.
+The upstream cold runs 41331622526 and 41332021001 validate their stated source;
+source equivalence or Linux tests alone do not prove a later native execution.
+The corrected local candidate passes Core39, Windows Search59, Privacy28,
+backend48 and 23 packager tests on Linux. Focused correction review found no
+outstanding Critical/Important finding; final review, required CI and fresh
+Windows service/GUI execution still need the exact integration candidate SHA.
+The manual protected workflow remains owner-only, read-only and isolated.
+
+The local help index is finite; no operational SearXNG/public-web coverage is
+inferred. Windows CNG signing keys are nonexportable and explicitly deleted on
+normal owned-host shutdown, but abrupt termination or deletion failure may leave
+an orphan key. Physical Windows10/11, spoken Narrator/NVDA, complete cookie
+isolation, binary signing and public distribution retain their own acceptance
+gates. Founder ownership, licensing posture and the controlling
+OWNER_AUTHORITY_HANDOFF boundary are unchanged.
+
+## Provider-result visibility continuation
+
+Issue #2061 continues the owner-scoped Windows/Search repair. The preceding
+integration #2047 and pilot pin #2055 are merged; exact product
+`4c9ee43aa2a435abc18a6c63399fb2a99a698e58` passed174 native checks in
+run41338890297, with packaged service/GUI and normal cleanup. This is historical
+acceptance for that exact source, not for the correction described below.
+
+The selected provider now has priority in the bounded result list; safe matching
+bookmarks fill unused slots. Previously twenty matching bookmarks could hide
+every successful Web/Index result. Deduplication prefers the actual provider's
+destination/title/source. Provider errors still remain visible and eligible
+bookmarks remain available without querying a fallback. Limits, authenticated
+local TLS, token handling, cancellation and private bookmark omission are retained.
+The priority regressions produced60/66 before the fix and66/66 after it on
+Linux. The eighth new regression then exposed submission-time bookmark mutation
+(66/67); capturing the input snapshot brings the final Search suite to67/67. Fresh exact-source native acceptance, required CI and final review for
+this increment are recorded in #2061, rather than inferred from the earlier run.
+
+Issue #2062 separately prepares a loopback-only disposable real-Web cloud test.
+No production SearXNG endpoint is configured by this result-order correction.
+Physical Windows10/11, spoken accessibility, upstream availability, code signing
+and public distribution remain separate gates. Owner identity, ownership,
+licensing and the controlling OWNER_AUTHORITY_HANDOFF are unchanged.
+
+## Optimus isolated real-Web acceptance proposal
+
+Issue #2062 scopes an owner-only manual public-repository/main Ubuntu24.04
+acceptance job. It checks out the reviewed harness, exact product and official
+SearXNG source separately, then uses a temporary loopback-only upstream with
+only the ordinary Mwmbl APIv1 adapter. The public typed Core client and real
+owned SearchHost submit only the fixed Python and Firefox cases with empty
+bookmarks, require SearXNG provenance and a relevant official HTTPS destination,
+and fail on missing, irrelevant, rate-limited or unresponsive evidence.
+
+The proposal creates no persistent endpoint or application default, changes no
+ranking, and provisions no paid resources. Both manual QA workflows select the
+native-accepted product0790e0977c170ff8507bb73e0ec7b6e166755892; the existing
+Windows workflow also fixes checkout/build source literally. Both source inputs
+are confirmation-only; another candidate needs a protected pin update, avoiding
+unreviewed code execution in main's cache context. Existing authorization, runner,
+permission, timeout and profile safeguards remain. Source, workflow,
+upstream and resolved dependency provenance remain distinct; direct requirements
+pins do not establish a hermetic transitive lock. Curated reports and exact-owned
+cleanup are mandatory. Local synthetic tests do not establish real-Web relevance;
+independent review found two startup/cancellation defects, now covered by real
+symlinked-venv and actual-wrapper signal regressions. The final Python suite is
+44/44 after additional source-trust regressions; required checks and a separately attributed cloud run remain pending.
+See `products/browser/search/docs/REAL_WEB_SMOKE_2062.md`. The separate
+ranking correction remains under #2061; existing owner-authority and acceptance
+boundaries remain unchanged.
+
+
+## Real-Web first execution and diagnostic correction — issue2062
+
+- Protected PR2068 merged3652228c1cbbc2155bc44ba5280a396ab71312f6, full tree equal27d70040. Final CI2654 tests+1661subtests passed,7required correct publishers and6CodeQL analyses+aggregate success,0unresolvedthreads.
+- Actual run41362456275/job125015536500 attempt1 verified workflow3652228/product0790/SearXNG8b35, SDK10.0.403/deps/build/self26 passed. Execution exited2; Actions Bash-e skipped publishing redirected JSON. Internal cause, query contacts and cleanup are unknown; real-Web acceptance remains blocked.
+- Follow-up captures code in OR-list, publishes the curated report even on negative output, returns original code. Closed qa_mode defaults startup-only: only SearXNG/query-free health, no product/probe search, distinct startup-ready status. Fixed diagnostic stage/readiness/exit/probe-attempt fields and a closed startup error category from bounded private stderr inspection; no raw text is published; existing product pin, authorization, relevance and no-bypass policy retained. Actual Actions-shell negative fixture was RED then GREEN; local suite55 passes.
+- Next: independent review, fresh protected CI/merge, startup-only main execution. Do not infer acceptance or automatically resubmit the uncertain first query run. No persistent endpoint/new resource/paid service. OWNER_AUTHORITY_HANDOFF remains unchanged and controlling.
+
+
+## Search relevance evidence correction — issue2062, 2026-11-03
+
+The owner requested continued launch repairs with Microsoft infrastructure as the
+default. Current mainaed8336db4311f25b0246d19221c8ccb3281ef50 retains the
+browser/search implementation validated at36c34f4; the historical real-Web
+run41363931459 remains blocked by its combined relevance criterion.
+
+The QA probe previously derived both domain and topic diagnostics from a single
+combined match. It now reports an independently found allowed official domain,
+an independent title-topic match and a pairedMatch boolean. A query still passes
+only with an error-free typed response, nonempty all-SearXNG results and domain
+plus topic in the same result. Separate matching results never combine to pass.
+The supervisor requires the new exact evidence shape and rejects contradictory
+paired/pass claims even when the outer report is already blocked. No raw title,
+URL or error message is added. Old historical reports are not reinterpreted.
+
+Synthetic regression evidence: C# self-test first blocked at check27 for an
+official-domain-only candidate; final33 checks pass. Python contract fixtures
+first failed for the missing pairedMatch shape; three contradictory-evidence
+cases then failed after shape acceptance and pass with the consistency checks.
+Final65 focused Python tests pass. The probe compiled with no warnings/errors
+against21 Core files whose blob IDs match current main. No new upstream query,
+fallback, endpoint, criterion relaxation, product pin update or cloud resource.
+Microsoft-first launch planning remains separate coordination under2021; a new
+Azure remote-service contract cannot reuse the local loopback profile boundary
+unchanged. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+
+Fresh review found that a suffix-based report-domain check could accept a raw
+URL ending in an official domain, and arbitrary upstream subdomain labels could
+carry private-looking text. Producer diagnostics now project onto a closed set
+of known public names or the matching fixed root. The curator accepts exactly
+those labels. Qualification still accepts the same proper official subdomains;
+only published evidence is projected. Producer privacy self-check32 and two
+curator fixtures failed before this fix, then passed; final33 C# checks and65
+Python tests pass. No Critical/Important review finding remains after the
+verified fix pass. No external request was made to test it.
+
+
+## 2026-11-03 — Public Search pilot data for Microsoft-first launch (#2081 / #2079)
+
+- Eight finite Spanish Optimus-authored summaries now refer to two immutable public HUB documents and six official Microsoft accessibility, identity and Azure pages checked on2026-11-03. This is a separate explicit catalog; frozen three-document packaged help, release pins, runtime/TLS/HMAC/loopback, providers and client source settings are unchanged. It is not Web coverage, Microsoft endorsement, automatic DLP or remote article-byte verification.
+- A fixed-input offline stdlib builder validates exact HTTPS references, strict shapes, UTC revision and content-bound provenance before exclusive new-file creation. Four fixed ZIP members use canonical UTF-8/LF JSON, stored bytes and fixed metadata; no platform-dependent imported index. No profile scan, crawl, credentials, upload, activation, paid resource or automatic user-profile import.
+- Observed Python: initial missing-feature RED,36 mutation/parser RED cases before validation; initial45 pilot tests passed; after the review corrections, final50 pilot tests and together with the unchanged real-Web harness115 pass. Archive generation and an independent exact-member/checksum verification succeeded; the extracted catalog imported with the real unchanged .NET CLI, exit0. ZIP10803 bytes SHA256ea9b29929d22fd6604b345c9d4f67f4540281cf7337ad3edb6e793d957d6fa98; canonical catalog8294911789f69f2c1262c80153ca0dddd6189e9a198b586f5fbb3beeb0d665ec.
+- All11 backend runtime source blobs independently match maind77ede8; baseline48/48 Linux tests passed. The three new real-CLI tests first failed against an empty catalog (48/51), then exercise eight expected topic URLs, unrelated single-token empty results, repeat-import byte equality on one platform and malformed/duplicate rejection preserving prior output. Final complete backend suite51/51 passed, exit0; independent review is recorded on the scoped PR before integration. Windows-specific CNG checks remain platform-skipped locally; no new native Windows acceptance is claimed.
+- The source/provenance sidecar is reviewed independently of CatalogStore: the existing importer does not enforce its trust assertion. Checksums prove package integrity against a trusted revision, not publisher authenticity alone. An interrupted exclusive output write may leave an incomplete ZIP, which must be verified before import and is never automatically overwritten/deleted.
+- Fresh whole-branch review:0Critical/2Important/1Minor. Both Important findings fixed in one RED/GREEN pass: ASCII-only timestamp digits align with the real .NET importer; the documented verifier uses explicit exceptions under optimized Python and checks the trusted external digest before opening the archive. Four new adversarial cases failed before correction; all50 pilot checks now pass. The Minor archive-guide revision wording remains deferred to release/publication metadata; the sidecar sourceRevision identifies reference articles, not the new guide.
+- Future Azure Blob publication and a separately authenticated remote service remain #2079 gates: subscription, accountable operator, cost, remote contract/abuse controls/update/rollback and deployment acceptance are still pending. The current local host must not be exposed by changing its bind or sharing device tokens. No Azure resource was created. Historical Web run41363931459 stays blocked; no external query/retry/fallback was executed and #2062 remains open.
+- Preserve all other current work and OWNER_AUTHORITY_HANDOFF authority. Review, seven latest publisher-bound mandatory checks, complete CodeQL success, exact current base and zero unresolved threads remain pre-merge requirements. Linux/Windows shared contract and #2021 coordination remain visible.
+
+
+## 2026-11-03 — Explicit Windows public pilot selection (#2083 / #2079)
+
+- Owner approved the proposed Windows load/restore and cloud GUI acceptance via hazlo. Native Index offers explicit fixed-public-pilot loading/restoration. Selection is session-only, visible as Piloto público · 8 documentos; default three-help bytes, profile/settings persistence, backend contract/ranking/TLS/HMAC/loopback and Web/Wikipedia behavior remain unchanged. No provider query/retry/fallback, Azure resource, credential, public endpoint or cost.
+- Two fixed bundled public assets are hash-bound; real CLI imports into a newly owned temporary workspace. Imported JSON must semantically equal all8reviewed records (UTC representation normalized) before stopping prior service. Selection serializes with connection, rejects independent responders on preflight/late/reconnect, and requires the actual child post-bind stdout marker plus authenticated health and live owned handle. Atomic launcher cleanup state distinguishes normal confirmed shutdown from an exited/retained handle; only known owned files are removed after confirmed cleanup. Stale tab results are cancelled and busy search eligibility blocks resubmission.
+- Portable evidence: initial baseline67/67 Search; missing behavior RED72/75 then75/75; deadline regression74/75 fixed; candidate retention RED75/76 then76/76. Fresh review0Critical/4Important/2Minor; five further regressions RED76/81 then81/81 Search pass in one fix wave. Existing OS fixtures now preserve the production owner's exclusive stdout observer and independent process observation handles; all shutdown assertions remain. FinalCore39/Privacy28 pass against corrected Core, unchanged backend51 previously passed:199 portable checks. WPF/helper builds and three self-contained publications succeeded locally; fixed asset hashes match source after all publishes. Cross-compilation is not Windows execution.
+- GUI negative fixture changed by explicit ruling: no mutation of caller-supplied publication. After valid8-topic results, hold a read-only exclusive lease on the public asset, invoke actual reload, require generic unavailable-asset error and continued pilot-only result/count, release lease, then empty-result/restore checks. Malformed-byte rejection remains real importer evidence portably. Ordinary owned-ancestor scrolling reaches long cards. Result-click/render uses a loopback bookmark created through the normal guide and is not a public-article offline claim. Native execution remains pending until the protected main job runs and reports are read.
+- Corrected product/helper source91ce4863d756f429d8fcae19787e56d166d69b82:13exact remote source blobs,10ownerVerified commits. A separate manual pilot workflow pins that literal and verifies both fixed asset hashes after publication. Initialceab39bc source is superseded and must not be executed as final acceptance. Historical native0790 and real-Web0790 workflows/tests stay unchanged; strict owner/public/main/contents-read/no-artifact/no-cache boundaries remain. Workflow/source identities reported separately.
+- Python focused118pass; packaging24pass/107subtests. Local full pytest initially had18collection errors due missing declared jsonschema4.26 dependency, resolved by installing unchanged requirements. Rerun was interrupted (exit130) after stalled quiet progress with3skips, without observed failure/final summary; cause unknown. A guessed nearby EC2marker test independently passed1/1 in0.04s, so no defect is attributed to it. Exact-head GitHub full-suite SUCCESS remains mandatory; local full suite is incomplete, never counted as passed.
+- Deferred minors: extreme OS post-kill/import-drain cleanup has no extra final deadline (no observed hang; can leave switching pending); further concurrent Connect/disposal fixture coverage beyond tested load/restore and host cases. These do not establish additional acceptance. Session-only rather than persisted generic import is a reversible scope choice; a future persistence requirement costs separate work. Read-only GUI failure fixture intentionally does not claim malformed-byte GUI evidence.
+- Preserve complete main9fa3f8a0 handoff prefix, other work, owner authority and Windows/Linux coordination2021. All7 latest publisher-bound checks,6 CodeQL analyses/aggregateSUCCESS, current base and0threads remain pre-merge gates. Native Windows acceptance is still UNRUN. #2079 remote service/auth/cost/deployment and #2062 relevance remain open.
+
+## 2026-11-08 — Operator Lambda dependency boundary (#2104)
+
+The centralized Lambda builder now checks esbuild's complete resolved input
+graph, including tree-shaken inputs, before returning any bundle bytes. It
+rejects CDK, constructs, minimatch, glob and esbuild package paths and allows
+only genuine Node builtins as external imports in both input and output
+metadata. Existing build and verification commands inherit the guard. This is
+a statically resolved graph check, not a sandbox for variable runtime imports
+or arbitrary source changes; npm package paths remain the current boundary.
+
+The reviewed Lambda bundle bytes and infrastructure package/lock declarations
+remain unchanged. This defensive guard does not remediate bundled
+minimatch 10.2.5 in aws-cdk-lib 2.273.0 or close Dependabot #21 / #2104. A
+supported supplier update, exact installed-tree and audit evidence, governed
+review, and a fresh authenticated alert read remain necessary. No AWS mutation,
+public activation, scanner exception or GitHub protection change is included.
+OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+
+## 2026-11-08 — Sites canonical entry pilot (#2131)
+
+External deployment checkpoint: [#2131](https://github.com/Voxterrae/HUB_Optimus/issues/2131)
+records the principal Sites version 13 deployed at 18:54:34 UTC from Sites source
+`eb434be59f124f00055bd96c42e1a3b18b7d2273`. Its root now opens the
+[canonical public portfolio](https://huboptimus.dev/) after the existing platform
+access gate. The entry uses `location.replace("https://huboptimus.dev/#")` and
+a visible fallback link, both with no-referrer policy. Incoming query, fragment
+and origin credentials are not copied. Root GET/HEAD return HTTP 200; this is
+browser navigation, not an HTTP 302 redirect.
+
+The published Sites source retains the complete 82-file canonical mirror and
+the other 81 public assets unchanged; synchronization reapplies only the
+documented root-entry exception.
+The canonical GitHub Pages source remains authoritative. Sites access, DNS,
+data, dependencies and the build stack are unchanged.
+
+Evidence at this checkpoint: 24 route tests and 5 sync/provenance tests passed;
+the native remote build and deployment succeeded. Three local Edge cases
+passed, including incoming query/fragment and keyboard fallback without
+JavaScript, with the destination intercepted by a synthetic document.
+Production HTTP verification at 18:55:51 UTC passed 15 checks: entry HTML intact
+apart from the strictly identified pre-existing platform injection, empty HEAD,
+preserved aliases/method refusal and Browser/Operator HTML, three exact static
+asset hashes and four anonymous denials. No enforcing CSP header was present.
+These service requests did not follow redirects or establish authenticated
+production-browser, visitor-identity or assistive-technology acceptance.
+The full rendered-artifact suite was not run; no unavailable archive digest
+is asserted.
+
+Rollback retains version 10, Sites source
+`2b3ada980d1193f9e234edf02a3ead2c1de5d588`, restoring the previous mirror
+without changing access, DNS or data. Preserve that recovery version.
+The other fifteen Sites and their data remain outside this pilot; inventory one
+additional Site's source, dependencies and access before a separately reviewed
+migration. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.

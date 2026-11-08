@@ -285,8 +285,8 @@
     },
     {
       "path": "tests/test_dataverse_schema_applicator.py",
-      "sha256": "890a08a1f37051404f49aca92f931473e7ed8dfea4c41580de28ebd4158ea1fc",
-      "size": 49997
+      "sha256": "a46e2bff91a6d63fd3f62bcf5dd3b73e09e303b2a487e1ee0df1decd619e88db",
+      "size": 51499
     },
     {
       "path": "tests/test_dataverse_schema_contract.py",

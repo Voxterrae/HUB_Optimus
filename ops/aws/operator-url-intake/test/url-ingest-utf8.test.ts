@@ -1,14 +1,14 @@
+import { afterAll, beforeEach, expect, jest, mock, test } from './test-support';
 import { EventEmitter } from 'node:events';
 import { promises as dns } from 'node:dns';
-import * as https from 'node:https';
+import https = require('node:https');
 import type { IncomingMessage } from 'node:http';
 import { fetchPublicText } from '../lambda/url-ingest-handler';
 
-jest.mock('node:https', () => ({ ...jest.requireActual('node:https'), request: jest.fn() }));
-jest.mock('node:dns', () => ({
-  ...jest.requireActual('node:dns'),
-  promises: { ...jest.requireActual('node:dns').promises, lookup: jest.fn() },
-}));
+const requestMock = jest.fn();
+const lookupMock = jest.fn();
+mock.method(https, 'request', requestMock);
+mock.method(dns, 'lookup', lookupMock);
 
 const MAX = 1_000_000;
 const ADDRESS = '93.184.216.34';
@@ -18,7 +18,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   process.env.MAX_CONTENT_BYTES = String(MAX);
   process.env.MAX_EXTRACTED_TEXT_CHARS = '24000';
-  (dns.lookup as unknown as jest.Mock).mockResolvedValue([{ address: ADDRESS, family: 4 }]);
+  lookupMock.mockResolvedValue([{ address: ADDRESS, family: 4 }]);
 });
 
 afterAll(() => {
@@ -29,7 +29,7 @@ afterAll(() => {
 });
 
 function serve(body: Buffer): void {
-  (https.request as unknown as jest.Mock).mockImplementation((
+  requestMock.mockImplementation((
     _options: unknown, callback: (response: IncomingMessage) => void,
   ) => {
     const response = Object.assign(new EventEmitter(), {

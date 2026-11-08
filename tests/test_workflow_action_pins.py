@@ -22,6 +22,10 @@ EXPECTED_ACTION_PINS = {
         "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
         "v7.1.0",
     ),
+    "actions/setup-dotnet": (
+        "2016bd2012dba4e32de620c46fe006a3ac9f0602",
+        "v5.0.1",
+    ),
     "actions/setup-node": (
         "949feb2413d6458794dcd2491c4babbbce0c15c1",
         "v7.1.0",
@@ -37,6 +41,10 @@ EXPECTED_ACTION_PINS = {
     "actions/upload-pages-artifact": (
         "fc324d3547104276b827a68afc52ff2a11cc49c9",
         "v5.0.0",
+    ),
+    "actions/upload-artifact": (
+        "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+        "v7.0.2",
     ),
     "actions/deploy-pages": (
         "368f82528645a54fb793d4d04e342629a3f51346",

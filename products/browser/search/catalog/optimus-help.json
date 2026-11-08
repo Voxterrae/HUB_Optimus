@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "documents": [
+    {
+      "url": "https://github.com/Voxterrae/HUB_Optimus/blob/feat/browser-windows-search-2021/products/browser/search/README.md",
+      "title": "Ayuda Optimus: elegir Web, Índice o Wikipedia",
+      "content": "Web usa el servicio local Optimus y un SearXNG controlado por el operador. Índice Optimus consulta offline este catálogo finito de ayuda. Wikipedia solo se consulta cuando la persona la elige explícitamente. No hay sustitución silenciosa de fuentes ni cobertura de toda la web.",
+      "source": "Ayuda Optimus — catálogo local finito",
+      "updatedUtc": "2026-10-30T00:00:00Z"
+    },
+    {
+      "url": "https://github.com/Voxterrae/HUB_Optimus/blob/feat/browser-windows-search-2021/products/browser/search/docs/PROTOCOL.md",
+      "title": "Ayuda Optimus: servicio local y privacidad",
+      "content": "El servicio local Optimus escucha solo en IPv4 loopback 127.0.0.1, puerto 17831 por defecto. La búsqueda requiere un token del perfil que no se guarda en settings ni se entrega al proveedor SearXNG. No hay rastreo, historial de consultas ni caché de resultados. Esta ayuda forma un catálogo limitado.",
+      "source": "Ayuda Optimus — catálogo local finito",
+      "updatedUtc": "2026-10-30T00:00:00Z"
+    },
+    {
+      "url": "https://github.com/Voxterrae/HUB_Optimus/blob/feat/browser-windows-search-2021/products/browser/windows/docs/GUIA_0_3.md",
+      "title": "Ayuda Optimus: importar documentos al índice",
+      "content": "El índice propio acepta un catálogo explícito con schemaVersion 1 y documentos con url, title, content, source y updatedUtc. La importación valida todo y publica de forma atómica. Admite máximo 1000 documentos, contenido de 64 KiB por documento y archivo de 16 MiB. La búsqueda local no hace solicitudes de red.",
+      "source": "Ayuda Optimus — catálogo local finito",
+      "updatedUtc": "2026-10-30T00:00:00Z"
+    }
+  ]
+}
