@@ -642,3 +642,40 @@ supported supplier update, exact installed-tree and audit evidence, governed
 review, and a fresh authenticated alert read remain necessary. No AWS mutation,
 public activation, scanner exception or GitHub protection change is included.
 OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+
+## 2026-11-08 — Sites canonical entry pilot (#2131)
+
+External deployment checkpoint: [#2131](https://github.com/Voxterrae/HUB_Optimus/issues/2131)
+records the principal Sites version 13 deployed at 18:54:34 UTC from Sites source
+`eb434be59f124f00055bd96c42e1a3b18b7d2273`. Its root now opens the
+[canonical public portfolio](https://huboptimus.dev/) after the existing platform
+access gate. The entry uses `location.replace("https://huboptimus.dev/#")` and
+a visible fallback link, both with no-referrer policy. Incoming query, fragment
+and origin credentials are not copied. Root GET/HEAD return HTTP 200; this is
+browser navigation, not an HTTP 302 redirect.
+
+The published Sites source retains the complete 82-file canonical mirror and
+the other 81 public assets unchanged; synchronization reapplies only the
+documented root-entry exception.
+The canonical GitHub Pages source remains authoritative. Sites access, DNS,
+data, dependencies and the build stack are unchanged.
+
+Evidence at this checkpoint: 24 route tests and 5 sync/provenance tests passed;
+the native remote build and deployment succeeded. Three local Edge cases
+passed, including incoming query/fragment and keyboard fallback without
+JavaScript, with the destination intercepted by a synthetic document.
+Production HTTP verification at 18:55:51 UTC passed 15 checks: entry HTML intact
+apart from the strictly identified pre-existing platform injection, empty HEAD,
+preserved aliases/method refusal and Browser/Operator HTML, three exact static
+asset hashes and four anonymous denials. No enforcing CSP header was present.
+These service requests did not follow redirects or establish authenticated
+production-browser, visitor-identity or assistive-technology acceptance.
+The full rendered-artifact suite was not run; no unavailable archive digest
+is asserted.
+
+Rollback retains version 10, Sites source
+`2b3ada980d1193f9e234edf02a3ead2c1de5d588`, restoring the previous mirror
+without changing access, DNS or data. Preserve that recovery version.
+The other fifteen Sites and their data remain outside this pilot; inventory one
+additional Site's source, dependencies and access before a separately reviewed
+migration. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
