@@ -706,11 +706,30 @@ source/run limits.
 The additional closed `identity-http` profile requires the exact eight identity
 plus seven reviewed HTTP resource tests, with HTTP already `Running` before
 each native harness and still `Running` afterward. It issues no service
-start/stop/configuration command; the preflight is non-atomic. Its current-base
-source candidate and new hosted fifteen-test acceptance remain pending. Profile availability alone
-is not HTTP acceptance, a listener or a secure channel. No owner's device is
-authorized by workflow availability. OWNER_AUTHORITY_HANDOFF remains controlling
-and unchanged.
+start/stop/configuration command; the preflight is non-atomic. Its native acceptance completed in
+[run 42519467599, attempt 1](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42519467599),
+workflow `5d414c90b4bfaf715752b0606b07b8bad3861ce1`, candidate
+`a8846f2ac5cbdbe28af88a511042824a54ebc4f4`: all 15 tests passed, zero failed or
+ignored, four HTTP Running observations, GNU Clippy/fmt and unchanged-source
+certification. [The source integration receipt](https://github.com/Voxterrae/HUB_Optimus/pull/2150#issuecomment-6726675335)
+records PR #2150 merged as
+`9bf7b31693eeb55515b93cced1692eb9708b0501`, preserving the tested candidate tree.
+Owned-resource cleanup assertions and process-exit/runner-disposal limits remain;
+there is no URL registration, queue binding, HTTP I/O or secure-channel claim.
+No owner's device is authorized by workflow availability.
+
+Issue #2152 adds a closed `bootstrap-peer` profile for a separately reviewed
+corrected #2003/#2048 candidate. It requires exactly 19 active passes and only
+`bootstrap_peer::tests::native_child_entry` ignored from a 20-entry inventory.
+The helper is invoked by parent fixtures and never counted as a passing security
+test. Peer output is captured privately, with only allowed names/fixed statuses
+and counts published; duplicate, missing, extra or contradictory outcomes fail.
+This peer-only GNU profile executes no CNG/HTTP tests and queries no HTTP service.
+Its local pipes, child processes and token-context fixtures remain confined to
+the disposable runner. Availability is not native peer acceptance: the fresh
+exact-candidate run is pending. Historical #2048 MSVC runs retain their own
+source/toolchain limits. No service activation, owner's-device operation or
+enrollment follows. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
 
 ## 2026-11-08 — Native-search WPF regression validation (#2151)
 
