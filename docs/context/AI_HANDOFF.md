@@ -755,3 +755,17 @@ visible UIAutomation, Narrator/NVDA, CreateTabAsync initialization, packaged GUI
 physical Windows 10/11, provider relevance or distribution. Missing or blocked
 evidence is not PASS. No owner's desktop execution or activation is authorized;
 OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+
+The inactive authenticated Brave gateway reconstruction is scoped by
+[issue #2157](https://github.com/Voxterrae/HUB_Optimus/issues/2157), preserving the
+seven executable source/project blobs from #2114 on current main. The existing
+Brave offline workflow's core runner now requires complete adapter59/59 and
+gateway39/39 console results when the gateway is present, using the unchanged
+Linux loopback-only namespace, fixed SDK, cleared environment and empty NuGet
+sources. Historical adapter-only candidates explicitly report the gateway as
+not run; Windows would register37 gateway cases and is not claimed here.
+Require fresh hosted results for the final source and harness SHAs before
+integration; historical local39/39 is not current CI or live-provider evidence.
+The source remains an explicitly started loopback library with synthetic test
+providers: no live Brave key/request, paid service, production host, Windows
+wiring or runtime activation. #2108 remains open; #2062 remains unchanged.
