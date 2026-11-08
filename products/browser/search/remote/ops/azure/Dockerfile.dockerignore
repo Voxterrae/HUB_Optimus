@@ -1,0 +1,15 @@
+# Dockerfile-specific allowlist for the products/browser/search build context.
+**
+!global.json
+!remote/
+!remote/src/
+!remote/src/Optimus.Search.Remote/
+!remote/src/Optimus.Search.Remote/*.cs
+!remote/src/Optimus.Search.Remote/Optimus.Search.Remote.csproj
+!src/
+!src/Optimus.Search/
+!src/Optimus.Search/LocalSearchIndex.cs
+!src/Optimus.Search/SearchModels.cs
+!catalog/
+!catalog/public-pilot-v0.1.json
+!catalog/public-pilot-v0.1.provenance.json
