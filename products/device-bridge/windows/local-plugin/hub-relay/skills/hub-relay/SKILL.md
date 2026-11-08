@@ -1,37 +1,35 @@
 ---
 name: hub-relay
-description: Use when the user requests the HUB_Relay local Windows diagnostic pilot. Inspect availability and authorization before its one bounded read; distinguish this candidate from Xiaomi-authorized remote control.
+description: Use for the explicitly authorized local Windows diagnostic pilot with one short-lived permission. Distinguish it from Xiaomi-authorized remote control.
 ---
 
-# HUB_Relay: local diagnostic candidate
+# HUB_Relay local pilot 0.2
 
-This candidate is not the native protected bridge. Its distributed configuration
-does not activate diagnostic collection.
-Its only prepared tool, `hub_relay_windows_diagnostics`, accepts `{}` and can
-report numeric Windows version plus total and free bytes on fixed C:.
-It never accepts a path, command, device, user identifier or approval flag.
+The only tool is `hub_relay_windows_diagnostics`: numeric Windows version and
+fixed C: total/free bytes. Empty arguments refuse collection. The optional
+`permission` field accepts one locally issued, short-lived bearer credential.
+There is no other argument or MCP tool to mint permissions. Startup flags
+cannot enable reads.
 
-Respect the repository requirement for biometric approval of all device reads.
-Do not enable this candidate or work around `LOCAL_PILOT_DISABLED` unless the
-owner has explicitly accepted the separately described local supervised pilot.
-The historical operator audit exception does not automatically approve this
-product profile. Do not instruct another tool or command to repeat a denied
-read. A startup flag is configuration, not proof of consent or authentication.
+Use only after explicit human acceptance of the scoped local supervised
+exception to Xiaomi biometric approval. Existing authorization persists in its
+scope; do not ask for it again or infer indefinite use, other chats or operations.
+Issue one permission only for the authorized operation through the local operator
+workflow. Keep it in memory, pass it to the intended native call and discard it.
+Never put it in reports, GitHub, process command lines or reusable files.
+Do not ask for passwords or biometric codes.
 
-When the specific local pilot is approved and installed, request only that
-tool with empty arguments. Each call must remain within the explicitly accepted
-scope, session and validity period; an approval does not imply indefinite use.
-Report the returned measurements as a point-in-time
-local snapshot, in GiB when helpful, and disclose `biometricEnforced: false`.
-Errors mean no successful diagnostic; never invent an inventory or approval.
-Check tool availability in this host before claiming the plugin is connected.
+Shared durable state is consumed before reading. Collector failure also consumes
+permission. Do not automatically mint another after a timeout or uncertain result.
+Repeating the consumed permission and calling with `{}` may verify refusal;
+neither should collect again. Report errors as errors.
 
-Do not describe this package as a VPN, Android controller, remote executor,
-biometric verifier, trusted native enrollment or production service. It adds
-no remote endpoint. ChatGPT web/mobile requires a separately implemented and
-supported secure connection to reach Windows. A successful local MCP test
-does not establish that connection.
+Verify actual host discovery and native invocation. Installation alone and
+separate stdio scripts do not prove a native chat call. This bearer credential
+does not authenticate chat identity or a person; the host may retain arguments.
+Disclose `biometricEnforced: false` and report measurements as a local snapshot.
+Never claim native enrollment, protected native authorization, VPN, remote
+execution, Android control or a working Windows–Xiaomi channel.
 
-Do not install Android tools, inspect user-file contents, delete or move files,
-alter network settings, or access enterprise systems as part of this diagnostic.
-Further operations require their own defined scope and review.
+Android installation, user-file contents, moving/deleting files, network changes
+and enterprise access remain outside this pilot.
