@@ -1,4 +1,4 @@
-# Windows native CNG foundation
+# Windows native CNG and HTTP.sys resource foundation
 
 Experimental software signing primitive for
 [#1933](https://github.com/Voxterrae/HUB_Optimus/issues/1933), exact slice
@@ -45,7 +45,8 @@ unavailable.
 ## Dependency and rights boundary
 
 The target-Windows dependency is exactly `windows-sys 0.61.2`, with only
-`Win32_Foundation` and `Win32_Security_Cryptography`. The lock contains two registry
+`Win32_Foundation`, `Win32_Security_Cryptography` and
+`Win32_Networking_HttpServer`. The unchanged lock contains two registry
 packages: `windows-sys 0.61.2` and `windows-link 0.2.1`; their complete registry
 checksums are recorded in `Cargo.lock`. No new backend, DER codec or Android
 component is included. Original contributions follow the root
@@ -102,10 +103,61 @@ reports a required size of 104 bytes. The policy-zero key must refuse that query
 explicitly deleted and checked for failed reopening before the status assertions.
 Neither query supplies a private output buffer or requests private bytes.
 
-## Later HTTP.sys gate
+## Unregistered HTTP.sys resources and later gate
 
-HTTP.sys/Schannel remains the selected later direction, with no channel code in
-this increment. A CTL is not proof of a private trust anchor.
+`UnregisteredHttpSys::create_owned()` initializes the v2 HTTP Server API with
+`HTTP_INITIALIZE_SERVER`, then creates one server session, an anonymous queue
+with null security attributes and flags zero, and an empty URL group. Handles
+and IDs remain private; there is no raw constructor, clone or serialization.
+No URL is added and no group is bound to a queue. There is no HTTP parser,
+receive/send operation or channel-ready API.
+
+`close(self)` attempts all applicable closers in order: `HttpCloseUrlGroup`,
+`HttpCloseRequestQueue`, `HttpCloseServerSession`, then `HttpTerminate` with the
+same SERVER flag. Setup errors preserve their primary failure plus every cleanup
+failure. Explicit-close errors retain the first failure plus every later failure.
+Public errors contain operation names and native status codes, never handles or
+IDs. Ownership is consumed before each close attempt; uncertain resources are
+not retried by Drop. A failed cleanup can leave resources until process exit.
+Drop is a best-effort fallback and cannot provide checked cleanup evidence.
+
+[`HttpInitialize`](https://learn.microsoft.com/en-us/windows/win32/api/http/nf-http-httpinitialize)
+can start the Windows HTTP driver if it is stopped. On this host, native tests
+must use the private supervisor and a runner which reads `Get-Service HTTP`
+immediately before the actual harness, requires `Running`, records the after
+state and refuses stopped or unavailable states. There is no explicit service
+start. That preflight is not atomic and proves neither global-state isolation
+nor absence of unrelated traffic. No URLACL, SSL binding, certificate, trust,
+firewall, VPN, service/account provisioning or HTTP configuration is performed.
+
+On 2026-10-26 in the same Windows GNU environment, seven HTTP.sys native tests
+passed. The final full-crate run passed all 15 cases (eight existing CNG and
+seven HTTP.sys), with no failures or ignored cases. Both credited harness runs
+recorded the HTTP driver already `Running` before launch and still `Running`
+afterward. Their raw native output was captured explicitly and hashed before
+decoding; an earlier exit-zero invocation without harness output was not counted
+as passing evidence.
+
+The HTTP.sys cases check live v2 property queries, queue non-inheritance,
+independent owners, eight repeated lifecycles and setup failures after each of
+the four acquisitions. Post-close session/group queries have successful live
+controls and a still-initialized observer; stale queue handles fail the same
+handle-information query that succeeds on live controls. One test deliberately
+closes only its own queue first, then verifies that the real queue-close error
+is preserved while group/session/termination cleanup continues successfully.
+Two additional cases inject reported cleanup statuses only after the real
+native closers succeed, testing aggregation of all errors. Those synthetic
+statuses are not evidence of real native failures. All raw snapshots and fault
+hooks remain test-private, and checked explicit cleanup supplies the evidence.
+
+The HTTP-only command used the same guarded launcher and flags as above:
+
+~~~powershell
+cargo test --manifest-path products/device-bridge/windows/native-pilot/Cargo.toml --target x86_64-pc-windows-gnu --locked --offline approval_https::tests -- --test-threads=1 --nocapture
+~~~
+
+HTTP.sys/Schannel remains the selected later channel direction. Resource
+ownership does not establish TLS or admission. A CTL is not proof of a private trust anchor.
 `HTTP_SSL_CLIENT_CERT_INFO` can deliver `CERT_E_UNTRUSTEDROOT`; native evidence
 must still establish the intended handshake, receipt of the client certificate,
 exclusive chain validation and pin checks without global trust changes. There
@@ -115,7 +167,8 @@ and the existing [T5 proposal](../../common/enrolled-key/proposal/README.md).
 
 ## Rollback
 
-Before integration, discard only this five-file package. After protected
+For this resource increment, revert only its four reviewed paths: `Cargo.toml`,
+`src/lib.rs`, `src/approval_https.rs` and this README. After protected
 integration, use a focused reviewed revert. Code removal does not delete
 persistent CNG keys: delete only references owned by the test or application
 while they remain available. Never enumerate or delete unrelated containers.
