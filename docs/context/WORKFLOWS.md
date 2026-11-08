@@ -64,7 +64,7 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 
 - Trigger: `workflow_dispatch` only, with a required immutable 40-hex
   `candidate_sha` from this repository and a closed `test_suite` choice:
-  `bootstrap-process` (default), `identity-cng` or `identity-http`.
+  `bootstrap-process` (default), `identity-cng`, `identity-http` or `bootstrap-peer`.
 - Permissions: `contents: read`; the reviewed checkout Action does not persist
   credentials. No named secrets, write token, upload or deployment is used.
 - One disposable GitHub-hosted `windows-2022` job (20-minute timeout):
@@ -76,19 +76,24 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   - fetches locked dependencies once, then runs the selected suite offline:
     exactly 36 `bootstrap_process::` tests (30 token and 6 parent), or the exact
     eight reviewed `identity::tests::` names, or exactly those eight plus seven
-    reviewed `approval_https::tests::` names for `identity-http`; then Clippy with
+    reviewed `approval_https::tests::` names for `identity-http`, or the exact
+    19 active `bootstrap_peer::tests::` cases plus one named ignored child helper
+    for `bootstrap-peer`; then Clippy with
     `--all-targets -- -D warnings` and `rustfmt --check --edition 2024 src/lib.rs`;
-  - requires all selected tests to execute with 0 failed and 0 ignored, and
-    verifies unchanged source and Cargo.lock hashes afterward; filtered tests
-    from other modules provide no acceptance;
+  - requires all active selected tests to pass with 0 failed; only the peer
+    profile admits the named child helper ignored, never as a passing security
+    test. Other profiles require 0 ignored. The exact inventory/result sets and
+    single summary must agree. It verifies unchanged source and Cargo.lock
+    hashes afterward; filtered tests from other modules provide no acceptance;
   - for `identity-http`, requires the HTTP driver already `Running` immediately
     before both test inventory and execution, and still `Running` afterward,
     including on failure. It refuses stopped/unavailable states and issues no
     service start/stop/configuration command. These reads are not atomic and
     cannot exclude external state changes between observation and `HttpInitialize`;
-  - captures CNG/HTTP test stdout/stderr in runner process memory and publishes only
+  - captures CNG/HTTP/peer test stdout/stderr in runner process memory and publishes only
     the allowlisted inventory, recognized test statuses, exit code and counts.
-    Raw vectors, key/resource identifiers and failure output are not printed or uploaded;
+    Raw vectors, key/resource/pipe/token context and failure output are not printed
+    or uploaded; the peer helper ignore reason is reduced to a fixed status;
   - records candidate/workflow SHAs, runner/tool versions, SHA-256 inputs and
     actual outcomes in the job log/summary. Skipped or incomplete validation
     cannot produce PASS.
@@ -108,6 +113,20 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   groups. No URL registration, queue binding, HTTP I/O, listener, certificate,
   URLACL or TLS acceptance is included. Explicit cleanup failures fail the tests;
   Drop is best-effort and failed cleanup may persist until process exit.
+- The `bootstrap-peer` suite requires a separately reviewed corrected candidate
+  containing `src/bootstrap_peer.rs` and `src/bootstrap_peer/tests.rs`. Its fixed
+  filter is `bootstrap_peer::tests::`, using `--lib` and one execution thread.
+  Inventory must contain exactly 20 unique names: 19 reviewed active tests and
+  `bootstrap_peer::tests::native_child_entry`. The result must prove 19 passes,
+  zero failures and only that helper ignored. Parent fixtures invoke the helper
+  internally; CI does not invoke it separately or count it as a pass. Missing,
+  extra, duplicated or contradictory results and extra child summaries fail.
+  This profile executes no CNG/HTTP tests and does not query the HTTP service.
+  Its local pipes, child processes and token-context changes are confined to
+  disposable-runner fixtures; no owner's device or network listener is used.
+  Historical #2048 MSVC evidence remains separate from this GNU validation.
+  Passing fixtures do not establish arbitrary-client SQOS freshness, same-user
+  isolation, loaded-image provenance, privileged bootstrap or activation.
 - Eight internal CNG passes do not prove independent Node interoperability,
   production MSVC compatibility, TPM/biometric protection, same-user isolation
   or protected enrollment.
