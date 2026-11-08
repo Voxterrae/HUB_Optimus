@@ -17,6 +17,7 @@ on:
           - identity-cng
           - identity-http
           - bootstrap-peer
+          - security-descriptor
 
 permissions:
   contents: read
@@ -39,8 +40,8 @@ jobs:
           if ($env:CANDIDATE_SHA -cnotmatch '\A[0-9a-fA-F]{40}\z') {
             throw 'candidate_sha must contain exactly 40 hexadecimal characters'
           }
-          if ($env:TEST_SUITE -cnotin @('bootstrap-process', 'identity-cng', 'identity-http', 'bootstrap-peer')) {
-            throw 'test_suite must be bootstrap-process, identity-cng, identity-http or bootstrap-peer'
+          if ($env:TEST_SUITE -cnotin @('bootstrap-process', 'identity-cng', 'identity-http', 'bootstrap-peer', 'security-descriptor')) {
+            throw 'test_suite must be bootstrap-process, identity-cng, identity-http, bootstrap-peer or security-descriptor'
           }
           "sha=$($env:CANDIDATE_SHA.ToLowerInvariant())" >> $env:GITHUB_OUTPUT
           "suite=$env:TEST_SUITE" >> $env:GITHUB_OUTPUT
@@ -144,6 +145,30 @@ jobs:
                 'bootstrap_peer::tests::native_child_entry'
               )
             }
+            'security-descriptor' {
+              $filter = 'security_descriptor::tests::'
+              $expectedCount = 17
+              $requiredInputs += @('src/security_descriptor.rs', 'src/security_descriptor/tests.rs')
+              $expectedNames = @(
+                'security_descriptor::tests::native_snapshot_matches_explicit_fixture_policy',
+                'security_descriptor::tests::native_allow_ace_order_is_semantic',
+                'security_descriptor::tests::native_user_owner_fails_system_rule',
+                'security_descriptor::tests::native_null_dacl_denied',
+                'security_descriptor::tests::native_unprotected_dacl_denied',
+                'security_descriptor::tests::native_extra_rights_and_broad_grant_denied',
+                'security_descriptor::tests::native_inheritance_normalization_and_unsupported_ace',
+                'security_descriptor::tests::native_duplicate_input_is_checked_after_os_normalization',
+                'security_descriptor::tests::native_attribute_write_denied_but_owner_can_change_dacl',
+                'security_descriptor::tests::native_reopened_acl_handle_must_match_owned_fixture_before_mutation',
+                'security_descriptor::tests::native_query_without_read_control_denied',
+                'security_descriptor::tests::native_add_file_mask_is_also_file_write_data',
+                'security_descriptor::tests::parser_bounds_layouts_and_sid_fail_closed',
+                'security_descriptor::tests::parser_absent_dacl_is_distinct_from_null',
+                'security_descriptor::tests::root_policy_rejects_nonservice_inputs_and_changed_grants',
+                'security_descriptor::tests::error_aggregation_retains_primary_and_cleanup',
+                'security_descriptor::tests::parser_duplicate_and_inherited_grants_are_denied'
+              )
+            }
             default { throw 'Unvalidated test suite' }
           }
 
@@ -157,6 +182,43 @@ jobs:
             catch { throw 'HTTP driver state unavailable; native HTTP validation refused' }
             if ($state -cne 'Running') { throw 'HTTP driver must already be Running; native HTTP validation refused' }
             Write-Output "HTTP $moment : Running"
+          }
+
+          function New-DescriptorFixtureParent {
+            try {
+              if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP) -or
+                -not [IO.Path]::IsPathFullyQualified($env:RUNNER_TEMP) -or $env:RUNNER_TEMP.StartsWith('\\')) {
+                throw 'Invalid runner temporary directory'
+              }
+              $runnerRoot = [IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('\', '/')
+              $item = Get-Item -LiteralPath $runnerRoot -Force -ErrorAction Stop
+              if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+                throw 'Runner temporary directory is not a regular directory'
+              }
+              $path = Join-Path $runnerRoot ('hub-descriptor-' + [Guid]::NewGuid().ToString('N'))
+              if ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($path)) -ine $runnerRoot -or
+                (Test-Path -LiteralPath $path -ErrorAction Stop)) {
+                throw 'Descriptor parent must be a fresh direct child of runner temp'
+              }
+              $null = New-Item -Path $path -ItemType Directory -ErrorAction Stop
+              return $path
+            } catch {
+              throw 'Descriptor fixture parent preparation failed'
+            }
+          }
+
+          function Remove-DescriptorFixtureParent([string] $path) {
+            try {
+              $item = Get-Item -LiteralPath $path -Force -ErrorAction Stop
+              if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+                @(Get-ChildItem -LiteralPath $path -Force -ErrorAction Stop).Count -ne 0) {
+                throw 'Descriptor parent is not an empty regular directory'
+              }
+              # Never remove leftover fixture files by path; fail if anything remains.
+              [IO.Directory]::Delete($path, $false)
+            } catch {
+              throw 'Descriptor owned parent cleanup failed'
+            }
           }
 
           function Get-SourceSnapshot {
@@ -297,11 +359,40 @@ jobs:
             $phase = "$expectedCount-test execution ($env:TEST_SUITE)"
             # Failed tests can print captured vectors or resource IDs: keep raw native output private.
             if ($env:TEST_SUITE -ceq 'identity-http') { Assert-HttpAlreadyRunning 'before execution' }
+            $descriptorParent = $null
+            $descriptorInvocationFailed = $false
+            $descriptorCleanupFailed = $false
+            $testExit = $null
+            if ($env:TEST_SUITE -ceq 'security-descriptor') {
+              # Ignore inherited fixture paths; this profile owns a fresh runner-only parent.
+              $env:HUB_RELAY_NTFS_FIXTURE_PARENT = $null
+              $descriptorParent = New-DescriptorFixtureParent
+              $env:HUB_RELAY_NTFS_FIXTURE_PARENT = $descriptorParent
+            }
             try {
-              $results = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib $filter -- --test-threads=1 2>&1)
+              if ($env:TEST_SUITE -ceq 'security-descriptor') {
+                $results = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib $filter -- --test-threads=1 --show-output 2>&1)
+              } else {
+                $results = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib $filter -- --test-threads=1 2>&1)
+              }
               $testExit = $LASTEXITCODE
+            } catch {
+              if ($env:TEST_SUITE -cne 'security-descriptor') { throw }
+              $descriptorInvocationFailed = $true
             } finally {
               if ($env:TEST_SUITE -ceq 'identity-http') { Assert-HttpAlreadyRunning 'after execution' }
+              if ($null -ne $descriptorParent) {
+                try { Remove-DescriptorFixtureParent $descriptorParent }
+                catch { $descriptorCleanupFailed = $true }
+                $env:HUB_RELAY_NTFS_FIXTURE_PARENT = $null
+              }
+            }
+            if ($env:TEST_SUITE -ceq 'security-descriptor') {
+              Write-Output "Descriptor harness exit: $testExit; invocation failed: $descriptorInvocationFailed; parent cleanup failed: $descriptorCleanupFailed"
+              if ($descriptorInvocationFailed -or $descriptorCleanupFailed) {
+                throw 'Descriptor execution or owned-parent cleanup failed'
+              }
+              Write-Output 'Descriptor owned parent: empty and removed'
             }
             if ($env:TEST_SUITE -ceq 'bootstrap-process') { $results | Write-Output }
             $observed = @($results | ForEach-Object {
@@ -325,7 +416,8 @@ jobs:
                 }
               }
               $resultLabel = if ($env:TEST_SUITE -ceq 'identity-http') { 'Native' }
-                elseif ($env:TEST_SUITE -ceq 'bootstrap-peer') { 'Peer' } else { 'CNG' }
+                elseif ($env:TEST_SUITE -ceq 'bootstrap-peer') { 'Peer' }
+                elseif ($env:TEST_SUITE -ceq 'security-descriptor') { 'Descriptor' } else { 'CNG' }
               Write-Output "$resultLabel exit: $testExit; recognized passes: $($passed.Count)/$expectedPassCount"
               if ($env:TEST_SUITE -ceq 'bootstrap-peer') {
                 Write-Output "Peer helper ignores: $($ignored.Count)/$expectedIgnoredCount (not passing security tests)"
@@ -339,6 +431,13 @@ jobs:
               (Compare-Object -CaseSensitive ($expectedPassedNames | Sort-Object) ($passed | Sort-Object)) -or $summaries.Count -ne 1 -or
               "$($summaries[0])" -cnotmatch "\Atest result: ok\. $expectedPassCount passed; 0 failed; $expectedIgnoredCount ignored; 0 measured; [0-9]+ filtered out; finished in .+\z") {
               throw 'Execution did not prove every active test passed with only the reviewed helper ignore'
+            }
+            if ($env:TEST_SUITE -ceq 'security-descriptor') {
+              $cleanupReceipts = @($results | Where-Object {
+                "$_" -ceq 'descriptor fixture: exact live identity deleted, handle closed, path absent'
+              }).Count
+              Write-Output "Descriptor fixture cleanup receipts: $cleanupReceipts/13"
+              if ($cleanupReceipts -ne 13) { throw 'Descriptor fixture cleanup receipt count differs from the reviewed suite' }
             }
             $completed += $phase
 
@@ -389,6 +488,8 @@ jobs:
           }
           if ($env:TEST_SUITE -ceq 'bootstrap-peer') {
             'PASS: exact candidate, GNU tools, locked offline checks, 19 peer tests passed and only the child helper ignored; unchanged inputs.' >> $env:GITHUB_STEP_SUMMARY
+          } elseif ($env:TEST_SUITE -ceq 'security-descriptor') {
+            'PASS: exact candidate, GNU tools, locked offline checks, 17 descriptor tests and 13 fixture cleanup receipts; owned parent removed and unchanged inputs.' >> $env:GITHUB_STEP_SUMMARY
           } else {
             'PASS: exact candidate, GNU tools, locked offline checks, selected-suite tests passed without ignores and unchanged inputs.' >> $env:GITHUB_STEP_SUMMARY
           }
