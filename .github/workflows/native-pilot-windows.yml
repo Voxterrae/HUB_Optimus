@@ -18,6 +18,7 @@ on:
           - identity-http
           - bootstrap-peer
           - security-descriptor
+          - service-identity
 
 permissions:
   contents: read
@@ -40,8 +41,8 @@ jobs:
           if ($env:CANDIDATE_SHA -cnotmatch '\A[0-9a-fA-F]{40}\z') {
             throw 'candidate_sha must contain exactly 40 hexadecimal characters'
           }
-          if ($env:TEST_SUITE -cnotin @('bootstrap-process', 'identity-cng', 'identity-http', 'bootstrap-peer', 'security-descriptor')) {
-            throw 'test_suite must be bootstrap-process, identity-cng, identity-http, bootstrap-peer or security-descriptor'
+          if ($env:TEST_SUITE -cnotin @('bootstrap-process', 'identity-cng', 'identity-http', 'bootstrap-peer', 'security-descriptor', 'service-identity')) {
+            throw 'test_suite must be bootstrap-process, identity-cng, identity-http, bootstrap-peer, security-descriptor or service-identity'
           }
           "sha=$($env:CANDIDATE_SHA.ToLowerInvariant())" >> $env:GITHUB_OUTPUT
           "suite=$env:TEST_SUITE" >> $env:GITHUB_OUTPUT
@@ -145,6 +146,29 @@ jobs:
                 'bootstrap_peer::tests::native_child_entry'
               )
             }
+            'service-identity' {
+              $filter = 'service_identity::tests::'
+              $expectedCount = 14
+              $requiredInputs += @('src/service_identity.rs', 'src/service_identity/tests.rs',
+                'src/bootstrap_peer.rs', 'src/bootstrap_peer/tests.rs')
+              $expectedIgnoredNames = @('service_identity::tests::native_child_entry')
+              $expectedNames = @(
+                'service_identity::tests::synthetic_full_agreement_is_policy_only',
+                'service_identity::tests::wrong_configuration_denies',
+                'service_identity::tests::stale_pending_stopped_and_changed_capture_deny',
+                'service_identity::tests::actual_user_distinctness_restrictions_session_and_image_deny',
+                'service_identity::tests::exact_privilege_inventory_including_used_for_access_denies_drift',
+                'service_identity::tests::bounded_utf16_and_multi_sz_parse_only_valid_interior_data',
+                'service_identity::tests::config_allocation_excludes_rounding_padding_and_invalid_sizes',
+                'service_identity::tests::primary_and_all_cleanup_errors_are_preserved',
+                'service_identity::tests::native_local_connect_and_fixed_absent_service_exact_1060',
+                'service_identity::tests::native_held_current_primary_process_recheck_and_noninheritability',
+                'service_identity::tests::native_same_user_child_denies_even_if_expected_user_matches',
+                'service_identity::tests::native_exited_retained_child_denies',
+                'service_identity::tests::native_preexisting_impersonation_is_preserved',
+                'service_identity::tests::native_child_entry'
+              )
+            }
             'security-descriptor' {
               $filter = 'security_descriptor::tests::'
               $expectedCount = 17
@@ -174,7 +198,9 @@ jobs:
 
           $expectedIgnoredCount = $expectedIgnoredNames.Count
           $expectedPassCount = $expectedCount - $expectedIgnoredCount
-          $helperIgnoredStatus = 'ignored, subprocess fixture entry; exercised by native parent tests'
+          $helperIgnoredStatus = if ($env:TEST_SUITE -ceq 'service-identity') {
+            'ignored, owned child helper; never counted as a security pass'
+          } else { 'ignored, subprocess fixture entry; exercised by native parent tests' }
 
           function Assert-HttpAlreadyRunning([string] $moment) {
             # Read-only, non-atomic preflight: never start or configure the driver.
@@ -332,6 +358,9 @@ jobs:
             try {
               $listing = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib $filter -- --list 2>&1)
               $inventoryExit = $LASTEXITCODE
+            } catch {
+              if ($env:TEST_SUITE -ceq 'service-identity') { throw 'SCM test inventory invocation failed' }
+              throw
             } finally {
               if ($env:TEST_SUITE -ceq 'identity-http') { Assert-HttpAlreadyRunning 'after inventory' }
             }
@@ -377,6 +406,7 @@ jobs:
               }
               $testExit = $LASTEXITCODE
             } catch {
+              if ($env:TEST_SUITE -ceq 'service-identity') { throw 'SCM test execution invocation failed' }
               if ($env:TEST_SUITE -cne 'security-descriptor') { throw }
               $descriptorInvocationFailed = $true
             } finally {
@@ -417,10 +447,11 @@ jobs:
               }
               $resultLabel = if ($env:TEST_SUITE -ceq 'identity-http') { 'Native' }
                 elseif ($env:TEST_SUITE -ceq 'bootstrap-peer') { 'Peer' }
-                elseif ($env:TEST_SUITE -ceq 'security-descriptor') { 'Descriptor' } else { 'CNG' }
+                elseif ($env:TEST_SUITE -ceq 'security-descriptor') { 'Descriptor' }
+                elseif ($env:TEST_SUITE -ceq 'service-identity') { 'SCM' } else { 'CNG' }
               Write-Output "$resultLabel exit: $testExit; recognized passes: $($passed.Count)/$expectedPassCount"
-              if ($env:TEST_SUITE -ceq 'bootstrap-peer') {
-                Write-Output "Peer helper ignores: $($ignored.Count)/$expectedIgnoredCount (not passing security tests)"
+              if ($env:TEST_SUITE -cin @('bootstrap-peer', 'service-identity')) {
+                Write-Output "$resultLabel helper ignores: $($ignored.Count)/$expectedIgnoredCount (not passing security tests)"
               }
             }
             if ($testExit -ne 0) { throw "Selected test execution failed (exit $testExit)" }
@@ -488,6 +519,8 @@ jobs:
           }
           if ($env:TEST_SUITE -ceq 'bootstrap-peer') {
             'PASS: exact candidate, GNU tools, locked offline checks, 19 peer tests passed and only the child helper ignored; unchanged inputs.' >> $env:GITHUB_STEP_SUMMARY
+          } elseif ($env:TEST_SUITE -ceq 'service-identity') {
+            'PASS: exact candidate, GNU tools, locked offline checks, 13 SCM tests passed and only the owned child helper ignored; unchanged inputs. No installed-service positive or activation is established.' >> $env:GITHUB_STEP_SUMMARY
           } elseif ($env:TEST_SUITE -ceq 'security-descriptor') {
             'PASS: exact candidate, GNU tools, locked offline checks, 17 descriptor tests and 13 fixture cleanup receipts; owned parent removed and unchanged inputs.' >> $env:GITHUB_STEP_SUMMARY
           } else {

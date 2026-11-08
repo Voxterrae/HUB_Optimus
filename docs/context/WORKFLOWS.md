@@ -64,8 +64,8 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 
 - Trigger: `workflow_dispatch` only, with a required immutable 40-hex
   `candidate_sha` from this repository and a closed `test_suite` choice:
-  `bootstrap-process` (default), `identity-cng`, `identity-http`, `bootstrap-peer`
-  or `security-descriptor`.
+  `bootstrap-process` (default), `identity-cng`, `identity-http`, `bootstrap-peer`,
+  `security-descriptor` or `service-identity`.
 - Permissions: `contents: read`; the reviewed checkout Action does not persist
   credentials. No named secrets, write token, upload or deployment is used.
 - One disposable GitHub-hosted `windows-2022` job (20-minute timeout):
@@ -81,11 +81,13 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
     19 active `bootstrap_peer::tests::` cases plus one named ignored child helper
     for `bootstrap-peer`, or exactly 17 `security_descriptor::tests::` cases
     (12 native and five pure) with 13 owned-fixture cleanup markers for
-    `security-descriptor`; then Clippy with
+    `security-descriptor`, or 13 active `service_identity::tests::` cases
+    (eight pure and five native) plus one named ignored helper for
+    `service-identity`; then Clippy with
     `--all-targets -- -D warnings` and `rustfmt --check --edition 2024 src/lib.rs`;
-  - requires all active selected tests to pass with 0 failed; only the peer
-    profile admits the named child helper ignored, never as a passing security
-    test. Other profiles require 0 ignored. The exact inventory/result sets and
+  - requires all active selected tests to pass with 0 failed; only the peer and
+    SCM profiles admit their own named child helper ignored, never as a passing
+    security test. Other profiles require 0 ignored. The exact inventory/result sets and
     single summary must agree. It verifies unchanged source and Cargo.lock
     hashes afterward; filtered tests from other modules provide no acceptance;
   - for `identity-http`, requires the HTTP driver already `Running` immediately
@@ -93,11 +95,11 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
     including on failure. It refuses stopped/unavailable states and issues no
     service start/stop/configuration command. These reads are not atomic and
     cannot exclude external state changes between observation and `HttpInitialize`;
-  - captures CNG/HTTP/peer/descriptor test stdout/stderr in runner process memory
+  - captures CNG/HTTP/peer/descriptor/SCM test stdout/stderr in runner process memory
     and publishes only the allowlisted inventory, recognized test statuses,
     exit code, counts and fixed cleanup outcomes. Raw vectors, keys, resource,
     pipe, token or fixture context and failure output are not printed or
-    uploaded; the peer helper ignore reason is reduced to a fixed status;
+    uploaded; each admitted helper ignore reason is reduced to a fixed status;
   - records candidate/workflow SHAs, runner/tool versions, SHA-256 inputs and
     actual outcomes in the job log/summary. Skipped or incomplete validation
     cannot produce PASS.
@@ -152,6 +154,29 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   The 13 markers are fixture assertions, not global VM cleanup or protected
   ancestry/isolation proof; process loss can leave resources until runner
   disposal. No owner-device operation, service, key, root or activation follows.
+- The `service-identity` suite under #2169 requires a separately reviewed current
+  #2005 candidate containing `src/service_identity.rs`, its test module and the
+  retained `bootstrap_peer` source/tests. The fixed filter is
+  `service_identity::tests::`, using `--lib` and one execution thread. Exactly
+  14 unique inventory entries must yield 13 active passes (eight pure and five
+  native) plus only `service_identity::tests::native_child_entry` ignored, never
+  counted as a security pass. Parent tests invoke that helper internally.
+  Its annotation is `ignored, owned child helper; never counted as a security pass`;
+  the peer annotation is not interchangeable. Bare `ignored` remains accepted.
+  Native inventory/execution invocation errors receive fixed generic messages;
+  captured assertion/token/process/service output and helper reasons are not
+  published, including on failure. SCM adds no `--show-output`.
+  Native cases perform actual query-only local SCM access, require exact error
+  1060 for the absent fixed service, and inspect retained current/owned-child
+  process/token context. An existing service or access denial fails; no service
+  discovery, start/stop/create/configuration/delete operation is permitted.
+  Two owned child fixtures use hidden windows and null standard streams with
+  checked kill/wait and handle closure; no global process cleanup is added.
+  This profile executes no CNG/HTTP/peer/descriptor tests, HTTP service query or
+  NTFS fixture-parent operation. Synthetic policy agreement is not a positive
+  installed-service or virtual-account binding. Emergency Drop/process-loss
+  cleanup retains runner-disposal limits; no owner-device operation, service
+  isolation, loaded-image provenance, enrollment or activation follows.
 - Eight internal CNG passes do not prove independent Node interoperability,
   production MSVC compatibility, TPM/biometric protection, same-user isolation
   or protected enrollment.
