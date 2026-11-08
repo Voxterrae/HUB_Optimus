@@ -32,7 +32,9 @@ static class IdentityProofTests
             await using var listener = new Listener(async (stream, headers) =>
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(500));
-                var nonce = Header(headers, "X-Optimus-Nonce") ?? new string('0', 64);
+                var nonce = Header(headers, "X-Optimus-Nonce");
+                if (nonce is not { Length: 64 } || !nonce.All(Uri.IsHexDigit))
+                    throw new Exception("Delayed health request must include a valid 64-hex nonce");
                 await Send(stream, Health, Proof(Token, 17831, nonce));
             });
             using var client = Client();
