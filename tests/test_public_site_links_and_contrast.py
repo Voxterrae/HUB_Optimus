@@ -1,4 +1,5 @@
 import re
+import subprocess
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urljoin, urlsplit
@@ -8,6 +9,18 @@ ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
 PUBLIC_ORIGIN = "https://huboptimus.dev"
 EVIDENCE_REF = "8426b08e5f88b650c4d79e41d3ce3afd7d42746b"
+PRODUCT_REF = "7ca513eb16d12d77ba5f017c63109dab937c12b2"
+DEVELOPMENT_EVIDENCE_LINKS = {
+    f"https://github.com/Voxterrae/HUB_Optimus/tree/{PRODUCT_REF}/products/browser/windows",
+    f"https://github.com/Voxterrae/HUB_Optimus/tree/{PRODUCT_REF}/products/browser/web",
+    f"https://github.com/Voxterrae/HUB_Optimus/tree/{PRODUCT_REF}/products/browser/search",
+    f"https://github.com/Voxterrae/HUB_Optimus/blob/{PRODUCT_REF}/products/browser/search/catalog/public-pilot-v0.1.json",
+    f"https://github.com/Voxterrae/HUB_Optimus/tree/{PRODUCT_REF}/products/device-bridge",
+    f"https://github.com/Voxterrae/HUB_Optimus/tree/{PRODUCT_REF}/products/device-bridge/windows/bootstrap-inventory",
+    "https://github.com/Voxterrae/HUB_Optimus/tree/c7a67a7af9e5067e27518d3a9bd8b56f99767acf/products/admin-gateway/src/optimus_admin_gateway",
+    "https://github.com/Voxterrae/HUB_Optimus/tree/51327282170b9c0a6f769b8bd5ddc5c39572d6a4/products/evidence-lab",
+    "https://github.com/Voxterrae/HUB_Optimus/tree/bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41/hub_optimus/connect",
+}
 PUBLIC_ROUTES = {
     "/": SITE / "index.html",
     "/404.html": SITE / "404.html",
@@ -19,11 +32,14 @@ PUBLIC_ROUTES = {
 }
 LIVE_MAIN_NAVIGATION = {
     "https://github.com/Voxterrae/HUB_Optimus/tree/main/obsidian-HUB_Optimus",
+    "https://github.com/Voxterrae/HUB_Optimus/blob/main/products/README.md",
 }
 EXPECTED_EXTERNAL_NAVIGATION = LIVE_MAIN_NAVIGATION | {
     "https://github.com/Voxterrae/HUB_Optimus",
     "https://github.com/Voxterrae/HUB_Optimus/issues",
     "https://github.com/Voxterrae/HUB_Optimus/issues/1901",
+    "https://github.com/Voxterrae/HUB_Optimus/issues/1880",
+    "https://github.com/Voxterrae/HUB_Optimus/issues/2021",
     "https://github.com/Voxterrae/HUB-Optimus-labs",
     "https://api.huboptimus.dev/oauth2/start?rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F",
     "https://api.huboptimus.dev/oauth2/sign_out?rd=%2Fsigned-out",
@@ -168,6 +184,7 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
         r"(?P<kind>blob|tree)/(?P<ref>[0-9a-f]{40})/(?P<path>.+)$"
     )
     checked = []
+    development_checked = set()
     for path in PUBLIC_ROUTES.values():
         for tag, attribute, reference in parse_document(path).references:
             if tag != "a" or attribute != "href":
@@ -180,14 +197,27 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
                 continue
 
             repository_path = ROOT / unquote(match.group("path"))
-            assert match.group("ref") == EVIDENCE_REF, reference
+            if match.group("ref") == EVIDENCE_REF:
+                checked.append(reference)
+            else:
+                assert reference in DEVELOPMENT_EVIDENCE_LINKS, reference
+                development_checked.add(reference)
             if match.group("kind") == "blob":
                 assert repository_path.is_file(), reference
             else:
                 assert repository_path.is_dir(), reference
-            checked.append(reference)
+            object_type = subprocess.run(
+                ["git", "cat-file", "-t", f'{match.group("ref")}:{unquote(match.group("path"))}'],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            assert object_type.returncode == 0, reference
+            assert object_type.stdout.strip() == match.group("kind"), reference
 
     assert len(checked) == 22
+    assert development_checked == DEVELOPMENT_EVIDENCE_LINKS
 
 
 def test_live_external_navigation_targets_are_explicit_and_network_free_in_pytest():

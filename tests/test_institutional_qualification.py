@@ -51,6 +51,49 @@ def test_free_bespoke_work_is_declined() -> None:
     assert evaluate(intake, POLICY).classification == "DECLINE_FREE_BESPOKE_WORK"
 
 
+@pytest.mark.parametrize("accepts_paid_pov", [True, False])
+def test_hidden_commercial_beneficiary_holds_paid_request(accepts_paid_pov) -> None:
+    intake = paid_intake()
+    intake["accepts_paid_pov"] = accepts_paid_pov
+    intake["hidden_reseller_or_commercial_beneficiary"] = True
+    decision = evaluate(intake, POLICY)
+    assert decision.classification == "HOLD_UNQUALIFIED"
+    assert any("hidden" in reason.lower() for reason in decision.reasons)
+
+
+@pytest.mark.parametrize("value", [None, 0, 1, "false", "", [], {}])
+def test_paid_invalid_beneficiary_answer_is_rejected(value) -> None:
+    intake = paid_intake()
+    intake["hidden_reseller_or_commercial_beneficiary"] = value
+    with pytest.raises(QualificationError, match="hidden_reseller_or_commercial_beneficiary"):
+        evaluate(intake, POLICY)
+
+
+def test_paid_missing_beneficiary_answer_is_rejected() -> None:
+    intake = paid_intake()
+    del intake["hidden_reseller_or_commercial_beneficiary"]
+    with pytest.raises(QualificationError, match="hidden_reseller_or_commercial_beneficiary"):
+        evaluate(intake, POLICY)
+
+
+def test_paid_diagnostic_without_hidden_beneficiary_remains_qualified() -> None:
+    intake = paid_intake()
+    intake["accepts_paid_pov"] = False
+    assert evaluate(intake, POLICY).classification == "QUALIFIED_DIAGNOSTIC_ONLY"
+
+
+def test_cli_hidden_paid_beneficiary_returns_hold(tmp_path, capsys) -> None:
+    intake = paid_intake()
+    intake["hidden_reseller_or_commercial_beneficiary"] = True
+    intake_path = tmp_path / "intake.json"
+    intake_path.write_text(json.dumps(intake), encoding="utf-8")
+    policy_path = ROOT / "config/launch/qualification_policy.v0.1.json"
+    assert main([str(intake_path), "--policy", str(policy_path)]) == 0
+    captured = capsys.readouterr()
+    assert json.loads(captured.out)["classification"] == "HOLD_UNQUALIFIED"
+    assert captured.err == ""
+
+
 def test_enterprise_below_minimum_is_held() -> None:
     intake = paid_intake()
     intake["budget_band"] = "15k_50k"

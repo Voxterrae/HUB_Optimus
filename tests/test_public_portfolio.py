@@ -27,6 +27,18 @@ GEOJSON_CHECKSUM = SITE / "assets" / "geo" / "land-110m.geojson.sha256"
 GEO_ATTRIBUTION = SITE / "assets" / "geo" / "README.md"
 PUBLIC_LOCALES = {"en", "es", "de", "ru", "he", "zh-Hans"}
 
+DEVELOPMENT_COMPONENTS = {
+    "browser-windows": "early-implementation",
+    "browser-web-pilot": "browser-prototype",
+    "browser-linux": "issue-only",
+    "search": "implementation-present-deployment-unverified",
+    "device-bridge": "experimental-tooling",
+    "admin-gateway": "implementation-present-deployment-unverified",
+    "evidence-lab": "implementation-present-deployment-unverified",
+    "connect-xai-x": "early-implementation",
+    "global-graph": "issue-only",
+}
+
 
 class PublicPageParser(HTMLParser):
     def __init__(self):
@@ -36,6 +48,11 @@ class PublicPageParser(HTMLParser):
         self.local_references = []
         self.i18n_keys = set()
         self.portfolio_statuses = {}
+        self.portfolio_sections = {}
+        self.portfolio_copy_keys = {}
+        self.portfolio_links = {}
+        self.section_stack = []
+        self.active_article = None
         self.future_statuses = []
         self.text_parts = []
 
@@ -51,9 +68,22 @@ class PublicPageParser(HTMLParser):
             if attrs.get(attribute):
                 self.i18n_keys.add(attrs[attribute])
 
+        if tag == "section":
+            self.section_stack.append(attrs.get("id"))
         component = attrs.get("data-portfolio-component")
         if component:
+            assert component not in self.portfolio_statuses, component
             self.portfolio_statuses[component] = attrs.get("data-status")
+            self.portfolio_sections[component] = self.section_stack[-1]
+            self.portfolio_copy_keys[component] = set()
+            self.portfolio_links[component] = []
+            if tag == "article":
+                self.active_article = component
+        if self.active_article:
+            if tag == "p" and attrs.get("data-i18n"):
+                self.portfolio_copy_keys[self.active_article].add(attrs["data-i18n"])
+            if tag == "a":
+                self.portfolio_links[self.active_article].append(attrs)
 
         if tag == "a" and attrs.get("data-status"):
             self.future_statuses.append(attrs["data-status"])
@@ -65,6 +95,12 @@ class PublicPageParser(HTMLParser):
             reference = attrs.get("src")
         if reference:
             self.local_references.append(reference)
+
+    def handle_endtag(self, tag):
+        if tag == "section":
+            self.section_stack.pop()
+        if tag == "article":
+            self.active_article = None
 
     def handle_data(self, data):
         value = " ".join(data.split())
@@ -599,7 +635,7 @@ def test_public_javascript_syntax_and_translation_key_parity():
     source = APP.read_text(encoding="utf-8")
     dictionaries = extract_translation_dictionaries(source)
     assert set(dictionaries) == PUBLIC_LOCALES
-    assert len(dictionaries["en"]) == 165
+    assert len(dictionaries["en"]) == 187
     assert all(set(dictionary) == set(dictionaries["en"]) for dictionary in dictionaries.values())
     assert all(
         value.strip()
@@ -983,6 +1019,7 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     html = INDEX.read_text(encoding="utf-8")
 
     assert metadata["manifest_version"] == "1.4.3"
+    assert metadata["portfolio_revision"] == "2026-11-08"
     assert metadata["issue"] == 1750
     assert metadata["latest_audit_issue"] == 1834
     assert metadata["canonical_v1_language"] == "es"
@@ -995,7 +1032,7 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     assert set(operator_localization["advanced_audit_console_locales"]) == PUBLIC_LOCALES
     assert set(operator_localization["supported_locales"]) == PUBLIC_LOCALES
     assert "human" in operator_localization["review_status"]
-    assert metadata["portfolio_translation_key_count"] == 165
+    assert metadata["portfolio_translation_key_count"] == 187
     assert set(metadata["locales"]) == PUBLIC_LOCALES
     assert len(metadata["field_status"]) >= 10
     for record in metadata["locales"].values():
@@ -1026,12 +1063,17 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
         assert all(
             field_status[locale] == audited_status
             for field_name, field_status in metadata["field_status"].items()
-            if field_name != "operator_advanced_audit_console"
+            if field_name not in {
+                "operator_advanced_audit_console", "development_products_and_labs_update"
+            }
         )
-        assert (
-            metadata["field_status"]["operator_advanced_audit_console"][locale]
-            == "AI-assisted draft; named qualified human review required"
-        )
+        for field_name in (
+            "operator_advanced_audit_console", "development_products_and_labs_update"
+        ):
+            assert (
+                metadata["field_status"][field_name][locale]
+                == "AI-assisted draft; named qualified human review required"
+            )
 
     assert all(
         record["named_reviewer"] is None
@@ -1122,7 +1164,7 @@ def test_en_es_de_capability_claims_preserve_maturity_and_clear_register():
             "operatorDisclosure": "does not execute the Semantic Engine",
             "intakeCopy": "Retrieved text is not verified evidence.",
             "truthNote": "Retrieval is not verification.",
-            "labsTruth": "currently empty",
+            "labsTruth": "does not certify the current contents",
             "boundariesLead": "cannot redefine it.",
             "enterpriseCopy": "No enterprise product or public service exists.",
             "postQuantumCopy": "No cryptographic implementation.",
@@ -1134,7 +1176,7 @@ def test_en_es_de_capability_claims_preserve_maturity_and_clear_register():
             "operatorDisclosure": "no ejecuta el Semantic Engine",
             "intakeCopy": "El texto recuperado no es evidencia verificada.",
             "truthNote": "Recuperar una fuente no equivale a verificarla.",
-            "labsTruth": "actualmente está vacío",
+            "labsTruth": "no certifica el contenido",
             "boundariesLead": "no redefinirlo.",
             "enterpriseCopy": "No existe ningún producto empresarial ni servicio público.",
             "postQuantumCopy": "Sin implementación criptográfica.",
@@ -1146,7 +1188,7 @@ def test_en_es_de_capability_claims_preserve_maturity_and_clear_register():
             "operatorDisclosure": "die Semantic Engine wird dabei nicht ausgeführt",
             "intakeCopy": "Abgerufener Text ist keine verifizierte Evidenz.",
             "truthNote": "Abruf ist keine Verifizierung.",
-            "labsTruth": "derzeit leer",
+            "labsTruth": "bestätigt weder den aktuellen Inhalt",
             "boundariesLead": "nicht neu definieren.",
             "enterpriseCopy": "weder ein Unternehmensprodukt noch einen öffentlichen Dienst",
             "postQuantumCopy": "Keine kryptografische Implementierung.",
@@ -1293,6 +1335,7 @@ def test_public_portfolio_matches_repository_maturity():
         "research": "experimental-tooling",
         "governance-intelligence": "active-ratified-protocol",
         "labs": "documented-incubation-surface",
+        **DEVELOPMENT_COMPONENTS,
     }
     assert parser.future_statuses == ["rfc-not-implemented"] * 3
 
@@ -1305,6 +1348,7 @@ def test_public_portfolio_matches_repository_maturity():
         "statusIntake": "Implementation present · deployment unverified",
         "statusResearch": "Experimental tooling",
         "statusGovernance": "Active · ratified protocol",
+        "statusIssueOnly": "Issue only · no merged implementation",
     }
     for key, value in no_javascript_status_copy.items():
         assert f'data-i18n="{key}">{value}</strong>' in html
@@ -1325,7 +1369,7 @@ def test_public_portfolio_matches_repository_maturity():
     text = parser.visible_text
     assert "It does not evaluate or score claims." in text
     assert "GitHub does not confirm a live deployment." in text
-    assert "Repository exists · no released artifacts" in text
+    assert "Documented incubation surface" in text
     assert "No cryptographic implementation." in text
     assert "It is not an authority, a prediction engine, or a replacement for diplomacy." in text
 
@@ -1343,6 +1387,97 @@ def test_public_portfolio_matches_repository_maturity():
     lowered_text = text.lower()
     for phrase in unsupported_phrases:
         assert phrase.lower() not in lowered_text
+
+
+
+def test_development_cards_keep_their_own_status_evidence_and_runtime_boundaries():
+    parser = parse_public_page()
+    html = INDEX.read_text(encoding="utf-8")
+    assert html.count('id="in-development"') == 1
+    assert 'id="in-development" aria-labelledby="development-title"' in html
+    assert 'id="development-title" data-i18n="developmentTitle"' in html
+    assert html.index('id="portfolio"') < html.index('id="in-development"') < html.index('id="labs"')
+    assert {key for key, section in parser.portfolio_sections.items() if section == "in-development"} == set(DEVELOPMENT_COMPONENTS)
+    assert all(parser.portfolio_sections[key] == "portfolio" for key in ("core", "simulator", "semantic-engine", "operator", "controlled-url-intake", "research", "governance-intelligence"))
+    assert parser.portfolio_sections["labs"] == "labs"
+
+    copy_keys = {
+        "browser-windows": {"windowsCopy"},
+        "browser-web-pilot": {"webPilotCopy", "webPilotLanguages"},
+        "browser-linux": {"linuxCopy"},
+        "search": {"searchCopy"},
+        "device-bridge": {"bridgeCopy"},
+        "admin-gateway": {"adminCopy"},
+        "evidence-lab": {"evidenceLabCopy"},
+        "connect-xai-x": {"connectCopy"},
+        "global-graph": {"graphCopy"},
+    }
+    sha = "7ca513eb16d12d77ba5f017c63109dab937c12b2"
+    github = "https://github.com/Voxterrae/HUB_Optimus"
+    evidence = {
+        "browser-windows": f"{github}/tree/{sha}/products/browser/windows",
+        "browser-web-pilot": f"{github}/tree/{sha}/products/browser/web",
+        "browser-linux": f"{github}/issues/2021",
+        "search": f"{github}/tree/{sha}/products/browser/search",
+        "device-bridge": f"{github}/tree/{sha}/products/device-bridge",
+        "admin-gateway": f"{github}/tree/c7a67a7af9e5067e27518d3a9bd8b56f99767acf/products/admin-gateway/src/optimus_admin_gateway",
+        "evidence-lab": f"{github}/tree/51327282170b9c0a6f769b8bd5ddc5c39572d6a4/products/evidence-lab",
+        "connect-xai-x": f"{github}/tree/bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41/hub_optimus/connect",
+        "global-graph": f"{github}/issues/1880",
+    }
+    for component in DEVELOPMENT_COMPONENTS:
+        assert parser.portfolio_copy_keys[component] == copy_keys[component]
+        links = parser.portfolio_links[component]
+        assert evidence[component] in {link["href"] for link in links}
+        for link in links:
+            href = link["href"]
+            if href == "./browser/":
+                assert component == "browser-web-pilot"
+                assert "hreflang" not in link
+            else:
+                assert re.fullmatch(
+                    re.escape(github) + r"/(?:issues/(?:1880|2021)|(?:blob|tree)/[0-9a-f]{40}/.+)",
+                    href,
+                ), href
+        assert not any("data-operator-route" in link for link in links)
+    # The existing pilot owns its language preference and uses a different locale set.
+    assert [link["href"] for link in parser.portfolio_links["browser-web-pilot"]].count("./browser/") == 1
+    assert "data-browser-route" not in html
+    app = APP.read_text(encoding="utf-8")
+    assert "wikipedia.org" not in app
+    assert "api/search" not in app
+
+
+def test_development_limits_are_localized_without_promoting_operational_capability():
+    dictionaries = extract_translation_dictionaries(APP.read_text(encoding="utf-8"))
+    keys = {
+        "developmentKicker", "developmentTitle", "developmentLead", "developmentLink",
+        "developmentReview", "productCatalogue", "productNavAria", "statusIssueOnly",
+        "windowsCopy", "webPilotCopy", "webPilotLanguages", "linuxCopy", "searchCopy",
+        "bridgeCopy", "adminCopy", "evidenceLabCopy", "connectCopy", "graphCopy",
+        "openWebPilot", "viewIssue", "inspectCatalogue", "inspectRelay",
+    }
+    # Each locale preserves the critical denial/pending boundary, rather than only a product name.
+    limits = {
+        "en": {"windowsCopy": ("exact revision tested", "Voice control and IoT are not implemented"), "webPilotCopy": ("explicitly submitted", "offline guarantee"), "linuxCopy": ("#2021 only", "No Linux implementation"), "searchCopy": ("finite eight-document", "acceptance remains blocked"), "bridgeCopy": ("activation remains blocked", "provenance is not established"), "adminCopy": ("execution disabled", "does not establish tenant authorization"), "evidenceLabCopy": ("offline package", "does not apply live metadata"), "connectCopy": ("default to disabled", "No credentials"), "graphCopy": ("issue only", "No implementation"), "developmentReview": ("drafts", "human linguistic review"), "labsTruth": ("does not certify", "separate repository")},
+        "es": {"windowsCopy": ("revisión exacta probada", "IoT no están implementados"), "webPilotCopy": ("forma explícita", "garantía de uso sin conexión"), "linuxCopy": ("issue #2021", "No hay una implementación"), "searchCopy": ("finito de ocho", "sigue bloqueada"), "bridgeCopy": ("activación de HUB_Relay sigue bloqueada", "no está establecida"), "adminCopy": ("ejecución real de la API deshabilitada", "no acredita autorización"), "evidenceLabCopy": ("sin conexión", "No aplica metadatos"), "connectCopy": ("deshabilitados por defecto", "No se habilitan credenciales"), "graphCopy": ("issue fundacional", "no contiene implementación"), "developmentReview": ("borradores", "humana cualificada"), "labsTruth": ("no certifica", "repositorio independiente")},
+        "de": {"windowsCopy": ("exakt geprüfte Revision", "IoT sind nicht implementiert"), "webPilotCopy": ("ausdrücklichen Absenden", "Offline-Garantie"), "linuxCopy": ("Issue #2021", "keine Linux-Implementierung"), "searchCopy": ("acht Dokumenten", "bleibt blockiert"), "bridgeCopy": ("Aktivierung von HUB_Relay bleibt gesperrt", "ist nicht belegt"), "adminCopy": ("API-Ausführung ist deaktiviert", "bestätigt weder Mandantenberechtigung"), "evidenceLabCopy": ("Offline-Paket", "keine Metadaten"), "connectCopy": ("standardmäßig deaktiviert", "Zugangsdaten"), "graphCopy": ("Grundlagen-Issue", "keine Implementierung"), "developmentReview": ("Entwürfe", "menschliche Sprachprüfung"), "labsTruth": ("bestätigt weder", "separaten Repositorys")},
+        "ru": {"windowsCopy": ("точной проверенной ревизии", "IoT не реализованы"), "webPilotCopy": ("явного запуска", "гарантию работы без сети"), "linuxCopy": ("issue #2021", "ещё не включена"), "searchCopy": ("восьми документов", "остаётся заблокированной"), "bridgeCopy": ("HUB_Relay заблокирована", "не установлено"), "adminCopy": ("API-операций отключено", "не подтверждает разрешение"), "evidenceLabCopy": ("Автономный пакет", "не выполняются"), "connectCopy": ("по умолчанию отключены", "Нет учётных данных"), "graphCopy": ("Только основополагающая issue", "отсутствуют"), "developmentReview": ("черновики", "проверка человеком"), "labsTruth": ("не подтверждает", "отдельного репозитория")},
+        "he": {"windowsCopy": ("הגרסה המדויקת שנבדקה", "IoT אינם ממומשים"), "webPilotCopy": ("הפעלה מפורשת", "הבטחת שימוש ללא חיבור"), "linuxCopy": ("#2021 בלבד", "טרם מוזג"), "searchCopy": ("שמונה מסמכים", "עדיין חסומה"), "bridgeCopy": ("HUB_Relay חסומה", "טרם הוכח"), "adminCopy": ("API אמיתיות מושבת", "אין בכך אישור"), "evidenceLabCopy": ("ללא חיבור", "אין החלה"), "connectCopy": ("מושבתים כברירת מחדל", "אין פרטי גישה"), "graphCopy": ("סוגיית יסוד בלבד", "אין מימוש"), "developmentReview": ("טיוטות", "אנושית מוסמכת"), "labsTruth": ("אינה מאשרת", "המאגר הנפרד")},
+        "zh-Hans": {"windowsCopy": ("经过测试的确切修订", "IoT 尚未实现"), "webPilotCopy": ("明确提交搜索", "离线使用保证"), "linuxCopy": ("#2021", "尚未合入"), "searchCopy": ("八篇文档", "验收仍被阻止"), "bridgeCopy": ("激活仍被阻止", "来源尚未确立"), "adminCopy": ("真实 API 操作仍被禁用", "不代表已获得"), "evidenceLabCopy": ("离线软件包", "未在真实环境"), "connectCopy": ("默认禁用", "没有凭据"), "graphCopy": ("仅有基础议题", "尚无实现"), "developmentReview": ("AI 辅助草稿", "合格人员"), "labsTruth": ("不证明", "独立仓库")},
+    }
+    assert set(limits) == PUBLIC_LOCALES
+    for locale, dictionary in dictionaries.items():
+        assert keys <= set(dictionary)
+        if locale != "en":
+            assert all(dictionary[key] != dictionaries["en"][key] for key in keys)
+        for key, markers in limits[locale].items():
+            assert all(marker in dictionary[key] for marker in markers), (locale, key)
+        assert all(code in dictionary["webPilotLanguages"] for code in ("ES", "CA", "EN", "DE", "FR", "RU"))
+        # The new text is actually selected by the existing locale switcher, including RTL.
+        probe = run_locale_dom_probe(APP, saved=locale, key="bridgeCopy")
+        assert probe["initial"]["text"] == dictionary["bridgeCopy"]
+        assert probe["initial"]["dir"] == ("rtl" if locale == "he" else "ltr")
 
 
 def test_public_internal_anchors_and_local_assets_resolve():

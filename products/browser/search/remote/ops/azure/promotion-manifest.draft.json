@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "status": "BLOCKED_INERT_PROPOSAL",
+  "deployEnabled": false,
+  "reviewedAtUtc": null,
+  "approvedBy": null,
+  "scope": {
+    "tenantId": null,
+    "subscriptionId": null,
+    "resourceGroupName": null,
+    "resourceGroupDisposition": null,
+    "region": null,
+    "environmentName": null,
+    "containerAppName": null
+  },
+  "permissions": {
+    "approved": false,
+    "deployingPrincipalObjectId": null,
+    "effectiveRoleDefinitionIds": [],
+    "effectiveRoleAssignmentScopes": [],
+    "resourceProviderRegistrationState": null,
+    "leastPrivilegeReviewEvidence": null,
+    "secretReadAccessReviewEvidence": null,
+    "requiredOperationReview": [
+      "Resource-group-scoped deployment validate/what-if/write/read operations, as separately authorized",
+      "Microsoft.App managed environment and container app read/write/delete operations required for this exact lifecycle",
+      "Read-only inventory, regional availability/quota and policy checks",
+      "Separate approval if provider registration, resource group creation, role assignments, registry access or secret handling are needed"
+    ]
+  },
+  "economics": {
+    "approved": false,
+    "currency": null,
+    "billingOfferAndRegionEvidence": null,
+    "monthlyBudgetAmount": null,
+    "forecastMonthlyAmount": null,
+    "creditAmountAndExpiry": null,
+    "freeGrantRemainingEvidence": null,
+    "requestAndActiveSecondsAssumptions": null,
+    "egressAndImageRegistryCostEvidence": null,
+    "ancillaryAndPlatformResourceCostEvidence": null,
+    "budgetAlertOwner": null,
+    "stopTriggerAndResponsibleOperator": null,
+    "reviewEvidence": null,
+    "budgetIsHardCap": false
+  },
+  "release": {
+    "approved": false,
+    "imageDigestReference": null,
+    "sdkBaseImageDigestReference": null,
+    "runtimeBaseImageDigestReference": null,
+    "sourceCommit": null,
+    "catalogSha256": null,
+    "provenanceSha256": null,
+    "previousImageDigestReference": null,
+    "imageRegistryAndPullAuthorization": null,
+    "containerRuntimeSmokeEvidence": null,
+    "azureAcceptanceEvidence": null
+  },
+  "credentials": {
+    "approved": false,
+    "externalRegistryPath": "/run/optimus-remote/credentials.json",
+    "mountMechanism": null,
+    "mountReadOnlyEvidence": null,
+    "nonRootReadAccessEvidence": null,
+    "expiryAndRevocationEvidence": null,
+    "secretReadRbacEvidence": null,
+    "containsCredentialMaterial": false
+  },
+  "networkAndPrivacy": {
+    "approved": false,
+    "externalIngress": false,
+    "publicHttpsPromotionEvidence": null,
+    "platformLoggingAndRetentionReviewEvidence": null,
+    "queryCredentialIpLoggingEvidence": null,
+    "nativeClientHttpsAcceptanceEvidence": null
+  },
+  "blockers": [
+    "No exact owner-approved tenant, subscription, resource group, region or effective permission evidence",
+    "No approved economics, credit/free-grant evidence, alert owner or operational stop trigger",
+    "No reviewed source/image/base-image digests or registry pull authorization",
+    "No external read-only credential registry mount; the application must fail closed on startup",
+    "Public ingress disabled; HTTPS edge and native-client end-to-end acceptance remain unvalidated",
+    "No permission to create resources, register providers, assign roles, build/push/pull images or activate the service",
+    "A separately reviewed promotion change must replace the false-only resource gate; parameter edits cannot activate this proposal"
+  ]
+}

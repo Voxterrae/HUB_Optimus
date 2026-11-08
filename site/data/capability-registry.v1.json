@@ -3,7 +3,7 @@
   "schema_version": "1.0.0",
   "registry_id": "hub_optimus.public_capabilities.v1",
   "registry_mode": "human-reviewed-static",
-  "reviewed_at": "2026-09-30",
+  "reviewed_at": "2026-11-08",
   "baseline": {
     "canonical_repository": "Voxterrae/HUB_Optimus",
     "source_baseline_sha": "30e985226347b4bc59b0e187b96633a09647ca42",
@@ -205,8 +205,8 @@
       "lifecycle_state": "implementation-present-deployment-unverified",
       "source_status": "merged",
       "public_section": "in-development",
-      "publicly_listed": false,
-      "public_static_surface_available": false,
+      "publicly_listed": true,
+      "public_static_surface_available": true,
       "public_browser_runtime_available": false,
       "production_service_deployed": false,
       "production_writes_executed": 0,
@@ -253,8 +253,8 @@
       "lifecycle_state": "implementation-present-deployment-unverified",
       "source_status": "merged",
       "public_section": "in-development",
-      "publicly_listed": false,
-      "public_static_surface_available": false,
+      "publicly_listed": true,
+      "public_static_surface_available": true,
       "public_browser_runtime_available": false,
       "production_service_deployed": false,
       "production_writes_executed": 0,
@@ -274,8 +274,8 @@
       "lifecycle_state": "early-implementation",
       "source_status": "merged",
       "public_section": "in-development",
-      "publicly_listed": false,
-      "public_static_surface_available": false,
+      "publicly_listed": true,
+      "public_static_surface_available": true,
       "public_browser_runtime_available": false,
       "production_service_deployed": false,
       "production_writes_executed": 0,
@@ -295,8 +295,8 @@
       "lifecycle_state": "issue-only",
       "source_status": "open-issue",
       "public_section": "in-development",
-      "publicly_listed": false,
-      "public_static_surface_available": false,
+      "publicly_listed": true,
+      "public_static_surface_available": true,
       "public_browser_runtime_available": false,
       "production_service_deployed": false,
       "production_writes_executed": 0,
@@ -309,6 +309,111 @@
         }
       ],
       "claim_boundary": "Governed foundation issue only; no implementation, person-level graph, public globe integration, API, Dataverse mutation or Sites deployment exists under this record."
+    },
+    {
+      "id": "browser-windows",
+      "display_name": "Optimus Browser — Windows",
+      "lifecycle_state": "early-implementation",
+      "source_status": "merged",
+      "public_section": "in-development",
+      "publicly_listed": true,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "7ca513eb16d12d77ba5f017c63109dab937c12b2",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/browser/windows"
+        }
+      ],
+      "claim_boundary": "Merged native Windows alpha source for WPF/WebView2 and the local Search host. Native acceptance and production deployment are not established by this card; web search requires an operator-configured SearXNG instance. This is separate from the static web pilot."
+    },
+    {
+      "id": "browser-web-pilot",
+      "display_name": "Optimus Browser — Web Pilot",
+      "lifecycle_state": "browser-prototype",
+      "source_status": "merged",
+      "public_section": "in-development",
+      "publicly_listed": true,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": true,
+      "production_service_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": true,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "7ca513eb16d12d77ba5f017c63109dab937c12b2",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/site/browser"
+        }
+      ],
+      "claim_boundary": "Usable static web pilot, separate from the native Windows/Linux Browser. Wikipedia receives a query only after explicit user submission. Browser-side runtime and this bounded external read are available; no hosted product service, production write or device control is claimed."
+    },
+    {
+      "id": "browser-linux",
+      "display_name": "Optimus Browser — Linux",
+      "lifecycle_state": "issue-only",
+      "source_status": "open-issue",
+      "public_section": "in-development",
+      "publicly_listed": true,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "issue",
+          "ref": "2021",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/issues/2021"
+        }
+      ],
+      "claim_boundary": "Issue #2021 records Linux coordination only; no merged Linux browser source or deployable Linux Browser is established. Shared Search protocol source does not establish a Linux browser implementation."
+    },
+    {
+      "id": "search",
+      "display_name": "Optimus Search",
+      "lifecycle_state": "implementation-present-deployment-unverified",
+      "source_status": "merged",
+      "public_section": "in-development",
+      "publicly_listed": true,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "7ca513eb16d12d77ba5f017c63109dab937c12b2",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/browser/search"
+        }
+      ],
+      "claim_boundary": "Merged device-local Search host and finite offline index, with support for an operator-configured SearXNG instance. No configured production provider, public search service or production deployment is established by source presence."
+    },
+    {
+      "id": "device-bridge",
+      "display_name": "Device Bridge / HUB_Relay",
+      "lifecycle_state": "experimental-tooling",
+      "source_status": "merged",
+      "public_section": "in-development",
+      "publicly_listed": true,
+      "public_static_surface_available": true,
+      "public_browser_runtime_available": false,
+      "production_service_deployed": false,
+      "production_writes_executed": 0,
+      "live_external_transport_enabled": false,
+      "evidence": [
+        {
+          "type": "commit-path",
+          "ref": "7ca513eb16d12d77ba5f017c63109dab937c12b2",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/device-bridge"
+        }
+      ],
+      "claim_boundary": "Merged experimental, manually operated compatibility and diagnostic assets. HUB_Relay activation remains blocked; source presence does not establish device access, an active bridge service or production deployment."
     }
   ]
 }

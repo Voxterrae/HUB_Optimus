@@ -1,6 +1,13 @@
 # Public portfolio translation status
 
 Operator interface catalog version: `1.4.3`.
+Portfolio content review: `2026-11-08` (Europe/Madrid), 187 translation keys.
+
+The product-development cards, catalogue navigation and revised Labs wording
+under #1888 are assisted drafts in all six portfolio languages. They do not
+inherit the earlier terminology audit or acquire qualified human review.
+The separate Browser web pilot has its own ES/CA/EN/DE/FR/RU selector; it does
+not inherit the portfolio's Hebrew or Simplified Chinese interface languages.
 
 This directory records the translation boundary for the static public portfolio and
 the complete Operator interface. It does not translate the repository or the
