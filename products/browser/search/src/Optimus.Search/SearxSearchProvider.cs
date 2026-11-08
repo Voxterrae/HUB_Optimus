@@ -41,9 +41,9 @@ public sealed class SearxSearchProvider : IDisposable
             var prefix = endpoint.AbsoluteUri.TrimEnd('/');
             var requestUri = new Uri(prefix + (endpoint.AbsolutePath.TrimEnd('/').EndsWith("/search", StringComparison.Ordinal) ? "" : "/search"));
             using var request = new HttpRequestMessage(HttpMethod.Post, requestUri) {
-                Content = new FormUrlEncodedContent(new Dictionary<string, string> {
-                    ["format"] = "json", ["q"] = query, ["language"] = language,
-                    ["categories"] = "general", ["safesearch"] = "2"
+                Content = new FormUrlEncodedContent(new KeyValuePair<string, string>[] {
+                    new("format", "json"), new("q", query), new("language", language),
+                    new("categories", "general"), new("safesearch", "2")
                 })
             };
             request.Headers.Accept.ParseAdd("application/json");
