@@ -1,5 +1,5 @@
 ---
-applyTo: "products/browser/**,site/browser/**,.github/workflows/optimus-windows-smoke.yml,.github/workflows/optimus-public-pilot-smoke.yml,.github/workflows/optimus-real-web-smoke.yml"
+applyTo: "products/browser/**,site/browser/**,.github/workflows/optimus-windows-smoke.yml,.github/workflows/optimus-public-pilot-smoke.yml,.github/workflows/optimus-real-web-smoke.yml,.github/workflows/brave-offline.yml,.github/workflows/search-remote.yml"
 ---
 
 # Optimus Browser instructions
@@ -45,6 +45,44 @@ python -m pytest -q tests/test_optimus_public_pilot.py tests/test_optimus_public
 ```
 
 For static Web changes, keep `products/browser/web/dist/` and `site/browser/` byte-identical; from the repository root check `diff -qr products/browser/web/dist site/browser` where available. Pages publishes `site/` directly, not the React demo or an implicit build. Review `.github/workflows/pages.yml` and the current environment hold before publication; source parity does not establish deployed or served bytes.
+
+## Standalone Brave and remote catalog checks
+
+These are separate from the device-local SearchHost and the pinned manual smoke
+workflows below. Use .NET SDK **10.0.403** and the affected component's tests.
+
+For the inactive Brave adapter, from `products/browser/search`:
+
+```sh
+dotnet run --project providers/brave/tests/Optimus.Search.Brave.Tests -c Release
+```
+
+The suite uses synthetic fixtures and owned loopback listeners. Direct local
+execution does not certify network isolation. The separate
+[Brave offline workflow](../workflows/brave-offline.yml) supplies the loopback-only
+network namespace, drops root and clears the environment before candidate code,
+and uses a cold restore with no NuGet sources. Preserve those boundaries and
+record harness and candidate SHAs separately. No live provider request, real
+subscription key, application wiring or relevance/billing acceptance follows
+from this check; read the [adapter guide](../../products/browser/search/providers/brave/README.md).
+
+For the eight-reference remote catalog API, from `products/browser/search`:
+
+```sh
+dotnet run --project remote/tests/Optimus.Search.Remote.Tests/Optimus.Search.Remote.Tests.csproj --no-launch-profile --configuration Release
+python -m unittest discover -s remote/tests_python -v
+python -m unittest discover -s remote/ops -v
+python remote/ops/azure/validate_proposal.py
+```
+
+The [remote workflow](../workflows/search-remote.yml) additionally performs
+empty-source restores, backend/catalog regression tests, owned loopback-process
+acceptance and constrained local-container acceptance. Follow its exact commands
+and the [remote guide](../../products/browser/search/remote/README.md); use
+disposable test credentials, refuse occupied ports and clean up only owned test
+resources. This API has its own credential/protocol boundary and finite catalog;
+it does not expose local SearchHost, enable general Web search, publish an image
+or establish Azure ingress, cost or deployment acceptance.
 
 ## Packaging and provenance
 
