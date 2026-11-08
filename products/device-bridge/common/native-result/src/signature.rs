@@ -28,8 +28,9 @@ pub(crate) fn der_signature(hex: &str) -> Result<Signature, ResultError> {
 /// Full domain-separated signing message. This is not a bounded wire envelope.
 pub fn result_signing_bytes(payload: &NativeResultPayload) -> Result<Vec<u8>, ResultError> {
     let canonical = crate::wire::canonical_payload(payload)?;
-    let mut bytes = Vec::with_capacity(20 + canonical.len());
-    bytes.extend_from_slice(b"HUB-RELAY-RESULT-v0.1\0");
+    let domain = b"HUB-RELAY-RESULT-v0.1\0";
+    let mut bytes = Vec::with_capacity(domain.len() + canonical.len());
+    bytes.extend_from_slice(domain);
     bytes.extend_from_slice(&canonical);
     Ok(bytes)
 }
