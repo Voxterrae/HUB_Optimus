@@ -269,14 +269,30 @@ foundation requires an explicit owner decision that covers the resulting Pages
 deployment and a post-merge receipt for the merged commit, tree, workflow run,
 and public registry/schema resources.
 
-Outstanding slices remain separate:
+The visible presentation slice keeps the existing eight methodology/prototype
+surfaces and adds a separate `in-development` section aligned with the reviewed
+registry. `products/README.md` is the repository catalogue; its exact component
+IDs, source states, lifecycle states and first immutable evidence references are
+checked against that registry. It is navigation and a dated source observation,
+not a release, support or deployment certificate.
 
-1. the visible presentation must consume the reviewed registry through its own
-   scoped pull request and must not present draft or issue-only work as live;
+Windows alpha, the separate static web pilot and Linux are separate Browser
+entries. The existing web pilot can perform an explicit Wikipedia request; its
+browser-runtime/transport flags describe that prototype, not a native Browser
+release or a production service. Linux remains issue-only at the reviewed source
+snapshot. Search separates its finite local catalogue from operator-configured
+Web providers. Relay activation remains blocked. Admin Gateway, Evidence Lab,
+Connect and Global Graph retain their recorded execution boundaries.
+
+Publication and synchronization remain separate receipt-backed operations:
+
+1. the visible presentation must pass its scoped pull-request checks and must
+   not present draft or issue-only work as live;
 2. the protected Sites mirror must be synchronized only after the canonical
    presentation change is reviewed, merged, deployed, and bound to an exact SHA;
-3. Sites publication, access changes, tenant mutation, external transport, and
-   production-service writes require their own explicit owner authorization.
+3. Sites publication must preserve its approved audience; access changes,
+   tenant mutation, new external transport, and production-service writes
+   require their own explicit owner authorization.
 
 Until those slices have exact repository and platform evidence, future operators
 must continue to describe GitHub Pages as the canonical public static surface

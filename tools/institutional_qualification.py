@@ -149,6 +149,8 @@ def evaluate(intake: dict[str, Any], policy: dict[str, Any]) -> Decision:
         )
 
     reasons = []
+    if _bool(intake, "hidden_reseller_or_commercial_beneficiary"):
+        reasons.append("Hidden commercial or reseller beneficiaries are prohibited.")
     if not _bool(intake, "decision_authority_confirmed"):
         reasons.append("Decision authority is not confirmed.")
     if not _bool(intake, "procurement_owner_confirmed"):
