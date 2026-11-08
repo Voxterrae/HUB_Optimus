@@ -198,6 +198,11 @@
         </p>
       </div>
 
+      <nav class="card-links portfolio-navigation" aria-label="Product navigation" data-i18n-aria="productNavAria">
+        <a href="#in-development" data-i18n="developmentLink">See work in development</a>
+        <a href="https://github.com/Voxterrae/HUB_Optimus/blob/main/products/README.md" data-i18n="productCatalogue">Product catalogue on GitHub</a>
+      </nav>
+
       <div class="portfolio-grid">
         <article class="portfolio-card" data-portfolio-component="core" data-status="active-methodology">
           <div class="card-topline">
@@ -349,6 +354,133 @@
       </aside>
     </section>
 
+    <section class="section section-dark" id="in-development" aria-labelledby="development-title">
+      <div class="section-heading">
+        <p class="section-kicker" data-i18n="developmentKicker">Product development</p>
+        <h2 id="development-title" data-i18n="developmentTitle">In development.</h2>
+        <p data-i18n="developmentLead">Merged source, prototypes, and issue-only foundations. The status of each component describes reviewed evidence; it does not establish production deployment or authorize live operations.</p>
+      </div>
+
+      <div class="portfolio-grid">
+        <article class="portfolio-card" data-portfolio-component="browser-windows" data-status="early-implementation">
+          <div class="card-topline">
+            <span>08</span>
+            <strong class="status status-early" data-i18n="statusSemantic">Early implementation</strong>
+          </div>
+          <h3>Optimus Browser · Windows</h3>
+          <p data-i18n="windowsCopy">Unsigned native Windows alpha. Native and accessibility acceptance apply only to the exact revision tested; physical Windows, spoken assistive-technology acceptance, and distribution retain separate gates. Voice control and IoT are not implemented.</p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/browser/windows" data-i18n="inspectSource">Inspect source</a>
+          </div>
+        </article>
+
+        <article class="portfolio-card" data-portfolio-component="browser-web-pilot" data-status="browser-prototype">
+          <div class="card-topline">
+            <span>09</span>
+            <strong class="status status-browser" data-i18n="statusBrowser">Browser prototype</strong>
+          </div>
+          <h3>Optimus Browser · Web</h3>
+          <p data-i18n="webPilotCopy">A separate six-language static Wikipedia pilot. A query is sent only when a search is explicitly submitted. Device storage is optional and local voice depends on browser support. It does not replace the native browser or provide IoT, general-web search, or an offline guarantee.</p>
+          <p class="card-disclosure" data-i18n="webPilotLanguages">Pilot interfaces: ES, CA, EN, DE, FR, RU. The pilot has its own language preference; it does not inherit the portfolio language.</p>
+          <div class="card-links">
+            <a href="./browser/" data-i18n="openWebPilot">Open Wikipedia web pilot</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/browser/web" data-i18n="inspectSource">Inspect source</a>
+          </div>
+        </article>
+
+        <article class="portfolio-card" data-portfolio-component="browser-linux" data-status="issue-only">
+          <div class="card-topline">
+            <span>10</span>
+            <strong class="status status-early" data-i18n="statusIssueOnly">Issue only · no merged implementation</strong>
+          </div>
+          <h3>Optimus Browser · Linux</h3>
+          <p data-i18n="linuxCopy">Planning under issue #2021 only. No Linux implementation is merged into this repository.</p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/issues/2021" data-i18n="viewIssue">View foundation issue</a>
+          </div>
+        </article>
+
+        <article class="portfolio-card" data-portfolio-component="search" data-status="implementation-present-deployment-unverified">
+          <div class="card-topline">
+            <span>11</span>
+            <strong class="status status-intake" data-i18n="statusIntake">Implementation present · deployment unverified</strong>
+          </div>
+          <h3>Optimus Search</h3>
+          <p data-i18n="searchCopy">Local search with a finite eight-document pilot catalogue, plus Web through an operator-configured SearXNG instance. General-web acceptance remains blocked; every new native revision needs its own acceptance. The catalogue is not Internet coverage.</p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/browser/search" data-i18n="inspectSource">Inspect source</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/blob/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/browser/search/catalog/public-pilot-v0.1.json" data-i18n="inspectCatalogue">Inspect finite pilot catalogue</a>
+          </div>
+        </article>
+
+        <article class="portfolio-card" data-portfolio-component="device-bridge" data-status="experimental-tooling">
+          <div class="card-topline">
+            <span>12</span>
+            <strong class="status status-experimental" data-i18n="statusResearch">Experimental tooling</strong>
+          </div>
+          <h3>Device Bridge / HUB_Relay</h3>
+          <p data-i18n="bridgeCopy">Experimental offline fixtures and a read-only native inventory candidate. HUB_Relay activation remains blocked and loaded-image provenance is not established. No device-control service or biometric enforcement is provided.</p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/device-bridge" data-i18n="inspectSource">Inspect source</a>
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/device-bridge/windows/bootstrap-inventory" data-i18n="inspectRelay">Inspect Relay diagnostic candidate</a>
+          </div>
+        </article>
+
+        <article class="portfolio-card" data-portfolio-component="admin-gateway" data-status="implementation-present-deployment-unverified">
+          <div class="card-topline">
+            <span>13</span>
+            <strong class="status status-intake" data-i18n="statusIntake">Implementation present · deployment unverified</strong>
+          </div>
+          <h3>Optimus Admin Gateway</h3>
+          <p data-i18n="adminCopy">Merged API and reference assets, with live API execution disabled. Source integration does not establish tenant authorization, connector activation, production deployment, or production writes.</p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/c7a67a7af9e5067e27518d3a9bd8b56f99767acf/products/admin-gateway/src/optimus_admin_gateway" data-i18n="inspectSource">Inspect source</a>
+          </div>
+        </article>
+
+        <article class="portfolio-card" data-portfolio-component="evidence-lab" data-status="implementation-present-deployment-unverified">
+          <div class="card-topline">
+            <span>14</span>
+            <strong class="status status-intake" data-i18n="statusIntake">Implementation present · deployment unverified</strong>
+          </div>
+          <h3>Optimus Evidence Lab</h3>
+          <p data-i18n="evidenceLabCopy">An offline package with governed schema and seed plans. It does not apply live metadata, seed business data, or establish a deployed service.</p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/51327282170b9c0a6f769b8bd5ddc5c39572d6a4/products/evidence-lab" data-i18n="inspectSource">Inspect source</a>
+          </div>
+        </article>
+
+        <article class="portfolio-card" data-portfolio-component="connect-xai-x" data-status="early-implementation">
+          <div class="card-topline">
+            <span>15</span>
+            <strong class="status status-early" data-i18n="statusSemantic">Early implementation</strong>
+          </div>
+          <h3>HUB_Optimus Connect</h3>
+          <p data-i18n="connectCopy">Provider adapters and publication planning default to disabled. No credentials, live calls, automatic publication, external transport, or partnership claim is enabled.</p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/tree/bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41/hub_optimus/connect" data-i18n="inspectSource">Inspect source</a>
+          </div>
+        </article>
+
+        <article class="portfolio-card" data-portfolio-component="global-graph" data-status="issue-only">
+          <div class="card-topline">
+            <span>16</span>
+            <strong class="status status-early" data-i18n="statusIssueOnly">Issue only · no merged implementation</strong>
+          </div>
+          <h3>Optimus Global Graph</h3>
+          <p data-i18n="graphCopy">Foundation issue only. No implementation, person-level graph, public globe integration, API, or Dataverse mutation exists under this record.</p>
+          <div class="card-links">
+            <a href="https://github.com/Voxterrae/HUB_Optimus/issues/1880" data-i18n="viewIssue">View foundation issue</a>
+          </div>
+        </article>
+
+      </div>
+
+      <aside class="translation-note">
+        <p data-i18n="developmentReview">The new product descriptions and updated Labs text are AI-assisted drafts in all six languages. Qualified human linguistic review is still required.</p>
+      </aside>
+    </section>
+
     <section class="section section-labs" id="labs" aria-labelledby="labs-title">
       <div class="labs-identity">
         <p class="section-kicker" data-i18n="labsKicker">Official incubation space</p>
@@ -364,13 +496,10 @@
 
       <div class="labs-state" data-portfolio-component="labs" data-status="documented-incubation-surface">
         <div class="labs-state-header">
-          <span data-i18n="checkedOn">Repository checked on 28 July 2026</span>
-          <strong data-i18n="labsEmpty">Repository exists · no released artifacts</strong>
+          <span data-i18n="checkedOn">Historical observation · 28 July 2026</span>
+          <strong data-i18n="labsEmpty">Documented incubation surface</strong>
         </div>
-        <p data-i18n="labsTruth">
-          The repository is official and currently empty. The site does not attribute
-          unreleased engines, datasets, deployments, or security capabilities to it.
-        </p>
+        <p data-i18n="labsTruth">Labs is a documented incubation reference. The dated portfolio observation does not certify the current contents, emptiness, or releases of the separate repository.</p>
         <div class="labs-rules">
           <div>
             <span>01</span>
