@@ -4,6 +4,33 @@ var tests = new List<(string Name, Action Run)>();
 void Test(string name, Action run) => tests.Add((name,run));
 void Check(bool condition, string behavior) { if(!condition) throw new Exception(behavior); }
 var context = new BrowserContext(Guid.NewGuid(), 1, "https://example.org");
+Test("Search intent: Optimus text has no external navigation URI", () => {
+ foreach(var query in new[]{"ayuntamiento de Madrid","contraste","café 日本語 & privacidad"}) {
+  var result=NavigationPolicy.Resolve(query,SearchProvider.Optimus);
+  Check(result.IsSearch && result.Uri is null && result.Error is null,"Text must stay in native Optimus Search");
+ }
+});
+Test("Search intent: native query bound and strict URL handling", () => {
+ Check(NavigationPolicy.Resolve(new string('x',500),SearchProvider.Optimus) is {IsSearch:true,Uri:null,Error:null},"500 character native query accepted");
+ Check(NavigationPolicy.Resolve(new string('x',501),SearchProvider.Optimus) is {IsSearch:false,Uri:null,Error:not null},"Oversized query rejected");
+ foreach(var input in new[]{"example.org/path","https://example.org/path?q=test","http://localhost:8080"})
+  Check(NavigationPolicy.Resolve(input,SearchProvider.Optimus) is {Allowed:true,IsSearch:false},"Direct address remains navigation");
+ foreach(var input in new[]{"javascript:alert(1)","file:///secret","https://user:secret@example.org","https://exa mple.org","https://example.org\\evil","hello\nworld"})
+  Check(NavigationPolicy.Resolve(input,SearchProvider.Optimus) is {Allowed:false,IsSearch:false,Error:not null},"Unsafe address cannot become search");
+});
+Test("External search: fixed portals encode the entire explicit query", () => {
+ var ddg=NavigationPolicy.ExternalSearch("https://example.org/?x=1&y=2",SearchProvider.DuckDuckGo);
+ Check(ddg is {Allowed:true,IsSearch:true} && ddg.Uri!.AbsoluteUri=="https://duckduckgo.com/?q=https%3A%2F%2Fexample.org%2F%3Fx%3D1%26y%3D2","URL-looking query stays a query at chosen portal");
+ var google=NavigationPolicy.ExternalSearch("  café & privacidad #1  ",SearchProvider.Google);
+ Check(google.Uri?.AbsoluteUri=="https://www.google.com/search?q=caf%C3%A9%20%26%20privacidad%20%231","Unicode and separators cannot add parameters");
+});
+Test("External search: invalid queries and unsupported providers produce no URI", () => {
+ foreach(var query in new[]{"","  ","hello\nworld","test\u0000query",new string('x',501)})
+  Check(NavigationPolicy.ExternalSearch(query,SearchProvider.DuckDuckGo) is {Allowed:false,IsSearch:false,Uri:null,Error:not null},"Invalid query cannot leave the app");
+ foreach(var provider in new[]{SearchProvider.Optimus,(SearchProvider)99})
+  Check(NavigationPolicy.ExternalSearch("test",provider) is {Allowed:false,Uri:null,Error:not null},"Only explicit fixed portals allowed");
+ Check(NavigationPolicy.ExternalSearch(new string('x',500),SearchProvider.Google).Allowed,"Exact bound allowed");
+});
 Test("URL: bare domains use HTTPS", () => Check(NavigationPolicy.Resolve("example.org/path", SearchProvider.DuckDuckGo).Uri?.AbsoluteUri == "https://example.org/path", "Expected HTTPS bare domain"));
 Test("URL: ordinary search uses selected fixed provider", () => { var r=NavigationPolicy.Resolve("ayuntamiento de Madrid", SearchProvider.Google); Check(r.IsSearch && r.Uri?.Host=="www.google.com" && r.Uri.Query.Contains("ayuntamiento"),"Expected fixed Google search"); });
 Test("URL: unsafe and attempted schemes never become searches", () => { foreach(var s in new[]{"file:///c:/secret","javascript:alert(1)","data:text/html,hello","mailto:a@b.com","custom:payload","https:example.org","https://user:pass@example.org","https://example.org/\nsecret","https://","https://example.org\\evil","https://exa mple.org"}) Check(!NavigationPolicy.Resolve(s,SearchProvider.Google).Allowed,"Rejected "+s); });
