@@ -762,7 +762,12 @@ seven executable source/project blobs from #2114 on current main. The existing
 Brave offline workflow's core runner now requires complete adapter59/59 and
 gateway39/39 console results when the gateway is present, using the unchanged
 Linux loopback-only namespace, fixed SDK, cleared environment and empty NuGet
-sources. Historical adapter-only candidates explicitly report the gateway as
+sources. The first hosted [run 42523008579](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42523008579)
+used source `a6b372c33ad1a3b7d19229beb8a3bd5fe92bbd2e` and harness
+`80cc82e31bd8791d7929d191f1fd70e33fa82363`: adapter59/59 and gateway39/39,
+both Release builds with zero warnings/errors and no provider activation.
+This is historical evidence for those SHAs, not acceptance of a later head.
+Historical adapter-only candidates explicitly report the gateway as
 not run; Windows would register37 gateway cases and is not claimed here.
 Require fresh hosted results for the final source and harness SHAs before
 integration; historical local39/39 is not current CI or live-provider evidence.
