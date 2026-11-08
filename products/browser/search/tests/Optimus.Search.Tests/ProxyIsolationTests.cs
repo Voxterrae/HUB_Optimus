@@ -44,7 +44,8 @@ static class ProxyIsolationTests
             Require(child.ExitCode == 0, "Provider proxy worker failed without returning its fixture results");
             Require(proxy.Contacts == 0, $"Ambient proxy received provider traffic; operator contacts={configured.Contacts}, proxy contacts={proxy.Contacts}");
             Require(configured.Contacts == 1 && configured.RequestLines.Count == 1, "Configured operator must receive exactly one request");
-            Require(configured.RequestLines.Single() == "GET /search?format=json&q=proxy-isolation-fixture&language=es&categories=general HTTP/1.1", "Configured operator received an unexpected method or request target");
+            Require(configured.RequestLines.Single() == "POST /search HTTP/1.1", "Configured operator received an unexpected method or request target");
+            Require(configured.RequestBodies.Single() == "format=json&q=proxy-isolation-fixture&language=es&categories=general&safesearch=2", "Configured operator did not receive the fixed private form");
         });
     }
 
@@ -70,6 +71,7 @@ static class ProxyIsolationTests
         public string Url { get; }
         public int Contacts => Volatile.Read(ref contacts);
         public ConcurrentQueue<string> RequestLines { get; } = new();
+        public ConcurrentQueue<string> RequestBodies { get; } = new();
 
         public Responder()
         {
@@ -92,6 +94,10 @@ static class ProxyIsolationTests
                         }
                         var headers = Encoding.ASCII.GetString(bytes.ToArray());
                         RequestLines.Enqueue(headers.Split("\r\n", StringSplitOptions.None)[0]);
+                        var lengthHeader=headers.Split("\r\n",StringSplitOptions.None).SingleOrDefault(x=>x.StartsWith("Content-Length:",StringComparison.OrdinalIgnoreCase));
+                        var length=lengthHeader is null?0:int.Parse(lengthHeader[15..].Trim(),System.Globalization.CultureInfo.InvariantCulture);
+                        if(length is <0 or >8192) throw new IOException("Fixture body exceeds bound");
+                        var body=new byte[length];await stream.ReadExactlyAsync(body,stopping.Token);RequestBodies.Enqueue(Encoding.UTF8.GetString(body));
                         await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 14\r\nConnection: close\r\n\r\n{\"results\":[]}"), stopping.Token);
                     }
                 }

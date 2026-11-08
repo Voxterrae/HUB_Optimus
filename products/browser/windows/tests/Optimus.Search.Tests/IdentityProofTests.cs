@@ -26,6 +26,25 @@ static class IdentityProofTests
             Undisclosed(listener.Requests);
         });
 
+        test("real TLS launcher accepts authenticated health after a 500ms response delay", async () =>
+        {
+            using var profile = new Profile(Token);
+            await using var listener = new Listener(async (stream, headers) =>
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(500));
+                var nonce = Header(headers, "X-Optimus-Nonce");
+                if (nonce is not { Length: 64 } || !nonce.All(Uri.IsHexDigit))
+                    throw new Exception("Delayed health request must include a valid 64-hex nonce");
+                await Send(stream, Health, Proof(Token, 17831, nonce));
+            });
+            using var client = Client();
+            using var launcher = new SearchHostLauncher(client, profile.Directory, profile.Directory);
+            var connection = await launcher.ConnectAsync(null, default);
+            Require(connection.Error is null && connection.Target.BearerToken == Token && !launcher.OwnsProcess,
+                "A delayed authenticated independent host must connect within the existing global deadline");
+            Undisclosed(listener.Requests);
+        });
+
         // Removing proof verification would disclose a target to a name/version port squatter.
         foreach (var mode in new[] { "missing", "random", "malformed", "wrong-token", "unknown-marker" })
             test("real TLS launcher rejects " + mode + " identity without bearer or query disclosure", async () =>
