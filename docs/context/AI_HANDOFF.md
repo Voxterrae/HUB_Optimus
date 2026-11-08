@@ -711,3 +711,28 @@ source candidate and new hosted fifteen-test acceptance remain pending. Profile 
 is not HTTP acceptance, a listener or a secure channel. No owner's device is
 authorized by workflow availability. OWNER_AUTHORITY_HANDOFF remains controlling
 and unchanged.
+
+## 2026-11-08 — Native-search WPF regression validation (#2151)
+
+The existing manual Optimus Windows smoke binds a reviewed source commit/tree
+for the reconciled #2106 change and adds 13 WPF handler/state scenarios. It
+retains the complete native TLS suite and 22 identity cases, including the
+#2112 delayed-health regression, production suites and packaged-service checks.
+The source literal remains confirmation-only; workflow and product SHAs are
+reported separately. See [WORKFLOWS.md](WORKFLOWS.md#optimus-windows-smokeyml).
+
+The new project links the actual App C#/XAML and Core, using synthetic in-memory
+HTTP and owned temporary settings. It compiles visibly before captured execution
+and requires all 13 exact case names, final summary and zero exit. The test uses
+an unshown window and owned invisible HWND; an interactive disposable runner
+and absent default profile remain mandatory. No WebView2 engine, SearchHost or
+external provider is started by these WPF cases.
+
+Compilation, the new 13-case execution and hosted interactive prerequisites
+remain **UNRUN** until their exact-candidate receipt exists. Issue #2151 scopes
+one hosted run with gui=false after protected integration. Raised events and a
+reconstructed callback subscription do not accept physical keyboard/focus,
+visible UIAutomation, Narrator/NVDA, CreateTabAsync initialization, packaged GUI,
+physical Windows 10/11, provider relevance or distribution. Missing or blocked
+evidence is not PASS. No owner's desktop execution or activation is authorized;
+OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.

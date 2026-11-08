@@ -116,6 +116,35 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   The manual workflow must reach the default branch before dispatch; merging
   it does not run native validation or make this job a required branch check.
 
+### optimus-windows-smoke.yml
+
+- Trigger: manual `workflow_dispatch` on protected `main` only, in the public
+  source repository with exact repository and owner-account guards.
+- Permissions: `contents: read`; immutable checkout Action, no persisted checkout
+  credentials, artifact uploads or caches. The source input confirms a literal
+  reviewed commit; exact HEAD/tree and clean checkout are checked separately.
+- Runner: Windows 2022, 15-minute job limit, existing SDK **10.0.403** without
+  installation/fallback. Less than one GiB free RAM or occupied loopback17831
+  blocks execution without stopping existing processes or listeners.
+- Native coverage: complete C# TLS suite and all 22 identity cases, production
+  suites/publications and real packaged-service acceptance. Their actual totals
+  and cleanup must come from the exact-source receipt, not historical counts.
+- The independent three-minute WPF step builds with visible diagnostics, then
+  runs the 13 reviewed search handler/state scenarios with captured runtime
+  output. Every named case must occur once, the exact final summary must occur
+  once and last, and exit/failure/block markers must agree. Only curated case
+  outcomes and provenance enter its separate report and always-run summary.
+- WPF cases use synthetic HTTP, owned temporary settings and an invisible HWND;
+  they require an interactive disposable runner with no default Optimus profile.
+  The product window is not shown and its engine/host are not initialized.
+- Issue #2151 scopes one later execution with `gui=false`; these WPF cases run
+  independently of that optional GUI input. Visible GUI, physical keyboard/focus,
+  assistive technology, provider relevance and distribution remain separate.
+  Missing, blocked, skipped or timed-out evidence never establishes acceptance.
+- Record workflow SHA, product SHA/tree and run/attempt separately. The workflow
+  does not create a new required PR-head check, activate a provider or distribute
+  the product. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+
 ### link-check.yml
 
 - Triggers:
