@@ -42,6 +42,15 @@ Any company instance requires a different service, `TokenUser` SID, protected ro
 
 ## Concrete roots, descriptors and immutable bootstrap evidence
 
+The [later policy and placement amendment](protected-root-ancestors.v0_1.md),
+adopted in the [exact-head owner record](https://github.com/Voxterrae/HUB_Optimus/pull/2012#issuecomment-6455986873),
+supersedes this document's original ProgramData/ProgramFiles two-root layout
+with one `<ProgramFiles>\HUB_Relay\Personal` tree and separate writable `State`.
+The original two-root location and directory-descriptor examples below are
+historical and superseded by that policy for the personal tree. The principal,
+owned-key provenance and remaining native/activation gates here stay in force.
+This amendment moves no files and permits no provisioning or migration.
+
 Resolve Windows known folders locally in the privileged bootstrap, never from caller environment variables. Candidate product roots are `<ProgramData>\HUB_Relay\Personal` and `<ProgramFiles>\HUB_Relay\Personal`; they must resolve to an approved fixed local NTFS volume. These are proposed future locations, not paths created by this draft.
 
 Create the service and product-owned directory tree only when absent. An existing service or any existing product-owned ancestor/root/leaf causes a stop, including a seemingly compatible old installation. Do not change its ACL, reuse it or automatically select another name. Existing OS-owned known-folder ancestors are inspected, not adopted as application-owned resources. Later upgrade/reinstall needs a separately reviewed procedure.
