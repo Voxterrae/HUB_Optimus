@@ -1,0 +1,109 @@
+# Independent remote pilot validation under #2096; no Azure deployment or secrets.
+name: Optimus Search remote
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/search-remote.yml
+      - products/browser/search/**
+      - tests/test_optimus_public_pilot.py
+      - requirements*.txt
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-remote-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Prepare reviewed SDK
+        uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
+        with:
+          dotnet-version: 10.0.403
+          cache: false
+
+      - name: Setup Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Install existing test dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Restore backend and remote using an empty local source
+        shell: bash
+        working-directory: products/browser/search
+        run: |
+          set -euo pipefail
+          test "$(dotnet --version)" = "10.0.403"
+          mkdir -p "$RUNNER_TEMP/optimus-empty-nuget"
+          dotnet restore tests/Optimus.Search.Tests/Optimus.Search.Tests.csproj --source "$RUNNER_TEMP/optimus-empty-nuget"
+          dotnet restore remote/tests/Optimus.Search.Remote.Tests/Optimus.Search.Remote.Tests.csproj --source "$RUNNER_TEMP/optimus-empty-nuget"
+
+      - name: Run unchanged backend tests
+        working-directory: products/browser/search
+        run: dotnet run --project tests/Optimus.Search.Tests/Optimus.Search.Tests.csproj --no-restore --no-launch-profile --configuration Release
+
+      - name: Run remote HTTP and authentication tests
+        working-directory: products/browser/search
+        run: dotnet run --project remote/tests/Optimus.Search.Remote.Tests/Optimus.Search.Remote.Tests.csproj --no-restore --no-launch-profile --configuration Release
+
+      - name: Run independent verifier and inert infrastructure checks
+        shell: bash
+        working-directory: products/browser/search
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s remote/tests_python -v
+          python -m unittest discover -s remote/ops -v
+          python remote/ops/azure/validate_proposal.py
+
+      - name: Run unchanged public catalog tests
+        run: python -m pytest -q tests/test_optimus_public_pilot.py
+
+      - name: Publish and independently exercise the local process
+        shell: bash
+        working-directory: products/browser/search
+        run: |
+          set -euo pipefail
+          dotnet publish remote/src/Optimus.Search.Remote/Optimus.Search.Remote.csproj --no-restore --configuration Release --output "$RUNNER_TEMP/optimus-remote-publish" /p:UseAppHost=false
+          python remote/tools/run_live_acceptance.py "$RUNNER_TEMP/optimus-remote-publish/Optimus.Search.Remote.dll"
+
+  container-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Build the exact Dockerfile with reviewed Linux amd64 base digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --pull --platform linux/amd64 --network none \
+            --file products/browser/search/remote/ops/azure/Dockerfile \
+            --build-arg DOTNET_SDK_IMAGE=mcr.microsoft.com/dotnet/sdk@sha256:9c7b6b263d9d4c2e4718e16dae6d75cd8f4b5ccf206f1e7d48a98eb429981b03 \
+            --build-arg DOTNET_RUNTIME_IMAGE=mcr.microsoft.com/dotnet/aspnet@sha256:43cbcf11fd6f88c0375c9c0f7fe59af619abeb323befe5f57dc1502b5a05d8c3 \
+            --iidfile "$RUNNER_TEMP/optimus-remote-image-id" \
+            products/browser/search
+
+      - name: Exercise constrained container HTTP and external read-only credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          python products/browser/search/remote/tools/run_container_acceptance.py "$(cat "$RUNNER_TEMP/optimus-remote-image-id")"
