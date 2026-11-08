@@ -877,6 +877,11 @@ canvas {
   padding-top: 2.2rem;
 }
 
+.portfolio-navigation {
+  margin: 0 0 1.5rem;
+  padding-top: 0;
+}
+
 .card-links a,
 .provider-note a {
   color: var(--signal-amber);
