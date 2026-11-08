@@ -10,6 +10,10 @@ SITE = ROOT / "site"
 PUBLIC_ORIGIN = "https://huboptimus.dev"
 EVIDENCE_REF = "8426b08e5f88b650c4d79e41d3ce3afd7d42746b"
 PRODUCT_REF = "7ca513eb16d12d77ba5f017c63109dab937c12b2"
+CATALOGUE_EVIDENCE_LINK = (
+    "https://github.com/Voxterrae/HUB_Optimus/blob/"
+    "6d3cf67469233d3177fc59dd76232df3e9774b73/products/README.md"
+)
 DEVELOPMENT_EVIDENCE_LINKS = {
     f"https://github.com/Voxterrae/HUB_Optimus/tree/{PRODUCT_REF}/products/browser/windows",
     f"https://github.com/Voxterrae/HUB_Optimus/tree/{PRODUCT_REF}/products/browser/web",
@@ -32,7 +36,6 @@ PUBLIC_ROUTES = {
 }
 LIVE_MAIN_NAVIGATION = {
     "https://github.com/Voxterrae/HUB_Optimus/tree/main/obsidian-HUB_Optimus",
-    "https://github.com/Voxterrae/HUB_Optimus/blob/main/products/README.md",
 }
 EXPECTED_EXTERNAL_NAVIGATION = LIVE_MAIN_NAVIGATION | {
     "https://github.com/Voxterrae/HUB_Optimus",
@@ -185,6 +188,7 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
     )
     checked = []
     development_checked = set()
+    catalogue_checked = set()
     for path in PUBLIC_ROUTES.values():
         for tag, attribute, reference in parse_document(path).references:
             if tag != "a" or attribute != "href":
@@ -199,6 +203,8 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
             repository_path = ROOT / unquote(match.group("path"))
             if match.group("ref") == EVIDENCE_REF:
                 checked.append(reference)
+            elif reference == CATALOGUE_EVIDENCE_LINK:
+                catalogue_checked.add(reference)
             else:
                 assert reference in DEVELOPMENT_EVIDENCE_LINKS, reference
                 development_checked.add(reference)
@@ -218,6 +224,7 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
 
     assert len(checked) == 22
     assert development_checked == DEVELOPMENT_EVIDENCE_LINKS
+    assert catalogue_checked == {CATALOGUE_EVIDENCE_LINK}
 
 
 def test_live_external_navigation_targets_are_explicit_and_network_free_in_pytest():
