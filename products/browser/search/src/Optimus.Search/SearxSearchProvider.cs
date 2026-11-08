@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Optimus.Search;
 
@@ -31,20 +32,38 @@ public sealed class SearxSearchProvider : IDisposable
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(string query, string language, CancellationToken cancellationToken)
     {
         if (!SearchValidation.ValidQuery(query)) throw new ArgumentException("Invalid query.");
+        if (language is null || !Regex.IsMatch(language, @"\A[a-zA-Z]{2,3}(?:-[a-zA-Z]{2})?\z", RegexOptions.CultureInvariant))
+            throw new ArgumentException("Invalid language.");
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(10));
         try
         {
             var prefix = endpoint.AbsoluteUri.TrimEnd('/');
-            var requestUri = new Uri(prefix + (endpoint.AbsolutePath.TrimEnd('/').EndsWith("/search", StringComparison.Ordinal) ? "" : "/search") + "?format=json&q=" + Uri.EscapeDataString(query) + "&language=" + Uri.EscapeDataString(language) + "&categories=general");
-            using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            var requestUri = new Uri(prefix + (endpoint.AbsolutePath.TrimEnd('/').EndsWith("/search", StringComparison.Ordinal) ? "" : "/search"));
+            using var request = new HttpRequestMessage(HttpMethod.Post, requestUri) {
+                Content = new FormUrlEncodedContent(new KeyValuePair<string, string>[] {
+                    new("format", "json"), new("q", query), new("language", language),
+                    new("categories", "general"), new("safesearch", "2")
+                })
+            };
             request.Headers.Accept.ParseAdd("application/json");
             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline.Token);
-            if (!response.IsSuccessStatusCode || response.Content.Headers.ContentLength > 1024 * 1024) throw new SearchProviderException();
+            if (!response.IsSuccessStatusCode || response.Content.Headers.ContentLength > 1024 * 1024
+                || !string.Equals(response.Content.Headers.ContentType?.MediaType, "application/json", StringComparison.OrdinalIgnoreCase)
+                || response.Content.Headers.ContentEncoding.Any(value => !value.Equals("identity", StringComparison.OrdinalIgnoreCase)))
+                throw new SearchProviderException();
             await using var stream = await response.Content.ReadAsStreamAsync(deadline.Token);
             var bytes = await BoundedRead.ReadAsync(stream, 1024 * 1024, deadline.Token);
             using var json = JsonDocument.Parse(bytes, new JsonDocumentOptions { MaxDepth = 32 });
-            if (json.RootElement.ValueKind != JsonValueKind.Object || !json.RootElement.TryGetProperty("results", out var list) || list.ValueKind != JsonValueKind.Array) throw new SearchProviderException();
+            if (json.RootElement.ValueKind != JsonValueKind.Object) throw new SearchProviderException();
+            RequireUniqueProperties(json.RootElement);
+            if (!json.RootElement.TryGetProperty("results", out var list) || list.ValueKind != JsonValueKind.Array) throw new SearchProviderException();
+            // Validate every object before applying the display cap: an ambiguous
+            // late record must not make a partially trusted response look healthy.
+            foreach (var item in list.EnumerateArray()) {
+                deadline.Token.ThrowIfCancellationRequested();
+                if (item.ValueKind == JsonValueKind.Object) RequireUniqueProperties(item);
+            }
             // A reported engine failure is a conservative total failure, even with partial results.
             if (json.RootElement.TryGetProperty("unresponsive_engines", out var failures)
                 && (failures.ValueKind != JsonValueKind.Array || failures.GetArrayLength() != 0)) throw new SearchProviderException();
@@ -64,6 +83,15 @@ public sealed class SearxSearchProvider : IDisposable
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { throw new SearchProviderException(true); }
         catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or JsonException) { throw new SearchProviderException(); }
+    }
+    private static void RequireUniqueProperties(JsonElement value)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        try {
+            foreach (var property in value.EnumerateObject())
+                if (!names.Add(property.Name)) throw new SearchProviderException();
+        }
+        catch (InvalidOperationException) { throw new SearchProviderException(); }
     }
     private static string ReadString(JsonElement value)
     {

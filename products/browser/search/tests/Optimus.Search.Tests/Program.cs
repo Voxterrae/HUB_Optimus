@@ -62,7 +62,7 @@ Test("catalog rejects malformed fields, controls, credentials, non-UTC dates, bo
     await Reject(() => CatalogStore.ImportAsync(FilePath("input.json"), FilePath("index.json")));
 });
 
-Test("web provider emits fixed query without bearer, filters URLs, deduplicates and bounds text", async () => {
+Test("web provider posts private form without bearer, filters URLs, deduplicates and bounds text", async () => {
     string? request = null;
     var results = new List<object> { new {url="https://EXAMPLE.org:443/a#one",title=new string('t',250),content=new string('c',1300)}, new {url="https://example.org/a#two",title="Duplicate",content="text"}, new {url="javascript:alert(1)",title="Bad",content="bad"}, new {url="https://u:p@example.org/",title="Bad",content="bad"}, new {url="https://example.org/\\bad",title="Bad",content="bad"} };
     results.AddRange(Enumerable.Range(0,30).Select(i => new {url=$"https://example.org/{i}",title=$"Result {i}",content="text"}));
@@ -70,7 +70,10 @@ Test("web provider emits fixed query without bearer, filters URLs, deduplicates 
     using var provider = new SearxSearchProvider(upstream.Url);
     var found = await provider.SearchAsync("á &?", "es", default);
     Equal(20, found.Count); Equal("https://example.org/a", found[0].Url); Equal(240, found[0].Title.Length); Equal(1200, found[0].Content.Length);
-    True(request!.StartsWith("GET /search?format=json&q=%C3%A1%20%26%3F&language=es&categories=general HTTP/1.1"));
+    True(request!.StartsWith("POST /search HTTP/1.1\r\n",StringComparison.Ordinal));
+    True(request.Contains("Content-Type: application/x-www-form-urlencoded",StringComparison.OrdinalIgnoreCase));
+    Equal("format=json&q=%C3%A1+%26%3F&language=es&categories=general&safesearch=2",request.Split("\r\n\r\n",2,StringSplitOptions.None)[1]);
+    True(!request.Split("\r\n",2,StringSplitOptions.None)[0].Contains("q="));
     True(!request.Contains("Authorization", StringComparison.OrdinalIgnoreCase)); True(!request.Contains("Cookie:", StringComparison.OrdinalIgnoreCase));
 });
 Test("provider rejects unsafe endpoint configuration before network", async () => {
@@ -89,19 +92,19 @@ Test("provider rejects malformed JSON shape and redirect rather than following i
     try { await redirectProvider.SearchAsync("query","es",default); throw new Exception("Redirect accepted"); } catch(SearchProviderException ex) { True(!ex.TimedOut); }
 });
 Test("provider bounds unknown-length streamed bytes and disposes late body on cancellation", async () => {
-    await using(var upstream = new Upstream(async (stream, _) => { await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n")); await stream.WriteAsync(new byte[1024*1024+1]); })) {
+    await using(var upstream = new Upstream(async (stream, _) => { await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n")); await stream.WriteAsync(new byte[1024*1024+1]); })) {
         using var provider = new SearxSearchProvider(upstream.Url);
         try { await provider.SearchAsync("query","es",default); throw new Exception("Oversized stream accepted"); } catch(SearchProviderException ex) { True(!ex.TimedOut); }
     }
     var disconnected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-    await using var slow = new Upstream(async(stream,headers) => { await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Length: 30\r\n\r\n{\"results\":")); if(await stream.ReadAsync(new byte[1])==0) disconnected.TrySetResult(); });
+    await using var slow = new Upstream(async(stream,headers) => { await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 30\r\n\r\n{\"results\":")); if(await stream.ReadAsync(new byte[1])==0) disconnected.TrySetResult(); });
     using var slowProvider = new SearxSearchProvider(slow.Url); using var cancel = new CancellationTokenSource(TimeSpan.FromMilliseconds(150));
     var watch = Stopwatch.StartNew();
     try { await slowProvider.SearchAsync("query","es",cancel.Token); throw new Exception("Cancelled read applied"); } catch(OperationCanceledException) {}
     True(watch.Elapsed < TimeSpan.FromSeconds(3)); await disconnected.Task.WaitAsync(TimeSpan.FromSeconds(3));
 });
 Test("API maps ten-second upstream body deadline to sanitized 504 without fallback", async () => {
-    await using var upstream = new Upstream(async(stream,headers) => { await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Length: 30\r\n\r\n{\"results\":")); _ = await stream.ReadAsync(new byte[1]); });
+    await using var upstream = new Upstream(async(stream,headers) => { await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 30\r\n\r\n{\"results\":")); _ = await stream.ReadAsync(new byte[1]); });
     using var provider = new SearxSearchProvider(upstream.Url);
     await using var server=await SearchServer.StartAsync(new ServerOptions(0,new string('a',64)),new LocalSearchIndex([]),provider);
     using var client=new HttpClient(TestTls.Handler()){BaseAddress=new Uri(server.Address)};client.DefaultRequestHeaders.Authorization=new("Bearer",new string('a',64));
@@ -240,7 +243,7 @@ Test("CLI and actual token worker run without optional DOTNET_ROOT", async () =>
 Test("provider accepts exactly one MiB and rejects larger declared body", async () => {
     var prefix="{\"results\":[]}";var body=prefix+new string(' ',1024*1024-prefix.Length);
     await using(var upstream=new Upstream((stream,headers)=>Upstream.Json(stream,body))) {using var provider=new SearxSearchProvider(upstream.Url);Equal(0,(await provider.SearchAsync("help","es",default)).Count);}
-    await using var declared=new Upstream(async(stream,headers)=>await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Length: 1048577\r\nConnection: close\r\n\r\n")));
+    await using var declared=new Upstream(async(stream,headers)=>await stream.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 1048577\r\nConnection: close\r\n\r\n")));
     using var bounded=new SearxSearchProvider(declared.Url);try {await bounded.SearchAsync("help","es",default);throw new Exception("Declared oversize accepted");} catch(SearchProviderException ex){True(!ex.TimedOut);}
 });
 Test("web API successful loopback provider fixture returns Optimus protocol and fixed source", async () => {
@@ -405,7 +408,7 @@ Test("provider preserves accepted base prefix " + suffix, async () => {
     using var provider=new SearxSearchProvider(upstream.Url.TrimEnd('/')+suffix);
     await provider.SearchAsync("help","es",default);
     var expected=suffix.Length==0?"/search":"/instance/search";
-    True(received!.StartsWith("GET "+expected+"?",StringComparison.Ordinal));
+    True(received!.StartsWith("POST "+expected+" HTTP/1.1\r\n",StringComparison.Ordinal));
 });
 Test("native accepted localhost configuration constructs and starts actual host", async () => {
     await using var upstream=new Upstream((stream,headers)=>Upstream.Json(stream,"{\"results\":[]}"));
@@ -437,6 +440,73 @@ Test("actual API reports " + state + " without engine detail", async () => {
 Test("service exposes HTTPS only including actual ephemeral port", async () => {
     await using var server=await SearchServer.StartAsync(new(0,new string('a',64)),new LocalSearchIndex([]));
     True(server.Address.StartsWith("https://127.0.0.1:"));True(new Uri(server.Address).Port>0);
+});
+
+// These transport fixtures catch private queries leaking into a request target and
+// ambiguous responses being counted as a healthy empty search.
+foreach(var language in new[]{"es&engines=other", "es_ES", "", "es\r\nX-Private: value", "abcd", "es-123"})
+Test("provider rejects invalid language before contacting operator " + language.Replace("\r"," ").Replace("\n"," "), async () => {
+    bool contacted=false;
+    await using var upstream=new Upstream(async(stream,request)=>{contacted=true;await Upstream.Json(stream,"{\"results\":[]}");});
+    using var provider=new SearxSearchProvider(upstream.Url);
+    try { await provider.SearchAsync("language fixture",language,default);throw new Exception("Invalid language accepted"); }
+    catch(ArgumentException) { }
+    True(!contacted);
+});
+foreach(var language in new[]{"es", "ca", "en-US", "de", "fr", "ru", "eng"})
+Test("provider forwards valid language in body " + language, async () => {
+    string? request=null;
+    await using var upstream=new Upstream(async(stream,value)=>{request=value;await Upstream.Json(stream,"{\"results\":[]}");});
+    using var provider=new SearxSearchProvider(upstream.Url);
+    Equal(0,(await provider.SearchAsync("form fixture",language,default)).Count);
+    True(request!.StartsWith("POST /search HTTP/1.1\r\n",StringComparison.Ordinal));
+    True(request.Split("\r\n\r\n",2,StringSplitOptions.None)[1].Contains("&language="+language+"&categories=general&safesearch=2",StringComparison.Ordinal));
+});
+foreach(var (label,contentType,encoding) in new (string,string?,string?)[]{
+    ("missing media type",null,null),("HTML","text/html",null),("problem JSON","application/problem+json",null),
+    ("gzip","application/json","gzip"),("br","application/json","br"),("mixed encoding","application/json","identity, gzip")
+})
+Test("API rejects upstream " + label + " with sanitized failure", async () => {
+    await using var upstream=new Upstream((stream,request)=>Upstream.Json(stream,"{\"results\":[]}",contentType,encoding));
+    using var provider=new SearxSearchProvider(upstream.Url);
+    var token=new string('a',64);await using var server=await SearchServer.StartAsync(new(0,token),new LocalSearchIndex([]),provider);
+    using var client=new HttpClient(TestTls.Handler()){BaseAddress=new Uri(server.Address)};client.DefaultRequestHeaders.Authorization=new("Bearer",token);
+    using var response=await client.GetAsync("/search?format=json&q=private-fixture&scope=web&language=es");
+    Equal(HttpStatusCode.BadGateway,response.StatusCode);
+    var body=await response.Content.ReadAsStringAsync();using var json=JsonDocument.Parse(body);
+    Equal("upstream-failed",json.RootElement.GetProperty("error").GetString());Equal("",json.RootElement.GetProperty("query").GetString());Equal(0,json.RootElement.GetProperty("results").GetArrayLength());
+    True(!body.Contains("private-fixture"));True(!body.Contains(upstream.Url));True(!body.Contains(token));
+});
+foreach(var (contentType,encoding) in new (string,string?)[]{("application/json; charset=utf-8",null),("APPLICATION/JSON","identity")})
+Test("provider accepts expected JSON media type " + contentType, async () => {
+    await using var upstream=new Upstream((stream,request)=>Upstream.Json(stream,"{\"results\":[]}",contentType,encoding));
+    using var provider=new SearxSearchProvider(upstream.Url);Equal(0,(await provider.SearchAsync("media fixture","es",default)).Count);
+});
+foreach(var body in new[]{
+    "{\"results\":[{\"url\":\"https://example.org\",\"title\":\"Public result\"}],\"results\":[]}",
+    "{\"results\":[],\"unresponsive_engines\":[[\"private-engine\",\"private-failure\"]],\"unresponsive_engines\":[]}",
+    "{\"results\":[{\"url\":\"https://private.example\",\"url\":\"https://example.org\",\"title\":\"Public result\"}]}",
+    "{\"results\":[{\"url\":\"https://example.org\",\"title\":\"private-title\",\"title\":\"Public result\"}]}",
+    "{\"results\":[{\"url\":\"https://example.org\",\"title\":\"Public result\",\"content\":\"private-content\",\"content\":\"Public content\"}]}",
+    "{\"results\":[{\"url\":\"https://example.org\",\"title\":\"Public result\",\"engine\":\"one\",\"engine\":\"two\"}]}"
+})
+Test("API rejects ambiguous upstream object " + body, async () => {
+    await using var upstream=new Upstream((stream,request)=>Upstream.Json(stream,body));using var provider=new SearxSearchProvider(upstream.Url);
+    var token=new string('a',64);await using var server=await SearchServer.StartAsync(new(0,token),new LocalSearchIndex([]),provider);
+    using var client=new HttpClient(TestTls.Handler()){BaseAddress=new Uri(server.Address)};client.DefaultRequestHeaders.Authorization=new("Bearer",token);
+    using var response=await client.GetAsync("/search?format=json&q=private-fixture&scope=web&language=es");Equal(HttpStatusCode.BadGateway,response.StatusCode);
+    var output=await response.Content.ReadAsStringAsync();using var json=JsonDocument.Parse(output);
+    Equal("upstream-failed",json.RootElement.GetProperty("error").GetString());Equal(0,json.RootElement.GetProperty("results").GetArrayLength());
+    True(!output.Contains("private-"));True(!output.Contains(upstream.Url));True(!output.Contains(token));
+});
+
+Test("provider rejects ambiguous twenty-first record beyond the display cap", async () => {
+    var firstTwenty=string.Join(",",Enumerable.Range(0,20).Select(i=>JsonSerializer.Serialize(new {url=$"https://example.org/{i}",title="Public result"})));
+    var body="{\"results\":["+firstTwenty+",{\"url\":\"https://example.org/late\",\"title\":\"One\",\"ti\\u0074le\":\"Two\"}]}";
+    await using var upstream=new Upstream((stream,_)=>Upstream.Json(stream,body));
+    using var provider=new SearxSearchProvider(upstream.Url);
+    try {await provider.SearchAsync("late record fixture","es",default);throw new Exception("Ambiguous late record accepted");}
+    catch(SearchProviderException ex){True(!ex.TimedOut);}
 });
 
 IdentityProofTests.Register(Test);
@@ -514,17 +584,27 @@ sealed class Upstream : IAsyncDisposable
     public Upstream(Func<NetworkStream,string,Task> respond)
     {
         listener.Start(); Url=$"http://127.0.0.1:{((IPEndPoint)listener.LocalEndpoint).Port}";
+        // Register accept before returning: invalid-input tests may dispose
+        // without making a connection, before the serving task is scheduled.
+        var accepted=listener.AcceptTcpClientAsync();
         serving=Task.Run(async()=>{
             try {
-                using var client=await listener.AcceptTcpClientAsync(); await using var stream=client.GetStream();
+                using var client=await accepted; await using var stream=client.GetStream();
                 var data=new List<byte>(); var one=new byte[1];
                 while(data.Count<16384 && await stream.ReadAsync(one)>0) {data.Add(one[0]); if(data.Count>=4 && Encoding.ASCII.GetString(data.TakeLast(4).ToArray())=="\r\n\r\n") break;}
-                await respond(stream,Encoding.ASCII.GetString(data.ToArray()));
+                var headers=Encoding.ASCII.GetString(data.ToArray());
+                var lengthHeader=headers.Split("\r\n",StringSplitOptions.None).SingleOrDefault(x=>x.StartsWith("Content-Length:",StringComparison.OrdinalIgnoreCase));
+                var length=lengthHeader is null?0:int.Parse(lengthHeader[15..].Trim(),System.Globalization.CultureInfo.InvariantCulture);
+                if(length is <0 or >8192) throw new IOException("Fixture request body exceeded bound.");
+                var body=new byte[length];using var deadline=new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await stream.ReadExactlyAsync(body,deadline.Token);
+                await respond(stream,headers+Encoding.UTF8.GetString(body));
             } catch(Exception ex) when(ex is IOException or ObjectDisposedException or SocketException) {}
         });
     }
-    public static async Task Json(NetworkStream stream,string json) {
-        var bytes=Encoding.UTF8.GetBytes(json); await stream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {bytes.Length}\r\nConnection: close\r\n\r\n")); await stream.WriteAsync(bytes);
+    public static async Task Json(NetworkStream stream,string json,string? contentType="application/json",string? encoding=null) {
+        var headers=(contentType is null?"":"Content-Type: "+contentType+"\r\n")+(encoding is null?"":"Content-Encoding: "+encoding+"\r\n");
+        var bytes=Encoding.UTF8.GetBytes(json); await stream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\n{headers}Content-Length: {bytes.Length}\r\nConnection: close\r\n\r\n")); await stream.WriteAsync(bytes);
     }
     public async ValueTask DisposeAsync() {listener.Stop(); await serving.WaitAsync(TimeSpan.FromSeconds(4));}
 }
