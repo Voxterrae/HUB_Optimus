@@ -265,7 +265,134 @@ from the child allow-list. Native errors include 1347 (anonymous token), 234
 native statuses. The new peer cases create no CNG keys. No real revert failure,
 non-completing driver, primary-token replacement or PID reuse was induced.
 
+## Private file-security descriptor prerequisite
+
+`security_descriptor` is private and dormant. It inspects an already-open
+file/directory handle with `GetSecurityInfo`, copies the owner/DACL snapshot,
+and compares exact metadata expectations. It opens no path and changes no
+filesystem object. A match produces no protected root, authenticated service
+identity, creation receipt, owned key, store, enrollment or release authority.
+The observation can become stale immediately; it is not an effective-access
+calculation or an isolation guarantee.
+
+The application copy/parser accepts at most 64 KiB. `GetSecurityInfo` allocates
+its buffer before that check, so the bound does not limit Windows' own
+allocation. Explicit `LocalFree` cleanup preserves a primary failure and any
+cleanup failure; Drop is only best effort. The parser reads bounded byte slices,
+without typed unaligned dereferences or Windows calls on arbitrary test bytes.
+It supports revision-1 self-relative descriptors, revision-2/4 ACLs and standard
+allow ACEs containing revision-1 SIDs with at most 15 subauthorities. Offsets,
+counts, sizes, overlap and supported layouts are checked. Absent/NULL/unprotected
+DACLs, unexpected owners, ACE flags including inheritance, unsupported ACE
+types, and missing/additional/changed grants deny. Equivalent allow-ACE ordering
+matches. Duplicate or split grants to the same SID deliberately deny instead of
+being combined; this is a conservative accepted-shape rule, not a claim of full
+Windows access-check equivalence.
+
+The candidate root **metadata** rule expects SYSTEM ownership, SYSTEM full
+access `0x001f01ff` and an expected service grant of `0x001200ab`: read control,
+synchronize, list/read data, add file/write data, read extended attributes,
+traverse/execute and read attributes. It excludes add-subdirectory, root delete,
+delete-child, write attributes, write DACL and write owner. Any future need for
+broader rights requires review. The expected service input must have the
+`S-1-5-80` prefix plus five DWORD subauthorities; SYSTEM, Everyone and All Services
+are rejected. This is structural validation only: another fabricated service SID
+has the same shape. Raw SID shape or equality does not authenticate the virtual
+service account or prove that the selected service is running.
+The `ADD_FILE` bit is also `FILE_WRITE_DATA`; excluding `WRITE_ATTRIBUTES` alone
+does **not** exclude reparse mutation.
+
+Publication remains blocked. A historical separate native probe for #2004 retained a
+directory handle with real read-data access and no write/delete sharing, then
+successfully opened that same directory with only `FILE_WRITE_ATTRIBUTES` and
+set an owned junction. Its file identity stayed unchanged. Both fresh empty
+fixtures were deleted through retained identity-checked handles and verified
+absent. This matches Microsoft's
+[sharing-mode exception for attribute access](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew)
+and [reparse mutation access rules](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4aeefef8-92c3-4abc-af7a-a610caf8a165).
+That short separate probe is not a credited Rust-suite test. No sharing-only
+ancestor guard, traversal, staging, rename or publication API is implemented.
+Trusted ancestor protection, any handle-relative publication design and its
+native validation remain separate gates.
+
+The descriptor tests use exclusively created zero-content local NTFS files and
+explicit fixture ACLs. Test-only fixture selection is not a production root
+selector. Cleanup uses each retained creation handle, verifies volume/file ID,
+deletes that exact object, closes the handle and checks the exact path is absent.
+No recursive cleanup or persistent key creation is added. A user-owned fixture
+matching its test policy must fail the SYSTEM-owner rule. The current-token
+attribute-write probe and the owner's ability to change its own DACL illustrate
+why metadata equality does not prove distinct-principal isolation.
+The fixture ACL includes `SYNCHRONIZE`, so a synchronous open's implicit request
+for that right cannot masquerade as an attribute-write denial. A separate empty
+regular-file control using `0x001200ab` allows a `FILE_WRITE_DATA` open, without
+writing any content; it demonstrates the shared bit, not safe directory mutation.
+The original native fixtures recorded Windows normalizing duplicate allow
+entries and removing file inheritance flags. Tests inspect the resulting shape; raw-parser cases
+separately establish duplicate and flag rejection without claiming those bytes
+were retained by NTFS. No OS buffer-free failure is deliberately induced.
+
+The original descriptor source had 16 cases: 11 native file cases and five
+deterministic parser/policy/error-accounting cases. The native cases included
+equivalent ACE ordering, user-owner versus SYSTEM-owner rejection, null and
+unprotected DACLs, changed/broad grants, a stored unsupported deny ACE, the
+normalization controls, attribute denial followed by an owner DACL change,
+the write-data-bit control, and `GetSecurityInfo` denial without `READ_CONTROL`.
+Its historical full-crate run recorded 45 active cases and the existing one ignored
+subprocess fixture entry; that entry is exercised explicitly by its native parent tests.
+The [historical terminal receipt](https://github.com/Voxterrae/HUB_Optimus/pull/2004#issuecomment-6428352097)
+reports the final full suite and fmt against original head
+`71aa552d9600f8592c07173a7712677cf18c5b90`. Clippy covered executable-equivalent
+source before an endian-comment clarification, without a byte-identical claim.
+Historical compiled bytes were not independently revalidated in this reconstruction.
+The historical host guards and HTTP-running observations retain their own scope;
+a descriptor-only run does not execute CNG, HTTP or peer tests or query HTTP.
+
+The test-only ownership correction in [#2147](https://github.com/Voxterrae/HUB_Optimus/issues/2147)
+binds every fixture-helper DACL mutation to the retained volume/file identity,
+single-link regular-file shape and absence of a reparse point before changing
+security metadata. A reopened owner handle requests the already-granted
+`READ_ATTRIBUTES` right and is explicitly closed even when that check rejects it.
+One added native regression supplies another newly owned fixture's handle and
+checks rejection, handle closure and both unchanged policies. This gives 17
+descriptor cases (12 native and five deterministic), using 13 total owned
+fixtures because the new case owns two. Native validation of this correction
+remains **UNRUN**; the earlier 16/45-test evidence does not validate it. On the
+integrated corrected peer base, the expected full-crate inventory is 51 active
+cases plus its one ignored child helper (17 descriptor, 19 peer and 15 CNG/HTTP).
+That is an inventory expectation, not an executed result or an additional gate
+for the focused descriptor profile. This guard protects the test's mutation
+target; it does not establish service isolation or a production root/publication
+boundary.
+
+The separate hosted profile scoped by
+[#2163](https://github.com/Voxterrae/HUB_Optimus/issues/2163) requires the reviewed
+exact candidate and integrated workflow before execution. It selects only
+`security_descriptor::tests::` with `--lib`, one thread and privately captured
+`--show-output`: exactly 17 passes, no ignored cases and 13 complete-line
+fixture cleanup markers. Its fresh owned parent is beneath validated
+`RUNNER_TEMP`, using a non-SYSTEM account and local fixed NTFS. Tests delete only
+their owned files through retained, identity-checked handles; the workflow removes
+only its empty directory nonrecursively. Any leftover or cleanup error fails. Raw SID,
+ACL, path, identity and panic context stays private. The markers do not prove
+global VM cleanup or protected ancestry/isolation; process loss can leave
+resources until the disposable runner is discarded. Workflow availability and
+synthetic checks are not native evidence. No owner-device execution is included.
+
+Actual SYSTEM-owned root provisioning, service identity/profile, virtual-account
+DPAPI/KSP persistence, distinct-principal denial, immutable sealing,
+antirollback/freshness, crash/power-loss durability, protected reference recovery,
+enrollment, T6/T7 and HTTP.sys/Schannel TLS remain open gates.
+
 ## Rollback
+
+For the descriptor increment, remove only `src/security_descriptor.rs`,
+`src/security_descriptor/tests.rs`, its private registration in `src/lib.rs`
+and this descriptor README section through a focused reviewed revert.
+Preserve the existing peer SQOS correction and all independent CNG/HTTP
+content. Apply only the increment's deltas; do not restore historical shared
+README or module-registration files wholesale. No persistent application
+resource or authority is created by this increment.
 
 For this bootstrap increment, revert only its five reviewed paths: `Cargo.toml`,
 `src/lib.rs`, `src/bootstrap_peer.rs`, `src/bootstrap_peer/tests.rs` and this README.
