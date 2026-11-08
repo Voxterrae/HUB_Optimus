@@ -718,18 +718,40 @@ Owned-resource cleanup assertions and process-exit/runner-disposal limits remain
 there is no URL registration, queue binding, HTTP I/O or secure-channel claim.
 No owner's device is authorized by workflow availability.
 
-Issue #2152 adds a closed `bootstrap-peer` profile for a separately reviewed
-corrected #2003/#2048 candidate. It requires exactly 19 active passes and only
-`bootstrap_peer::tests::native_child_entry` ignored from a 20-entry inventory.
-The helper is invoked by parent fixtures and never counted as a passing security
-test. Peer output is captured privately, with only allowed names/fixed statuses
-and counts published; duplicate, missing, extra or contradictory outcomes fail.
-This peer-only GNU profile executes no CNG/HTTP tests and queries no HTTP service.
-Its local pipes, child processes and token-context fixtures remain confined to
-the disposable runner. Availability is not native peer acceptance: the fresh
-exact-candidate run is pending. Historical #2048 MSVC runs retain their own
-source/toolchain limits. No service activation, owner's-device operation or
-enrollment follows. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+The closed `bootstrap-peer` profile under #2152 completed native acceptance in
+[run 42523268177, attempt 1](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42523268177):
+exactly 19 active tests passed and only
+`bootstrap_peer::tests::native_child_entry` was ignored from the 20-entry
+inventory. Workflow `454415fa2fb698dc6b63548aeb4268e5b1dda05d` tested source
+`0d3daba32df1ede4647e406031e7194c94823d48`; source integration #2162 at
+`abdc7002cfbd1a4e9220af0bb1632e76f75c95eb` preserves the tested tree.
+[The sanitized receipt](https://github.com/Voxterrae/HUB_Optimus/pull/2162#issuecomment-6727124361)
+records GNU Rust 1.99.0, locked/offline checks, Clippy/fmt and unchanged-source
+certification. Parent fixtures invoke the helper internally; it is never counted
+as a passing security test. Only allowed names/fixed statuses and counts were
+published. This peer-only run executed no CNG/HTTP tests or HTTP service query.
+Fixture cleanup assertions are not an independent post-job resource enumeration;
+process loss and runner disposal remain limits. Historical #2048 MSVC evidence
+retains its own source/toolchain limits. No arbitrary-client SQOS freshness,
+same-user/admin isolation, loaded-image provenance, privileged bootstrap,
+owner's-device operation, enrollment or activation acceptance follows.
+OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+
+Issue #2163 adds the closed `security-descriptor` profile for a separately
+reviewed #2147 source candidate on the corrected peer base: exactly 17 passes
+(12 native and five pure), no ignored helper, and 13 owned-fixture cleanup
+markers. Descriptor-only `--show-output` stays inside private capture; only
+allowlisted names/statuses/counts and fixed cleanup outcomes are published.
+The workflow binds the fixture parent to a fresh owned directory beneath
+validated absolute `RUNNER_TEMP`, requiring local fixed NTFS and a non-SYSTEM
+account. Its final cleanup removes only that empty directory nonrecursively;
+leftovers or cleanup errors fail without path deletion or raw context output,
+preserving primary failures. No CNG/HTTP/peer tests or HTTP query run in this
+profile. Exact-candidate native validation and source integration remain pending;
+workflow availability and synthetic checks are not native acceptance. The 13
+markers establish fixture assertions, not global VM cleanup, protected ancestry,
+same-user isolation or activation; process loss remains bounded by runner disposal.
+No owner's-device operation or authority change is included.
 
 ## 2026-11-08 — Native-search WPF regression validation (#2151)
 
@@ -747,14 +769,22 @@ an unshown window and owned invisible HWND; an interactive disposable runner
 and absent default profile remain mandatory. No WebView2 engine, SearchHost or
 external provider is started by these WPF cases.
 
-Compilation, the new 13-case execution and hosted interactive prerequisites
-remain **UNRUN** until their exact-candidate receipt exists. Issue #2151 scopes
-one hosted run with gui=false after protected integration. Raised events and a
-reconstructed callback subscription do not accept physical keyboard/focus,
-visible UIAutomation, Narrator/NVDA, CreateTabAsync initialization, packaged GUI,
-physical Windows 10/11, provider relevance or distribution. Missing or blocked
-evidence is not PASS. No owner's desktop execution or activation is authorized;
-OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+The single hosted #2151 acceptance completed in
+[run 42521616529, attempt 1](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42521616529),
+workflow `6d3cf67469233d3177fc59dd76232df3e9774b73`, source
+`b996f26238f3ea79becf3d6b320bec7781c80077`:
+[the sanitized receipt](https://github.com/Voxterrae/HUB_Optimus/issues/2151#issuecomment-6726995099)
+records 79 native cases including all 22 identity cases, 13 WPF cases, 43 Core,
+28 Privacy, 82 backend and all six packaged-service checks passing, including
+owned-process exit and temporary cleanup. SDK 10.0.403, Windows Server 2022
+image 20261101.353.1 and the interactive preflight were recorded; compilation,
+execution and reports succeeded with no cleanup failures. The run used gui=false.
+Raised events and a reconstructed callback subscription do not accept physical
+keyboard/focus, visible UIAutomation, Narrator/NVDA, CreateTabAsync initialization,
+packaged GUI, physical Windows 10/11, provider relevance or distribution.
+The wider #2106/#2021 and real-Web #2062 acceptance remain separate. Missing or
+blocked evidence is not PASS. No owner's desktop execution or activation is
+authorized; OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
 
 The inactive authenticated Brave gateway reconstruction is scoped by
 [issue #2157](https://github.com/Voxterrae/HUB_Optimus/issues/2157), preserving the

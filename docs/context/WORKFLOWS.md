@@ -64,7 +64,8 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 
 - Trigger: `workflow_dispatch` only, with a required immutable 40-hex
   `candidate_sha` from this repository and a closed `test_suite` choice:
-  `bootstrap-process` (default), `identity-cng`, `identity-http` or `bootstrap-peer`.
+  `bootstrap-process` (default), `identity-cng`, `identity-http`, `bootstrap-peer`
+  or `security-descriptor`.
 - Permissions: `contents: read`; the reviewed checkout Action does not persist
   credentials. No named secrets, write token, upload or deployment is used.
 - One disposable GitHub-hosted `windows-2022` job (20-minute timeout):
@@ -78,7 +79,9 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
     eight reviewed `identity::tests::` names, or exactly those eight plus seven
     reviewed `approval_https::tests::` names for `identity-http`, or the exact
     19 active `bootstrap_peer::tests::` cases plus one named ignored child helper
-    for `bootstrap-peer`; then Clippy with
+    for `bootstrap-peer`, or exactly 17 `security_descriptor::tests::` cases
+    (12 native and five pure) with 13 owned-fixture cleanup markers for
+    `security-descriptor`; then Clippy with
     `--all-targets -- -D warnings` and `rustfmt --check --edition 2024 src/lib.rs`;
   - requires all active selected tests to pass with 0 failed; only the peer
     profile admits the named child helper ignored, never as a passing security
@@ -90,10 +93,11 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
     including on failure. It refuses stopped/unavailable states and issues no
     service start/stop/configuration command. These reads are not atomic and
     cannot exclude external state changes between observation and `HttpInitialize`;
-  - captures CNG/HTTP/peer test stdout/stderr in runner process memory and publishes only
-    the allowlisted inventory, recognized test statuses, exit code and counts.
-    Raw vectors, key/resource/pipe/token context and failure output are not printed
-    or uploaded; the peer helper ignore reason is reduced to a fixed status;
+  - captures CNG/HTTP/peer/descriptor test stdout/stderr in runner process memory
+    and publishes only the allowlisted inventory, recognized test statuses,
+    exit code, counts and fixed cleanup outcomes. Raw vectors, keys, resource,
+    pipe, token or fixture context and failure output are not printed or
+    uploaded; the peer helper ignore reason is reduced to a fixed status;
   - records candidate/workflow SHAs, runner/tool versions, SHA-256 inputs and
     actual outcomes in the job log/summary. Skipped or incomplete validation
     cannot produce PASS.
@@ -127,6 +131,27 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   Historical #2048 MSVC evidence remains separate from this GNU validation.
   Passing fixtures do not establish arbitrary-client SQOS freshness, same-user
   isolation, loaded-image provenance, privileged bootstrap or activation.
+- The `security-descriptor` suite requires a separately reviewed corrected
+  #2147 candidate containing `src/security_descriptor.rs` and
+  `src/security_descriptor/tests.rs`, on the integrated corrected peer base.
+  Its fixed filter is `security_descriptor::tests::`, using `--lib` and one
+  execution thread. Exactly 17 unique names must pass once, with no failed,
+  ignored, helper or measured cases and one coherent summary. Only this
+  profile adds `--show-output` inside private capture, requiring exactly 13
+  complete-line cleanup markers without publishing raw successful or failed
+  output, ACLs, SIDs, paths, fixture identities or deliberate-panic details.
+  The workflow overrides `HUB_RELAY_NTFS_FIXTURE_PARENT` with a fresh empty
+  owned directory directly under validated absolute `RUNNER_TEMP`; no path
+  input or ambient fixture-parent fallback is accepted. Source prerequisites
+  require a non-SYSTEM account and local fixed NTFS volume. In `finally`,
+  only the empty owned directory is removed nonrecursively; missing parents,
+  leftover files or cleanup errors fail with fixed sanitized outcomes while
+  preserving any primary failure. Leftover fixture files are never deleted
+  by path. Tests retain exact-handle deletion, close and absence assertions.
+  This profile executes no CNG/HTTP/peer tests and queries no HTTP service.
+  The 13 markers are fixture assertions, not global VM cleanup or protected
+  ancestry/isolation proof; process loss can leave resources until runner
+  disposal. No owner-device operation, service, key, root or activation follows.
 - Eight internal CNG passes do not prove independent Node interoperability,
   production MSVC compatibility, TPM/biometric protection, same-user isolation
   or protected enrollment.
