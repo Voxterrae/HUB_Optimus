@@ -40,6 +40,7 @@ def test_negative_values_fail() -> None:
     (0.001, []),
     (1.005, []),
     (0.01, [49.9999, 49.9999]),
+    (0.01, [80, 5.45, 5.45]),
     (1, [0.5] * 30),
 ])
 def test_displayed_amounts_preserve_reported_net_and_target(target, percentages):
