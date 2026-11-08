@@ -2,11 +2,16 @@
   "use strict";
 
   const EVIDENCE_SHA = "8426b08e5f88b650c4d79e41d3ce3afd7d42746b";
+  const CATALOGUE_SHA = "6d3cf67469233d3177fc59dd76232df3e9774b73";
   const repository = "https://github.com/Voxterrae/HUB_Optimus";
   const blob = (path) => `${repository}/blob/${EVIDENCE_SHA}/${path}`;
   const tree = (path) => `${repository}/tree/${EVIDENCE_SHA}/${path}`;
 
   const routes = Object.freeze({
+    "products.catalogue": {
+      href: `${repository}/blob/${CATALOGUE_SHA}/products/README.md`,
+      language: "en"
+    },
     "core.canonical": {
       href: tree("v1_core/languages/es"),
       language: "es",
