@@ -747,11 +747,38 @@ validated absolute `RUNNER_TEMP`, requiring local fixed NTFS and a non-SYSTEM
 account. Its final cleanup removes only that empty directory nonrecursively;
 leftovers or cleanup errors fail without path deletion or raw context output,
 preserving primary failures. No CNG/HTTP/peer tests or HTTP query run in this
-profile. Exact-candidate native validation and source integration remain pending;
-workflow availability and synthetic checks are not native acceptance. The 13
-markers establish fixture assertions, not global VM cleanup, protected ancestry,
-same-user isolation or activation; process loss remains bounded by runner disposal.
-No owner's-device operation or authority change is included.
+profile. Exact native acceptance completed in
+[run 42527287881, attempt 1](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42527287881),
+job 128873597433: 17 passes (12 native and five pure), zero failed/ignored/measured,
+13 cleanup receipts, exit zero and the owned parent empty and removed. Workflow
+`15c495537d1f0b9731ee40c47c64e710c1cf0b54` tested source
+`f4666c3ad5bd9a20f65f9c6acae466f0a858b5bb`; integration #2167 at
+`1893f12d04328204a125f4f29af9074da82ee69f` preserves the tested tree
+`292e600463a772b33f3ac133c23e72143e803937`.
+[The sanitized receipt](https://github.com/Voxterrae/HUB_Optimus/pull/2167#issuecomment-6727681826)
+records Rust 1.99.0 GNU, fmt, locked/offline Clippy with warnings denied and
+unchanged source/lock certification. Detailed hash tables were not independently
+exported. The 13 markers establish fixture assertions, not global VM cleanup,
+protected ancestry, same-user isolation or activation; process loss remains
+bounded by runner disposal. No owner's-device operation or authority change is
+included; no full-crate or MSVC result is inferred.
+
+Issue #2169 adds a closed `service-identity` profile for the separately reviewed
+current SCM source preserving the original implementation: 14 exact inventory
+names, 13 active passes (eight pure and five native), and only its owned child helper ignored.
+The helper is never a passing security case; its literal reason is distinct from
+the peer helper. Candidate/workflow SHA binding, locked GNU tools, fmt/Clippy and
+source/lock integrity remain mandatory. Output is privately captured, including
+SCM inventory/execution invocation errors; only normalized names/statuses/counts
+and provenance are published. Exact-source native SCM acceptance remains pending.
+The native cases use actual query-only local SCM access with exact 1060 for the
+absent fixed service and retained current/owned-child observations. A pure policy
+match is not a real installed-service positive. The profile runs no CNG/HTTP/peer/
+descriptor tests, HTTP query or NTFS fixture-parent operation; it starts or
+configures no service and performs no owner-device operation. Checked owned-child
+cleanup and process-loss/runner-disposal limits remain; no service isolation,
+loaded-image provenance, enrollment or activation follows. OWNER_AUTHORITY_HANDOFF
+remains controlling and unchanged.
 
 ## 2026-11-08 — Native-search WPF regression validation (#2151)
 
