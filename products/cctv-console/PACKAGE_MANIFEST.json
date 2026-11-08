@@ -1,7 +1,7 @@
 {
   "package": "optimus-cctv-console",
   "version": "0.1.0",
-  "fileCount": 40,
+  "fileCount": 41,
   "files": [
     {
       "path": ".gitignore",
@@ -60,8 +60,8 @@
     },
     {
       "path": "src/vox_cctv_native.py",
-      "sha256": "2af41d36896de8dd1fa98b69467eb787a207380b1161b22a041b91457c1911e0",
-      "size": 18076
+      "sha256": "d94a3f8c371667ca7fa107c07557a10074c0d830b295d4d89a400cfd39c0117a",
+      "size": 18242
     },
     {
       "path": "src/vox_cctv_photos.py",
@@ -172,6 +172,11 @@
       "path": "tests/test_vox_cctv_evidence.py",
       "sha256": "0ed71518ade2b2c62c9f023fc9d319622aee1baac8dca5d226a871c941f94150",
       "size": 19259
+    },
+    {
+      "path": "tests/test_vox_cctv_native_alarms.py",
+      "sha256": "a13d0f2322dfc90384fc4ffd70f44014a85c2049981509573b1557c9d51e6b2f",
+      "size": 4147
     },
     {
       "path": "tests/test_vox_cctv_photos.py",

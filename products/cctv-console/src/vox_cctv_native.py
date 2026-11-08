@@ -22,6 +22,7 @@ from vox_cctv_config import RECORDER_IP, CREDENTIAL_TARGET, RECORDER_SERIAL, req
 MAX_PACKET = 4 * 1024 * 1024
 MAX_FRAME = 8 * 1024 * 1024
 MAX_BUFFER = 12 * 1024 * 1024
+MAX_ALARM_SUBSCRIPTION_PACKETS = 64
 CHANNELS = tuple(range(7))
 
 
@@ -351,11 +352,12 @@ class NativeAlarmClient(NativeClient):
                  expected_serial: str = RECORDER_SERIAL):
         super().__init__(auth_hash, 0, 'Extra1', stop_event, monitor=False,
                          recorder_ip=recorder_ip, expected_serial=expected_serial)
-        self.pending = deque(maxlen=25)
+        # The bounded handshake must retain every report it acknowledges.
+        self.pending = deque(maxlen=MAX_ALARM_SUBSCRIPTION_PACKETS)
         try:
             self.send(1500, {'Name': '', 'SessionID': f'0x{self.session:08X}'})
             deadline = time.monotonic() + 12
-            for _ in range(64):
+            for _ in range(MAX_ALARM_SUBSCRIPTION_PACKETS):
                 message, session, payload, sequence = self.receive(deadline, with_sequence=True)
                 if session != self.session:
                     continue
