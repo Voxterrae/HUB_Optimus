@@ -679,3 +679,20 @@ without changing access, DNS or data. Preserve that recovery version.
 The other fifteen Sites and their data remain outside this pilot; inventory one
 additional Site's source, dependencies and access before a separately reviewed
 migration. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+
+## 2026-11-08 — Hosted native Windows suite selection (#2140)
+
+The manual native Windows workflow offers a closed suite selector:
+`bootstrap-process` remains the default, requiring the existing 36 tests;
+`identity-cng` requires the exact eight reviewed identity tests. Both retain
+immutable candidate binding, Rust 1.99.0 GNU, locked/offline checks and unchanged
+source/lock verification. CNG output is sanitized even on failure; real test keys
+are confined to the disposable runner account under separately approved scope.
+See [WORKFLOWS.md](WORKFLOWS.md#native-pilot-windowsyml) for the execution contract.
+
+A current-base CNG candidate still requires separate publication and exact-source
+Windows validation. Making this selector available is not native acceptance:
+the new eight-test run and independent interoperability verification remain
+UNRUN. Historical bootstrap and Node evidence retain their original source/run
+limits. No owner's device, enrollment or activation is authorized by workflow
+availability. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
