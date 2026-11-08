@@ -7,6 +7,14 @@ on:
         description: Immutable HUB_Optimus candidate commit (40 hex characters)
         required: true
         type: string
+      test_suite:
+        description: Reviewed native test suite (bootstrap remains the default)
+        required: true
+        type: choice
+        default: bootstrap-process
+        options:
+          - bootstrap-process
+          - identity-cng
 
 permissions:
   contents: read
@@ -23,12 +31,17 @@ jobs:
         id: candidate
         env:
           CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          TEST_SUITE: ${{ inputs.test_suite }}
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:CANDIDATE_SHA -cnotmatch '\A[0-9a-fA-F]{40}\z') {
             throw 'candidate_sha must contain exactly 40 hexadecimal characters'
           }
+          if ($env:TEST_SUITE -cnotin @('bootstrap-process', 'identity-cng')) {
+            throw 'test_suite must be bootstrap-process or identity-cng'
+          }
           "sha=$($env:CANDIDATE_SHA.ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          "suite=$env:TEST_SUITE" >> $env:GITHUB_OUTPUT
           # Keep checked-out bytes unchanged by Windows line-ending conversion.
           git config --global core.autocrlf false
           if ($LASTEXITCODE -ne 0) { throw 'Cannot disable runner line-ending conversion' }
@@ -43,11 +56,12 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      - name: Validate locked bootstrap process on native Windows GNU
+      - name: Validate selected locked suite on native Windows GNU
         id: validate
         working-directory: ${{ runner.temp }}
         env:
           CANDIDATE_SHA: ${{ steps.candidate.outputs.sha }}
+          TEST_SUITE: ${{ steps.candidate.outputs.suite }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $false
@@ -60,6 +74,31 @@ jobs:
           $before = $null
           $sourceIntegrity = 'NOT_CHECKED'
           $certified = $false
+          $requiredInputs = @('README.md', 'Cargo.toml', 'Cargo.lock', 'src/lib.rs')
+          $identityNames = @(
+            'identity::tests::persists_public_identity_and_signing_only_nonexport_policy',
+            'identity::tests::valid_signature_passes_and_changed_digest_signature_and_wrong_key_fail',
+            'identity::tests::private_export_is_denied_without_requesting_private_bytes',
+            'identity::tests::altered_reference_cannot_reopen_or_delete_the_real_key',
+            'identity::tests::failure_after_finalization_removes_the_exact_partial_key',
+            'identity::tests::emits_only_public_vector_for_independent_p1363_verification',
+            'identity::tests::altered_identity_digest_cannot_reopen_or_delete_the_real_key',
+            'identity::tests::invalid_native_handle_is_an_error_instead_of_invalid_signature'
+          )
+          switch -CaseSensitive ($env:TEST_SUITE) {
+            'bootstrap-process' {
+              $filter = 'bootstrap_process::'
+              $expectedCount = 36
+              $requiredInputs += @('src/bootstrap_process.rs', 'src/bootstrap_process/token.rs',
+                'src/bootstrap_process/token/tests.rs')
+            }
+            'identity-cng' {
+              $filter = 'identity::tests::'
+              $expectedCount = 8
+              $requiredInputs += 'src/identity.rs'
+            }
+            default { throw 'Unvalidated test suite' }
+          }
 
           function Get-SourceSnapshot {
             $dirty = @(git -C $env:GITHUB_WORKSPACE status --porcelain --untracked-files=all -- $pilot)
@@ -76,9 +115,7 @@ jobs:
               $expectedBlobs += $Matches[1]
               $paths += $Matches[2]
             }
-            foreach ($required in @('README.md', 'Cargo.toml', 'Cargo.lock', 'src/lib.rs',
-              'src/bootstrap_process.rs', 'src/bootstrap_process/token.rs',
-              'src/bootstrap_process/token/tests.rs')) {
+            foreach ($required in $requiredInputs) {
               if ("$pilot/$required" -cnotin $paths) { throw "Missing tracked input: $required" }
             }
             $actualBlobs = @(git -C $env:GITHUB_WORKSPACE hash-object --no-filters -- @paths)
@@ -107,6 +144,7 @@ jobs:
             if ($head -cne $env:CANDIDATE_SHA) { throw 'Checkout HEAD differs from candidate_sha' }
             "## Native Windows candidate validation`n" >> $env:GITHUB_STEP_SUMMARY
             "Candidate: $head; workflow source: $env:GITHUB_SHA" >> $env:GITHUB_STEP_SUMMARY
+            "Selected suite: $env:TEST_SUITE; required tests: $expectedCount" >> $env:GITHUB_STEP_SUMMARY
             "Runner: $env:RUNNER_OS/$env:RUNNER_ARCH; image: $env:ImageOS/$env:ImageVersion; OS: $([Environment]::OSVersion.Version); PowerShell: $($PSVersionTable.PSVersion)" >> $env:GITHUB_STEP_SUMMARY
             $before = Get-SourceSnapshot
             "`n### Candidate inputs (SHA-256)" >> $env:GITHUB_STEP_SUMMARY
@@ -168,29 +206,58 @@ jobs:
             $env:CARGO_NET_OFFLINE = 'true'
             $completed += $phase
 
-            $phase = '36-test inventory (30 token, 6 parent)'
-            $listing = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib bootstrap_process:: -- --list 2>&1)
-            if ($LASTEXITCODE -ne 0) { $listing | Write-Output; throw 'Bootstrap test inventory failed' }
-            $listing | Write-Output
+            $phase = "$expectedCount-test inventory ($env:TEST_SUITE)"
+            $listing = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib $filter -- --list 2>&1)
+            $inventoryExit = $LASTEXITCODE
+            if ($env:TEST_SUITE -ceq 'bootstrap-process') { $listing | Write-Output }
+            if ($inventoryExit -ne 0) { throw "Selected test inventory failed (exit $inventoryExit)" }
             $names = @($listing | ForEach-Object { if ("$_" -cmatch '\A(.+): test\z') { $Matches[1] } })
-            $token = @($names | Where-Object { $_ -cmatch '\Abootstrap_process::token::tests::[^:]+\z' })
-            $parent = @($names | Where-Object { $_ -cmatch '\Abootstrap_process::tests::[^:]+\z' })
-            if ($names.Count -ne 36 -or @($names | Select-Object -Unique).Count -ne 36 -or
-              $token.Count -ne 30 -or $parent.Count -ne 6 -or '36 tests, 0 benchmarks' -cnotin $listing) {
-              throw 'Expected exactly 36 bootstrap tests: 30 token plus 6 parent'
+            if ($names.Count -ne $expectedCount -or @($names | Select-Object -Unique).Count -ne $expectedCount -or
+              "$expectedCount tests, 0 benchmarks" -cnotin $listing) {
+              throw 'Selected test inventory count differs from the reviewed suite'
+            }
+            if ($env:TEST_SUITE -ceq 'bootstrap-process') {
+              $token = @($names | Where-Object { $_ -cmatch '\Abootstrap_process::token::tests::[^:]+\z' })
+              $parent = @($names | Where-Object { $_ -cmatch '\Abootstrap_process::tests::[^:]+\z' })
+              if ($token.Count -ne 30 -or $parent.Count -ne 6) {
+                throw 'Expected exactly 36 bootstrap tests: 30 token plus 6 parent'
+              }
+            } else {
+              if (Compare-Object -CaseSensitive ($identityNames | Sort-Object) ($names | Sort-Object)) {
+                throw 'Expected the exact eight reviewed identity/CNG test names'
+              }
+              $identityNames | ForEach-Object { Write-Output "Inventoried: $_" }
             }
             $completed += $phase
 
-            $phase = '36 tests passed, 0 failed, 0 ignored'
-            $results = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib bootstrap_process:: -- --test-threads=1 2>&1)
-            if ($LASTEXITCODE -ne 0) { $results | Write-Output; throw 'Bootstrap test execution failed' }
-            $results | Write-Output
-            $passed = @($results | ForEach-Object { if ("$_" -cmatch '\Atest (bootstrap_process::.+) \.\.\. ok\z') { $Matches[1] } })
+            $phase = "$expectedCount-test execution ($env:TEST_SUITE)"
+            # Failed tests can print captured vectors: never publish raw CNG output.
+            $results = @(& $rustup run $toolchain cargo test --locked --offline --target $target --manifest-path $manifest --lib $filter -- --test-threads=1 2>&1)
+            $testExit = $LASTEXITCODE
+            if ($env:TEST_SUITE -ceq 'bootstrap-process') { $results | Write-Output }
+            $observed = @($results | ForEach-Object {
+              if ("$_" -cmatch '\Atest (.+) \.\.\. (.+)\z') {
+                [pscustomobject]@{ Name = $Matches[1]; Status = $Matches[2] }
+              }
+            })
+            $passed = @($observed | Where-Object { $_.Status -ceq 'ok' } | ForEach-Object { $_.Name })
+            if ($env:TEST_SUITE -ceq 'identity-cng') {
+              # Emit only allowlisted names and fixed statuses, never captured stdout/stderr.
+              foreach ($test in $observed) {
+                if ($test.Name -cin $identityNames) {
+                  $status = if ($test.Status -cin @('ok', 'FAILED', 'ignored')) { $test.Status } else { 'unrecognized' }
+                  Write-Output "test $($test.Name) ... $status"
+                }
+              }
+              Write-Output "CNG exit: $testExit; recognized passes: $($passed.Count)/$expectedCount"
+            }
+            if ($testExit -ne 0) { throw "Selected test execution failed (exit $testExit)" }
             $summaries = @($results | Where-Object { "$_" -cmatch '\Atest result:' })
-            if ($passed.Count -ne 36 -or @($passed | Select-Object -Unique).Count -ne 36 -or
-              (Compare-Object ($names | Sort-Object) ($passed | Sort-Object)) -or $summaries.Count -ne 1 -or
-              "$($summaries[0])" -cnotmatch '\Atest result: ok\. 36 passed; 0 failed; 0 ignored; 0 measured; [0-9]+ filtered out; finished in .+\z') {
-              throw 'Test execution did not prove all 36 inventoried bootstrap tests passed without ignores'
+            if ($observed.Count -ne $expectedCount -or $passed.Count -ne $expectedCount -or
+              @($passed | Select-Object -Unique).Count -ne $expectedCount -or
+              (Compare-Object -CaseSensitive ($names | Sort-Object) ($passed | Sort-Object)) -or $summaries.Count -ne 1 -or
+              "$($summaries[0])" -cnotmatch "\Atest result: ok\. $expectedCount passed; 0 failed; 0 ignored; 0 measured; [0-9]+ filtered out; finished in .+\z") {
+              throw 'Execution did not prove all inventoried tests passed without ignores'
             }
             $completed += $phase
 
@@ -238,4 +305,4 @@ jobs:
             'NOT PASS: failed, skipped, cancelled, neutral or incomplete validation is not success.' >> $env:GITHUB_STEP_SUMMARY
             throw 'Native candidate validation is not PASS'
           }
-          'PASS: exact candidate, GNU tools, locked offline checks, 36 passing tests and unchanged inputs.' >> $env:GITHUB_STEP_SUMMARY
+          'PASS: exact candidate, GNU tools, locked offline checks, selected-suite tests passed without ignores and unchanged inputs.' >> $env:GITHUB_STEP_SUMMARY

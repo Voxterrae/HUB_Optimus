@@ -63,7 +63,8 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 ### native-pilot-windows.yml
 
 - Trigger: `workflow_dispatch` only, with a required immutable 40-hex
-  `candidate_sha` from this repository.
+  `candidate_sha` from this repository and a closed `test_suite` choice:
+  `bootstrap-process` (default) or `identity-cng`.
 - Permissions: `contents: read`; the reviewed checkout Action does not persist
   credentials. No named secrets, write token, upload or deployment is used.
 - One disposable GitHub-hosted `windows-2022` job (20-minute timeout):
@@ -72,14 +73,30 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   - verifies explicit x64 MinGW `gcc`, `ar` and `dlltool` paths and metadata;
   - installs exact Rust `1.99.0-x86_64-pc-windows-gnu`, Clippy and rustfmt on
     the runner, with isolated Cargo/Rustup state and cleared compiler overrides;
-  - fetches locked dependencies once, then runs offline: exactly 36
-    `bootstrap_process::` tests (30 token and 6 parent), Clippy with
-    `--all-targets -- -D warnings`, and `rustfmt --check --edition 2024 src/lib.rs`;
-  - requires the inventoried tests to execute with 36 passed, 0 failed and
-    0 ignored, and verifies unchanged source and Cargo.lock hashes afterward;
+  - fetches locked dependencies once, then runs the selected suite offline:
+    exactly 36 `bootstrap_process::` tests (30 token and 6 parent), or the exact
+    eight reviewed `identity::tests::` names; then Clippy with
+    `--all-targets -- -D warnings` and `rustfmt --check --edition 2024 src/lib.rs`;
+  - requires all selected tests to execute with 0 failed and 0 ignored, and
+    verifies unchanged source and Cargo.lock hashes afterward; filtered tests
+    from other modules provide no acceptance;
+  - captures CNG test stdout/stderr in runner process memory and publishes only
+    the allowlisted inventory, recognized test statuses, exit code and counts.
+    Raw vectors, key identifiers and failure output are not printed or uploaded;
   - records candidate/workflow SHAs, runner/tool versions, SHA-256 inputs and
     actual outcomes in the job log/summary. Skipped or incomplete validation
     cannot produce PASS.
+- The CNG selection requires a separately reviewed exact candidate containing
+  `src/identity.rs`. It creates real persistent test keys in the disposable
+  runner account's Microsoft Software KSP, including an owned export-policy
+  control. Tests delete their exact owned keys and verify failed reopening;
+  runner disposal is the remaining boundary after cancellation or process loss.
+  No existing keys are enumerated or deleted. Run only under the exact approved
+  source/profile scope. Raw CNG output is ephemeral and is not retained as an
+  artifact; a failed run may need a separately scoped private diagnostic.
+- Eight internal CNG passes do not prove independent Node interoperability,
+  production MSVC compatibility, TPM/biometric protection, same-user isolation
+  or protected enrollment.
 - Writes to repo: no. This is candidate-specific hosted evidence, not laptop
   account-context certification, remote-device enrollment or release authority.
   The manual workflow must reach the default branch before dispatch; merging
