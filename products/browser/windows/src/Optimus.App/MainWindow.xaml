@@ -81,8 +81,7 @@
       <Button Content="Configurar privacidad y buscador" Click="PrivacySettings_Click" HorizontalAlignment="Left"/>
       <Expander x:Name="AdvancedOptions" MinHeight="44" IsExpanded="True"><Expander.Header><TextBlock Text="Otras opciones" MinHeight="44" VerticalAlignment="Center"/></Expander.Header><StackPanel>
       <TextBlock Text="Búsqueda" FontWeight="SemiBold" Margin="0,24,0,12"/>
-      <TextBlock Text="Al escribir una búsqueda en la barra de dirección" TextWrapping="Wrap"/>
-      <ComboBox x:Name="SearchChoice" AutomationProperties.Name="Proveedor de búsqueda" SelectionChanged="Search_Changed" SelectedValuePath="Tag"><ComboBoxItem Content="Optimus Search" Tag="{x:Static core:SearchProvider.Optimus}"/><ComboBoxItem Content="DuckDuckGo" Tag="{x:Static core:SearchProvider.DuckDuckGo}"/><ComboBoxItem Content="Google" Tag="{x:Static core:SearchProvider.Google}"/></ComboBox>
+      <TextBlock Text="La barra de dirección busca dentro de Optimus Search. Para usar DuckDuckGo o Google, abre «Buscar en un portal externo» dentro de una búsqueda y pulsa el botón del buscador elegido." TextWrapping="Wrap"/>
       <TextBlock Text="Optimus Search permite elegir Web, Índice y Wikipedia dentro de su buscador. Web necesita un proveedor configurado." TextWrapping="Wrap" Foreground="{DynamicResource OptimusMutedBrush}" FontSize="{DynamicResource OptimusSmallSize}" Margin="3,8,0,12"/>
       <TextBlock Text="Sesión" FontWeight="SemiBold" Margin="0,24,0,12"/>
       <CheckBox x:Name="RestoreChoice" Click="Restore_Click"><TextBlock Text="Restaurar direcciones al abrir Optimus" TextWrapping="Wrap"/></CheckBox>
