@@ -23,8 +23,8 @@ EXPECTED_ACTION_PINS = {
         "v7.1.0",
     ),
     "actions/setup-dotnet": (
-        "2016bd2012dba4e32de620c46fe006a3ac9f0602",
-        "v5.0.1",
+        "0f4a354dd5547a28c70b7853dbd95d5b67886e73",
+        "v6.1.0",
     ),
     "actions/setup-node": (
         "949feb2413d6458794dcd2491c4babbbce0c15c1",
