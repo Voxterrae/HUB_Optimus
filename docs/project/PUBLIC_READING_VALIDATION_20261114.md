@@ -63,6 +63,19 @@ separately in the source-pinned pilot guide; they are not browser evidence.
   portfolio. Reproducible generation checks all 23 artifacts; JavaScript syntax,
   Markdown encoding and diff whitespace checks passed.
 - Complete local suite and exact-head hosted checks remain separate receipts.
+- The first complete CI run on candidate `cc08d98b99afc53b5ed26de5c680ca997949af2d`
+  reported 3,014 passed, 2,559 subtests passed and one failure: the development
+  dependency contract still expected the previous list. The follow-up updates
+  that contract and bootstrap development-only probes for the two exact authoring
+  versions. Runtime dependencies and runtime-only bootstrap stay unchanged.
+  New inventory/probe/version tests were observed failing before the fix.
+- Raw source downloads intentionally retain original Markdown hard-break spaces;
+  their byte hashes are checked. Whitespace checking excludes only those exact
+  downloads rather than rewriting normative text.
+- The optional Search remote job failed before restores/tests at its SDK
+  preparation step; its workflow and product sources match main byte-for-byte.
+  The selected SDK value is absent from the log, so a runner/selection cause is
+  only a hypothesis. No workflow was changed or manually retried for this task.
 - Real mobile viewport, screen-reader acceptance, a complete keyboard traversal,
   browser-disabled JavaScript and persistence across browser sessions are pending.
   Source and complete article exist in static HTML without requiring JavaScript;
