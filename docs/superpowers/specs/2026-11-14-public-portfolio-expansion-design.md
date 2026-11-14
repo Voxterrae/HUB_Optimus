@@ -2,8 +2,9 @@
 
 Related to #2187. Refs #2185 y #1936; las tres incidencias permanecen abiertas.
 
-**Estado: propuesta editorial preparada para aprobación humana.** No autoriza
-modificar textos normativos, implementar el generador o publicar una superficie.
+**Estado: diseño editorial y primer piloto Operator aprobados el 14-11-2026.**
+La implementación y publicación siguen los controles protegidos vigentes; esta
+aprobación no modifica textos normativos, autoridad ni audiencias.
 Base inspeccionada: `53b7a841e028592ca81fb43d04d15a2b017bbd78`, 14-11-2026.
 
 ## Intención y público
@@ -27,7 +28,7 @@ no se redacta una nueva constitución ni se inventa una biografía personal.
 
 La recomendación conserva la arquitectura pública actual y la preferencia del
 propietario por reflejar la misma información en README, huboptimus.dev y Sites.
-La elección final del alcance editorial sigue pendiente de revisión del texto.
+El propietario aprobó este enfoque y el relato; el primer piloto es Operator.
 
 ## Recorrido de lectura propuesto
 
@@ -122,14 +123,16 @@ por separado y no se transforman en espejos públicos del repositorio.
 
 ## Aceptación y orden
 
-1. Aprobar el relato de la guía y el primer piloto con un resultado observable.
+1. Relato de la guía y primer piloto Operator aprobados; conservar su resultado
+   observable y distinguirlo de la aceptación de producción.
 2. Implementar el lote de lectura Markdown y la navegación; validar procedencia,
    enlaces, texto íntegro, idiomas/fallback, teclado, móvil y RTL.
 3. Integrar mediante los controles vigentes y obtener recibo de publicación
    Pages; sincronizar el espejo y comprobar su versión por separado.
 4. Ampliar traducciones y pilotos con sus propias evidencias de aceptación.
 
-El bloqueo actual es editorial/de aceptación, no la necesidad de otro proveedor.
-No se han cambiado productos, contratos, dependencias, autoridad, permisos o
-audiencias. El coste nuevo dominante es la revisión humana y mantenimiento;
+La aprobación editorial permite ejecutar este diseño. La aceptación del
+candidato, integración y despliegue se acreditan por separado. No se cambian
+contratos de producto, autoridad, permisos o audiencias. El coste nuevo dominante
+es la revisión humana y mantenimiento;
 no se justifica un servicio recurrente adicional para esta entrega.

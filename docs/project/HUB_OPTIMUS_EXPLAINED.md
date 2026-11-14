@@ -1,6 +1,6 @@
 # Conoce HUB_Optimus
 
-**Propuesta de explicación pública para revisión editorial.** Related to #2187.
+**Guía explicativa; alcance editorial aprobado el 14-11-2026.** Related to #2187.
 Fuentes inspeccionadas el 14 de noviembre de 2026. Esta guía explica el proyecto;
 los documentos originales mantienen su autoridad y su estado.
 
@@ -91,9 +91,11 @@ de clientes no se incorporan a la lectura pública. Consulta la
 [política de idiomas](../context/STATUS.md) y el
 [registro de madurez](../i18n/maturity.v1.json).
 
-## El siguiente paso propuesto
+## Primer piloto aprobado
 
-Demostrar una utilidad completa con una persona y un caso acotado. Registrar
+Empezar con Operator para demostrar una utilidad completa con una persona y un
+caso acotado. La [guía del primer piloto](OPERATOR_FIRST_PILOT.md) describe el
+recorrido y sus comprobaciones. Registrar
 qué funcionó, qué tuvo que corregirse y qué condiciones faltan para usarlo de
 forma habitual. Esa evidencia permitirá ampliar el sistema con un propósito
 concreto, manteniendo la decisión y la responsabilidad humanas.
