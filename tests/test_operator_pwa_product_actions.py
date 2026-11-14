@@ -396,6 +396,221 @@ def _named_function(html: str, name: str) -> str:
     return match.group(0)
 
 
+def _run_claim_focus_scenario(body):
+    html = _read(INDEX)
+    scripts = _InlineScriptParser()
+    scripts.feed(html)
+    prelude = FULL_PAGE_HARNESS.split(
+        'vm.runInContext(SOURCE, context, { filename: "operator-inline.js" });',
+        maxsplit=1,
+    )[0]
+    scenario = r'''
+const firstExcerpt = "El registro sintético indica dos cajas. El recuento sintético indica tres cajas. El tercer registro sintético sigue abierto.";
+const secondExcerpt = "El otro lote sintético contiene una caja.";
+const canonical = canonicalSource(`${firstExcerpt}\n${secondExcerpt}`);
+const selectedExcerpts = [firstExcerpt, secondExcerpt].map((text, index) => {
+  const start = index === 0 ? 0 : Array.from(firstExcerpt).length + 1;
+  return {
+    excerpt_id: `excerpt-${index + 1}`,
+    text,
+    span_start: start,
+    span_end: start + Array.from(text).length,
+    span_unit: "unicode-code-point",
+    source_text_fingerprint: canonical.fingerprint,
+    passage_scope: "complete-candidate-passage",
+    selection_origin: "human-confirmed"
+  };
+});
+currentConfirmedSourceSelection = {
+  source_text_fingerprint: canonical.fingerprint,
+  excerpts: selectedExcerpts
+};
+currentClaimDraftSet = claimDraftModel.proposeClaimSet(selectedExcerpts, {hashText: sha256Hex});
+renderClaimDraftGroups();
+renderClaimDraftValidation();
+if (currentClaimDraftSet.groups[0].claims.length !== 3
+    || currentClaimDraftSet.groups[1].claims.length !== 1) {
+  throw new Error("synthetic source did not produce the hand-checked three-plus-one proposals");
+}
+function findControl(selector) {
+  const node = $("product_claim_draft_groups").querySelector(selector);
+  if (!node) throw new Error(`missing rendered control: ${selector}`);
+  return node;
+}
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+''' + body
+    smoke = (
+        "const SOURCE = " + json.dumps(scripts.scripts[-1]) + ";\n"
+        + "const CLAIM_SOURCE = " + json.dumps(_read(CLAIM_DECOMPOSITION)) + ";\n"
+        + "const I18N_SOURCE = " + json.dumps(_read(OPERATOR_I18N)) + ";\n"
+        + "const SCENARIO = " + json.dumps(scenario) + ";\n"
+        + prelude
+        + r'''
+// Parse only the claim renderer's actual article, textarea and button output.
+// Replacing innerHTML disconnects every old control and resets its focus to
+// BODY. The full application and model run unchanged against this DOM adapter;
+// real keyboard/Tab and native browser focus remain separate acceptance.
+document.activeElement = document.body;
+let renderedControls = [];
+const claimContainer = byId("product_claim_draft_groups");
+function attributes(raw) {
+  const result = {};
+  for (const match of raw.matchAll(/([\w-]+)(?:="([^"]*)")?/g)) {
+    result[match[1]] = match[2] ?? "";
+  }
+  return result;
+}
+function renderedNode(attrs, group, text = "") {
+  const node = element(attrs.id || "");
+  node.attributes = attrs;
+  node.group = group;
+  node.value = text;
+  node.hidden = Object.hasOwn(attrs, "hidden");
+  node.isConnected = true;
+  node.focus = () => {
+    if (node.isConnected && !node.hidden) document.activeElement = node;
+  };
+  if (attrs.id) nodes.set(attrs.id, node);
+  return node;
+}
+claimContainer.querySelector = (selector) => {
+  const group = selector.match(/^\[data-claim-group="(\d+)"\]\s+/);
+  const leaf = (group ? selector.slice(group[0].length) : selector)
+    .match(/^\[([\w-]+)="([^"]*)"\]$/);
+  if (!leaf) throw new Error(`unsupported focus-test selector: ${selector}`);
+  return renderedControls.find((node) => (
+    (!group || node.group === group[1]) && node.getAttribute(leaf[1]) === leaf[2]
+  )) || null;
+};
+let renderedHtml = "";
+Object.defineProperty(claimContainer, "innerHTML", {
+  get() { return renderedHtml; },
+  set(html) {
+    renderedHtml = html;
+    for (const old of renderedControls) {
+      old.isConnected = false;
+      if (old.id) nodes.delete(old.id);
+      if (document.activeElement === old) document.activeElement = document.body;
+    }
+    renderedControls = [];
+    for (const article of html.matchAll(/<article\b([^>]*)>([\s\S]*?)<\/article>/g)) {
+      const group = attributes(article[1])["data-claim-group"];
+      for (const control of article[2].matchAll(/<(textarea|button)\b([^>]*)>([\s\S]*?)<\/\1>/g)) {
+        renderedControls.push(renderedNode(attributes(control[2]), group, control[3]));
+      }
+    }
+  }
+});
+document.getElementById = (id) => (
+  /^product_claim_\d+_\d+$/.test(id) ? nodes.get(id) || null : byId(id)
+);
+vm.runInContext(I18N_SOURCE, context, {filename: "i18n.v1.js"});
+// These records contain JSON values only. Clone them in the VM's own realm so
+// the real model's plain-object validation is not changed by the Node adapter.
+vm.runInContext("globalThis.structuredClone = (value) => JSON.parse(JSON.stringify(value));", context);
+vm.runInContext(SOURCE, context, {filename: "operator-inline.js"});
+vm.runInContext(SCENARIO, context, {filename: "claim-focus-scenario.js"});
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+@pytest.mark.parametrize("setup,trigger,action,target,expected_text", [
+    (
+        "", '[data-claim-group="0"] [data-review-claim-proposal="1"]',
+        "reviewClaimProposal(0, 1)", '[data-claim-group="0"] [data-claim-text="1"]',
+        "El recuento sintético indica tres cajas.",
+    ),
+    (
+        "", '[data-claim-group="1"] [data-review-claim-proposal="0"]',
+        "reviewClaimProposal(1, 0)", '[data-claim-group="1"] [data-claim-text="0"]',
+        "El otro lote sintético contiene una caja.",
+    ),
+    (
+        "", '[data-claim-group="0"] [data-remove-claim-draft="1"]',
+        "removeClaimDraft(0, 1)", '[data-claim-group="0"] [data-claim-text="1"]',
+        "El tercer registro sintético sigue abierto.",
+    ),
+    (
+        "", '[data-claim-group="0"] [data-remove-claim-draft="2"]',
+        "removeClaimDraft(0, 2)", '[data-claim-group="0"] [data-claim-text="1"]',
+        "El recuento sintético indica tres cajas.",
+    ),
+    (
+        "", '[data-claim-group="1"] [data-remove-claim-draft="0"]',
+        "removeClaimDraft(1, 0)", '[data-add-claim-draft="1"]', None,
+    ),
+    (
+        "removeClaimDraft(0, 1);", '[data-claim-group="0"] [data-restore-claim-proposal="1"]',
+        "restoreClaimProposal(0, 1)", '[data-claim-group="0"] [data-claim-text="2"]',
+        "El recuento sintético indica tres cajas.",
+    ),
+], ids=["review-same-index", "review-other-group", "remove-middle", "remove-last", "remove-only", "restore-appended"])
+def test_proposal_action_focuses_the_new_same_group_control(setup, trigger, action, target, expected_text):
+    _run_claim_focus_scenario(
+        setup + "\n"
+        + "const trigger = findControl(" + json.dumps(trigger) + ");\n"
+        + 'const oldTarget = $("product_claim_draft_groups").querySelector(' + json.dumps(target) + ");\n"
+        + r'''
+const sourceBefore = JSON.stringify(currentConfirmedSourceSelection);
+const excerptsBefore = currentClaimDraftSet.groups.map((group) => group.exact_excerpt).join("\n");
+$("product_confirm_claims").checked = true;
+trigger.focus();
+'''
+        + action + ";\n"
+        + "const target = findControl(" + json.dumps(target) + ");\n"
+        + "const expectedText = " + json.dumps(expected_text) + ";\n"
+        + r'''
+assert(document.activeElement === target && target.isConnected,
+  `proposal action lost focus; wanted ${target.id || target.getAttribute("data-add-claim-draft")}`);
+assert(target !== oldTarget && (!oldTarget || !oldTarget.isConnected) && !trigger.isConnected,
+  "focus was not restored to a newly rendered connected control");
+if (expectedText !== null) assert(target.value === expectedText, "focused the wrong surviving or restored claim");
+assert(JSON.stringify(currentConfirmedSourceSelection) === sourceBefore, "proposal action changed the source selection");
+assert(currentClaimDraftSet.groups.map((group) => group.exact_excerpt).join("\n") === excerptsBefore,
+  "proposal action changed an exact source excerpt");
+assert(currentConfirmedClaimSet === null && currentClaimDraftSet.confirmation === null
+  && !$("product_confirm_claims").checked, "proposal action retained a claim-set confirmation");
+'''
+    )
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+@pytest.mark.parametrize("setup,action", [
+    ("", "reviewClaimProposal(99, 0)"),
+    ("", "reviewClaimProposal(0, 99)"),
+    ("addClaimDraft(0);", "reviewClaimProposal(0, 3)"),
+    ('currentClaimDraftSet.groups[0].proposal_reviews[1].review_disposition = "omitted";', "reviewClaimProposal(0, 1)"),
+    ("", "removeClaimDraft(99, 0)"),
+    ("", "removeClaimDraft(0, 99)"),
+    ("", "restoreClaimProposal(99, 0)"),
+    ("", "restoreClaimProposal(0, 99)"),
+    ("", "restoreClaimProposal(0, 0)"),
+    ("removeClaimDraft(0, 1); for (let index = 0; index < 17; index += 1) addClaimDraft(1);", "restoreClaimProposal(0, 1)"),
+], ids=["review-group", "review-claim", "review-human-row", "review-omitted", "remove-group", "remove-claim",
+        "restore-group", "restore-proposal", "restore-not-omitted", "restore-total-limit"])
+def test_invalid_proposal_action_preserves_focus_and_claim_state(setup, action):
+    _run_claim_focus_scenario(
+        setup + "\n"
+        + r'''
+const trigger = findControl('[data-add-claim-draft="0"]');
+trigger.focus();
+const before = JSON.stringify(currentClaimDraftSet);
+'''
+        + action + ";\n"
+        + r'''
+assert(document.activeElement === trigger && trigger.isConnected, "guarded action moved focus or rerendered controls");
+assert(JSON.stringify(currentClaimDraftSet) === before, "guarded action changed the claim set");
+'''
+    )
+
+
 def _operator_i18n_node_prelude() -> str:
     return _read(OPERATOR_I18N) + r"""
 const operatorI18n = globalThis.HUB_OPTIMUS_OPERATOR_I18N;
