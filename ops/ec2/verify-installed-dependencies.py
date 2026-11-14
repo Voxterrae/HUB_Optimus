@@ -31,7 +31,7 @@ LOCK_SPECS = (
     ),
     (
         "ops/ec2/requirements-validation.lock",
-        {"iniconfig", "packaging", "pluggy", "pygments", "pytest", "pyyaml"},
+        {"iniconfig", "markdown-it-py", "mdurl", "packaging", "pluggy", "pygments", "pytest", "pyyaml"},
         True,
     ),
 )

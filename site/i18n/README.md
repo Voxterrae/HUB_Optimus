@@ -1,7 +1,9 @@
 # Public portfolio translation status
 
 Operator interface catalog version: `1.4.3`.
-Portfolio content review: `2026-11-08` (Europe/Madrid), 187 translation keys.
+Portfolio content review: `2026-11-08` (Europe/Madrid), 187 translation keys at that checkpoint.
+Contribution/Labs addition: `2026-11-14`, total 206 keys. The 19 new keys are
+AI-assisted drafts in all six locales and require qualified human review.
 
 The product-development cards, catalogue navigation and revised Labs wording
 under #1888 are assisted drafts in all six portfolio languages. They do not
@@ -114,3 +116,9 @@ Language reviewers should review both rendered text and these records. Hebrew re
 must include keyboard order, focus order, mixed-direction product names, URLs, numbers,
 and small-screen layout. Simplified Chinese review does not establish Traditional Chinese
 coverage.
+
+Reading-entry update: `2026-11-14`, total 210 portfolio keys. The four new keys
+and revised public-intake/description copy are assisted drafts in all six
+portfolio locales. The reader offers eight navigation languages; documents
+retain their real source language and explicit fallback. This does not complete
+translation or parity of the repository.

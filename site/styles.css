@@ -796,11 +796,50 @@ canvas {
   transform: translateY(-4px);
 }
 
+/* Contributions retain their own provenance; they are not product cards. */
+.contribution-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 1rem;
+}
+
+.contribution-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.5rem;
+  border: 1px solid var(--line-dark);
+  border-radius: var(--radius);
+  background: var(--graphite);
+}
+
+.contribution-card h3 {
+  margin: 1rem 0 0;
+  font-size: 1.4rem;
+}
+
+.contribution-card > p {
+  color: var(--off-white);
+  font-size: 0.9rem;
+}
+
 .card-topline {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.section-labs .card-links a {
+  color: var(--mediterranean);
+}
+
+.section-labs .card-links a:hover {
+  color: var(--ink);
+}
+
+.section-labs .card-links a:focus-visible {
+  color: var(--ink);
 }
 
 .card-topline > span {

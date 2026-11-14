@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title lang="en">Simulation core charter · HUB_Optimus</title>
+<link rel="stylesheet" href="../reading.css"><script src="../reading.js" defer></script></head>
+<body data-source-language="en" data-source-id="simulation-charter" data-source-languages="">
+<a class="reader-skip" href="#reader-main" data-reader-copy="skip">Ir al documento</a>
+<header class="reader-header"><a class="reader-brand" href="../../">HUB_Optimus</a>
+<nav aria-label="Navegación" data-reader-controls><a href="../index.html" data-reader-home data-reader-copy="collection">Conoce y explora</a>
+<a href="../../operator/?lang=es#product_intake" data-reader-operator data-reader-copy="operator">Probar Operator</a></nav></header>
+<div class="reader-language" data-reader-controls><p data-reader-copy="language">Idioma de navegación</p>
+<nav aria-label="Idiomas"><a href="../carta-nucleo/index.html?lang=es" hreflang="es" data-reader-language="es" lang="es">Español</a>
+<a href="../simulation-charter/index.html?lang=en" hreflang="en" data-reader-language="en" lang="en">English</a>
+<a href="../simulation-charter/index.html?lang=de" hreflang="en" data-reader-language="de" lang="de">Deutsch</a>
+<a href="../simulation-charter/index.html?lang=ca" hreflang="en" data-reader-language="ca" lang="ca">Català</a>
+<a href="../simulation-charter/index.html?lang=fr" hreflang="en" data-reader-language="fr" lang="fr">Français</a>
+<a href="../simulation-charter/index.html?lang=ru" hreflang="en" data-reader-language="ru" lang="ru">Русский</a>
+<a href="../simulation-charter/index.html?lang=he" hreflang="en" data-reader-language="he" lang="he">עברית</a>
+<a href="../simulation-charter/index.html?lang=zh-Hans" hreflang="en" data-reader-language="zh-Hans" lang="zh-Hans">简体中文</a></nav>
+<p id="reader-language-notice" role="status">El texto conserva el idioma de su fuente. Las traducciones que falten se indican expresamente.</p></div>
+<main id="reader-main" class="reader-main"><div class="reader-intro"><p class="reader-kicker">HUB_Optimus · lectura con fuente</p>
+<h1 lang="en">Simulation core charter</h1><p lang="en">English source of the simulation charter. File presence does not certify reviewed parity.</p>
+<p class="reader-source">Fuente: <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/KERNEL_CHARTER_EN.md" referrerpolicy="no-referrer">KERNEL_CHARTER_EN.md</a><br>
+<span>Commit: <bdi>abf973b989720cbba4fab734cc19e60c3277b8df</bdi></span><br>
+<span>SHA-256: <bdi>cf65bd3814b1ce807389063d468f2329032f9af9ad447df1f78ef7c537551c60</bdi></span><br>
+<a href="source.md" download data-reader-copy="download">Descargar el Markdown original</a></p></div>
+<div class="reader-layout"><aside class="reader-toc"><h2 data-reader-copy="contents">En esta página</h2><ol lang="en" dir="ltr"><li><a href="#doc-hub_optimus-core-charter">HUB_Optimus Core Charter</a></li><li><a href="#doc-foundational-principles">Foundational principles</a></li><li><a href="#doc-technical-constraints-of-the-core">Technical constraints of the core</a></li><li><a href="#doc-1-capability-permission">1. Capability ≠ Permission</a></li><li><a href="#doc-2-focus-on-multiactor-stability">2. Focus on multi‑actor stability</a></li><li><a href="#doc-3-transparency-and-auditability">3. Transparency and auditability</a></li><li><a href="#doc-4-integration-isolation">4. Integration isolation</a></li><li><a href="#doc-5-information-security">5. Information security</a></li><li><a href="#doc-6-didactic-mode-and-functional-mode">6. Didactic mode and functional mode</a></li><li><a href="#doc-governance-and-maintenance">Governance and maintenance</a></li><li><a href="#doc-conclusion">Conclusion</a></li></ol></aside>
+<article class="reader-article" lang="en" dir="ltr"><h1 id="doc-hub_optimus-core-charter">HUB_Optimus Core Charter</h1>
+<p>This charter defines the immutable rules governing the simulation core of <strong>HUB_Optimus</strong>.  Its purpose is to transform the project's philosophical principles into explicit technical constraints.  Any component integrated into the core (<code>Simulator</code>, <code>Scenario</code> or <code>Actor</code>) must respect these rules in order to preserve the project's mission: to promote systemic stability and integrity in diplomatic contexts.</p>
+<h2 id="doc-foundational-principles">Foundational principles</h2>
+<p>The project is guided by five core principles that serve as its ethical and technical compass:</p>
+<ol>
+<li><strong>Stability over optics</strong> – mid‑ and long‑term systemic stability takes precedence over short‑term wins.</li>
+<li><strong>Integrity first</strong> – influence and authority are earned through ethical coherence, not by position, credentials or temporary power.</li>
+<li><strong>Evaluation over narrative</strong> – outcomes are valued according to structural criteria (incentives, verification, sequencing) rather than rhetoric.</li>
+<li><strong>Prevention over reaction</strong> – early and discreet mediation is preferred over public escalation and reactive behaviour.</li>
+<li><strong>No blame</strong> – errors and failures are treated as systemic symptoms, not as personal shortcomings.</li>
+</ol>
+<h2 id="doc-technical-constraints-of-the-core">Technical constraints of the core</h2>
+<p>To translate these principles into concrete software behaviour, the core incorporates the following rules:</p>
+<h3 id="doc-1-capability-permission">1. Capability ≠ Permission</h3>
+<p>The core can simulate negotiation dynamics and evaluate their consequences, but <strong>it is not allowed to recommend actions that seek to dominate, exploit or manipulate other actors</strong>.  Computational power should improve the clarity of diagnosis, not the aggressiveness of strategies.</p>
+<ul>
+<li><strong>Prohibition of exploitation</strong> – any policy that optimises individual benefit at the expense of the deterioration of other actors is automatically marked as a <em>high‑risk outcome</em> and discouraged.</li>
+<li><strong>Tactical neutrality</strong> – the core does not generate tactical instructions for real actors; it only describes consequences, risks and alternative scenarios.</li>
+</ul>
+<h3 id="doc-2-focus-on-multiactor-stability">2. Focus on multi‑actor stability</h3>
+<p>Utility functions and success criteria in the simulator are defined in terms of <strong>joint stability</strong> rather than maximisation of individual payoffs.  Evaluations must consider:</p>
+<ul>
+<li>Medium and long‑term coherence of agreements.</li>
+<li>Balance of incentives among actors.</li>
+<li>Viability of verification and compliance.</li>
+</ul>
+<h3 id="doc-3-transparency-and-auditability">3. Transparency and auditability</h3>
+<p>All internal decisions of the core must be traceable.  This implies:</p>
+<ul>
+<li><strong>Action history</strong> – each negotiation round records offers, concessions and justifications.</li>
+<li><strong>Explicit criteria</strong> – the criteria that lead to declaring success or failure of a scenario are clearly exposed in the reports.</li>
+<li><strong>No opaque results</strong> – the core does not return encrypted or inscrutable results; users can review why a particular diagnosis was reached.</li>
+</ul>
+<h3 id="doc-4-integration-isolation">4. Integration isolation</h3>
+<p>The core is designed to be extensible through external <em>plugins</em> (for example, negotiation libraries such as NegMAS or multi‑agent orchestrators such as CrewAI).  However, such integrations <strong>can never modify the base rules</strong>.  They must meet the following requirements:</p>
+<ul>
+<li><strong>Non‑invasiveness</strong> – extensions are loaded as secondary modules and communicate with the core through well‑defined interfaces.</li>
+<li><strong>Charter compliance</strong> – any integrated strategy or algorithm must adhere to the prohibition on exploitation and the focus on stability.</li>
+</ul>
+<h3 id="doc-5-information-security">5. Information security</h3>
+<p>The core may incorporate encryption mechanisms (for example, MLKEM/Kyber) to protect the confidentiality of proposals and results during the simulation.  Nevertheless:</p>
+<ul>
+<li><strong>Encryption applies to the channel</strong> – not to the final content of the reports.</li>
+<li><strong>Results are always auditable</strong> – encryption is not used to hide evaluations or recommendations.</li>
+</ul>
+<h3 id="doc-6-didactic-mode-and-functional-mode">6. Didactic mode and functional mode</h3>
+<p>The core distinguishes between two modes of use:</p>
+<ul>
+<li><strong>Didactic mode</strong> – transparent and oriented towards training.  It displays the full history of rounds, integrity metrics and explanations.  Recommended for research and teaching.</li>
+<li><strong>Functional mode</strong> (future enterprise fork) – maintains the same logic but automates the execution of multiple scenarios and offers summarised reports.  Under no circumstances does it enable control of external systems or generate actionable strategies in real time.</li>
+</ul>
+<h2 id="doc-governance-and-maintenance">Governance and maintenance</h2>
+<p>Compliance with this charter must be verified through automated tests and code reviews.  Contributions to the core should:</p>
+<ul>
+<li>Include <strong>unit tests</strong> demonstrating that new functionality respects these rules.</li>
+<li>Clearly document any changes to utility functions or to the definition of stability.</li>
+<li>Be reviewed by at least two collaborators familiar with the project's mission.</li>
+</ul>
+<h2 id="doc-conclusion">Conclusion</h2>
+<p>This charter transforms the ethical principles of HUB_Optimus into binding technical constraints.  It ensures that as the project grows and new tools are incorporated, <strong>the original purpose—promoting integrative diplomacy and stability—will not be perverted</strong>.  Any expansion of the core must begin by evaluating its compliance with this charter.</p>
+</article></div></main>
+<footer class="reader-footer"><p data-reader-copy="boundary">Las explicaciones ayudan a leer; los documentos originales mantienen su autoridad y su estado. La interfaz no certifica traducción ni producción.</p>
+<a href="../index.html" data-reader-home data-reader-copy="collection">Conoce y explora</a></footer></body></html>
