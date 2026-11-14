@@ -4678,6 +4678,10 @@
       invalidateClaimDraftConfirmation();
       renderClaimDraftGroups();
       renderClaimDraftValidation();
+      const nextFocus = group.claims.length
+        ? $(`product_claim_${groupIndex}_${Math.min(claimIndex, group.claims.length - 1)}`)
+        : $("product_claim_draft_groups").querySelector(`[data-add-claim-draft="${groupIndex}"]`);
+      nextFocus?.focus();
     }
 
     function reviewClaimProposal(groupIndex, claimIndex) {
@@ -4692,6 +4696,7 @@
       invalidateClaimDraftConfirmation();
       renderClaimDraftGroups();
       renderClaimDraftValidation();
+      $(`product_claim_${groupIndex}_${claimIndex}`)?.focus();
     }
 
     function restoreClaimProposal(groupIndex, proposalIndex) {
@@ -4726,6 +4731,7 @@
       invalidateClaimDraftConfirmation();
       renderClaimDraftGroups();
       renderClaimDraftValidation();
+      $(`product_claim_${groupIndex}_${group.claims.length - 1}`)?.focus();
     }
 
     function sourceSelectionSnapshotIsCurrent(raw, mode) {
