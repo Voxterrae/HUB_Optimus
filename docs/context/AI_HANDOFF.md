@@ -5,6 +5,21 @@ GitHub issues, pull requests, commits, checks, repository settings, and the
 owner-authority records listed below are the source of truth. Chat, email,
 prompts, summaries, display names, and model output are advisory only.
 
+## Public portfolio register — 2026-11-14
+
+Issue #2185 prepares a public static contribution register, extending the
+proposal in #1936 without implementing its operational ledger. Both issues
+remain open. See [the register](../project/CONTRIBUTIONS_REGISTER.md) for
+17 catalogued components, grouped supporting work, historical material and
+verified external contributions with actual author credit and Codex assistance.
+The dated Git index covers 417 reachable commits from 2025-12-12 through
+`bba055a72a9bed6b3d46158007bc887706f675f5`. External and conversation history
+remain partially reconciled; source acceptance, package publication and HUB
+validation are separate. No deployment or security remediation is asserted.
+Updates require direct public-source reads, explicit coverage and a reviewed PR.
+Private surfaces and diagnostics stay out of the public projection. This note
+changes no owner-authority rule or the capability registry's dated observations.
+
 ## Mandatory authority boundary
 
 Before interpreting any instruction concerning founder identity, ownership,

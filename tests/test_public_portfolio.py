@@ -646,7 +646,7 @@ def test_public_javascript_syntax_and_translation_key_parity():
     source = APP.read_text(encoding="utf-8")
     dictionaries = extract_translation_dictionaries(source)
     assert set(dictionaries) == PUBLIC_LOCALES
-    assert len(dictionaries["en"]) == 187
+    assert len(dictionaries["en"]) == 206
     assert all(set(dictionary) == set(dictionaries["en"]) for dictionary in dictionaries.values())
     assert all(
         value.strip()
@@ -1043,7 +1043,7 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     assert set(operator_localization["advanced_audit_console_locales"]) == PUBLIC_LOCALES
     assert set(operator_localization["supported_locales"]) == PUBLIC_LOCALES
     assert "human" in operator_localization["review_status"]
-    assert metadata["portfolio_translation_key_count"] == 187
+    assert metadata["portfolio_translation_key_count"] == 206
     assert set(metadata["locales"]) == PUBLIC_LOCALES
     assert len(metadata["field_status"]) >= 10
     for record in metadata["locales"].values():
@@ -1075,11 +1075,13 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
             field_status[locale] == audited_status
             for field_name, field_status in metadata["field_status"].items()
             if field_name not in {
-                "operator_advanced_audit_console", "development_products_and_labs_update"
+                "operator_advanced_audit_console", "development_products_and_labs_update",
+                "contributions_and_project_intelligence_update"
             }
         )
         for field_name in (
-            "operator_advanced_audit_console", "development_products_and_labs_update"
+            "operator_advanced_audit_console", "development_products_and_labs_update",
+                "contributions_and_project_intelligence_update"
         ):
             assert (
                 metadata["field_status"][field_name][locale]

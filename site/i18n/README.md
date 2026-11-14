@@ -1,7 +1,9 @@
 # Public portfolio translation status
 
 Operator interface catalog version: `1.4.3`.
-Portfolio content review: `2026-11-08` (Europe/Madrid), 187 translation keys.
+Portfolio content review: `2026-11-08` (Europe/Madrid), 187 translation keys at that checkpoint.
+Contribution/Labs addition: `2026-11-14`, total 206 keys. The 19 new keys are
+AI-assisted drafts in all six locales and require qualified human review.
 
 The product-development cards, catalogue navigation and revised Labs wording
 under #1888 are assisted drafts in all six portfolio languages. They do not

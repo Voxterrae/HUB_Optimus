@@ -1,0 +1,1723 @@
+{
+  "schema_version": "1.0.0",
+  "record_mode": "public-static-source-linked",
+  "observed_at": "2026-11-14T16:13:16Z",
+  "timezone": "Europe/Madrid",
+  "tracking_issue": "https://github.com/Voxterrae/HUB_Optimus/issues/2185",
+  "ledger_proposal": "https://github.com/Voxterrae/HUB_Optimus/issues/1936",
+  "coverage": {
+    "repository_history": "repository-history.v1.json",
+    "history_start_commit": "c7dd0f6da3a97fe52ad2ce025f87842d4ca6e9ac",
+    "history_start_date": "2025-12-12T16:30:51+01:00",
+    "through_commit": "bba055a72a9bed6b3d46158007bc887706f675f5",
+    "reachable_commit_count": 417,
+    "external_history_complete": false,
+    "reconciliation_status": "partial-public-history-reconciled",
+    "external_search_scope": "Cuenta pública Voxterrae desde su creación 2025-12-12 hasta la observación: PR/issues por autor, reviewed-by/commenter/involves, Discussions por autor/commenter/involves y eventos públicos paginados; lecturas directas de los tres registros prevalecen.",
+    "known_index_gap": "El comentario Smithy 6880003584 existe en lectura directa, pero no aparece en la búsqueda commenter. Un resultado de cero no demuestra ausencia.",
+    "reviewed_sources": [
+      "Grafo Git alcanzable, catálogo de productos, capability registry, RFC registry y rutas seleccionadas a un SHA fijo",
+      "Objetos públicos de PR804, comentario6880003584 y Discussion39733 y sus estados/atribución",
+      "Búsquedas públicas globales y eventos con sus límites de retención e indexación"
+    ],
+    "pending_sources": [
+      "Reconciliar todas las conversaciones internas, PR no integradas, revisiones y comentarios desde el inicio; no están cubiertos por el índice de commits",
+      "Contribuciones externas omitidas por indexación, actividad eliminada y ramas/forks fuera del grafo auditado",
+      "Creaciones fuera del repositorio o de acceso restringido: requieren ficha pública saneada y verificación antes de enlazarlas"
+    ],
+    "claim_boundary": "No es un censo universal de aportaciones. Tres aportes externos comprobados no equivalen a tres aportes históricos totales. El catálogo conserva su observación del 2026-11-08; los soportes incluyen fuentes posteriores hasta el SHA de corte."
+  },
+  "creation_catalogue": {
+    "path": "../../products/README.md",
+    "registry": "capability-registry.v1.json",
+    "catalogue_reviewed_at": "2026-11-08",
+    "component_count": 17,
+    "claim_boundary": "Los soportes, el archivo y los RFC no son productos adicionales. Integración de fuente no acredita despliegue ni aceptación nativa."
+  },
+  "creations": {
+    "catalogue_components": [
+      {
+        "id": "core",
+        "name": "HUB_Optimus Core",
+        "maturity": "active-methodology",
+        "summary_es": "Metodología y flujo de trabajo humano v1; español canónico y referencias de paridad.",
+        "evidence": [
+          {
+            "path": "v1_core",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/v1_core",
+            "kind": "directory"
+          },
+          {
+            "path": "docs/context/STATUS.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/context/STATUS.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "91d160430241437cf16c17ff83289acbdcc46c93",
+          "author_date": "2025-12-25T00:48:09+01:00",
+          "committer_date": "2025-12-25T00:48:09+01:00",
+          "subject": "chore: separate v0 exploratory documents into legacy and initialize v1_core structure",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/91d160430241437cf16c17ff83289acbdcc46c93"
+        },
+        "latest_path_commit": {
+          "sha": "62fdb439759217d2ff2ef727e99fd18d96e61c37",
+          "author_date": "2026-07-23T23:13:25+02:00",
+          "committer_date": "2026-07-23T23:13:25+02:00",
+          "subject": "chore: add SECURITY.md, dependabot.yml, complete governance mirrors, scenario parity (#1726)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/62fdb439759217d2ff2ef727e99fd18d96e61c37"
+        }
+      },
+      {
+        "id": "simulator",
+        "name": "Deterministic Scenario Simulator",
+        "maturity": "working-deterministic-prototype",
+        "summary_es": "CLI, contrato JSON y simulador por rondas determinista con benchmarks congelados.",
+        "evidence": [
+          {
+            "path": "hub_optimus_simulator.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/hub_optimus_simulator.py",
+            "kind": "file"
+          },
+          {
+            "path": "run_scenario.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/run_scenario.py",
+            "kind": "file"
+          },
+          {
+            "path": "scenario.schema.json",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/scenario.schema.json",
+            "kind": "file"
+          },
+          {
+            "path": "SIMULATION_README.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/SIMULATION_README.md",
+            "kind": "file"
+          },
+          {
+            "path": "benchmarks/scenarios",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/benchmarks/scenarios",
+            "kind": "directory"
+          },
+          {
+            "path": "benchmarks/expected",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/benchmarks/expected",
+            "kind": "directory"
+          },
+          {
+            "path": "docs/architecture/runtime_contract.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/architecture/runtime_contract.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "18f7d1625ac69572bc3a85aa7362f3961b70ad7f",
+          "author_date": "2026-01-30T18:51:23-08:00",
+          "committer_date": "2026-01-30T18:51:23-08:00",
+          "subject": "Add simulation kernel, tools and English docs (#41)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/18f7d1625ac69572bc3a85aa7362f3961b70ad7f"
+        },
+        "latest_path_commit": {
+          "sha": "03ee6387a9a69f615bba077c87150999bf054e41",
+          "author_date": "2026-09-30T12:27:08+02:00",
+          "committer_date": "2026-09-30T12:27:08+02:00",
+          "subject": "fix(cli): preserve scenario input when output aliases it (#1938)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/03ee6387a9a69f615bba077c87150999bf054e41"
+        }
+      },
+      {
+        "id": "semantic-engine",
+        "name": "Semantic Engine Contracts and CLI",
+        "maturity": "early-implementation",
+        "summary_es": "Contratos CaseInput, CLI y registros deterministas para revisión humana.",
+        "evidence": [
+          {
+            "path": "semantic_engine",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/semantic_engine",
+            "kind": "directory"
+          },
+          {
+            "path": "docs/architecture/semantic_engine_cli.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/architecture/semantic_engine_cli.md",
+            "kind": "file"
+          },
+          {
+            "path": "examples/semantic_engine",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/examples/semantic_engine",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "907a1668d814a8b8fd68869b0d64ac6417073dbd",
+          "author_date": "2026-05-30T18:16:24+02:00",
+          "committer_date": "2026-05-30T18:16:24+02:00",
+          "subject": "engine: add minimal semantic engine contracts (#1614)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/907a1668d814a8b8fd68869b0d64ac6417073dbd"
+        },
+        "latest_path_commit": {
+          "sha": "824d5602e11f3e0eea84baed1cc085c613dc7e59",
+          "author_date": "2026-07-29T20:05:22+02:00",
+          "committer_date": "2026-07-29T20:05:22+02:00",
+          "subject": "fix(json): reject non-standard numeric constants (#1812)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/824d5602e11f3e0eea84baed1cc085c613dc7e59"
+        }
+      },
+      {
+        "id": "operator",
+        "name": "HUB_Optimus Operator",
+        "maturity": "browser-prototype",
+        "summary_es": "PWA de navegador para preparar borradores locales, conservar procedencia y revisión humana.",
+        "evidence": [
+          {
+            "path": "site/operator",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/site/operator",
+            "kind": "directory"
+          },
+          {
+            "path": "docs/rfc/operator_atomic_claim_drafting.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/operator_atomic_claim_drafting.md",
+            "kind": "file"
+          },
+          {
+            "path": "docs/rfc/operator_local_learning_candidate.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/operator_local_learning_candidate.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "b19a316cbd4603541bbd4829446987e08a9ce2ba",
+          "author_date": "2026-06-30T12:05:17+02:00",
+          "committer_date": "2026-06-30T12:05:17+02:00",
+          "subject": "site: add operator PWA shell (#1674)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/b19a316cbd4603541bbd4829446987e08a9ce2ba"
+        },
+        "latest_path_commit": {
+          "sha": "3426dbbc5cd59cdb8ff6a6b91edc404dd31ea95a",
+          "author_date": "2026-11-08T00:45:52+01:00",
+          "committer_date": "2026-11-08T00:45:52+01:00",
+          "subject": "fix(operator): preserve provenance URLs without embedded credentials (#2099)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/3426dbbc5cd59cdb8ff6a6b91edc404dd31ea95a"
+        }
+      },
+      {
+        "id": "controlled-url-intake",
+        "name": "Controlled URL Intake",
+        "maturity": "implementation-present-deployment-unverified",
+        "summary_es": "Contratos y candidatos de recuperación acotada de una URL; entrada pública desactivada.",
+        "evidence": [
+          {
+            "path": "docs/rfc/operator_controlled_url_intake.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/operator_controlled_url_intake.md",
+            "kind": "file"
+          },
+          {
+            "path": "ops/ec2/controlled_url_intake.v1.schema.json",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/ops/ec2/controlled_url_intake.v1.schema.json",
+            "kind": "file"
+          },
+          {
+            "path": "ops/ec2/operator_public_intake.v1.schema.json",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/ops/ec2/operator_public_intake.v1.schema.json",
+            "kind": "file"
+          },
+          {
+            "path": "ops/ec2/operator-intake-gateway.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/ops/ec2/operator-intake-gateway.py",
+            "kind": "file"
+          },
+          {
+            "path": "ops/aws/operator-url-intake",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/ops/aws/operator-url-intake",
+            "kind": "directory"
+          },
+          {
+            "path": "docs/context/STATUS.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/context/STATUS.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "cfe5e2c70a4dc87961b23d11c19c64efb3a80fd0",
+          "author_date": "2026-07-20T15:25:25+02:00",
+          "committer_date": "2026-07-20T15:25:25+02:00",
+          "subject": "docs: add Operator controlled URL intake RFC",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/cfe5e2c70a4dc87961b23d11c19c64efb3a80fd0"
+        },
+        "latest_path_commit": {
+          "sha": "e150eced156c22c624366a5c681ae41df9a347e1",
+          "author_date": "2026-11-08T19:16:58+01:00",
+          "committer_date": "2026-11-08T19:16:58+01:00",
+          "subject": "fix(operator): guard Lambda dependency graph (#2104) (#2120)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/e150eced156c22c624366a5c681ae41df9a347e1"
+        }
+      },
+      {
+        "id": "research",
+        "name": "Scenario and Narrative Research",
+        "maturity": "experimental-tooling",
+        "summary_es": "Laboratorio de escenarios sintéticos, herramientas de límites/fronteras y corpus narrativos provisionales.",
+        "evidence": [
+          {
+            "path": "tools/scenario_generator",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_generator",
+            "kind": "directory"
+          },
+          {
+            "path": "tools/scenario_mutator.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_mutator.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/scenario_telemetry.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_telemetry.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/scenario_boundary_search.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_boundary_search.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/scenario_frontier.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_frontier.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/scenario_frontier_compare.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_frontier_compare.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/scenario_report.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_report.py",
+            "kind": "file"
+          },
+          {
+            "path": "datasets",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/datasets",
+            "kind": "directory"
+          },
+          {
+            "path": "benchmarks/run_narrative_benchmarks.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/benchmarks/run_narrative_benchmarks.py",
+            "kind": "file"
+          },
+          {
+            "path": "docs/lab_state.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/lab_state.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "7060596f05b449cca0cdfaccd3a3b5a441a3360a",
+          "author_date": "2026-03-09T06:10:53-07:00",
+          "committer_date": "2026-03-09T06:10:53-07:00",
+          "subject": "feature: synthetic scenario generator compatible with canonical schema (#114)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/7060596f05b449cca0cdfaccd3a3b5a441a3360a"
+        },
+        "latest_path_commit": {
+          "sha": "21973051fc32823df1aa6b05b0ff7ad99bb4d21d",
+          "author_date": "2026-10-25T20:20:44+01:00",
+          "committer_date": "2026-10-25T20:20:44+01:00",
+          "subject": "test: make Windows validation portable (#1958)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/21973051fc32823df1aa6b05b0ff7ad99bb4d21d"
+        }
+      },
+      {
+        "id": "governance-intelligence",
+        "name": "Governance Intelligence",
+        "maturity": "active-ratified-protocol",
+        "summary_es": "Protocolo documental de gobernanza con responsabilidad humana.",
+        "evidence": [
+          {
+            "path": "docs/governance/GOVERNANCE_INTELLIGENCE.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/governance/GOVERNANCE_INTELLIGENCE.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "e82998079340f63807e506f6bd7a07ce5b184eee",
+          "author_date": "2026-07-17T08:33:05+02:00",
+          "committer_date": "2026-07-17T08:33:05+02:00",
+          "subject": "governance: ratify Governance Intelligence protocol (#1695)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/e82998079340f63807e506f6bd7a07ce5b184eee"
+        },
+        "latest_path_commit": {
+          "sha": "e82998079340f63807e506f6bd7a07ce5b184eee",
+          "author_date": "2026-07-17T08:33:05+02:00",
+          "committer_date": "2026-07-17T08:33:05+02:00",
+          "subject": "governance: ratify Governance Intelligence protocol (#1695)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/e82998079340f63807e506f6bd7a07ce5b184eee"
+        }
+      },
+      {
+        "id": "labs",
+        "name": "HUB-Optimus Labs",
+        "maturity": "documented-incubation-surface",
+        "summary_es": "Referencia de incubación Labs en el portafolio público; el repositorio externo Labs no ha sido auditado aquí.",
+        "evidence": [
+          {
+            "path": "site/index.html",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/site/index.html",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "581aab7f858ff109b06d2b7737084cb660637c7a",
+          "author_date": "2026-07-28T13:42:06+02:00",
+          "committer_date": "2026-07-28T13:42:06+02:00",
+          "subject": "site: rebuild HUB_Optimus portfolio from repository truth (#1737)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/581aab7f858ff109b06d2b7737084cb660637c7a"
+        },
+        "latest_path_commit": {
+          "sha": "e674c098e2ad11b8722ba34e493be7d705f8db2d",
+          "author_date": "2026-11-08T22:32:25+01:00",
+          "committer_date": "2026-11-08T22:32:25+01:00",
+          "subject": "fix(site): disclose the catalogue document language (#2164)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/e674c098e2ad11b8722ba34e493be7d705f8db2d"
+        }
+      },
+      {
+        "id": "admin-gateway",
+        "name": "Optimus Admin Gateway",
+        "maturity": "implementation-present-deployment-unverified",
+        "summary_es": "API de referencia neutral respecto al tenant, catálogo de operaciones, runbooks, conectores y planes Dataverse.",
+        "evidence": [
+          {
+            "path": "products/admin-gateway",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/products/admin-gateway",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "ebe288effbdc3307c8f9f6c509178f66fe42484f",
+          "author_date": "2026-09-14T18:46:20+02:00",
+          "committer_date": "2026-09-14T18:46:20+02:00",
+          "subject": "docs(admin-gateway): establish governed product foundation (#1870)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/ebe288effbdc3307c8f9f6c509178f66fe42484f"
+        },
+        "latest_path_commit": {
+          "sha": "ab904f96f8a4848171a9764ff26f505f7451a888",
+          "author_date": "2026-11-02T17:21:05+01:00",
+          "committer_date": "2026-11-02T17:21:05+01:00",
+          "subject": "test(admin-gateway): preserve journal backoff in metadata fixtures (#2078)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/ab904f96f8a4848171a9764ff26f505f7451a888"
+        }
+      },
+      {
+        "id": "evidence-lab",
+        "name": "Optimus Evidence Lab",
+        "maturity": "implementation-present-deployment-unverified",
+        "summary_es": "Paquete Dataverse v0.1.0.0: esquema gobernado, planes de seed y evidencia offline; cero escrituras ejecutadas.",
+        "evidence": [
+          {
+            "path": "products/evidence-lab",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/products/evidence-lab",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "51327282170b9c0a6f769b8bd5ddc5c39572d6a4",
+          "author_date": "2026-09-30T13:50:38+02:00",
+          "committer_date": "2026-09-30T13:50:38+02:00",
+          "subject": "feat(evidence-lab): add tenant-neutral Dataverse pilot (#1879)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/51327282170b9c0a6f769b8bd5ddc5c39572d6a4"
+        },
+        "latest_path_commit": {
+          "sha": "51327282170b9c0a6f769b8bd5ddc5c39572d6a4",
+          "author_date": "2026-09-30T13:50:38+02:00",
+          "committer_date": "2026-09-30T13:50:38+02:00",
+          "subject": "feat(evidence-lab): add tenant-neutral Dataverse pilot (#1879)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/51327282170b9c0a6f769b8bd5ddc5c39572d6a4"
+        }
+      },
+      {
+        "id": "connect-xai-x",
+        "name": "HUB_Optimus Connect — xAI and X Foundation",
+        "maturity": "early-implementation",
+        "summary_es": "Contratos de proveedor, adaptadores y planificación DryRun para xAI/X, desactivados y con transportes inyectados.",
+        "evidence": [
+          {
+            "path": "hub_optimus/connect",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/hub_optimus/connect",
+            "kind": "directory"
+          },
+          {
+            "path": "docs/architecture/xai_x_signal_bridge.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/architecture/xai_x_signal_bridge.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41",
+          "author_date": "2026-09-14T20:21:12+02:00",
+          "committer_date": "2026-09-14T20:21:12+02:00",
+          "subject": "feat(connect): add governed offline xAI and X foundation (#1877)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41"
+        },
+        "latest_path_commit": {
+          "sha": "bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41",
+          "author_date": "2026-09-14T20:21:12+02:00",
+          "committer_date": "2026-09-14T20:21:12+02:00",
+          "subject": "feat(connect): add governed offline xAI and X foundation (#1877)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41"
+        }
+      },
+      {
+        "id": "global-graph",
+        "name": "Optimus Global Graph",
+        "maturity": "issue-only",
+        "summary_es": "Fundación documentada mediante issue #1880; no es una creación implementada en este baseline.",
+        "evidence": [
+          {
+            "type": "issue",
+            "ref": "1880",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/issues/1880"
+          }
+        ],
+        "first_source_commit": null,
+        "latest_path_commit": null
+      },
+      {
+        "id": "browser-windows",
+        "name": "Optimus Browser — Windows",
+        "maturity": "early-implementation",
+        "summary_es": "Fuentes Windows WPF/WebView2 alpha 0.3.3 con Search local; distribución sin firma y aceptación física/accesibilidad pendientes.",
+        "evidence": [
+          {
+            "path": "products/browser/windows",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/products/browser/windows",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "4002b849d0c2614627fc876b89bce8e21556d3a9",
+          "author_date": "2026-10-30T21:19:32+01:00",
+          "committer_date": "2026-10-30T21:19:32+01:00",
+          "subject": "chore(browser): preserve native 0.2 and adaptive UI sources (#2018)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/4002b849d0c2614627fc876b89bce8e21556d3a9"
+        },
+        "latest_path_commit": {
+          "sha": "df1150fc7c60fe7606a5a4ccce5be34d518bb2a4",
+          "author_date": "2026-11-08T19:01:11+01:00",
+          "committer_date": "2026-11-08T19:01:11+01:00",
+          "subject": "fix(browser): allow authenticated health within the startup budget (#2112)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/df1150fc7c60fe7606a5a4ccce5be34d518bb2a4"
+        }
+      },
+      {
+        "id": "browser-web-pilot",
+        "name": "Optimus Browser — Web Pilot",
+        "maturity": "browser-prototype",
+        "summary_es": "Piloto web estático separado del navegador nativo: seis idiomas, Wikipedia explícita y preferencias locales optativas.",
+        "evidence": [
+          {
+            "path": "products/browser/web",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/products/browser/web",
+            "kind": "directory"
+          },
+          {
+            "path": "site/browser",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/site/browser",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "5b1f5989a6626ad1abe9ba84ef42595bd77f4c16",
+          "author_date": "2026-10-30T21:48:23+01:00",
+          "committer_date": "2026-10-30T21:48:23+01:00",
+          "subject": "feat(browser): piloto web accesible con seis idiomas y voz local (#2020)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/5b1f5989a6626ad1abe9ba84ef42595bd77f4c16"
+        },
+        "latest_path_commit": {
+          "sha": "5b1f5989a6626ad1abe9ba84ef42595bd77f4c16",
+          "author_date": "2026-10-30T21:48:23+01:00",
+          "committer_date": "2026-10-30T21:48:23+01:00",
+          "subject": "feat(browser): piloto web accesible con seis idiomas y voz local (#2020)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/5b1f5989a6626ad1abe9ba84ef42595bd77f4c16"
+        }
+      },
+      {
+        "id": "browser-linux",
+        "name": "Optimus Browser — Linux",
+        "maturity": "issue-only",
+        "summary_es": "Coordinación Linux mediante issue #2021; no hay fuente del navegador Linux integrada en este baseline.",
+        "evidence": [
+          {
+            "type": "issue",
+            "ref": "2021",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/issues/2021"
+          }
+        ],
+        "first_source_commit": null,
+        "latest_path_commit": null
+      },
+      {
+        "id": "search",
+        "name": "Optimus Search",
+        "maturity": "implementation-present-deployment-unverified",
+        "summary_es": "Host HTTPS local e índice finito, adaptador SearXNG configurado por operador, catálogo piloto, API remota candidata y Brave inactivo.",
+        "evidence": [
+          {
+            "path": "products/browser/search",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/products/browser/search",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "10512ad8270f274cf69797a642e2f8bb309aa878",
+          "author_date": "2026-11-01T19:59:18+01:00",
+          "committer_date": "2026-11-01T19:59:18+01:00",
+          "subject": "feat(windows): integrate 0.3.3 browser and Search with verified regressions (#2047)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/10512ad8270f274cf69797a642e2f8bb309aa878"
+        },
+        "latest_path_commit": {
+          "sha": "376eb0eb2f288d6c4bc666e27d343082c81f07f2",
+          "author_date": "2026-11-08T22:18:00+01:00",
+          "committer_date": "2026-11-08T22:18:00+01:00",
+          "subject": "feat(search): integrate inactive Brave gateway with offline validation (#2161)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/376eb0eb2f288d6c4bc666e27d343082c81f07f2"
+        }
+      },
+      {
+        "id": "device-bridge",
+        "name": "Device Bridge / HUB_Relay",
+        "maturity": "experimental-tooling",
+        "summary_es": "Trabajo experimental de compatibilidad Android/Termux y diagnósticos Windows/HUB_Relay; activación bloqueada.",
+        "evidence": [
+          {
+            "path": "products/device-bridge",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/products/device-bridge",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "e48a10bfc0fbe63ca99c29ccc1279398f0a957f6",
+          "author_date": "2026-09-30T13:26:57+02:00",
+          "committer_date": "2026-09-30T13:26:57+02:00",
+          "subject": "docs: registrar Device Bridge Android/Termux (#1933) (#1934)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/e48a10bfc0fbe63ca99c29ccc1279398f0a957f6"
+        },
+        "latest_path_commit": {
+          "sha": "eec3c3f078f9b47af7ba7e37570d8087ea7714de",
+          "author_date": "2026-11-08T23:28:50+01:00",
+          "committer_date": "2026-11-08T23:28:50+01:00",
+          "subject": "feat(relay): reconcile dormant SCM process binding (#2175)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/eec3c3f078f9b47af7ba7e37570d8087ea7714de"
+        }
+      }
+    ],
+    "supporting_capabilities": [
+      {
+        "id": "project-intelligence",
+        "name": "Project Intelligence / Obsidian Explorer",
+        "maturity": "experimental",
+        "summary_es": "Explorador arquitectónico y Graph Intelligence v1.1 experimental; conocimiento derivado fijado a 30e985…; canal estable, alias v1.1 y recuperación v1.0 son una sola creación.",
+        "evidence": [
+          {
+            "path": "obsidian-HUB_Optimus",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/obsidian-HUB_Optimus",
+            "kind": "directory"
+          },
+          {
+            "path": "site/obsidian-HUB_Optimus",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/site/obsidian-HUB_Optimus",
+            "kind": "directory"
+          },
+          {
+            "path": "tools/project_intelligence",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/tools/project_intelligence",
+            "kind": "directory"
+          },
+          {
+            "path": "site/obsidian-release-channels.v1.json",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/site/obsidian-release-channels.v1.json",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "c7d08b78d38148ffc6f84b9f2dd8541149d224ff",
+          "author_date": "2026-09-14T19:31:12+02:00",
+          "committer_date": "2026-09-14T19:31:12+02:00",
+          "subject": "feat: add evidence-bound project intelligence explorer (#1903)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/c7d08b78d38148ffc6f84b9f2dd8541149d224ff"
+        },
+        "latest_path_commit": {
+          "sha": "f965ebdbec6809fa6311aed76a7ae0d4fb8232e5",
+          "author_date": "2026-09-14T19:39:07+02:00",
+          "committer_date": "2026-09-14T19:39:07+02:00",
+          "subject": "feat: integrate Obsidian v1.1 with retained release channels (#1913)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/f965ebdbec6809fa6311aed76a7ae0d4fb8232e5"
+        },
+        "parent_catalogue_id": "labs"
+      },
+      {
+        "id": "public-portfolio",
+        "name": "Sitio público y presentación estática/PWA",
+        "maturity": "browser-prototype",
+        "summary_es": "Presentación pública, globo WebGL con fallback y vistas estáticas del catálogo; no acredita bytes publicados ni disponibilidad actual.",
+        "evidence": [
+          {
+            "path": "site/index.html",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/site/index.html",
+            "kind": "file"
+          },
+          {
+            "path": "site/assets",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/site/assets",
+            "kind": "directory"
+          },
+          {
+            "path": "site/data",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/site/data",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "70bc1f61d0316608133b6db6ec235fd1d1b5312c",
+          "author_date": "2026-06-24T19:29:37+02:00",
+          "committer_date": "2026-06-24T19:29:37+02:00",
+          "subject": "Add static landing page for GitHub Pages (#1648)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/70bc1f61d0316608133b6db6ec235fd1d1b5312c"
+        },
+        "latest_path_commit": {
+          "sha": "e674c098e2ad11b8722ba34e493be7d705f8db2d",
+          "author_date": "2026-11-08T22:32:25+01:00",
+          "committer_date": "2026-11-08T22:32:25+01:00",
+          "subject": "fix(site): disclose the catalogue document language (#2164)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/e674c098e2ad11b8722ba34e493be7d705f8db2d"
+        },
+        "parent_catalogue_id": "labs"
+      },
+      {
+        "id": "local-control-prototype",
+        "name": "Prototipo local ControlPlane",
+        "maturity": "experimental",
+        "summary_es": "Allowlist actor→tool y log en memoria en un único proceso; no importado por las superficies soportadas y sin control de producción.",
+        "evidence": [
+          {
+            "path": "hub_optimus/hub_optimus_control.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/hub_optimus/hub_optimus_control.py",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "351cad7d40329023595d5e64045c122f64cff0a1",
+          "author_date": "2026-02-08T11:49:02-08:00",
+          "committer_date": "2026-02-08T11:49:02-08:00",
+          "subject": "Voxterrae patch 2 (#44)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/351cad7d40329023595d5e64045c122f64cff0a1"
+        },
+        "latest_path_commit": {
+          "sha": "a79d3eef14fbea633814e448daf2aca859b24d5f",
+          "author_date": "2026-07-29T23:59:19+02:00",
+          "committer_date": "2026-07-29T23:59:19+02:00",
+          "subject": "fix(control): bound the local prototype (#1826)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/a79d3eef14fbea633814e448daf2aca859b24d5f"
+        },
+        "parent_catalogue_id": "core"
+      },
+      {
+        "id": "ec2-operations-api",
+        "name": "Runner, registro de ejecuciones y API local EC2",
+        "maturity": "prototype-partial",
+        "summary_es": "Scripts locales de release, ejecución fijada, registro de runs y API loopback; no acreditan host vivo, DNS/TLS o despliegue actual.",
+        "evidence": [
+          {
+            "path": "ops/ec2",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/ops/ec2",
+            "kind": "directory"
+          },
+          {
+            "path": "scripts/infra",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/scripts/infra",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "2dea8113a8526af44d9a3ee9bc48aee44ffe2ef3",
+          "author_date": "2026-06-27T22:25:24+02:00",
+          "committer_date": "2026-06-27T22:25:24+02:00",
+          "subject": "infra: add AWS dev runtime bootstrap (#1623)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/2dea8113a8526af44d9a3ee9bc48aee44ffe2ef3"
+        },
+        "latest_path_commit": {
+          "sha": "21973051fc32823df1aa6b05b0ff7ad99bb4d21d",
+          "author_date": "2026-10-25T20:20:44+01:00",
+          "committer_date": "2026-10-25T20:20:44+01:00",
+          "subject": "test: make Windows validation portable (#1958)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/21973051fc32823df1aa6b05b0ff7ad99bb4d21d"
+        },
+        "parent_catalogue_id": "semantic-engine"
+      },
+      {
+        "id": "mobile-intake",
+        "name": "CLI local de entrada móvil",
+        "maturity": "prototype",
+        "summary_es": "Entrada raw local e ignorada por defecto; validación de rutas/archivos, sin verificar contenido ni publicar.",
+        "evidence": [
+          {
+            "path": "tools/mobile_ingest.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/mobile_ingest.py",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "65732b978b93d89d9e6a70320f4d3126fab7c9dc",
+          "author_date": "2026-05-15T21:27:34+02:00",
+          "committer_date": "2026-05-15T21:27:34+02:00",
+          "subject": "feat: add mobile ingest CLI",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/65732b978b93d89d9e6a70320f4d3126fab7c9dc"
+        },
+        "latest_path_commit": {
+          "sha": "46e890e2328ffaed2f1a1f384ed21b31a112feaa",
+          "author_date": "2026-07-29T16:14:36+02:00",
+          "committer_date": "2026-07-29T16:14:36+02:00",
+          "subject": "security(intake): keep raw mobile claims private by default (#1777)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/46e890e2328ffaed2f1a1f384ed21b31a112feaa"
+        },
+        "parent_catalogue_id": "operator"
+      },
+      {
+        "id": "operator-local-learning",
+        "name": "Candidatos y almacén local de aprendizaje Operator",
+        "maturity": "draft-local-workflow-implemented",
+        "summary_es": "Modelo ejecutable y almacenamiento IndexedDB local con revisión humana; RFC Draft, sin entrenar modelos ni crear memoria institucional/remota.",
+        "evidence": [
+          {
+            "path": "site/operator/learning-store.v1.js",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/site/operator/learning-store.v1.js",
+            "kind": "file"
+          },
+          {
+            "path": "site/operator/learning-candidate.v1.js",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/site/operator/learning-candidate.v1.js",
+            "kind": "file"
+          },
+          {
+            "path": "docs/rfc/operator_local_learning_candidate.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/operator_local_learning_candidate.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "d8501c9f71656afc1c11542702f568aab41818cf",
+          "author_date": "2026-08-02T17:07:26+02:00",
+          "committer_date": "2026-08-02T17:07:26+02:00",
+          "subject": "feat(operator): add local learning candidate model and store (#1836)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/d8501c9f71656afc1c11542702f568aab41818cf"
+        },
+        "latest_path_commit": {
+          "sha": "67e2f41465790445f8ab755f01801a3915e90230",
+          "author_date": "2026-09-30T13:35:10+02:00",
+          "committer_date": "2026-09-30T13:35:10+02:00",
+          "subject": "feat(operator): add human-confirmed atomic claim drafting candidate (#1921)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/67e2f41465790445f8ab755f01801a3915e90230"
+        },
+        "parent_catalogue_id": "operator"
+      },
+      {
+        "id": "operator-atomic-claims",
+        "name": "Descomposición de afirmaciones atómicas confirmada por humanos",
+        "maturity": "accepted-bounded-source",
+        "summary_es": "Ayuda local para borradores sujetos a confirmación humana; registro RFC Accepted con decisión explícita; no verifica verdad.",
+        "evidence": [
+          {
+            "path": "site/operator/claim-decomposition.v1.js",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/site/operator/claim-decomposition.v1.js",
+            "kind": "file"
+          },
+          {
+            "path": "docs/rfc/operator_atomic_claim_drafting.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/operator_atomic_claim_drafting.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "67e2f41465790445f8ab755f01801a3915e90230",
+          "author_date": "2026-09-30T13:35:10+02:00",
+          "committer_date": "2026-09-30T13:35:10+02:00",
+          "subject": "feat(operator): add human-confirmed atomic claim drafting candidate (#1921)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/67e2f41465790445f8ab755f01801a3915e90230"
+        },
+        "latest_path_commit": {
+          "sha": "67e2f41465790445f8ab755f01801a3915e90230",
+          "author_date": "2026-09-30T13:35:10+02:00",
+          "committer_date": "2026-09-30T13:35:10+02:00",
+          "subject": "feat(operator): add human-confirmed atomic claim drafting candidate (#1921)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/67e2f41465790445f8ab755f01801a3915e90230"
+        },
+        "parent_catalogue_id": "operator"
+      },
+      {
+        "id": "scenario-research-tools",
+        "name": "Generador y herramientas de mutación, telemetría y fronteras",
+        "maturity": "experimental",
+        "summary_es": "Herramientas reproducibles sobre escenarios sintéticos; no predicción ni prueba causal.",
+        "evidence": [
+          {
+            "path": "tools/scenario_generator",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_generator",
+            "kind": "directory"
+          },
+          {
+            "path": "tools/scenario_mutator.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_mutator.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/scenario_telemetry.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_telemetry.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/scenario_boundary_search.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_boundary_search.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/scenario_frontier.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_frontier.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/scenario_frontier_compare.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/scenario_frontier_compare.py",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "7060596f05b449cca0cdfaccd3a3b5a441a3360a",
+          "author_date": "2026-03-09T06:10:53-07:00",
+          "committer_date": "2026-03-09T06:10:53-07:00",
+          "subject": "feature: synthetic scenario generator compatible with canonical schema (#114)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/7060596f05b449cca0cdfaccd3a3b5a441a3360a"
+        },
+        "latest_path_commit": {
+          "sha": "21973051fc32823df1aa6b05b0ff7ad99bb4d21d",
+          "author_date": "2026-10-25T20:20:44+01:00",
+          "committer_date": "2026-10-25T20:20:44+01:00",
+          "subject": "test: make Windows validation portable (#1958)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/21973051fc32823df1aa6b05b0ff7ad99bb4d21d"
+        },
+        "parent_catalogue_id": "research"
+      },
+      {
+        "id": "narrative-datasets",
+        "name": "Corpus narrativos y comprobaciones de consistencia",
+        "maturity": "implemented-structural-checks-provisional-content",
+        "summary_es": "Esquemas, taxonomías, renderizado y salidas congeladas; contenido provisional, sin verificar afirmaciones o motivos.",
+        "evidence": [
+          {
+            "path": "datasets",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/datasets",
+            "kind": "directory"
+          },
+          {
+            "path": "benchmarks/run_narrative_benchmarks.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/benchmarks/run_narrative_benchmarks.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/check_narrative_consistency.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/check_narrative_consistency.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/render_narrative_report.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/render_narrative_report.py",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "661c3d7ecf040fa0fb2ca9a5efbf8f902b72df76",
+          "author_date": "2026-03-22T17:12:47+01:00",
+          "committer_date": "2026-03-22T17:12:47+01:00",
+          "subject": "feat: add narrative-risk triage scaffold (#1550)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/661c3d7ecf040fa0fb2ca9a5efbf8f902b72df76"
+        },
+        "latest_path_commit": {
+          "sha": "8701b083d24fbea52d9faa0207ab51010ba61273",
+          "author_date": "2026-07-29T17:09:42+02:00",
+          "committer_date": "2026-07-29T17:09:42+02:00",
+          "subject": "test(narratives): close contract coverage gaps (#1797)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/8701b083d24fbea52d9faa0207ab51010ba61273"
+        },
+        "parent_catalogue_id": "research"
+      },
+      {
+        "id": "governance-and-repository-tooling",
+        "name": "Normas de gobernanza y herramientas del repositorio",
+        "maturity": "active-documents-and-bounded-implemented-tools",
+        "summary_es": "Documentos normativos, guardrails, mantenimiento y madurez i18n; no un producto comercial adicional ni certificación de ajustes vivos.",
+        "evidence": [
+          {
+            "path": "docs/governance",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/docs/governance",
+            "kind": "directory"
+          },
+          {
+            "path": "tools/kernel_guard.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/kernel_guard.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/founder_authority_guard.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/founder_authority_guard.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/maintenance_bot.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/maintenance_bot.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/check_maintenance_drift.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/check_maintenance_drift.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/i18n_maturity.py",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/i18n_maturity.py",
+            "kind": "file"
+          },
+          {
+            "path": "tools/audit_i18n.ps1",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/tools/audit_i18n.ps1",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "27b59ccafdbeafc39e1f3d9050c8c6ed17cdd0ed",
+          "author_date": "2026-01-05T14:38:12+01:00",
+          "committer_date": "2026-01-05T14:38:12+01:00",
+          "subject": "Add name/identity use rules (TRADEMARKS) and link from start guides",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/27b59ccafdbeafc39e1f3d9050c8c6ed17cdd0ed"
+        },
+        "latest_path_commit": {
+          "sha": "1c4a61be49dbcc4dbb5344da139b561f4a76a207",
+          "author_date": "2026-10-03T21:21:24+02:00",
+          "committer_date": "2026-10-03T21:21:24+02:00",
+          "subject": "governance: align founder control and parent/product boundaries (#1948)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/1c4a61be49dbcc4dbb5344da139b561f4a76a207"
+        },
+        "parent_catalogue_id": "core"
+      },
+      {
+        "id": "browser-adaptive-demo",
+        "name": "Demo adaptable React de Optimus",
+        "maturity": "interface-demo",
+        "summary_es": "Demo de interfaz con resultados fijos; fuente preservada de importación 0.2, separada del navegador nativo y del piloto web 6 idiomas.",
+        "evidence": [
+          {
+            "path": "products/browser/demo",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/products/browser/demo",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "4002b849d0c2614627fc876b89bce8e21556d3a9",
+          "author_date": "2026-10-30T21:19:32+01:00",
+          "committer_date": "2026-10-30T21:19:32+01:00",
+          "subject": "chore(browser): preserve native 0.2 and adaptive UI sources (#2018)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/4002b849d0c2614627fc876b89bce8e21556d3a9"
+        },
+        "latest_path_commit": {
+          "sha": "4002b849d0c2614627fc876b89bce8e21556d3a9",
+          "author_date": "2026-10-30T21:19:32+01:00",
+          "committer_date": "2026-10-30T21:19:32+01:00",
+          "subject": "chore(browser): preserve native 0.2 and adaptive UI sources (#2018)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/4002b849d0c2614627fc876b89bce8e21556d3a9"
+        },
+        "parent_catalogue_id": "browser-windows"
+      },
+      {
+        "id": "search-remote-candidate",
+        "name": "API remota de catálogo piloto",
+        "maturity": "inactive-implementation-deployment-unverified",
+        "summary_es": "API .NET10 separada para el catálogo público de ocho referencias y propuesta Azure inerte; no desplegada ni integrada en clientes.",
+        "evidence": [
+          {
+            "path": "products/browser/search/remote",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/products/browser/search/remote",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "18c20047ba66e7478e76fcba49014553f713427b",
+          "author_date": "2026-11-08T18:04:27+01:00",
+          "committer_date": "2026-11-08T18:04:27+01:00",
+          "subject": "feat(search): add verified independent remote pilot API (#2098)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/18c20047ba66e7478e76fcba49014553f713427b"
+        },
+        "latest_path_commit": {
+          "sha": "18c20047ba66e7478e76fcba49014553f713427b",
+          "author_date": "2026-11-08T18:04:27+01:00",
+          "committer_date": "2026-11-08T18:04:27+01:00",
+          "subject": "feat(search): add verified independent remote pilot API (#2098)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/18c20047ba66e7478e76fcba49014553f713427b"
+        },
+        "parent_catalogue_id": "search"
+      },
+      {
+        "id": "search-brave-candidate",
+        "name": "Adaptador Brave y gateway web autenticado",
+        "maturity": "inactive-local-candidate",
+        "summary_es": "Fuente de adaptador y gateway con fixtures offline; sin registro runtime, credenciales, suscripción ni solicitudes pagadas.",
+        "evidence": [
+          {
+            "path": "products/browser/search/providers/brave",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/products/browser/search/providers/brave",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "6eebd712c116932e3a6b9d397709f1140220b786",
+          "author_date": "2026-11-08T01:09:45+01:00",
+          "committer_date": "2026-11-08T01:09:45+01:00",
+          "subject": "ci(search): integrate inactive Brave adapter and offline acceptance (#2123)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/6eebd712c116932e3a6b9d397709f1140220b786"
+        },
+        "latest_path_commit": {
+          "sha": "376eb0eb2f288d6c4bc666e27d343082c81f07f2",
+          "author_date": "2026-11-08T22:18:00+01:00",
+          "committer_date": "2026-11-08T22:18:00+01:00",
+          "subject": "feat(search): integrate inactive Brave gateway with offline validation (#2161)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/376eb0eb2f288d6c4bc666e27d343082c81f07f2"
+        },
+        "parent_catalogue_id": "search"
+      },
+      {
+        "id": "aws-intake-canary",
+        "name": "Canary privado AWS para una URL",
+        "maturity": "disabled-repository-candidate",
+        "summary_es": "CDK/Lambda y PKCE presentes como candidato inactivo; no implica despliegue, activación del frontend, cuentas o autorización de escritura AWS.",
+        "evidence": [
+          {
+            "path": "ops/aws/operator-url-intake",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/ops/aws/operator-url-intake",
+            "kind": "directory"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "2359fb9dd3d0cdb8150fc6c60c622c3e8e558b4a",
+          "author_date": "2026-09-30T22:26:30+02:00",
+          "committer_date": "2026-09-30T22:26:30+02:00",
+          "subject": "feat(operator): integrate disabled URL-intake canary infrastructure (#1918)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/2359fb9dd3d0cdb8150fc6c60c622c3e8e558b4a"
+        },
+        "latest_path_commit": {
+          "sha": "e150eced156c22c624366a5c681ae41df9a347e1",
+          "author_date": "2026-11-08T19:16:58+01:00",
+          "committer_date": "2026-11-08T19:16:58+01:00",
+          "subject": "fix(operator): guard Lambda dependency graph (#2104) (#2120)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/e150eced156c22c624366a5c681ae41df9a347e1"
+        },
+        "parent_catalogue_id": "controlled-url-intake"
+      }
+    ],
+    "historical_creations": [
+      {
+        "id": "v0-exploratory",
+        "name": "Archivo exploratorio v0: paz, diplomacia y participación cívica",
+        "maturity": "historical / legacy / non-canonical",
+        "summary_es": "Archivo histórico no canónico; no es un producto actual.",
+        "evidence": [
+          {
+            "path": "legacy/v0_exploratory",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/tree/bba055a72a9bed6b3d46158007bc887706f675f5/legacy/v0_exploratory",
+            "kind": "directory"
+          },
+          {
+            "path": "legacy/v0_exploratory/HISTORICAL_RELEASE_2025-12-12.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/legacy/v0_exploratory/HISTORICAL_RELEASE_2025-12-12.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": null,
+        "latest_path_commit": {
+          "sha": "55a13347f8373a409adbb0a08019de2d85a57873",
+          "author_date": "2026-07-29T15:20:59+02:00",
+          "committer_date": "2026-07-29T15:20:59+02:00",
+          "subject": "artifact: quarantine conflicting legacy release (#1768)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/55a13347f8373a409adbb0a08019de2d85a57873"
+        },
+        "first_public_package": {
+          "sha": "2bb8851c66586a48a0be3e8d1a8ed2c41a7a019b",
+          "author_date": "2025-12-12T16:33:24+01:00",
+          "committer_date": "2025-12-12T16:33:24+01:00",
+          "subject": "Add files via upload",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/2bb8851c66586a48a0be3e8d1a8ed2c41a7a019b"
+        },
+        "first_individual_documents": {
+          "sha": "d3b8c0a381e577bcfacf1b858d5c1ac7d6dae176",
+          "author_date": "2025-12-12T16:43:17+01:00",
+          "committer_date": "2025-12-12T16:43:17+01:00",
+          "subject": "Add files via upload",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/d3b8c0a381e577bcfacf1b858d5c1ac7d6dae176"
+        },
+        "archive_separation_commit": {
+          "sha": "91d160430241437cf16c17ff83289acbdcc46c93",
+          "author_date": "2025-12-25T00:48:09+01:00",
+          "committer_date": "2025-12-25T00:48:09+01:00",
+          "subject": "chore: separate v0 exploratory documents into legacy and initialize v1_core structure",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/91d160430241437cf16c17ff83289acbdcc46c93"
+        },
+        "latest_relevant_path_commit": {
+          "sha": "55a13347f8373a409adbb0a08019de2d85a57873",
+          "author_date": "2026-07-29T15:20:59+02:00",
+          "committer_date": "2026-07-29T15:20:59+02:00",
+          "subject": "artifact: quarantine conflicting legacy release (#1768)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/55a13347f8373a409adbb0a08019de2d85a57873"
+        }
+      }
+    ],
+    "draft_concepts": [
+      {
+        "id": "ai-llm-provider-independence",
+        "name": "AI / LLM Provider Independence",
+        "maturity": "Draft",
+        "summary_es": "The proposal text is merged, but no acceptance or implementation record is declared.",
+        "evidence": [
+          {
+            "path": "docs/rfc/ai_llm_provider_independence.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/ai_llm_provider_independence.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "70b55fd45b28c7c5e3593253e97eb104dfa38ab2",
+          "author_date": "2026-06-14T18:46:18+02:00",
+          "committer_date": "2026-06-14T18:46:18+02:00",
+          "subject": "docs: add AI provider independence RFC (#1636)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/70b55fd45b28c7c5e3593253e97eb104dfa38ab2"
+        },
+        "latest_path_commit": {
+          "sha": "70b55fd45b28c7c5e3593253e97eb104dfa38ab2",
+          "author_date": "2026-06-14T18:46:18+02:00",
+          "committer_date": "2026-06-14T18:46:18+02:00",
+          "subject": "docs: add AI provider independence RFC (#1636)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/70b55fd45b28c7c5e3593253e97eb104dfa38ab2"
+        }
+      },
+      {
+        "id": "constitutional-governance-ai-regulatory-boundary",
+        "name": "Constitutional Governance and AI Regulatory Boundary",
+        "maturity": "Draft",
+        "summary_es": "Documentation proposal only; it is not the active governance protocol.",
+        "evidence": [
+          {
+            "path": "docs/rfc/constitutional_governance_ai_regulatory_boundary.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/constitutional_governance_ai_regulatory_boundary.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "da95c3303124adf7b54e337b86c6ca8010f75a59",
+          "author_date": "2026-06-09T20:45:16+02:00",
+          "committer_date": "2026-06-09T20:45:16+02:00",
+          "subject": "docs: add constitutional governance RFC (#1628)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/da95c3303124adf7b54e337b86c6ca8010f75a59"
+        },
+        "latest_path_commit": {
+          "sha": "da95c3303124adf7b54e337b86c6ca8010f75a59",
+          "author_date": "2026-06-09T20:45:16+02:00",
+          "committer_date": "2026-06-09T20:45:16+02:00",
+          "subject": "docs: add constitutional governance RFC (#1628)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/da95c3303124adf7b54e337b86c6ca8010f75a59"
+        }
+      },
+      {
+        "id": "enterprise-boundary",
+        "name": "Enterprise Boundary",
+        "maturity": "Draft",
+        "summary_es": "The repository contains a proposal boundary only; no enterprise product or launch is authorized.",
+        "evidence": [
+          {
+            "path": "docs/rfc/enterprise_boundary.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/enterprise_boundary.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "6bebdfe2b65062c984f91d7bcf987b2933e05c81",
+          "author_date": "2026-06-14T18:31:49+02:00",
+          "committer_date": "2026-06-14T18:31:49+02:00",
+          "subject": "docs: add enterprise boundary RFC (#1635)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/6bebdfe2b65062c984f91d7bcf987b2933e05c81"
+        },
+        "latest_path_commit": {
+          "sha": "1eb1236bc4d0861ec9e33358e90dfe7ea7ae2572",
+          "author_date": "2026-07-28T14:16:06+02:00",
+          "committer_date": "2026-07-28T14:16:06+02:00",
+          "subject": "docs: register RFC lifecycle and capability evidence (#1781)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/1eb1236bc4d0861ec9e33358e90dfe7ea7ae2572"
+        }
+      },
+      {
+        "id": "epistemic-analysis-modes",
+        "name": "Epistemic Analysis Modes",
+        "maturity": "Draft",
+        "summary_es": "Conceptual taxonomy only; no mode router or evaluator is implemented.",
+        "evidence": [
+          {
+            "path": "docs/rfc/epistemic_analysis_modes.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/epistemic_analysis_modes.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "1895a7f167acaa5137fc7c9f7720a9fe90760f3a",
+          "author_date": "2026-06-10T10:58:33+02:00",
+          "committer_date": "2026-06-10T10:58:33+02:00",
+          "subject": "[codex] docs: define epistemic analysis modes taxonomy (#1631)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/1895a7f167acaa5137fc7c9f7720a9fe90760f3a"
+        },
+        "latest_path_commit": {
+          "sha": "1895a7f167acaa5137fc7c9f7720a9fe90760f3a",
+          "author_date": "2026-06-10T10:58:33+02:00",
+          "committer_date": "2026-06-10T10:58:33+02:00",
+          "subject": "[codex] docs: define epistemic analysis modes taxonomy (#1631)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/1895a7f167acaa5137fc7c9f7720a9fe90760f3a"
+        }
+      },
+      {
+        "id": "github-platform-strategy",
+        "name": "GitHub Platform Strategy for HUB_Optimus Evolution",
+        "maturity": "Draft",
+        "summary_es": "Planning record only; repository settings and platform adoption require separate evidence.",
+        "evidence": [
+          {
+            "path": "docs/rfc/github_platform_strategy.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/github_platform_strategy.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "748716fefe340f7e8de9920949d77b2477bb77ff",
+          "author_date": "2026-07-09T08:19:05+02:00",
+          "committer_date": "2026-07-09T08:19:05+02:00",
+          "subject": "docs: RFC — GitHub platform strategy for HUB_Optimus evolution (#1691)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/748716fefe340f7e8de9920949d77b2477bb77ff"
+        },
+        "latest_path_commit": {
+          "sha": "748716fefe340f7e8de9920949d77b2477bb77ff",
+          "author_date": "2026-07-09T08:19:05+02:00",
+          "committer_date": "2026-07-09T08:19:05+02:00",
+          "subject": "docs: RFC — GitHub platform strategy for HUB_Optimus evolution (#1691)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/748716fefe340f7e8de9920949d77b2477bb77ff"
+        }
+      },
+      {
+        "id": "hub-optimus-evidence-bridge",
+        "name": "HUB_Optimus Evidence Bridge",
+        "maturity": "Draft",
+        "summary_es": "Architecture proposal only; it authorizes no Dataverse mutation, hosted MCP endpoint, OpenAI plugin publication, truth adjudication, merge, or deployment.",
+        "evidence": [
+          {
+            "path": "docs/rfc/hub_optimus_evidence_bridge.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/hub_optimus_evidence_bridge.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "f4c916ad29e17d96957cff8c6d12cac954bc420e",
+          "author_date": "2026-09-14T20:14:13+02:00",
+          "committer_date": "2026-09-14T20:14:13+02:00",
+          "subject": "docs(rfc): record Evidence Bridge architecture proposal (#1923)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/f4c916ad29e17d96957cff8c6d12cac954bc420e"
+        },
+        "latest_path_commit": {
+          "sha": "f4c916ad29e17d96957cff8c6d12cac954bc420e",
+          "author_date": "2026-09-14T20:14:13+02:00",
+          "committer_date": "2026-09-14T20:14:13+02:00",
+          "subject": "docs(rfc): record Evidence Bridge architecture proposal (#1923)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/f4c916ad29e17d96957cff8c6d12cac954bc420e"
+        }
+      },
+      {
+        "id": "hermes-pwa-gate-issue-pack",
+        "name": "HERMES PWA Gate Issue Pack",
+        "maturity": "Draft",
+        "summary_es": "Implementation-planning pack; it opens no gate by itself.",
+        "evidence": [
+          {
+            "path": "docs/rfc/hermes_pwa_gate_issue_pack.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/hermes_pwa_gate_issue_pack.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "ff975f5b55c550ca4a481060cf34730c91c27cbe",
+          "author_date": "2026-06-30T02:00:59+02:00",
+          "committer_date": "2026-06-30T02:00:59+02:00",
+          "subject": "docs: add HERMES gate issue roadmap and API-boundary-first PR scope (#1671)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/ff975f5b55c550ca4a481060cf34730c91c27cbe"
+        },
+        "latest_path_commit": {
+          "sha": "ff975f5b55c550ca4a481060cf34730c91c27cbe",
+          "author_date": "2026-06-30T02:00:59+02:00",
+          "committer_date": "2026-06-30T02:00:59+02:00",
+          "subject": "docs: add HERMES gate issue roadmap and API-boundary-first PR scope (#1671)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/ff975f5b55c550ca4a481060cf34730c91c27cbe"
+        }
+      },
+      {
+        "id": "hermes-pwa-interface-boundary",
+        "name": "HERMES PWA Interface Boundary",
+        "maturity": "Draft",
+        "summary_es": "No HERMES application, public API, authentication, billing, or dashboard is authorized.",
+        "evidence": [
+          {
+            "path": "docs/rfc/hermes_pwa_interface_boundary.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/hermes_pwa_interface_boundary.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "70b62fd7d6e144c146569569d31e13a97702586b",
+          "author_date": "2026-06-14T19:14:57+02:00",
+          "committer_date": "2026-06-14T19:14:57+02:00",
+          "subject": "docs: add HERMES PWA interface RFC (#1639)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/70b62fd7d6e144c146569569d31e13a97702586b"
+        },
+        "latest_path_commit": {
+          "sha": "ff975f5b55c550ca4a481060cf34730c91c27cbe",
+          "author_date": "2026-06-30T02:00:59+02:00",
+          "committer_date": "2026-06-30T02:00:59+02:00",
+          "subject": "docs: add HERMES gate issue roadmap and API-boundary-first PR scope (#1671)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/ff975f5b55c550ca4a481060cf34730c91c27cbe"
+        }
+      },
+      {
+        "id": "ingestion-evidence-intake-boundary",
+        "name": "Ingestion and Evidence Intake Boundary",
+        "maturity": "Draft",
+        "summary_es": "The broad boundary is unratified; individual local intake prototypes are tracked as separate capabilities.",
+        "evidence": [
+          {
+            "path": "docs/rfc/ingestion_evidence_intake_boundary.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/ingestion_evidence_intake_boundary.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "855fd6853eec6e78928e4e5a01882088d417c28b",
+          "author_date": "2026-06-14T19:08:05+02:00",
+          "committer_date": "2026-06-14T19:08:05+02:00",
+          "subject": "docs: add ingestion evidence intake RFC (#1638)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/855fd6853eec6e78928e4e5a01882088d417c28b"
+        },
+        "latest_path_commit": {
+          "sha": "855fd6853eec6e78928e4e5a01882088d417c28b",
+          "author_date": "2026-06-14T19:08:05+02:00",
+          "committer_date": "2026-06-14T19:08:05+02:00",
+          "subject": "docs: add ingestion evidence intake RFC (#1638)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/855fd6853eec6e78928e4e5a01882088d417c28b"
+        }
+      },
+      {
+        "id": "intelligent-ecosystem-guardian",
+        "name": "IEG — Intelligent Ecosystem Guardian",
+        "maturity": "Draft",
+        "summary_es": "Design hypothesis only; no conservation data source, model, pilot, or operational module is implemented.",
+        "evidence": [
+          {
+            "path": "docs/rfc/intelligent_ecosystem_guardian.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/intelligent_ecosystem_guardian.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "619e6223323d05f0fd3856fc327e28e0fe38a2d8",
+          "author_date": "2026-07-16T22:42:49+02:00",
+          "committer_date": "2026-07-16T22:42:49+02:00",
+          "subject": "docs: add IEG conservation decision-support RFC (#1697)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/619e6223323d05f0fd3856fc327e28e0fe38a2d8"
+        },
+        "latest_path_commit": {
+          "sha": "619e6223323d05f0fd3856fc327e28e0fe38a2d8",
+          "author_date": "2026-07-16T22:42:49+02:00",
+          "committer_date": "2026-07-16T22:42:49+02:00",
+          "subject": "docs: add IEG conservation decision-support RFC (#1697)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/619e6223323d05f0fd3856fc327e28e0fe38a2d8"
+        }
+      },
+      {
+        "id": "ip-confidential-disclosure-boundary",
+        "name": "IP / Patent / Confidential Disclosure Boundary",
+        "maturity": "Draft",
+        "summary_es": "Proposal only; it is not legal advice and does not establish confidential storage or a patent process.",
+        "evidence": [
+          {
+            "path": "docs/rfc/ip_confidential_disclosure_boundary.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/ip_confidential_disclosure_boundary.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "866442ea6d9bcb8bec4784af1d546f7dcea3b598",
+          "author_date": "2026-06-14T18:59:23+02:00",
+          "committer_date": "2026-06-14T18:59:23+02:00",
+          "subject": "docs: add IP confidential disclosure RFC (#1637)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/866442ea6d9bcb8bec4784af1d546f7dcea3b598"
+        },
+        "latest_path_commit": {
+          "sha": "866442ea6d9bcb8bec4784af1d546f7dcea3b598",
+          "author_date": "2026-06-14T18:59:23+02:00",
+          "committer_date": "2026-06-14T18:59:23+02:00",
+          "subject": "docs: add IP confidential disclosure RFC (#1637)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/866442ea6d9bcb8bec4784af1d546f7dcea3b598"
+        }
+      },
+      {
+        "id": "judicial-transparency-audit-framework",
+        "name": "Judicial Transparency Audit Framework",
+        "maturity": "Draft",
+        "summary_es": "Forensic-audit proposal only; no crawler, scoring system, legal conclusion, or implementation is authorized.",
+        "evidence": [
+          {
+            "path": "docs/rfc/judicial_transparency_audit_framework.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/judicial_transparency_audit_framework.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "f57fff6d031dd9b767b342ce40d44eb5fcf4a3ee",
+          "author_date": "2026-06-19T20:34:03+02:00",
+          "committer_date": "2026-06-19T20:34:03+02:00",
+          "subject": "docs: add judicial transparency audit framework RFC (#1642)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/f57fff6d031dd9b767b342ce40d44eb5fcf4a3ee"
+        },
+        "latest_path_commit": {
+          "sha": "00b6a1ad32d677e12e621c154d68c3705e55499b",
+          "author_date": "2026-06-20T16:43:17+02:00",
+          "committer_date": "2026-06-20T16:43:17+02:00",
+          "subject": "docs: add external JTAF contribution note",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/00b6a1ad32d677e12e621c154d68c3705e55499b"
+        }
+      },
+      {
+        "id": "post-quantum-control-plane",
+        "name": "Post-Quantum Control Plane",
+        "maturity": "Draft",
+        "summary_es": "No post-quantum runtime, key management, signing, sealed exchange, or production security claim exists.",
+        "evidence": [
+          {
+            "path": "docs/rfc/post_quantum_control_plane.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/post_quantum_control_plane.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "b76cb8dbed756b01ef0bb9a4473c32e24014a75d",
+          "author_date": "2026-05-24T18:34:41+02:00",
+          "committer_date": "2026-05-24T18:34:41+02:00",
+          "subject": "rfc: define post-quantum control plane boundary (#1611)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/b76cb8dbed756b01ef0bb9a4473c32e24014a75d"
+        },
+        "latest_path_commit": {
+          "sha": "b76cb8dbed756b01ef0bb9a4473c32e24014a75d",
+          "author_date": "2026-05-24T18:34:41+02:00",
+          "committer_date": "2026-05-24T18:34:41+02:00",
+          "subject": "rfc: define post-quantum control plane boundary (#1611)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/b76cb8dbed756b01ef0bb9a4473c32e24014a75d"
+        }
+      },
+      {
+        "id": "proposal-scenario-analysis-mode",
+        "name": "Proposal and Scenario Analysis Mode",
+        "maturity": "Draft",
+        "summary_es": "Analysis-mode proposal only; it does not change the simulator or endorse submitted proposals.",
+        "evidence": [
+          {
+            "path": "docs/rfc/proposal_scenario_analysis_mode.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/proposal_scenario_analysis_mode.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "c1728ea23391b4fefe805e47fa133c279ef10569",
+          "author_date": "2026-06-06T16:10:44+02:00",
+          "committer_date": "2026-06-06T16:10:44+02:00",
+          "subject": "rfc: define proposal and scenario analysis mode (#1626)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/c1728ea23391b4fefe805e47fa133c279ef10569"
+        },
+        "latest_path_commit": {
+          "sha": "c1728ea23391b4fefe805e47fa133c279ef10569",
+          "author_date": "2026-06-06T16:10:44+02:00",
+          "committer_date": "2026-06-06T16:10:44+02:00",
+          "subject": "rfc: define proposal and scenario analysis mode (#1626)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/c1728ea23391b4fefe805e47fa133c279ef10569"
+        }
+      },
+      {
+        "id": "whatsapp-claim-intake-adapter-boundary",
+        "name": "WhatsApp Claim Intake Adapter Boundary",
+        "maturity": "Draft",
+        "summary_es": "No bot, webhook, connector, automated messaging intake, or provider integration is implemented.",
+        "evidence": [
+          {
+            "path": "docs/rfc/whatsapp_claim_intake_adapter_boundary.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/whatsapp_claim_intake_adapter_boundary.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "4fa7a10979fe6bef734356792f1594f6131d1727",
+          "author_date": "2026-06-30T01:24:58+02:00",
+          "committer_date": "2026-06-30T01:24:58+02:00",
+          "subject": "docs: add WhatsApp claim intake adapter RFC (#1651)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/4fa7a10979fe6bef734356792f1594f6131d1727"
+        },
+        "latest_path_commit": {
+          "sha": "4fa7a10979fe6bef734356792f1594f6131d1727",
+          "author_date": "2026-06-30T01:24:58+02:00",
+          "committer_date": "2026-06-30T01:24:58+02:00",
+          "subject": "docs: add WhatsApp claim intake adapter RFC (#1651)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/4fa7a10979fe6bef734356792f1594f6131d1727"
+        }
+      },
+      {
+        "id": "ai-access-matrix",
+        "name": "AI Access Matrix",
+        "maturity": "Draft",
+        "summary_es": "Documentation proposal prepared against main@23ea5a6677c07dcefab60f70c6b1641a3541f0b0 on 2026-10-15 under #1584. No ratification, provider connection, automated integration, new tool permission, or implementation is recorded. The historical registry baseline and existing decision records are not re-certified by this added proposal.",
+        "evidence": [
+          {
+            "path": "docs/rfc/ai_access_matrix.md",
+            "url": "https://github.com/Voxterrae/HUB_Optimus/blob/bba055a72a9bed6b3d46158007bc887706f675f5/docs/rfc/ai_access_matrix.md",
+            "kind": "file"
+          }
+        ],
+        "first_source_commit": {
+          "sha": "7f6473e0e2607e581e686e3fe5b56cf43bfa958f",
+          "author_date": "2026-10-25T19:05:31+01:00",
+          "committer_date": "2026-10-25T19:05:31+01:00",
+          "subject": "docs(rfc): isolate the draft AI access matrix with verified history (#1989)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/7f6473e0e2607e581e686e3fe5b56cf43bfa958f"
+        },
+        "latest_path_commit": {
+          "sha": "7f6473e0e2607e581e686e3fe5b56cf43bfa958f",
+          "author_date": "2026-10-25T19:05:31+01:00",
+          "committer_date": "2026-10-25T19:05:31+01:00",
+          "subject": "docs(rfc): isolate the draft AI access matrix with verified history (#1989)",
+          "url": "https://github.com/Voxterrae/HUB_Optimus/commit/7f6473e0e2607e581e686e3fe5b56cf43bfa958f"
+        }
+      }
+    ]
+  },
+  "contributions": [
+    {
+      "id": "setup-dotnet-804",
+      "repository": "actions/setup-dotnet",
+      "title": "docs: clarify rebuilding bundles for dependency updates",
+      "kind": "documentation-pr",
+      "url": "https://github.com/actions/setup-dotnet/pull/804",
+      "contributor": {
+        "login": "Voxterrae",
+        "id": 249308740
+      },
+      "created_at": "2026-11-11T14:54:52Z",
+      "observed_at": "2026-11-14T16:04:56.569791+00:00",
+      "status": "open",
+      "summary_es": "PR propia de documentación: indica que las actualizaciones de dependencias requieren regenerar los bundles ejecutados por la Action e incluir dist/setup/ y dist/cache-save/.",
+      "acceptance": "not-confirmed",
+      "ai_assistance": "Codex; declarada en la aportación pública",
+      "hub_remediation_validated": false,
+      "evidence_urls": [
+        "https://api.github.com/repos/actions/setup-dotnet/pulls/804",
+        "https://api.github.com/repos/actions/setup-dotnet/pulls/804/files?per_page=100&page=1",
+        "https://api.github.com/repos/actions/setup-dotnet/pulls/804/reviews?per_page=100&page=1"
+      ],
+      "head_sha": "6c5068192fb1bf42b866e48ebfa6493c1d262f01",
+      "merged_at": null
+    },
+    {
+      "id": "smithy-2351-validation",
+      "repository": "smithy-lang/smithy-typescript",
+      "title": "Validación downstream y consulta de publicación en PR #2351",
+      "kind": "downstream-validation",
+      "url": "https://github.com/smithy-lang/smithy-typescript/pull/2351#issuecomment-6880003584",
+      "contributor": {
+        "login": "Voxterrae",
+        "id": 249308740
+      },
+      "created_at": "2026-11-14T15:45:17Z",
+      "observed_at": "2026-11-14T16:04:56.569791+00:00",
+      "status": "published-awaiting-response",
+      "summary_es": "Comentario propio que publica una comparación aislada de quoteHeader/splitHeader entre tarballs npm y fuentes fusionadas, y solicita una versión soportada que contenga el arreglo.",
+      "acceptance": "not-confirmed",
+      "ai_assistance": "Codex; declarada en la aportación pública",
+      "hub_remediation_validated": false,
+      "evidence_urls": [
+        "https://api.github.com/repos/smithy-lang/smithy-typescript/issues/comments/6880003584",
+        "https://api.github.com/repos/smithy-lang/smithy-typescript/pulls/2351",
+        "https://api.github.com/repos/smithy-lang/smithy-typescript/issues/2351/comments?per_page=100&page=1"
+      ],
+      "upstream_change": {
+        "url": "https://github.com/smithy-lang/smithy-typescript/pull/2351",
+        "author": "Alan4506",
+        "merge_commit": "c364c4863d5429f3a019a5fc020cbd57cf4ebf17",
+        "merged_at": "2026-11-13T18:31:17Z",
+        "attribution_es": "El arreglo y su fusión pertenecen a Alan4506; la aportación de Voxterrae es la validación y el seguimiento público."
+      },
+      "reported_validation": {
+        "old_npm_versions": [
+          "3.33.3",
+          "3.40.0"
+        ],
+        "checks_per_implementation": 1562,
+        "each_old_npm_result": {
+          "passed": 1446,
+          "failed": 116
+        },
+        "merged_sources_result": {
+          "passed": 1562,
+          "failed": 0
+        },
+        "scope": "Isolated helper runtime logic; not full package/workspace/integration tests",
+        "independently_reexecuted_by_this_census": false
+      }
+    },
+    {
+      "id": "aws-cdk-39733-follow-up",
+      "repository": "aws/aws-cdk",
+      "title": "Release follow-up: verifying bundled minimatch after #39595 (GHSA-g3hv-75wg-m249)",
+      "kind": "release-verification-discussion",
+      "url": "https://github.com/aws/aws-cdk/discussions/39733",
+      "contributor": {
+        "login": "Voxterrae",
+        "id": 249308740
+      },
+      "created_at": "2026-11-14T15:35:26Z",
+      "observed_at": "2026-11-14T16:04:56.569791+00:00",
+      "status": "published-awaiting-response",
+      "summary_es": "Discusión propia de seguimiento de publicación: aporta reproducción para verificar SHA-512 y la versión real de minimatch incluida en el tarball oficial de aws-cdk-lib.",
+      "acceptance": "not-confirmed",
+      "ai_assistance": "Codex; declarada en la aportación pública",
+      "hub_remediation_validated": false,
+      "evidence_urls": [
+        "https://api.github.com/repos/aws/aws-cdk/discussions/39733",
+        "https://github.com/aws/aws-cdk/discussions/39733",
+        "https://api.github.com/repos/aws/aws-cdk/pulls/39595"
+      ],
+      "upstream_change": {
+        "url": "https://github.com/aws/aws-cdk/pull/39595",
+        "author": "udondan",
+        "merge_commit": "c153af906a24dde1797fbd15153ca2c4b29317d5",
+        "merged_at": "2026-11-13T10:29:22Z",
+        "attribution_es": "El arreglo original PR #39595 pertenece a udondan; la aportación de Voxterrae es la validación del artefacto y el seguimiento público."
+      },
+      "reported_validation": {
+        "aws_cdk_lib_version": "2.277.0",
+        "bundled_minimatch_version": "10.2.6",
+        "tarball_sha512_integrity": "sha512-xUY16j7p5rsyohZIqxUtk7CswPpagCnDFoYKwwK2w78Of+m2+/EhU5UzI3FbNWeKttKMfwvddhVuah4GGODkAQ==",
+        "advisory_as_read_at_contribution_date": "GHSA-g3hv-75wg-m249",
+        "scope": "Read-only published artifact validation and release chronology; source fix already merged",
+        "independently_reexecuted_by_this_census": false
+      }
+    }
+  ],
+  "attribution_boundary": "La identidad de cuenta y un commit firmado por GitHub no demuestran autoría humana exclusiva ni una firma independiente del propietario. Conservar crédito de contribuidores, ayuda de IA y derechos/licencias de terceros; este registro no cambia autoridad ni propiedad."
+}
