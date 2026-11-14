@@ -7,6 +7,17 @@ prompts, summaries, display names, and model output are advisory only.
 
 ## Public portfolio register — 2026-11-14
 
+Issue #2187 expands the documentary review with 24 groups of own ecosystem
+work, a 39-capability/pilot assessment and a plain-language editorial proposal.
+See `docs/project/ECOSYSTEM_CONTRIBUTIONS.md`, `CAPABILITIES_AND_PILOTS.md` and
+`HUB_OPTIMUS_EXPLAINED.md`. The design in
+`docs/superpowers/specs/2026-11-14-public-portfolio-expansion-design.md` remains
+pending human editorial approval. It proposes an allowlisted static Markdown
+reading layer and a separate existing-Site synchronization; neither has been
+implemented or published by this documentary update. Do not promote private
+accessory metadata, proposals or provider use into vendor acceptance. Preserve
+the normative sources, canonicality, rights and existing audiences.
+
 Issue #2185 prepares a public static contribution register, extending the
 proposal in #1936 without implementing its operational ledger. Both issues
 remain open. See [the register](../project/CONTRIBUTIONS_REGISTER.md) for

@@ -12,7 +12,19 @@
   <strong>Reality → Evidence → Inference → Narrative → Operational Signal</strong>
 </p>
 
-**Integrity-first diplomatic simulation workflow for evaluation, preventive mediation, and systemic learning.**
+**A human-governed platform for organizing evidence, preparing reviewable drafts,
+and developing connected tools.**
+
+HUB_Optimus combines a versioned methodology with tools at different stages of
+development: Operator, Browser, Search, connectors and experimental components.
+Start with a concrete use and its evidence; the catalogue states what each
+component implements and what still needs acceptance.
+
+**New to the project?** [Read the plain-language guide (ES)](docs/project/HUB_OPTIMUS_EXPLAINED.md),
+review [capabilities and first pilots](docs/project/CAPABILITIES_AND_PILOTS.md),
+or inspect [creations and ecosystem work](docs/project/ECOSYSTEM_CONTRIBUTIONS.md).
+The new guide is an editorial proposal for review, not a replacement for the
+source documents below.
 
 ## Founder, creator, ownership, and authority
 
@@ -50,30 +62,35 @@ verified-commit, pull-request, review, and owner-authority controls.
 
 > **Primary onboarding:** [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md)
 >
-> **Translation status:** DE governance path translated · CA / FR / RU = progressive translation · HE / ZH = onboarding stubs, full translation pending
+> **Other entry points:** [CA](docs/ca/00_start_here.md) · [FR](docs/fr/00_start_here.md) · [RU](docs/ru/00_start_here.md) · [HE](docs/he/00_start_here.md) · [ZH-Hans](docs/zh/00_start_here.md)
+>
+> **Coverage:** ES/DE onboarding needs review; CA/FR/RU onboarding remains stub;
+> HE/ZH-Hans documentation is partial. Governance coverage differs by document.
+> These links do not certify complete translation or professional linguistic review.
+> See the [dated maturity record](docs/i18n/maturity.v1.json).
 >
 > Translation-policy authority:
 > [docs/context/STATUS.md](docs/context/STATUS.md)
 
-**Quick paths:**
-- 90 seconds: [EN](docs/00_start_here.md) · [ES](docs/es/00_start_here.md) · [DE](docs/de/00_start_here.md)
-- 20 minutes (canonical v1 ES): [v1_core/languages/es](v1_core/languages/es)
+**Paths by interest:**
+- Understand the project: [plain-language guide (ES)](docs/project/HUB_OPTIMUS_EXPLAINED.md)
+- Try a bounded workflow: [capabilities and pilots](docs/project/CAPABILITIES_AND_PILOTS.md)
+- Read the canonical v1 methodology: [Spanish source](v1_core/languages/es)
 - Hands-on: [Scenario Template](v1_core/workflow/04_scenario_template.md)
 
 ---
 
 ## What it is
 **HUB_Optimus** is developed in a publicly visible repository with restricted rights;
-contribution and use are governed by [IP_NOTICE.md](IP_NOTICE.md). It is designed to improve diplomatic outcomes through:
-- structured evaluation (incentives, verification, sequencing),
-- preventive, non-coercive mediation options,
-- iterative meta-learning from both failures and successes.
+contribution and use are governed by [IP_NOTICE.md](IP_NOTICE.md). Its methodology
+and tools support organizing sources, preparing structured drafts, examining
+uncertainty and keeping human review visible. The available prototypes each
+implement a narrower part of that workflow; integration and live deployment
+require their own evidence.
 
-It helps humans and institutions:
-- avoid repeating known historical failure patterns,
-- detect “false successes” before they escalate,
-- align incentives with medium/long-term stability,
-- operate rationally under time pressure and political noise.
+The early diplomatic work explored incentives, verification, sequencing and
+preventive mediation. It remains part of the project's history and methodology,
+alongside later tools for everyday document and technical workflows.
 
 ## What it is not
 - Not an authority.
@@ -84,7 +101,7 @@ It is a tool for **better judgment**.
 
 ---
 
-## Start in 60 seconds
+## Start here
 **New here?**
 - Start (EN): [docs/00_start_here.md](docs/00_start_here.md)
 - Empezar (ES): [docs/es/00_start_here.md](docs/es/00_start_here.md)

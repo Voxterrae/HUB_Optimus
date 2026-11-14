@@ -1719,5 +1719,624 @@
       }
     }
   ],
-  "attribution_boundary": "La identidad de cuenta y un commit firmado por GitHub no demuestran autoría humana exclusiva ni una firma independiente del propietario. Conservar crédito de contribuidores, ayuda de IA y derechos/licencias de terceros; este registro no cambia autoridad ni propiedad."
+  "attribution_boundary": "La identidad de cuenta y un commit firmado por GitHub no demuestran autoría humana exclusiva ni una firma independiente del propietario. Conservar crédito de contribuidores, ayuda de IA y derechos/licencias de terceros; este registro no cambia autoridad ni propiedad.",
+  "ecosystem_review": {
+    "observed_on": "2026-11-14",
+    "through_commit": "53b7a841e028592ca81fb43d04d15a2b017bbd78",
+    "tracking_issue": "https://github.com/Voxterrae/HUB_Optimus/issues/2187",
+    "groups_count": 24,
+    "claim_boundary": "Grupos de trabajo propio o integración, no productos adicionales ni mejoras aceptadas por sus proveedores. Los tres aportes externos del campo contributions conservan su categoría separada.",
+    "coverage": "Barrido de 1.005 archivos públicos de texto y 2.370 mensajes de commits disponibles entre refs locales; no lectura de cada blob histórico ni exportación de todos los chats. La consulta de contexto, los documentos y accesorios privados solo orientan reconciliación interna."
+  },
+  "ecosystem_work": [
+    {
+      "id": "own-ai-handoff-protocol",
+      "title_es": "Protocolo persistente ChatGPT/Codex",
+      "providers": [
+        "OpenAI",
+        "ChatGPT",
+        "Codex",
+        "GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "Protocolo de sincronización, contexto y continuidad de operadores mediante documentos y estado de GitHub.",
+      "project_state": "documented_as_merged_in_project",
+      "external_submission_state": "not_evidenced_in_inspected_public_sources",
+      "vendor_acceptance_state": "not_evidenced",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/context/AI_HANDOFF_HISTORY_PRE_1862.md#L879",
+          "kind": "public_repository_blob"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/AGENTS.md#L1",
+          "kind": "public_repository_blob"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "own-ai-provider-independence",
+      "title_es": "Arquitectura de independencia de proveedores IA",
+      "providers": [
+        "OpenAI",
+        "ChatGPT",
+        "Codex",
+        "Microsoft Copilot",
+        "Other AI providers"
+      ],
+      "grade": "own_creation",
+      "summary_es": "RFC de portabilidad, fuentes de verdad y sustitución de proveedor.",
+      "project_state": "draft_rfc_not_implemented",
+      "external_submission_state": "not_evidenced_in_inspected_public_sources",
+      "vendor_acceptance_state": "not_evidenced",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/rfc/ai_llm_provider_independence.md#L1",
+          "kind": "public_repository_blob"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "own-connector-intake-boundary",
+      "title_es": "Frontera de ingesta y futuros conectores",
+      "providers": [
+        "Connectors",
+        "Workspace services"
+      ],
+      "grade": "own_creation",
+      "summary_es": "RFC con límites de evidencia, atribución, documentos, URL y salidas de conectores.",
+      "project_state": "draft_rfc_no_connector_authorized",
+      "external_submission_state": "not_evidenced_in_inspected_public_sources",
+      "vendor_acceptance_state": "not_evidenced",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/rfc/ingestion_evidence_intake_boundary.md#L1",
+          "kind": "public_repository_blob"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "own-external-ai-review-protocol",
+      "title_es": "Protocolo público de revisión externa con IA",
+      "providers": [
+        "OpenAI",
+        "Other AI providers",
+        "GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "Paquete de revisión y retorno de hallazgos consultivos a incidencias o pull requests del proyecto.",
+      "project_state": "published_project_methodology",
+      "external_submission_state": "not_evidenced_in_inspected_public_sources",
+      "vendor_acceptance_state": "not_evidenced",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/governance/EXTERNAL_AI_REVIEW_PROTOCOL.md#L1",
+          "kind": "public_repository_blob"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "own-evidence-bridge-rfc",
+      "title_es": "Evidence Bridge: GitHub, Dataverse y plugin OpenAI",
+      "providers": [
+        "OpenAI",
+        "MCP",
+        "Microsoft Dataverse",
+        "GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "Propuesta de arquitectura que separa autoridad de GitHub, evidencia operativa Dataverse, gateway MCP y herramientas de lectura para un cliente OpenAI.",
+      "project_state": "draft_architecture_only_zero_production_calls",
+      "external_submission_state": "not_evidenced_in_inspected_public_sources",
+      "vendor_acceptance_state": "not_evidenced",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/rfc/hub_optimus_evidence_bridge.md#L1",
+          "kind": "public_repository_blob"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "own-xai-x-foundation",
+      "title_es": "Connect: base gobernada xAI y X",
+      "providers": [
+        "xAI",
+        "X"
+      ],
+      "grade": "integration",
+      "summary_es": "Contratos, adaptadores desactivados e inyección de transporte para análisis, lectura y planificación de publicación.",
+      "project_state": "implemented_offline_disabled_by_default",
+      "external_submission_state": "not_evidenced_in_inspected_public_sources",
+      "vendor_acceptance_state": "not_evidenced",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/architecture/xai_x_signal_bridge.md#L1",
+          "kind": "public_repository_blob"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "integration-android-termux-mcp",
+      "title_es": "Diagnóstico y reparación de compatibilidad Android/Termux MCP",
+      "providers": [
+        "Desktop Commander",
+        "Remote Desktop Commander",
+        "MCP",
+        "Android",
+        "Termux"
+      ],
+      "grade": "integration",
+      "summary_es": "Registro público de una reparación local que preservó cuatro variables de entorno al iniciar el hijo MCP; documenta pruebas aisladas y reconexión.",
+      "project_state": "local_compatibility_work_reported_publicly_documented_2026_09_30",
+      "external_submission_state": "not_evidenced_in_inspected_public_sources",
+      "vendor_acceptance_state": "not_evidenced",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/TERMUX.md#L1",
+          "kind": "public_repository_blob"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/VALIDATION.md#L1",
+          "kind": "public_repository_blob"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "own-ai-access-matrix",
+      "title_es": "Matriz de acceso y delegación de IA",
+      "providers": [
+        "OpenAI",
+        "ChatGPT",
+        "Codex",
+        "Microsoft Copilot",
+        "Other AI providers"
+      ],
+      "grade": "own_creation",
+      "summary_es": "Propuesta de roles, alcance, revisión, trazabilidad y activación separada de conexiones o capacidades.",
+      "project_state": "draft_not_ratified_or_activated",
+      "external_submission_state": "not_evidenced_in_inspected_public_sources",
+      "vendor_acceptance_state": "not_evidenced",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/rfc/ai_access_matrix.md#L1",
+          "kind": "public_repository_blob"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "own-hub-relay-local-mcp-plugin",
+      "title_es": "HUB_Relay: plugin MCP local 0.2.0",
+      "providers": [
+        "OpenAI-compatible clients",
+        "MCP",
+        "Windows"
+      ],
+      "grade": "own_creation",
+      "summary_es": "Servidor stdio y manifiesto con extensión com.openai para diagnóstico Windows fijo; consume un permiso local temporal de un uso antes de leer.",
+      "project_state": "source_integrated_local_pilot_activation_and_native_acceptance_separate",
+      "external_submission_state": "not_evidenced_in_inspected_public_sources",
+      "vendor_acceptance_state": "not_evidenced",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/windows/local-plugin/hub-relay/README.md#L1",
+          "kind": "public_repository_blob"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/windows/local-plugin/hub-relay/plugin.json#L1",
+          "kind": "public_repository_blob"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/windows/local-plugin/hub-relay/server.py#L1",
+          "kind": "public_repository_blob"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/windows/local-plugin/hub-relay/permissions.py#L1",
+          "kind": "public_repository_blob"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "integration-brave-adapter-gateway",
+      "title_es": "Adaptador Brave y gateway con cuotas persistentes",
+      "providers": [
+        "Brave Search",
+        "Microsoft .NET"
+      ],
+      "grade": "integration",
+      "summary_es": "Biblioteca propia y gateway local con validación offline, reservas persistentes y protocolos de autenticación.",
+      "project_state": "inactive_offline_candidate_no_external_requests",
+      "external_submission_state": "not_evidenced_in_inspected_public_sources",
+      "vendor_acceptance_state": "not_evidenced",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/providers/brave/README.md#L1",
+          "kind": "public_repository_blob"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/providers/brave/gateway/README.md#L1",
+          "kind": "public_repository_blob"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-admin-gateway",
+      "title_es": "Optimus Admin Gateway: API de administración gobernada",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "API, catálogo de operaciones, contratos y controles de identidad/roles/recibos creados en HUB_Optimus para futuras operaciones Microsoft365. El ejecutor de referencia permanece deshabilitado; fuente publicada y pruebas documentadas no acreditan despliegue ni aceptación por Microsoft.",
+      "project_state": "public_source_integrated_reference_executor_disabled",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/README.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/VALIDATION.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/docs/ARCHITECTURE.md",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-power-platform-custom-connector",
+      "title_es": "Conector Power Platform y agentes Copilot Studio",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "integration",
+      "summary_es": "Plantilla propia Swagger2 con OAuth2/Entra, agentes de Exchange/PowerShell y blueprint de aprobación. Transporta solicitudes hacia Optimus Admin Gateway. No se encontró envío al catálogo de conectores Microsoft, certificación o publicación de agente en Copilot Studio.",
+      "project_state": "public_templates_integrated_live_registration_unverified",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/power-platform/custom-connector/apiDefinition.swagger.json",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/power-platform/flows/approval-flow.blueprint.yaml",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/copilot-studio/agents/optimus-exchange-admin.agent.yaml",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/copilot-studio/agents/optimus-powershell-ops.agent.yaml",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-dataverse-applicator",
+      "title_es": "Aplicador y contrato Dataverse de Admin Gateway",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "Contrato neutral, plan determinista, preflight y aplicador de metadatos idempotente con autorización temporal, comprobación previa, vinculación de commit y rollback por journal. Son herramientas propias sobre Dataverse, no cambios al servicio o SDK de Microsoft.",
+      "project_state": "source_only_check_first_offline_default_live_application_separately_gated",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/dataverse/apply/README.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/docs/DATAVERSE_SCHEMA.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/scripts/apply-dataverse-schema.py",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-exchange-runbooks",
+      "title_es": "Runbooks Exchange y Azure Automation",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "integration",
+      "summary_es": "Dispatcher PowerShell con operaciones allowlist y previsualización DryRun. La validación pública documenta respuestas Exchange simuladas; no demuestra conexión, ejecución sobre buzones o validación de producción por Microsoft.",
+      "project_state": "public_source_integrated_synthetic_validation",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/tree/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/runbooks",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/VALIDATION.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/deployment/azure/README.md",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-evidence-lab",
+      "title_es": "Optimus Evidence Lab",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "Paquete propio Dataverse: contrato, plan, aplicador y rollback por journal. El estado público es preparado/offline; el README conserva cero escrituras ejecutadas por el paquete. No se infiere despliegue ni aceptación por el proveedor.",
+      "project_state": "public_source_integrated_prepared_offline_zero_writes_claim",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/evidence-lab/README.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/evidence-lab/docs/APPLICATOR.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/evidence-lab/docs/MODEL.md",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-evidence-lab-odata-correction",
+      "title_es": "Reproducción y corrección propia de consulta OData",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "La documentación saneada registra que el aplicador se detuvo antes de escribir al usar un filtro no admitido para GlobalOptionSetDefinitions. La corrección propia usa su clave alternativa Name, trata404 como ausencia y mantiene fallos cerrados. No se encontró un reporte externo a Microsoft ni evidencia de modificación del servicio.",
+      "project_state": "public_reproduction_summary_and_local_fix_integrated",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/evidence-lab/docs/APPLICATOR.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/evidence-lab/README.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/evidence-lab/scripts/apply-dataverse-schema.py",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-azure-static-web",
+      "title_es": "Plantilla Azure Static Web Apps para el piloto web",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "integration",
+      "summary_es": "Plantilla ARM propia para Microsoft.Web/staticSites con SKUFree. README distingue comprobación local de sintaxis/revisión y validación del proveedor; declara que no se desplegó Azure.",
+      "project_state": "prepared_template_not_deployed",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/web/ops/azure/README.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/web/ops/azure/azuredeploy.json",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-azure-container-apps",
+      "title_es": "API .NET remota y propuesta Azure Container Apps",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "integration",
+      "summary_es": "API propia ASP.NET con pruebas HTTP reales en loopback y propuesta ARM inerte para Container Apps. deployEnabled solo admitefalse; fuentes y pruebas locales no constituyen despliegue, endpoint público o aceptación de Azure.",
+      "project_state": "implementation_integrated_inert_cloud_proposal_no_azure_acceptance",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/remote/README.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/remote/tests/TEST_EVIDENCE.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/remote/ops/azure/README.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/remote/ops/azure/main.proposal.json",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-entra-oidc",
+      "title_es": "Integración propuesta Microsoft Entra/OIDC para Operator",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "integration",
+      "summary_es": "Runbook y artefactos propios de autenticación de un único tenant con roles HUB.Owner/HUB.Operator, oauth2-proxy, NGINX y gateway de entrada. El estado documental es candidato de despliegue; no se verifica una identidad en vivo, asignación de roles o despliegue EC2.",
+      "project_state": "repository_candidate_live_identity_and_deployment_unverified",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/maintenance/operator_oidc_owner_team.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/ops/ec2/oauth2-proxy.cfg.example",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/ops/ec2/operator-intake-gateway.py",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-windows-dotnet-tls",
+      "title_es": "Correcciones propias Windows/.NET: TLS, claves y ciclo de vida",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "Registros públicos de fallos y correcciones de Optimus Browser/Search con Schannel/CNG, propiedad de clave y cierre del host. La aceptación documentada corresponde al producto HUB_Optimus y sus pruebas nativas; no se encontró envío de parche o reporte a dotnet/Microsoft.",
+      "project_state": "own_product_native_validation_documented",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/windows/docs/VALIDATION_WINDOWS_TLS_2026_11_01.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/windows/docs/third-party/ASPNetCore.PROVENANCE.md",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-win32-native-diagnostics",
+      "title_es": "HUB_Relay: diagnóstico nativo Win32 y análisis de contrato",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "Herramienta propia de inventario diagnóstico restringido con fixtures y verificadores; distingue TokenHasRestrictions de IsTokenRestricted y conserva el límite de compatibilidad1/4bytes. README cita una discusión Microsoft de otra cuenta como referencia técnica. Activación y procedencia de imagen cargada siguen bloqueadas.",
+      "project_state": "own_diagnostic_source_activation_blocked",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/windows/bootstrap-inventory/README.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/windows/native-pilot/README.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/windows/native-pilot/tools/TOKEN_BUFFER_README.md",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "github-own-tools-and-app",
+      "title_es": "Herramientas propias, CI y App de comprobación en GitHub",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "PR Pro, retirada auditada de ramas de mantenimiento y controles de autoridad/CI usan GitHubCLI, API, Actions y una App dedicada. Son utilidades y gobernanza del repositorio propio; el uso o registro de una App no prueba una contribución al producto GitHub. No se consultaron permisos privados actuales ni se ejecutaron utilidades.",
+      "project_state": "own_tools_integrated_and_historically_documented_github_integration",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tools/pr_pro.py",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tools/retire_maintenance_branches.py",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tools/founder_authority_guard.py",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/maintenance/issue-1788/README.md",
+          "kind": "public_repository_source"
+        },
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/context/AI_HANDOFF.md",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "github-platform-strategy",
+      "title_es": "RFC de estrategia de plataforma GitHub",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "own_creation",
+      "summary_es": "Documento propio que evalúa qué capacidades adoptar ahora, después o aplazar. Su estado vigente en la fuente es Draft/RFConly; no es propuesta al proveedor ni implementación de cada capacidad enumerada.",
+      "project_state": "draft_rfc_only",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/rfc/github_platform_strategy.md",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    },
+    {
+      "id": "ms-azure-agent-dependency-history",
+      "title_es": "Integración histórica declarada con Azure AI Agent Framework",
+      "providers": [
+        "Microsoft / GitHub"
+      ],
+      "grade": "integration",
+      "summary_es": "Un commit histórico añade dependencias agent-framework-azure-ai/core, azure-ai-agentserver, azure-identity y agent-dev-cli. Se verificó requirements.txt localmente; declarar dependencias no demuestra ejecución satisfactoria ni contribución a esos SDK.",
+      "project_state": "historical_dependency_integration_declared",
+      "external_submission_state": "not_established_from_inspected_sources",
+      "vendor_acceptance_state": "not_established_from_inspected_sources",
+      "evidence": [
+        {
+          "url": "https://github.com/Voxterrae/HUB_Optimus/blob/b8a940d1201cc00465909aa8be9dd77163389c95/requirements.txt",
+          "kind": "public_repository_source"
+        }
+      ],
+      "count_as_verified_external_contribution": false
+    }
+  ]
 }

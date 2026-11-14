@@ -6,6 +6,13 @@ Comprobación: **14 de noviembre de 2026 (Europe/Madrid)**. Registro público
 estático preparado con ayuda de Codex para revisión humana. No implanta la
 aplicación Contribution Ledger ni acredita su ratificación.
 
+La ampliación bajo #2187 añade [24 grupos de trabajo propio en el ecosistema](ECOSYSTEM_CONTRIBUTIONS.md)
+y una [revisión de 39 capacidades y soportes con pilotos propuestos](CAPABILITIES_AND_PILOTS.md).
+Estos recuentos tienen alcances distintos: no son nuevos productos ni cambios
+aceptados por OpenAI, Microsoft u otros proveedores. La
+[guía explicativa propuesta](HUB_OPTIMUS_EXPLAINED.md) prepara una lectura pública
+para personas nuevas, pendiente de revisión editorial y publicación web.
+
 ## Qué cubre
 
 - **417 commits** alcanzables desde el primer commit del repositorio,

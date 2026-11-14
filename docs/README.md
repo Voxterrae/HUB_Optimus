@@ -4,6 +4,9 @@ This folder contains onboarding guides and multilingual entry points.
 
 ## Project truth
 
+- [Conoce HUB_Optimus: plain-language editorial proposal (ES)](project/HUB_OPTIMUS_EXPLAINED.md)
+- [Capabilities, blockers and first pilots](project/CAPABILITIES_AND_PILOTS.md)
+- [Own creations, integrations and ecosystem contributions](project/ECOSYSTEM_CONTRIBUTIONS.md)
 - [Creations, public contributions and historical coverage](project/CONTRIBUTIONS_REGISTER.md)
 
 - [What HUB_Optimus is, what is built, and what is not](context/PROJECT_OVERVIEW.md)
