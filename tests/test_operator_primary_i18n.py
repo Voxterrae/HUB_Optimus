@@ -497,7 +497,7 @@ def test_hebrew_ui_preserves_rtl_while_source_and_technical_values_are_isolated(
     html = _read(INDEX)
     assert 'document.documentElement.dir = activeOperatorLanguage === "he" ? "rtl" : "ltr"' in html
     assert 'id="product_source_url"' in html and 'spellcheck="false" dir="ltr"' in html
-    assert 'id="product_source_text" name="source_text" dir="auto"' in html
+    assert 'id="product_source_text" dir="auto"' in html
     assert 'id="product_source_preview_text" dir="auto"' in html
     assert '<div class="grid advanced-body">' in html
     assert 'class="grid advanced-body" lang="en" dir="ltr"' not in html

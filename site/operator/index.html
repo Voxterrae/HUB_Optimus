@@ -696,6 +696,13 @@
         border-radius: 0.8rem;
       }
     }
+    .product-intake > fieldset {
+      min-inline-size: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
     .product-intake textarea {
       min-height: 11rem;
     }
@@ -1358,17 +1365,18 @@
       <h2 id="product_intake_title" data-op-i18n="intakeTitle">Prepare a review draft</h2>
       <p class="product-lede" data-op-i18n="intakeLede">Paste source text and, optionally, its URL. Public Operator keeps both local and treats the URL as unverified attribution; authenticated private Operator may retrieve the URL through controlled intake. Neither path verifies truth, infers motives, scores risk, or executes the Semantic Engine.</p>
 
+      <fieldset id="product_intake_fields" aria-labelledby="product_intake_title" disabled>
       <div class="row">
         <div class="field">
           <label for="product_source_url" data-op-i18n="sourceUrlLabel">Source URL</label>
-          <input id="product_source_url" name="source_url" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" dir="ltr" aria-describedby="product_source_url_hint product_source_url_disclosure product_private_intake_hint" placeholder="https://example.com/news-or-github-source" data-op-i18n-placeholder="sourceUrlPlaceholder">
+          <input id="product_source_url" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" dir="ltr" aria-describedby="product_source_url_hint product_source_url_disclosure product_private_intake_hint" placeholder="https://example.com/news-or-github-source" data-op-i18n-placeholder="sourceUrlPlaceholder">
           <p class="field-hint" id="product_source_url_hint" data-op-i18n="sourceUrlAccessHint">The authenticated private Operator can send this URL to controlled intake. Public Operator does not send it; paste the relevant source text below instead.</p>
           <p class="field-hint" id="product_source_url_disclosure" data-op-i18n="sourceUrlPrivacyDisclosure">On the public Operator, an exact URL supplied with source text stays local as unverified attribution; explicit share actions can include it. On the authenticated private Operator, retrieval sends that exact URL, including its path, query and fragment, to controlled intake. Do not use private or signed links, tokens, one-time passwords or personal data.</p>
           <p class="field-hint" id="product_private_intake_hint"><a href="https://api.huboptimus.dev/oauth2/start?rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F" rel="noopener noreferrer" data-op-i18n="privateIntakeLink">Private URL intake (activation pending)</a> · <span data-op-i18n="privateIntakeHint">Private URL retrieval is pending activation and will be limited to authorized owner/team accounts. Paste the source text below to complete the public flow locally, without sending the URL.</span></p>
         </div>
         <div class="field">
           <label for="signal_source_type" data-op-i18n="sourceTypeLabel">Source type</label>
-          <select id="signal_source_type" name="source_type">
+          <select id="signal_source_type">
             <option value="automatic" data-op-i18n="optionAutomatic">detect conservatively from URL</option>
             <option value="external-source" data-op-i18n="optionExternal">external source</option>
             <option value="news-article" data-op-i18n="optionNews">news article</option>
@@ -1386,7 +1394,7 @@
 
       <div class="field">
         <label for="product_source_text"><span data-op-i18n="sourceTextLabel">Source text</span> <span class="meta" data-op-i18n="sourceTextOptional">(required for a public draft; optional private context when a URL is retrieved; public text has no 1,200-character limit)</span></label>
-        <textarea id="product_source_text" name="source_text" dir="auto" aria-describedby="product_source_text_hint" placeholder="Paste the complete source text to review locally." data-op-i18n-placeholder="sourceTextPlaceholder"></textarea>
+        <textarea id="product_source_text" dir="auto" aria-describedby="product_source_text_hint" placeholder="Paste the complete source text to review locally." data-op-i18n-placeholder="sourceTextPlaceholder"></textarea>
         <p class="field-hint" id="product_source_text_hint" data-op-i18n="sourceTextHint">In the public Operator, pasted text is used in full as the local source; the 1,200-character context limit does not apply. In the authenticated private Operator, when a URL is retrieved, up to 1,200 Unicode characters of pasted text are recorded separately as local operator context. The draft indicates whether any remainder was omitted.</p>
       </div>
 
@@ -1469,6 +1477,7 @@
         <button id="share_memory_whatsapp" type="button" disabled data-op-i18n="whatsapp">WhatsApp</button>
       </div>
       <p class="memory-status" id="memory_status" role="status" aria-live="polite" data-op-i18n="memoryInitial">Prepare a draft to unlock copying and WhatsApp for the current page. Operator does not save these summaries.</p>
+      </fieldset>
     </form>
 
     <section class="panel full learning-panel" id="learning_workspace" data-operator-primary-step="5" aria-labelledby="learning_title">
@@ -7566,6 +7575,9 @@
     setMemoryActionsEnabled(false);
     syncProductInputState();
     updateJson();
+    // Native submission stays inert until the local submit handler and all
+    // critical synchronous setup above have completed successfully.
+    $("product_intake_fields").disabled = false;
     void initializeLearningWorkspace();
 
     const privateSessionActions = $("private_operator_session_actions");

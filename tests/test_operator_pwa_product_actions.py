@@ -43,6 +43,42 @@ class _InlineScriptParser(HTMLParser):
             self._parts = None
 
 
+class _IntakeControlsParser(HTMLParser):
+    """Read the shipped control state before any browser script can run."""
+
+    def __init__(self):
+        super().__init__()
+        self.controls = []
+        self.fieldsets = []
+        self._inside_intake = False
+        self._ancestors = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "form":
+            self._inside_intake = attrs.get("id") == "product_intake"
+        if not self._inside_intake:
+            return
+        if tag == "fieldset":
+            self.fieldsets.append(attrs)
+            self._ancestors.append(attrs)
+        if tag in {"input", "textarea", "select", "button"}:
+            self.controls.append({
+                "tag": tag,
+                "attrs": attrs,
+                "fieldsets": [ancestor.get("id") for ancestor in self._ancestors],
+                "disabled": "disabled" in attrs or any(
+                    "disabled" in ancestor for ancestor in self._ancestors
+                ),
+            })
+
+    def handle_endtag(self, tag):
+        if tag == "fieldset" and self._inside_intake:
+            self._ancestors.pop()
+        if tag == "form":
+            self._inside_intake = False
+
+
 FULL_PAGE_HARNESS = r'''
 const vm = require("node:vm");
 function fakeClassList() {
@@ -213,6 +249,141 @@ async function submit(url, text) {
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _intake_controls():
+    parser = _IntakeControlsParser()
+    parser.feed(_read(INDEX))
+    return parser
+
+
+def test_intake_has_no_native_source_submission_before_initialization():
+    intake = _intake_controls()
+    source_ids = {"product_source_url", "product_source_text", "signal_source_type"}
+    source_controls = [control for control in intake.controls if control["attrs"].get("id") in source_ids]
+    assert len(source_controls) == 3
+    # A native submission must have neither successful source controls nor an
+    # editable path to them before the local-only handler is ready.
+    assert [
+        control["attrs"]["name"] for control in source_controls
+        if control["attrs"].get("name") and not control["disabled"]
+    ] == []
+    assert all(control["disabled"] for control in intake.controls)
+    # Names are unnecessary to the ID-based local intake. Their absence also
+    # prevents serialization if a later change accidentally unlocks a control.
+    assert all(not control["attrs"].get("name") for control in source_controls)
+    submit = next(control for control in intake.controls if control["attrs"].get("id") == "product_analyze")
+    assert submit["attrs"]["type"] == "submit"
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+@pytest.mark.parametrize("interruption", [None, "before-submit-handler", "after-submit-handler"])
+def test_local_intake_unlocks_only_after_critical_initialization(interruption):
+    html = _read(INDEX)
+    scripts = _InlineScriptParser()
+    scripts.feed(html)
+    intake = _intake_controls()
+    prelude = FULL_PAGE_HARNESS.split(
+        'vm.runInContext(SOURCE, context, { filename: "operator-inline.js" });',
+        maxsplit=1,
+    )[0]
+    smoke = (
+        "const SOURCE = " + json.dumps(scripts.scripts[-1]) + ";\n"
+        + "const CLAIM_SOURCE = " + json.dumps(_read(CLAIM_DECOMPOSITION)) + ";\n"
+        + "const MARKUP_CONTROLS = " + json.dumps(intake.controls) + ";\n"
+        + "const MARKUP_FIELDSETS = " + json.dumps(intake.fieldsets) + ";\n"
+        + "const INTERRUPTION = " + json.dumps(interruption) + ";\n"
+        + prelude
+        + r'''
+// The real HTML supplies the initial attributes and fieldset ancestry. This
+// narrow DOM adapter exposes effective disabled state; browser navigation and
+// physical Enter submission are deliberately left to browser acceptance.
+for (const attrs of MARKUP_FIELDSETS) {
+  const fieldset = byId(attrs.id);
+  fieldset.tagName = "FIELDSET";
+  fieldset.disabled = Object.hasOwn(attrs, "disabled");
+}
+for (const control of MARKUP_CONTROLS) {
+  const node = byId(control.attrs.id);
+  node.disabled = Object.hasOwn(control.attrs, "disabled");
+  node.parentElement = control.fieldsets.length
+    ? byId(control.fieldsets[control.fieldsets.length - 1]) : null;
+}
+function effectivelyDisabled(node) {
+  for (let ancestor = node; ancestor; ancestor = ancestor.parentElement) {
+    if (ancestor.disabled) return true;
+  }
+  return false;
+}
+const input = byId("product_source_text");
+if (!effectivelyDisabled(input)) {
+  throw new Error("source intake is editable before local initialization");
+}
+let submitRegistered = false;
+const form = byId("product_intake");
+const register = form.addEventListener;
+form.addEventListener = function(type, listener) {
+  if (type === "submit") {
+    if (INTERRUPTION === "before-submit-handler") throw new Error("synthetic initialization interruption");
+    submitRegistered = true;
+  }
+  return register.call(this, type, listener);
+};
+if (INTERRUPTION === "after-submit-handler") {
+  Object.defineProperty(byId("product_loader"), "innerHTML", {
+    get() { return ""; },
+    set() { throw new Error("synthetic initialization interruption"); }
+  });
+}
+let initializationError;
+try {
+  vm.runInContext(SOURCE, context, {filename: "operator-inline.js"});
+} catch (error) {
+  initializationError = error;
+}
+(async () => {
+  if (INTERRUPTION) {
+    if (initializationError?.message !== "synthetic initialization interruption") {
+      throw new Error(`wrong initialization interruption: ${initializationError?.message}`);
+    }
+    if (submitRegistered !== (INTERRUPTION === "after-submit-handler")) {
+      throw new Error("initialization interrupted on the wrong side of handler registration");
+    }
+    // Input listeners can be installed earlier than the submit handler. Even
+    // if one enables the child button, the enclosing intake must stay closed.
+    input.value = "El registro sintético indica dos cajas.\nEl recuento sintético indica tres cajas.";
+    await input.emit("input");
+    if (!effectivelyDisabled(input) || !effectivelyDisabled(byId("product_analyze"))) {
+      throw new Error("interrupted initialization unlocked source intake");
+    }
+    if (fetchCalls !== 0) throw new Error("interrupted public initialization fetched material");
+    return;
+  }
+  if (initializationError) throw initializationError;
+  if (!submitRegistered || effectivelyDisabled(input)) {
+    throw new Error("completed local initialization did not unlock intake");
+  }
+  const fixture = "El registro sintético indica dos cajas.\nEl recuento sintético indica tres cajas.";
+  byId("product_source_url").value = "https://example.invalid/piloto-operator";
+  input.value = fixture;
+  byId("signal_source_type").value = "automatic";
+  await input.emit("input");
+  if (effectivelyDisabled(byId("product_analyze"))) throw new Error("local submit remained disabled after input");
+  let prevented = false;
+  await form.emit("submit", {preventDefault() { prevented = true; }});
+  if (!prevented) throw new Error("local submit did not cancel native transmission");
+  if (byId("product_source_preview").hidden
+      || byId("product_source_preview_text").textContent !== fixture) {
+    throw new Error("local submission did not preserve the complete synthetic source snapshot");
+  }
+  if (fetchCalls !== 0) throw new Error("local public submission fetched material");
+})().catch((error) => { console.error(error); process.exitCode = 1; });
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def _named_function(html: str, name: str) -> str:
@@ -603,7 +774,7 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert "fetch(sourceUrl" not in html
     assert "fetch(url" not in html
     assert '<form class="panel full product-intake"' in html
-    assert 'id="product_source_url" name="source_url" type="url"' in html
+    assert 'id="product_source_url" type="url"' in html
     assert 'id="product_analyze" type="submit"' in html
     assert 'id="product_source_preview"' in html
     assert 'id="product_confirm_source" type="checkbox"' in html
@@ -2697,7 +2868,7 @@ def test_operator_context_limit_is_disclosed_and_visible_in_every_locale():
     assert "pasted text is used in full as the local source" in html
     assert "the 1,200-character context limit does not apply" in html
     assert 'id="product_source_text"' in html
-    assert 'id="product_source_text" name="source_text"' in html
+    assert 'id="product_source_text" dir="auto"' in html
     assert not re.search(r'id="product_source_text"[^>]*\bmaxlength=', html)
     assert "operatorContextCard(currentCaseMetadata.operator_context)" in html
 
