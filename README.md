@@ -23,8 +23,10 @@ component implements and what still needs acceptance.
 **New to the project?** [Read the plain-language guide (ES)](docs/project/HUB_OPTIMUS_EXPLAINED.md),
 review [capabilities and first pilots](docs/project/CAPABILITIES_AND_PILOTS.md),
 or inspect [creations and ecosystem work](docs/project/ECOSYSTEM_CONTRIBUTIONS.md).
-The new guide is an editorial proposal for review, not a replacement for the
-source documents below.
+The owner approved the guide and Operator-first pilot on 14 November 2026.
+The [reading collection](site/docs/index.html) retains the complete original
+documents and their sources; [publication and acceptance](docs/project/PUBLIC_READING_VALIDATION_20261114.md)
+are recorded separately.
 
 ## Founder, creator, ownership, and authority
 

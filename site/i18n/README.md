@@ -116,3 +116,9 @@ Language reviewers should review both rendered text and these records. Hebrew re
 must include keyboard order, focus order, mixed-direction product names, URLs, numbers,
 and small-screen layout. Simplified Chinese review does not establish Traditional Chinese
 coverage.
+
+Reading-entry update: `2026-11-14`, total 210 portfolio keys. The four new keys
+and revised public-intake/description copy are assisted drafts in all six
+portfolio locales. The reader offers eight navigation languages; documents
+retain their real source language and explicit fallback. This does not complete
+translation or parity of the repository.

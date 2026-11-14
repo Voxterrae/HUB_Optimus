@@ -51,11 +51,11 @@ create `docs/project/OPERATOR_FIRST_PILOT.md`; this plan.
 approved guide and exact Operator steps. Later generation reads only Git blobs
 at that commit, never silently substitutes working-tree text.
 
-- [ ] Check current Operator controls and existing DOM tests with a synthetic
+- [x] Check current Operator controls and existing DOM tests with a synthetic
   two-line fixture; record observed results separately from browser acceptance.
-- [ ] Document paste, draft, review, Advanced / Build JSON / Copy JSON and clear
+- [x] Document paste, draft, review, Advanced / Build JSON / Copy JSON and clear
   actions using their actual controls. No URL-fetch or generic export claim.
-- [ ] Publish the scoped source-only commit and verify its file blobs and actor.
+- [x] Publish the scoped source-only commit and verify its file blobs and actor.
 
 ### Task 2: Generate safe, reproducible reading pages
 
@@ -77,21 +77,21 @@ Initial IDs: `conoce`, `capacidades`, `contribuciones`, `ecosistema`, `catalogo`
 `autoridad`, `charter`, `kernel`, `carta-nucleo`, `simulation-charter`,
 `operator-piloto`. Do not infer publication by scanning all repository Markdown.
 
-- [ ] Write and run failing tests for byte-exact preamble/body/tail, deterministic
+- [x] Write and run failing tests for byte-exact preamble/body/tail, deterministic
   output/drift, source/path/hash rejection, hostile URLs/HTML, duplicate headings,
   relative-fragment rewrite, source fallback and no-JavaScript readability.
-- [ ] Implement with MarkdownIt HTML disabled, tables enabled and strict URL
+- [x] Implement with MarkdownIt HTML disabled, tables enabled and strict URL
   handling. Non-allowlisted existing paths link to the fixed GitHub source;
   missing destinations remain visibly unavailable rather than dead links.
-- [ ] Prefix generated heading IDs with `doc-`; preserve source URLs/line anchors
+- [x] Prefix generated heading IDs with `doc-`; preserve source URLs/line anchors
   when no generated destination can represent them faithfully.
-- [ ] Never auto-load remote images from Markdown. Preserve alt text and a safe
+- [x] Never auto-load remote images from Markdown. Preserve alt text and a safe
   link to their source; raw source remains available for exact inspection.
-- [ ] Generate an index and readable pages with original-source download,
+- [x] Generate an index and readable pages with original-source download,
   provenance, full document, contents, boundaries and keyboard navigation.
-- [ ] Add eight language UI choices and explicit fallback; use actual source
+- [x] Add eight language UI choices and explicit fallback; use actual source
   `lang`/`dir` for content and selected UI language/direction only for controls.
-- [ ] Run authoring tests and `--check`; all generated files must be reproducible.
+- [x] Run authoring tests and `--check`; all generated files must be reproducible.
 
 ### Task 3: Connect the portfolio and preserve route contracts
 
@@ -103,13 +103,13 @@ reader index links to `../operator/?lang=<locale>#product_intake`. Original
 route/evidence tests remain applicable to their seven routes; generated routes
 are an explicit additional set and the union equals every published HTML file.
 
-- [ ] Write failing assertions for reader links, honest public Operator wording,
+- [x] Write failing assertions for reader links, honest public Operator wording,
   language-link propagation and the exact route union.
-- [ ] Add the reader entry and pilot links; correct the URL-fetch implication in
+- [x] Add the reader entry and pilot links; correct the URL-fetch implication in
   the six existing portfolio dictionaries and English static fallback.
-- [ ] Retain original pinned-source and external-navigation guards. Check the
+- [x] Retain original pinned-source and external-navigation guards. Check the
   reader's source targets/fragments and exact external inventory independently.
-- [ ] Run portfolio, reading, catalogue, registry, links/contrast and language
+- [x] Run portfolio, reading, catalogue, registry, links/contrast and language
   tests; run encoding, JavaScript syntax and diff checks.
 
 ### Task 4: Observe acceptance and prepare publication

@@ -646,7 +646,7 @@ def test_public_javascript_syntax_and_translation_key_parity():
     source = APP.read_text(encoding="utf-8")
     dictionaries = extract_translation_dictionaries(source)
     assert set(dictionaries) == PUBLIC_LOCALES
-    assert len(dictionaries["en"]) == 206
+    assert len(dictionaries["en"]) == 210
     assert all(set(dictionary) == set(dictionaries["en"]) for dictionary in dictionaries.values())
     assert all(
         value.strip()
@@ -1043,7 +1043,7 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     assert set(operator_localization["advanced_audit_console_locales"]) == PUBLIC_LOCALES
     assert set(operator_localization["supported_locales"]) == PUBLIC_LOCALES
     assert "human" in operator_localization["review_status"]
-    assert metadata["portfolio_translation_key_count"] == 206
+    assert metadata["portfolio_translation_key_count"] == 210
     assert set(metadata["locales"]) == PUBLIC_LOCALES
     assert len(metadata["field_status"]) >= 10
     for record in metadata["locales"].values():
@@ -1076,12 +1076,14 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
             for field_name, field_status in metadata["field_status"].items()
             if field_name not in {
                 "operator_advanced_audit_console", "development_products_and_labs_update",
-                "contributions_and_project_intelligence_update"
+                "contributions_and_project_intelligence_update", "public_reading_entry_update",
+                "document_title_and_description", "method_and_operating_principles"
             }
         )
         for field_name in (
             "operator_advanced_audit_console", "development_products_and_labs_update",
-                "contributions_and_project_intelligence_update"
+                "contributions_and_project_intelligence_update", "public_reading_entry_update",
+                "document_title_and_description", "method_and_operating_principles"
         ):
             assert (
                 metadata["field_status"][field_name][locale]
@@ -1999,14 +2001,15 @@ def test_mobile_hero_keeps_brand_visible_and_prioritizes_operator():
         '<a class="button button-primary" href="./operator/?lang=en#product_intake" hreflang="en" '
         'data-operator-route data-i18n="tryOperator">Try Operator</a>'
     )
-    method_cta = (
-        '<a class="button button-secondary" href="#method" '
-        'data-i18n="howItWorks">How it works</a>'
+    reader_cta = (
+        '<a class="button button-secondary" href="./docs/index.html?lang=en" hreflang="es" '
+        'data-reader-route data-i18n="readGuide">Meet HUB_Optimus</a>'
     )
 
     assert operator_cta in html
-    assert method_cta in html
-    assert html.index(operator_cta) < html.index(method_cta)
+    assert reader_cta in html
+    assert html.index(operator_cta) < html.index(reader_cta)
+    assert '<a href="#method" data-i18n="navMethod">Method</a>' in html
     assert re.search(r"\.hero-copy\s*\{[^}]*min-width:\s*0;", css, re.DOTALL)
     assert re.search(r"\.hero h1\s*\{[^}]*max-width:\s*100%;", css, re.DOTALL)
     assert re.search(r"body\s*\{[^}]*overflow-wrap:\s*anywhere;", css, re.DOTALL)

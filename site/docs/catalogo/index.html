@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title lang="es">Catálogo de componentes · HUB_Optimus</title>
+<link rel="stylesheet" href="../reading.css"><script src="../reading.js" defer></script></head>
+<body data-source-language="en" data-source-id="catalogo" data-source-languages="">
+<a class="reader-skip" href="#reader-main" data-reader-copy="skip">Ir al documento</a>
+<header class="reader-header"><a class="reader-brand" href="../../">HUB_Optimus</a>
+<nav aria-label="Navegación" data-reader-controls><a href="../index.html" data-reader-home data-reader-copy="collection">Conoce y explora</a>
+<a href="../../operator/?lang=es#product_intake" data-reader-operator data-reader-copy="operator">Probar Operator</a></nav></header>
+<div class="reader-language" data-reader-controls><p data-reader-copy="language">Idioma de navegación</p>
+<nav aria-label="Idiomas"><a href="../catalogo/index.html?lang=es" hreflang="en" data-reader-language="es" lang="es">Español</a>
+<a href="../catalogo/index.html?lang=en" hreflang="en" data-reader-language="en" lang="en">English</a>
+<a href="../catalogo/index.html?lang=de" hreflang="en" data-reader-language="de" lang="de">Deutsch</a>
+<a href="../catalogo/index.html?lang=ca" hreflang="en" data-reader-language="ca" lang="ca">Català</a>
+<a href="../catalogo/index.html?lang=fr" hreflang="en" data-reader-language="fr" lang="fr">Français</a>
+<a href="../catalogo/index.html?lang=ru" hreflang="en" data-reader-language="ru" lang="ru">Русский</a>
+<a href="../catalogo/index.html?lang=he" hreflang="en" data-reader-language="he" lang="he">עברית</a>
+<a href="../catalogo/index.html?lang=zh-Hans" hreflang="en" data-reader-language="zh-Hans" lang="zh-Hans">简体中文</a></nav>
+<p id="reader-language-notice" role="status">El texto conserva el idioma de su fuente. Las traducciones que falten se indican expresamente.</p></div>
+<main id="reader-main" class="reader-main"><div class="reader-intro"><p class="reader-kicker">HUB_Optimus · lectura con fuente</p>
+<h1 lang="es">Catálogo de componentes</h1><p lang="es">Catálogo técnico con el estado y los límites de cada componente. Texto original en inglés.</p>
+<p class="reader-source">Fuente: <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/products/README.md" referrerpolicy="no-referrer">products/README.md</a><br>
+<span>Commit: <bdi>abf973b989720cbba4fab734cc19e60c3277b8df</bdi></span><br>
+<span>SHA-256: <bdi>6c24df6821a527406f1063526e27fa84c84e73637ca644c25694fcd95b0cfbc0</bdi></span><br>
+<a href="source.md" download data-reader-copy="download">Descargar el Markdown original</a></p></div>
+<div class="reader-layout"><aside class="reader-toc"><h2 data-reader-copy="contents">En esta página</h2><ol lang="en" dir="ltr"><li><a href="#doc-product-catalogue">Product catalogue</a></li><li><a href="#doc-existing-methodology-and-prototype-surfaces">Existing methodology and prototype surfaces</a></li><li><a href="#doc-in-development">In development</a></li><li><a href="#doc-product-boundaries-and-next-acceptance-gates">Product boundaries and next acceptance gates</a></li><li><a href="#doc-how-to-use-the-evidence">How to use the evidence</a></li></ol></aside>
+<article class="reader-article" lang="en" dir="ltr"><h1 id="doc-product-catalogue">Product catalogue</h1>
+<p>Reviewed source snapshot: <a href="https://github.com/Voxterrae/HUB_Optimus/commit/7ca513eb16d12d77ba5f017c63109dab937c12b2" referrerpolicy="no-referrer">main@7ca513eb</a>, 8 November 2026 (Europe/Madrid).
+The <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/site/data/capability-registry.v1.json" referrerpolicy="no-referrer">capability registry</a> records the
+reviewed source and execution boundaries. This catalogue and the public cards
+are static, reviewed views; they do not monitor releases or deployments.</p>
+<p>Source integration proves that the linked assets are in the repository. A
+usable local prototype, a public static web pilot, a supported product release
+and a deployed production service are separate claims. No commercial release,
+service-level commitment or current-HEAD native acceptance follows from a card.
+All components retain zero production writes and no deployed production-service
+claim in this reviewed registry.</p>
+<p>The existing methodology/prototype entries retain their older, explicitly
+versioned public-document evidence baseline. New product entries link their own
+immutable source snapshot. Historical tests apply only to the exact source they
+executed; see the relevant PR, run and dated validation guide for acceptance.</p>
+<h2 id="doc-existing-methodology-and-prototype-surfaces">Existing methodology and prototype surfaces</h2>
+<div class="reader-table" role="region" aria-label="Tabla" tabindex="0"><table>
+<thead>
+<tr>
+<th>Component ID</th>
+<th>Evidence / entry point</th>
+<th>Source status</th>
+<th>Lifecycle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/v1_core/languages/es" referrerpolicy="no-referrer">HUB_Optimus Core</a></td>
+<td><code>merged</code></td>
+<td><code>active-methodology</code></td>
+</tr>
+<tr>
+<td><code>simulator</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/SIMULATION_README.md" referrerpolicy="no-referrer">Deterministic Scenario Simulator</a></td>
+<td><code>merged</code></td>
+<td><code>working-deterministic-prototype</code></td>
+</tr>
+<tr>
+<td><code>semantic-engine</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/semantic_engine" referrerpolicy="no-referrer">Semantic Engine Contracts and CLI</a></td>
+<td><code>merged</code></td>
+<td><code>early-implementation</code></td>
+</tr>
+<tr>
+<td><code>operator</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/site/operator" referrerpolicy="no-referrer">HUB_Optimus Operator</a></td>
+<td><code>merged</code></td>
+<td><code>browser-prototype</code></td>
+</tr>
+<tr>
+<td><code>controlled-url-intake</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/docs/rfc/operator_controlled_url_intake.md" referrerpolicy="no-referrer">Controlled URL Intake</a></td>
+<td><code>merged</code></td>
+<td><code>implementation-present-deployment-unverified</code></td>
+</tr>
+<tr>
+<td><code>research</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/docs/lab_state.md" referrerpolicy="no-referrer">Scenario and Narrative Research</a></td>
+<td><code>merged</code></td>
+<td><code>experimental-tooling</code></td>
+</tr>
+<tr>
+<td><code>governance-intelligence</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/docs/governance/GOVERNANCE_INTELLIGENCE.md" referrerpolicy="no-referrer">Governance Intelligence</a></td>
+<td><code>merged</code></td>
+<td><code>active-ratified-protocol</code></td>
+</tr>
+<tr>
+<td><code>labs</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/8426b08e5f88b650c4d79e41d3ce3afd7d42746b/site/index.html" referrerpolicy="no-referrer">HUB-Optimus Labs</a></td>
+<td><code>merged</code></td>
+<td><code>documented-incubation-surface</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-in-development">In development</h2>
+<p>These source records do not claim a released native product or a production
+service. A static description can be public while execution remains disabled.
+The separate web pilot is an explicitly labelled browser prototype.</p>
+<div class="reader-table" role="region" aria-label="Tabla" tabindex="0"><table>
+<thead>
+<tr>
+<th>Component ID</th>
+<th>Evidence / entry point</th>
+<th>Source status</th>
+<th>Lifecycle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>admin-gateway</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/c7a67a7af9e5067e27518d3a9bd8b56f99767acf/products/admin-gateway/src/optimus_admin_gateway" referrerpolicy="no-referrer">Optimus Admin Gateway</a></td>
+<td><code>merged</code></td>
+<td><code>implementation-present-deployment-unverified</code></td>
+</tr>
+<tr>
+<td><code>evidence-lab</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/51327282170b9c0a6f769b8bd5ddc5c39572d6a4/products/evidence-lab" referrerpolicy="no-referrer">Optimus Evidence Lab</a></td>
+<td><code>merged</code></td>
+<td><code>implementation-present-deployment-unverified</code></td>
+</tr>
+<tr>
+<td><code>connect-xai-x</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/bd7cfd3cf39e36d7a9f9c215cd5d47635d63cf41/hub_optimus/connect" referrerpolicy="no-referrer">HUB_Optimus Connect — xAI and X Foundation</a></td>
+<td><code>merged</code></td>
+<td><code>early-implementation</code></td>
+</tr>
+<tr>
+<td><code>global-graph</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/issues/1880" referrerpolicy="no-referrer">Optimus Global Graph</a></td>
+<td><code>open-issue</code></td>
+<td><code>issue-only</code></td>
+</tr>
+<tr>
+<td><code>browser-windows</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/browser/windows" referrerpolicy="no-referrer">Optimus Browser — Windows</a></td>
+<td><code>merged</code></td>
+<td><code>early-implementation</code></td>
+</tr>
+<tr>
+<td><code>browser-web-pilot</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/site/browser" referrerpolicy="no-referrer">Optimus Browser — Web Pilot</a></td>
+<td><code>merged</code></td>
+<td><code>browser-prototype</code></td>
+</tr>
+<tr>
+<td><code>browser-linux</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/issues/2021" referrerpolicy="no-referrer">Optimus Browser — Linux</a></td>
+<td><code>open-issue</code></td>
+<td><code>issue-only</code></td>
+</tr>
+<tr>
+<td><code>search</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/browser/search" referrerpolicy="no-referrer">Optimus Search</a></td>
+<td><code>merged</code></td>
+<td><code>implementation-present-deployment-unverified</code></td>
+</tr>
+<tr>
+<td><code>device-bridge</code></td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/7ca513eb16d12d77ba5f017c63109dab937c12b2/products/device-bridge" referrerpolicy="no-referrer">Device Bridge / HUB_Relay</a></td>
+<td><code>merged</code></td>
+<td><code>experimental-tooling</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-product-boundaries-and-next-acceptance-gates">Product boundaries and next acceptance gates</h2>
+<div class="reader-table" role="region" aria-label="Tabla" tabindex="0"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Available source / prototype scope</th>
+<th>Separate acceptance or activation gate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Operator</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/tree/abf973b989720cbba4fab734cc19e60c3277b8df/site/operator" referrerpolicy="no-referrer">Browser-local draft preparation</a>; supplied text and source attribution are not verified evidence.</td>
+<td>Private URL intake is disabled in the public runtime configuration. A local draft is not a Semantic Engine execution.</td>
+</tr>
+<tr>
+<td>Browser / Windows</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/products/browser/windows/README.md" referrerpolicy="no-referrer">WPF/WebView2 alpha</a>, shared local Search and reversible session-only pilot catalogue selection.</td>
+<td>Current-source native execution, physical Windows, spoken assistive-technology acceptance, signing and distribution need their own dated evidence.</td>
+</tr>
+<tr>
+<td>Browser / web</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/products/browser/web/README.md" referrerpolicy="no-referrer">Separate static web pilot</a> with six interface languages, explicit Wikipedia submission and optional device-local preferences; local voice depends on browser support.</td>
+<td>It is not the native browser, a general-Web search engine or an offline guarantee. Requests to Wikipedia occur only after explicit user submission.</td>
+</tr>
+<tr>
+<td>Browser / Linux</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/issues/2021" referrerpolicy="no-referrer">Coordination issue #2021</a> records a declared local PySide6/Qt WebEngine prototype.</td>
+<td>No Linux Browser source is merged at this snapshot. A contributor report or shared Search contract is not client acceptance.</td>
+</tr>
+<tr>
+<td>Search / catalogue</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/products/browser/search/README.md" referrerpolicy="no-referrer">Device-local HTTPS host</a>, finite index and a separate <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/products/browser/search/docs/PUBLIC_PILOT.md" referrerpolicy="no-referrer">eight-summary Spanish pilot catalogue</a>.</td>
+<td>The catalogue is not a crawler or general Internet coverage. Its checksums do not establish a deployed Azure service.</td>
+</tr>
+<tr>
+<td>Search / Web</td>
+<td>Source includes an operator-configured SearXNG adapter and an explicit Wikipedia source.</td>
+<td>A production provider is not configured by this catalogue. General-Web relevance remains a separate acceptance gate; proposed Brave/gateway adapters are not part of the reviewed merged source.</td>
+</tr>
+<tr>
+<td>Device Bridge / HUB_Relay</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/products/device-bridge/README.md" referrerpolicy="no-referrer">Compatibility records</a>, <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/products/device-bridge/common/native-protocol/README.md" referrerpolicy="no-referrer">protocol-verification library</a>, offline fixtures and a fixed-route <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/products/device-bridge/windows/bootstrap-inventory/README.md" referrerpolicy="no-referrer">Windows diagnostic candidate</a>.</td>
+<td>Relay activation remains blocked. Diagnostic receipts do not establish loaded-image provenance, biometric enforcement or an unattended management service.</td>
+</tr>
+<tr>
+<td>Admin Gateway</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/products/admin-gateway/README.md" referrerpolicy="no-referrer">Tenant-neutral reference API</a>, allowlisted runbooks and connector/schema/deployment assets.</td>
+<td>The reference executor rejects live execution. Source publication does not authorize tenant operations, installation or production writes.</td>
+</tr>
+<tr>
+<td>Evidence Lab</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/products/evidence-lab/README.md" referrerpolicy="no-referrer">Dataverse package</a>, governed schema/aggregate seed plans and offline dry-run evidence.</td>
+<td>Live metadata application, business-data seeding and deployment retain separate gates.</td>
+</tr>
+<tr>
+<td>Connect</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/docs/architecture/xai_x_signal_bridge.md" referrerpolicy="no-referrer">xAI/X provider foundation</a> with injected, disabled-by-default adapters and local publication planning.</td>
+<td>No bundled live transport, credentials, automatic social publication or partnership claim is established.</td>
+</tr>
+<tr>
+<td>Global Graph</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/issues/1880" referrerpolicy="no-referrer">Issue-only foundation #1880</a>.</td>
+<td>No implemented graph, public-globe integration, API or Dataverse mutation is represented by this record.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-how-to-use-the-evidence">How to use the evidence</h2>
+<ul>
+<li>Use the immutable links above for source evidence and the child guides for navigation.</li>
+<li>Read <code>source_status</code> together with <code>lifecycle_state</code> and the runtime/deployment fields; <code>merged</code> alone is not an activation signal.</li>
+<li>Keep catalogue, Web-provider and platform acceptance separate. A passing fixture or cross-compilation is not a native or real-Web test.</li>
+<li>Consult the <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/docs/architecture/public_surface_sync.md" referrerpolicy="no-referrer">public-surface synchronization contract</a> and <a href="https://github.com/Voxterrae/HUB_Optimus/issues/1888" referrerpolicy="no-referrer">issue #1888</a> for Pages/Sites receipts. The private Sites mirror is a separately synchronized presentation surface.</li>
+<li>Use <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/IP_NOTICE.md" referrerpolicy="no-referrer">IP_NOTICE.md</a> for rights and permitted use. This catalogue does not create a commercial license, pricing, support contract or third-party endorsement.</li>
+</ul>
+<p>All new public interface translations remain assisted drafts requiring qualified
+human review. The canonical language and governance policies remain unchanged.</p>
+</article></div></main>
+<footer class="reader-footer"><p data-reader-copy="boundary">Las explicaciones ayudan a leer; los documentos originales mantienen su autoridad y su estado. La interfaz no certifica traducción ni producción.</p>
+<a href="../index.html" data-reader-home data-reader-copy="collection">Conoce y explora</a></footer></body></html>

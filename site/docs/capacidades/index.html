@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title lang="es">Capacidades y próximos pilotos · HUB_Optimus</title>
+<link rel="stylesheet" href="../reading.css"><script src="../reading.js" defer></script></head>
+<body data-source-language="es" data-source-id="capacidades" data-source-languages="">
+<a class="reader-skip" href="#reader-main" data-reader-copy="skip">Ir al documento</a>
+<header class="reader-header"><a class="reader-brand" href="../../">HUB_Optimus</a>
+<nav aria-label="Navegación" data-reader-controls><a href="../index.html" data-reader-home data-reader-copy="collection">Conoce y explora</a>
+<a href="../../operator/?lang=es#product_intake" data-reader-operator data-reader-copy="operator">Probar Operator</a></nav></header>
+<div class="reader-language" data-reader-controls><p data-reader-copy="language">Idioma de navegación</p>
+<nav aria-label="Idiomas"><a href="../capacidades/index.html?lang=es" hreflang="es" data-reader-language="es" lang="es">Español</a>
+<a href="../capacidades/index.html?lang=en" hreflang="es" data-reader-language="en" lang="en">English</a>
+<a href="../capacidades/index.html?lang=de" hreflang="es" data-reader-language="de" lang="de">Deutsch</a>
+<a href="../capacidades/index.html?lang=ca" hreflang="es" data-reader-language="ca" lang="ca">Català</a>
+<a href="../capacidades/index.html?lang=fr" hreflang="es" data-reader-language="fr" lang="fr">Français</a>
+<a href="../capacidades/index.html?lang=ru" hreflang="es" data-reader-language="ru" lang="ru">Русский</a>
+<a href="../capacidades/index.html?lang=he" hreflang="es" data-reader-language="he" lang="he">עברית</a>
+<a href="../capacidades/index.html?lang=zh-Hans" hreflang="es" data-reader-language="zh-Hans" lang="zh-Hans">简体中文</a></nav>
+<p id="reader-language-notice" role="status">El texto conserva el idioma de su fuente. Las traducciones que falten se indican expresamente.</p></div>
+<main id="reader-main" class="reader-main"><div class="reader-intro"><p class="reader-kicker">HUB_Optimus · lectura con fuente</p>
+<h1 lang="es">Capacidades y próximos pilotos</h1><p lang="es">Qué permite cada pieza, qué falta aceptar y por dónde empezar. No es una lista de productos terminados.</p>
+<p class="reader-source">Fuente: <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/docs/project/CAPABILITIES_AND_PILOTS.md" referrerpolicy="no-referrer">docs/project/CAPABILITIES_AND_PILOTS.md</a><br>
+<span>Commit: <bdi>abf973b989720cbba4fab734cc19e60c3277b8df</bdi></span><br>
+<span>SHA-256: <bdi>99e284a46134b867eaf842ca3f50398b10d4f4a279eb399729e3ba93663c205d</bdi></span><br>
+<a href="source.md" download data-reader-copy="download">Descargar el Markdown original</a></p></div>
+<div class="reader-layout"><aside class="reader-toc"><h2 data-reader-copy="contents">En esta página</h2><ol lang="es" dir="ltr"><li><a href="#doc-capacidades-y-pilotos-de-hub_optimus">Capacidades y pilotos de HUB_Optimus</a></li><li><a href="#doc-primeros-pilotos-propuestos">Primeros pilotos propuestos</a></li><li><a href="#doc-inventario-de-capacidades">Inventario de capacidades</a></li><li><a href="#doc-lo-que-bloquea-pasar-directamente-a-producción">Lo que bloquea pasar directamente a producción</a></li><li><a href="#doc-qué-se-ha-verificado-en-esta-revisión">Qué se ha verificado en esta revisión</a></li><li><a href="#doc-puerta-común-de-lanzamiento">Puerta común de lanzamiento</a></li></ol></aside>
+<article class="reader-article" lang="es" dir="ltr"><h1 id="doc-capacidades-y-pilotos-de-hub_optimus">Capacidades y pilotos de HUB_Optimus</h1>
+<p>Related to #2187. Refs #2185; ambas incidencias permanecen abiertas.</p>
+<p><strong>Revisión: 14-11-2026, Europe/Madrid. Fuente pública: <code>53b7a841e028592ca81fb43d04d15a2b017bbd78</code>.</strong>
+La revisión distingue <strong>39 capacidades y soportes del ecosistema</strong>, tomando como referencia los
+17 componentes del catálogo y separando los accesorios externos. No son
+39 productos terminados. No se cambian
+roadmap, estado del registry, permisos ni autorizaciones de producción.</p>
+<p>La prioridad es una recomendación de trabajo: <strong>P1</strong> aceptación/piloto acotado;
+<strong>P2</strong> desarrollo o integración pendiente; <strong>P3</strong> investigación/bloqueo material;
+<strong>P4</strong> propuesta sin implementación suficiente. La evidencia de fuente y tests
+existentes no equivale a ejecución de esos tests en esta auditoría.</p>
+<h2 id="doc-primeros-pilotos-propuestos">Primeros pilotos propuestos</h2>
+<div class="reader-table" role="region" aria-label="Tabla" tabindex="0"><table>
+<thead>
+<tr>
+<th>Orden</th>
+<th>Flujo útil</th>
+<th>Recursos y coste incremental</th>
+<th>Aceptación antes de uso habitual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Operator: expediente local y revisión posterior</td>
+<td>Texto público → pasajes → afirmaciones humanas → JSON revisable → un candidato local de mejora.</td>
+<td>Bajo: QA y tiempo de revisión; no servicio recurrente nuevo necesario. Navegador y superficie estática existentes; sin endpoint privado ni API nueva.</td>
+<td>Tres casos completos en desktop y móvil objetivo; exportar/importar y borrar; cambios de fuente bloquean aceptación stale; ningún envío remoto de aprendizaje.</td>
+</tr>
+<tr>
+<td>2. Claim Review: revisión y handoff stateless</td>
+<td>Caso público/sintético → apoyos y dudas → opciones sin decisión automática → handoff revisado por humano.</td>
+<td>Bajo para aceptación del flujo; consumo hospedado y soporte aún no verificados. Conector privado existente; sin base de datos ni integración externa declaradas.</td>
+<td>Repetir review_claim, prepare_decision y prepare_handoff con un caso acotado; preservar abstención, selected_option=null, pending_human_review y verificación no realizada; registrar manualmente la decisión final.</td>
+</tr>
+<tr>
+<td>3. Search: corpus propio local</td>
+<td>Encontrar 10–30 guías propias con cobertura y procedencia declaradas.</td>
+<td>Bajo: curación e instalación controlada; sin cuota por consulta de proveedor. Equipo existente con runtime .NET compatible; corpus público revisado separado de LCDH.</td>
+<td>Veinte consultas humanas registradas, tres referencias exactas recuperables, caso vacío y rechazo de importación sin dañar índice; actualización y rollback documentados.</td>
+</tr>
+<tr>
+<td>4. Browser Web: consulta sencilla y accesibilidad</td>
+<td>Persona real completa consultar, abrir y guardar un recurso con teclado.</td>
+<td>Bajo: dispositivos y revisión humana. Voz se prueba solo si hay soporte local real. Navegador y hosting estático existentes; Wikipedia explícita.</td>
+<td>Tres tareas supervisadas; teclado, foco, móvil, zoom real y lector de pantalla elegidos; persistencia opt-in y borrado observados.</td>
+</tr>
+<tr>
+<td>5. Semantic CLI: expediente estructurado portable</td>
+<td>Un caso público con claims y evidence consistentes produce AnalysisResult contractual y una revisión humana.</td>
+<td>Bajo: fixtures y revisión; sin modelo, base vectorial o nube obligatorios. Python y contrato existente; almacenamiento local elegido.</td>
+<td>Caso válido y casos con ID duplicado/referencia huérfana; salida preserva datos y limita inferencias; comando, SHA y archivo final registrados.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Recomiendo <strong>Operator primero</strong>, con un caso público o sintético completo y un
+resultado revisado por una persona. Aprovecha la superficie estática existente,
+permite demostrar utilidad sin servicio nuevo y revela qué integración posterior
+merece el esfuerzo. Claim Review es un piloto privado complementario: no añade
+persistencia ni verificación de fuentes. Search local evita comenzar por una
+cuenta o proveedor Web nuevo.</p>
+<p>Los costes son estimaciones cualitativas de esfuerzo, no precios, presupuestos
+aprobados ni promesas de ahorro. El uso habitual requiere aceptación del
+responsable; cualquier servicio nuevo exige revisar licencias, capacidad y coste.</p>
+<h2 id="doc-inventario-de-capacidades">Inventario de capacidades</h2>
+<p>La última columna enlaza código o documentación a un SHA fijo. El estado
+resumido es el de la fuente inspeccionada; no certifica un host o tenant vivo.</p>
+<div class="reader-table" role="region" aria-label="Tabla" tabindex="0"><table>
+<thead>
+<tr>
+<th>Prioridad</th>
+<th>Capacidad y uso</th>
+<th>Estado y límite</th>
+<th>Siguiente aceptación propuesta</th>
+<th>Fuente</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1</td>
+<td><strong>API gobernada para validar y preparar planes Microsoft 365</strong>. Preparar y revisar un plan administrativo.</td>
+<td>Prototipo local. El ejecutor real está deshabilitado.</td>
+<td>Aceptar tres casos sintéticos de planificación.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/src/optimus_admin_gateway/main.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/src/optimus_admin_gateway/executors.py#L21" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Browser Web accesible</strong>. Consultar, abrir y guardar recursos desde una interfaz sencilla.</td>
+<td>Prototipo integrado; aceptación con personas pendiente.</td>
+<td>Completar tres tareas con teclado, móvil y lector de pantalla.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/web/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/web/docs/VALIDATION.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Claim Review: piloto privado estructural sin persistencia</strong>. Revisar la estructura de evidencias y preparar opciones y traspasos.</td>
+<td>Piloto privado sin persistencia. Tres comprobaciones sintéticas observadas.</td>
+<td>Aceptar un caso completo con una persona; conservar la decisión humana.</td>
+<td>Observación privada; fuente pública pendiente</td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Core y Governance Intelligence: revisión humana estructurada</strong>. Separar afirmaciones, evidencia, dudas y decisiones.</td>
+<td>Metodología documentada; requiere aplicación y revisión humanas.</td>
+<td>Aplicar una plantilla a un caso y registrar correcciones y utilidad.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/v1_core/workflow/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/v1_core/workflow/05_meta_learning.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Modelo de evidencia y observaciones agregadas con procedencia versionada</strong>. Organizar observaciones agregadas con fuente y procedencia.</td>
+<td>Paquete y comprobaciones offline; instalación Dataverse sin acreditar.</td>
+<td>Mostrar una observación trazable y revisar sus fuentes.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/evidence-lab/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/evidence-lab/docs/MODEL.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Herramientas gobernadas de CI y mantenimiento del repositorio</strong>. Revisar cambios, contratos y controles del repositorio.</td>
+<td>Herramientas integradas; su adaptación a otro repositorio es trabajo separado.</td>
+<td>Revisar un caso permitido sin cambiar sus controles.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tools/kernel_guard.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tools/founder_authority_guard.py" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Inventario determinista y drift de arquitectura</strong>. Identificar qué rutas cambiaron entre dos versiones.</td>
+<td>Comparación determinista de instantáneas; no interpretación automática de su impacto.</td>
+<td>Comparar un cambio conocido y verificar el resultado.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tools/project_intelligence/repository_intelligence.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tests/test_project_intelligence_v11.py" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Project Intelligence / Obsidian Explorer</strong>. Explorar visualmente la arquitectura y sus fuentes.</td>
+<td>Explorador experimental con instantáneas fechadas.</td>
+<td>Actualizar una instantánea y aceptar tres recorridos de lectura.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tools/project_intelligence/repository_intelligence.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/site/obsidian-HUB_Optimus/system.json" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Descomposición atómica confirmada por humanos</strong>. Dividir un texto en afirmaciones revisables.</td>
+<td>Ayuda local sujeta a confirmación humana.</td>
+<td>Comprobar cambios de fuente y rechazo de una aceptación desactualizada.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/site/operator/claim-decomposition.v1.js" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/site/operator/index.html" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Operator PWA local: intake, borrador, triage y exportación</strong>. Pegar un texto, preparar un borrador y exportarlo.</td>
+<td>Prototipo de navegador; no recupera ni verifica una URL por sí solo.</td>
+<td>Completar entrada, revisión, exportación y borrado con un caso acotado.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/site/operator/index.html" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/site/operator/sw.js" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Candidatos y almacén local de aprendizaje</strong>. Guardar propuestas locales de mejora para revisarlas.</td>
+<td>Almacén local; no entrena un modelo ni envía aprendizaje a un proveedor.</td>
+<td>Revisar una propuesta y observar exportación y borrado.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/rfc/operator_local_learning_candidate.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/site/operator/learning-candidate.v1.js" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Search local y catálogo propio</strong>. Encontrar documentos de un catálogo propio.</td>
+<td>Fuente integrada; cobertura finita, sin búsqueda Web general.</td>
+<td>Aceptar veinte consultas y probar actualización y reversión del índice.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/src/Optimus.Search/Program.cs" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Semantic Engine: contratos y CLI</strong>. Producir un expediente estructurado desde la línea de comandos.</td>
+<td>Contratos y CLI locales; la estructura no certifica veracidad.</td>
+<td>Probar un caso válido y referencias duplicadas o huérfanas.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/semantic_engine/cli/__main__.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/semantic_engine/contracts/case_input.py" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P1</td>
+<td><strong>Simulador determinista y runner</strong>. Repetir escenarios sintéticos bajo reglas explícitas.</td>
+<td>Simulador determinista; no acredita predicción de situaciones reales.</td>
+<td>Reproducir un escenario y explicar sus supuestos y resultado.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/hub_optimus_simulator.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/run_scenario.py" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Planificación y aplicación gobernada del esquema administrativo</strong>. Preparar el esquema administrativo que se aplicaría a un entorno.</td>
+<td>Herramientas y contratos; instalación real y aceptación pendientes.</td>
+<td>Revisar el plan offline antes de proponer una aplicación autorizada.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/scripts/apply-dataverse-schema.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/dataverse/apply/README.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Browser Windows alpha</strong>. Usar el navegador Windows y su conexión con Search.</td>
+<td>Alpha con pruebas de componentes; aceptación nativa del candidato pendiente.</td>
+<td>Aceptar empaquetado, teclado y accesibilidad en el equipo objetivo.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/windows/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/windows/docs/VALIDATION_WINDOWS_INTEGRATION_2026_11_01.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Calificación institucional y calculadoras de canal</strong>. Ordenar requisitos institucionales y estimaciones de canal.</td>
+<td>Herramientas de propuesta; no son precios ni acuerdos aprobados.</td>
+<td>Revisar un ejemplo con supuestos y responsable identificados.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tools/institutional_qualification.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tools/channel_net_price.py" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Connect: planificador DryRun de publicaciones en X</strong>. Preparar una publicación y comprobar sus parámetros.</td>
+<td>Planificador en simulación; no publica por sí mismo.</td>
+<td>Validar un caso artificial sin habilitar envío.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/hub_optimus/connect/publisher_x.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/architecture/xai_x_signal_bridge.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>HUB_Relay: plugin local mínimo</strong>. Probar una operación local acotada mediante el complemento.</td>
+<td>Complemento Python distinto del Relay nativo; activación y controles separados.</td>
+<td>Aceptar una operación permitida con consentimiento y límites observables.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/windows/local-plugin/hub-relay/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/windows/local-plugin/hub-relay/server.py" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>API loopback, runner y registro de ejecuciones</strong>. Consultar ejecuciones locales y sus registros.</td>
+<td>API local; exposición remota y aceptación operativa sin acreditar.</td>
+<td>Comprobar una ejecución local y su registro de principio a fin.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/ops/ec2/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/ops/ec2/hub-api.sh" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Diagnóstico Exchange y previews de permisos FullAccess</strong>. Preparar diagnósticos y vistas previas de permisos Exchange.</td>
+<td>Guías y scripts; ninguna ejecución real se acredita en esta revisión.</td>
+<td>Revisar una consulta de solo lectura en un entorno autorizado.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/runbooks/Invoke-OptimusExchangeOperation.ps1#L1" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/README.md#L95" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>CLI local móvil/Termux</strong>. Validar y organizar un archivo aportado desde un dispositivo.</td>
+<td>CLI local; no certifica el contenido ni activa un puente remoto.</td>
+<td>Probar un archivo válido y rechazos de formato o ruta.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tools/mobile_ingest.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/lab_state.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Corpus narrativos, validación y reportes deterministas</strong>. Validar consistencia de registros narrativos y generar informes.</td>
+<td>Corpus y validadores; sus afirmaciones siguen necesitando fuentes.</td>
+<td>Reproducir un informe y revisar los límites de sus datos.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/datasets/ai_risk_narratives/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/datasets/geopolitical_claim_packs/README.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Despliegue/rollback manual de releases Linux</strong>. Preparar versiones y una reversión controlada en Linux.</td>
+<td>Scripts operativos; un despliegue actual requiere su propio recibo.</td>
+<td>Ensayar preparación y reversión en un entorno autorizado.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/ops/ec2/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/ops/ec2/deploy-current.sh" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Generación, mutación, telemetría y fronteras de escenarios</strong>. Generar y comparar variaciones de escenarios sintéticos.</td>
+<td>Herramientas experimentales; no prueban relaciones causales del mundo real.</td>
+<td>Repetir un experimento y documentar parámetros y límites.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/lab_state.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/lab_regeneration_1775.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Adaptador Brave y gateway limitado</strong>. Preparar acceso limitado a un proveedor de búsqueda.</td>
+<td>Adaptador y gateway inactivos; proveedor, acceso y coste pendientes.</td>
+<td>Aceptar pruebas offline antes de proponer activación.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/providers/brave/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/providers/brave/gateway/README.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>API remota del catálogo piloto</strong>. Servir remotamente un catálogo finito de referencias.</td>
+<td>API candidata; despliegue y uso real sin acreditar.</td>
+<td>Aceptar salud, contrato y publicación del candidato exacto.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/remote/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/remote/src/Optimus.Search.Remote/RemoteServer.cs" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Search Web: SearXNG / Wikipedia</strong>. Consultar fuentes Web mediante un transporte configurado.</td>
+<td>Integración con configuración y aceptación del operador pendientes.</td>
+<td>Definir fuentes y límites y aceptar una consulta controlada.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/search/docs/CONTROLLED_WEB_DESIGN.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Studio, conectores y portfolio privado: frontera externa</strong>. Organizar entregas y accesorios en superficies separadas.</td>
+<td>Frontera externa al catálogo principal; metadatos no prueban acceso o persistencia.</td>
+<td>Aceptar un flujo real con el permiso existente y su recibo.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/launch/FIRST_PAID_CUSTOMER_LAUNCH_PLAN.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/copilot-studio/agents/optimus-exchange-admin.agent.yaml" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Intake de una URL: backend acotado y frontera Entra owner/team</strong>. Recuperar una página concreta bajo una frontera de identidad.</td>
+<td>Fuente integrada; acceso, servicio y aceptación de extremo a extremo pendientes.</td>
+<td>Aceptar identidad, sesión y una URL controlada antes de exposición.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/rfc/operator_controlled_url_intake.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/maintenance/operator_oidc_owner_team.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P3</td>
+<td><strong>Futura ejecución administrativa aprobada mediante Power Platform, Copilot Studio y Azure</strong>. Ejecutar en el futuro un plan administrativo autorizado.</td>
+<td>Ejecutor deshabilitado; controles de aprobación y operación aún incompletos.</td>
+<td>Implementar primero una lectura acotada con identidad y pruebas propias.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/docs/DEPLOYMENT.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/admin-gateway/docs/SECURITY.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P3</td>
+<td><strong>Browser Linux, propuesta</strong>. Preparar una experiencia de navegador para Linux.</td>
+<td>Propuesta sin cliente integrado en este corte.</td>
+<td>Recibir una fuente reproducible y revisable con su procedencia.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/browser/README.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P3</td>
+<td><strong>Connect: lectura y señal de X</strong>. Conservar procedencia mínima de una señal pública.</td>
+<td>Contrato inicial; lectura real, retención y acceso al proveedor pendientes.</td>
+<td>Probar datos artificiales y definir retención antes de conectar.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/architecture/xai_x_signal_bridge.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/hub_optimus/connect/source_x.py" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P3</td>
+<td><strong>Connect: contrato de proveedor xAI</strong>. Preparar un contrato para un proveedor analítico opcional.</td>
+<td>Transporte y servicio reales sin implementar o acreditar.</td>
+<td>Validar el formato offline y justificar una necesidad concreta.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/docs/architecture/xai_x_signal_bridge.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/hub_optimus/connect/provider_xai.py" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P3</td>
+<td><strong>ControlPlane educativo aislado</strong>. Enseñar permisos de herramientas con ejemplos controlados.</td>
+<td>Prototipo educativo; no es un control de seguridad de producción.</td>
+<td>Conservar la demostración y sus límites, sin ampliar privilegios.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/hub_optimus/hub_optimus_control.py" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/tests/test_control_plane_prototype.py" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P3</td>
+<td><strong>Diagnóstico Android/Termux histórico</strong>. Revisar diagnósticos de un dispositivo autorizado.</td>
+<td>Trabajo histórico; consentimiento y requisito biométrico siguen siendo puertas separadas.</td>
+<td>Acotar una operación y demostrar los controles antes de activarla.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/SECURITY_REQUIREMENTS.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P3</td>
+<td><strong>HUB_Relay: protocolo y bases nativas</strong>. Desarrollar los contratos y bases de un puente entre dispositivos.</td>
+<td>Investigación nativa; incorporación de identidad y activación bloqueadas.</td>
+<td>Aceptar una prueba nativa del SHA exacto sin activar el puente.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/common/native-protocol/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/device-bridge/common/native-result/README.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P3</td>
+<td><strong>Canary privado AWS de una URL</strong>. Preparar una ingesta limitada para un piloto invitado.</td>
+<td>Candidato deshabilitado; identidad, dependencias, presupuesto y despliegue pendientes.</td>
+<td>Resolver las puertas existentes en orden; priorizar primero el flujo local.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/ops/aws/operator-url-intake/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/ops/aws/operator-url-intake/CANDIDATE_STATUS.md" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+<tr>
+<td>P4</td>
+<td><strong>Global Graph, Linux Browser, Labs y RFC propuestos</strong>. Conservar y evaluar nuevas ideas del ecosistema.</td>
+<td>Incubación y propuestas; no servicios operativos adicionales.</td>
+<td>Elegir un problema concreto y aceptar un alcance acotado.</td>
+<td><a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/products/README.md" referrerpolicy="no-referrer">fuente 1</a> · <a href="https://github.com/Voxterrae/HUB_Optimus/blob/53b7a841e028592ca81fb43d04d15a2b017bbd78/site/data/capability-registry.v1.json" referrerpolicy="no-referrer">fuente 2</a></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-lo-que-bloquea-pasar-directamente-a-producción">Lo que bloquea pasar directamente a producción</h2>
+<ul>
+<li><strong>Administración Microsoft 365:</strong> la vía live de Admin Gateway devuelve
+<code>EXECUTOR_NOT_CONFIGURED</code>; el ejecutor es un stub. Un dry-run valida el plan,
+no consulta ni cambia el tenant. La aprobación mutante necesita consumo único
+durable, roles/identidad y evidencia de ejecución antes de abrir esa vía.</li>
+<li><strong>Browser Windows:</strong> falta aceptación visible del candidato exacto con teclado,
+tecnologías de asistencia y empaquetado en el runtime objetivo. CI y prueba
+sintáctica no sustituyen esa aceptación. Linux requiere una entrega revisable.</li>
+<li><strong>Relay nativo:</strong> fundamentos, pruebas y contratos no levantan por sí solos el
+bloqueo de activación, consentimiento, identidad y transporte. El complemento
+local Python y el Relay nativo son piezas diferentes.</li>
+<li><strong>URL intake y proveedores Web:</strong> autenticación, límites, seguridad de
+dependencias, presupuesto y despliegue se aceptan por separado. Una corrección
+o prueba de otro componente no valida el bundle/candidato de esa ruta.</li>
+<li><strong>Dataverse/Evidence Lab:</strong> el paquete y los applicators offline no acreditan
+instalación, publicación, seguridad o escritura en un entorno vivo.</li>
+</ul>
+<h2 id="doc-qué-se-ha-verificado-en-esta-revisión">Qué se ha verificado en esta revisión</h2>
+<p>Lectura estática y 146 referencias locales de fuente existentes. Los tests
+históricos citados por la fuente mantienen fecha y candidato; no se volvieron a
+ejecutar todos los productos. En un piloto privado se observaron tres
+comprobaciones sintéticas de revisión, opciones y handoff: borradores,
+selección pendiente del humano y ninguna acción externa. Esto es un smoke
+acotado, no aceptación de producción, auditoría de seguridad o prueba de verdad.
+No se publican salidas, direcciones ni identificadores privados.</p>
+<h2 id="doc-puerta-común-de-lanzamiento">Puerta común de lanzamiento</h2>
+<p>Antes de declarar una capacidad operativa: fijar caso de uso y responsable;
+seleccionar SHA/paquete/runtime exactos; comprobar dependencias y controles;
+recorrer el flujo completo con datos acotados; observar almacenamiento,
+exportación/borrado y errores; registrar aceptación, rollback y resultado.
+Separar aceptación del piloto, autorización de acciones, despliegue y publicación
+pública. Una etiqueta <code>merged</code> no sustituye ninguna de estas evidencias.</p>
+<p>Los accesorios privados y el estado vivo de Sites requieren su propia ficha y
+recibos. La lista no acredita que todos los usuarios ya tengan acceso o que sus
+sesiones y datos persistan. No cambia las audiencias existentes.</p>
+</article></div></main>
+<footer class="reader-footer"><p data-reader-copy="boundary">Las explicaciones ayudan a leer; los documentos originales mantienen su autoridad y su estado. La interfaz no certifica traducción ni producción.</p>
+<a href="../index.html" data-reader-home data-reader-copy="collection">Conoce y explora</a></footer></body></html>

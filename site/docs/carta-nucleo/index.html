@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title lang="es">Carta del núcleo de simulación · HUB_Optimus</title>
+<link rel="stylesheet" href="../reading.css"><script src="../reading.js" defer></script></head>
+<body data-source-language="es" data-source-id="carta-nucleo" data-source-languages="">
+<a class="reader-skip" href="#reader-main" data-reader-copy="skip">Ir al documento</a>
+<header class="reader-header"><a class="reader-brand" href="../../">HUB_Optimus</a>
+<nav aria-label="Navegación" data-reader-controls><a href="../index.html" data-reader-home data-reader-copy="collection">Conoce y explora</a>
+<a href="../../operator/?lang=es#product_intake" data-reader-operator data-reader-copy="operator">Probar Operator</a></nav></header>
+<div class="reader-language" data-reader-controls><p data-reader-copy="language">Idioma de navegación</p>
+<nav aria-label="Idiomas"><a href="../carta-nucleo/index.html?lang=es" hreflang="es" data-reader-language="es" lang="es">Español</a>
+<a href="../simulation-charter/index.html?lang=en" hreflang="en" data-reader-language="en" lang="en">English</a>
+<a href="../carta-nucleo/index.html?lang=de" hreflang="es" data-reader-language="de" lang="de">Deutsch</a>
+<a href="../carta-nucleo/index.html?lang=ca" hreflang="es" data-reader-language="ca" lang="ca">Català</a>
+<a href="../carta-nucleo/index.html?lang=fr" hreflang="es" data-reader-language="fr" lang="fr">Français</a>
+<a href="../carta-nucleo/index.html?lang=ru" hreflang="es" data-reader-language="ru" lang="ru">Русский</a>
+<a href="../carta-nucleo/index.html?lang=he" hreflang="es" data-reader-language="he" lang="he">עברית</a>
+<a href="../carta-nucleo/index.html?lang=zh-Hans" hreflang="es" data-reader-language="zh-Hans" lang="zh-Hans">简体中文</a></nav>
+<p id="reader-language-notice" role="status">El texto conserva el idioma de su fuente. Las traducciones que falten se indican expresamente.</p></div>
+<main id="reader-main" class="reader-main"><div class="reader-intro"><p class="reader-kicker">HUB_Optimus · lectura con fuente</p>
+<h1 lang="es">Carta del núcleo de simulación</h1><p lang="es">Principios y restricciones del núcleo. Su lectura no demuestra que todos los mecanismos estén implementados.</p>
+<p class="reader-source">Fuente: <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/KERNEL_CHARTER.md" referrerpolicy="no-referrer">KERNEL_CHARTER.md</a><br>
+<span>Commit: <bdi>abf973b989720cbba4fab734cc19e60c3277b8df</bdi></span><br>
+<span>SHA-256: <bdi>c8dd42915f9648962d02b6ccf6a02a3b8aa8e6a26fec43c7c4ec2c6292d8ebb2</bdi></span><br>
+<a href="source.md" download data-reader-copy="download">Descargar el Markdown original</a></p></div>
+<div class="reader-layout"><aside class="reader-toc"><h2 data-reader-copy="contents">En esta página</h2><ol lang="es" dir="ltr"><li><a href="#doc-carta-del-núcleo-de-hub_optimus">Carta del Núcleo de HUB_Optimus</a></li><li><a href="#doc-principios-fundacionales">Principios fundacionales</a></li><li><a href="#doc-restricciones-técnicas-del-núcleo">Restricciones técnicas del núcleo</a></li><li><a href="#doc-1-capacidad-permiso">1. Capacidad ≠ Permiso</a></li><li><a href="#doc-2-foco-en-la-estabilidad-multiactor">2. Foco en la estabilidad multi‑actor</a></li><li><a href="#doc-3-transparencia-y-auditabilidad">3. Transparencia y auditabilidad</a></li><li><a href="#doc-4-aislamiento-de-integración">4. Aislamiento de integración</a></li><li><a href="#doc-5-seguridad-de-la-información">5. Seguridad de la información</a></li><li><a href="#doc-6-modo-didáctico-y-modo-funcional">6. Modo didáctico y modo funcional</a></li><li><a href="#doc-gobernanza-y-mantenimiento">Gobernanza y mantenimiento</a></li><li><a href="#doc-conclusión">Conclusión</a></li></ol></aside>
+<article class="reader-article" lang="es" dir="ltr"><h1 id="doc-carta-del-núcleo-de-hub_optimus">Carta del Núcleo de HUB_Optimus</h1>
+<p>Esta carta define las reglas inmutables que gobiernan el núcleo de simulación de <strong>HUB_Optimus</strong>.  Su propósito es transformar los principios filosóficos del proyecto en restricciones técnicas explícitas.  Todo componente que se integre en el núcleo (<code>Simulator</code>, <code>Scenario</code> o <code>Actor</code>) debe respetar estas reglas para preservar la misión del proyecto: promover la estabilidad sistémica y la integridad en contextos diplomáticos.</p>
+<h2 id="doc-principios-fundacionales">Principios fundacionales</h2>
+<p>El proyecto se rige por cinco principios base que sirven como brújula ética y técnica:</p>
+<ol>
+<li><strong>Estabilidad sobre óptica</strong>: la prioridad máxima es la estabilidad sistémica a medio y largo plazo, por encima de aparentes éxitos inmediatos.</li>
+<li><strong>Integridad primero</strong>: la influencia y la autoridad se ganan mediante la coherencia ética, no por posición, credenciales o poder coyuntural.</li>
+<li><strong>Evaluación sobre narrativa</strong>: los resultados se valoran con criterios estructurales (incentivos, verificación, secuenciación) en lugar de argumentos retóricos.</li>
+<li><strong>Prevención sobre reacción</strong>: se privilegia la mediación temprana y discreta frente a la escalada pública y reactiva.</li>
+<li><strong>Sin culpabilizar</strong>: los errores y fallos se tratan como síntomas sistémicos, no como fracasos personales.</li>
+</ol>
+<h2 id="doc-restricciones-técnicas-del-núcleo">Restricciones técnicas del núcleo</h2>
+<p>Para que estos principios se traduzcan en un comportamiento concreto del software, el núcleo incorpora las siguientes reglas:</p>
+<h3 id="doc-1-capacidad-permiso">1. Capacidad ≠ Permiso</h3>
+<p>El núcleo puede simular dinámicas de negociación y evaluar sus consecuencias, pero <strong>no tiene permitido recomendar acciones que busquen dominar, explotar o manipular a otros actores</strong>.  La potencia computacional debe mejorar la claridad del diagnóstico, no la agresividad de las estrategias.</p>
+<ul>
+<li><strong>Regla de prohibición de explotación</strong>: cualquier política que optimice el beneficio individual a costa del deterioro de otros actores se marca automáticamente como <em>resultado de alto riesgo</em> y se desaconseja.</li>
+<li><strong>Regla de neutralidad táctica</strong>: el núcleo no genera instrucciones tácticas para actores reales; solo describe consecuencias, riesgos y escenarios alternativos.</li>
+</ul>
+<h3 id="doc-2-foco-en-la-estabilidad-multiactor">2. Foco en la estabilidad multi‑actor</h3>
+<p>Las funciones de utilidad y los criterios de éxito del simulador se definen en términos de <strong>estabilidad conjunta</strong> en lugar de maximización de payoffs individuales.  Las evaluaciones deben tener en cuenta:</p>
+<ul>
+<li>Coherencia a medio y largo plazo de los acuerdos.</li>
+<li>Equilibrio de incentivos entre actores.</li>
+<li>Viabilidad de verificación y cumplimiento.</li>
+</ul>
+<h3 id="doc-3-transparencia-y-auditabilidad">3. Transparencia y auditabilidad</h3>
+<p>Todas las decisiones internas del núcleo deben ser trazables.  Esto implica:</p>
+<ul>
+<li><strong>Historial de acciones</strong>: cada ronda de negociación registra las ofertas, concesiones y justificaciones.</li>
+<li><strong>Criterios explícitos</strong>: los criterios que llevan a declarar el éxito o el fracaso de un escenario se exponen de manera clara en los informes.</li>
+<li><strong>Sin resultados opacos</strong>: el núcleo no devuelve resultados cifrados o inescrutables; los usuarios pueden revisar por qué se alcanzó un determinado diagnóstico.</li>
+</ul>
+<h3 id="doc-4-aislamiento-de-integración">4. Aislamiento de integración</h3>
+<p>El núcleo está diseñado para ser extensible mediante <em>plugins</em> externos (por ejemplo, bibliotecas de negociación como NegMAS o orquestadores multi‑agente como CrewAI).  Sin embargo, dichas integraciones <strong>nunca pueden modificar las reglas base</strong>.  Deben cumplir los siguientes requisitos:</p>
+<ul>
+<li><strong>No invasividad</strong>: las extensiones se cargan como módulos secundarios y se comunican con el núcleo a través de interfaces bien definidas.</li>
+<li><strong>Respeto de la Carta</strong>: cualquier estrategia o algoritmo integrado debe ajustarse a la prohibición de explotación y al enfoque en la estabilidad.</li>
+</ul>
+<h3 id="doc-5-seguridad-de-la-información">5. Seguridad de la información</h3>
+<p>El núcleo puede incorporar mecanismos de cifrado (por ejemplo, MLKEM/Kyber) para proteger la confidencialidad de propuestas y resultados durante la simulación.  No obstante:</p>
+<ul>
+<li><strong>El cifrado se aplica al canal</strong>, no al contenido final de los informes.</li>
+<li><strong>Los resultados siempre serán auditables</strong>; el cifrado no se utiliza para ocultar evaluaciones o recomendaciones.</li>
+</ul>
+<h3 id="doc-6-modo-didáctico-y-modo-funcional">6. Modo didáctico y modo funcional</h3>
+<p>El núcleo distingue entre dos modos de uso:</p>
+<ul>
+<li><strong>Modo didáctico</strong>: transparente y orientado a la formación.  Muestra íntegramente el historial de rondas, métricas de integridad y explicaciones.  Recomendado para investigación y enseñanza.</li>
+<li><strong>Modo funcional</strong> (futuro fork empresarial): mantiene la misma lógica, pero automatiza la ejecución de múltiples escenarios y ofrece informes resumidos.  En ningún caso habilita el control de sistemas externos ni genera estrategias accionables en tiempo real.</li>
+</ul>
+<h2 id="doc-gobernanza-y-mantenimiento">Gobernanza y mantenimiento</h2>
+<p>El cumplimiento de esta carta debe verificarse mediante pruebas automatizadas y revisiones de código.  Las contribuciones al núcleo deberán:</p>
+<ul>
+<li>Incluir <strong>pruebas unitarias</strong> que demuestren que las nuevas funcionalidades respetan estas reglas.</li>
+<li>Documentar claramente cualquier cambio en las funciones de utilidad o en la definición de estabilidad.</li>
+<li>Ser revisadas por al menos dos colaboradores familiarizados con la misión del proyecto.</li>
+</ul>
+<h2 id="doc-conclusión">Conclusión</h2>
+<p>Esta carta transforma los principios éticos de HUB_Optimus en restricciones técnicas vinculantes.  Garantiza que, a medida que el proyecto crezca y se incorporen nuevas herramientas, <strong>la finalidad original—promover la diplomacia integradora y la estabilidad—no se pervertirá</strong>.  Cualquier expansión del núcleo debe comenzar evaluando su conformidad con esta carta.</p>
+</article></div></main>
+<footer class="reader-footer"><p data-reader-copy="boundary">Las explicaciones ayudan a leer; los documentos originales mantienen su autoridad y su estado. La interfaz no certifica traducción ni producción.</p>
+<a href="../index.html" data-reader-home data-reader-copy="collection">Conoce y explora</a></footer></body></html>

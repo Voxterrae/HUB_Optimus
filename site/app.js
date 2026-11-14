@@ -6,6 +6,10 @@
 
   const translations = {
     en: {
+      readGuide: "Meet HUB_Optimus",
+      readCollection: "Readable guides and sources",
+      readOperatorPilot: "First case with Operator",
+      readerDisclosure: "Guides show the original language and source. Missing translations open the original with an explicit notice.",
       contributionLink: "Contributions & history",
       contributionKicker: "Public work, traceable credit",
       contributionTitle: "What we contribute.",
@@ -48,7 +52,7 @@
       inspectCatalogue: "Inspect finite pilot catalogue",
       inspectRelay: "Inspect Relay diagnostic candidate",
       title: "HUB_Optimus — Versioned public portfolio",
-      description: "Turn a URL or source text into a structured, source-bound draft for human review, then inspect the versioned evidence, method, governance, and limits behind HUB_Optimus.",
+      description: "Paste source text to prepare a structured draft for human review. A URL is an unverified reference; public Operator does not fetch it.",
       skip: "Skip to portfolio",
       homeAria: "HUB_Optimus home",
       brandDescriptor: "Versioned public portfolio",
@@ -61,7 +65,7 @@
       openGithub: "Open GitHub",
       heroEyebrow: "From source to reviewable draft",
       sequence: "Reality → Evidence → Inference → Narrative → Operational Signal",
-      heroLead: "Turn a URL or source text into a structured, source-bound draft for human review—without presenting it as verified truth.",
+      heroLead: "Paste source text to prepare a structured draft for human review. A URL is an unverified reference; public Operator does not fetch it.",
       heroBoundary: "It supports better judgment. It is not an authority, a prediction engine, or a replacement for diplomacy.",
       explorePortfolio: "Explore the portfolio",
       openOperator: "Open Operator",
@@ -214,6 +218,10 @@
       documentRouterUnavailable: "language route unavailable"
     },
     es: {
+      readGuide: "Conoce HUB_Optimus",
+      readCollection: "Guías y fuentes legibles",
+      readOperatorPilot: "Primer caso con Operator",
+      readerDisclosure: "Las guías muestran el idioma y la fuente originales. Las traducciones que falten abren el original con un aviso explícito.",
       contributionLink: "Aportaciones e histórico",
       contributionKicker: "Trabajo público, crédito trazable",
       contributionTitle: "Lo que aportamos.",
@@ -256,7 +264,7 @@
       inspectCatalogue: "Consultar el catálogo piloto finito",
       inspectRelay: "Consultar el candidato diagnóstico de Relay",
       title: "HUB_Optimus — Portfolio público versionado",
-      description: "Convierte una URL o texto fuente en un borrador estructurado y vinculado a la fuente para revisión humana; después consulta la evidencia versionada, el método, la gobernanza y los límites de HUB_Optimus.",
+      description: "Pega texto fuente y prepara un borrador estructurado para revisión humana. La URL es una referencia no verificada; el Operator público no descarga su contenido.",
       skip: "Ir al portfolio",
       homeAria: "Inicio de HUB_Optimus",
       brandDescriptor: "Portfolio público versionado",
@@ -269,7 +277,7 @@
       openGithub: "Abrir GitHub",
       heroEyebrow: "De la fuente al borrador revisable",
       sequence: "Realidad → Evidencia → Inferencia → Narrativa → Señal operativa",
-      heroLead: "Convierte una URL o un texto fuente en un borrador estructurado y vinculado a la fuente para revisión humana, sin presentarlo como verdad verificada.",
+      heroLead: "Pega texto fuente y prepara un borrador estructurado para revisión humana. La URL es una referencia no verificada; el Operator público no descarga su contenido.",
       heroBoundary: "Ayuda a mejorar el criterio. No es una autoridad, un motor de predicción ni un sustituto de la diplomacia.",
       explorePortfolio: "Explorar el portfolio",
       openOperator: "Abrir Operator",
@@ -422,6 +430,10 @@
       documentRouterUnavailable: "ruta lingüística no disponible"
     },
     de: {
+      readGuide: "HUB_Optimus kennenlernen",
+      readCollection: "Lesbare Leitfäden und Quellen",
+      readOperatorPilot: "Erster Fall mit Operator",
+      readerDisclosure: "Die Leitfäden zeigen Originalsprache und Quelle. Fehlt eine Übersetzung, wird das Original mit einem ausdrücklichen Hinweis geöffnet.",
       contributionLink: "Beiträge und Verlauf",
       contributionKicker: "Öffentliche Arbeit, belegbare Anerkennung",
       contributionTitle: "Was wir beitragen.",
@@ -464,7 +476,7 @@
       inspectCatalogue: "Begrenzten Pilotkatalog ansehen",
       inspectRelay: "Relay-Diagnosekandidaten ansehen",
       title: "HUB_Optimus — Versioniertes öffentliches Portfolio",
-      description: "Verwandle eine URL oder einen Quelltext in einen strukturierten, quellengebundenen Entwurf zur menschlichen Prüfung und prüfe anschließend die versionierten Nachweise, Methoden, Governance und Grenzen von HUB_Optimus.",
+      description: "Füge Quelltext ein und bereite einen strukturierten Entwurf zur menschlichen Prüfung vor. Eine URL ist eine ungeprüfte Referenz; der öffentliche Operator ruft ihren Inhalt nicht ab.",
       skip: "Zum Portfolio springen",
       homeAria: "HUB_Optimus Startseite",
       brandDescriptor: "Versioniertes öffentliches Portfolio",
@@ -477,7 +489,7 @@
       openGithub: "GitHub öffnen",
       heroEyebrow: "Von der Quelle zum prüfbaren Entwurf",
       sequence: "Realität → Evidenz → Schlussfolgerung → Narrativ → Operatives Signal",
-      heroLead: "Verwandle eine URL oder einen Quelltext in einen strukturierten, quellengebundenen Entwurf zur menschlichen Prüfung – ohne ihn als verifizierte Wahrheit darzustellen.",
+      heroLead: "Füge Quelltext ein und bereite einen strukturierten Entwurf zur menschlichen Prüfung vor. Eine URL ist eine ungeprüfte Referenz; der öffentliche Operator ruft ihren Inhalt nicht ab.",
       heroBoundary: "Das System unterstützt bessere Urteile. Es ist weder Autorität noch Prognosemaschine noch Ersatz für Diplomatie.",
       explorePortfolio: "Portfolio erkunden",
       openOperator: "Operator öffnen",
@@ -630,6 +642,10 @@
       documentRouterUnavailable: "Sprachroute nicht verfügbar"
     },
     ru: {
+      readGuide: "Знакомство с HUB_Optimus",
+      readCollection: "Понятные руководства и источники",
+      readOperatorPilot: "Первый случай с Operator",
+      readerDisclosure: "Руководства показывают язык и источник оригинала. При отсутствии перевода открывается оригинал с явным уведомлением.",
       contributionLink: "Вклад и история",
       contributionKicker: "Публичная работа и подтверждённое авторство",
       contributionTitle: "Наш вклад.",
@@ -672,7 +688,7 @@
       inspectCatalogue: "Посмотреть конечный пилотный каталог",
       inspectRelay: "Посмотреть диагностический кандидат Relay",
       title: "HUB_Optimus — Версионируемый публичный портфель",
-      description: "Преобразуйте URL или исходный текст в структурированный, привязанный к источнику черновик для проверки человеком, а затем изучите версионируемые доказательства, метод, управление и ограничения HUB_Optimus.",
+      description: "Вставьте исходный текст для подготовки структурированного черновика на проверку человеку. URL — непроверенная ссылка; публичный Operator не загружает её содержимое.",
       skip: "Перейти к портфелю",
       homeAria: "Главная страница HUB_Optimus",
       brandDescriptor: "Версионируемый публичный портфель",
@@ -685,7 +701,7 @@
       openGithub: "Открыть GitHub",
       heroEyebrow: "От источника к проверяемому черновику",
       sequence: "Реальность → Доказательства → Вывод → Нарратив → Операционный сигнал",
-      heroLead: "Преобразуйте URL или исходный текст в структурированный черновик, привязанный к источнику, для проверки человеком — без представления его как подтверждённой истины.",
+      heroLead: "Вставьте исходный текст для подготовки структурированного черновика на проверку человеку. URL — непроверенная ссылка; публичный Operator не загружает её содержимое.",
       heroBoundary: "Он помогает улучшить суждение. Это не орган власти, не механизм прогнозирования и не замена дипломатии.",
       explorePortfolio: "Изучить портфель",
       openOperator: "Открыть Operator",
@@ -838,6 +854,10 @@
       documentRouterUnavailable: "языковой маршрут недоступен"
     },
     he: {
+      readGuide: "היכרות עם HUB_Optimus",
+      readCollection: "מדריכים ומקורות לקריאה",
+      readOperatorPilot: "מקרה ראשון עם Operator",
+      readerDisclosure: "המדריכים מציגים את שפת המקור ואת המקור. בהיעדר תרגום מוצג המקור עם הודעה מפורשת.",
       contributionLink: "תרומות והיסטוריה",
       contributionKicker: "עבודה ציבורית וייחוס מתועד",
       contributionTitle: "התרומות שלנו.",
@@ -880,7 +900,7 @@
       inspectCatalogue: "לצפייה בקטלוג הפיילוט המוגבל",
       inspectRelay: "לצפייה במועמד האבחון של Relay",
       title: "HUB_Optimus — פורטפוליו ציבורי מנוהל בגרסאות",
-      description: "הפכו כתובת URL או טקסט מקור לטיוטה מובנית המקושרת למקור לצורך בדיקה אנושית, ולאחר מכן עיינו בראיות, בשיטה, בממשל ובמגבלות של HUB_Optimus המתועדים בגרסאות.",
+      description: "הדביקו טקסט מקור להכנת טיוטה מובנית לבדיקה אנושית. כתובת URL היא הפניה שלא אומתה; Operator הציבורי אינו מוריד את תוכנה.",
       skip: "דילוג לפורטפוליו",
       homeAria: "דף הבית של HUB_Optimus",
       brandDescriptor: "פורטפוליו ציבורי מנוהל בגרסאות",
@@ -893,7 +913,7 @@
       openGithub: "פתיחת GitHub",
       heroEyebrow: "מהמקור לטיוטה הניתנת לבדיקה",
       sequence: "מציאות ← ראיות ← הסקה ← נרטיב ← אות תפעולי",
-      heroLead: "הפכו כתובת URL או טקסט מקור לטיוטה מובנית המקושרת למקור לצורך בדיקה אנושית — בלי להציג אותה כאמת מאומתת.",
+      heroLead: "הדביקו טקסט מקור להכנת טיוטה מובנית לבדיקה אנושית. כתובת URL היא הפניה שלא אומתה; Operator הציבורי אינו מוריד את תוכנה.",
       heroBoundary: "הוא מסייע לשיקול דעת טוב יותר. הוא אינו סמכות, מנוע חיזוי או תחליף לדיפלומטיה.",
       explorePortfolio: "עיון בפורטפוליו",
       openOperator: "פתיחת Operator",
@@ -1046,6 +1066,10 @@
       documentRouterUnavailable: "נתיב השפה אינו זמין"
     },
     "zh-Hans": {
+      readGuide: "了解 HUB_Optimus",
+      readCollection: "阅读指南与原始资料",
+      readOperatorPilot: "Operator 首个案例",
+      readerDisclosure: "指南显示原始语言和来源。暂无译文时，会明确提示并打开原文。",
       contributionLink: "贡献与历史",
       contributionKicker: "公开工作与可追溯署名",
       contributionTitle: "我们的贡献。",
@@ -1088,7 +1112,7 @@
       inspectCatalogue: "查看有限试点目录",
       inspectRelay: "查看 Relay 诊断候选实现",
       title: "HUB_Optimus — 版本化公开项目组合",
-      description: "将 URL 或来源文本转换为结构化、与来源绑定的草稿，供人工审阅；随后查看 HUB_Optimus 的版本化证据、方法、治理与边界。",
+      description: "粘贴来源文本，准备供人工审阅的结构化草稿。URL 仅为未经核实的参考；公开版 Operator 不下载其内容。",
       skip: "跳至项目组合",
       homeAria: "HUB_Optimus 首页",
       brandDescriptor: "版本化公开项目组合",
@@ -1101,7 +1125,7 @@
       openGithub: "打开 GitHub",
       heroEyebrow: "从来源到可审阅草稿",
       sequence: "现实 → 证据 → 推断 → 叙事 → 运营信号",
-      heroLead: "将 URL 或来源文本转换为结构化、与来源绑定的草稿，供人工审阅，而不把它当作已核实的事实。",
+      heroLead: "粘贴来源文本，准备供人工审阅的结构化草稿。URL 仅为未经核实的参考；公开版 Operator 不下载其内容。",
       heroBoundary: "它帮助改善判断。它不是权威机构、预测引擎，也不能替代外交。",
       explorePortfolio: "浏览项目组合",
       openOperator: "打开 Operator",
@@ -1385,6 +1409,13 @@
     });
   }
 
+  function applyReaderRoutes(locale) {
+    document.querySelectorAll("[data-reader-route]").forEach((link) => {
+      const path = link.getAttribute("href").split("?")[0];
+      link.setAttribute("href", `${path}?lang=${encodeURIComponent(locale)}`);
+    });
+  }
+
   function persistLanguageInUrl(locale) {
     try {
       if (typeof URL !== "function" || !window.location?.href || !window.history?.replaceState) return;
@@ -1441,6 +1472,7 @@
 
     applyDocumentRoutes(nextLanguage, dictionary);
     applyOperatorRoutes(nextLanguage);
+    applyReaderRoutes(nextLanguage);
     persistLanguageInUrl(nextLanguage);
 
     try {

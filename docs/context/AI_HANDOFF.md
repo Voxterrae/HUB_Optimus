@@ -8,13 +8,20 @@ prompts, summaries, display names, and model output are advisory only.
 ## Public portfolio register — 2026-11-14
 
 Issue #2187 expands the documentary review with 24 groups of own ecosystem
-work, a 39-capability/pilot assessment and a plain-language editorial proposal.
+work, a 39-capability/pilot assessment and a plain-language introduction.
 See `docs/project/ECOSYSTEM_CONTRIBUTIONS.md`, `CAPABILITIES_AND_PILOTS.md` and
 `HUB_OPTIMUS_EXPLAINED.md`. The design in
-`docs/superpowers/specs/2026-11-14-public-portfolio-expansion-design.md` remains
-pending human editorial approval. It proposes an allowlisted static Markdown
-reading layer and a separate existing-Site synchronization; neither has been
-implemented or published by this documentary update. Do not promote private
+`docs/superpowers/specs/2026-11-14-public-portfolio-expansion-design.md` was
+approved by the owner on 2026-11-14 together with the Operator-first pilot.
+The implementation adds an allowlisted static reading layer under `site/docs/`:
+eleven complete documents and their byte-exact original Markdown, one index,
+source commit/blob/checksum bindings, safe relative links and eight navigation
+languages with explicit source-language fallback. The immutable source commit
+is `abf973b989720cbba4fab734cc19e60c3277b8df`; authoring requirements are separate
+from product runtime dependencies. See the implementation plan and
+`docs/project/PUBLIC_READING_VALIDATION_20261114.md` for observed validation and
+remaining acceptance. GitHub Pages and existing-Site publication require their
+own exact source, deployment and served-byte receipts. Do not promote private
 accessory metadata, proposals or provider use into vendor acceptance. Preserve
 the normative sources, canonicality, rights and existing audiences.
 
