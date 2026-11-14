@@ -150,6 +150,10 @@ See the [product catalogue](products/README.md) for the reviewed source, maturit
 and execution boundaries, the [public portfolio](https://huboptimus.dev/), or open
 the component guide below.
 
+The [creations and contributions register](docs/project/CONTRIBUTIONS_REGISTER.md)
+links the repository history from its first commit and verified public work in
+other projects. Its dated coverage and pending reconciliation remain explicit.
+
 | Component | Where to start | Current scope |
 | --- | --- | --- |
 | Operator | [Open Operator](https://huboptimus.dev/operator/) · [Source](site/operator/) | Public browser prototype for preparing drafts from pasted source text. |

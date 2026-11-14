@@ -38,6 +38,9 @@ LIVE_MAIN_NAVIGATION = {
     "https://github.com/Voxterrae/HUB_Optimus/tree/main/obsidian-HUB_Optimus",
 }
 EXPECTED_EXTERNAL_NAVIGATION = LIVE_MAIN_NAVIGATION | {
+    "https://github.com/actions/setup-dotnet/pull/804",
+    "https://github.com/aws/aws-cdk/discussions/39733",
+    "https://github.com/smithy-lang/smithy-typescript/pull/2351#issuecomment-6880003584",
     "https://github.com/Voxterrae/HUB_Optimus",
     "https://github.com/Voxterrae/HUB_Optimus/issues",
     "https://github.com/Voxterrae/HUB_Optimus/issues/1901",
@@ -160,6 +163,20 @@ def blend(foreground, background, alpha):
         alpha * foreground_channel + (1 - alpha) * background_channel
         for foreground_channel, background_channel in zip(foreground, background)
     )
+
+
+def test_labs_contribution_navigation_has_readable_normal_hover_and_focus_colors():
+    css = (SITE / "styles.css").read_text(encoding="utf-8")
+    properties = custom_properties(css)
+    for selector in (
+        ".section-labs .card-links a",
+        ".section-labs .card-links a:hover",
+        ".section-labs .card-links a:focus-visible",
+    ):
+        token = css_rule_property(css, selector, "color")
+        foreground = properties[token.removeprefix("var(--").removesuffix(")")]
+        for background in ("paper", "paper-2"):
+            assert contrast_ratio(foreground, properties[background]) >= 4.5
 
 
 def test_every_public_html_reference_and_fragment_resolves_in_the_artifact():

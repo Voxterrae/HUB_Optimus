@@ -4,6 +4,8 @@ This folder contains onboarding guides and multilingual entry points.
 
 ## Project truth
 
+- [Creations, public contributions and historical coverage](project/CONTRIBUTIONS_REGISTER.md)
+
 - [What HUB_Optimus is, what is built, and what is not](context/PROJECT_OVERVIEW.md)
 - [Current system architecture map](architecture/system_architecture_map.md)
 - [Evidence-backed capability ledger](architecture/capability_status.md)

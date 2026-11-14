@@ -14,8 +14,16 @@
     "supported_locales": ["en", "es", "de", "ru", "he", "zh-Hans"],
     "review_status": "AI/machine-assisted; qualified human linguistic review required"
   },
-  "portfolio_translation_key_count": 187,
+  "portfolio_translation_key_count": 206,
   "field_status": {
+    "contributions_and_project_intelligence_update": {
+      "en": "AI-assisted draft; named qualified human review required",
+      "es": "AI-assisted draft; named qualified human review required",
+      "de": "AI-assisted draft; named qualified human review required",
+      "ru": "machine-assisted draft; qualified human review required",
+      "he": "machine-assisted draft; qualified human review required",
+      "zh-Hans": "machine-assisted draft; qualified human review required"
+    },
     "development_products_and_labs_update": {
       "en": "AI-assisted draft; named qualified human review required",
       "es": "AI-assisted draft; named qualified human review required",
