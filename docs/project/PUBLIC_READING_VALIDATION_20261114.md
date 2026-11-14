@@ -69,6 +69,20 @@ separately in the source-pinned pilot guide; they are not browser evidence.
   that contract and bootstrap development-only probes for the two exact authoring
   versions. Runtime dependencies and runtime-only bootstrap stay unchanged.
   New inventory/probe/version tests were observed failing before the fix.
+- The follow-up `c59d97dad5d18b87e74224108a2fc45c63054949` passed the complete
+  general CI suite: **3,017 tests and 2,559 subtests**. Its separate offline
+  validation tier reported fourteen missing-parser errors because it installs
+  `requirements-validation.lock`. Integration therefore also adds the same two
+  exact authoring versions and official wheel hashes to that validation-only
+  lock and its closed inventory. The runtime lock, installation protections and
+  workflow definitions stay byte-identical; tests are not skipped to hide the gap.
+  Final exact-head certification remains required.
+- Two fresh sealed offline installations each contained the same fourteen exact
+  distributions. Hash-required installation, `pip check` and installed-inventory
+  verification passed; their inventory files were byte-identical. The combined
+  lock digest is `5ff8447e6b30b9c13c2b7b15626df635842854d645b6794d4c5d8fab4f78e044`.
+  Fifty focused checks passed in that locked environment. Independent review
+  found no weakening of the lock or runtime boundary.
 - Raw source downloads intentionally retain original Markdown hard-break spaces;
   their byte hashes are checked. Whitespace checking excludes only those exact
   downloads rather than rewriting normative text.
