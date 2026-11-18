@@ -22,6 +22,7 @@ TOOL_NAME = "hub_relay_windows_diagnostics"
 DB_FILENAME = "one-use-permissions.sqlite3"
 DATA_SUBDIRECTORY = "one-use"
 MAX_TTL_SECONDS = 120
+CONSUME_BUSY_TIMEOUT_SECONDS = 1.0
 TOKEN_PATTERN = r"[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]"
 
 
@@ -196,8 +197,10 @@ class PermissionStore:
     def _connect(self, create):
         self.directory_guard(self.data_dir)
         mode = "rwc" if create else "rw"
+        # A second consumer can briefly contend with the first even during setup or commit.
+        timeout = 0 if create else CONSUME_BUSY_TIMEOUT_SECONDS
         connection = sqlite3.connect(self.db_path.as_uri() + "?mode=" + mode,
-                                     uri=True, timeout=0, isolation_level=None)
+                                     uri=True, timeout=timeout, isolation_level=None)
         try:
             connection.execute("PRAGMA trusted_schema=OFF")
             if connection.execute("PRAGMA journal_mode=DELETE").fetchone() != ("delete",):
