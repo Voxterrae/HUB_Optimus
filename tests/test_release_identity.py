@@ -19,6 +19,7 @@ class ReleaseIdentityTests(unittest.TestCase):
             ("v1.1", "Multilingual profiles (v1.1)"),
             ("v1.0.0-alpha", "HUB_Optimus v1.0.0-alpha — Kernel"),
             ("v2.0.0-rc.1+build.4", "v2.0.0-rc.1+build.4 with SDK v10.0"),
+            ("v2.3.4", "v1.0.0-alpha/docs: HUB_Optimus v2.3.4"),
         ):
             with self.subTest(title=title):
                 result = self.check_candidate(version, version, title)
@@ -30,6 +31,9 @@ class ReleaseIdentityTests(unittest.TestCase):
             ("v2.3.4", "v2.3.4", "HUB_Optimus v1.0.0-alpha — Kernel"),
             ("v2.3.4", "v2.3.4", "v1.0.0-alpha (compare v2.3.4)"),
             ("v2.3.4", "v2.3.4", "v2.3.40"),
+            ("v2.3.4", "v2.3.4", "v2.3.4/docs: HUB_Optimus v1.0.0-alpha"),
+            ("v2.3.4", "v2.3.4", r"v2.3.4\docs: HUB_Optimus v1.0.0-alpha"),
+            ("v2.3.4", "v2.3.4", r"docs\v2.3.4: HUB_Optimus v1.0.0-alpha"),
             ("v2.3.4", "v2.3.4", "v2.3.4-rc.1"),
             ("v2.3.4", "v2.3.4", "Milestone complete"),
         ):

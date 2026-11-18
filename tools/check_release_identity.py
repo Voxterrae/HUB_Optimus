@@ -14,7 +14,7 @@ import sys
 
 
 VERSION = r"v[0-9]+(?:\.[0-9]+)+(?:-[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?(?:\+[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?"
-TITLE_VERSION = re.compile(rf"(?<![\w./+-]){VERSION}(?![\w+-]|\.[\w])")
+TITLE_VERSION = re.compile(rf"(?<![\w./\\+-]){VERSION}(?![\w/\\+-]|\.[\w])")
 
 
 def main() -> int:
