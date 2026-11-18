@@ -94,6 +94,18 @@ The early diplomatic work explored incentives, verification, sequencing and
 preventive mediation. It remains part of the project's history and methodology,
 alongside later tools for everyday document and technical workflows.
 
+The historical alpha of 25 December 2025 is tagged `v1.0.0-alpha` and contains
+the Kernel base declaration. The `v2.3.4` tag identifies the 14 June 2026
+source snapshot with the scenario simulator and the draft HERMES interface RFC.
+The automatic source downloads on the `v2.3.4` release page use the June tag.
+[December source](https://github.com/Voxterrae/HUB_Optimus/tree/1ae38d6b3c5ccdf681030c03999beabd3e08071d)
+· [June source](https://github.com/Voxterrae/HUB_Optimus/tree/70b62fd7d6e144c146569569d31e13a97702586b)
+· [Release provenance](https://github.com/Voxterrae/HUB_Optimus/issues/1786)
+
+Before publishing a product release, compare its intended version, proposed tag
+and title with the [release identity check](tools/check_release_identity.py).
+Run `python tools/check_release_identity.py --help` for the three inputs.
+
 ## What it is not
 - Not an authority.
 - Not a prediction engine.
