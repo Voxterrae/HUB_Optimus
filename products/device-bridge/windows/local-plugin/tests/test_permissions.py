@@ -11,6 +11,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+from threading import Barrier, Event, Timer
 import unittest
 from unittest.mock import Mock, patch
 
@@ -167,6 +168,33 @@ class OneUsePermissionContract(unittest.TestCase):
             connection.rollback()
         self.assertTrue(self.store.consume(token))
 
+    def test_consume_waits_for_short_writer_contention(self):
+        token = self.store.issue()
+        attempted = Event()
+        original_connect = sqlite3.connect
+
+        class ObservedConnection(sqlite3.Connection):
+            def execute(self, statement, *args):
+                if statement == "BEGIN IMMEDIATE":
+                    attempted.set()
+                return super().execute(statement, *args)
+
+        def connect(*args, **kwargs):
+            return original_connect(*args, factory=ObservedConnection, **kwargs)
+
+        with closing(original_connect(self.database())) as blocker:
+            blocker.execute("BEGIN IMMEDIATE")
+            with patch.object(permissions.sqlite3, "connect", connect), ThreadPoolExecutor(1) as pool:
+                result = pool.submit(self.new_store().consume, token)
+                try:
+                    self.assertTrue(attempted.wait(timeout=5))
+                    with self.assertRaises(TimeoutError):
+                        result.result(timeout=0.05)
+                finally:
+                    blocker.rollback()
+                self.assertTrue(result.result(timeout=5))
+        self.assertFalse(self.new_store().consume(token))
+
     def test_store_io_failure_denies_without_token_or_path_leak(self):
         token = self.store.issue()
         with patch.object(permissions.sqlite3, "connect", side_effect=sqlite3.OperationalError(
@@ -253,7 +281,6 @@ class OneUsePermissionContract(unittest.TestCase):
         self.assertEqual(observed, [False])
 
     def test_two_processes_collect_at_most_once_then_restart_denies(self):
-        token = self.store.issue()
         worker = r'''
 import importlib.util, json, pathlib, sys
 path = pathlib.Path(sys.argv[1])
@@ -275,27 +302,48 @@ server.handle({"jsonrpc":"2.0", "id":1, "method":"initialize", "params":{
     "protocolVersion":"2025-06-18", "capabilities":{},
     "clientInfo":{"name":"synthetic-worker", "version":"1"}}})
 server.handle({"jsonrpc":"2.0", "method":"notifications/initialized"})
+print("ready", flush=True)
 token = sys.stdin.readline().strip()
 response = server.handle({"jsonrpc":"2.0", "id":2, "method":"tools/call", "params":{
     "name":relay.TOOL_NAME, "arguments":{"permission":token}}})
-print(json.dumps({"calls":len(calls), "success":not response.get("result", {}).get("isError", True)}))
+result = response["result"]
+outcome = result["content"][0]["text"] if result["isError"] else "collected"
+if outcome not in ("collected", "PERMISSION_DENIED", "PERMISSION_STORE_UNAVAILABLE"):
+    outcome = "unexpected"
+print(json.dumps({"calls":len(calls), "outcome":outcome}))
 '''
 
-        def run_worker():
-            completed = subprocess.run([sys.executable, "-I", "-B", "-c", worker,
-                                        str(ENTRY), str(self.path)], input=token + "\n",
-                                       text=True, capture_output=True, timeout=20)
-            self.assertEqual(completed.returncode, 0, completed.stderr)
-            self.assertEqual(completed.stderr, "")
-            self.assertNotIn(token, completed.stdout)
-            return json.loads(completed.stdout)
+        def run_worker(token, ready=None):
+            with subprocess.Popen([sys.executable, "-I", "-B", "-c", worker,
+                                   str(ENTRY), str(self.path)], text=True,
+                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE) as process:
+                deadline = Timer(20, process.kill)
+                deadline.start()
+                try:
+                    self.assertEqual(process.stdout.readline(), "ready\n")
+                    if ready is not None:
+                        ready.wait(timeout=10)
+                    output, errors = process.communicate(token + "\n", timeout=20)
+                finally:
+                    deadline.cancel()
+                    if process.poll() is None:
+                        process.kill()
+            self.assertEqual(process.returncode, 0)
+            self.assertFalse(errors, "worker wrote to stderr")
+            self.assertFalse(token in output, "worker disclosed the synthetic grant")
+            return json.loads(output)
 
+        denied = {"calls": 0, "outcome": "PERMISSION_DENIED"}
         with ThreadPoolExecutor(max_workers=2) as pool:
-            futures = [pool.submit(run_worker) for _ in range(2)]
-            results = [future.result() for future in futures]
-        self.assertEqual(sum(result["calls"] for result in results), 1)
-        self.assertEqual(sum(result["success"] for result in results), 1)
-        self.assertEqual(run_worker(), {"calls": 0, "success": False})
+            for attempt in range(4):
+                with self.subTest(attempt=attempt):
+                    token = self.store.issue()
+                    ready = Barrier(2)
+                    futures = [pool.submit(run_worker, token, ready) for _ in range(2)]
+                    results = [future.result() for future in futures]
+                    self.assertCountEqual(results, [{"calls": 1, "outcome": "collected"}, denied])
+                    self.assertEqual(run_worker(token), denied)
 
 
 if __name__ == "__main__":
