@@ -470,3 +470,8 @@ def test_document_language_badges_remain_legible_on_every_surface():
         (footer_foreground, footer_background),
     )
     assert all(contrast_ratio(foreground, background) >= 4.5 for foreground, background in pairs)
+
+
+def test_privacy_cards_wrap_long_translated_words():
+    css = (SITE / "privacy/privacy.css").read_text(encoding="utf-8")
+    assert css_rule_property(css, ".grid .card", "overflow-wrap") == "anywhere"
