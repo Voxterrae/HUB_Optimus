@@ -179,6 +179,22 @@ under issue #2070. This scheduling is separate from enabled security updates;
 it does not remediate existing advisories or authorize dependency integration.
 All generated proposals require the normal owner-authority checks and review.
 
+### Protected PR metadata sequencing
+
+Follow the [AGENTS.md operating rules](../../AGENTS.md#operating-rules) for
+[#2180](https://github.com/Voxterrae/HUB_Optimus/issues/2180). For each live SHA,
+paginate `GET /repos/{owner}/{repo}/commits/{sha}/check-runs?filter=all` and
+read any matching commit statuses. Match the check's `app.id` to the rule's
+`integration_id` and read the PR merge box for the current blocker. Follow the
+[controlling owner-authority handoff](OWNER_AUTHORITY_HANDOFF.md).
+
+In [PR #2175](https://github.com/Voxterrae/HUB_Optimus/pull/2175), GitHub
+returned HTTP 405 for the
+[cancelled bootstrap](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42530085103/job/128882127046).
+The targeted retry [succeeded in attempt 2](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42530085103/job/128882863115)
+while the overall run remained cancelled. The protected merge produced
+[verified commit `eec3c3f078f9`](https://github.com/Voxterrae/HUB_Optimus/commit/eec3c3f078f9b47af7ba7e37570d8087ea7714de).
+
 ## Pages Environment review checkpoint — 2026-11-03
 
 Issue [#1743](https://github.com/Voxterrae/HUB_Optimus/issues/1743) records
