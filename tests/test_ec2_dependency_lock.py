@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -155,6 +156,25 @@ def test_dependency_lock_files_are_public_read_only_inputs() -> None:
         assert not path.is_symlink()
         if os.name != "nt":
             assert stat.S_IMODE(path.stat().st_mode) == 0o644
+
+
+def test_locked_validation_inventory_contains_declared_authoring_dependencies() -> None:
+    """The offline validation tier runs the same reader tests as development."""
+    authoring_pins = dict(re.findall(
+        r"(?m)^([A-Za-z0-9][A-Za-z0-9._-]*)==([^\s]+)$",
+        (ROOT / "requirements-docs.txt").read_text(encoding="ascii"),
+    ))
+    validation_pins = dict(re.findall(
+        r"(?m)^([A-Za-z0-9][A-Za-z0-9._-]*)==([^\s]+)",
+        VALIDATION_LOCK.read_text(encoding="ascii"),
+    ))
+    runtime_names = set(re.findall(
+        r"(?m)^([A-Za-z0-9][A-Za-z0-9._-]*)==", RUNTIME_LOCK.read_text(encoding="ascii")
+    ))
+
+    assert authoring_pins
+    assert not runtime_names & set(authoring_pins)
+    assert {name: validation_pins.get(name) for name in authoring_pins} == authoring_pins
 
 
 def test_locked_ci_certifies_two_reproducible_offline_environments() -> None:

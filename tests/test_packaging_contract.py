@@ -8,11 +8,13 @@ import sys
 from pathlib import Path
 from types import ModuleType
 from typing import Any
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BOOTSTRAP = REPO_ROOT / "scripts" / "bootstrap.py"
 RUNTIME_REQUIREMENTS = REPO_ROOT / "requirements.txt"
 DEVELOPMENT_REQUIREMENTS = REPO_ROOT / "requirements-dev.txt"
+AUTHORING_REQUIREMENTS = REPO_ROOT / "requirements-docs.txt"
 
 
 def _load_bootstrap() -> ModuleType:
@@ -38,10 +40,14 @@ def test_runtime_and_development_dependencies_are_separate() -> None:
     assert runtime == ["jsonschema>=4.26.0,<5"]
     assert development == [
         "-r requirements.txt",
+        "-r requirements-docs.txt",
         "pytest>=9.2.0,<10",
         "PyYAML>=6.0.3,<7",
     ]
     assert all("pytest" not in requirement.lower() for requirement in runtime)
+    assert _requirement_lines(AUTHORING_REQUIREMENTS) == [
+        "markdown-it-py==4.3.0", "mdurl==0.1.2",
+    ]
 
 
 def test_bootstrap_uses_python_311_and_explicit_dependency_tiers() -> None:
@@ -51,7 +57,7 @@ def test_bootstrap_uses_python_311_and_explicit_dependency_tiers() -> None:
     assert bootstrap.RUNTIME_REQUIREMENTS == RUNTIME_REQUIREMENTS
     assert bootstrap.DEVELOPMENT_REQUIREMENTS == DEVELOPMENT_REQUIREMENTS
     assert bootstrap.RUNTIME_PACKAGES == ("jsonschema",)
-    assert bootstrap.DEVELOPMENT_PACKAGES == ("jsonschema", "pytest", "PyYAML")
+    assert bootstrap.DEVELOPMENT_PACKAGES == ("jsonschema", "pytest", "PyYAML", "markdown-it-py", "mdurl")
 
 
 def test_bootstrap_package_inventory_matches_declared_requirement_ranges() -> None:
@@ -87,8 +93,10 @@ def test_bootstrap_package_inventory_matches_declared_requirement_ranges() -> No
         )
 
     assert bootstrap.SUPPORTED_PACKAGE_RANGES == parsed
-    assert set(bootstrap.PACKAGE_IMPORT_NAMES) == set(parsed)
-    assert set(bootstrap.DEVELOPMENT_PACKAGES) == set(parsed)
+    pinned = dict(line.split("==") for line in _requirement_lines(AUTHORING_REQUIREMENTS))
+    assert bootstrap.PINNED_PACKAGE_VERSIONS == pinned
+    assert set(bootstrap.PACKAGE_IMPORT_NAMES) == set(parsed) | set(pinned)
+    assert set(bootstrap.DEVELOPMENT_PACKAGES) == set(parsed) | set(pinned)
 
 
 def test_runtime_only_check_does_not_require_pytest() -> None:
@@ -124,7 +132,22 @@ def test_development_check_probes_every_declared_package(
     monkeypatch.setattr(bootstrap, "check_tool", lambda _name: True)
 
     assert bootstrap.main(["--check"]) == 0
-    assert checked == ["jsonschema", "pytest", "PyYAML"]
+    assert checked == ["jsonschema", "pytest", "PyYAML", "markdown-it-py", "mdurl"]
+
+
+@pytest.mark.parametrize("name,import_name,version,other", [
+    ("markdown-it-py", "markdown_it", "4.3.0", "4.3.1"),
+    ("mdurl", "mdurl", "0.1.2", "0.1.3"),
+])
+def test_development_authoring_versions_are_exact(monkeypatch, name, import_name, version, other):
+    bootstrap = _load_bootstrap()
+    imported = []
+    monkeypatch.setattr(bootstrap.importlib, "import_module", lambda value: imported.append(value))
+    monkeypatch.setattr(bootstrap.metadata, "version", lambda _name: version)
+    assert bootstrap.check_package(name)
+    assert imported == [import_name]
+    monkeypatch.setattr(bootstrap.metadata, "version", lambda _name: other)
+    assert not bootstrap.check_package(name)
 
 
 def test_pyyaml_uses_yaml_import_and_pyyaml_distribution_metadata(

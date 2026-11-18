@@ -4,6 +4,12 @@ This folder contains onboarding guides and multilingual entry points.
 
 ## Project truth
 
+- [Conoce HUB_Optimus: approved plain-language guide (ES)](project/HUB_OPTIMUS_EXPLAINED.md)
+- [Complete reading collection](../site/docs/index.html) and [Operator-first pilot](project/OPERATOR_FIRST_PILOT.md)
+- [Capabilities, blockers and first pilots](project/CAPABILITIES_AND_PILOTS.md)
+- [Own creations, integrations and ecosystem contributions](project/ECOSYSTEM_CONTRIBUTIONS.md)
+- [Creations, public contributions and historical coverage](project/CONTRIBUTIONS_REGISTER.md)
+
 - [What HUB_Optimus is, what is built, and what is not](context/PROJECT_OVERVIEW.md)
 - [Current system architecture map](architecture/system_architecture_map.md)
 - [Evidence-backed capability ledger](architecture/capability_status.md)

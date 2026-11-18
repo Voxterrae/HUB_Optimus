@@ -31,13 +31,16 @@ SUPPORTED_PACKAGE_RANGES = {
     "pytest": ((9, 2, 0), (10, 0, 0)),
     "PyYAML": ((6, 0, 3), (7, 0, 0)),
 }
+PINNED_PACKAGE_VERSIONS = {"markdown-it-py": "4.3.0", "mdurl": "0.1.2"}
 PACKAGE_IMPORT_NAMES = {
     "jsonschema": "jsonschema",
     "pytest": "pytest",
     "PyYAML": "yaml",
+    "markdown-it-py": "markdown_it",
+    "mdurl": "mdurl",
 }
 RUNTIME_PACKAGES = ("jsonschema",)
-DEVELOPMENT_PACKAGES = (*RUNTIME_PACKAGES, "pytest", "PyYAML")
+DEVELOPMENT_PACKAGES = (*RUNTIME_PACKAGES, "pytest", "PyYAML", *PINNED_PACKAGE_VERSIONS)
 
 # ── Checks ──────────────────────────────────────────────────
 
@@ -63,6 +66,12 @@ def check_package(name: str) -> bool:
     except metadata.PackageNotFoundError:
         print(f"  [MISS] {name} (distribution metadata)")
         return False
+
+    pinned = PINNED_PACKAGE_VERSIONS.get(name)
+    if pinned is not None:
+        ok = installed == pinned
+        print(f"  [{'OK' if ok else 'MISS'}] {name} {installed} (need == {pinned})")
+        return ok
 
     bounds = SUPPORTED_PACKAGE_RANGES.get(name)
     if bounds is None:

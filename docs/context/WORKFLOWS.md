@@ -64,7 +64,8 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 
 - Trigger: `workflow_dispatch` only, with a required immutable 40-hex
   `candidate_sha` from this repository and a closed `test_suite` choice:
-  `bootstrap-process` (default), `identity-cng` or `identity-http`.
+  `bootstrap-process` (default), `identity-cng`, `identity-http`, `bootstrap-peer`,
+  `security-descriptor` or `service-identity`.
 - Permissions: `contents: read`; the reviewed checkout Action does not persist
   credentials. No named secrets, write token, upload or deployment is used.
 - One disposable GitHub-hosted `windows-2022` job (20-minute timeout):
@@ -76,19 +77,29 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   - fetches locked dependencies once, then runs the selected suite offline:
     exactly 36 `bootstrap_process::` tests (30 token and 6 parent), or the exact
     eight reviewed `identity::tests::` names, or exactly those eight plus seven
-    reviewed `approval_https::tests::` names for `identity-http`; then Clippy with
+    reviewed `approval_https::tests::` names for `identity-http`, or the exact
+    19 active `bootstrap_peer::tests::` cases plus one named ignored child helper
+    for `bootstrap-peer`, or exactly 17 `security_descriptor::tests::` cases
+    (12 native and five pure) with 13 owned-fixture cleanup markers for
+    `security-descriptor`, or 13 active `service_identity::tests::` cases
+    (eight pure and five native) plus one named ignored helper for
+    `service-identity`; then Clippy with
     `--all-targets -- -D warnings` and `rustfmt --check --edition 2024 src/lib.rs`;
-  - requires all selected tests to execute with 0 failed and 0 ignored, and
-    verifies unchanged source and Cargo.lock hashes afterward; filtered tests
-    from other modules provide no acceptance;
+  - requires all active selected tests to pass with 0 failed; only the peer and
+    SCM profiles admit their own named child helper ignored, never as a passing
+    security test. Other profiles require 0 ignored. The exact inventory/result sets and
+    single summary must agree. It verifies unchanged source and Cargo.lock
+    hashes afterward; filtered tests from other modules provide no acceptance;
   - for `identity-http`, requires the HTTP driver already `Running` immediately
     before both test inventory and execution, and still `Running` afterward,
     including on failure. It refuses stopped/unavailable states and issues no
     service start/stop/configuration command. These reads are not atomic and
     cannot exclude external state changes between observation and `HttpInitialize`;
-  - captures CNG/HTTP test stdout/stderr in runner process memory and publishes only
-    the allowlisted inventory, recognized test statuses, exit code and counts.
-    Raw vectors, key/resource identifiers and failure output are not printed or uploaded;
+  - captures CNG/HTTP/peer/descriptor/SCM test stdout/stderr in runner process memory
+    and publishes only the allowlisted inventory, recognized test statuses,
+    exit code, counts and fixed cleanup outcomes. Raw vectors, keys, resource,
+    pipe, token or fixture context and failure output are not printed or
+    uploaded; each admitted helper ignore reason is reduced to a fixed status;
   - records candidate/workflow SHAs, runner/tool versions, SHA-256 inputs and
     actual outcomes in the job log/summary. Skipped or incomplete validation
     cannot produce PASS.
@@ -108,6 +119,64 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   groups. No URL registration, queue binding, HTTP I/O, listener, certificate,
   URLACL or TLS acceptance is included. Explicit cleanup failures fail the tests;
   Drop is best-effort and failed cleanup may persist until process exit.
+- The `bootstrap-peer` suite requires a separately reviewed corrected candidate
+  containing `src/bootstrap_peer.rs` and `src/bootstrap_peer/tests.rs`. Its fixed
+  filter is `bootstrap_peer::tests::`, using `--lib` and one execution thread.
+  Inventory must contain exactly 20 unique names: 19 reviewed active tests and
+  `bootstrap_peer::tests::native_child_entry`. The result must prove 19 passes,
+  zero failures and only that helper ignored. Parent fixtures invoke the helper
+  internally; CI does not invoke it separately or count it as a pass. Missing,
+  extra, duplicated or contradictory results and extra child summaries fail.
+  This profile executes no CNG/HTTP tests and does not query the HTTP service.
+  Its local pipes, child processes and token-context changes are confined to
+  disposable-runner fixtures; no owner's device or network listener is used.
+  Historical #2048 MSVC evidence remains separate from this GNU validation.
+  Passing fixtures do not establish arbitrary-client SQOS freshness, same-user
+  isolation, loaded-image provenance, privileged bootstrap or activation.
+- The `security-descriptor` suite requires a separately reviewed corrected
+  #2147 candidate containing `src/security_descriptor.rs` and
+  `src/security_descriptor/tests.rs`, on the integrated corrected peer base.
+  Its fixed filter is `security_descriptor::tests::`, using `--lib` and one
+  execution thread. Exactly 17 unique names must pass once, with no failed,
+  ignored, helper or measured cases and one coherent summary. Only this
+  profile adds `--show-output` inside private capture, requiring exactly 13
+  complete-line cleanup markers without publishing raw successful or failed
+  output, ACLs, SIDs, paths, fixture identities or deliberate-panic details.
+  The workflow overrides `HUB_RELAY_NTFS_FIXTURE_PARENT` with a fresh empty
+  owned directory directly under validated absolute `RUNNER_TEMP`; no path
+  input or ambient fixture-parent fallback is accepted. Source prerequisites
+  require a non-SYSTEM account and local fixed NTFS volume. In `finally`,
+  only the empty owned directory is removed nonrecursively; missing parents,
+  leftover files or cleanup errors fail with fixed sanitized outcomes while
+  preserving any primary failure. Leftover fixture files are never deleted
+  by path. Tests retain exact-handle deletion, close and absence assertions.
+  This profile executes no CNG/HTTP/peer tests and queries no HTTP service.
+  The 13 markers are fixture assertions, not global VM cleanup or protected
+  ancestry/isolation proof; process loss can leave resources until runner
+  disposal. No owner-device operation, service, key, root or activation follows.
+- The `service-identity` suite under #2169 requires a separately reviewed current
+  #2005 candidate containing `src/service_identity.rs`, its test module and the
+  retained `bootstrap_peer` source/tests. The fixed filter is
+  `service_identity::tests::`, using `--lib` and one execution thread. Exactly
+  14 unique inventory entries must yield 13 active passes (eight pure and five
+  native) plus only `service_identity::tests::native_child_entry` ignored, never
+  counted as a security pass. Parent tests invoke that helper internally.
+  Its annotation is `ignored, owned child helper; never counted as a security pass`;
+  the peer annotation is not interchangeable. Bare `ignored` remains accepted.
+  Native inventory/execution invocation errors receive fixed generic messages;
+  captured assertion/token/process/service output and helper reasons are not
+  published, including on failure. SCM adds no `--show-output`.
+  Native cases perform actual query-only local SCM access, require exact error
+  1060 for the absent fixed service, and inspect retained current/owned-child
+  process/token context. An existing service or access denial fails; no service
+  discovery, start/stop/create/configuration/delete operation is permitted.
+  Two owned child fixtures use hidden windows and null standard streams with
+  checked kill/wait and handle closure; no global process cleanup is added.
+  This profile executes no CNG/HTTP/peer/descriptor tests, HTTP service query or
+  NTFS fixture-parent operation. Synthetic policy agreement is not a positive
+  installed-service or virtual-account binding. Emergency Drop/process-loss
+  cleanup retains runner-disposal limits; no owner-device operation, service
+  isolation, loaded-image provenance, enrollment or activation follows.
 - Eight internal CNG passes do not prove independent Node interoperability,
   production MSVC compatibility, TPM/biometric protection, same-user isolation
   or protected enrollment.
@@ -115,6 +184,35 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
   account-context certification, remote-device enrollment or release authority.
   The manual workflow must reach the default branch before dispatch; merging
   it does not run native validation or make this job a required branch check.
+
+### optimus-windows-smoke.yml
+
+- Trigger: manual `workflow_dispatch` on protected `main` only, in the public
+  source repository with exact repository and owner-account guards.
+- Permissions: `contents: read`; immutable checkout Action, no persisted checkout
+  credentials, artifact uploads or caches. The source input confirms a literal
+  reviewed commit; exact HEAD/tree and clean checkout are checked separately.
+- Runner: Windows 2022, 15-minute job limit, existing SDK **10.0.403** without
+  installation/fallback. Less than one GiB free RAM or occupied loopback17831
+  blocks execution without stopping existing processes or listeners.
+- Native coverage: complete C# TLS suite and all 22 identity cases, production
+  suites/publications and real packaged-service acceptance. Their actual totals
+  and cleanup must come from the exact-source receipt, not historical counts.
+- The independent three-minute WPF step builds with visible diagnostics, then
+  runs the 13 reviewed search handler/state scenarios with captured runtime
+  output. Every named case must occur once, the exact final summary must occur
+  once and last, and exit/failure/block markers must agree. Only curated case
+  outcomes and provenance enter its separate report and always-run summary.
+- WPF cases use synthetic HTTP, owned temporary settings and an invisible HWND;
+  they require an interactive disposable runner with no default Optimus profile.
+  The product window is not shown and its engine/host are not initialized.
+- Issue #2151 scopes one later execution with `gui=false`; these WPF cases run
+  independently of that optional GUI input. Visible GUI, physical keyboard/focus,
+  assistive technology, provider relevance and distribution remain separate.
+  Missing, blocked, skipped or timed-out evidence never establishes acceptance.
+- Record workflow SHA, product SHA/tree and run/attempt separately. The workflow
+  does not create a new required PR-head check, activate a provider or distribute
+  the product. OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
 
 ### link-check.yml
 

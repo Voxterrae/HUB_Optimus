@@ -90,6 +90,12 @@ Principle: visible alliance, not hidden control.
   `Related to #N` or `Governance issue #N`, using its actual owner-authored
   `governance` issue number. `Closes` or `Refs` alone do not satisfy
   [`tools/founder_authority_guard.py`](tools/founder_authority_guard.py).
+- Reserve closing keywords in PR descriptions and commit messages for
+  deliberately completing fully accepted issues; negation does not disable
+  them. Use `Related`/`Refs` plus `remains open` for coordination, preserving the
+  protected-PR reference rule above. Before merging, inspect commit messages
+  and GitHub's `closingIssuesReferences`; confirm every automatic closure is
+  intended and supported by completed acceptance.
 - No person or AI other than the owner may independently authorize or merge a
   change; third parties may propose changes through governed review.
 - If repeated mistakes appear, update this file through the protected owner

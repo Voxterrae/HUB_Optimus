@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Core runner; the workflow supplies the network namespace. Direct local use
-# does not certify network isolation. Only the standalone Brave module is built.
+# does not certify network isolation. Only the standalone Brave suites are built.
 set -euo pipefail
 [[ $# == 2 ]] || { echo 'Usage: build-test.sh BRAVE_MODULE ABSOLUTE_DOTNET' >&2; exit 2; }
 module="$(realpath -- "$1")"
@@ -31,24 +31,65 @@ env -i \
     actual="$("$sdk" --version)"
     [[ "$actual" == 10.0.403 ]] || { echo "Wrong SDK: $actual; expected 10.0.403" >&2; exit 1; }
     echo "SDK: $actual"
-    project=tests/Optimus.Search.Brave.Tests/Optimus.Search.Brave.Tests.csproj
+    adapter=tests/Optimus.Search.Brave.Tests/Optimus.Search.Brave.Tests.csproj
+    gateway=gateway/tests/Optimus.Search.Brave.Gateway.Tests/Optimus.Search.Brave.Gateway.Tests.csproj
+    has_gateway=0
+    if [[ -e gateway ]]; then
+      [[ -f "$gateway" ]] || { echo "Incomplete gateway candidate" >&2; exit 1; }
+      has_gateway=1
+    fi
     # A cold restore with no sources must fail if a package is introduced.
-    "$sdk" restore "$project" --configfile "$state/NuGet.Config" \
+    restore_project() {
+      "$sdk" restore "$1" --configfile "$state/NuGet.Config" \
       --no-cache --force -p:NuGetAudit=false -p:RestoreIgnoreFailedSources=false \
       -p:RestoreFallbackFolders= -p:RestoreAdditionalProjectSources=
-    python3 - <<PY
+    }
+    restore_project "$adapter"
+    if (( has_gateway )); then restore_project "$gateway"; fi
+    python3 - "$has_gateway" <<PY
 import json
+import sys
 from pathlib import Path
-for path in (Path("src/Optimus.Search.Brave/obj/project.assets.json"),
-             Path("tests/Optimus.Search.Brave.Tests/obj/project.assets.json")):
+paths = [Path("src/Optimus.Search.Brave/obj/project.assets.json"),
+         Path("tests/Optimus.Search.Brave.Tests/obj/project.assets.json")]
+if sys.argv[1] == "1":
+    paths += [Path("gateway/src/Optimus.Search.Brave.Gateway/obj/project.assets.json"),
+              Path("gateway/tests/Optimus.Search.Brave.Gateway.Tests/obj/project.assets.json")]
+for path in paths:
     data = json.loads(path.read_text())
     if any(item["type"] != "project" for item in data["libraries"].values()):
         raise SystemExit("Unexpected package dependency: " + str(path))
     if data["project"]["restore"].get("sources", {}):
         raise SystemExit("Unexpected NuGet source: " + str(path))
-print("Verified: two assets files, zero package dependencies, zero NuGet sources")
+print(f"Verified: {len(paths)} assets files, zero package dependencies, zero NuGet sources")
 PY
-    "$sdk" build "$project" -c Release --no-restore --no-incremental -m:1 \
-      -p:ContinuousIntegrationBuild=true -p:UseSharedCompilation=false
-    "$sdk" run --project "$project" -c Release --no-build --no-restore
+    run_suite() {
+      label="$1"
+      project="$2"
+      expected="$3"
+      "$sdk" build "$project" -c Release --no-restore --no-incremental -m:1 \
+        -p:ContinuousIntegrationBuild=true -p:UseSharedCompilation=false
+      "$sdk" run --project "$project" -c Release --no-build --no-restore | tee "$state/$label.log"
+      python3 - "$label" "$expected" "$state/$label.log" <<PY
+import re
+import sys
+from pathlib import Path
+label, expected, log = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+lines = Path(log).read_text().splitlines()
+passes = [line for line in lines if line.startswith("PASS ")]
+summaries = [line for line in lines if re.fullmatch(r"[0-9]+/[0-9]+ passed", line)]
+summary = f"{expected}/{expected} passed"
+if (len(passes) != expected or len(set(passes)) != expected
+        or any(line.startswith("FAIL ") for line in lines)
+        or summaries != [summary] or not lines or lines[-1] != summary):
+    raise SystemExit("Incomplete or failed " + label + " console suite")
+print(f"Verified {label}: {expected}/{expected} complete console cases")
+PY
+    }
+    run_suite adapter "$adapter" 59
+    if (( has_gateway )); then
+      run_suite gateway "$gateway" 39
+    else
+      echo "Gateway NOT RUN: historical adapter-only candidate"
+    fi
   ' _ "$module" "$dotnet" "$state"

@@ -1,7 +1,7 @@
-# REVIEW CANDIDATE ONLY: apply through the protected owner process on main.
-# PR #2112 exact-source validation; broader service/GUI results remain separate.
+# Exact-source native-search validation; changes use the protected owner process.
+# Issue #2151: WPF handler/state evidence is separate from packaged GUI/accessibility.
 # Reviewed source pin: changing the executable source requires protected review.
-name: Optimus Windows PR 2112 isolated smoke
+name: Optimus Windows native search isolated smoke
 on:
   workflow_dispatch:
     inputs:
@@ -9,7 +9,7 @@ on:
         description: Confirm the reviewed product SHA; other commits are blocked
         type: string
         required: true
-        default: 66857eec18741106625e059bd0b03d504b1d5dd9
+        default: b996f26238f3ea79becf3d6b320bec7781c80077
       gui:
         description: Attempt GUI/UIAutomation on a clean interactive runner (blocked if unavailable)
         type: boolean
@@ -33,8 +33,8 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 15
     env:
-      OPTIMUS_SOURCE_COMMIT: 66857eec18741106625e059bd0b03d504b1d5dd9
-      OPTIMUS_SOURCE_TREE: 4e1384cc238d37825365b7c8b2114c4c69002c4f
+      OPTIMUS_SOURCE_COMMIT: b996f26238f3ea79becf3d6b320bec7781c80077
+      OPTIMUS_SOURCE_TREE: 4a73d9f46e7fa94782cdd0e1ec7422b16cbbe8c0
       OPTIMUS_REQUESTED_SOURCE_COMMIT: ${{ inputs.source_commit }}
       OPTIMUS_WORKFLOW_COMMIT: ${{ github.workflow_sha }}
       OPTIMUS_RUN_ID: ${{ github.run_id }}
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: 66857eec18741106625e059bd0b03d504b1d5dd9
+          ref: b996f26238f3ea79becf3d6b320bec7781c80077
       - name: Toolchain preflight (no installation)
         run: |
           $ErrorActionPreference = 'Stop'
@@ -177,6 +177,62 @@ jobs:
           dotnet publish scripts/WindowsSmoke/Optimus.Windows.Smoke.csproj -c Release -r win-x64 --self-contained true -m:1 "-p:SourceRevisionId=$env:OPTIMUS_SOURCE_COMMIT" -o "$output/Diagnostics"; CheckExit
           $catalog = (Resolve-Path '../search/catalog/optimus-help.json').Path
           dotnet run --project ../search/src/Optimus.Search/Optimus.Search.csproj -c Release -- index --input $catalog --output "$output/Search/index.json"; CheckExit
+      - name: Native search WPF handler and state regression (no engine)
+        id: native_search_ui
+        timeout-minutes: 3
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          # Separate from packaged GUI: an unshown WPF window plus owned invisible HWND.
+          # The executable retains its interactive/disposable-profile guards; do not bypass them.
+          # Public-source compiler diagnostics remain visible; build does not run Main/fixtures.
+          & dotnet build tests/Optimus.Search.Ui.Tests/Optimus.Search.Ui.Tests.csproj -c Release -m:1
+          if ($LASTEXITCODE -ne 0) { throw 'WPF regression compilation failed; no test executable ran.' }
+          $output = @(& dotnet run --project tests/Optimus.Search.Ui.Tests -c Release --no-build -- --disposable-profile-absent 2>&1)
+          $exitCode = $LASTEXITCODE
+          $lines = @($output | ForEach-Object { $_.ToString() })
+          $required = @(
+            'legacy-Google-raised-click-stays-native',
+            'legacy-Google-raised-enter-stays-native',
+            'legacy-DuckDuckGo-raised-click-stays-native',
+            'legacy-DuckDuckGo-raised-enter-stays-native',
+            'external-controls-disclosed-collapsed-and-explicit',
+            'blocked-DuckDuckGo-retains-live-native-result',
+            'blocked-Google-retains-live-native-result',
+            'web-Unconfigured-never-opens-fallback',
+            'web-UpstreamFailure-never-opens-fallback',
+            'web-Timeout-never-opens-fallback',
+            'web-ConnectionFailure-never-opens-fallback',
+            'web-Empty-never-opens-fallback',
+            'host-unavailable-does-not-submit-or-open-fallback'
+          )
+          $cases = @(foreach ($name in $required) {
+            [ordered]@{ name = $name; passed = @($lines | Where-Object { $_ -ceq "PASS $name" }).Count -eq 1 }
+          })
+          $expectedSummary = 'PASS: 13 WPF search handler/state scenarios; no visible GUI, engine, provider or assistive-technology acceptance.'
+          $passedLines = @($lines | Where-Object { $_ -cmatch '\APASS ' }).Count
+          $failedLines = @($lines | Where-Object { $_ -cmatch '\AFAIL:' }).Count
+          $blockedLines = @($lines | Where-Object { $_ -cmatch '\ABLOCKED:' }).Count
+          $successSummaries = @($lines | Where-Object { $_ -cmatch '\APASS:' }).Count
+          $complete = $lines.Count -gt 0 -and $lines[-1] -ceq $expectedSummary -and @($lines | Where-Object { $_ -ceq $expectedSummary }).Count -eq 1
+          $accepted = $exitCode -eq 0 -and $complete -and $successSummaries -eq 1 -and $passedLines -eq 13 -and $failedLines -eq 0 -and $blockedLines -eq 0 -and @($cases | Where-Object { !$_.passed }).Count -eq 0
+          $state = if ($accepted) { 'PASS' } elseif ($exitCode -eq 2 -and $blockedLines -eq 1 -and $passedLines -eq 0 -and $failedLines -eq 0 -and $successSummaries -eq 0) { 'BLOCKED' } else { 'FAIL' }
+          # Only fixed case names, outcome and provenance leave memory. Never publish raw output.
+          [ordered]@{
+            sourceCommit = $env:OPTIMUS_SOURCE_COMMIT
+            sourceTree = $env:OPTIMUS_SOURCE_TREE
+            workflowCommit = $env:OPTIMUS_WORKFLOW_COMMIT
+            runId = $env:OPTIMUS_RUN_ID
+            runAttempt = $env:OPTIMUS_RUN_ATTEMPT
+            exitCode = $exitCode
+            suiteComplete = $complete
+            expectedTestCount = 13
+            passedTestCount = $passedLines
+            cases = $cases
+            state = $state
+            boundary = 'Unshown WPF handler/state regression with synthetic HTTP; no packaged GUI, keyboard focus or assistive-technology acceptance.'
+          } | ConvertTo-Json -Depth 6 | Set-Content "$env:RUNNER_TEMP/optimus-native-search-ui.json" -Encoding utf8
+          if (!$accepted) { throw 'WPF handler/state regression failed, was blocked, or lacks complete execution evidence.' }
       - name: Real packaged host acceptance through Windows PowerShell 5.1
         id: service
         run: |
@@ -194,19 +250,21 @@ jobs:
         working-directory: ${{ runner.temp }}
         env:
           OPTIMUS_NATIVE_SEARCH_OUTCOME: ${{ steps.native_search.outcome }}
+          OPTIMUS_NATIVE_SEARCH_UI_OUTCOME: ${{ steps.native_search_ui.outcome }}
           OPTIMUS_PRODUCTION_OUTCOME: ${{ steps.production.outcome }}
           OPTIMUS_SERVICE_OUTCOME: ${{ steps.service.outcome }}
           OPTIMUS_GUI_OUTCOME: ${{ steps.gui.outcome }}
         run: |
           $ErrorActionPreference = 'Stop'
           $summary = @(
-            '# Optimus Windows PR 2112 smoke',
+            '# Optimus Windows native search smoke',
             "Source: $env:OPTIMUS_SOURCE_COMMIT",
             "Source tree: $env:OPTIMUS_SOURCE_TREE",
             "Workflow: $env:OPTIMUS_WORKFLOW_COMMIT",
             "Run: $env:OPTIMUS_RUN_ID; attempt: $env:OPTIMUS_RUN_ATTEMPT",
             'Missing evidence never establishes acceptance; inspect step outcomes.',
             "Native C# regression/identity step: $env:OPTIMUS_NATIVE_SEARCH_OUTCOME",
+            "WPF search handler/state step: $env:OPTIMUS_NATIVE_SEARCH_UI_OUTCOME (not packaged GUI or accessibility acceptance)",
             "Other suites/publication: $env:OPTIMUS_PRODUCTION_OUTCOME; service: $env:OPTIMUS_SERVICE_OUTCOME; GUI: $env:OPTIMUS_GUI_OUTCOME",
             'This manual run belongs to the workflow commit; its source evidence is not a new required PR check.',
             'Service and GUI reports are recorded separately. GUI is UNRUN unless requested and prior prerequisites pass.',
@@ -217,6 +275,7 @@ jobs:
             "$env:RUNNER_TEMP/optimus-toolchain.json",
             "$env:RUNNER_TEMP/optimus-regression-preflight.json",
             "$env:RUNNER_TEMP/optimus-native-search.json",
+            "$env:RUNNER_TEMP/optimus-native-search-ui.json",
             "$env:RUNNER_TEMP/optimus-service-evidence/metadata.json",
             "$env:RUNNER_TEMP/optimus-service-evidence/result.json",
             "$env:RUNNER_TEMP/optimus-gui-evidence/metadata.json",

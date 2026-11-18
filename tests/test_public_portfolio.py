@@ -26,6 +26,7 @@ GEOJSON = SITE / "assets" / "geo" / "land-110m.geojson"
 GEOJSON_CHECKSUM = SITE / "assets" / "geo" / "land-110m.geojson.sha256"
 GEO_ATTRIBUTION = SITE / "assets" / "geo" / "README.md"
 PUBLIC_LOCALES = {"en", "es", "de", "ru", "he", "zh-Hans"}
+CATALOGUE_EVIDENCE_SHA = "6d3cf67469233d3177fc59dd76232df3e9774b73"
 
 DEVELOPMENT_COMPONENTS = {
     "browser-windows": "early-implementation",
@@ -46,6 +47,7 @@ class PublicPageParser(HTMLParser):
         self.ids = set()
         self.duplicate_ids = set()
         self.local_references = []
+        self.repository_document_links = []
         self.i18n_keys = set()
         self.portfolio_statuses = {}
         self.portfolio_sections = {}
@@ -58,6 +60,14 @@ class PublicPageParser(HTMLParser):
 
     def handle_starttag(self, tag, attributes):
         attrs = dict(attributes)
+        if tag == "a":
+            target = urlsplit(attrs.get("href", ""))
+            if target.netloc == "github.com" and re.fullmatch(
+                r"/Voxterrae/HUB_Optimus/blob/[^/]+/.+\.md",
+                unquote(target.path),
+                re.IGNORECASE,
+            ):
+                self.repository_document_links.append(attrs)
         element_id = attrs.get("id")
         if element_id:
             if element_id in self.ids:
@@ -530,6 +540,7 @@ class RouteLink extends Element {
 const localeCodes = ["es", "en", "de", "ru", "he", "zh-Hans"];
 const buttons = localeCodes.map((code) => new Element({"data-language": code}));
 const links = [
+  new RouteLink("products.catalogue", "Product catalogue on GitHub"),
   new RouteLink("core.canonical", "Canonical core"),
   new RouteLink("core.meta-learning", "Meta-learning workflow"),
   new RouteLink("status.policy", "Status policy"),
@@ -635,7 +646,7 @@ def test_public_javascript_syntax_and_translation_key_parity():
     source = APP.read_text(encoding="utf-8")
     dictionaries = extract_translation_dictionaries(source)
     assert set(dictionaries) == PUBLIC_LOCALES
-    assert len(dictionaries["en"]) == 187
+    assert len(dictionaries["en"]) == 210
     assert all(set(dictionary) == set(dictionaries["en"]) for dictionary in dictionaries.values())
     assert all(
         value.strip()
@@ -1032,7 +1043,7 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     assert set(operator_localization["advanced_audit_console_locales"]) == PUBLIC_LOCALES
     assert set(operator_localization["supported_locales"]) == PUBLIC_LOCALES
     assert "human" in operator_localization["review_status"]
-    assert metadata["portfolio_translation_key_count"] == 187
+    assert metadata["portfolio_translation_key_count"] == 210
     assert set(metadata["locales"]) == PUBLIC_LOCALES
     assert len(metadata["field_status"]) >= 10
     for record in metadata["locales"].values():
@@ -1064,11 +1075,15 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
             field_status[locale] == audited_status
             for field_name, field_status in metadata["field_status"].items()
             if field_name not in {
-                "operator_advanced_audit_console", "development_products_and_labs_update"
+                "operator_advanced_audit_console", "development_products_and_labs_update",
+                "contributions_and_project_intelligence_update", "public_reading_entry_update",
+                "document_title_and_description", "method_and_operating_principles"
             }
         )
         for field_name in (
-            "operator_advanced_audit_console", "development_products_and_labs_update"
+            "operator_advanced_audit_console", "development_products_and_labs_update",
+                "contributions_and_project_intelligence_update", "public_reading_entry_update",
+                "document_title_and_description", "method_and_operating_principles"
         ):
             assert (
                 metadata["field_status"][field_name][locale]
@@ -1531,10 +1546,42 @@ def test_repository_evidence_links_point_to_existing_paths():
     assert len(checked) >= 15
 
 
+def test_repository_prose_links_use_locale_routes():
+    links = parse_public_page().repository_document_links
+    assert links, "the public page must expose its repository documentation"
+    for attributes in links:
+        assert attributes.get("data-document-route"), attributes["href"]
+
+
+def test_catalogue_route_discloses_english_after_each_locale_change():
+    expected_badges = {
+        "en": "EN · source",
+        "es": "EN · alternativa",
+        "de": "EN · Fallback",
+        "ru": "EN · резерв",
+        "he": "EN · חלופה",
+        "zh-Hans": "EN · 回退",
+    }
+    for locale, badge in expected_badges.items():
+        route = run_document_route_dom_probe(saved="en", click=locale)["after"][
+            "products.catalogue"
+        ]
+        assert route["href"] == (
+            "https://github.com/Voxterrae/HUB_Optimus/blob/"
+            f"{CATALOGUE_EVIDENCE_SHA}/products/README.md"
+        )
+        assert route["hreflang"] == "en"
+        assert route["badge"] == badge
+        assert route["relation"] == ("source" if locale == "en" else "fallback")
+        assert route["maturity"] is None
+        assert route["aria"] is None
+
+
 def test_document_route_resolver_has_complete_explicit_locale_matrix():
     probe = resolve_document_routes()
     locales = PUBLIC_LOCALES
     expected_route_ids = {
+        "products.catalogue",
         "core.canonical",
         "core.meta-learning",
         "status.policy",
@@ -1632,7 +1679,12 @@ def test_document_route_resolver_has_complete_explicit_locale_matrix():
     for route_id, variants in resolved.items():
         for route in variants.values():
             if route["href"].startswith("https://github.com/"):
-                assert f"/{probe['evidenceSha']}/" in route["href"]
+                expected_sha = (
+                    CATALOGUE_EVIDENCE_SHA
+                    if route_id == "products.catalogue"
+                    else probe["evidenceSha"]
+                )
+                assert f"/{expected_sha}/" in route["href"]
                 assert "/main/" not in route["href"]
 
 
@@ -1703,11 +1755,18 @@ def test_document_route_targets_exist_in_the_pinned_git_tree():
                 continue
             checked.add(href)
             parts = urlsplit(href)
+            target_ref = evidence_sha
             if parts.netloc == "github.com":
                 match = github_target.match(parts.path)
                 assert match, href
-                assert match.group("ref") == evidence_sha
                 repository_path = unquote(match.group("path"))
+                target_ref = match.group("ref")
+                expected_sha = (
+                    CATALOGUE_EVIDENCE_SHA
+                    if repository_path == "products/README.md"
+                    else evidence_sha
+                )
+                assert target_ref == expected_sha
             else:
                 assert not parts.scheme and not parts.netloc, href
                 repository_path = (
@@ -1715,7 +1774,7 @@ def test_document_route_targets_exist_in_the_pinned_git_tree():
                 ).as_posix()
 
             target = subprocess.run(
-                ["git", "cat-file", "-e", f"{evidence_sha}:{repository_path}"],
+                ["git", "cat-file", "-e", f"{target_ref}:{repository_path}"],
                 cwd=ROOT,
                 check=False,
                 capture_output=True,
@@ -1724,7 +1783,7 @@ def test_document_route_targets_exist_in_the_pinned_git_tree():
             )
             assert target.returncode == 0, f"{href}: {target.stderr}"
 
-    assert len(checked) == 21
+    assert len(checked) == 22
 
 
 def test_document_route_markup_covers_map_and_matches_no_javascript_english():
@@ -1942,14 +2001,15 @@ def test_mobile_hero_keeps_brand_visible_and_prioritizes_operator():
         '<a class="button button-primary" href="./operator/?lang=en#product_intake" hreflang="en" '
         'data-operator-route data-i18n="tryOperator">Try Operator</a>'
     )
-    method_cta = (
-        '<a class="button button-secondary" href="#method" '
-        'data-i18n="howItWorks">How it works</a>'
+    reader_cta = (
+        '<a class="button button-secondary" href="./docs/index.html?lang=en" hreflang="es" '
+        'data-reader-route data-i18n="readGuide">Meet HUB_Optimus</a>'
     )
 
     assert operator_cta in html
-    assert method_cta in html
-    assert html.index(operator_cta) < html.index(method_cta)
+    assert reader_cta in html
+    assert html.index(operator_cta) < html.index(reader_cta)
+    assert '<a href="#method" data-i18n="navMethod">Method</a>' in html
     assert re.search(r"\.hero-copy\s*\{[^}]*min-width:\s*0;", css, re.DOTALL)
     assert re.search(r"\.hero h1\s*\{[^}]*max-width:\s*100%;", css, re.DOTALL)
     assert re.search(r"body\s*\{[^}]*overflow-wrap:\s*anywhere;", css, re.DOTALL)

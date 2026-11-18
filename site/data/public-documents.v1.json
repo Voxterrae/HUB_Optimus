@@ -1,0 +1,303 @@
+{
+  "schema_version": "1.0",
+  "source_repository": "Voxterrae/HUB_Optimus",
+  "source_ref": "abf973b989720cbba4fab734cc19e60c3277b8df",
+  "reviewed_on": "2026-11-14",
+  "source_binding": "Immutable Git blobs and SHA-256; commit/path binding verified when the commit object is present.",
+  "documents": [
+    {
+      "id": "conoce",
+      "path": "docs/project/HUB_OPTIMUS_EXPLAINED.md",
+      "language": "es",
+      "title": "Conoce HUB_Optimus",
+      "kind": "explanatory",
+      "context": "Una explicación sencilla, un ejemplo y el origen del proyecto.",
+      "sha256": "0a8429a2fd7273cbf32d3e831c8c14aca52f80a69d8d86b8c2fef6344e47f1f8",
+      "git_blob_sha": "101dc7258e8d857706bb0967f00fe33b67d2e7ea"
+    },
+    {
+      "id": "operator-piloto",
+      "path": "docs/project/OPERATOR_FIRST_PILOT.md",
+      "language": "es",
+      "title": "Tu primer caso con Operator",
+      "kind": "pilot",
+      "context": "Pasos exactos para preparar, revisar, copiar y limpiar un borrador sintético. Aceptación visual pendiente.",
+      "sha256": "ff8742f7c1cebcee065d5147195e310751ffb525d387aa852222ba6c6fbf6301",
+      "git_blob_sha": "c6da7cea72a784d13adf1a8f0e8946d33155cf32"
+    },
+    {
+      "id": "capacidades",
+      "path": "docs/project/CAPABILITIES_AND_PILOTS.md",
+      "language": "es",
+      "title": "Capacidades y próximos pilotos",
+      "kind": "catalogue",
+      "context": "Qué permite cada pieza, qué falta aceptar y por dónde empezar. No es una lista de productos terminados.",
+      "sha256": "99e284a46134b867eaf842ca3f50398b10d4f4a279eb399729e3ba93663c205d",
+      "git_blob_sha": "0ee7d23a1d438d1ee151a72f8fa9c15d88840330"
+    },
+    {
+      "id": "contribuciones",
+      "path": "docs/project/CONTRIBUTIONS_REGISTER.md",
+      "language": "es",
+      "title": "Historia y registro de contribuciones",
+      "kind": "catalogue",
+      "context": "Registro histórico con fuentes y crédito. Actualización: el relato y el primer piloto se aprobaron el 14-11-2026; la mención pendiente del original corresponde al corte anterior.",
+      "sha256": "28dee6710de229cec3b3089af881f45c69c946387277ef0e64c5b4dffcc700b2",
+      "git_blob_sha": "472ecd1791e4baba2215bffa09c58f5641504115"
+    },
+    {
+      "id": "ecosistema",
+      "path": "docs/project/ECOSYSTEM_CONTRIBUTIONS.md",
+      "language": "es",
+      "title": "Trabajo en el ecosistema",
+      "kind": "catalogue",
+      "context": "Creación propia, integración, envío y aceptación por proveedores son estados diferentes.",
+      "sha256": "50ee81a80d5a148a7b65c3a7ae6a361db32dbd546fdcb6a93ca0dffd6a7a4317",
+      "git_blob_sha": "171b30e15b6aa6306f8934be26e4dd5ce91be4f9"
+    },
+    {
+      "id": "catalogo",
+      "path": "products/README.md",
+      "language": "en",
+      "title": "Catálogo de componentes",
+      "kind": "catalogue",
+      "context": "Catálogo técnico con el estado y los límites de cada componente. Texto original en inglés.",
+      "sha256": "6c24df6821a527406f1063526e27fa84c84e73637ca644c25694fcd95b0cfbc0",
+      "git_blob_sha": "7c479b41d36a3155c7d621b04f7a7668463b33aa"
+    },
+    {
+      "id": "autoridad",
+      "path": "docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md",
+      "language": "es",
+      "title": "Fundador, propiedad y autoridad humana",
+      "kind": "normative",
+      "context": "Documento completo. La Parte I canónica española y los renderings inglés y alemán conservan el estatus expresado dentro del texto.",
+      "sha256": "2710f8befdf052087eaf7699b1b6ced96b50f490f3fc7217b2baa5590cdcbec2",
+      "git_blob_sha": "a9898daac6c13f1a0ffb8cd3ae0f031e3a2f405b",
+      "source_languages": "es,en,de"
+    },
+    {
+      "id": "charter",
+      "path": "docs/governance/CHARTER.md",
+      "language": "en",
+      "title": "Carta de gobierno",
+      "kind": "normative",
+      "context": "Principios y límites de evaluación. Se conserva el preámbulo de autoridad y el texto completo.",
+      "sha256": "6505c45087646df3673f17f57395d41554133d9f1c3b189a736cd68d597a2eb2",
+      "git_blob_sha": "30d610b63357e936457cfdd7ccc628f9f945d6c1"
+    },
+    {
+      "id": "kernel",
+      "path": "docs/governance/KERNEL.md",
+      "language": "en",
+      "title": "Kernel: principios del proyecto",
+      "kind": "normative",
+      "context": "Principios de evaluación y revisión, con su frontera de autoridad. El texto no es un ejecutor automático.",
+      "sha256": "e90cbcbf3635991d8d608dee6b92386b09a30a95f975f35f521abffa91c92807",
+      "git_blob_sha": "09bbd1cda0121ce94deb49f97173408a510e55cf"
+    },
+    {
+      "id": "carta-nucleo",
+      "path": "KERNEL_CHARTER.md",
+      "language": "es",
+      "title": "Carta del núcleo de simulación",
+      "kind": "normative",
+      "context": "Principios y restricciones del núcleo. Su lectura no demuestra que todos los mecanismos estén implementados.",
+      "sha256": "c8dd42915f9648962d02b6ccf6a02a3b8aa8e6a26fec43c7c4ec2c6292d8ebb2",
+      "git_blob_sha": "b04acf6c33ef16cc1acfd5694cb59e485455228e",
+      "variants": {
+        "en": "simulation-charter"
+      }
+    },
+    {
+      "id": "simulation-charter",
+      "path": "KERNEL_CHARTER_EN.md",
+      "language": "en",
+      "title": "Simulation core charter",
+      "kind": "normative",
+      "context": "English source of the simulation charter. File presence does not certify reviewed parity.",
+      "sha256": "cf65bd3814b1ce807389063d468f2329032f9af9ad447df1f78ef7c537551c60",
+      "git_blob_sha": "0ce192176d64512d91000b51c970fa500068c142",
+      "variants": {
+        "es": "carta-nucleo"
+      },
+      "metadata_language": "en"
+    }
+  ],
+  "routes": [
+    "/docs/",
+    "/docs/conoce/",
+    "/docs/operator-piloto/",
+    "/docs/capacidades/",
+    "/docs/contribuciones/",
+    "/docs/ecosistema/",
+    "/docs/catalogo/",
+    "/docs/autoridad/",
+    "/docs/charter/",
+    "/docs/kernel/",
+    "/docs/carta-nucleo/",
+    "/docs/simulation-charter/"
+  ],
+  "link_targets": {
+    "CONTRIBUTING.md": {
+      "kind": "blob",
+      "git_oid": "971d9174b6419c1431e9475a4b89fd9f52be8041"
+    },
+    "IP_NOTICE.md": {
+      "kind": "blob",
+      "git_oid": "4d17617a267faaad904c2506590f8861fc50252b"
+    },
+    "KERNEL_CHARTER.md": {
+      "kind": "blob",
+      "git_oid": "b04acf6c33ef16cc1acfd5694cb59e485455228e"
+    },
+    "KERNEL_CHARTER_EN.md": {
+      "kind": "blob",
+      "git_oid": "0ce192176d64512d91000b51c970fa500068c142"
+    },
+    "config/governance/owner_identity.v1.json": {
+      "kind": "blob",
+      "git_oid": "aa535a1b062b31b30413fd4415661e07747eec37"
+    },
+    "docs/architecture/public_surface_sync.md": {
+      "kind": "blob",
+      "git_oid": "ad324df2dacf8b37e32a122514b8f89a7ea1288b"
+    },
+    "docs/architecture/runtime_contract.md": {
+      "kind": "blob",
+      "git_oid": "237933583c6a44250ec66bce30c5bf891f64580b"
+    },
+    "docs/architecture/xai_x_signal_bridge.md": {
+      "kind": "blob",
+      "git_oid": "3b48d4c63f1bf0bebc9ec02aeaa34261e6f48c89"
+    },
+    "docs/context/SOURCE_OF_TRUTH.md": {
+      "kind": "blob",
+      "git_oid": "4a63e7c9fd12dc92a3faaa3425421a6154024224"
+    },
+    "docs/context/STATUS.md": {
+      "kind": "blob",
+      "git_oid": "0a29425b4a6376d544e5b27e61dca5d2aa8e22b9"
+    },
+    "docs/governance/CHARTER.md": {
+      "kind": "blob",
+      "git_oid": "30d610b63357e936457cfdd7ccc628f9f945d6c1"
+    },
+    "docs/governance/CONSENSUS_PROCESS.md": {
+      "kind": "blob",
+      "git_oid": "aae7c9fb095c7f7682fc1e7bd90062cad053bc45"
+    },
+    "docs/governance/CUSTODIANSHIP.md": {
+      "kind": "blob",
+      "git_oid": "71d16f1e4dd28085c8bd13bb9f1deb1c0346b8d5"
+    },
+    "docs/governance/EVALUATION_STANDARD.md": {
+      "kind": "blob",
+      "git_oid": "d7902e45125e93452d0660f42420be1593876b8b"
+    },
+    "docs/governance/FOUNDER_OWNERSHIP_AND_AUTHORITY.md": {
+      "kind": "blob",
+      "git_oid": "a9898daac6c13f1a0ffb8cd3ae0f031e3a2f405b"
+    },
+    "docs/governance/KERNEL.md": {
+      "kind": "blob",
+      "git_oid": "09bbd1cda0121ce94deb49f97173408a510e55cf"
+    },
+    "docs/governance/SCENARIO_SCHEMA.md": {
+      "kind": "blob",
+      "git_oid": "1f1f154ede24c89f309a514f651bcf29605ea123"
+    },
+    "docs/governance/TRADEMARKS.md": {
+      "kind": "blob",
+      "git_oid": "a48adc3fef19f07e1e142cc7f703584457afe234"
+    },
+    "docs/governance/TRUST_LAYER.md": {
+      "kind": "blob",
+      "git_oid": "ca6163ca2bd047f7d5092a0d42f67224442e2010"
+    },
+    "docs/i18n/maturity.v1.json": {
+      "kind": "blob",
+      "git_oid": "70486db6c9b241bc524c992bfa797ce968379780"
+    },
+    "docs/project/CAPABILITIES_AND_PILOTS.md": {
+      "kind": "blob",
+      "git_oid": "0ee7d23a1d438d1ee151a72f8fa9c15d88840330"
+    },
+    "docs/project/CONTRIBUTIONS_REGISTER.md": {
+      "kind": "blob",
+      "git_oid": "472ecd1791e4baba2215bffa09c58f5641504115"
+    },
+    "docs/project/ECOSYSTEM_CONTRIBUTIONS.md": {
+      "kind": "blob",
+      "git_oid": "171b30e15b6aa6306f8934be26e4dd5ce91be4f9"
+    },
+    "docs/project/HUB_OPTIMUS_EXPLAINED.md": {
+      "kind": "blob",
+      "git_oid": "101dc7258e8d857706bb0967f00fe33b67d2e7ea"
+    },
+    "docs/project/OPERATOR_FIRST_PILOT.md": {
+      "kind": "blob",
+      "git_oid": "c6da7cea72a784d13adf1a8f0e8946d33155cf32"
+    },
+    "legacy/v0_exploratory": {
+      "kind": "tree",
+      "git_oid": "0871e60e2c027de09ade83f9ebbc7864291c9d27"
+    },
+    "products/README.md": {
+      "kind": "blob",
+      "git_oid": "7c479b41d36a3155c7d621b04f7a7668463b33aa"
+    },
+    "products/admin-gateway/README.md": {
+      "kind": "blob",
+      "git_oid": "bc36d899e65b36048ef95e8f4f7804d342bdd163"
+    },
+    "products/browser/search/README.md": {
+      "kind": "blob",
+      "git_oid": "1ca47b6ae72b31adbfe11042ac0a57c47e06005a"
+    },
+    "products/browser/search/docs/PUBLIC_PILOT.md": {
+      "kind": "blob",
+      "git_oid": "ebf1c6b9e40750c323d8841516000e1e448c6c48"
+    },
+    "products/browser/web/README.md": {
+      "kind": "blob",
+      "git_oid": "58667875d5ea86037213bc9b1bebba64c7d46704"
+    },
+    "products/browser/windows/README.md": {
+      "kind": "blob",
+      "git_oid": "ebee3f023f76357e3469aa167f25a31d24725b6b"
+    },
+    "products/device-bridge/README.md": {
+      "kind": "blob",
+      "git_oid": "4edf0f03b2064d3abd8226ed4ef9b002a29acaed"
+    },
+    "products/device-bridge/common/native-protocol/README.md": {
+      "kind": "blob",
+      "git_oid": "db8f61b1142fee8f089e2d3b62436be4bcb3a5b8"
+    },
+    "products/device-bridge/windows/bootstrap-inventory/README.md": {
+      "kind": "blob",
+      "git_oid": "3d750523d75c6cc4501755266414589b5e07c25e"
+    },
+    "products/evidence-lab/README.md": {
+      "kind": "blob",
+      "git_oid": "551ea6073520d320a8ef6917a406d094de33b33f"
+    },
+    "site/data/capability-registry.v1.json": {
+      "kind": "blob",
+      "git_oid": "3bc5fa76a34f09a998c0851831a8589404eedd45"
+    },
+    "site/data/contributions.v1.json": {
+      "kind": "blob",
+      "git_oid": "a7356d0813e08654f99e2c2687b3068695bf4490"
+    },
+    "site/data/repository-history.v1.json": {
+      "kind": "blob",
+      "git_oid": "31d1d474bd6767b77849515b0206c8e77d8320c4"
+    },
+    "site/operator": {
+      "kind": "tree",
+      "git_oid": "428c457799fd9a243366da013794d03d9d83a7ab"
+    }
+  }
+}

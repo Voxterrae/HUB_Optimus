@@ -1,7 +1,8 @@
+import json
 import re
 import subprocess
 from html.parser import HTMLParser
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.parse import unquote, urljoin, urlsplit
 
 
@@ -10,6 +11,10 @@ SITE = ROOT / "site"
 PUBLIC_ORIGIN = "https://huboptimus.dev"
 EVIDENCE_REF = "8426b08e5f88b650c4d79e41d3ce3afd7d42746b"
 PRODUCT_REF = "7ca513eb16d12d77ba5f017c63109dab937c12b2"
+CATALOGUE_EVIDENCE_LINK = (
+    "https://github.com/Voxterrae/HUB_Optimus/blob/"
+    "6d3cf67469233d3177fc59dd76232df3e9774b73/products/README.md"
+)
 DEVELOPMENT_EVIDENCE_LINKS = {
     f"https://github.com/Voxterrae/HUB_Optimus/tree/{PRODUCT_REF}/products/browser/windows",
     f"https://github.com/Voxterrae/HUB_Optimus/tree/{PRODUCT_REF}/products/browser/web",
@@ -30,11 +35,20 @@ PUBLIC_ROUTES = {
     "/obsidian-HUB_Optimus-v1.0/": SITE / "obsidian-HUB_Optimus-v1.0" / "index.html",
     "/obsidian-HUB_Optimus-v1.1/": SITE / "obsidian-HUB_Optimus-v1.1" / "index.html",
 }
+GENERATED_PUBLIC_ROUTES = {
+    "/docs/": SITE / "docs/index.html",
+    **{f"/docs/{slug}/": SITE / "docs" / slug / "index.html" for slug in (
+        "conoce", "operator-piloto", "capacidades", "contribuciones", "ecosistema",
+        "catalogo", "autoridad", "charter", "kernel", "carta-nucleo", "simulation-charter",
+    )},
+}
 LIVE_MAIN_NAVIGATION = {
     "https://github.com/Voxterrae/HUB_Optimus/tree/main/obsidian-HUB_Optimus",
-    "https://github.com/Voxterrae/HUB_Optimus/blob/main/products/README.md",
 }
 EXPECTED_EXTERNAL_NAVIGATION = LIVE_MAIN_NAVIGATION | {
+    "https://github.com/actions/setup-dotnet/pull/804",
+    "https://github.com/aws/aws-cdk/discussions/39733",
+    "https://github.com/smithy-lang/smithy-typescript/pull/2351#issuecomment-6880003584",
     "https://github.com/Voxterrae/HUB_Optimus",
     "https://github.com/Voxterrae/HUB_Optimus/issues",
     "https://github.com/Voxterrae/HUB_Optimus/issues/1901",
@@ -44,6 +58,21 @@ EXPECTED_EXTERNAL_NAVIGATION = LIVE_MAIN_NAVIGATION | {
     "https://api.huboptimus.dev/oauth2/start?rd=https%3A%2F%2Fapi.huboptimus.dev%2Foperator%2F",
     "https://api.huboptimus.dev/oauth2/sign_out?rd=%2Fsigned-out",
 }
+EXPECTED_READER_EXTERNAL_NAVIGATION = {
+    "https://github.com/Voxterrae/HUB_Optimus/issues/1880",
+    "https://github.com/Voxterrae/HUB_Optimus/issues/1888",
+    "https://github.com/Voxterrae/HUB_Optimus/issues/2021",
+    "https://github.com/actions/setup-dotnet/pull/804",
+    "https://github.com/aws/aws-cdk/discussions/39733",
+    "https://github.com/aws/aws-cdk/pull/39595",
+    "https://github.com/microsoft/win32metadata/discussions/2308",
+    "https://github.com/smithy-lang/smithy-typescript/pull/2351",
+    "https://github.com/smithy-lang/smithy-typescript/pull/2351#issuecomment-6880003584",
+}
+READER_REPOSITORY_REFERENCE = re.compile(
+    r"/Voxterrae/HUB_Optimus/(?P<kind>blob|tree|commit)/"
+    r"(?P<ref>[0-9a-f]{40})(?:/(?P<path>.+))?\Z"
+)
 
 
 class PublicHtmlParser(HTMLParser):
@@ -79,7 +108,7 @@ def parse_document(path):
 
 
 def route_for_document(path):
-    for route, candidate in PUBLIC_ROUTES.items():
+    for route, candidate in (PUBLIC_ROUTES | GENERATED_PUBLIC_ROUTES).items():
         if candidate == path:
             return route
     raise AssertionError(f"public HTML file has no declared route: {path}")
@@ -159,9 +188,24 @@ def blend(foreground, background, alpha):
     )
 
 
+def test_labs_contribution_navigation_has_readable_normal_hover_and_focus_colors():
+    css = (SITE / "styles.css").read_text(encoding="utf-8")
+    properties = custom_properties(css)
+    for selector in (
+        ".section-labs .card-links a",
+        ".section-labs .card-links a:hover",
+        ".section-labs .card-links a:focus-visible",
+    ):
+        token = css_rule_property(css, selector, "color")
+        foreground = properties[token.removeprefix("var(--").removesuffix(")")]
+        for background in ("paper", "paper-2"):
+            assert contrast_ratio(foreground, properties[background]) >= 4.5
+
+
 def test_every_public_html_reference_and_fragment_resolves_in_the_artifact():
     html_files = set(SITE.rglob("*.html"))
-    assert html_files == set(PUBLIC_ROUTES.values())
+    assert not set(PUBLIC_ROUTES) & set(GENERATED_PUBLIC_ROUTES)
+    assert html_files == set((PUBLIC_ROUTES | GENERATED_PUBLIC_ROUTES).values())
 
     documents = {path: parse_document(path) for path in html_files}
     for path, document in documents.items():
@@ -185,6 +229,7 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
     )
     checked = []
     development_checked = set()
+    catalogue_checked = set()
     for path in PUBLIC_ROUTES.values():
         for tag, attribute, reference in parse_document(path).references:
             if tag != "a" or attribute != "href":
@@ -199,6 +244,8 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
             repository_path = ROOT / unquote(match.group("path"))
             if match.group("ref") == EVIDENCE_REF:
                 checked.append(reference)
+            elif reference == CATALOGUE_EVIDENCE_LINK:
+                catalogue_checked.add(reference)
             else:
                 assert reference in DEVELOPMENT_EVIDENCE_LINKS, reference
                 development_checked.add(reference)
@@ -218,6 +265,7 @@ def test_repository_evidence_links_are_commit_pinned_and_resolve_locally():
 
     assert len(checked) == 22
     assert development_checked == DEVELOPMENT_EVIDENCE_LINKS
+    assert catalogue_checked == {CATALOGUE_EVIDENCE_LINK}
 
 
 def test_live_external_navigation_targets_are_explicit_and_network_free_in_pytest():
@@ -241,6 +289,99 @@ def test_live_external_navigation_targets_are_explicit_and_network_free_in_pytes
             external_navigation.add(reference)
 
     assert external_navigation == EXPECTED_EXTERNAL_NAVIGATION
+
+
+def git_object_type(object_name):
+    result = subprocess.run(
+        ["git", "cat-file", "-t", object_name], cwd=ROOT,
+        check=False, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, object_name
+    return result.stdout.strip()
+
+
+def test_reader_repository_references_resolve_to_pinned_git_objects():
+    """Validate the separate reader evidence without broadening the old pins."""
+    manifest = json.loads((SITE / "data/public-documents.v1.json").read_text())
+    source_ref = manifest["source_ref"]
+    source_available = subprocess.run(
+        ["git", "cat-file", "-e", source_ref + "^{commit}"], cwd=ROOT,
+        check=False, capture_output=True,
+    ).returncode == 0
+    source_bindings = dict(manifest["link_targets"])
+    source_bindings.update({
+        entry["path"]: {"kind": "blob", "git_oid": entry["git_blob_sha"]}
+        for entry in manifest["documents"]
+    })
+    checked = {"blob": set(), "tree": set(), "commit": set()}
+    for path in GENERATED_PUBLIC_ROUTES.values():
+        for tag, attribute, reference in parse_document(path).references:
+            if tag != "a" or attribute != "href":
+                continue
+            url = urlsplit(reference)
+            if url.scheme != "https" or url.netloc != "github.com":
+                continue
+            match = READER_REPOSITORY_REFERENCE.fullmatch(url.path)
+            if not match:
+                continue
+            kind, ref = match.group("kind"), match.group("ref")
+            assert not url.query, reference
+            if kind == "commit":
+                assert not match.group("path") and not url.fragment, reference
+                assert git_object_type(ref) == "commit", reference
+            else:
+                repository_path = unquote(match.group("path") or "")
+                parts = PurePosixPath(repository_path)
+                assert repository_path and not parts.is_absolute(), reference
+                assert ".." not in parts.parts and "\\" not in repository_path, reference
+                if ref == source_ref:
+                    # A squash may omit the source commit while retaining its
+                    # exact blobs. The reviewed manifest keeps that binding.
+                    binding = source_bindings[repository_path]
+                    assert binding["kind"] == kind, reference
+                    oid = binding["git_oid"]
+                    assert git_object_type(oid) == kind, reference
+                    if source_available:
+                        bound = subprocess.check_output(
+                            ["git", "rev-parse", f"{ref}:{repository_path}"],
+                            cwd=ROOT, text=True,
+                        ).strip()
+                        assert bound == oid, reference
+                else:
+                    assert git_object_type(ref) == "commit", reference
+                    oid = subprocess.check_output(
+                        ["git", "rev-parse", f"{ref}:{repository_path}"],
+                        cwd=ROOT, text=True,
+                    ).strip()
+                    assert git_object_type(oid) == kind, reference
+                if url.fragment:
+                    assert kind == "blob", reference
+                    line = re.fullmatch(r"L([1-9][0-9]*)(?:-L([1-9][0-9]*))?", url.fragment)
+                    assert line, reference
+                    content = subprocess.check_output(["git", "cat-file", "blob", oid], cwd=ROOT)
+                    first, last = int(line[1]), int(line[2] or line[1])
+                    assert 1 <= first <= last <= len(content.splitlines()), reference
+            checked[kind].add(reference)
+    assert all(checked.values()), "reader must retain source, history and component evidence"
+
+
+def test_reader_external_navigation_is_separately_allowlisted():
+    external_navigation = set()
+    for path in GENERATED_PUBLIC_ROUTES.values():
+        route = route_for_document(path)
+        for tag, attribute, reference in parse_document(path).references:
+            if tag != "a" or attribute != "href":
+                continue
+            url = urlsplit(urljoin(f"{PUBLIC_ORIGIN}{route}", reference))
+            assert url.scheme in {"http", "https"}, reference
+            if url.netloc == "huboptimus.dev":
+                continue
+            if (url.scheme == "https" and url.netloc == "github.com"
+                    and READER_REPOSITORY_REFERENCE.fullmatch(url.path)):
+                # The companion test resolves every skipped immutable object.
+                continue
+            external_navigation.add(reference)
+    assert external_navigation == EXPECTED_READER_EXTERNAL_NAVIGATION
 
 
 def test_reported_dark_surface_normal_text_uses_one_contrast_guarded_token():

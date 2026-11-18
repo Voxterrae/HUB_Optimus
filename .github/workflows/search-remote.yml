@@ -26,7 +26,7 @@ jobs:
           persist-credentials: false
 
       - name: Prepare reviewed SDK
-        uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           dotnet-version: 10.0.403
           cache: false

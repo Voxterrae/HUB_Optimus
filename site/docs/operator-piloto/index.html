@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title lang="es">Tu primer caso con Operator · HUB_Optimus</title>
+<link rel="stylesheet" href="../reading.css"><script src="../reading.js" defer></script></head>
+<body data-source-language="es" data-source-id="operator-piloto" data-source-languages="">
+<a class="reader-skip" href="#reader-main" data-reader-copy="skip">Ir al documento</a>
+<header class="reader-header"><a class="reader-brand" href="../../">HUB_Optimus</a>
+<nav aria-label="Navegación" data-reader-controls><a href="../index.html" data-reader-home data-reader-copy="collection">Conoce y explora</a>
+<a href="../../operator/?lang=es#product_intake" data-reader-operator data-reader-copy="operator">Probar Operator</a></nav></header>
+<div class="reader-language" data-reader-controls><p data-reader-copy="language">Idioma de navegación</p>
+<nav aria-label="Idiomas"><a href="../operator-piloto/index.html?lang=es" hreflang="es" data-reader-language="es" lang="es">Español</a>
+<a href="../operator-piloto/index.html?lang=en" hreflang="es" data-reader-language="en" lang="en">English</a>
+<a href="../operator-piloto/index.html?lang=de" hreflang="es" data-reader-language="de" lang="de">Deutsch</a>
+<a href="../operator-piloto/index.html?lang=ca" hreflang="es" data-reader-language="ca" lang="ca">Català</a>
+<a href="../operator-piloto/index.html?lang=fr" hreflang="es" data-reader-language="fr" lang="fr">Français</a>
+<a href="../operator-piloto/index.html?lang=ru" hreflang="es" data-reader-language="ru" lang="ru">Русский</a>
+<a href="../operator-piloto/index.html?lang=he" hreflang="es" data-reader-language="he" lang="he">עברית</a>
+<a href="../operator-piloto/index.html?lang=zh-Hans" hreflang="es" data-reader-language="zh-Hans" lang="zh-Hans">简体中文</a></nav>
+<p id="reader-language-notice" role="status">El texto conserva el idioma de su fuente. Las traducciones que falten se indican expresamente.</p></div>
+<main id="reader-main" class="reader-main"><div class="reader-intro"><p class="reader-kicker">HUB_Optimus · lectura con fuente</p>
+<h1 lang="es">Tu primer caso con Operator</h1><p lang="es">Pasos exactos para preparar, revisar, copiar y limpiar un borrador sintético. Aceptación visual pendiente.</p>
+<p class="reader-source">Fuente: <a href="https://github.com/Voxterrae/HUB_Optimus/blob/abf973b989720cbba4fab734cc19e60c3277b8df/docs/project/OPERATOR_FIRST_PILOT.md" referrerpolicy="no-referrer">docs/project/OPERATOR_FIRST_PILOT.md</a><br>
+<span>Commit: <bdi>abf973b989720cbba4fab734cc19e60c3277b8df</bdi></span><br>
+<span>SHA-256: <bdi>ff8742f7c1cebcee065d5147195e310751ffb525d387aa852222ba6c6fbf6301</bdi></span><br>
+<a href="source.md" download data-reader-copy="download">Descargar el Markdown original</a></p></div>
+<div class="reader-layout"><aside class="reader-toc"><h2 data-reader-copy="contents">En esta página</h2><ol lang="es" dir="ltr"><li><a href="#doc-primer-piloto-público-preparar-una-revisión-con-operator">Primer piloto público: preparar una revisión con Operator</a></li><li><a href="#doc-qué-puedes-probar">Qué puedes probar</a></li><li><a href="#doc-material-de-prueba">Material de prueba</a></li><li><a href="#doc-recorrido-y-resultado-observable">Recorrido y resultado observable</a></li><li><a href="#doc-qué-contiene-realmente-la-copia-json">Qué contiene realmente la copia JSON</a></li><li><a href="#doc-alcance-comprobado-y-límites">Alcance comprobado y límites</a></li><li><a href="#doc-aceptación-visible-pendiente">Aceptación visible pendiente</a></li><li><a href="#doc-selectores-para-comprobar-el-recorrido">Selectores para comprobar el recorrido</a></li></ol></aside>
+<article class="reader-article" lang="es" dir="ltr"><h1 id="doc-primer-piloto-público-preparar-una-revisión-con-operator">Primer piloto público: preparar una revisión con Operator</h1>
+<p>Related to #2187. Primer piloto aprobado el 14-11-2026; aceptación visual y producción se registran por separado.</p>
+<p><strong>Resultado buscado:</strong> convertir dos declaraciones de prueba en un borrador editable con extractos, procedencia y límites visibles; copiar su JSON y comprobar cómo se elimina el trabajo local.</p>
+<p>Estado a 14-11-2026: recorrido comprobado con JavaScript real de la página y DOM simulado sobre el commit <code>eb1f6b28ccba503b6c8402548a2f096e9c284e68</code>. La comprobación visible en navegador y la coincidencia con la versión publicada siguen pendientes. Este piloto no cambia el producto ni activa servicios privados.</p>
+<h2 id="doc-qué-puedes-probar">Qué puedes probar</h2>
+<p>El <a href="https://huboptimus.dev/operator/?lang=es" referrerpolicy="no-referrer">Operator público</a> prepara un borrador en el navegador a partir de texto pegado. La URL opcional se conserva como atribución aportada y no recuperada. Una URL sola no completa este recorrido.</p>
+<p>El resultado permite revisar qué afirma el material, separar afirmaciones y conservar los extractos exactos. <code>triage</code> significa que hace falta revisión humana. No demuestra que las declaraciones sean verdaderas ni identifica automáticamente la contradicción entre ellas. No infiere motivos, no puntúa riesgo ni ejecuta el Semantic Engine.</p>
+<p>No hace falta una cuenta privada ni un proveedor adicional para este recorrido público. No se ha medido el coste del alojamiento o de conectividad existente; no se propone gasto recurrente nuevo.</p>
+<h2 id="doc-material-de-prueba">Material de prueba</h2>
+<p>Utiliza únicamente este ejemplo inventado, sin datos de personas ni enlaces privados.</p>
+<p><strong>URL de la fuente:</strong> <code>https://example.invalid/piloto-operator</code></p>
+<p><strong>Texto de la fuente:</strong></p>
+<pre><code class="language-text">El registro sintético indica dos cajas.
+El recuento sintético indica tres cajas.
+</code></pre>
+<p>Mantén <strong>Tipo de fuente</strong> en la opción inicial <strong>detectar de forma conservadora desde la URL</strong>. La clasificación es una etiqueta de entrada y no una comprobación de la fuente.</p>
+<h2 id="doc-recorrido-y-resultado-observable">Recorrido y resultado observable</h2>
+<div class="reader-table" role="region" aria-label="Tabla" tabindex="0"><table>
+<thead>
+<tr>
+<th>Paso</th>
+<th>Acción exacta en la interfaz ES</th>
+<th>Qué debe observarse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Entrada</td>
+<td>Abre Operator con <code>?lang=es</code>. Rellena <strong>URL de la fuente</strong> y <strong>Texto de la fuente</strong> con el material anterior. Pulsa <strong>Preparar borrador</strong>.</td>
+<td>Se abre <strong>Revisa la instantánea de la fuente y elige pasajes</strong>. El texto completo sigue visible. Todavía no hay un borrador terminado.</td>
+</tr>
+<tr>
+<td>2. Pasajes</td>
+<td>Revisa <strong>Pasajes exactos seleccionados para este borrador</strong>. Conserva los dos pasajes propuestos y su separador tal como aparecen. Marca <strong>He revisado la instantánea y confirmo únicamente los pasajes exactos anteriores para este borrador. Esto confirma la selección, no la verdad ni la completitud.</strong></td>
+<td>Aparece <strong>Separar las afirmaciones de la fuente</strong>, con dos extractos y una afirmación por extracto. La propuesta inicial es mecánica, no una selección por relevancia.</td>
+</tr>
+<tr>
+<td>3. Afirmaciones</td>
+<td>En cada uno de los dos extractos pulsa <strong>Marcar propuesta como revisada</strong>. Marca <strong>He clasificado cada propuesta como revisada u omitida y he revisado estas afirmaciones conservadas como proposiciones separadas. Registran lo que afirma la fuente; no confirman que sea verdad.</strong></td>
+<td>Las dos propuestas constan como revisadas y el conjunto queda confirmado. Estas confirmaciones registran una decisión del operador sobre selección y redacción.</td>
+</tr>
+<tr>
+<td>4. Borrador</td>
+<td>Pulsa <strong>Preparar borrador vinculado a la fuente</strong>.</td>
+<td>Aparece <strong>Borrador listo. Requiere revisión humana; no se ha ejecutado ningún Semantic Engine.</strong> El resultado contiene dos afirmaciones y dos extractos, con señal <code>triage</code> y límites de corroboración.</td>
+</tr>
+<tr>
+<td>5. Edición</td>
+<td>En <strong>Separar las afirmaciones de la fuente</strong>, cambia la primera afirmación por <code>El registro de prueba declara que hay dos cajas.</code></td>
+<td>La primera afirmación pasa a <strong>Paráfrasis redactada por una persona</strong>. El extracto original sigue diciendo <code>El registro sintético indica dos cajas.</code>. Se retira la confirmación del conjunto y se desactiva <strong>Copiar resumen para compartir</strong> hasta preparar un borrador vigente.</td>
+</tr>
+<tr>
+<td>6. Nueva revisión</td>
+<td>Pulsa <strong>Marcar propuesta como revisada</strong> en la primera afirmación editada. Vuelve a marcar la confirmación de afirmaciones y pulsa <strong>Preparar borrador de nuevo</strong>.</td>
+<td>El borrador vuelve a estar listo; conserva la paráfrasis y el extracto original como registros distintos.</td>
+</tr>
+<tr>
+<td>7. Copia del JSON</td>
+<td>Pulsa <strong>Avanzado · vista técnica</strong>. En <strong>JSON generado del caso</strong>, pulsa <strong>Generar JSON</strong> y después <strong>Copiar JSON</strong>. Pega el contenido en un editor de texto si quieres conservar un archivo <code>.json</code>.</td>
+<td>Se confirma <strong>JSON del caso copiado.</strong> La copia contiene el caso actual. Este flujo copia al portapapeles; no descarga automáticamente un archivo del borrador. Si el navegador deniega el portapapeles, la interfaz informa de que no pudo copiarlo.</td>
+</tr>
+<tr>
+<td>8. Guardado local opcional</td>
+<td>En la misma sección pulsa <strong>Guardar borrador localmente</strong>.</td>
+<td>Se informa de que el caso queda en este perfil del navegador hasta eliminarlo o sustituirlo. Guardar es una acción explícita; preparar el borrador no lo guarda automáticamente.</td>
+</tr>
+<tr>
+<td>9. Limpiar lo actual</td>
+<td>Pulsa <strong>Limpiar campos actuales</strong> y acepta la confirmación que distingue campos actuales de borrador guardado.</td>
+<td>La URL, el texto y los registros actuales se vacían; compartir queda desactivado. El borrador guardado por separado sigue existiendo.</td>
+</tr>
+<tr>
+<td>10. Comprobar y borrar lo guardado</td>
+<td>Si realizaste el paso 8, pulsa <strong>Cargar borrador guardado</strong>. Comprueba que vuelven los registros y que la entrada principal se restablece para evitar mezclar procedencias. Pulsa <strong>Eliminar borrador guardado</strong> y acepta su confirmación.</td>
+<td>Aparece <strong>El borrador guardado se eliminó de este perfil del navegador.</strong> Esta acción elimina el guardado, pero conserva los campos actuales ya cargados. Pulsa de nuevo <strong>Limpiar campos actuales</strong> y acepta para terminar con ambos estados vacíos.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Los textos de los botones se toman del catálogo ES efectivo del código. El navegador y la traducción pueden necesitar revisión visual; los selectores técnicos de aceptación se incluyen al final.</p>
+<h2 id="doc-qué-contiene-realmente-la-copia-json">Qué contiene realmente la copia JSON</h2>
+<p>La copia del caso tiene estas claves raíz: <code>case_id</code>, <code>core_version_ref</code>, <code>input_summary</code>, <code>claims</code>, <code>evidence</code>, <code>inferences</code>, <code>uncertainties</code>, <code>narrative_amplification</code>, <code>operational_signal</code> y <code>metadata</code>. En este recorrido <code>case_id</code> se genera en cada preparación. El JSON copiado del caso no incluye <code>status</code> en la raíz; no debe confundirse con la envoltura del visor de resultados ni con el archivo de un candidato de revisión.</p>
+<div class="reader-table" role="region" aria-label="Tabla" tabindex="0"><table>
+<thead>
+<tr>
+<th>Campo o ruta</th>
+<th>Valor observado en este ejemplo</th>
+<th>Lectura correcta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operational_signal</code></td>
+<td><code>triage</code></td>
+<td>Revisión humana pendiente; no es una puntuación de riesgo.</td>
+</tr>
+<tr>
+<td><code>metadata.normalizer_version</code></td>
+<td><code>operator-source-bound-v2</code></td>
+<td>Identifica el normalizador y el registro de revisión usado.</td>
+</tr>
+<tr>
+<td><code>metadata.semantic_engine_executed</code></td>
+<td><code>false</code></td>
+<td>No hubo ejecución del Semantic Engine.</td>
+</tr>
+<tr>
+<td><code>metadata.verification_performed</code></td>
+<td><code>false</code></td>
+<td>No se verificó la verdad del material.</td>
+</tr>
+<tr>
+<td><code>metadata.model_used</code></td>
+<td><code>false</code></td>
+<td>Este recorrido no utilizó un modelo.</td>
+</tr>
+<tr>
+<td><code>metadata.intake_record.mode</code></td>
+<td><code>operator-pasted-text-with-url</code></td>
+<td>La fuente de trabajo fue el texto pegado.</td>
+</tr>
+<tr>
+<td><code>metadata.intake_record.original_url</code></td>
+<td><code>https://example.invalid/piloto-operator</code></td>
+<td>Atribución aportada por quien usa la interfaz.</td>
+</tr>
+<tr>
+<td><code>metadata.intake_record.attribution</code></td>
+<td><code>operator-provided-url-not-fetched</code></td>
+<td>La URL no fue recuperada.</td>
+</tr>
+<tr>
+<td><code>metadata.intake_record.final_url</code>, <code>retrieved_at</code>, <code>bytes_read</code></td>
+<td><code>null</code></td>
+<td>No hay recibo de recuperación.</td>
+</tr>
+<tr>
+<td><code>claims[0].metadata.source_quote_type</code> después de editar</td>
+<td><code>paraphrase</code></td>
+<td>La redacción editada no se presenta como cita exacta.</td>
+</tr>
+<tr>
+<td><code>evidence[0].text</code> después de editar</td>
+<td><code>El registro sintético indica dos cajas.</code></td>
+<td>El extracto exacto se conserva por separado.</td>
+</tr>
+<tr>
+<td><code>claims[*].metadata.support_scope</code> y <code>evidence[*].metadata.support_scope</code></td>
+<td><code>attribution-only</code></td>
+<td>El vínculo respalda la atribución al material, no su verdad.</td>
+</tr>
+<tr>
+<td><code>metadata.relationships[*].type</code></td>
+<td><code>SUPPORTS_ATTRIBUTION</code></td>
+<td>Relación candidata de atribución entre extracto y afirmación.</td>
+</tr>
+<tr>
+<td><code>metadata.source_text_fingerprint</code> y hashes de <code>metadata.claim_drafting</code></td>
+<td>SHA-256 del texto, selección y registros</td>
+<td>Permiten comprobar consistencia de esta estructura; no certifican autoría ni veracidad externas.</td>
+</tr>
+</tbody>
+</table></div>
+<p>El guardado local utiliza una envoltura diferente: <code>version: operator-local-draft-v2</code>, <code>saved_at_utc</code> y <code>payload</code> con el caso. El espacio <strong>Revisión estructurada del resultado</strong> tiene su propio flujo de candidatos y su propia descarga JSON; no es necesario para aceptar este primer piloto.</p>
+<h2 id="doc-alcance-comprobado-y-límites">Alcance comprobado y límites</h2>
+<p>Las pruebas existentes relevantes pasaron: <strong>116 passed in 30.48s</strong> (<code>test_operator_pwa_product_actions</code>, <code>test_operator_pwa_record_integrity</code>, <code>test_operator_claim_decomposition</code>, <code>test_operator_primary_i18n</code> y <code>test_operator_private_session_boundary</code>).</p>
+<p>La ejecución automática de este ejemplo usó el script completo de Operator, el catálogo ES y el módulo de descomposición del repositorio dentro de su harness Node con DOM simulado. Se accionaron los manejadores registrados de envío, confirmación, revisión, edición, copia, guardado, carga y borrado. Los destinos dinámicos delegados se representaron con los selectores reales. Para estructuras JSON se adaptó el clonado al contexto VM, evitando una diferencia de prototipos del harness; no se cambió código del producto.</p>
+<p>Se obtuvo: dos afirmaciones y dos extractos; <code>triage</code>; edición marcada como paráfrasis; invalidación de la versión compartible tras editar; copia idéntica al JSON mostrado; conservación del guardado al limpiar lo actual; carga sin reatribuir la entrada principal; eliminación del guardado; limpieza final con cero registros. Se registraron <strong>cero llamadas a <code>fetch</code> en este recorrido de entrada</strong>. Esta observación no significa que cargar los archivos de la página carezca de tráfico de red.</p>
+<p>Esta evidencia no acredita renderizado real, accesibilidad con lector de pantalla, permiso real del portapapeles, confirmaciones nativas, persistencia entre sesiones o coincidencia de los bytes publicados. El borrado local tampoco retira copias ya pegadas, descargas, historial externo o copias realizadas por otras aplicaciones, ni constituye borrado forense. No se ofrece garantía de cifrado del almacenamiento local.</p>
+<h2 id="doc-aceptación-visible-pendiente">Aceptación visible pendiente</h2>
+<p>Una persona debe repetir los pasos 1–10 en la versión pública y registrar fecha, versión servida, resultado de cada paso y cualquier diferencia. Comprobar en escritorio y móvil que puede leer ambos extractos, editar sin perder el foco, operar con teclado y distinguir el borrado actual del guardado. Verificar el permiso del portapapeles y la persistencia real tras recargar únicamente si se guardó de forma explícita. No debe presentarse este recorrido como aceptado visualmente antes de observar esas comprobaciones.</p>
+<p>La aceptación de este piloto demuestra una utilidad pública acotada: preparar y transportar material de revisión con procedencia y límites. La activación de recuperación privada de URL, cualquier análisis de backend o ejecución operativa requieren evidencias y aceptación separadas.</p>
+<h2 id="doc-selectores-para-comprobar-el-recorrido">Selectores para comprobar el recorrido</h2>
+<div class="reader-table" role="region" aria-label="Tabla" tabindex="0"><table>
+<thead>
+<tr>
+<th>Control o lectura</th>
+<th>Selector</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>URL y texto de entrada</td>
+<td><code>#product_source_url</code>, <code>#product_source_text</code></td>
+</tr>
+<tr>
+<td>Tipo de fuente</td>
+<td><code>#signal_source_type</code></td>
+</tr>
+<tr>
+<td>Preparar / volver a preparar</td>
+<td><code>#product_analyze</code></td>
+</tr>
+<tr>
+<td>Instantánea y selección</td>
+<td><code>#product_source_preview_text</code>, <code>#product_source_selection</code></td>
+</tr>
+<tr>
+<td>Confirmación de pasajes</td>
+<td><code>#product_confirm_source</code></td>
+</tr>
+<tr>
+<td>Afirmaciones de este fixture</td>
+<td><code>#product_claim_0_0</code>, <code>#product_claim_1_0</code></td>
+</tr>
+<tr>
+<td>Revisar propuesta, por extracto</td>
+<td><code>[data-claim-group=&quot;0&quot;] [data-review-claim-proposal=&quot;0&quot;]</code>, <code>[data-claim-group=&quot;1&quot;] [data-review-claim-proposal=&quot;0&quot;]</code></td>
+</tr>
+<tr>
+<td>Confirmación de afirmaciones</td>
+<td><code>#product_confirm_claims</code></td>
+</tr>
+<tr>
+<td>Estado y resultado</td>
+<td><code>#product_wait_status</code>, <code>#product_output</code></td>
+</tr>
+<tr>
+<td>Compartir habilitado/deshabilitado</td>
+<td><code>#share_memory_link</code></td>
+</tr>
+<tr>
+<td>Abrir vista avanzada</td>
+<td><code>#product_show_advanced</code>, <code>#advanced_operator_console</code></td>
+</tr>
+<tr>
+<td>JSON y copia</td>
+<td><code>#build_json</code>, <code>#case_json</code>, <code>#copy_json</code></td>
+</tr>
+<tr>
+<td>Guardar, cargar y eliminar el guardado</td>
+<td><code>#save_draft</code>, <code>#load_draft</code>, <code>#delete_saved_draft</code></td>
+</tr>
+<tr>
+<td>Limpiar lo actual</td>
+<td><code>#clear_all</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Fuente del comportamiento: <code>site/operator/index.html</code>, <code>site/operator/i18n.v1.js</code> y <code>site/operator/claim-decomposition.v1.js</code> en el commit indicado. No se modificaron interfaz, runtime, conectores, AWS, credenciales ni publicación para preparar esta propuesta.</p>
+</article></div></main>
+<footer class="reader-footer"><p data-reader-copy="boundary">Las explicaciones ayudan a leer; los documentos originales mantienen su autoridad y su estado. La interfaz no certifica traducción ni producción.</p>
+<a href="../index.html" data-reader-home data-reader-copy="collection">Conoce y explora</a></footer></body></html>

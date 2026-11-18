@@ -43,6 +43,42 @@ class _InlineScriptParser(HTMLParser):
             self._parts = None
 
 
+class _IntakeControlsParser(HTMLParser):
+    """Read the shipped control state before any browser script can run."""
+
+    def __init__(self):
+        super().__init__()
+        self.controls = []
+        self.fieldsets = []
+        self._inside_intake = False
+        self._ancestors = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "form":
+            self._inside_intake = attrs.get("id") == "product_intake"
+        if not self._inside_intake:
+            return
+        if tag == "fieldset":
+            self.fieldsets.append(attrs)
+            self._ancestors.append(attrs)
+        if tag in {"input", "textarea", "select", "button"}:
+            self.controls.append({
+                "tag": tag,
+                "attrs": attrs,
+                "fieldsets": [ancestor.get("id") for ancestor in self._ancestors],
+                "disabled": "disabled" in attrs or any(
+                    "disabled" in ancestor for ancestor in self._ancestors
+                ),
+            })
+
+    def handle_endtag(self, tag):
+        if tag == "fieldset" and self._inside_intake:
+            self._ancestors.pop()
+        if tag == "form":
+            self._inside_intake = False
+
+
 FULL_PAGE_HARNESS = r'''
 const vm = require("node:vm");
 function fakeClassList() {
@@ -215,6 +251,141 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _intake_controls():
+    parser = _IntakeControlsParser()
+    parser.feed(_read(INDEX))
+    return parser
+
+
+def test_intake_has_no_native_source_submission_before_initialization():
+    intake = _intake_controls()
+    source_ids = {"product_source_url", "product_source_text", "signal_source_type"}
+    source_controls = [control for control in intake.controls if control["attrs"].get("id") in source_ids]
+    assert len(source_controls) == 3
+    # A native submission must have neither successful source controls nor an
+    # editable path to them before the local-only handler is ready.
+    assert [
+        control["attrs"]["name"] for control in source_controls
+        if control["attrs"].get("name") and not control["disabled"]
+    ] == []
+    assert all(control["disabled"] for control in intake.controls)
+    # Names are unnecessary to the ID-based local intake. Their absence also
+    # prevents serialization if a later change accidentally unlocks a control.
+    assert all(not control["attrs"].get("name") for control in source_controls)
+    submit = next(control for control in intake.controls if control["attrs"].get("id") == "product_analyze")
+    assert submit["attrs"]["type"] == "submit"
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+@pytest.mark.parametrize("interruption", [None, "before-submit-handler", "after-submit-handler"])
+def test_local_intake_unlocks_only_after_critical_initialization(interruption):
+    html = _read(INDEX)
+    scripts = _InlineScriptParser()
+    scripts.feed(html)
+    intake = _intake_controls()
+    prelude = FULL_PAGE_HARNESS.split(
+        'vm.runInContext(SOURCE, context, { filename: "operator-inline.js" });',
+        maxsplit=1,
+    )[0]
+    smoke = (
+        "const SOURCE = " + json.dumps(scripts.scripts[-1]) + ";\n"
+        + "const CLAIM_SOURCE = " + json.dumps(_read(CLAIM_DECOMPOSITION)) + ";\n"
+        + "const MARKUP_CONTROLS = " + json.dumps(intake.controls) + ";\n"
+        + "const MARKUP_FIELDSETS = " + json.dumps(intake.fieldsets) + ";\n"
+        + "const INTERRUPTION = " + json.dumps(interruption) + ";\n"
+        + prelude
+        + r'''
+// The real HTML supplies the initial attributes and fieldset ancestry. This
+// narrow DOM adapter exposes effective disabled state; browser navigation and
+// physical Enter submission are deliberately left to browser acceptance.
+for (const attrs of MARKUP_FIELDSETS) {
+  const fieldset = byId(attrs.id);
+  fieldset.tagName = "FIELDSET";
+  fieldset.disabled = Object.hasOwn(attrs, "disabled");
+}
+for (const control of MARKUP_CONTROLS) {
+  const node = byId(control.attrs.id);
+  node.disabled = Object.hasOwn(control.attrs, "disabled");
+  node.parentElement = control.fieldsets.length
+    ? byId(control.fieldsets[control.fieldsets.length - 1]) : null;
+}
+function effectivelyDisabled(node) {
+  for (let ancestor = node; ancestor; ancestor = ancestor.parentElement) {
+    if (ancestor.disabled) return true;
+  }
+  return false;
+}
+const input = byId("product_source_text");
+if (!effectivelyDisabled(input)) {
+  throw new Error("source intake is editable before local initialization");
+}
+let submitRegistered = false;
+const form = byId("product_intake");
+const register = form.addEventListener;
+form.addEventListener = function(type, listener) {
+  if (type === "submit") {
+    if (INTERRUPTION === "before-submit-handler") throw new Error("synthetic initialization interruption");
+    submitRegistered = true;
+  }
+  return register.call(this, type, listener);
+};
+if (INTERRUPTION === "after-submit-handler") {
+  Object.defineProperty(byId("product_loader"), "innerHTML", {
+    get() { return ""; },
+    set() { throw new Error("synthetic initialization interruption"); }
+  });
+}
+let initializationError;
+try {
+  vm.runInContext(SOURCE, context, {filename: "operator-inline.js"});
+} catch (error) {
+  initializationError = error;
+}
+(async () => {
+  if (INTERRUPTION) {
+    if (initializationError?.message !== "synthetic initialization interruption") {
+      throw new Error(`wrong initialization interruption: ${initializationError?.message}`);
+    }
+    if (submitRegistered !== (INTERRUPTION === "after-submit-handler")) {
+      throw new Error("initialization interrupted on the wrong side of handler registration");
+    }
+    // Input listeners can be installed earlier than the submit handler. Even
+    // if one enables the child button, the enclosing intake must stay closed.
+    input.value = "El registro sintético indica dos cajas.\nEl recuento sintético indica tres cajas.";
+    await input.emit("input");
+    if (!effectivelyDisabled(input) || !effectivelyDisabled(byId("product_analyze"))) {
+      throw new Error("interrupted initialization unlocked source intake");
+    }
+    if (fetchCalls !== 0) throw new Error("interrupted public initialization fetched material");
+    return;
+  }
+  if (initializationError) throw initializationError;
+  if (!submitRegistered || effectivelyDisabled(input)) {
+    throw new Error("completed local initialization did not unlock intake");
+  }
+  const fixture = "El registro sintético indica dos cajas.\nEl recuento sintético indica tres cajas.";
+  byId("product_source_url").value = "https://example.invalid/piloto-operator";
+  input.value = fixture;
+  byId("signal_source_type").value = "automatic";
+  await input.emit("input");
+  if (effectivelyDisabled(byId("product_analyze"))) throw new Error("local submit remained disabled after input");
+  let prevented = false;
+  await form.emit("submit", {preventDefault() { prevented = true; }});
+  if (!prevented) throw new Error("local submit did not cancel native transmission");
+  if (byId("product_source_preview").hidden
+      || byId("product_source_preview_text").textContent !== fixture) {
+    throw new Error("local submission did not preserve the complete synthetic source snapshot");
+  }
+  if (fetchCalls !== 0) throw new Error("local public submission fetched material");
+})().catch((error) => { console.error(error); process.exitCode = 1; });
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
 def _named_function(html: str, name: str) -> str:
     match = re.search(
         rf"    function {re.escape(name)}\([^)]*\) \{{.*?\n    \}}",
@@ -223,6 +394,221 @@ def _named_function(html: str, name: str) -> str:
     )
     assert match is not None, name
     return match.group(0)
+
+
+def _run_claim_focus_scenario(body):
+    html = _read(INDEX)
+    scripts = _InlineScriptParser()
+    scripts.feed(html)
+    prelude = FULL_PAGE_HARNESS.split(
+        'vm.runInContext(SOURCE, context, { filename: "operator-inline.js" });',
+        maxsplit=1,
+    )[0]
+    scenario = r'''
+const firstExcerpt = "El registro sintético indica dos cajas. El recuento sintético indica tres cajas. El tercer registro sintético sigue abierto.";
+const secondExcerpt = "El otro lote sintético contiene una caja.";
+const canonical = canonicalSource(`${firstExcerpt}\n${secondExcerpt}`);
+const selectedExcerpts = [firstExcerpt, secondExcerpt].map((text, index) => {
+  const start = index === 0 ? 0 : Array.from(firstExcerpt).length + 1;
+  return {
+    excerpt_id: `excerpt-${index + 1}`,
+    text,
+    span_start: start,
+    span_end: start + Array.from(text).length,
+    span_unit: "unicode-code-point",
+    source_text_fingerprint: canonical.fingerprint,
+    passage_scope: "complete-candidate-passage",
+    selection_origin: "human-confirmed"
+  };
+});
+currentConfirmedSourceSelection = {
+  source_text_fingerprint: canonical.fingerprint,
+  excerpts: selectedExcerpts
+};
+currentClaimDraftSet = claimDraftModel.proposeClaimSet(selectedExcerpts, {hashText: sha256Hex});
+renderClaimDraftGroups();
+renderClaimDraftValidation();
+if (currentClaimDraftSet.groups[0].claims.length !== 3
+    || currentClaimDraftSet.groups[1].claims.length !== 1) {
+  throw new Error("synthetic source did not produce the hand-checked three-plus-one proposals");
+}
+function findControl(selector) {
+  const node = $("product_claim_draft_groups").querySelector(selector);
+  if (!node) throw new Error(`missing rendered control: ${selector}`);
+  return node;
+}
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+''' + body
+    smoke = (
+        "const SOURCE = " + json.dumps(scripts.scripts[-1]) + ";\n"
+        + "const CLAIM_SOURCE = " + json.dumps(_read(CLAIM_DECOMPOSITION)) + ";\n"
+        + "const I18N_SOURCE = " + json.dumps(_read(OPERATOR_I18N)) + ";\n"
+        + "const SCENARIO = " + json.dumps(scenario) + ";\n"
+        + prelude
+        + r'''
+// Parse only the claim renderer's actual article, textarea and button output.
+// Replacing innerHTML disconnects every old control and resets its focus to
+// BODY. The full application and model run unchanged against this DOM adapter;
+// real keyboard/Tab and native browser focus remain separate acceptance.
+document.activeElement = document.body;
+let renderedControls = [];
+const claimContainer = byId("product_claim_draft_groups");
+function attributes(raw) {
+  const result = {};
+  for (const match of raw.matchAll(/([\w-]+)(?:="([^"]*)")?/g)) {
+    result[match[1]] = match[2] ?? "";
+  }
+  return result;
+}
+function renderedNode(attrs, group, text = "") {
+  const node = element(attrs.id || "");
+  node.attributes = attrs;
+  node.group = group;
+  node.value = text;
+  node.hidden = Object.hasOwn(attrs, "hidden");
+  node.isConnected = true;
+  node.focus = () => {
+    if (node.isConnected && !node.hidden) document.activeElement = node;
+  };
+  if (attrs.id) nodes.set(attrs.id, node);
+  return node;
+}
+claimContainer.querySelector = (selector) => {
+  const group = selector.match(/^\[data-claim-group="(\d+)"\]\s+/);
+  const leaf = (group ? selector.slice(group[0].length) : selector)
+    .match(/^\[([\w-]+)="([^"]*)"\]$/);
+  if (!leaf) throw new Error(`unsupported focus-test selector: ${selector}`);
+  return renderedControls.find((node) => (
+    (!group || node.group === group[1]) && node.getAttribute(leaf[1]) === leaf[2]
+  )) || null;
+};
+let renderedHtml = "";
+Object.defineProperty(claimContainer, "innerHTML", {
+  get() { return renderedHtml; },
+  set(html) {
+    renderedHtml = html;
+    for (const old of renderedControls) {
+      old.isConnected = false;
+      if (old.id) nodes.delete(old.id);
+      if (document.activeElement === old) document.activeElement = document.body;
+    }
+    renderedControls = [];
+    for (const article of html.matchAll(/<article\b([^>]*)>([\s\S]*?)<\/article>/g)) {
+      const group = attributes(article[1])["data-claim-group"];
+      for (const control of article[2].matchAll(/<(textarea|button)\b([^>]*)>([\s\S]*?)<\/\1>/g)) {
+        renderedControls.push(renderedNode(attributes(control[2]), group, control[3]));
+      }
+    }
+  }
+});
+document.getElementById = (id) => (
+  /^product_claim_\d+_\d+$/.test(id) ? nodes.get(id) || null : byId(id)
+);
+vm.runInContext(I18N_SOURCE, context, {filename: "i18n.v1.js"});
+// These records contain JSON values only. Clone them in the VM's own realm so
+// the real model's plain-object validation is not changed by the Node adapter.
+vm.runInContext("globalThis.structuredClone = (value) => JSON.parse(JSON.stringify(value));", context);
+vm.runInContext(SOURCE, context, {filename: "operator-inline.js"});
+vm.runInContext(SCENARIO, context, {filename: "claim-focus-scenario.js"});
+'''
+    )
+    completed = subprocess.run(
+        [NODE, "-"], input=smoke, text=True, encoding="utf-8", capture_output=True, check=False
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+@pytest.mark.parametrize("setup,trigger,action,target,expected_text", [
+    (
+        "", '[data-claim-group="0"] [data-review-claim-proposal="1"]',
+        "reviewClaimProposal(0, 1)", '[data-claim-group="0"] [data-claim-text="1"]',
+        "El recuento sintético indica tres cajas.",
+    ),
+    (
+        "", '[data-claim-group="1"] [data-review-claim-proposal="0"]',
+        "reviewClaimProposal(1, 0)", '[data-claim-group="1"] [data-claim-text="0"]',
+        "El otro lote sintético contiene una caja.",
+    ),
+    (
+        "", '[data-claim-group="0"] [data-remove-claim-draft="1"]',
+        "removeClaimDraft(0, 1)", '[data-claim-group="0"] [data-claim-text="1"]',
+        "El tercer registro sintético sigue abierto.",
+    ),
+    (
+        "", '[data-claim-group="0"] [data-remove-claim-draft="2"]',
+        "removeClaimDraft(0, 2)", '[data-claim-group="0"] [data-claim-text="1"]',
+        "El recuento sintético indica tres cajas.",
+    ),
+    (
+        "", '[data-claim-group="1"] [data-remove-claim-draft="0"]',
+        "removeClaimDraft(1, 0)", '[data-add-claim-draft="1"]', None,
+    ),
+    (
+        "removeClaimDraft(0, 1);", '[data-claim-group="0"] [data-restore-claim-proposal="1"]',
+        "restoreClaimProposal(0, 1)", '[data-claim-group="0"] [data-claim-text="2"]',
+        "El recuento sintético indica tres cajas.",
+    ),
+], ids=["review-same-index", "review-other-group", "remove-middle", "remove-last", "remove-only", "restore-appended"])
+def test_proposal_action_focuses_the_new_same_group_control(setup, trigger, action, target, expected_text):
+    _run_claim_focus_scenario(
+        setup + "\n"
+        + "const trigger = findControl(" + json.dumps(trigger) + ");\n"
+        + 'const oldTarget = $("product_claim_draft_groups").querySelector(' + json.dumps(target) + ");\n"
+        + r'''
+const sourceBefore = JSON.stringify(currentConfirmedSourceSelection);
+const excerptsBefore = currentClaimDraftSet.groups.map((group) => group.exact_excerpt).join("\n");
+$("product_confirm_claims").checked = true;
+trigger.focus();
+'''
+        + action + ";\n"
+        + "const target = findControl(" + json.dumps(target) + ");\n"
+        + "const expectedText = " + json.dumps(expected_text) + ";\n"
+        + r'''
+assert(document.activeElement === target && target.isConnected,
+  `proposal action lost focus; wanted ${target.id || target.getAttribute("data-add-claim-draft")}`);
+assert(target !== oldTarget && (!oldTarget || !oldTarget.isConnected) && !trigger.isConnected,
+  "focus was not restored to a newly rendered connected control");
+if (expectedText !== null) assert(target.value === expectedText, "focused the wrong surviving or restored claim");
+assert(JSON.stringify(currentConfirmedSourceSelection) === sourceBefore, "proposal action changed the source selection");
+assert(currentClaimDraftSet.groups.map((group) => group.exact_excerpt).join("\n") === excerptsBefore,
+  "proposal action changed an exact source excerpt");
+assert(currentConfirmedClaimSet === null && currentClaimDraftSet.confirmation === null
+  && !$("product_confirm_claims").checked, "proposal action retained a claim-set confirmation");
+'''
+    )
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+@pytest.mark.parametrize("setup,action", [
+    ("", "reviewClaimProposal(99, 0)"),
+    ("", "reviewClaimProposal(0, 99)"),
+    ("addClaimDraft(0);", "reviewClaimProposal(0, 3)"),
+    ('currentClaimDraftSet.groups[0].proposal_reviews[1].review_disposition = "omitted";', "reviewClaimProposal(0, 1)"),
+    ("", "removeClaimDraft(99, 0)"),
+    ("", "removeClaimDraft(0, 99)"),
+    ("", "restoreClaimProposal(99, 0)"),
+    ("", "restoreClaimProposal(0, 99)"),
+    ("", "restoreClaimProposal(0, 0)"),
+    ("removeClaimDraft(0, 1); for (let index = 0; index < 17; index += 1) addClaimDraft(1);", "restoreClaimProposal(0, 1)"),
+], ids=["review-group", "review-claim", "review-human-row", "review-omitted", "remove-group", "remove-claim",
+        "restore-group", "restore-proposal", "restore-not-omitted", "restore-total-limit"])
+def test_invalid_proposal_action_preserves_focus_and_claim_state(setup, action):
+    _run_claim_focus_scenario(
+        setup + "\n"
+        + r'''
+const trigger = findControl('[data-add-claim-draft="0"]');
+trigger.focus();
+const before = JSON.stringify(currentClaimDraftSet);
+'''
+        + action + ";\n"
+        + r'''
+assert(document.activeElement === trigger && trigger.isConnected, "guarded action moved focus or rerendered controls");
+assert(JSON.stringify(currentClaimDraftSet) === before, "guarded action changed the claim set");
+'''
+    )
 
 
 def _operator_i18n_node_prelude() -> str:
@@ -603,7 +989,7 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert "fetch(sourceUrl" not in html
     assert "fetch(url" not in html
     assert '<form class="panel full product-intake"' in html
-    assert 'id="product_source_url" name="source_url" type="url"' in html
+    assert 'id="product_source_url" type="url"' in html
     assert 'id="product_analyze" type="submit"' in html
     assert 'id="product_source_preview"' in html
     assert 'id="product_confirm_source" type="checkbox"' in html
@@ -2697,7 +3083,7 @@ def test_operator_context_limit_is_disclosed_and_visible_in_every_locale():
     assert "pasted text is used in full as the local source" in html
     assert "the 1,200-character context limit does not apply" in html
     assert 'id="product_source_text"' in html
-    assert 'id="product_source_text" name="source_text"' in html
+    assert 'id="product_source_text" dir="auto"' in html
     assert not re.search(r'id="product_source_text"[^>]*\bmaxlength=', html)
     assert "operatorContextCard(currentCaseMetadata.operator_context)" in html
 

@@ -5,7 +5,10 @@ registered under governance issue #2118. The protected integration candidate
 reconstructs design #2109, inactive adapter #2111 and CI #2119 directly on main,
 without inheriting their unsigned proposal commits. Registration in a candidate
 does not by itself prove protected-main integration.
-Nothing here connects the adapter to the own index, SearchHost, Windows, Azure
+Issue #2157 adds the inactive gateway from #2114 and its offline console suite
+without inheriting the unsigned stack. The existing workflow path filter already
+covers the gateway; the workflow and its template are unchanged.
+Nothing here connects the adapter or gateway to the own index, SearchHost, Windows, Azure
 or a remote API. No Brave account, key, service or billing is configured.
 
 ## Reproducible boundary
@@ -35,11 +38,23 @@ required by the suite's owned-listener HTTP/redirect/proxy checks.
 `build-test.sh` clears the inherited environment, uses fresh home/package/cache
 directories, clears NuGet sources/fallback folders and disables audit, telemetry,
 diagnostics and workload-update notification. It rejects an SDK other than
-10.0.403 and any resolved package dependency or feed. The only dependency is the
-test project's reference to the adapter library; framework packs come from the
-fixed SDK. Build uses `--no-restore`; run uses `--no-build --no-restore`.
-The executable console suite's exit status is authoritative, not `dotnet test`
-discovery. No continue-on-error, result persistence or provider requests are used.
+10.0.403 and any resolved package dependency or feed. Dependencies are local
+project references; framework packs come from the fixed SDK. Build uses
+`--no-restore`; run uses `--no-build --no-restore`.
+The executable console suites' exit statuses are authoritative, not `dotnet test`
+discovery. In addition, each suite must emit exactly one complete final summary
+and the expected number of distinct PASS cases: adapter59/59 and gateway39/39.
+Missing, failed, zero, duplicate or incomplete results fail the job, including a
+gateway37/37 result: this is the Linux contract, not a Windows run.
+No continue-on-error, provider request or result persistence is introduced;
+temporary console output is removed with the runner's scratch state.
+
+If the candidate contains `gateway/`, its test project is mandatory. Both suites
+are cold-restored and all four project-assets files must contain zero packages
+and zero NuGet sources. A historical adapter-only candidate retains two-assets
+validation and adapter59/59 acceptance, with the explicit message
+`Gateway NOT RUN: historical adapter-only candidate`. That path provides no
+gateway evidence. Direct core-runner use still does not certify isolation.
 
 Direct local reproduction of the core commands, after preparing that SDK:
 
@@ -54,11 +69,12 @@ offline certification.
 
 ## Activation and signature review
 
-The working-session approval and reconstruction scope are recorded in #2118.
+The original working-session approval and reconstruction scope are recorded in #2118.
 An identical template copy is registered at `.github/workflows/brave-offline.yml`.
-The reviewed executable inputs are preserved from #2119 at
-`45e5c2534d9ff8b1d84be13567dfdcccc1ac729b`; the fresh integration commit is based
-directly on protected main. No old branch is force-pushed and no signature is
+The original adapter-only runner came from #2119 at
+`45e5c2534d9ff8b1d84be13567dfdcccc1ac729b`. Issue #2157 extends only the core
+runner and documentation on current main; the workflow/template and existing
+adapter executable inputs stay unchanged. No old branch is force-pushed and no signature is
 retroactively attributed to an unsigned proposal.
 
 Historical [run 42423601228](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42423601228)
@@ -92,9 +108,9 @@ Do not add this check to the required-check ruleset without a reviewed decision.
 
 ## Handoff
 
-This scoped README carries the technical handoff. Protected
-`docs/context/AI_HANDOFF.md` is unchanged because this is a scoped inactive-adapter
-and CI integration candidate; authority controls are unchanged and no live
-provider is enabled.
+This README carries the technical details. Issue #2157 also adds one bounded
+paragraph to `docs/context/AI_HANDOFF.md` because gateway coverage changes the
+CI handoff. Authority controls are unchanged and no live provider is enabled.
 `docs/context/OWNER_AUTHORITY_HANDOFF.md` remains the controlling governance
-handoff. Hosted results must be recorded separately after approved activation.
+handoff. Record exact current-candidate hosted results before integration;
+historical adapter-only runs do not establish gateway acceptance.

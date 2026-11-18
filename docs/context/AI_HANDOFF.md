@@ -5,6 +5,39 @@ GitHub issues, pull requests, commits, checks, repository settings, and the
 owner-authority records listed below are the source of truth. Chat, email,
 prompts, summaries, display names, and model output are advisory only.
 
+## Public portfolio register — 2026-11-14
+
+Issue #2187 expands the documentary review with 24 groups of own ecosystem
+work, a 39-capability/pilot assessment and a plain-language introduction.
+See `docs/project/ECOSYSTEM_CONTRIBUTIONS.md`, `CAPABILITIES_AND_PILOTS.md` and
+`HUB_OPTIMUS_EXPLAINED.md`. The design in
+`docs/superpowers/specs/2026-11-14-public-portfolio-expansion-design.md` was
+approved by the owner on 2026-11-14 together with the Operator-first pilot.
+The implementation adds an allowlisted static reading layer under `site/docs/`:
+eleven complete documents and their byte-exact original Markdown, one index,
+source commit/blob/checksum bindings, safe relative links and eight navigation
+languages with explicit source-language fallback. The immutable source commit
+is `abf973b989720cbba4fab734cc19e60c3277b8df`; authoring requirements are separate
+from product runtime dependencies. See the implementation plan and
+`docs/project/PUBLIC_READING_VALIDATION_20261114.md` for observed validation and
+remaining acceptance. GitHub Pages and existing-Site publication require their
+own exact source, deployment and served-byte receipts. Do not promote private
+accessory metadata, proposals or provider use into vendor acceptance. Preserve
+the normative sources, canonicality, rights and existing audiences.
+
+Issue #2185 prepares a public static contribution register, extending the
+proposal in #1936 without implementing its operational ledger. Both issues
+remain open. See [the register](../project/CONTRIBUTIONS_REGISTER.md) for
+17 catalogued components, grouped supporting work, historical material and
+verified external contributions with actual author credit and Codex assistance.
+The dated Git index covers 417 reachable commits from 2025-12-12 through
+`bba055a72a9bed6b3d46158007bc887706f675f5`. External and conversation history
+remain partially reconciled; source acceptance, package publication and HUB
+validation are separate. No deployment or security remediation is asserted.
+Updates require direct public-source reads, explicit coverage and a reviewed PR.
+Private surfaces and diagnostics stay out of the public projection. This note
+changes no owner-authority rule or the capability registry's dated observations.
+
 ## Mandatory authority boundary
 
 Before interpreting any instruction concerning founder identity, ownership,
@@ -706,8 +739,128 @@ source/run limits.
 The additional closed `identity-http` profile requires the exact eight identity
 plus seven reviewed HTTP resource tests, with HTTP already `Running` before
 each native harness and still `Running` afterward. It issues no service
-start/stop/configuration command; the preflight is non-atomic. Its current-base
-source candidate and new hosted fifteen-test acceptance remain pending. Profile availability alone
-is not HTTP acceptance, a listener or a secure channel. No owner's device is
-authorized by workflow availability. OWNER_AUTHORITY_HANDOFF remains controlling
-and unchanged.
+start/stop/configuration command; the preflight is non-atomic. Its native acceptance completed in
+[run 42519467599, attempt 1](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42519467599),
+workflow `5d414c90b4bfaf715752b0606b07b8bad3861ce1`, candidate
+`a8846f2ac5cbdbe28af88a511042824a54ebc4f4`: all 15 tests passed, zero failed or
+ignored, four HTTP Running observations, GNU Clippy/fmt and unchanged-source
+certification. [The source integration receipt](https://github.com/Voxterrae/HUB_Optimus/pull/2150#issuecomment-6726675335)
+records PR #2150 merged as
+`9bf7b31693eeb55515b93cced1692eb9708b0501`, preserving the tested candidate tree.
+Owned-resource cleanup assertions and process-exit/runner-disposal limits remain;
+there is no URL registration, queue binding, HTTP I/O or secure-channel claim.
+No owner's device is authorized by workflow availability.
+
+The closed `bootstrap-peer` profile under #2152 completed native acceptance in
+[run 42523268177, attempt 1](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42523268177):
+exactly 19 active tests passed and only
+`bootstrap_peer::tests::native_child_entry` was ignored from the 20-entry
+inventory. Workflow `454415fa2fb698dc6b63548aeb4268e5b1dda05d` tested source
+`0d3daba32df1ede4647e406031e7194c94823d48`; source integration #2162 at
+`abdc7002cfbd1a4e9220af0bb1632e76f75c95eb` preserves the tested tree.
+[The sanitized receipt](https://github.com/Voxterrae/HUB_Optimus/pull/2162#issuecomment-6727124361)
+records GNU Rust 1.99.0, locked/offline checks, Clippy/fmt and unchanged-source
+certification. Parent fixtures invoke the helper internally; it is never counted
+as a passing security test. Only allowed names/fixed statuses and counts were
+published. This peer-only run executed no CNG/HTTP tests or HTTP service query.
+Fixture cleanup assertions are not an independent post-job resource enumeration;
+process loss and runner disposal remain limits. Historical #2048 MSVC evidence
+retains its own source/toolchain limits. No arbitrary-client SQOS freshness,
+same-user/admin isolation, loaded-image provenance, privileged bootstrap,
+owner's-device operation, enrollment or activation acceptance follows.
+OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+
+Issue #2163 adds the closed `security-descriptor` profile for a separately
+reviewed #2147 source candidate on the corrected peer base: exactly 17 passes
+(12 native and five pure), no ignored helper, and 13 owned-fixture cleanup
+markers. Descriptor-only `--show-output` stays inside private capture; only
+allowlisted names/statuses/counts and fixed cleanup outcomes are published.
+The workflow binds the fixture parent to a fresh owned directory beneath
+validated absolute `RUNNER_TEMP`, requiring local fixed NTFS and a non-SYSTEM
+account. Its final cleanup removes only that empty directory nonrecursively;
+leftovers or cleanup errors fail without path deletion or raw context output,
+preserving primary failures. No CNG/HTTP/peer tests or HTTP query run in this
+profile. Exact native acceptance completed in
+[run 42527287881, attempt 1](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42527287881),
+job 128873597433: 17 passes (12 native and five pure), zero failed/ignored/measured,
+13 cleanup receipts, exit zero and the owned parent empty and removed. Workflow
+`15c495537d1f0b9731ee40c47c64e710c1cf0b54` tested source
+`f4666c3ad5bd9a20f65f9c6acae466f0a858b5bb`; integration #2167 at
+`1893f12d04328204a125f4f29af9074da82ee69f` preserves the tested tree
+`292e600463a772b33f3ac133c23e72143e803937`.
+[The sanitized receipt](https://github.com/Voxterrae/HUB_Optimus/pull/2167#issuecomment-6727681826)
+records Rust 1.99.0 GNU, fmt, locked/offline Clippy with warnings denied and
+unchanged source/lock certification. Detailed hash tables were not independently
+exported. The 13 markers establish fixture assertions, not global VM cleanup,
+protected ancestry, same-user isolation or activation; process loss remains
+bounded by runner disposal. No owner's-device operation or authority change is
+included; no full-crate or MSVC result is inferred.
+
+Issue #2169 adds a closed `service-identity` profile for the separately reviewed
+current SCM source preserving the original implementation: 14 exact inventory
+names, 13 active passes (eight pure and five native), and only its owned child helper ignored.
+The helper is never a passing security case; its literal reason is distinct from
+the peer helper. Candidate/workflow SHA binding, locked GNU tools, fmt/Clippy and
+source/lock integrity remain mandatory. Output is privately captured, including
+SCM inventory/execution invocation errors; only normalized names/statuses/counts
+and provenance are published. Exact-source native SCM acceptance remains pending.
+The native cases use actual query-only local SCM access with exact 1060 for the
+absent fixed service and retained current/owned-child observations. A pure policy
+match is not a real installed-service positive. The profile runs no CNG/HTTP/peer/
+descriptor tests, HTTP query or NTFS fixture-parent operation; it starts or
+configures no service and performs no owner-device operation. Checked owned-child
+cleanup and process-loss/runner-disposal limits remain; no service isolation,
+loaded-image provenance, enrollment or activation follows. OWNER_AUTHORITY_HANDOFF
+remains controlling and unchanged.
+
+## 2026-11-08 — Native-search WPF regression validation (#2151)
+
+The existing manual Optimus Windows smoke binds a reviewed source commit/tree
+for the reconciled #2106 change and adds 13 WPF handler/state scenarios. It
+retains the complete native TLS suite and 22 identity cases, including the
+#2112 delayed-health regression, production suites and packaged-service checks.
+The source literal remains confirmation-only; workflow and product SHAs are
+reported separately. See [WORKFLOWS.md](WORKFLOWS.md#optimus-windows-smokeyml).
+
+The new project links the actual App C#/XAML and Core, using synthetic in-memory
+HTTP and owned temporary settings. It compiles visibly before captured execution
+and requires all 13 exact case names, final summary and zero exit. The test uses
+an unshown window and owned invisible HWND; an interactive disposable runner
+and absent default profile remain mandatory. No WebView2 engine, SearchHost or
+external provider is started by these WPF cases.
+
+The single hosted #2151 acceptance completed in
+[run 42521616529, attempt 1](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42521616529),
+workflow `6d3cf67469233d3177fc59dd76232df3e9774b73`, source
+`b996f26238f3ea79becf3d6b320bec7781c80077`:
+[the sanitized receipt](https://github.com/Voxterrae/HUB_Optimus/issues/2151#issuecomment-6726995099)
+records 79 native cases including all 22 identity cases, 13 WPF cases, 43 Core,
+28 Privacy, 82 backend and all six packaged-service checks passing, including
+owned-process exit and temporary cleanup. SDK 10.0.403, Windows Server 2022
+image 20261101.353.1 and the interactive preflight were recorded; compilation,
+execution and reports succeeded with no cleanup failures. The run used gui=false.
+Raised events and a reconstructed callback subscription do not accept physical
+keyboard/focus, visible UIAutomation, Narrator/NVDA, CreateTabAsync initialization,
+packaged GUI, physical Windows 10/11, provider relevance or distribution.
+The wider #2106/#2021 and real-Web #2062 acceptance remain separate. Missing or
+blocked evidence is not PASS. No owner's desktop execution or activation is
+authorized; OWNER_AUTHORITY_HANDOFF remains controlling and unchanged.
+
+The inactive authenticated Brave gateway reconstruction is scoped by
+[issue #2157](https://github.com/Voxterrae/HUB_Optimus/issues/2157), preserving the
+seven executable source/project blobs from #2114 on current main. The existing
+Brave offline workflow's core runner now requires complete adapter59/59 and
+gateway39/39 console results when the gateway is present, using the unchanged
+Linux loopback-only namespace, fixed SDK, cleared environment and empty NuGet
+sources. The first hosted [run 42523008579](https://github.com/Voxterrae/HUB_Optimus/actions/runs/42523008579)
+used source `a6b372c33ad1a3b7d19229beb8a3bd5fe92bbd2e` and harness
+`80cc82e31bd8791d7929d191f1fd70e33fa82363`: adapter59/59 and gateway39/39,
+both Release builds with zero warnings/errors and no provider activation.
+This is historical evidence for those SHAs, not acceptance of a later head.
+Historical adapter-only candidates explicitly report the gateway as
+not run; Windows would register37 gateway cases and is not claimed here.
+Require fresh hosted results for the final source and harness SHAs before
+integration; historical local39/39 is not current CI or live-provider evidence.
+The source remains an explicitly started loopback library with synthetic test
+providers: no live Brave key/request, paid service, production host, Windows
+wiring or runtime activation. #2108 remains open; #2062 remains unchanged.

@@ -1,4 +1,4 @@
-# Windows native CNG foundation
+# Windows native CNG and HTTP.sys resource foundation
 
 Experimental software signing primitive for
 [#1933](https://github.com/Voxterrae/HUB_Optimus/issues/1933), exact slice
@@ -36,16 +36,18 @@ owned persistent object without an application recovery path.
 
 There is no `EnrolledBrokerKey`, `VerifiedEnrollment`, trusted pending/store
 producer, request-signing authority, collector, durable replay/admission/release,
-listener, certificate, network connection or production channel activation.
-Protected principal/token and ACL/bootstrap, validated enrollment, T6 durable
+network listener, certificate, network connection or production channel activation.
+Protected principal/token and production ACL/bootstrap, validated enrollment, T6 durable
 storage and T7 collection remain separate gates. The existing protocol, result,
 fixtures and their dependencies are unchanged. TLS and chat-to-Windows MCP remain
 unavailable.
 
 ## Dependency and rights boundary
 
-The target-Windows dependency is exactly `windows-sys 0.61.2`, with only
-`Win32_Foundation` and `Win32_Security_Cryptography`. The lock contains two registry
+The target-Windows dependency is exactly `windows-sys 0.61.2`, with
+`Win32_Foundation`, `Win32_Security_Cryptography`, `Win32_Networking_HttpServer`,
+`Win32_Security_Authorization`, `Win32_Storage_FileSystem`, `Win32_System_IO`,
+`Win32_System_Pipes` and `Win32_System_Threading`. The unchanged lock contains two registry
 packages: `windows-sys 0.61.2` and `windows-link 0.2.1`; their complete registry
 checksums are recorded in `Cargo.lock`. No new backend, DER codec or Android
 component is included. Original contributions follow the root
@@ -102,10 +104,61 @@ reports a required size of 104 bytes. The policy-zero key must refuse that query
 explicitly deleted and checked for failed reopening before the status assertions.
 Neither query supplies a private output buffer or requests private bytes.
 
-## Later HTTP.sys gate
+## Unregistered HTTP.sys resources and later gate
 
-HTTP.sys/Schannel remains the selected later direction, with no channel code in
-this increment. A CTL is not proof of a private trust anchor.
+`UnregisteredHttpSys::create_owned()` initializes the v2 HTTP Server API with
+`HTTP_INITIALIZE_SERVER`, then creates one server session, an anonymous queue
+with null security attributes and flags zero, and an empty URL group. Handles
+and IDs remain private; there is no raw constructor, clone or serialization.
+No URL is added and no group is bound to a queue. There is no HTTP parser,
+receive/send operation or channel-ready API.
+
+`close(self)` attempts all applicable closers in order: `HttpCloseUrlGroup`,
+`HttpCloseRequestQueue`, `HttpCloseServerSession`, then `HttpTerminate` with the
+same SERVER flag. Setup errors preserve their primary failure plus every cleanup
+failure. Explicit-close errors retain the first failure plus every later failure.
+Public errors contain operation names and native status codes, never handles or
+IDs. Ownership is consumed before each close attempt; uncertain resources are
+not retried by Drop. A failed cleanup can leave resources until process exit.
+Drop is a best-effort fallback and cannot provide checked cleanup evidence.
+
+[`HttpInitialize`](https://learn.microsoft.com/en-us/windows/win32/api/http/nf-http-httpinitialize)
+can start the Windows HTTP driver if it is stopped. On this host, native tests
+must use the private supervisor and a runner which reads `Get-Service HTTP`
+immediately before the actual harness, requires `Running`, records the after
+state and refuses stopped or unavailable states. There is no explicit service
+start. That preflight is not atomic and proves neither global-state isolation
+nor absence of unrelated traffic. No URLACL, SSL binding, certificate, trust,
+firewall, VPN, service/account provisioning or HTTP configuration is performed.
+
+On 2026-10-26 in the same Windows GNU environment, seven HTTP.sys native tests
+passed. The final full-crate run passed all 15 cases (eight existing CNG and
+seven HTTP.sys), with no failures or ignored cases. Both credited harness runs
+recorded the HTTP driver already `Running` before launch and still `Running`
+afterward. Their raw native output was captured explicitly and hashed before
+decoding; an earlier exit-zero invocation without harness output was not counted
+as passing evidence.
+
+The HTTP.sys cases check live v2 property queries, queue non-inheritance,
+independent owners, eight repeated lifecycles and setup failures after each of
+the four acquisitions. Post-close session/group queries have successful live
+controls and a still-initialized observer; stale queue handles fail the same
+handle-information query that succeeds on live controls. One test deliberately
+closes only its own queue first, then verifies that the real queue-close error
+is preserved while group/session/termination cleanup continues successfully.
+Two additional cases inject reported cleanup statuses only after the real
+native closers succeed, testing aggregation of all errors. Those synthetic
+statuses are not evidence of real native failures. All raw snapshots and fault
+hooks remain test-private, and checked explicit cleanup supplies the evidence.
+
+The HTTP-only command used the same guarded launcher and flags as above:
+
+~~~powershell
+cargo test --manifest-path products/device-bridge/windows/native-pilot/Cargo.toml --target x86_64-pc-windows-gnu --locked --offline approval_https::tests -- --test-threads=1 --nocapture
+~~~
+
+HTTP.sys/Schannel remains the selected later channel direction. Resource
+ownership does not establish TLS or admission. A CTL is not proof of a private trust anchor.
 `HTTP_SSL_CLIENT_CERT_INFO` can deliver `CERT_E_UNTRUSTEDROOT`; native evidence
 must still establish the intended handshake, receipt of the client certificate,
 exclusive chain validation and pin checks without global trust changes. There
@@ -113,9 +166,327 @@ is no claim that every private certificate must always fail. See the
 [HTTP_SSL_CLIENT_CERT_INFO documentation](https://learn.microsoft.com/en-us/windows/win32/api/http/ns-http-http_ssl_client_cert_info)
 and the existing [T5 proposal](../../common/enrolled-key/proposal/README.md).
 
+## Private process-bound bootstrap prerequisite
+
+`bootstrap_peer` is private and dormant. Its module-level `dead_code` allowance
+is limited to this prerequisite, which has no production caller or public API.
+It neither constructs nor imports a broker key, enrollment, stored reference,
+receipt, or admission/release authority. The existing CNG and HTTP.sys modules
+and external contracts remain independent.
+
+A trusted launcher must already own each expected peer's process handle. The
+primitive duplicates that handle down to query-limited-information plus
+synchronize rights, clears inheritance, and retains the resulting handle and a
+query-only primary-token handle. It captures the kernel PID, creation time,
+token ID, user SID, logon/group SIDs and attributes, authentication LUID,
+session, restricted SIDs, privileges, integrity, elevation, app-container and
+mandatory-policy context. Terminal checks re-query both the held primary token
+and the process's current primary token. Group and privilege lists are compared
+directly; the ever-filtered `TokenHasRestrictions` flag is not treated as
+`IsTokenRestricted` or as an automatic rejection of an expected UAC context.
+This host returns a one-byte `TokenHasRestrictions` value despite the documented
+DWORD layout. The query uses initialized DWORD storage and permits only that
+observed byte layout or the documented four bytes for this one class; every
+other supported scalar requires exactly four bytes. Pipe-supplied identities never select
+or open an expected process. Handles stay held throughout the exchange.
+
+The server creates a random local pipe name with 256 random bits, one message
+instance, `FILE_FLAG_FIRST_PIPE_INSTANCE`, `PIPE_REJECT_REMOTE_CLIENTS` and
+overlapped I/O. Its explicit protected DACL grants only the expected logon SID
+the individual client mask `0x00120183`. That mask excludes bit `0x4`,
+`FILE_CREATE_PIPE_INSTANCE`; no `FILE_GENERIC_WRITE` grant is made. All endpoint,
+event and retained process/token handles are noninheritable. The client opens
+with `SECURITY_SQOS_PRESENT | SECURITY_IDENTIFICATION | SECURITY_CONTEXT_TRACKING` and verifies the kernel
+server PID against its independently held expected server before its first byte.
+The server compares the kernel client PID with its held expected client.
+
+Every message is exactly 96 bytes: magic `HUBBSP01` (8 bytes), version `1`
+(1 byte), role (1 byte), reserved zero (6 bytes), ceremony ID (16 bytes), server
+nonce (32 bytes), and client nonce (32 bytes). Roles are hello `1`, challenge `2`,
+finish `3`, terminal `4`. The ceremony ID is conveyed by the trusted launcher;
+each side draws its own fresh nonce from the Windows system RNG. Hello alone
+uses an all-zero server nonce. Every other field, role and correlation is exact;
+zero nonces, oversized/truncated messages and a replayed hello as finish deny.
+There are no keys, secrets, filenames, certificates or receipt payloads.
+Consuming endpoints support one exchange and return a private terminal transcript.
+This transcript is not creation provenance or durable replay/admission evidence.
+
+On one fresh dedicated server thread, each exact hello and final inbound frame
+is immediately followed by `ImpersonateNamedPipeClient`, a real thread-token
+query, exact identification-level/context comparison with independently captured
+primary evidence, and `RevertToSelf`. A zero `TokenIsAppContainer` value on an
+identification token is not an independent app-container exclusion proof; this
+primitive relies on the held primary context and the other message checks.
+The impersonation query exposes the OS-presented context of the last message
+read on that thread. Preexisting impersonation denies without clearing it.
+A failed revert terminates the hosting process. See Microsoft's
+[message impersonation documentation](https://learn.microsoft.com/en-us/windows/win32/api/namedpipeapi/nf-namedpipeapi-impersonatenamedpipeclient).
+
+The end-to-end deadline must be positive and at most ten seconds. Overlapped
+timeouts request cancellation and observe completion before releasing the
+buffer, event or `OVERLAPPED`; cancellation alone is insufficient. A canceled
+operation has an additional bounded one-second drain. If completion cannot be
+proven within it, the hosting process terminates with the buffers still alive.
+No thread is detached. See Microsoft's
+[cancellation lifetime requirements](https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex).
+
+The native fixture is a trusted parent/child launch under the same user/logon,
+with an explicit handle-inheritance allow-list. Its process binding checks do
+not prove distinct-principal isolation, real PID reuse, service readiness, a
+protected broker principal, or protection against administrator/same-user code
+with process-modification rights. Production launch, protected principal and
+ACL bootstrap, authority construction, enrollment, T6 storage, T7 collection,
+and HTTP.sys/Schannel TLS remain separate approved-spec gates. No service,
+account/profile, permanent root, URL, network listener, certificate, trust,
+firewall or VPN is provisioned by this module or its tests.
+
+On 2026-10-26 in the Windows GNU environment above, the targeted bootstrap suite
+passed 14 active cases: 13 native behavior cases and one deterministic frame
+policy case. One subprocess fixture entry is intentionally ignored by the main
+harness and invoked explicitly with `--ignored --exact` by the native parent
+cases; it is not counted as a passing security case. The complete crate suite
+passed 29 active cases with that same one ignored fixture entry, including the
+15 existing CNG/HTTP.sys cases. Clippy with warnings denied and format check passed. Native output
+was captured explicitly, hashed before decoding and checked for the exact counts;
+the full suite observed HTTP already `Running` before and after launch.
+
+The tests cover a held parent/child exchange, a different same-SID client,
+substituted server rejection before any hello, a dead held expected process and
+live replacement, anonymous identification denial, privilege-only filtering and
+an additional real restricting logon SID. Both altered-token cases reach the
+server's actual last-message context comparison and require its specific denial.
+They also cover malformed hello/final/challenge fields, oversized/truncated input,
+replayed hello, second connection and second server instance rejection, bounded
+connect/read cancellation, disconnect and peer exit, exact preservation of a
+preexisting impersonation token, and an inheritable event deliberately omitted
+from the child allow-list. Native errors include 1347 (anonymous token), 234
+(overlong message), 5 (second instance), 995 (canceled operation after drain) and
+109 (broken pipe); frame/context denials are application policy, not fabricated
+native statuses. The new peer cases create no CNG keys. No real revert failure,
+non-completing driver, primary-token replacement or PID reuse was induced.
+
+## Private file-security descriptor prerequisite
+
+`security_descriptor` is private and dormant. It inspects an already-open
+file/directory handle with `GetSecurityInfo`, copies the owner/DACL snapshot,
+and compares exact metadata expectations. It opens no path and changes no
+filesystem object. A match produces no protected root, authenticated service
+identity, creation receipt, owned key, store, enrollment or release authority.
+The observation can become stale immediately; it is not an effective-access
+calculation or an isolation guarantee.
+
+The application copy/parser accepts at most 64 KiB. `GetSecurityInfo` allocates
+its buffer before that check, so the bound does not limit Windows' own
+allocation. Explicit `LocalFree` cleanup preserves a primary failure and any
+cleanup failure; Drop is only best effort. The parser reads bounded byte slices,
+without typed unaligned dereferences or Windows calls on arbitrary test bytes.
+It supports revision-1 self-relative descriptors, revision-2/4 ACLs and standard
+allow ACEs containing revision-1 SIDs with at most 15 subauthorities. Offsets,
+counts, sizes, overlap and supported layouts are checked. Absent/NULL/unprotected
+DACLs, unexpected owners, ACE flags including inheritance, unsupported ACE
+types, and missing/additional/changed grants deny. Equivalent allow-ACE ordering
+matches. Duplicate or split grants to the same SID deliberately deny instead of
+being combined; this is a conservative accepted-shape rule, not a claim of full
+Windows access-check equivalence.
+
+The candidate root **metadata** rule expects SYSTEM ownership, SYSTEM full
+access `0x001f01ff` and an expected service grant of `0x001200ab`: read control,
+synchronize, list/read data, add file/write data, read extended attributes,
+traverse/execute and read attributes. It excludes add-subdirectory, root delete,
+delete-child, write attributes, write DACL and write owner. Any future need for
+broader rights requires review. The expected service input must have the
+`S-1-5-80` prefix plus five DWORD subauthorities; SYSTEM, Everyone and All Services
+are rejected. This is structural validation only: another fabricated service SID
+has the same shape. Raw SID shape or equality does not authenticate the virtual
+service account or prove that the selected service is running.
+The `ADD_FILE` bit is also `FILE_WRITE_DATA`; excluding `WRITE_ATTRIBUTES` alone
+does **not** exclude reparse mutation.
+
+Publication remains blocked. A historical separate native probe for #2004 retained a
+directory handle with real read-data access and no write/delete sharing, then
+successfully opened that same directory with only `FILE_WRITE_ATTRIBUTES` and
+set an owned junction. Its file identity stayed unchanged. Both fresh empty
+fixtures were deleted through retained identity-checked handles and verified
+absent. This matches Microsoft's
+[sharing-mode exception for attribute access](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew)
+and [reparse mutation access rules](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4aeefef8-92c3-4abc-af7a-a610caf8a165).
+That short separate probe is not a credited Rust-suite test. No sharing-only
+ancestor guard, traversal, staging, rename or publication API is implemented.
+Trusted ancestor protection, any handle-relative publication design and its
+native validation remain separate gates.
+
+The descriptor tests use exclusively created zero-content local NTFS files and
+explicit fixture ACLs. Test-only fixture selection is not a production root
+selector. Cleanup uses each retained creation handle, verifies volume/file ID,
+deletes that exact object, closes the handle and checks the exact path is absent.
+No recursive cleanup or persistent key creation is added. A user-owned fixture
+matching its test policy must fail the SYSTEM-owner rule. The current-token
+attribute-write probe and the owner's ability to change its own DACL illustrate
+why metadata equality does not prove distinct-principal isolation.
+The fixture ACL includes `SYNCHRONIZE`, so a synchronous open's implicit request
+for that right cannot masquerade as an attribute-write denial. A separate empty
+regular-file control using `0x001200ab` allows a `FILE_WRITE_DATA` open, without
+writing any content; it demonstrates the shared bit, not safe directory mutation.
+The original native fixtures recorded Windows normalizing duplicate allow
+entries and removing file inheritance flags. Tests inspect the resulting shape; raw-parser cases
+separately establish duplicate and flag rejection without claiming those bytes
+were retained by NTFS. No OS buffer-free failure is deliberately induced.
+
+The original descriptor source had 16 cases: 11 native file cases and five
+deterministic parser/policy/error-accounting cases. The native cases included
+equivalent ACE ordering, user-owner versus SYSTEM-owner rejection, null and
+unprotected DACLs, changed/broad grants, a stored unsupported deny ACE, the
+normalization controls, attribute denial followed by an owner DACL change,
+the write-data-bit control, and `GetSecurityInfo` denial without `READ_CONTROL`.
+Its historical full-crate run recorded 45 active cases and the existing one ignored
+subprocess fixture entry; that entry is exercised explicitly by its native parent tests.
+The [historical terminal receipt](https://github.com/Voxterrae/HUB_Optimus/pull/2004#issuecomment-6428352097)
+reports the final full suite and fmt against original head
+`71aa552d9600f8592c07173a7712677cf18c5b90`. Clippy covered executable-equivalent
+source before an endian-comment clarification, without a byte-identical claim.
+Historical compiled bytes were not independently revalidated in this reconstruction.
+The historical host guards and HTTP-running observations retain their own scope;
+a descriptor-only run does not execute CNG, HTTP or peer tests or query HTTP.
+
+The test-only ownership correction in [#2147](https://github.com/Voxterrae/HUB_Optimus/issues/2147)
+binds every fixture-helper DACL mutation to the retained volume/file identity,
+single-link regular-file shape and absence of a reparse point before changing
+security metadata. A reopened owner handle requests the already-granted
+`READ_ATTRIBUTES` right and is explicitly closed even when that check rejects it.
+One added native regression supplies another newly owned fixture's handle and
+checks rejection, handle closure and both unchanged policies. This gives 17
+descriptor cases (12 native and five deterministic), using 13 total owned
+fixtures because the new case owns two. Native validation of this correction
+remains **UNRUN**; the earlier 16/45-test evidence does not validate it. On the
+integrated corrected peer base, the expected full-crate inventory is 51 active
+cases plus its one ignored child helper (17 descriptor, 19 peer and 15 CNG/HTTP).
+That is an inventory expectation, not an executed result or an additional gate
+for the focused descriptor profile. This guard protects the test's mutation
+target; it does not establish service isolation or a production root/publication
+boundary.
+
+The separate hosted profile scoped by
+[#2163](https://github.com/Voxterrae/HUB_Optimus/issues/2163) requires the reviewed
+exact candidate and integrated workflow before execution. It selects only
+`security_descriptor::tests::` with `--lib`, one thread and privately captured
+`--show-output`: exactly 17 passes, no ignored cases and 13 complete-line
+fixture cleanup markers. Its fresh owned parent is beneath validated
+`RUNNER_TEMP`, using a non-SYSTEM account and local fixed NTFS. Tests delete only
+their owned files through retained, identity-checked handles; the workflow removes
+only its empty directory nonrecursively. Any leftover or cleanup error fails. Raw SID,
+ACL, path, identity and panic context stays private. The markers do not prove
+global VM cleanup or protected ancestry/isolation; process loss can leave
+resources until the disposable runner is discarded. Workflow availability and
+synthetic checks are not native evidence. No owner-device execution is included.
+
+Actual SYSTEM-owned root provisioning, service identity/profile, virtual-account
+DPAPI/KSP persistence, distinct-principal denial, immutable sealing,
+antirollback/freshness, crash/power-loss durability, protected reference recovery,
+enrollment, T6/T7 and HTTP.sys/Schannel TLS remain open gates.
+
+## Private personal SCM/process binding prerequisite
+
+`service_identity` is dormant and private. `HeldScmProcessBinding` owns a local
+SCM CONNECT handle, a fixed `HUBRelayBrokerPersonal` service handle with only
+QUERY_CONFIG and QUERY_STATUS, and retained noninheritable query/synchronize
+process and query-only primary-token handles through `ExpectedPeer`. It returns
+no authenticated-service authority, protected root, key, enrollment or receipt.
+The fixed principal is `NT SERVICE\HUBRelayBrokerPersonal`; a service SID in a
+group never substitutes for actual primary TokenUser equality. A separately
+held, measured transport peer must have a different TokenUser.
+
+The internal unmeasured build/test candidate expects OWN_PROCESS exactly,
+DEMAND_START exactly, and the quoted command
+`"C:\Program Files\HUB_Relay\Personal\personal_broker_service.exe"` with no
+arguments. This literal is an expectation, not known-folder resolution, an
+installation plan, protected payload or human approval. There is no consumer.
+The observed full process path must match exactly; no disk hash is taken and
+neither pathname nor SCM configuration proves which approved bytes were loaded.
+[SCM configuration may describe the next start](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-queryserviceconfigw),
+so it cannot replace live retained process/token checks.
+
+The candidate configured required-privileges list is empty. An explicit
+QueryServiceConfig2 REQUIRED_PRIVILEGES query must succeed and return a bounded
+valid MULTI_SZ; null or unsupported layouts conservatively deny. The actual
+token inventory must contain exactly the locally resolved SeChangeNotifyPrivilege
+with ENABLED_BY_DEFAULT and ENABLED, with no other privileges, even disabled
+ones. USED_FOR_ACCESS is deliberately retained and its appearance also denies.
+This strict starting policy has not been measured on the personal service;
+mismatches require reviewed policy adjustment, never an observed allowlist.
+An empty configured list alone does not restrict the OS default inventory.
+
+Configuration buffers are capped at 8192 bytes, allocated from the explicit
+sizing result, and parsed only within the supplied allocation, excluding
+alignment padding. Interior pointer bounds/alignment, UTF-16 and MULTI_SZ
+termination are checked. The API defines pcbBytesNeeded for insufficient-buffer
+failure, not as a successful-query byte count. Unknown query errors never become
+empty configuration. All base config fields and required privileges are retained
+for equality checks; other optional configuration such as failure actions is
+not queried and no claim is made about it.
+
+Capture and every revalidation require RUNNING with a nonzero matching PID,
+unchanged creation time and token ID, session zero, exact intended local SID,
+no AppContainer or unsupported restriction context, unchanged full held/current
+primary context (groups, restricted SIDs, privilege attributes, integrity,
+authentication and scalar fields), and repeat SCM configuration/status checks.
+Calling-thread impersonation denies without clearing it. These snapshots cannot
+prove atomic SCM stability or that other service threads never impersonate.
+Explicit cleanup preserves primary and cleanup failures; SCM handles use
+CloseServiceHandle. Drop is a best-effort fallback.
+
+Tests separate synthetic policy acceptance from native read-only SCM absence
+and owned-process/token observations. The fixed-service absence case requires
+exact ERROR_SERVICE_DOES_NOT_EXIST (1060); unexpected existence fails without
+mutation. Native child tests create only their own hidden subprocesses and
+reap them. Ignored child entries are helpers, not independent security passes.
+Real personal-service success, actual config parsing on that service, loaded
+profile, KSP/DPAPI persistence, cross-principal isolation, service replacement,
+PID reuse and primary-token replacement remain uninduced. No service lifecycle,
+account, root, profile, key or machine configuration is modified.
+
+The focused SCM inventory contains 13 active tests (eight pure and five native)
+plus one ignored owned-child helper. A native acceptance receipt must identify
+the exact reconciled source; historical stacked-branch results do not validate
+the current peer/SQOS, descriptor and SCM combination.
+
 ## Rollback
 
-Before integration, discard only this five-file package. After protected
+For the descriptor increment, remove only `src/security_descriptor.rs`,
+`src/security_descriptor/tests.rs`, its private registration in `src/lib.rs`
+and this descriptor README section through a focused reviewed revert.
+Preserve the existing peer SQOS correction and all independent CNG/HTTP
+content. Apply only the increment's deltas; do not restore historical shared
+README or module-registration files wholesale. No persistent application
+resource or authority is created by this increment.
+
+For this bootstrap increment, revert only its five reviewed paths: `Cargo.toml`,
+`src/lib.rs`, `src/bootstrap_peer.rs`, `src/bootstrap_peer/tests.rs` and this README.
+The HTTP.sys foundation remains independent. After protected
 integration, use a focused reviewed revert. Code removal does not delete
 persistent CNG keys: delete only references owned by the test or application
 while they remain available. Never enumerate or delete unrelated containers.
+
+## Cooperative-client SQOS regression
+
+[Issue #2044](https://github.com/Voxterrae/HUB_Optimus/issues/2044) tracks the
+focused correction of [#2003's static-tracking finding](https://github.com/Voxterrae/HUB_Optimus/pull/2003#discussion_r4383495003).
+The cooperative client selects dynamic context tracking so authentication after
+HELLO and FINISH can observe a later context change. A pipe server cannot impose
+these SQOS flags on another client. An arbitrary client selecting static tracking
+can still cause Windows to present its opening context. The held process and
+primary-token, kernel PID and exact-level checks remain required; they do not
+establish arbitrary-client last-message freshness or executable provenance.
+
+New native regressions obtain the pipe through the actual Client::connect path,
+then switch to separately filtered or restricted tokens after connect before
+HELLO, or between CHALLENGE and FINISH. Positive controls use an equivalent
+context in a distinct token. Altered-token fixtures retain that token through
+the server acknowledgement or closure; they do not race an immediate reversion.
+
+The branch-scoped Windows2022/Rust1.99 workflow compiles the crate but executes
+only bootstrap_peer::tests. Native assertion details stay in disposable private
+files; public logs contain only fixed test names and count summaries. The single
+ignored subprocess entry is invoked explicitly by parent tests and is not counted
+as a passing security case. Actual exact-head runs and outcomes belong in the
+associated PR, separately from the historical GNU evidence above. No CNG or
+HTTP.sys tests, key, service, root creation, or activation are included.
