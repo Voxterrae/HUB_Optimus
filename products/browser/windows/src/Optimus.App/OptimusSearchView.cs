@@ -6,7 +6,7 @@ using Optimus.Core;
 
 namespace Optimus.App;
 
-/// <summary>A transient native surface. Queries/results never enter a WebView or settings.</summary>
+/// <summary>Transient native results. Only an explicit external-portal action puts its query in a WebView URL.</summary>
 internal sealed class OptimusSearchView : UserControl, IDisposable
 {
     private readonly Action<string> _openUrl;
@@ -26,6 +26,7 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
     private readonly TextBlock _privacy = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 8) };
     private readonly TextBlock _privacyDetails = new() { TextWrapping = TextWrapping.Wrap };
     private readonly StackPanel _results = new();
+    private readonly Expander _externalOptions = new() { MinHeight = 44 };
     private CancellationTokenSource? _pending;
     private readonly ComboBox _scope = new() { MinHeight = 44, Margin = new Thickness(0, 0, 0, 8) };
     private readonly Func<CancellationToken, Task<SearchHostConnection>> _connect;
@@ -110,6 +111,22 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         var privacyDetail = new Expander { Header = detailHeader, MinHeight = 44, Content = _privacyDetails };
         System.Windows.Automation.AutomationProperties.SetName(privacyDetail, "Detalles de la fuente y privacidad");
         searchPanel.Children.Add(privacyDetail);
+        var externalHeader = NativeSurface.Text("Buscar en un portal externo", "OptimusSmallSize");
+        externalHeader.MinHeight = 44;
+        externalHeader.VerticalAlignment = VerticalAlignment.Center;
+        _externalOptions.Header = externalHeader;
+        System.Windows.Automation.AutomationProperties.SetName(_externalOptions, "Buscar en un portal externo");
+        var externalPanel = new StackPanel();
+        externalPanel.Children.Add(NativeSurface.Text("Solo al pulsar un botón se enviará la consulta de arriba al buscador elegido. Se abrirá su página, que recibe tu consulta y conexión y puede mostrar publicidad. Optimus no cambia de buscador automáticamente.", "OptimusSmallSize", "OptimusMutedBrush"));
+        foreach (var provider in new[] { SearchProvider.DuckDuckGo, SearchProvider.Google })
+        {
+            var button = NativeSurface.Button("Buscar en " + provider + " (externo)", "Buscar en " + provider + " (externo)");
+            button.Margin = new Thickness(0, 8, 0, 0);
+            button.Click += (_, _) => OpenExternalSearch(provider);
+            externalPanel.Children.Add(button);
+        }
+        _externalOptions.Content = externalPanel;
+        searchPanel.Children.Add(_externalOptions);
         body.Children.Add(NativeSurface.Card(searchPanel, new Thickness(24)));
         _status.Text = "Escribe una consulta y pulsa Buscar.";
         System.Windows.Automation.AutomationProperties.SetLiveSetting(_status, System.Windows.Automation.AutomationLiveSetting.Polite);
@@ -130,6 +147,15 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
         }
         SizeChanged += (_, _) => Reflow();
         LayoutUpdated += (_, _) => Reflow();
+    }
+
+    private void OpenExternalSearch(SearchProvider provider)
+    {
+        if (!CanSubmit) return;
+        var target = NavigationPolicy.ExternalSearch(_query.Text, provider);
+        if (!target.Allowed) { _status.Text = target.Error; return; }
+        // The host invalidates after accepting navigation; a blocked portal keeps results usable.
+        _openUrl(target.Uri!.AbsoluteUri);
     }
 
     public async Task SearchAsync(string query, OptimusSearchScope scope, CancellationToken token = default)
@@ -249,6 +275,7 @@ internal sealed class OptimusSearchView : UserControl, IDisposable
     public void Cancel()
     {
         Invalidate();
+        _externalOptions.IsExpanded = false;
         _query.Clear();
         _results.Children.Clear();
         _status.Text = "Escribe una consulta y pulsa Buscar.";

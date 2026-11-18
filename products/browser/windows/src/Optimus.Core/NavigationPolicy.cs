@@ -18,8 +18,20 @@ public static partial class NavigationPolicy
    if(candidate.Uri is {} uri && (uri.Host.Contains('.') || uri.Host=="localhost" || Uri.CheckHostName(uri.Host)==UriHostNameType.IPv6)) return candidate;
    if(input.Contains('/') || input.Contains('@')) return Deny("Comprueba la dirección; no se permiten credenciales en ella.");
   }
+  // A native search intent has no URI that could accidentally navigate to a portal.
+  if(provider==SearchProvider.Optimus)
+   return input.Length<=500?new(null,true,null):Deny("La consulta admite hasta 500 caracteres.");
   var baseUrl=provider switch {SearchProvider.DuckDuckGo=>"https://duckduckgo.com/?q=",SearchProvider.Google=>"https://www.google.com/search?q=",_=>null};
   return baseUrl==null?Deny("El proveedor de búsqueda no es válido."):new(new Uri(baseUrl+Uri.EscapeDataString(input)),true,null);
+ }
+ // Only an explicit portal action calls this: URL-looking text remains a query.
+ public static NavigationResult ExternalSearch(string input, SearchProvider provider)
+ {
+  if(string.IsNullOrWhiteSpace(input)||input.Any(char.IsControl))return Deny("Escribe una consulta de 1 a 500 caracteres, sin caracteres de control.");
+  input=input.Trim();
+  if(input.Length>500)return Deny("La consulta admite hasta 500 caracteres.");
+  var baseUrl=provider switch {SearchProvider.DuckDuckGo=>"https://duckduckgo.com/?q=",SearchProvider.Google=>"https://www.google.com/search?q=",_=>null};
+  return baseUrl==null?Deny("El buscador externo no es válido."):new(new Uri(baseUrl+Uri.EscapeDataString(input)),true,null);
  }
  public static bool IsAllowed(Uri? uri) => uri is {IsAbsoluteUri:true} && (uri.Scheme=="https"||uri.Scheme=="http") && !string.IsNullOrEmpty(uri.Host) && string.IsNullOrEmpty(uri.UserInfo);
  private static NavigationResult Direct(string text) => !text.Any(char.IsWhiteSpace) && Uri.TryCreate(text,UriKind.Absolute,out var uri) && IsAllowed(uri) ? new(uri,false,null):Deny("La dirección no es válida o incluye credenciales. Usa HTTP o HTTPS.");
