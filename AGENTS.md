@@ -96,6 +96,25 @@ Principle: visible alliance, not hidden control.
   protected-PR reference rule above. Before merging, inspect commit messages
   and GitHub's `closingIssuesReferences`; confirm every automatic closure is
   intended and supported by completed acceptance.
+- For protected PRs, finalize the description and governance issue binding
+  while the PR is in draft. After opening the draft or saving its final body
+  edit, wait for the resulting Founder Authority Guard run (`opened` or `edited`)
+  to finish and verify its authority result before marking the PR Ready for
+  review. Let each evaluation settle before sending another metadata event
+  that triggers it.
+- After Ready or any later metadata, base, or head change, wait for the
+  resulting evaluation to settle. Re-read the open PR's exact `head.sha` and
+  live test-merge SHA (`merge_commit_sha`), and match checks on the applicable
+  SHAs to the target branch's live required contexts and publisher App IDs.
+  Verify `founder-authority` on both SHAs. PASS requires a completed `success`
+  from the configured publisher. Missing, pending, cancelled, failed, neutral,
+  and skipped results are separate from PASS.
+- Use GitHub's current merge blocker to identify the affected check. A matching
+  name or a newer run ID alone cannot establish that a blocker was superseded.
+  If the job still blocks the current PR and evidence points to a recoverable
+  failure or cancellation, propose a retry of that job only. Obtain authorization
+  before retrying. Record links to both attempts, reconcile any dependent jobs,
+  and recheck the live SHAs, required checks, and merge blocker.
 - No person or AI other than the owner may independently authorize or merge a
   change; third parties may propose changes through governed review.
 - If repeated mistakes appear, update this file through the protected owner
