@@ -175,6 +175,20 @@ def test_tampered_bundle_fails_before_any_remote_operation(tmp_path: Path):
         retirement.verify_archive(manifest, repository_root=root)
 
 
+def test_truncated_bundle_rejection_preserves_both_files(tmp_path: Path):
+    root, manifest_path = _copy_manifest_package(tmp_path)
+    manifest = retirement.load_manifest(manifest_path, root)
+    original = BUNDLE_PATH.read_bytes()
+    truncated = original[:-1]
+    manifest.archive_path.write_bytes(truncated)
+
+    with pytest.raises(retirement.GuardError, match="size differs from the manifest"):
+        retirement.verify_archive(manifest, repository_root=root)
+
+    assert manifest.archive_path.read_bytes() == truncated
+    assert BUNDLE_PATH.read_bytes() == original
+
+
 def test_manifest_rejects_duplicate_keys_and_bundle_header_rejects_prerequisites(
     tmp_path: Path,
 ):
