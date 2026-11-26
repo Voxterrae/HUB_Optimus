@@ -1645,7 +1645,7 @@
           </article>
           <article class="mini-card">
             <h3 data-op-i18n="sourceUrlLabel">Source URL</h3>
-            <p id="audit_source_url" lang="en" dir="ltr" data-op-i18n="valueNotProvided">not provided</p>
+            <p id="audit_source_url">not provided</p>
           </article>
         </div>
         <div class="mini-card">
@@ -1837,7 +1837,7 @@
     </footer>
   </main>
 
-  <script src="./i18n.v1.js?v=1.4.3"></script>
+  <script src="./i18n.v1.js?v=1.4.4"></script>
   <script src="./claim-decomposition.v1.js"></script>
   <script src="./learning-candidate.v1.js"></script>
   <script src="./learning-store.v1.js"></script>
@@ -4866,9 +4866,19 @@
       };
     }
 
+    function renderAuditSourceUrl(sourceUrl) {
+      const node = $("audit_source_url");
+      if (sourceUrl) {
+        node.setAttribute("dir", "ltr");
+      } else {
+        node.removeAttribute("dir");
+      }
+      node.textContent = sourceUrl || opText("valueNotProvided");
+    }
+
     function syncAuditIntakeView(intakeState = canonicalIntakeState()) {
       $("audit_source_type").textContent = intakeState.sourceType;
-      $("audit_source_url").textContent = intakeState.sourceUrl || opText("valueNotProvided");
+      renderAuditSourceUrl(intakeState.sourceUrl);
       $("audit_source_text").textContent = intakeState.sourceText
         ? opText("advancedCharactersSupplied", { count: unicodeCharacterCount(intakeState.sourceText) })
         : opText("valueNotProvided");
@@ -6272,7 +6282,7 @@
       clearUiStep(() => { $("product_source_url").value = ""; });
       clearUiStep(() => { $("product_source_text").value = ""; });
       clearUiStep(() => { $("audit_source_type").textContent = "external-source"; });
-      clearUiStep(() => { $("audit_source_url").textContent = opText("valueNotProvided"); });
+      clearUiStep(() => renderAuditSourceUrl(""));
       clearUiStep(() => { $("audit_source_text").textContent = opText("valueNotProvided"); });
       clearUiStep(clearRetrievedSourcePreview);
       clearUiStep(() => { $("product_confirm_source").checked = false; });

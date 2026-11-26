@@ -785,7 +785,7 @@ const fields = {
   product_source_text: {value: "Synthetic issue report for canonical intake testing."},
   signal_source_type: {value: "automatic"},
   audit_source_type: {textContent: ""},
-  audit_source_url: {textContent: ""},
+  audit_source_url: {textContent: "", setAttribute() {}, removeAttribute() {}},
   audit_source_text: {textContent: ""},
   product_analyze: {disabled: true},
   product_wait_status: {textContent: ""}
@@ -994,7 +994,7 @@ def test_operator_uses_only_controlled_url_intake_fetch():
     assert 'id="product_source_preview"' in html
     assert 'id="product_confirm_source" type="checkbox"' in html
     assert 'id="product_confirm_claims" type="checkbox"' in html
-    assert '<script src="./i18n.v1.js?v=1.4.3"></script>' in html
+    assert '<script src="./i18n.v1.js?v=1.4.4"></script>' in html
     assert '<script src="./claim-decomposition.v1.js"></script>' in html
     assert re.search(r'<script[^>]+src="https?://', html) is None
 
@@ -1011,6 +1011,93 @@ def test_full_public_operator_submit_never_fetches_a_supplied_url():
         f"const SOURCE = {json.dumps(scripts[0])};\n"
         f"const CLAIM_SOURCE = {json.dumps(_read(CLAIM_DECOMPOSITION))};\n"
         f"{FULL_PAGE_HARNESS}"
+    )
+    completed = subprocess.run(
+        [NODE, "-"],
+        input=smoke,
+        text=True, encoding="utf-8",
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
+def test_audit_source_url_uses_locale_for_the_fallback_and_ltr_for_a_url():
+    html = _read(INDEX)
+    parser = _InlineScriptParser()
+    parser.feed(html)
+    audit_tag = re.search(r'<p id="audit_source_url"([^>]*)>', html)
+    assert audit_tag is not None
+    audit_attributes = dict(re.findall(r'([\w-]+)="([^"]*)"', audit_tag.group(1)))
+    prelude = FULL_PAGE_HARNESS.split(
+        'vm.runInContext(SOURCE, context, { filename: "operator-inline.js" });',
+        maxsplit=1,
+    )[0]
+    smoke = (
+        f"const SOURCE = {json.dumps(parser.scripts[0])};\n"
+        f"const CLAIM_SOURCE = {json.dumps(_read(CLAIM_DECOMPOSITION))};\n"
+        f"const I18N_SOURCE = {json.dumps(_read(OPERATOR_I18N))};\n"
+        f"const AUDIT_ATTRIBUTES = {json.dumps(audit_attributes)};\n"
+        + prelude
+        + r'''
+const audit = byId("audit_source_url");
+for (const [key, value] of Object.entries(AUDIT_ATTRIBUTES)) audit.setAttribute(key, value);
+const languages = new Map(["he", "zh-Hans"].map((locale) => {
+  const button = element();
+  button.setAttribute("data-operator-language", locale);
+  return [locale, button];
+}));
+document.querySelectorAll = (selector) => {
+  if (selector === "[data-operator-language]") return [...languages.values()];
+  if (selector === "[data-op-i18n]" && audit.getAttribute("data-op-i18n")) return [audit];
+  return [];
+};
+window.location.search = "?lang=he";
+context.confirm = () => true;
+vm.runInContext(I18N_SOURCE, context, {filename: "i18n.v1.js"});
+vm.runInContext(SOURCE, context, {filename: "operator-inline.js"});
+
+function assertAudit(expectedText, language, direction, hasUrl = false) {
+  const actual = [
+    audit.textContent,
+    audit.getAttribute("lang") || document.documentElement.lang,
+    audit.getAttribute("dir") || document.documentElement.dir,
+    audit.getAttribute("dir")
+  ];
+  const expected = [expectedText, language, direction, hasUrl ? "ltr" : null];
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(`audit source expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  }
+  if (audit.getAttribute("href") || audit.children.length) {
+    throw new Error("audit source became a link or inserted markup");
+  }
+}
+
+(async () => {
+  const input = byId("product_source_url");
+  const url = "https://example.test/נתיב?source=测试";
+  assertAudit("לא נמסר", "he", "rtl");
+  input.value = url;
+  await input.emit("input");
+  assertAudit(url, "he", "ltr", true);
+  await languages.get("zh-Hans").emit("click");
+  assertAudit(url, "zh-Hans", "ltr", true);
+  input.value = "";
+  await input.emit("input");
+  assertAudit("未提供", "zh-Hans", "ltr");
+  await languages.get("he").emit("click");
+  assertAudit("לא נמסר", "he", "rtl");
+  input.value = url;
+  await input.emit("input");
+  await byId("clear_all").emit("click");
+  assertAudit("לא נמסר", "he", "rtl");
+  if (input.value || fetchCalls !== 0) throw new Error("audit source lifecycle retained or fetched the URL");
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+'''
     )
     completed = subprocess.run(
         [NODE, "-"],
@@ -1454,7 +1541,7 @@ def test_operator_progress_is_immediate_and_only_network_intake_has_a_deadline()
     assert "const CONTROLLED_INTAKE_CLIENT_TIMEOUT_MS = 15000;" in html
     assert 'new ControlledIntakeError("url_fetch_timeout", 504)' in html
     assert "return await Promise.race([request, deadline]);" in html
-    assert "hub-optimus-operator-v0-32" in sw
+    assert "hub-optimus-operator-v0-33" in sw
 
 
 def test_operator_draft_is_source_bound_and_conservative():
@@ -3381,7 +3468,7 @@ def test_advanced_saved_draft_has_an_explicit_privacy_lifecycle():
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for JavaScript validation")
 def test_clear_all_atomically_discards_active_v2_without_touching_saved_history():
     html = _read(INDEX)
-    clear_all = _named_function(html, "clearAll")
+    clear_all = _named_function(html, "renderAuditSourceUrl") + _named_function(html, "clearAll")
     smoke = r'''
 const sentinel = "SECRET-V2-SENTINEL";
 const saved = new Map([
@@ -3451,6 +3538,7 @@ const element = (value = "") => ({
   checked: false,
   textContent: sentinel,
   innerHTML: sentinel,
+  removeAttribute(name) { delete this[name]; },
   replaceChildren() { this.textContent = ""; this.innerHTML = ""; }
 });
 const fields = Object.fromEntries([
@@ -4330,7 +4418,7 @@ def test_operator_install_assets_use_institutional_mark_and_cache_v031():
         icon,
         re.IGNORECASE,
     ) is None
-    assert "hub-optimus-operator-v0-32" in sw
+    assert "hub-optimus-operator-v0-33" in sw
     assert "./index.html" in sw
     assert "../assets/brand/hub-optimus-logo-lockup.png" in sw
     assert "./og.svg" in sw
@@ -4363,8 +4451,10 @@ const origin = scenario === "private" ? "https://api.huboptimus.dev" : "https://
 const workerUrl = `${origin}/operator/sw.js`;
 const catalogUrl = new URL(scriptUrl, workerUrl).href;
 const unversionedUrl = new URL("./i18n.v1.js", workerUrl).href;
+const previousCatalogUrl = new URL("./i18n.v1.js?v=1.4.3", workerUrl).href;
 const currentSource = fs.readFileSync(process.argv[2], "utf8");
 const legacySource = 'globalThis.HUB_OPTIMUS_OPERATOR_I18N = {version: "1.3.2", supportedLocales: ["en"], messages: {en: {}}};';
+const previousSource = 'globalThis.HUB_OPTIMUS_OPERATOR_I18N = {version: "1.4.3", supportedLocales: ["zh-Hans"], messages: {"zh-Hans": {optionGithubIssue: "GitHub issue"}}};';
 const handlers = {};
 const stores = new Map();
 const networkRequests = [];
@@ -4414,7 +4504,11 @@ const context = {
   }
 };
 vm.createContext(context);
-vm.runInContext(source, context, {filename: "sw.js"});
+const workerSource = scenario === "legacy"
+  ? source.replace("hub-optimus-operator-v0-33", "hub-optimus-operator-v0-32")
+      .replace("./i18n.v1.js?v=1.4.4", "./i18n.v1.js?v=1.4.3")
+  : source;
+vm.runInContext(workerSource, context, {filename: "sw.js"});
 async function lifecycle(type) {
   let work;
   handlers[type]({waitUntil(value) { work = value; }});
@@ -4433,18 +4527,20 @@ async function snapshot(response) {
   return {
     version: catalog.version,
     supportedLocales: [...catalog.supportedLocales],
+    githubIssueZhHans: catalog.messages["zh-Hans"]?.optionGithubIssue ?? null,
     messages: Object.fromEntries(catalog.supportedLocales.map((locale) => [locale,
       Object.fromEntries(claimKeys.map((key) => [key, catalog.messages[locale][key] ?? null]))
     ]))
   };
 }
 (async () => {
-  // Populate the cache used by the real handlers, so a cache-name bump alone
-  // cannot hide a reused unversioned response.
+  // The active older worker still serves cached catalog URLs while a new
+  // worker installs. Updated HTML must request a URL the older worker can fetch.
   const activeCache = await openCache(vm.runInContext("CACHE_NAME", context));
   await activeCache.put(unversionedUrl, new Response(legacySource));
   let legacyVersion = null;
   if (scenario === "legacy") {
+    await activeCache.put(previousCatalogUrl, new Response(previousSource));
     legacyVersion = (await snapshot(await requestCatalog(unversionedUrl))).version;
   } else {
     await lifecycle("install");
@@ -4481,7 +4577,8 @@ async function snapshot(response) {
     else:
         assert result["precachedCount"] > 0
     catalog = result["catalog"]
-    assert catalog["version"] == "1.4.3"
+    assert catalog["githubIssueZhHans"] == "GitHub 议题"
+    assert catalog["version"] == "1.4.4"
     assert catalog["supportedLocales"] == ["en", "es", "de", "ru", "he", "zh-Hans"]
     for locale, messages in catalog["messages"].items():
         for key in claim_keys:
@@ -4492,7 +4589,7 @@ async function snapshot(response) {
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is required for service-worker validation")
-def test_operator_service_worker_refetches_v031_assets_and_deletes_older_versions():
+def test_operator_service_worker_refetches_assets_and_deletes_older_versions():
     sw = _read(SW)
     smoke = f"const source = {json.dumps(sw)};\n" + r'''
 const vm = require("node:vm");
@@ -4500,7 +4597,8 @@ const listeners = {};
 const cacheNames = new Set([
   "hub-optimus-operator-v0-26",
   "hub-optimus-operator-v0-27",
-  "hub-optimus-operator-v0-30"
+  "hub-optimus-operator-v0-30",
+  "hub-optimus-operator-v0-32"
 ]);
 const installedRequests = [];
 const deleted = [];
@@ -4541,7 +4639,7 @@ vm.runInContext(source, context);
   let installWork;
   listeners.install({waitUntil(work) { installWork = work; }});
   await installWork;
-  if (!installedRequests.length) throw new Error("no v0-32 assets installed");
+  if (!installedRequests.length) throw new Error("no assets installed");
   if (installedRequests.some((request) => request.cache !== "reload")) {
     throw new Error("an install request can reuse stale HTTP-cache bytes");
   }
@@ -4556,8 +4654,11 @@ vm.runInContext(source, context);
   if (!deleted.includes("hub-optimus-operator-v0-27")) {
     throw new Error("v0-27 cache was not deleted");
   }
-  if (!cacheNames.has("hub-optimus-operator-v0-32")) {
-    throw new Error("v0-32 cache was not retained");
+  if (!deleted.includes("hub-optimus-operator-v0-32")) {
+    throw new Error("v0-32 cache with the previous catalog was not deleted");
+  }
+  if (!cacheNames.has("hub-optimus-operator-v0-33")) {
+    throw new Error("v0-33 cache was not retained");
   }
   if (claimCalls !== 1) throw new Error("updated worker did not claim clients");
 })().catch((error) => {

@@ -1,5 +1,5 @@
 {
-  "manifest_version": "1.4.3",
+  "manifest_version": "1.4.4",
   "portfolio_revision": "2026-11-08",
   "issue": 1750,
   "latest_audit_issue": 1834,
@@ -28,7 +28,7 @@
     ],
     "review_status": "AI/machine-assisted; qualified human linguistic review required"
   },
-  "portfolio_translation_key_count": 210,
+  "portfolio_translation_key_count": 211,
   "field_status": {
     "contributions_and_project_intelligence_update": {
       "en": "AI-assisted draft; named qualified human review required",
