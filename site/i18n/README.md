@@ -1,6 +1,6 @@
 # Public portfolio translation status
 
-Operator interface catalog version: `1.4.3`.
+Operator interface catalog version: `1.4.4`.
 Portfolio content review: `2026-11-08` (Europe/Madrid), 187 translation keys at that checkpoint.
 Contribution/Labs addition: `2026-11-14`, total 206 keys. The 19 new keys are
 AI-assisted drafts in all six locales and require qualified human review.
@@ -122,3 +122,6 @@ and revised public-intake/description copy are assisted drafts in all six
 portfolio locales. The reader offers eight navigation languages; documents
 retain their real source language and explicit fallback. This does not complete
 translation or parity of the repository.
+
+The portfolio now has 211 keys, including the enterprise proposal heading. That
+heading and the updated Simplified Chinese Operator issue label are assisted drafts.

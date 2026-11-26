@@ -832,7 +832,7 @@
     optionAutomatic: "根据 URL 保守检测",
     optionExternal: "外部来源",
     optionNews: "新闻文章",
-    optionGithubIssue: "GitHub issue",
+    optionGithubIssue: "GitHub 议题",
     optionGithubPr: "GitHub PR",
     optionCi: "CI/运行时信号",
     optionReviewFriction: "复核摩擦",
@@ -2966,7 +2966,7 @@
 
   const catalog = Object.freeze({
     id: "hub-optimus-operator-i18n",
-    version: "1.4.3",
+    version: "1.4.4",
     defaultLocale: "en",
     supportedLocales: Object.freeze(["en", "es", "de", "ru", "he", "zh-Hans"]),
     aliases: Object.freeze({
