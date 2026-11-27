@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <StartupObject>Optimus.App.SearchUiRegression</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Compile actual product sources; do not duplicate their implementations. -->
+    <ProjectReference Include="../../src/Optimus.Core/Optimus.Core.csproj"/>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35"/>
+    <Compile Include="../../src/Optimus.App/*.cs" Exclude="../../src/Optimus.App/App.xaml.cs" Link="App/%(Filename)%(Extension)"/>
+    <Page Include="../../src/Optimus.App/MainWindow.xaml" Link="MainWindow.xaml"/>
+    <Page Include="../../src/Optimus.App/Assets/OptimusBrand.xaml" Link="Assets/OptimusBrand.xaml"/>
+    <Page Include="../../src/Optimus.App/Assets/OptimusTheme.xaml" Link="Assets/OptimusTheme.xaml"/>
+    <Resource Include="../../src/Optimus.App/Assets/optimus.ico" Link="Assets/optimus.ico"/>
+    <Resource Include="../../src/Optimus.App/Assets/optimus.png" Link="Assets/optimus.png"/>
+  </ItemGroup>
+</Project>
