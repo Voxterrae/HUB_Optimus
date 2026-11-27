@@ -49,17 +49,11 @@ jobs:
         run: |
           if ($env:OPTIMUS_REQUESTED_SOURCE_COMMIT -cnotmatch '\A[0-9a-f]{40}\z') { throw 'A complete lowercase commit SHA is required; branch and tag names are not accepted.' }
           if ($env:OPTIMUS_REQUESTED_SOURCE_COMMIT -cne $env:OPTIMUS_SOURCE_COMMIT) { throw 'Only the protected reviewed product pin may execute.' }
-      - name: Provision the reviewed SDK on the disposable runner
-        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
-        with:
-          dotnet-version: '10.0.403'
-          check-latest: false
-          skip-lts-prepass: true
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: 30d52497b94a30ecc893d0fba9e400740c993981
-      - name: Verify source tree and selected SDK before build
+      - name: Verify the exact product checkout before provisioning
         run: |
           $ErrorActionPreference = 'Stop'
           $head = & git rev-parse HEAD
@@ -68,6 +62,15 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $tree -cne $env:OPTIMUS_SOURCE_TREE) { throw 'Checkout source tree mismatch.' }
           $dirty = & git status --porcelain
           if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Executable source must be clean before building.' }
+      - name: Provision the reviewed SDK on the disposable runner
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: '10.0.403'
+          check-latest: false
+          skip-lts-prepass: true
+      - name: Verify selected SDK and record toolchain
+        run: |
+          $ErrorActionPreference = 'Stop'
           & dotnet --list-sdks
           if ($LASTEXITCODE -ne 0) { throw 'Could not enumerate installed .NET SDKs.' }
           $version = & dotnet --version
@@ -75,8 +78,8 @@ jobs:
           Write-Host "Expected .NET SDK 10.0.403; selected '$version' (exit $selectionExit)."
           if ($selectionExit -ne 0 -or $version -cne '10.0.403') { throw 'Reviewed .NET SDK selection failed before build.' }
           [ordered]@{
-            sourceCommit = $head
-            sourceTree = $tree
+            sourceCommit = $env:OPTIMUS_SOURCE_COMMIT
+            sourceTree = $env:OPTIMUS_SOURCE_TREE
             workflowCommit = $env:OPTIMUS_WORKFLOW_COMMIT
             runId = $env:OPTIMUS_RUN_ID
             runAttempt = $env:OPTIMUS_RUN_ATTEMPT
