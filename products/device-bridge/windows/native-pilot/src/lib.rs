@@ -15,3 +15,7 @@ mod security_descriptor;
 // Private dormant SCM observation; grants no service or storage authority.
 #[allow(dead_code)]
 mod service_identity;
+
+// Private metadata agreement only; no protected-root or content capability.
+#[allow(dead_code)]
+mod relative_ntfs;
