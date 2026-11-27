@@ -9,7 +9,7 @@ on:
         description: Confirm the reviewed product SHA; other commits are blocked
         type: string
         required: true
-        default: b996f26238f3ea79becf3d6b320bec7781c80077
+        default: 30d52497b94a30ecc893d0fba9e400740c993981
       gui:
         description: Attempt GUI/UIAutomation on a clean interactive runner (blocked if unavailable)
         type: boolean
@@ -33,8 +33,8 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 15
     env:
-      OPTIMUS_SOURCE_COMMIT: b996f26238f3ea79becf3d6b320bec7781c80077
-      OPTIMUS_SOURCE_TREE: 4a73d9f46e7fa94782cdd0e1ec7422b16cbbe8c0
+      OPTIMUS_SOURCE_COMMIT: 30d52497b94a30ecc893d0fba9e400740c993981
+      OPTIMUS_SOURCE_TREE: 8201b4302bae44c694ac4658bb4433593198f0e8
       OPTIMUS_REQUESTED_SOURCE_COMMIT: ${{ inputs.source_commit }}
       OPTIMUS_WORKFLOW_COMMIT: ${{ github.workflow_sha }}
       OPTIMUS_RUN_ID: ${{ github.run_id }}
@@ -52,8 +52,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: b996f26238f3ea79becf3d6b320bec7781c80077
-      - name: Toolchain preflight (no installation)
+          ref: 30d52497b94a30ecc893d0fba9e400740c993981
+      - name: Verify the exact product checkout before provisioning
         run: |
           $ErrorActionPreference = 'Stop'
           $head = & git rev-parse HEAD
@@ -62,11 +62,24 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $tree -cne $env:OPTIMUS_SOURCE_TREE) { throw 'Checkout source tree mismatch.' }
           $dirty = & git status --porcelain
           if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Executable source must be clean before building.' }
+      - name: Provision the reviewed SDK on the disposable runner
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: '10.0.403'
+          check-latest: false
+          skip-lts-prepass: true
+      - name: Verify selected SDK and record toolchain
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & dotnet --list-sdks
+          if ($LASTEXITCODE -ne 0) { throw 'Could not enumerate installed .NET SDKs.' }
           $version = & dotnet --version
-          if ($LASTEXITCODE -ne 0 -or $version -ne '10.0.403') { throw 'Required .NET SDK 10.0.403 absent; provision the isolated runner through protected review.' }
+          $selectionExit = $LASTEXITCODE
+          Write-Host "Expected .NET SDK 10.0.403; selected '$version' (exit $selectionExit)."
+          if ($selectionExit -ne 0 -or $version -cne '10.0.403') { throw 'Reviewed .NET SDK selection failed before build.' }
           [ordered]@{
-            sourceCommit = $head
-            sourceTree = $tree
+            sourceCommit = $env:OPTIMUS_SOURCE_COMMIT
+            sourceTree = $env:OPTIMUS_SOURCE_TREE
             workflowCommit = $env:OPTIMUS_WORKFLOW_COMMIT
             runId = $env:OPTIMUS_RUN_ID
             runAttempt = $env:OPTIMUS_RUN_ATTEMPT
