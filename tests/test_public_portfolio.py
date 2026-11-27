@@ -138,6 +138,8 @@ class DocumentRouteParser(HTMLParser):
                 self.duplicates.add(route_id)
             self.links[route_id] = {"attributes": attrs, "badge": "", "content": ""}
             self._active_route = route_id
+        elif tag == "h3" and self._active_route:
+            self.links[self._active_route]["heading_key"] = attrs.get("data-i18n")
         elif (
             tag == "small"
             and self._active_route
@@ -646,7 +648,7 @@ def test_public_javascript_syntax_and_translation_key_parity():
     source = APP.read_text(encoding="utf-8")
     dictionaries = extract_translation_dictionaries(source)
     assert set(dictionaries) == PUBLIC_LOCALES
-    assert len(dictionaries["en"]) == 210
+    assert len(dictionaries["en"]) == 211
     assert all(set(dictionary) == set(dictionaries["en"]) for dictionary in dictionaries.values())
     assert all(
         value.strip()
@@ -671,6 +673,18 @@ def test_public_javascript_syntax_and_translation_key_parity():
         for dictionary in not_found_dictionaries.values()
         for value in dictionary.values()
     )
+
+
+def test_enterprise_proposal_heading_changes_with_portfolio_language():
+    card = parse_document_route_markup().links["future.enterprise"]
+    key = card.get("heading_key")
+    assert key is not None
+
+    english = run_locale_dom_probe(APP, saved="en", key=key)["initial"]["text"]
+    assert english and english != "Enterprise"
+    for locale in PUBLIC_LOCALES - {"en"}:
+        translated = run_locale_dom_probe(APP, saved=locale, key=key)["initial"]["text"]
+        assert translated and translated not in {english, "Enterprise"}, locale
 
 
 def test_locale_selection_persistence_fallback_and_rtl_dom_behavior():
@@ -1029,7 +1043,7 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     normalized_readme = " ".join(readme.split())
     html = INDEX.read_text(encoding="utf-8")
 
-    assert metadata["manifest_version"] == "1.4.3"
+    assert metadata["manifest_version"] == "1.4.4"
     assert metadata["portfolio_revision"] == "2026-11-08"
     assert metadata["issue"] == 1750
     assert metadata["latest_audit_issue"] == 1834
@@ -1043,7 +1057,7 @@ def test_translation_review_metadata_and_termbase_are_versioned_and_linked():
     assert set(operator_localization["advanced_audit_console_locales"]) == PUBLIC_LOCALES
     assert set(operator_localization["supported_locales"]) == PUBLIC_LOCALES
     assert "human" in operator_localization["review_status"]
-    assert metadata["portfolio_translation_key_count"] == 210
+    assert metadata["portfolio_translation_key_count"] == 211
     assert set(metadata["locales"]) == PUBLIC_LOCALES
     assert len(metadata["field_status"]) >= 10
     for record in metadata["locales"].values():
