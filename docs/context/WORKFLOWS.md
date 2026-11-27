@@ -192,8 +192,11 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 - Permissions: `contents: read`; immutable checkout Action, no persisted checkout
   credentials, artifact uploads or caches. The source input confirms a literal
   reviewed commit; exact HEAD/tree and clean checkout are checked separately.
-- Runner: Windows 2022, 15-minute job limit, existing SDK **10.0.403** without
-  installation/fallback. Less than one GiB free RAM or occupied loopback17831
+- Runner: Windows 2022, 15-minute job limit. The pinned GitHub setup action
+  provides SDK **10.0.403** in the disposable VM before checkout. It reuses an
+  exact installed version and skips the LTS pre-pass. The workflow prints the
+  installed SDKs and selected version, and requires an exact match before build.
+  Less than one GiB free RAM or occupied loopback17831
   blocks execution without stopping existing processes or listeners.
 - Native coverage: complete C# TLS suite and all 22 identity cases, production
   suites/publications and real packaged-service acceptance. Their actual totals
