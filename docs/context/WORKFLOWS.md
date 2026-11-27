@@ -206,9 +206,11 @@ powershell -ExecutionPolicy Bypass -File tools/trace_repo.ps1
 - WPF cases use synthetic HTTP, owned temporary settings and an invisible HWND;
   they require an interactive disposable runner with no default Optimus profile.
   The product window is not shown and its engine/host are not initialized.
-- Issue #2151 scopes one later execution with `gui=false`; these WPF cases run
-  independently of that optional GUI input. Visible GUI, physical keyboard/focus,
-  assistive technology, provider relevance and distribution remain separate.
+- Issue #2151 records the completed `gui=false` run for its original source.
+  Issue #2217 tracks a manual `gui=true` run for the refreshed #2153 candidate.
+  The 13 WPF cases run independently of that input. Packaged GUI automation,
+  physical keyboard/focus, assistive technology and distribution each require
+  their own evidence.
   Missing, blocked, skipped or timed-out evidence never establishes acceptance.
 - Record workflow SHA, product SHA/tree and run/attempt separately. The workflow
   does not create a new required PR-head check, activate a provider or distribute
