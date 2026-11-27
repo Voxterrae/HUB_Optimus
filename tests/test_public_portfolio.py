@@ -6,7 +6,7 @@ import shutil
 import subprocess
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
+from urllib.parse import unquote, urljoin, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,7 +47,8 @@ class PublicPageParser(HTMLParser):
         self.ids = set()
         self.duplicate_ids = set()
         self.local_references = []
-        self.repository_document_links = []
+        self.anchors = []
+        self.script_sources = []
         self.i18n_keys = set()
         self.portfolio_statuses = {}
         self.portfolio_sections = {}
@@ -60,14 +61,10 @@ class PublicPageParser(HTMLParser):
 
     def handle_starttag(self, tag, attributes):
         attrs = dict(attributes)
-        if tag == "a":
-            target = urlsplit(attrs.get("href", ""))
-            if target.netloc == "github.com" and re.fullmatch(
-                r"/Voxterrae/HUB_Optimus/blob/[^/]+/.+\.md",
-                unquote(target.path),
-                re.IGNORECASE,
-            ):
-                self.repository_document_links.append(attrs)
+        if tag == "a" and attrs.get("href"):
+            self.anchors.append(attrs)
+        if tag == "script" and attrs.get("src"):
+            self.script_sources.append(attrs["src"])
         element_id = attrs.get("id")
         if element_id:
             if element_id in self.ids:
@@ -161,9 +158,9 @@ class DocumentRouteParser(HTMLParser):
             self._in_badge = False
 
 
-def parse_public_page():
+def parse_public_page(path=INDEX):
     parser = PublicPageParser()
-    parser.feed(INDEX.read_text(encoding="utf-8"))
+    parser.feed(path.read_text(encoding="utf-8"))
     return parser
 
 
@@ -1560,11 +1557,41 @@ def test_repository_evidence_links_point_to_existing_paths():
     assert len(checked) >= 15
 
 
-def test_repository_prose_links_use_locale_routes():
-    links = parse_public_page().repository_document_links
-    assert links, "the public page must expose its repository documentation"
-    for attributes in links:
-        assert attributes.get("data-document-route"), attributes["href"]
+def test_documentation_links_on_localized_pages_use_their_resolver():
+    origin = "https://huboptimus.dev/"
+    routes = resolve_document_routes()["resolved"]
+    destinations = {
+        urljoin(origin, result["en"]["href"]): route_id
+        for route_id, result in routes.items()
+    }
+    for page in (INDEX, NOT_FOUND, SITE / "operator" / "index.html"):
+        page_url = urljoin(origin, page.relative_to(SITE).as_posix())
+        parser = parse_public_page(page)
+        scripts = {urljoin(page_url, src) for src in parser.script_sources}
+        for anchor in parser.anchors:
+            href = urljoin(page_url, anchor["href"])
+            target = urlsplit(href)
+            path = unquote(target.path)
+            local = target.netloc == "huboptimus.dev"
+            context = (page.relative_to(SITE), anchor["href"])
+            reader_page = (
+                local
+                and (path == "/docs" or path.startswith("/docs/"))
+                and Path(path).suffix.lower() in {"", ".html"}
+            )
+            if reader_page:
+                assert "data-reader-route" in anchor, context
+                assert urljoin(origin, "app.js") in scripts, context
+                continue
+            repo = target.netloc == "github.com" and path.lower().startswith(
+                "/voxterrae/hub_optimus/"
+            )
+            prose = (local or repo) and path.lower().endswith(".md")
+            if href in destinations or prose:
+                route_id = anchor.get("data-document-route")
+                assert route_id and destinations.get(href) == route_id, context
+                assert urljoin(origin, "i18n/document-routes.v1.js") in scripts, context
+                assert urljoin(origin, "app.js") in scripts, context
 
 
 def test_catalogue_route_discloses_english_after_each_locale_change():
