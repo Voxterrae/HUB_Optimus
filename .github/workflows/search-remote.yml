@@ -44,7 +44,13 @@ jobs:
         working-directory: products/browser/search
         run: |
           set -euo pipefail
-          test "$(dotnet --version)" = "10.0.403"
+          dotnet --list-sdks
+          selected_sdk="$(dotnet --version)"
+          printf 'Selected .NET SDK: %s\n' "$selected_sdk"
+          if [ "$selected_sdk" != "10.0.403" ]; then
+            printf '::error::Expected reviewed .NET SDK 10.0.403; selected %s\n' "$selected_sdk" >&2
+            exit 1
+          fi
           mkdir -p "$RUNNER_TEMP/optimus-empty-nuget"
           dotnet restore tests/Optimus.Search.Tests/Optimus.Search.Tests.csproj --source "$RUNNER_TEMP/optimus-empty-nuget"
           dotnet restore remote/tests/Optimus.Search.Remote.Tests/Optimus.Search.Remote.Tests.csproj --source "$RUNNER_TEMP/optimus-empty-nuget"

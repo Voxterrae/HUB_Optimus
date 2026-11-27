@@ -1,11 +1,11 @@
-const CACHE_NAME = "hub-optimus-operator-v0-32";
+const CACHE_NAME = "hub-optimus-operator-v0-33";
 const PRIVATE_OPERATOR_ORIGIN = "https://api.huboptimus.dev";
 const IS_PRIVATE_OPERATOR_ORIGIN = self.location.origin === PRIVATE_OPERATOR_ORIGIN;
 const OFFLINE_FALLBACK = "./index.html";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
-  "./i18n.v1.js?v=1.4.3",
+  "./i18n.v1.js?v=1.4.4",
   "./claim-decomposition.v1.js",
   "./learning-candidate.v1.js",
   "./learning-store.v1.js",
