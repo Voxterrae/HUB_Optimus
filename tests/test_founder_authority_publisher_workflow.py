@@ -65,7 +65,7 @@ def test_app_publisher_is_separate_fail_closed_pinned_and_least_privilege() -> N
 
     assert (
         "actions/create-github-app-token@"
-        "64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0"
+        "f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0"
     ) in text
     assert "client-id: ${{ vars.FOUNDER_AUTHORITY_APP_CLIENT_ID }}" in text
     assert "private-key: ${{ secrets.FOUNDER_AUTHORITY_APP_PRIVATE_KEY }}" in text
