@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Información técnica de privacidad y controles locales de HUB_Optimus. Aviso en preparación.">
+  <title>Privacidad y datos · HUB_Optimus</title>
+  <link rel="stylesheet" href="./privacy.css">
+  <script src="./privacy-config.v1.js" defer></script>
+  <script src="./privacy.v1.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#privacy-centre" data-privacy-key="skip">Ir al contenido</a>
+  <header>
+    <a class="brand" href="../">HUB_Optimus</a>
+    <nav aria-label="HUB_Optimus">
+      <a href="../" data-privacy-key="home">Volver al inicio</a>
+      <a href="../operator/" data-privacy-key="operator">Abrir Operator</a>
+    </nav>
+    <label><span data-privacy-key="language">Idioma</span>
+      <select id="privacy-language"><option value="es" lang="es">Español</option><option value="en" lang="en">English</option><option value="de" lang="de">Deutsch</option></select>
+    </label>
+  </header>
+  <main id="privacy-centre">
+    <div class="hero">
+      <p class="eyebrow">HUB_OPTIMUS</p>
+      <h1 data-privacy-key="title">Privacidad y datos</h1>
+      <p class="lead" data-privacy-key="intro">Conoce qué se guarda en tu dispositivo, qué puedes eliminar y qué información necesita verificación antes de completar el aviso.</p>
+    </div>
+    <aside class="status" aria-labelledby="notice-status">
+      <h2 id="notice-status">Aviso en preparación</h2>
+      <p id="notice-status-detail">Faltan datos verificados para presentar este aviso como definitivo.</p>
+      <div class="metadata"><span><span data-privacy-key="version">Versión</span>: <span id="notice-version">0.1</span></span><span><span data-privacy-key="reviewed">Revisión técnica</span>: <time id="technical-review-date" datetime="2026-10-24">2026-10-24</time></span></div>
+    </aside>
+    <noscript>
+      <p lang="en">Draft notice: controller, private contact, providers and retention still require verification. This page collects no requests. Open Operator to manage local drafts and candidate records; exported copies and hosting logs are separate.</p>
+      <p lang="de">Entwurf: Verantwortlicher, privater Kontakt, Anbieter und Aufbewahrung müssen noch geprüft werden. Diese Seite erfasst keine Anfragen. Lokale Entwürfe und Kandidaten verwaltest du im Operator; exportierte Kopien und Hosting-Protokolle sind davon getrennt.</p>
+    </noscript>
+    <section class="card" id="pending-section">
+      <h2 data-privacy-key="pendingTitle">Información pendiente</h2>
+      <ul id="pending-fields"><li>Identidad del responsable</li><li>Canal privado de privacidad</li><li>Alojamiento y conservación</li><li>Aprobación del aviso</li></ul>
+    </section>
+    <div class="grid">
+      <section class="card"><h2 data-privacy-key="controller">Identidad del responsable</h2><p id="controller-value">La identidad del responsable está pendiente de verificación.</p></section>
+      <section class="card"><h2 data-privacy-key="contact">Canal privado de privacidad</h2><p id="contact-pending" data-privacy-key="pendingContact">El canal privado está pendiente de verificación. Esta página no recoge solicitudes ni datos personales.</p><a id="privacy-contact" data-privacy-key="write" hidden>Contactar por el canal verificado</a></section>
+    </div>
+    <section class="card" aria-labelledby="storage-title">
+      <h2 id="storage-title" data-privacy-key="storage">Datos en este dispositivo</h2>
+      <p data-privacy-key="storageIntro">Abrir esta página o cambiar su idioma no guarda una preferencia nueva ni modifica los datos de Operator.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th scope="col" data-privacy-key="data">Datos</th><th scope="col" data-privacy-key="purpose">Finalidad y conservación</th><th scope="col" data-privacy-key="controls">Control disponible</th></tr></thead>
+        <tbody>
+          <tr><th scope="row" data-privacy-key="languageData">Idioma elegido</th><td data-privacy-key="languagePurpose">El sitio y Operator pueden recordar el idioma que eliges. Permanece en este perfil del navegador hasta eliminarlo desde sus ajustes.</td><td data-privacy-key="browserControls">Ajustes de datos del sitio en tu navegador</td></tr>
+          <tr><th scope="row" data-privacy-key="draftData">Borrador guardado</th><td data-privacy-key="draftPurpose">Solo se conserva cuando pulsas Guardar. Puede contener el caso completo. Limpiar los campos actuales no elimina ese borrador.</td><td><a href="../operator/#advanced_operator_console" data-privacy-key="draftControls">Abrir controles del borrador</a></td></tr>
+          <tr><th scope="row" data-privacy-key="learningData">Candidatos de revisión</th><td data-privacy-key="learningPurpose">Los registros creados o importados se guardan en este perfil hasta eliminarlos. La aceptación local no publica ni modifica el proyecto.</td><td><a href="../operator/#learning_workspace" data-privacy-key="learningControls">Abrir controles de candidatos</a></td></tr>
+          <tr><th scope="row" data-privacy-key="cacheData">Archivos para uso sin conexión</th><td data-privacy-key="cachePurpose">La superficie pública de Operator puede guardar recursos estáticos. La caché no es un archivo de tus casos; la superficie privada tiene controles distintos.</td><td data-privacy-key="browserControls">Ajustes de datos del sitio en tu navegador</td></tr>
+        </tbody>
+      </table></div>
+      <p data-privacy-key="controlsHelp">En Operator, abre la sección avanzada para eliminar el borrador guardado. Para candidatos, selecciona el registro y revisa la eliminación de ese registro o del caso. El navegador permite eliminar los datos completos del sitio; revisa su alcance antes de confirmar.</p>
+    </section>
+    <div class="grid">
+      <section class="card"><h2 data-privacy-key="hosting">Alojamiento, proveedores y transferencias</h2><p id="hosting-value">Los proveedores activos, posibles transferencias y registros técnicos del alojamiento deben verificarse.</p></section>
+      <section class="card"><h2 data-privacy-key="retention">Criterios de conservación</h2><p id="retention-value">Los datos locales indicados se conservan hasta su eliminación. Los plazos de otros tratamientos están pendientes de revisión.</p></section>
+      <section class="card"><h2 data-privacy-key="optional">Servicios opcionales</h2><p data-privacy-key="optionalBody">Este centro no incorpora analítica, publicidad, seguimiento ni llamadas a modelos. Una integración futura que requiera consentimiento tendrá su propio control antes de activarse.</p></section>
+      <section class="card"><h2 data-privacy-key="sharing">Copias y servicios externos</h2><p data-privacy-key="sharingBody">Copiar, exportar o compartir por WhatsApp puede crear copias fuera de este dispositivo. Borrar el original local no elimina esas copias ni los registros de otros servicios.</p></section>
+    </div>
+    <section class="card"><h2 data-privacy-key="rights">Consultas y ejercicio de derechos</h2><p data-privacy-key="rightsBody">Puedes solicitar información sobre tus datos y, cuando corresponda, acceso, rectificación, supresión, oposición, limitación o portabilidad. La atención requiere revisión humana. Eliminar datos locales y solicitar actuaciones al responsable son acciones diferentes.</p><p data-privacy-key="noForm">Sin formularios ni recepción automática de solicitudes en esta página.</p></section>
+    <section class="card"><h2 data-privacy-key="ai">Intervención de IA y revisión humana</h2><p data-privacy-key="aiBody">La superficie pública de Operator organiza información en borradores para revisión humana mediante herramientas locales. Este centro no envía casos a una IA. Una función privada o una integración con un proveedor necesita información específica sobre sus datos, límites y responsables.</p></section>
+  </main>
+  <footer><p data-privacy-key="boundary">Este aviso se limita al sitio público y sus controles locales. LCDH-OS, las consultas cívicas y los servicios privados necesitan información específica para su propio tratamiento.</p><a href="https://github.com/Voxterrae/HUB_Optimus" data-privacy-key="evidence">Consultar el proyecto</a></footer>
+</body>
+</html>
